@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - PhishSim AI{% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+    <div>
+        <h1>Dashboard</h1>
+        <p>Manage your phishing campaigns and monitor live statistics.</p>
+    </div>
+</div>
+
+{% if not campaigns %}
+<div class="card dashboard-card" style="text-align: center; padding: 4rem 2rem;">
+    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="1" style="margin-bottom: 1rem;">
+        <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+    </svg>
+    <h3>No Active Campaigns</h3>
+    <p style="margin-bottom: 1.5rem;">You haven't created any phishing simulations yet. Start by creating a new campaign.</p>
+    <a href="/new-campaign" class="btn-primary">+ Create Your First Campaign</a>
+</div>
+{% else %}
+
+<div class="dashboard-grid">
+    {% for camp in campaigns %}
+    <div class="card dashboard-card">
+        <div class="campaign-header">
+            <div>
+                <h3 style="margin-bottom: 0.25rem;">{{ camp.name }}</h3>
+                <span class="badge {% if camp.status == 'launched' %}badge-launched{% elif camp.status == 'launching' %}badge-launching{% else %}badge-draft{% endif %}">
+                    {{ camp.status }}
+                </span>
+            </div>
+            
+            <form action="/delete-campaign/{{ camp.id }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this campaign?');" style="margin: 0;">
+                <button type="submit" class="btn-danger-sm">Delete</button>
+            </form>
+        </div>
+        
+        <p style="font-size: 0.875rem; margin-bottom: 1rem;">
+            <strong>Target Domain:</strong> {{ camp.company_domain }}<br>
+            <strong>Scenario:</strong> {{ camp.scenario_type.replace('_', ' ').title() }}
+        </p>
+        
+        <hr>
+
+        {% if camp.status == 'draft' %}
+            
+            {% if camp.employee_count == 0 %}
+                <!-- Step 1: Upload Employees -->
+                <div style="margin-top: 1rem; flex: 1;">
+                    <p style="font-size: 0.875rem;"><strong>Step 1: Upload Targets</strong><br>Upload a CSV file containing target employees.</p>
+                    <form action="/upload-employees/{{ camp.id }}" method="POST" enctype="multipart/form-data">
+                        <div class="form-group" style="margin-bottom: 0.5rem;">
+                            <input type="file" name="employee_csv" required style="padding: 0.5rem; font-size: 0.875rem;">
+                        </div>
+                        <button type="submit" class="btn-outline" style="width: 100%; padding: 0.5rem;">Upload CSV</button>
+                    </form>
+                </div>
+            {% else %}
+                <!-- Step 2: Launch -->
+                <div style="margin-top: 1rem; flex: 1; display: flex; flex-direction: column;">
+                    <p style="font-size: 0.875rem;">
+                        <strong>Step 2: Launch Simulation</strong><br>
+                        <span style="color: var(--accent-cyan);">{{ camp.employee_count }} employees loaded.</span> Ready to generate AI emails and dispatch.
+                    </p>
+                    <form action="/launch-campaign/{{ camp.id }}" method="POST" style="margin-top: auto;">
+                        <button type="submit" class="btn-primary" style="width: 100%;">🚀 Launch Campaign</button>
+                    </form>
+                </div>
+            {% endif %}
+
+        {% elif camp.status == 'launching' %}
+            <div style="margin-top: 1rem; text-align: center; padding: 1rem;">
+                <p style="color: var(--accent-blue); font-weight: bold; margin-bottom: 0.5rem;">🚀 Dispatching Campaign...</p>
+                <p style="font-size: 0.75rem; color: var(--text-muted);">AI is generating and sending emails in the background.<br>Refresh this page in a few moments to view live tracking statistics.</p>
+            </div>
+
+        {% elif camp.status == 'launched' %}
+            
+            <!-- Live Tracking Stats -->
+            <div style="margin-top: 0.5rem;">
+                <p style="font-size: 0.875rem; margin-bottom: 0;"><strong>Live Tracking Statistics</strong></p>
+                <p style="font-size: 0.75rem; color: var(--text-muted);">Sent to {{ camp.emails_sent }} employees</p>
+                
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <div class="stat-value opens">{{ camp.opens }}</div>
+                        <div class="stat-label">Opens</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value clicks">{{ camp.clicks }}</div>
+                        <div class="stat-label">Clicks</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value reports">{{ camp.reports }}</div>
+                        <div class="stat-label">Reports</div>
+                    </div>
+                </div>
+            </div>
+
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+{% endblock %}

@@ -49,6 +49,11 @@ Write a phishing simulation email that:
 4. Is under 120 words
 5. Use simple HTML formatting with <p> and <a> tags only
 
+CRITICAL RULES:
+- Do NOT hallucinate random sender names (like 'Jordan Lee' or 'John Doe').
+- Sign off using ONLY the Department name (e.g., 'Human Resources', 'IT Support Team', or 'Finance Department').
+- Make sure the tone matches the company context provided.
+
 Return ONLY this JSON structure with no extra text, no markdown, no explanation:
 {{"subject": "...", "sender_name": "...", "body_html": "..."}}"""
 
@@ -77,19 +82,20 @@ Return ONLY this JSON structure with no extra text, no markdown, no explanation:
             print(f"Empty response on attempt {attempt + 1}, retrying...")
         except Exception as e:
             print(f"API call failed on attempt {attempt + 1}: {e}")
+            # Fallback to a realistic generic email instead of an error string
             return {
-                "subject": "Security Notice",
-                "sender_name": "IT Department",
-                "body_html": f"API error: {str(e)}"
+                "subject": "Action Required: Urgent Account Verification",
+                "sender_name": "IT Security Team",
+                "body_html": f"<p>Dear {employee_profile['name']},</p><p>We detected unusual login activity on your account. Please verify your credentials immediately to prevent account suspension.</p><p><a href='TRACKING_LINK'>Verify Account Now</a></p><p>Thank you,<br>IT Security Team</p>"
             }
 
     # --- If both attempts returned empty ---
     if not raw or not raw.strip():
         print("Model returned empty response after 2 attempts.")
         return {
-            "subject": "Security Notice",
-            "sender_name": "IT Department",
-            "body_html": "Model returned empty response."
+            "subject": "Action Required: Urgent Account Verification",
+            "sender_name": "IT Security Team",
+            "body_html": f"<p>Dear {employee_profile['name']},</p><p>We detected unusual login activity on your account. Please verify your credentials immediately to prevent account suspension.</p><p><a href='TRACKING_LINK'>Verify Account Now</a></p><p>Thank you,<br>IT Security Team</p>"
         }
 
     # --- Clean markdown fences ---
