@@ -1,52 +1,85 @@
-# PhishSim AI
+# 🎣 PhishSim AI
 
-PhishSim AI is an AI-powered phishing simulation platform designed for security awareness training.  
-The goal of this project is to simulate realistic phishing scenarios so organizations can train employees to recognize and avoid phishing attacks.
+**An Advanced, AI-Powered Phishing Simulation & Security Awareness Platform**
 
-⚠️ This project is strictly for **educational and security awareness purposes only**.
+PhishSim AI is an enterprise-grade phishing simulation platform designed for security awareness training. By leveraging Open-Source Intelligence (OSINT) and cutting-edge Large Language Models (LLMs), PhishSim AI generates highly realistic, context-aware phishing simulations to train employees to recognize and report sophisticated cyber threats.
 
----
-
-# Project Overview
-
-PhishSim AI combines OSINT (Open Source Intelligence) and AI to generate highly realistic phishing simulation emails.
-
-The system works in multiple phases:
-
-1. Collect company intelligence from public websites.
-2. Generate personalized phishing emails using AI.
-3. Simulate phishing campaigns.
-4. Track interactions and improve employee awareness.
+> ⚠️ **DISCLAIMER:** This project is strictly for **educational and authorized security awareness training purposes only**. It must only be used on networks and targets where explicit written consent has been provided.
 
 ---
 
-# Phase 1 – OSINT Company Intelligence
+## 🚀 Features & Architecture
 
-Phase 1 focuses on collecting publicly available company information to understand how the company communicates.
+The system operates across four highly integrated phases:
 
-This data helps AI generate realistic phishing simulation emails.
+### Phase 1: OSINT Intelligence Gathering
+The engine dynamically scrapes public company data, extracting descriptions, writing tone, social media presence, and recent context to ensure simulations are specifically tailored to the target organization's internal communication style.
 
-### Features
+### Phase 2: AI Email Generation Engine
+Using advanced LLMs via OpenRouter, the engine crafts hyper-realistic phishing emails. It utilizes psychological triggers (Authority, Urgency, Compliance) and adapts the tone based on the target employee's department and seniority level, making the emails practically indistinguishable from real internal communications.
 
-- Website scraping
-- Company description extraction
-- Writing tone analysis
-- Social media discovery
-- Email detection
-- Bot protection detection
-- Link extraction
+### Phase 3: Flask Web Application & Dashboard
+A sleek, premium dark-themed web application that acts as the control center:
+- **Campaign Management:** Create, manage, and launch phishing campaigns.
+- **Target Management:** Upload employee targets via CSV files.
+- **Dynamic Dashboard:** Real-time visibility into all active and past campaigns.
+- **Background Dispatch:** Non-blocking email dispatch using background threading and Mailtrap integration.
 
-Example output:
+### Phase 4: Advanced Tracking & Analytics
+A comprehensive tracking system that monitors employee interactions with the simulation:
+- **Open Tracking:** Invisible 1x1 tracking pixels log when an email is opened.
+- **Click Tracking:** Links redirect to a highly convincing Microsoft 365 fake login page before revealing the simulation.
+- **Reporting Mechanism:** Injected "Report Suspicious Email" buttons allow employees to successfully report the phish.
+- **Educational Reveal:** A beautifully designed landing page provides immediate, visual feedback and tips to employees who fall for the simulation.
+- **Real-Time Database Logging:** Captures IP addresses, User-Agents, and timestamps for robust reporting.
 
-```json
-{
- "company_name": "DigitalOcean",
- "description": "Build on DigitalOcean's cloud infrastructure...",
- "recent_context": ["Customers growing with DigitalOcean"],
- "writing_tone": "Simple and affordable cloud infrastructure...",
- "emails": [],
- "links": [],
- "socials": {
-   "linkedin": "https://linkedin.com/company/digitalocean"
- }
-}
+---
+
+## 🛠️ Technology Stack
+
+- **Backend:** Python, Flask
+- **Database:** MySQL
+- **Frontend:** HTML5, CSS3 (Custom Glassmorphism UI, No external frameworks)
+- **AI/LLM:** OpenRouter API
+- **Email Delivery:** SMTP (Mailtrap for sandbox testing)
+
+---
+
+## ⚙️ Setup & Installation
+
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/yourusername/Phishsim.ai.git
+   cd Phishsim.ai
+   ```
+
+2. **Install dependencies:**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+3. **Configure Environment Variables:**
+   Create a `.env` file in the root directory and add the following:
+   ```env
+   OPENROUTER_API_KEY=your_api_key_here
+   DB_PASSWORD=your_mysql_password
+   MAILTRAP_USER=your_mailtrap_user
+   MAILTRAP_PASS=your_mailtrap_password
+   ```
+
+4. **Initialize the Database:**
+   Ensure your local MySQL server is running and you have created a database named `phishsim_db`. The application will automatically construct the required tables (`campaigns`, `employees`, `emails_sent`, `events`) upon launch.
+
+5. **Run the Application:**
+   ```bash
+   python app.py
+   ```
+   Navigate to `http://127.0.0.1:5000` in your browser.
+
+---
+
+## 🛡️ Best Practices & Usage
+
+- **Always obtain consent** before launching a campaign against any domain or employee list.
+- Use **Mailtrap** during development to prevent accidentally sending emails to real inboxes.
+- Monitor your dashboard closely to identify departments that may require additional security training based on click rates.
