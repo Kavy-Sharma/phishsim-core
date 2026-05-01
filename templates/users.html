@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+
+{% block title %}Users - PhishSim AI{% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+    <div>
+        <h1>Users</h1>
+        <p>Create admins and company users for role-based campaign access.</p>
+    </div>
+</div>
+
+{% with messages = get_flashed_messages() %}
+    {% if messages %}
+        <div class="form-alert">{{ messages[0] }}</div>
+    {% endif %}
+{% endwith %}
+
+<div class="dashboard-grid" style="grid-template-columns: minmax(320px, 420px) 1fr;">
+    <section class="card">
+        <h2>Create User</h2>
+        <form method="POST">
+            <div class="form-group">
+                <label for="name">Name</label>
+                <input type="text" id="name" name="name" placeholder="Security Manager" required>
+            </div>
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" placeholder="manager@company.com" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Temporary Password</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            <div class="form-group">
+                <label for="role">Role</label>
+                <select id="role" name="role">
+                    <option value="company_user">Company User</option>
+                    <option value="admin">Admin</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="company_domain">Company Domain</label>
+                <input type="text" id="company_domain" name="company_domain" placeholder="company.com">
+            </div>
+            <button type="submit" class="btn-primary" style="width: 100%;">Create User</button>
+        </form>
+    </section>
+
+    <section class="card">
+        <h2>Existing Users</h2>
+        <div class="user-list">
+            {% for user in users %}
+            <div class="user-row">
+                <div>
+                    <strong>{{ user.name }}</strong>
+                    <p>{{ user.email }}{% if user.company_domain %} · {{ user.company_domain }}{% endif %}</p>
+                </div>
+                <span class="badge {% if user.role == 'admin' %}badge-launched{% else %}badge-draft{% endif %}">
+                    {{ user.role.replace('_', ' ') }}
+                </span>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+</div>
+{% endblock %}

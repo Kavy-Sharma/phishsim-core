@@ -5,15 +5,27 @@
 {% block content %}
 <div style="max-width: 800px; margin: 0 auto; text-align: center; padding-top: 2rem;">
     
-    <div style="margin-bottom: 2rem;">
+    <div style="margin-bottom: 2rem; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: var(--radius-lg); padding: 2rem;">
         <!-- Alert Icon -->
-        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="var(--accent-blue)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 1rem;">
-            <circle cx="12" cy="12" r="10"></circle>
-            <line x1="12" y1="8" x2="12" y2="12"></line>
-            <line x1="12" y1="16" x2="12.01" y2="16"></line>
-        </svg>
-        <h1 style="font-size: 2.5rem; margin-bottom: 0.5rem;">Oops! That was a phishing simulation.</h1>
-        <p style="font-size: 1.25rem; color: var(--text-muted);">Don't worry, you haven't been compromised. This was an authorized security training exercise.</p>
+        <div style="display: flex; justify-content: center; margin-bottom: 1rem; color: #ef4444;">
+            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+        </div>
+        <h1 style="font-size: 2.5rem; margin-bottom: 0.5rem; color: #ef4444;">CRITICAL SECURITY ALERT</h1>
+        <p style="font-size: 1.25rem; color: var(--text-main); margin-bottom: 0;">Oops! You just fell for a simulated phishing attack.</p>
+        
+        {% if scenario %}
+        <div style="margin-top: 1.5rem;">
+            <p style="font-size: 1rem; color: var(--accent-cyan); display: inline-block; padding: 0.5rem 1rem; border: 1px solid rgba(6, 182, 212, 0.3); border-radius: var(--radius-full); background: rgba(6, 182, 212, 0.1);">
+                Scenario Detected: <strong>{{ scenario }}</strong>
+            </p>
+        </div>
+        {% endif %}
+        
+        <p style="font-size: 1rem; color: var(--text-muted); margin-top: 1.5rem;">Don't panic! You haven't been compromised. This was an authorized security training exercise to test our human firewall.</p>
     </div>
 
     <div class="card" style="text-align: left; margin-bottom: 2rem;">

@@ -1,15 +1,645 @@
 {% extends 'base.html' %}
 
-{% block title %}PhishSim AI - Next-Gen Phishing Simulation{% endblock %}
+{% block title %}PhishSim AI - Agentic Phishing Simulator{% endblock %}
 
 {% block content %}
-<div class="hero">
-    <h1>Advanced <span class="text-gradient">Phishing Simulation</span> powered by AI.</h1>
-    <p>Train your employees against highly targeted, AI-generated phishing campaigns designed using the latest OSINT techniques.</p>
-    
-    <div class="hero-buttons">
-        <a href="/dashboard" class="btn-primary">Go to Dashboard</a>
-        <a href="/new-campaign" class="btn-outline">Create Campaign</a>
+<!-- Font Google -->
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&family=Space+Mono&display=swap" rel="stylesheet">
+
+<!-- Network Graph Background -->
+<canvas id="network-canvas"></canvas>
+
+<!-- Hero Section -->
+<section class="hero-modern" id="hero">
+    <div class="hero-container">
+        <div class="pill-badge">Powered by Agentic AI</div>
+        <h1 class="hero-title">
+            <span id="typewriter-text"></span><span class="cursor"></span>
+        </h1>
+        <p class="hero-subtitle">The first autonomous phishing simulator that weaponizes OSINT and Generative AI to stress-test your human firewall.</p>
+        <div class="hero-cta-group">
+            <a href="/dashboard" class="btn-primary-glow">Go to Dashboard</a>
+            <a href="#attack-flow" class="btn-outline-glow">View Attack Flow</a>
+        </div>
+
+        <!-- Status Ticker moved below buttons -->
+        <div class="status-ticker">
+            <div class="ticker-content">
+                <span>⚠️ LIVE: 2,847+ phishing emails simulated today</span>
+                <span>🛡️ 98.7% Model Bypass Detection Rate</span>
+                <span>⚡ c2s Agentic Email Generation</span>
+                <span>⚠️ LIVE: 2,847+ phishing emails simulated today</span>
+                <span>🛡️ 98.7% Model Bypass Detection Rate</span>
+                <span>⚡ c2s Agentic Email Generation</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Anatomy of an Attack -->
+<section class="flow-section" id="attack-flow">
+    <div class="container">
+        <h2 class="section-title">The Anatomy of an Autonomous Attack</h2>
+        <p class="section-subtitle">Watch how the Agentic AI orchestrates a full-scale social engineering campaign without human intervention.</p>
+        
+        <button id="run-simulation-btn" class="modern-cyber-btn">
+            <span class="btn-glitch"></span>
+            <span class="btn-content">▶ Execute Attack Simulation</span>
+        </button>
+
+        <div class="timeline-container">
+            <div class="timeline-line"></div>
+            <div class="timeline-cards">
+                <div class="timeline-card" onclick="openModal(1)" style="--delay: 1">
+                    <div class="card-icon"><i class="fas fa-search"></i></div>
+                    <h4>1. OSINT Gather</h4>
+                    <p>Scrapes domain data</p>
+                </div>
+                <div class="timeline-card" onclick="openModal(2)" style="--delay: 2">
+                    <div class="card-icon"><i class="fas fa-brain"></i></div>
+                    <h4>2. LLM Crafting</h4>
+                    <p>Generates context</p>
+                </div>
+                <div class="timeline-card" onclick="openModal(3)" style="--delay: 3">
+                    <div class="card-icon"><i class="fas fa-envelope-open-text"></i></div>
+                    <h4>3. Delivery</h4>
+                    <p>Bypasses filters</p>
+                </div>
+                <div class="timeline-card" onclick="openModal(4)" style="--delay: 4">
+                    <div class="card-icon"><i class="fas fa-id-badge"></i></div>
+                    <h4>4. Harvesting</h4>
+                    <p>Fake 365 Logins</p>
+                </div>
+                <div class="timeline-card" onclick="openModal(5)" style="--delay: 5">
+                    <div class="card-icon"><i class="fas fa-chart-bar"></i></div>
+                    <h4>5. Reporting</h4>
+                    <p>Risk Profiling</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Interactive Terminal Section -->
+<section class="terminal-section" id="terminal-section" style="padding: 2rem 0 6rem 0; display: flex; justify-content: center; background: linear-gradient(180deg, rgba(15, 23, 42, 0.8), #020617);">
+    <div id="terminal-wrapper" style="position: relative; z-index: 10;">
+        <div class="terminal-container" id="terminal-main">
+            <div class="terminal-header">
+                <div class="terminal-title">
+                    <i class="fas fa-terminal"></i> root@phishsim.ai
+                </div>
+                <div class="terminal-dots">
+                    <span class="dot green" onclick="maximizeTerminal()"></span>
+                    <span class="dot yellow" onclick="closeTerminal()"></span>
+                    <span class="dot red" onclick="rebootTerminal()"></span>
+                </div>
+            </div>
+            <div class="terminal-body" id="terminal-body">
+                <div class="crt-overlay"></div>
+                <div id="terminal-output">
+                    <div style="text-align: center; margin-bottom: 25px; margin-top: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                        <img src="{{ url_for('static', filename='images/terminal_logo.png') }}" alt="PhishSim AI Logo" style="width: 140px; height: 140px; margin-bottom: 15px;">
+                        <div style="color: #3b82f6; font-weight: bold; font-size: 1.3rem; letter-spacing: 2px;">PHISHSIM AI ENGINE</div>
+                        <div style="color: #64748b; font-size: 0.8rem; letter-spacing: 4px; margin-top: 5px;">AUTONOMOUS SIMULATION PLATFORM</div>
+                    </div>
+                    <div class="sys-msg-boot">[*] Booting Agentic Engine...</div>
+                    <div class="sys-msg-boot">[*] Injecting LLM Kernels... [OK]</div>
+                    <div class="sys-msg-boot">[*] Establishing encrypted C2 connection... [OK]</div>
+                    <div class="sys-msg" style="margin-top: 15px;">Welcome to PhishSim AI. Type 'help' to view available commands.</div>
+                </div>
+                <div class="terminal-input-row">
+                    <span class="prompt">user@phishsim.ai:~$</span>
+                    <input type="text" id="terminal-input" autocomplete="off" spellcheck="false">
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Floating Terminal Icon -->
+<div class="terminal-icon-mini" id="terminal-mini" onclick="openTerminal()" style="position: fixed; bottom: 30px; right: 30px; z-index: 9999;">
+    <i class="fas fa-terminal"></i>
+</div>
+
+<!-- Enterprise Vertical Bars (Brside Inspiration) -->
+<section class="enterprise-section">
+    <div class="container">
+        <h2 class="section-title" style="margin-bottom: 3rem;">Core Platform Capabilities</h2>
+        <div class="vertical-bars-container">
+            <div class="v-bar active" onclick="toggleVBar(this)">
+                <div class="v-bar-icon"><i class="fas fa-file-csv"></i></div>
+                <h3 class="v-bar-title">CSV Campaign Launch</h3>
+                <div class="v-bar-content">
+                    <p>Effortlessly start campaigns. Simply upload an employee CSV and provide your company domain. PhishSim automatically parses departments, seniority, and roles to prepare the simulation.</p>
+                </div>
+            </div>
+            <div class="v-bar" onclick="toggleVBar(this)">
+                <div class="v-bar-icon"><i class="fas fa-robot"></i></div>
+                <h3 class="v-bar-title">Agentic Email Generation</h3>
+                <div class="v-bar-content">
+                    <p>Moving beyond static templates. Our Agentic AI autonomously drafts highly convincing, context-aware phishing emails tailored specifically to each target's department and corporate environment.</p>
+                </div>
+            </div>
+            <div class="v-bar" onclick="toggleVBar(this)">
+                <div class="v-bar-icon"><i class="fas fa-chart-bar"></i></div>
+                <h3 class="v-bar-title">Real-Time Dashboards</h3>
+                <div class="v-bar-content">
+                    <p>Powered by Chart.js, our live dashboards track critical campaign metrics instantly. Monitor total emails sent, open rates, click rates, and reporting rates, broken down visually by department.</p>
+                </div>
+            </div>
+            <div class="v-bar" onclick="toggleVBar(this)">
+                <div class="v-bar-icon"><i class="fas fa-brain"></i></div>
+                <h3 class="v-bar-title">Agentic Risk Modeling</h3>
+                <div class="v-bar-content">
+                    <p>Replacing legacy ML models. The Agentic AI analyzes raw event data to predict human risk factors, identifying which departments (e.g., Finance vs. HR) are most vulnerable based on historical click rates.</p>
+                </div>
+            </div>
+            <div class="v-bar" onclick="toggleVBar(this)">
+                <div class="v-bar-icon"><i class="fas fa-file-signature"></i></div>
+                <h3 class="v-bar-title">AI Security Assessments</h3>
+                <div class="v-bar-content">
+                    <p>After a campaign concludes, our LLM engine ingests the statistics and automatically generates a comprehensive, multi-paragraph security posture report, highlighting key findings and training priorities.</p>
+                </div>
+            </div>
+            <div class="v-bar" onclick="toggleVBar(this)">
+                <div class="v-bar-icon"><i class="fas fa-file-pdf"></i></div>
+                <h3 class="v-bar-title">PDF Report Export</h3>
+                <div class="v-bar-content">
+                    <p>Export your AI-generated risk reports to professional PDF documents with a single click. Perfect for compliance audits, board meetings, and sharing actionable insights with stakeholders.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Bento Box Grid -->
+<section class="bento-section">
+    <div class="container">
+        <h2 class="section-title" style="margin-bottom: 3rem;">A Complete Simulation Ecosystem</h2>
+        <div class="bento-grid">
+            <div class="bento-item bento-large">
+                <i class="fas fa-users-cog"></i>
+                <h3>End-to-End Campaign Management</h3>
+                <p>Manage hundreds of targeted users at once. Simply upload your CSV, and our backend logic automatically structures groups by seniority and department to tailor the difficulty of the phishing simulations.</p>
+            </div>
+            <div class="bento-item bento-small">
+                <i class="fas fa-chart-line"></i>
+                <h3>Chart.js Analytics</h3>
+                <p>Beautiful, responsive bar charts and metrics dashboards natively rendering your live database statistics in real-time.</p>
+            </div>
+            <div class="bento-item bento-small">
+                <i class="fas fa-server"></i>
+                <h3>Flask & MySQL Powered</h3>
+                <p>Built on a robust Python Flask architecture using a secure MySQL relational database for reliable, scalable tracking.</p>
+            </div>
+            <div class="bento-item bento-large">
+                <i class="fas fa-robot"></i>
+                <h3>LLM Risk Analysis via Claude</h3>
+                <p>We leverage the Claude API to analyze raw click-rate data. The LLM identifies trends, spots vulnerable departments, and writes a professional 3-paragraph executive summary for you.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Final CTA -->
+<section class="final-cta">
+    <div class="container" style="text-align: center;">
+        <h2 class="cta-title">Ready to Test Your Defenses?</h2>
+        <p class="cta-subtitle">Launch your first Agentic AI phishing campaign in under 5 minutes and get your first AI-generated vulnerability report.</p>
+        <a href="/login" class="modern-cyber-btn pulse" style="font-size: 1.2rem; padding: 1rem 3rem;">
+            <span class="btn-glitch"></span>
+            <span class="btn-content">INITIALIZE SANDBOX <i class="fas fa-arrow-right"></i></span>
+        </a>
+    </div>
+</section>
+
+<!-- Modal for Tiles -->
+<div class="modal-overlay" id="info-modal" onclick="closeModal()">
+    <div class="modal-box" onclick="event.stopPropagation()">
+        <i class="fas fa-times modal-close" onclick="closeModal()"></i>
+        <h3 id="modal-title">Title</h3>
+        <p id="modal-text">Details here.</p>
     </div>
 </div>
+
+<script>
+// --- Typewriter Animation ---
+const words = ["Simulate.", "Train.", "Analyze.", "Protect."];
+let i = 0;
+let timer;
+const typewriterEl = document.getElementById('typewriter-text');
+
+function typingEffect() {
+    let word = words[i].split("");
+    var loopTyping = function() {
+        if (word.length > 0) {
+            typewriterEl.innerHTML += word.shift();
+        } else {
+            setTimeout(deletingEffect, 2500);
+            return false;
+        }
+        timer = setTimeout(loopTyping, 100);
+    };
+    loopTyping();
+}
+
+function deletingEffect() {
+    let word = words[i].split("");
+    var loopDeleting = function() {
+        if (word.length > 0) {
+            word.pop();
+            typewriterEl.innerHTML = word.join("");
+        } else {
+            i = (i + 1) % words.length;
+            setTimeout(typingEffect, 500);
+            return false;
+        }
+        timer = setTimeout(loopDeleting, 50);
+    };
+    loopDeleting();
+}
+typingEffect();
+
+// --- Advanced Interactive Network Graph ---
+const canvas = document.getElementById('network-canvas');
+const ctx = canvas.getContext('2d');
+let width, height;
+let particles = [];
+let mouse = { x: null, y: null };
+
+function resize() {
+    width = canvas.width = window.innerWidth;
+    height = canvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resize);
+resize();
+
+window.addEventListener('mousemove', (e) => {
+    mouse.x = e.x;
+    mouse.y = e.y;
+});
+window.addEventListener('mouseout', () => {
+    mouse.x = null;
+    mouse.y = null;
+});
+window.addEventListener('click', (e) => {
+    // Generate new particles on click
+    for(let i=0; i<8; i++) {
+        let p = new Particle();
+        p.x = mouse.x;
+        p.y = mouse.y;
+        p.vx = (Math.random() - 0.5) * 4; // Burst outward
+        p.vy = (Math.random() - 0.5) * 4;
+        particles.push(p);
+    }
+});
+
+class Particle {
+    constructor() {
+        this.x = Math.random() * width;
+        this.y = Math.random() * height;
+        this.vx = (Math.random() - 0.5) * 0.4; // Very slow
+        this.vy = (Math.random() - 0.5) * 0.4; // Very slow
+        this.radius = Math.random() * 2 + 1;
+        this.baseX = this.x;
+        this.baseY = this.y;
+    }
+    update() {
+        this.x += this.vx;
+        this.y += this.vy;
+        
+        // Boundaries
+        if (this.x < 0 || this.x > width) this.vx *= -1;
+        if (this.y < 0 || this.y > height) this.vy *= -1;
+        
+        // Interactive Mouse Attract/Repel
+        if (mouse.x) {
+            let dx = mouse.x - this.x;
+            let dy = mouse.y - this.y;
+            let dist = Math.sqrt(dx*dx + dy*dy);
+            if (dist < 120) {
+                this.x -= dx * 0.02; // Repel
+                this.y -= dy * 0.02;
+            }
+        }
+    }
+    draw() {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(6, 182, 212, 0.6)';
+        ctx.fill();
+    }
+}
+
+for (let j = 0; j < 100; j++) particles.push(new Particle());
+
+function animate() {
+    ctx.clearRect(0, 0, width, height);
+    
+    // Draw mouse follower dot (neon blue)
+    if(mouse.x) {
+        ctx.beginPath();
+        ctx.arc(mouse.x, mouse.y, 6, 0, Math.PI * 2);
+        ctx.fillStyle = '#06b6d4';
+        ctx.shadowBlur = 20;
+        ctx.shadowColor = '#06b6d4';
+        ctx.fill();
+        ctx.shadowBlur = 0; // reset
+    }
+
+    for (let j = 0; j < particles.length; j++) {
+        particles[j].update();
+        particles[j].draw();
+        
+        for (let k = j; k < particles.length; k++) {
+            const dx = particles[j].x - particles[k].x;
+            const dy = particles[j].y - particles[k].y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            
+            if (dist < 130) {
+                ctx.beginPath();
+                ctx.moveTo(particles[j].x, particles[j].y);
+                ctx.lineTo(particles[k].x, particles[k].y);
+                ctx.strokeStyle = `rgba(6, 182, 212, ${1 - dist/130})`;
+                ctx.lineWidth = 0.5;
+                ctx.stroke();
+            }
+        }
+        
+        // Connect to mouse
+        if (mouse.x) {
+            const mdx = particles[j].x - mouse.x;
+            const mdy = particles[j].y - mouse.y;
+            const mdist = Math.sqrt(mdx*mdx + mdy*mdy);
+            if (mdist < 150) {
+                ctx.beginPath();
+                ctx.moveTo(particles[j].x, particles[j].y);
+                ctx.lineTo(mouse.x, mouse.y);
+                ctx.strokeStyle = `rgba(255, 255, 255, ${0.8 - mdist/150})`;
+                ctx.lineWidth = 1;
+                ctx.stroke();
+            }
+        }
+    }
+    requestAnimationFrame(animate);
+}
+animate();
+
+// --- Execute Attack Simulation (Fancy Anim) ---
+document.getElementById('run-simulation-btn').addEventListener('click', function() {
+    const btn = this;
+    btn.classList.add('executing');
+    btn.querySelector('.btn-content').innerHTML = 'Initializing AI...';
+    
+    const cards = document.querySelectorAll('.timeline-card');
+    cards.forEach(c => c.classList.remove('active', 'animate-pop'));
+    
+    setTimeout(() => {
+        btn.querySelector('.btn-content').innerHTML = '▶ Execute Attack Simulation';
+        btn.classList.remove('executing');
+        
+        cards.forEach((card, idx) => {
+            setTimeout(() => {
+                card.classList.add('active', 'animate-pop');
+                simulateTerminalLog(`Module [${card.querySelector('h4').innerText}] executed successfully.`);
+            }, idx * 1200); // Slowed down significantly
+        });
+    }, 1500);
+});
+
+// --- Modal Logic with Cross ---
+const modalData = {
+    1: { title: "OSINT Gather", text: "Scrapes domain records, LinkedIn profiles, and company directories to build a target list and understand hierarchy." },
+    2: { title: "LLM Crafting", text: "A Generative AI model drafts highly contextual phishing emails tailored to specific departments using scraped data." },
+    3: { title: "Delivery", text: "Emails are sent through an authenticated SMTP relay, designed to bypass spam filters by behaving like legitimate external comms." },
+    4: { title: "Harvesting", text: "If a user clicks the link, they are taken to a perfectly cloned login page to test if they would submit credentials." },
+    5: { title: "Reporting", text: "All interactions are logged in real-time. A comprehensive risk profile is generated for the organization." }
+};
+
+function openModal(id) {
+    document.getElementById('modal-title').textContent = modalData[id].title;
+    document.getElementById('modal-text').textContent = modalData[id].text;
+    document.getElementById('info-modal').classList.add('show');
+}
+
+function closeModal() {
+    document.getElementById('info-modal').classList.remove('show');
+}
+
+// --- Ultrarealistic Terminal Logic ---
+const termMain = document.getElementById('terminal-main');
+const termMini = document.getElementById('terminal-mini');
+const termInput = document.getElementById('terminal-input');
+const termOutput = document.getElementById('terminal-output');
+const termBody = document.getElementById('terminal-body');
+
+function closeTerminal() {
+    termMain.classList.remove('open');
+    termMain.classList.add('closing');
+    setTimeout(() => {
+        termMain.style.display = 'none';
+        termMain.classList.remove('closing');
+        termMini.style.display = 'flex';
+        termMini.classList.add('pop-in');
+    }, 400); // Matches CSS transition duration
+}
+
+function openTerminal() {
+    termMini.style.display = 'none';
+    termMain.style.display = 'flex';
+    termMain.classList.add('open');
+    document.getElementById('terminal-section').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    termInput.focus();
+}
+
+function maximizeTerminal() {
+    termMain.classList.toggle('fullscreen');
+}
+
+function rebootTerminal() {
+    termOutput.innerHTML = '';
+    const initialBoot = `
+        <div style="text-align: center; margin-bottom: 25px; margin-top: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+            <img src="{{ url_for('static', filename='images/terminal_logo.png') }}" alt="PhishSim AI Logo" style="width: 140px; height: 140px; margin-bottom: 15px;">
+            <div style="color: #3b82f6; font-weight: bold; font-size: 1.3rem; letter-spacing: 2px;">PHISHSIM AI ENGINE</div>
+            <div style="color: #64748b; font-size: 0.8rem; letter-spacing: 4px; margin-top: 5px;">AUTONOMOUS SIMULATION PLATFORM</div>
+        </div>
+        <div class="sys-msg-boot">[*] Rebooting System...</div>
+    `;
+    termOutput.innerHTML = initialBoot;
+    setTimeout(() => { termOutput.innerHTML += `<div class="sys-msg-boot">[*] Injecting LLM Kernels... [OK]</div>`; termBody.scrollTop = termBody.scrollHeight; }, 600);
+    setTimeout(() => { termOutput.innerHTML += `<div class="sys-msg-boot">[*] Establishing encrypted C2 connection... [OK]</div>`; termBody.scrollTop = termBody.scrollHeight; }, 1200);
+    setTimeout(() => { termOutput.innerHTML += `<div class="sys-msg" style="margin-top: 15px;">Welcome to PhishSim AI. Type 'help' to view available commands.</div>`; termBody.scrollTop = termBody.scrollHeight; }, 1800);
+    currentPath = "/home/agent";
+    document.querySelector('.prompt').innerText = `user@phishsim.ai:${currentPath}$`;
+}
+
+function simulateTerminalLog(text) {
+    if(termMain.style.display !== 'none') {
+        const line = document.createElement('div');
+        line.className = 'sys-msg-auto typing-effect';
+        line.innerText = `[SYS] ${text}`;
+        termOutput.appendChild(line);
+        termBody.scrollTop = termBody.scrollHeight;
+    }
+}
+
+// --- Virtual File System ---
+const vfs = {
+    "home": {
+        "agent": {
+            "targets.txt": "ceo@corp.com\ncto@corp.com\ncfo@corp.com\nhr@corp.com\nadmin@corp.com",
+            "payloads": {
+                "exploit_v3.py": "import os\n# Auto-generated by Agentic AI\ndef deploy_payload():\n    print('Bypassing 2FA...')\n    return True",
+                "invoice.pdf.exe": "<binary data payload snippet>\n01001011 01100101 01111001"
+            },
+            "system_config.json": '{\n  "mode": "autonomous",\n  "evasion": "level_9",\n  "targets": "all"\n}',
+            "readme.md": "Welcome to PhishSim Agentic OS.\nUse 'ls' to list files.\nUse 'cat <file>' to view contents.\nUse 'run_agent' to start simulation."
+        }
+    },
+    "var": {
+        "log": {
+            "auth.log": "May  1 10:14:02 phishsim sshd[1234]: Accepted publickey for agent from 192.168.1.5",
+            "syslog": "System initialized successfully."
+        }
+    },
+    "etc": {
+        "passwd": "root:x:0:0:root:/root:/bin/bash\nagent:x:1000:1000:Agent,,,:/home/agent:/bin/bash",
+        "shadow": "cat: shadow: Permission denied"
+    }
+};
+
+let currentPath = "/home/agent";
+document.querySelector('.prompt').innerText = `user@phishsim.ai:${currentPath}$`;
+
+function getDir(path) {
+    if (path === '/') return vfs;
+    let parts = path.split('/').filter(p => p);
+    let curr = vfs;
+    for (let p of parts) {
+        if (curr[p] !== undefined) curr = curr[p];
+        else return null;
+    }
+    return curr;
+}
+
+const availableCommands = ['clear', 'ls', 'cd', 'cat', 'pwd', 'whoami', 'scan', 'run_agent', 'help'];
+
+termInput.addEventListener('keydown', function(e) {
+    if (e.key === 'Tab') {
+        e.preventDefault();
+        const val = this.value;
+        const parts = val.split(' ');
+        if (parts.length === 1) {
+            const matches = availableCommands.filter(c => c.startsWith(val));
+            if (matches.length === 1) {
+                this.value = matches[0] + ' ';
+            }
+        } else if (parts.length === 2 && (parts[0] === 'cat' || parts[0] === 'cd')) {
+            const dir = getDir(currentPath);
+            if (dir && typeof dir === 'object') {
+                const matches = Object.keys(dir).filter(k => k.startsWith(parts[1]));
+                if (matches.length === 1) {
+                    this.value = parts[0] + ' ' + matches[0];
+                }
+            }
+        }
+    }
+});
+
+termInput.addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        const val = this.value.trim();
+        this.value = '';
+        
+        const line = document.createElement('div');
+        line.innerHTML = `<span class="prompt">user@phishsim.ai:${currentPath}$</span> <span class="term-text">${val}</span>`;
+        termOutput.appendChild(line);
+        
+        if (val === '') {
+            termBody.scrollTop = termBody.scrollHeight;
+            return;
+        }
+
+        const args = val.split(' ').filter(a => a);
+        const cmd = args[0].toLowerCase();
+        let outputHTML = '';
+        
+        if (cmd === 'help') {
+            outputHTML = `<div class="sys-msg-info">[AVAILABLE KERNEL COMMANDS]<br> - clear : Flush buffer<br> - ls : List directory contents<br> - cd &lt;dir&gt; : Change directory<br> - cat &lt;file&gt; : View file contents<br> - pwd : Print working directory<br> - whoami : Print current user<br> - scan &lt;target&gt; : OSINT scan<br> - run_agent : Deploy AI agents</div>`;
+        } else if (cmd === 'clear') {
+            termOutput.innerHTML = '';
+        } else if (cmd === 'whoami') {
+            outputHTML = `<div class="sys-msg">phishsim_ai</div>`;
+        } else if (cmd === 'pwd') {
+            outputHTML = `<div class="sys-msg">${currentPath || '/'}</div>`;
+        } else if (cmd === 'ls') {
+            const dir = getDir(currentPath);
+            if (dir && typeof dir === 'object') {
+                let items = Object.keys(dir).map(k => typeof dir[k] === 'object' ? `<span style="color:#3b82f6;font-weight:bold">${k}/</span>` : `<span style="color:#cbd5e1">${k}</span>`);
+                outputHTML = `<div class="sys-msg" style="display:flex;gap:15px;flex-wrap:wrap;">${items.join('')}</div>`;
+            }
+        } else if (cmd === 'cd') {
+            let target = args[1] || '/home/agent';
+            if (target === '..') {
+                if (currentPath !== '/home/agent' && currentPath !== '') {
+                    currentPath = currentPath.substring(0, currentPath.lastIndexOf('/')) || '/';
+                }
+            } else if (target === '/') {
+                currentPath = '/';
+            } else {
+                let newPath = target.startsWith('/') ? target : (currentPath === '/' ? '/' + target : currentPath + '/' + target);
+                const dir = getDir(newPath);
+                if (dir && typeof dir === 'object') {
+                    currentPath = newPath;
+                } else {
+                    outputHTML = `<div class="sys-msg-error">bash: cd: ${target}: No such file or directory</div>`;
+                }
+            }
+            document.querySelector('.terminal-input-row .prompt').innerText = `user@phishsim.ai:${currentPath}$`;
+        } else if (cmd === 'cat') {
+            if (!args[1]) {
+                outputHTML = `<div class="sys-msg-error">cat: missing operand</div>`;
+            } else {
+                const dir = getDir(currentPath);
+                if (dir && dir[args[1]] && typeof dir[args[1]] === 'string') {
+                    outputHTML = `<div class="sys-msg" style="white-space:pre-wrap; color:#94a3b8;">${dir[args[1]]}</div>`;
+                } else if (dir && dir[args[1]] && typeof dir[args[1]] === 'object') {
+                    outputHTML = `<div class="sys-msg-error">cat: ${args[1]}: Is a directory</div>`;
+                } else {
+                    outputHTML = `<div class="sys-msg-error">cat: ${args[1]}: No such file or directory</div>`;
+                }
+            }
+        } else if (cmd === 'run_agent') {
+            document.getElementById('run-simulation-btn').click();
+            outputHTML = `<div class="sys-msg-success">[+] Bootstrapping Agentic Engine...</div>`;
+            setTimeout(() => { termOutput.innerHTML += `<div class="sys-msg-auto typing-effect">Initializing modules...</div>`; termBody.scrollTop = termBody.scrollHeight; }, 500);
+            setTimeout(() => { termOutput.innerHTML += `<div class="sys-msg-auto typing-effect">Executing simulation sequence...</div>`; termBody.scrollTop = termBody.scrollHeight; }, 1000);
+        } else if (cmd === 'scan') {
+            outputHTML = `<div class="sys-msg-warn">[!] Initiating deep footprinting...</div>`;
+            setTimeout(() => { termOutput.innerHTML += `<div class="sys-msg-success">[+] Found 142 employee emails.</div>`; termBody.scrollTop = termBody.scrollHeight; }, 1000);
+            setTimeout(() => { termOutput.innerHTML += `<div class="sys-msg-success">[+] Discovered 3 exposed subdomains.</div>`; termBody.scrollTop = termBody.scrollHeight; }, 2000);
+        } else {
+            outputHTML = `<div class="sys-msg-error">bash: ${cmd}: command not found</div>`;
+        }
+        
+        if (outputHTML) {
+            termOutput.innerHTML += outputHTML;
+        }
+        
+        termBody.scrollTop = termBody.scrollHeight;
+    }
+});
+document.getElementById('terminal-main').addEventListener('click', () => { termInput.focus(); });
+
+// Removed random background ping text for cleaner UI
+
+// --- Vertical Accordion (Brside style) ---
+function toggleVBar(el) {
+    document.querySelectorAll('.v-bar').forEach(b => {
+        if(b !== el) b.classList.remove('active');
+    });
+    el.classList.toggle('active');
+}
+</script>
 {% endblock %}

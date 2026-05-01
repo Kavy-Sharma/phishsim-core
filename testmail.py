@@ -1,24 +1,24 @@
-import smtplib
+from send_email import send_phishing_email
 import os
-from dotenv import load_dotenv
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
 
-load_dotenv()
 
-user = os.getenv("MAILTRAP_USER")
-password = os.getenv("MAILTRAP_PASS")
+print(
+    "Testing Mailtrap SMTP "
+    f"{os.getenv('MAILTRAP_HOST', 'sandbox.smtp.mailtrap.io')}:"
+    f"{os.getenv('MAILTRAP_PORT', '2525')} "
+    f"encryption={os.getenv('MAILTRAP_ENCRYPTION', 'none')}"
+)
 
-msg = MIMEMultipart()
-msg["Subject"] = "Test Email from PhishSim"
-msg["From"] = "test@phishsim.com"
-msg["To"] = "test@example.com"
 
-body = "This is your first test email 🚀"
-msg.attach(MIMEText(body, "plain"))
+result = send_phishing_email(
+    to_email="test@example.com",
+    subject="Test Email from PhishSim",
+    sender_name="PhishSim Test",
+    body_html="<p>This is a Mailtrap SMTP test from PhishSim.</p><p><a href='TRACKING_LINK'>Test tracking link</a></p>",
+    tracking_id="mailtrap-diagnostic"
+)
 
-with smtplib.SMTP("sandbox.smtp.mailtrap.io", 2525) as server:
-    server.login(user, password)
-    server.send_message(msg)
-
-print("Email sent successfully!")
+if result["success"]:
+    print("Email accepted by Mailtrap SMTP.")
+else:
+    print(f"Email failed: {result['error']}")

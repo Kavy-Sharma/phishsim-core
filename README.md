@@ -1,85 +1,95 @@
-# 🎣 PhishSim AI
+# 🎣 PhishSim.ai — Agentic OS Simulation platform
 
-**An Advanced, AI-Powered Phishing Simulation & Security Awareness Platform**
-
-PhishSim AI is an enterprise-grade phishing simulation platform designed for security awareness training. By leveraging Open-Source Intelligence (OSINT) and cutting-edge Large Language Models (LLMs), PhishSim AI generates highly realistic, context-aware phishing simulations to train employees to recognize and report sophisticated cyber threats.
-
-> ⚠️ **DISCLAIMER:** This project is strictly for **educational and authorized security awareness training purposes only**. It must only be used on networks and targets where explicit written consent has been provided.
-
----
-
-## 🚀 Features & Architecture
-
-The system operates across four highly integrated phases:
-
-### Phase 1: OSINT Intelligence Gathering
-The engine dynamically scrapes public company data, extracting descriptions, writing tone, social media presence, and recent context to ensure simulations are specifically tailored to the target organization's internal communication style.
-
-### Phase 2: AI Email Generation Engine
-Using advanced LLMs via OpenRouter, the engine crafts hyper-realistic phishing emails. It utilizes psychological triggers (Authority, Urgency, Compliance) and adapts the tone based on the target employee's department and seniority level, making the emails practically indistinguishable from real internal communications.
-
-### Phase 3: Flask Web Application & Dashboard
-A sleek, premium dark-themed web application that acts as the control center:
-- **Campaign Management:** Create, manage, and launch phishing campaigns.
-- **Target Management:** Upload employee targets via CSV files.
-- **Dynamic Dashboard:** Real-time visibility into all active and past campaigns.
-- **Background Dispatch:** Non-blocking email dispatch using background threading and Mailtrap integration.
-
-### Phase 4: Advanced Tracking & Analytics
-A comprehensive tracking system that monitors employee interactions with the simulation:
-- **Open Tracking:** Invisible 1x1 tracking pixels log when an email is opened.
-- **Click Tracking:** Links redirect to a highly convincing Microsoft 365 fake login page before revealing the simulation.
-- **Reporting Mechanism:** Injected "Report Suspicious Email" buttons allow employees to successfully report the phish.
-- **Educational Reveal:** A beautifully designed landing page provides immediate, visual feedback and tips to employees who fall for the simulation.
-- **Real-Time Database Logging:** Captures IP addresses, User-Agents, and timestamps for robust reporting.
+<p align="center">
+  <img src="https://img.shields.io/badge/Agentic-OS-00E5FF?style=for-the-badge&logo=ai&logoColor=black" alt="Agentic OS" />
+  <img src="https://img.shields.io/badge/Python-3.9+-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python" />
+  <img src="https://img.shields.io/badge/Flask-Premium_UI-000000?style=for-the-badge&logo=flask&logoColor=white" alt="Flask" />
+  <img src="https://img.shields.io/badge/Claude-AI_Engine-D97757?style=for-the-badge&logo=anthropic&logoColor=white" alt="Claude AI" />
+</p>
 
 ---
 
-## 🛠️ Technology Stack
+## ⚡ The Mission
+**PhishSim.ai** is not just another phishing tool. It is a **Premium Agentic OS** designed to revolutionize security awareness. By merging **OSINT data mining** with **Generative AI**, PhishSim.ai creates hyper-realistic simulations that don't just "test" employees—they **educate** them through the lens of a real-world adversary.
 
-- **Backend:** Python, Flask
-- **Database:** MySQL
-- **Frontend:** HTML5, CSS3 (Custom Glassmorphism UI, No external frameworks)
-- **AI/LLM:** OpenRouter API
-- **Email Delivery:** SMTP (Mailtrap for sandbox testing)
+> [!CAUTION]
+> **LEGAL DISCLAIMER:** This software is for **Authorized Security Testing and Educational Purposes ONLY**. Unauthorized use of this tool against any target without explicit, written consent is illegal and unethical.
 
 ---
 
-## ⚙️ Setup & Installation
+## 🖥️ The Agentic OS Experience
+Experience a high-fidelity, cyberpunk-inspired control center. Our custom-built **Terminal UI** and **Glassmorphic Dashboard** provide a seamless "Operating System" feel right in your browser.
 
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/yourusername/Phishsim.ai.git
-   cd Phishsim.ai
-   ```
-
-2. **Install dependencies:**
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-3. **Configure Environment Variables:**
-   Create a `.env` file in the root directory and add the following:
-   ```env
-   OPENROUTER_API_KEY=your_api_key_here
-   DB_PASSWORD=your_mysql_password
-   MAILTRAP_USER=your_mailtrap_user
-   MAILTRAP_PASS=your_mailtrap_password
-   ```
-
-4. **Initialize the Database:**
-   Ensure your local MySQL server is running and you have created a database named `phishsim_db`. The application will automatically construct the required tables (`campaigns`, `employees`, `emails_sent`, `events`) upon launch.
-
-5. **Run the Application:**
-   ```bash
-   python app.py
-   ```
-   Navigate to `http://127.0.0.1:5000` in your browser.
+- **Neon Aesthetics**: Deep-dark backgrounds with cyan and blue neon accents.
+- **Interactive Terminal**: A fully functional command-line interface for system interactions.
+- **Bento Grid Layout**: Modern, high-density visualization of campaign metrics and system health.
 
 ---
 
-## 🛡️ Best Practices & Usage
+## 🚀 Core Capabilities
 
-- **Always obtain consent** before launching a campaign against any domain or employee list.
-- Use **Mailtrap** during development to prevent accidentally sending emails to real inboxes.
-- Monitor your dashboard closely to identify departments that may require additional security training based on click rates.
+| Feature | Description | Engine |
+| :--- | :--- | :--- |
+| **OSINT Scraper** | Automatically mines company descriptions and writing tones from public data. | `osint_miner` |
+| **Generative AI** | Crafts department-specific phishing emails using psychological triggers. | `Claude-3.5-Sonnet` |
+| **Live Telemetry** | Real-time tracking of opens (pixel) and clicks with IP/User-Agent logging. | `Flask-Core` |
+| **Multi-Mode Delivery** | Switch between **Trial (Mailtrap/smtp4dev)** and **Live (SMTP)** with one click. | `SMTP-Relay` |
+| **AI-PDF Reporting** | Generates detailed risk reports with AI-driven recommendations. | `Report-Gen` |
+
+---
+
+## 🛠️ Tech Stack
+- **Backend:** `Python 3.9+`, `Flask`
+- **Database:** `MySQL` (Structured for speed and relational integrity)
+- **Frontend:** `Vanilla JS`, `Custom CSS` (Zero frameworks, pure glassmorphism)
+- **AI:** `OpenRouter` / `Anthropic Claude`
+- **Email:** `SMTPLib` (Configurable for Local, Mailtrap, or Production SMTP)
+
+---
+
+## ⚙️ Quick Start
+
+### 1. Deployment
+```bash
+# Clone the OS
+git clone https://github.com/yourusername/Phishsim.ai.git
+cd Phishsim.ai
+
+# Install System Modules
+pip install -r requirements.txt
+```
+
+### 2. Environment Configuration
+Create a `.env` file in the root directory:
+```env
+# AI CONFIG
+OPENROUTER_API_KEY=sk-or-v1-...
+
+# DATABASE
+DB_PASSWORD=your_secure_password
+
+# EMAIL MODES
+EMAIL_PROVIDER=local  # Options: local, mailtrap, smtp
+LOCAL_SMTP_PORT=25    # Default for smtp4dev
+```
+
+### 3. Launch System
+```bash
+python app.py
+```
+> Access the interface at: `http://127.0.0.1:5000`
+
+---
+
+## 📊 Roadmap
+- [x] **Phase 1**: Agentic OS UI Overhaul (Terminal & Bento Grid)
+- [x] **Phase 2**: Multi-Mode SMTP Integration (Trial vs Live)
+- [ ] **Phase 3**: In-App Email Previewer (Capture emails without SMTP)
+- [ ] **Phase 4**: Advanced OSINT (Social Media Scrutiny)
+
+---
+
+<p align="center">
+  Built with 💙 by <b>Kavy Sharma</b><br>
+  <i>"Securing the human element, one byte at a time."</i>
+</p>

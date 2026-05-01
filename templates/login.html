@@ -1,0 +1,377 @@
+{% extends 'base.html' %}
+
+{% block title %}Login — PhishSim AI{% endblock %}
+
+{% block content %}
+<style>
+/* ---- Auth Page Reset ---- */
+body { background: #020617 !important; }
+
+.auth-page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+    padding: 2rem;
+    background: #020617;
+}
+
+/* Animated background canvas */
+#auth-canvas {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: 0;
+    pointer-events: none;
+}
+
+/* Glowing radial gradient blobs */
+.auth-blob-1 {
+    position: fixed;
+    width: 600px; height: 600px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(6, 182, 212, 0.12) 0%, transparent 70%);
+    top: -200px; left: -200px;
+    animation: blobDrift 8s ease-in-out infinite alternate;
+    pointer-events: none;
+    z-index: 0;
+}
+.auth-blob-2 {
+    position: fixed;
+    width: 500px; height: 500px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(59, 130, 246, 0.1) 0%, transparent 70%);
+    bottom: -150px; right: -150px;
+    animation: blobDrift 10s ease-in-out infinite alternate-reverse;
+    pointer-events: none;
+    z-index: 0;
+}
+@keyframes blobDrift {
+    0% { transform: translate(0, 0) scale(1); }
+    100% { transform: translate(40px, 30px) scale(1.1); }
+}
+
+/* ---- Auth Card ---- */
+.auth-card {
+    position: relative;
+    z-index: 10;
+    width: 100%;
+    max-width: 480px;
+    background: rgba(8, 15, 35, 0.85);
+    border: 1px solid rgba(6, 182, 212, 0.2);
+    border-radius: 24px;
+    padding: 3rem;
+    backdrop-filter: blur(20px);
+    box-shadow: 0 0 60px rgba(6, 182, 212, 0.08), 0 40px 80px rgba(0,0,0,0.6);
+    animation: cardEntrance 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    opacity: 0;
+    transform: translateY(30px);
+}
+@keyframes cardEntrance {
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Terminal-style top bar */
+.auth-terminal-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.auth-dot { width: 12px; height: 12px; border-radius: 50%; }
+.auth-dot.red { background: #ff5f57; }
+.auth-dot.yellow { background: #febc2e; }
+.auth-dot.green { background: #28c840; }
+.auth-terminal-label {
+    margin-left: auto;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.75rem;
+    color: #475569;
+    letter-spacing: 1px;
+}
+
+/* Eyebrow badge */
+.auth-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(6, 182, 212, 0.1);
+    border: 1px solid rgba(6, 182, 212, 0.25);
+    border-radius: 100px;
+    padding: 5px 14px;
+    font-size: 0.78rem;
+    color: #06b6d4;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 1.2rem;
+    font-family: 'Space Mono', monospace;
+}
+.auth-eyebrow::before {
+    content: '';
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: #06b6d4;
+    box-shadow: 0 0 8px #06b6d4;
+    animation: pulse 2s infinite;
+}
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+}
+
+.auth-title {
+    font-family: 'Outfit', sans-serif;
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 0.5rem;
+    line-height: 1.2;
+}
+.auth-subtitle {
+    color: #64748b;
+    font-size: 0.95rem;
+    margin-bottom: 2rem;
+    line-height: 1.5;
+}
+
+/* Flash messages */
+.form-alert {
+    background: rgba(239, 68, 68, 0.12);
+    border: 1px solid rgba(239, 68, 68, 0.4);
+    color: #fca5a5;
+    padding: 12px 16px;
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+    font-size: 0.9rem;
+}
+
+/* ---- Form Inputs ---- */
+.auth-form-group {
+    margin-bottom: 1.4rem;
+    position: relative;
+}
+.auth-form-group label {
+    display: block;
+    font-size: 0.85rem;
+    color: #94a3b8;
+    margin-bottom: 8px;
+    letter-spacing: 0.5px;
+    font-family: 'Space Mono', monospace;
+}
+.auth-input-wrap {
+    position: relative;
+}
+.auth-input-wrap i {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #475569;
+    font-size: 0.95rem;
+    transition: color 0.3s;
+    pointer-events: none;
+}
+.auth-form-group input {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 14px 16px 14px 44px;
+    color: #fff;
+    font-size: 0.95rem;
+    font-family: 'Outfit', sans-serif;
+    outline: none;
+    transition: all 0.3s ease;
+    box-sizing: border-box;
+}
+.auth-form-group input::placeholder { color: #334155; }
+.auth-form-group input:focus {
+    border-color: rgba(6, 182, 212, 0.6);
+    background: rgba(6, 182, 212, 0.04);
+    box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.1), 0 0 20px rgba(6, 182, 212, 0.08);
+}
+.auth-form-group input:focus + i,
+.auth-input-wrap:focus-within i {
+    color: #06b6d4;
+}
+
+/* ---- Submit Button ---- */
+.auth-submit-btn {
+    width: 100%;
+    padding: 15px;
+    background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%);
+    border: none;
+    border-radius: 12px;
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 700;
+    font-family: 'Outfit', sans-serif;
+    letter-spacing: 1px;
+    cursor: pointer;
+    margin-top: 0.5rem;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+}
+.auth-submit-btn::before {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%;
+    width: 100%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+    transition: left 0.5s ease;
+}
+.auth-submit-btn:hover::before { left: 100%; }
+.auth-submit-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px rgba(6, 182, 212, 0.4);
+}
+.auth-submit-btn:active { transform: translateY(0); }
+
+/* Divider */
+.auth-divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 1.5rem 0;
+    color: #334155;
+    font-size: 0.8rem;
+}
+.auth-divider::before, .auth-divider::after {
+    content: ''; flex: 1; height: 1px; background: rgba(255,255,255,0.05);
+}
+
+/* Footer hint */
+.auth-footer {
+    text-align: center;
+    margin-top: 1.5rem;
+    color: #475569;
+    font-size: 0.9rem;
+}
+.auth-footer a {
+    color: #06b6d4;
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.2s;
+}
+.auth-footer a:hover { color: #67e8f9; }
+
+/* Scan line animation on card */
+.auth-card::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; width: 100%;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, #06b6d4, transparent);
+    animation: scanLine 3s ease-in-out infinite;
+    border-radius: 24px 24px 0 0;
+}
+@keyframes scanLine {
+    0% { top: 0; opacity: 1; }
+    80% { opacity: 0.5; }
+    100% { top: 100%; opacity: 0; }
+}
+</style>
+
+<div class="auth-blob-1"></div>
+<div class="auth-blob-2"></div>
+<canvas id="auth-canvas"></canvas>
+
+<div class="auth-page">
+    <div class="auth-card">
+        <!-- Terminal top bar -->
+        <div class="auth-terminal-bar">
+            <span class="auth-dot red"></span>
+            <span class="auth-dot yellow"></span>
+            <span class="auth-dot green"></span>
+            <span class="auth-terminal-label">SECURE_ACCESS :: phishsim.ai</span>
+        </div>
+
+        <span class="auth-eyebrow">Secure Portal</span>
+        <h1 class="auth-title">Welcome back.</h1>
+        <p class="auth-subtitle">Sign in to your PhishSim AI workspace to manage campaigns and view reports.</p>
+
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <div class="form-alert"><i class="fas fa-exclamation-triangle" style="margin-right:8px;"></i>{{ messages[0] }}</div>
+            {% endif %}
+        {% endwith %}
+
+        <form method="POST">
+            <div class="auth-form-group">
+                <label for="email">Email Address</label>
+                <div class="auth-input-wrap">
+                    <input type="email" id="email" name="email" placeholder="you@company.com" required>
+                    <i class="fas fa-envelope"></i>
+                </div>
+            </div>
+            <div class="auth-form-group">
+                <label for="password">Password</label>
+                <div class="auth-input-wrap">
+                    <input type="password" id="password" name="password" placeholder="••••••••••" required>
+                    <i class="fas fa-lock"></i>
+                </div>
+            </div>
+            <button type="submit" class="auth-submit-btn">
+                <i class="fas fa-terminal" style="margin-right: 8px;"></i> Initialize Session
+            </button>
+        </form>
+
+        <p class="auth-footer">No account? <a href="{{ url_for('signup') }}">Create one here →</a></p>
+    </div>
+</div>
+
+<script>
+// Particle canvas for auth page
+const canvas = document.getElementById('auth-canvas');
+const ctx = canvas.getContext('2d');
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+window.addEventListener('resize', () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; });
+
+const particles = Array.from({length: 60}, () => ({
+    x: Math.random() * canvas.width,
+    y: Math.random() * canvas.height,
+    r: Math.random() * 1.5 + 0.5,
+    vx: (Math.random() - 0.5) * 0.3,
+    vy: (Math.random() - 0.5) * 0.3,
+    alpha: Math.random() * 0.4 + 0.1
+}));
+
+function drawAuth() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    particles.forEach(p => {
+        p.x += p.vx; p.y += p.vy;
+        if (p.x < 0) p.x = canvas.width;
+        if (p.x > canvas.width) p.x = 0;
+        if (p.y < 0) p.y = canvas.height;
+        if (p.y > canvas.height) p.y = 0;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(6, 182, 212, ${p.alpha})`;
+        ctx.fill();
+    });
+    // Draw connections
+    particles.forEach((a, i) => {
+        particles.slice(i + 1).forEach(b => {
+            const d = Math.hypot(a.x - b.x, a.y - b.y);
+            if (d < 120) {
+                ctx.beginPath();
+                ctx.moveTo(a.x, a.y);
+                ctx.lineTo(b.x, b.y);
+                ctx.strokeStyle = `rgba(6, 182, 212, ${0.06 * (1 - d / 120)})`;
+                ctx.lineWidth = 0.5;
+                ctx.stroke();
+            }
+        });
+    });
+    requestAnimationFrame(drawAuth);
+}
+drawAuth();
+</script>
+{% endblock %}

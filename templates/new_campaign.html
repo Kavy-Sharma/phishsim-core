@@ -1,51 +1,562 @@
 {% extends 'base.html' %}
-
-{% block title %}New Campaign - PhishSim AI{% endblock %}
-
+{% block title %}New Campaign — PhishSim AI{% endblock %}
 {% block content %}
-<div style="max-width: 600px; margin: 0 auto;">
-    <div class="dashboard-header" style="margin-bottom: 1rem;">
-        <a href="/dashboard" style="color: var(--text-muted); font-size: 0.875rem;">&larr; Back to Dashboard</a>
-    </div>
+<style>
+    body {
+        background: #020617 !important;
+    }
 
-    <div class="card">
-        <h2 style="margin-bottom: 0.5rem;">Create New Campaign</h2>
-        <p style="margin-bottom: 2rem;">Configure the parameters for your next AI-driven phishing test.</p>
-        
+    .nc-page {
+        max-width: 680px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+
+    /* Header */
+    .nc-back {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        color: #64748b;
+        text-decoration: none;
+        font-size: 0.88rem;
+        margin-bottom: 2rem;
+        transition: color 0.2s;
+    }
+
+    .nc-back:hover {
+        color: #06b6d4;
+    }
+
+    /* Card */
+    .nc-card {
+        background: rgba(8, 15, 35, 0.85);
+        border: 1px solid rgba(6, 182, 212, 0.15);
+        border-radius: 24px;
+        padding: 3rem;
+        backdrop-filter: blur(20px);
+        box-shadow: 0 0 60px rgba(6, 182, 212, 0.06), 0 40px 80px rgba(0, 0, 0, 0.5);
+        position: relative;
+        overflow: hidden;
+        animation: cardEntrance 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        opacity: 0;
+        transform: translateY(30px);
+    }
+
+    .nc-card::before {
+        content: '';
+        position: absolute;
+        top: -80px;
+        right: -80px;
+        width: 300px;
+        height: 300px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(59, 130, 246, 0.12) 0%, transparent 70%);
+        pointer-events: none;
+    }
+
+    /* Animated scan line */
+    .nc-card::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 2px;
+        background: linear-gradient(90deg, transparent, #3b82f6, transparent);
+        animation: scanLine 3s ease-in-out infinite;
+        border-radius: 24px 24px 0 0;
+    }
+
+    @keyframes scanLine {
+        0% {
+            top: 0;
+            opacity: 1;
+        }
+
+        80% {
+            opacity: 0.5;
+        }
+
+        100% {
+            top: 100%;
+            opacity: 0;
+        }
+    }
+
+    @keyframes cardEntrance {
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .nc-eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(59, 130, 246, 0.1);
+        border: 1px solid rgba(59, 130, 246, 0.25);
+        border-radius: 100px;
+        padding: 5px 14px;
+        font-size: 0.78rem;
+        color: #3b82f6;
+        font-family: 'Space Mono', monospace;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 1.2rem;
+    }
+
+    .nc-eyebrow::before {
+        content: '';
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #3b82f6;
+        box-shadow: 0 0 8px #3b82f6;
+        animation: blink 2s infinite;
+    }
+
+    @keyframes blink {
+
+        0%,
+        100% {
+            opacity: 1;
+        }
+
+        50% {
+            opacity: 0.2;
+        }
+    }
+
+    .nc-title {
+        font-family: 'Outfit', sans-serif;
+        font-size: 2.2rem;
+        font-weight: 800;
+        color: #fff;
+        margin: 0 0 0.4rem;
+    }
+
+    .nc-subtitle {
+        color: #64748b;
+        margin: 0 0 2.5rem;
+        font-size: 0.95rem;
+    }
+
+    /* Form Groups */
+    .nc-group {
+        margin-bottom: 1.6rem;
+    }
+
+    .nc-group label {
+        display: block;
+        font-family: 'Space Mono', monospace;
+        font-size: 0.78rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: #475569;
+        margin-bottom: 8px;
+    }
+
+    .nc-input-wrap {
+        position: relative;
+    }
+
+    .nc-input-wrap i {
+        position: absolute;
+        left: 16px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #334155;
+        font-size: 0.9rem;
+        pointer-events: none;
+        transition: color 0.3s;
+    }
+
+    .nc-input {
+        width: 100%;
+        padding: 14px 16px 14px 44px;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 12px;
+        color: #fff;
+        font-size: 0.95rem;
+        font-family: 'Outfit', sans-serif;
+        outline: none;
+        transition: all 0.3s ease;
+        box-sizing: border-box;
+        appearance: none;
+    }
+
+    .nc-input::placeholder {
+        color: #1e293b;
+    }
+
+    .nc-input:focus {
+        border-color: rgba(59, 130, 246, 0.5);
+        background: rgba(59, 130, 246, 0.04);
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    .nc-input-wrap:focus-within i {
+        color: #3b82f6;
+    }
+
+    /* Select arrow */
+    .nc-select-wrap {
+        position: relative;
+    }
+
+    .nc-select-wrap::after {
+        content: "▼";
+        position: absolute;
+        right: 16px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #334155;
+        pointer-events: none;
+        font-size: 0.75rem;
+    }
+
+    .nc-select-wrap select {
+        cursor: pointer;
+    }
+
+    /* Scenario cards */
+    .scenario-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.8rem;
+    }
+
+    .scenario-option {
+        position: relative;
+    }
+
+    .scenario-option input[type="radio"] {
+        position: absolute;
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    .scenario-label {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 1rem;
+        border: 1px solid rgba(255, 255, 255, 0.07);
+        border-radius: 12px;
+        cursor: pointer;
+        background: rgba(255, 255, 255, 0.02);
+        transition: all 0.3s ease;
+    }
+
+    .scenario-label:hover {
+        border-color: rgba(59, 130, 246, 0.4);
+        background: rgba(59, 130, 246, 0.05);
+    }
+
+    .scenario-option input:checked+.scenario-label {
+        border-color: rgba(59, 130, 246, 0.6);
+        background: rgba(59, 130, 246, 0.08);
+        box-shadow: 0 0 20px rgba(59, 130, 246, 0.1);
+    }
+
+    .scenario-icon {
+        font-size: 1.5rem;
+        flex-shrink: 0;
+    }
+
+    .scenario-info strong {
+        display: block;
+        color: #fff;
+        font-size: 0.9rem;
+        margin-bottom: 2px;
+    }
+
+    .scenario-info small {
+        color: #64748b;
+        font-size: 0.78rem;
+    }
+
+    /* Delivery mode */
+    .delivery-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.8rem;
+    }
+
+    .delivery-option {
+        position: relative;
+    }
+
+    .delivery-option input[type="radio"] {
+        position: absolute;
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    .delivery-label {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 1rem;
+        border: 1px solid rgba(255, 255, 255, 0.07);
+        border-radius: 12px;
+        cursor: pointer;
+        background: rgba(255, 255, 255, 0.02);
+        transition: all 0.3s ease;
+    }
+
+    .delivery-label:hover {
+        border-color: rgba(6, 182, 212, 0.4);
+    }
+
+    .delivery-option input:checked+.delivery-label {
+        border-color: rgba(6, 182, 212, 0.6);
+        background: rgba(6, 182, 212, 0.05);
+    }
+
+    .delivery-label strong {
+        display: block;
+        color: #fff;
+        font-size: 0.9rem;
+        margin-bottom: 2px;
+    }
+
+    .delivery-label small {
+        color: #64748b;
+        font-size: 0.78rem;
+    }
+
+    /* Consent */
+    .consent-box {
+        background: rgba(234, 179, 8, 0.04);
+        border: 1px solid rgba(234, 179, 8, 0.2);
+        border-radius: 14px;
+        padding: 1.5rem;
+        margin: 1.8rem 0;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .consent-box::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        height: 100%;
+        width: 3px;
+        background: #f59e0b;
+    }
+
+    .consent-box label {
+        display: flex;
+        align-items: flex-start;
+        gap: 14px;
+        cursor: pointer;
+    }
+
+    .consent-box input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        margin-top: 2px;
+        accent-color: #f59e0b;
+        flex-shrink: 0;
+        cursor: pointer;
+    }
+
+    .consent-text strong {
+        display: block;
+        color: #fff;
+        font-size: 0.95rem;
+        margin-bottom: 5px;
+    }
+
+    .consent-text span {
+        color: #94a3b8;
+        font-size: 0.88rem;
+        line-height: 1.5;
+    }
+
+    /* Submit button */
+    .nc-submit {
+        width: 100%;
+        padding: 16px;
+        background: linear-gradient(135deg, #3b82f6, #06b6d4);
+        border: none;
+        border-radius: 14px;
+        color: #fff;
+        font-family: 'Outfit', sans-serif;
+        font-weight: 800;
+        font-size: 1.05rem;
+        letter-spacing: 0.5px;
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+        transition: all 0.3s ease;
+        text-transform: uppercase;
+    }
+
+    .nc-submit::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        transition: left 0.5s;
+    }
+
+    .nc-submit:hover::before {
+        left: 100%;
+    }
+
+    .nc-submit:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 35px rgba(59, 130, 246, 0.4);
+    }
+
+    .nc-submit:active {
+        transform: translateY(0);
+    }
+
+    .section-divider {
+        height: 1px;
+        background: rgba(255, 255, 255, 0.05);
+        margin: 2rem 0;
+    }
+</style>
+
+<div class="nc-page">
+    <a href="/dashboard" class="nc-back">
+        <i class="fas fa-arrow-left"></i> Back to Dashboard
+    </a>
+
+    <div class="nc-card">
+        <span class="nc-eyebrow">New Simulation</span>
+        <h1 class="nc-title">Configure Campaign</h1>
+        <p class="nc-subtitle">Set up the parameters for your next AI-driven phishing simulation.</p>
+
         <form action="/new-campaign" method="POST">
-            <div class="form-group">
+
+            <!-- Campaign Name -->
+            <div class="nc-group">
                 <label for="campaign_name">Campaign Name</label>
-                <input type="text" id="campaign_name" name="campaign_name" placeholder="e.g. Q3 Security Audit" required>
+                <div class="nc-input-wrap">
+                    <input class="nc-input" type="text" id="campaign_name" name="campaign_name"
+                        placeholder="e.g. Q3 Security Audit" required>
+                    <i class="fas fa-tag"></i>
+                </div>
             </div>
 
-            <div class="form-group">
-                <label for="company_domain">Company Domain to Scrape (OSINT)</label>
-                <input type="text" id="company_domain" name="company_domain" placeholder="example.com" required>
+            <!-- Domain -->
+            <div class="nc-group">
+                <label for="company_domain">Company Domain</label>
+                <div class="nc-input-wrap">
+                    <input class="nc-input" type="text" id="company_domain" name="company_domain"
+                        placeholder="example.com" required>
+                    <i class="fas fa-globe"></i>
+                </div>
             </div>
 
-            <div class="form-group">
-                <label for="scenario">AI Generation Scenario</label>
-                <select id="scenario" name="scenario">
-                    <option value="ceo_fraud">CEO Fraud (Wire Transfer)</option>
-                    <option value="it_alert">IT Alert (Password Reset)</option>
-                    <option value="hr_update">HR Update (Benefits Portal)</option>
-                    <option value="invoice">Urgent Invoice (Finance)</option>
-                </select>
+            <div class="section-divider"></div>
+
+            <!-- Scenario Selection -->
+            <div class="nc-group">
+                <label>AI Generation Scenario</label>
+                <div class="scenario-grid">
+                    <div class="scenario-option">
+                        <input type="radio" name="scenario" id="s1" value="ceo_fraud" checked>
+                        <label class="scenario-label" for="s1">
+                            <span class="scenario-icon">👑</span>
+                            <div class="scenario-info">
+                                <strong>CEO Fraud</strong>
+                                <small>Wire transfer request from exec</small>
+                            </div>
+                        </label>
+                    </div>
+                    <div class="scenario-option">
+                        <input type="radio" name="scenario" id="s2" value="it_alert">
+                        <label class="scenario-label" for="s2">
+                            <span class="scenario-icon">💻</span>
+                            <div class="scenario-info">
+                                <strong>IT Alert</strong>
+                                <small>Password reset / account lockout</small>
+                            </div>
+                        </label>
+                    </div>
+                    <div class="scenario-option">
+                        <input type="radio" name="scenario" id="s3" value="hr_update">
+                        <label class="scenario-label" for="s3">
+                            <span class="scenario-icon">📄</span>
+                            <div class="scenario-info">
+                                <strong>HR Update</strong>
+                                <small>Benefits portal / policy change</small>
+                            </div>
+                        </label>
+                    </div>
+                    <div class="scenario-option">
+                        <input type="radio" name="scenario" id="s4" value="invoice">
+                        <label class="scenario-label" for="s4">
+                            <span class="scenario-icon">💰</span>
+                            <div class="scenario-info">
+                                <strong>Urgent Invoice</strong>
+                                <small>Fake vendor invoice to finance</small>
+                            </div>
+                        </label>
+                    </div>
+                </div>
             </div>
 
-            <div class="form-group" style="background: rgba(59, 130, 246, 0.1); padding: 1rem; border-radius: var(--radius-md); border: 1px solid rgba(59, 130, 246, 0.2); margin-top: 2rem;">
-                <label style="display: flex; align-items: flex-start; gap: 0.75rem; margin: 0; cursor: pointer;">
-                    <input type="checkbox" name="consent_confirmed" value="yes" required style="margin-top: 0.25rem;">
-                    <span style="font-weight: normal; font-size: 0.9rem;">
-                        <strong>Authorization Required</strong><br>
-                        I confirm that I have explicit written permission to perform a phishing simulation test against this domain and its employees.
-                    </span>
+            <div class="section-divider"></div>
+
+            <!-- Delivery Mode (admin only) -->
+            {% if current_user and current_user.role == 'admin' %}
+            <div class="nc-group">
+                <label>Delivery Mode</label>
+                <div class="delivery-grid">
+                    <div class="delivery-option">
+                        <input type="radio" name="delivery_mode" id="d1" value="local" checked>
+                        <label class="delivery-label" for="d1">
+                            <i class="fas fa-flask" style="color:#06b6d4; font-size:1.3rem; flex-shrink:0;"></i>
+                            <div>
+                                <strong>Admin Testing</strong>
+                                <small>Local smtp4dev inbox only</small>
+                            </div>
+                        </label>
+                    </div>
+                    <div class="delivery-option">
+                        <input type="radio" name="delivery_mode" id="d2" value="smtp">
+                        <label class="delivery-label" for="d2">
+                            <i class="fas fa-paper-plane" style="color:#3b82f6; font-size:1.3rem; flex-shrink:0;"></i>
+                            <div>
+                                <strong>Live Email</strong>
+                                <small>Send to real inboxes via SMTP</small>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="section-divider"></div>
+            {% endif %}
+
+            <!-- Consent -->
+            <div class="consent-box">
+                <label>
+                    <input type="checkbox" name="consent_confirmed" value="yes" required>
+                    <div class="consent-text">
+                        <strong>Authorization Required</strong>
+                        <span>I confirm that I have explicit written permission to perform a phishing simulation against
+                            this domain and its employees.</span>
+                    </div>
                 </label>
             </div>
 
-            <div style="margin-top: 2rem; display: flex; justify-content: flex-end;">
-                <button type="submit" class="btn-primary">Create & Continue</button>
-            </div>
+            <button type="submit" class="nc-submit">
+                <i class="fas fa-rocket" style="margin-right:8px;"></i> Create Campaign
+            </button>
         </form>
     </div>
 </div>

@@ -16,6 +16,25 @@ client = OpenAI(
 )
 
 
+def clean_email_data(email_data):
+    """Removes common AI filler phrases from generated email content."""
+    replacements = {
+        "Thank you for your prompt attention.": "Thank you.",
+        "Thank you for your prompt attention": "Thank you",
+        "Thank you for your immediate attention.": "Thank you.",
+        "Thank you for your immediate attention": "Thank you",
+    }
+
+    for key in ("subject", "sender_name", "body_html"):
+        value = email_data.get(key)
+        if isinstance(value, str):
+            for old, new in replacements.items():
+                value = value.replace(old, new)
+            email_data[key] = value
+
+    return email_data
+
+
 def generate_phishing_email(employee_profile, scenario):
     """
     Takes employee profile dict + scenario string.
@@ -53,6 +72,9 @@ CRITICAL RULES:
 - Do NOT hallucinate random sender names (like 'Jordan Lee' or 'John Doe').
 - Sign off using ONLY the Department name (e.g., 'Human Resources', 'IT Support Team', or 'Finance Department').
 - Make sure the tone matches the company context provided.
+- Do NOT ask the employee to enter or share a password, MFA code, bank detail, or secret.
+- The link should lead to a safe training page, not a credential collection form.
+- Avoid generic AI filler phrases like "thank you for your prompt attention".
 
 Return ONLY this JSON structure with no extra text, no markdown, no explanation:
 {{"subject": "...", "sender_name": "...", "body_html": "..."}}"""
@@ -83,20 +105,20 @@ Return ONLY this JSON structure with no extra text, no markdown, no explanation:
         except Exception as e:
             print(f"API call failed on attempt {attempt + 1}: {e}")
             # Fallback to a realistic generic email instead of an error string
-            return {
-                "subject": "Action Required: Urgent Account Verification",
+            return clean_email_data({
+                "subject": "Action Required: Security Notice Review",
                 "sender_name": "IT Security Team",
-                "body_html": f"<p>Dear {employee_profile['name']},</p><p>We detected unusual login activity on your account. Please verify your credentials immediately to prevent account suspension.</p><p><a href='TRACKING_LINK'>Verify Account Now</a></p><p>Thank you,<br>IT Security Team</p>"
-            }
+                "body_html": f"<p>Dear {employee_profile['name']},</p><p>We detected a security notice that requires your review today.</p><p><a href='TRACKING_LINK'>Review Security Notice</a></p><p>Thank you,<br>IT Security Team</p>"
+            })
 
     # --- If both attempts returned empty ---
     if not raw or not raw.strip():
         print("Model returned empty response after 2 attempts.")
-        return {
-            "subject": "Action Required: Urgent Account Verification",
+        return clean_email_data({
+            "subject": "Action Required: Security Notice Review",
             "sender_name": "IT Security Team",
-            "body_html": f"<p>Dear {employee_profile['name']},</p><p>We detected unusual login activity on your account. Please verify your credentials immediately to prevent account suspension.</p><p><a href='TRACKING_LINK'>Verify Account Now</a></p><p>Thank you,<br>IT Security Team</p>"
-        }
+            "body_html": f"<p>Dear {employee_profile['name']},</p><p>We detected a security notice that requires your review today.</p><p><a href='TRACKING_LINK'>Review Security Notice</a></p><p>Thank you,<br>IT Security Team</p>"
+        })
 
     # --- Clean markdown fences ---
     raw = raw.replace("```json", "").replace("```", "").strip()
@@ -107,22 +129,22 @@ Return ONLY this JSON structure with no extra text, no markdown, no explanation:
         raw = match.group()
     else:
         print(f"No JSON found. Raw output:\n{raw}")
-        return {
+        return clean_email_data({
             "subject": "Security Notice",
             "sender_name": "IT Department",
             "body_html": raw
-        }
+        })
 
     # --- Parse JSON safely ---
     try:
-        return json.loads(raw)
+        return clean_email_data(json.loads(raw))
     except json.JSONDecodeError as e:
         print(f"JSON decode error: {e}\nRaw: {raw}")
-        return {
+        return clean_email_data({
             "subject": "Security Notice",
             "sender_name": "IT Department",
             "body_html": raw
-        }
+        })
 
 
 if __name__ == "__main__":

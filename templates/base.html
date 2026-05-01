@@ -9,12 +9,15 @@
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     
     <!-- Main Stylesheet -->
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
-<body>
+<body class="{% block body_class %}{% endblock %}">
     <nav class="navbar">
         <div class="nav-container">
             <a href="/" class="brand-logo">
@@ -22,15 +25,22 @@
                 PhishSim<span class="highlight">.ai</span>
             </a>
             <div class="nav-links">
+                <a href="/" class="nav-link">Home</a>
+                {% if current_user %}
                 <a href="/dashboard" class="nav-link">Dashboard</a>
+                {% if current_user.role == 'admin' %}
+                <a href="/users" class="nav-link">Users</a>
+                {% endif %}
                 <a href="/new-campaign" class="btn-primary-sm">New Campaign</a>
+                <a href="/logout" class="nav-link">Logout</a>
+                {% else %}
+                <a href="/login" class="btn-primary-sm">Login</a>
+                {% endif %}
             </div>
         </div>
     </nav>
 
-    <main class="container">
-        {% block content %}{% endblock %}
-    </main>
+    {% block content %}{% endblock %}
     
     <footer class="footer">
         <p>&copy; 2026 PhishSim AI. All rights reserved.</p>

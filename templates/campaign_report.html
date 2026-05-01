@@ -1,0 +1,201 @@
+{% extends 'base.html' %}
+{% block title %}AI Security Report — {{ campaign.name }}{% endblock %}
+{% block content %}
+<style>
+body { background: #020617 !important; }
+
+.report-page { max-width: 900px; margin: 0 auto; padding: 2rem; }
+
+/* Top back bar */
+.report-topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 2rem; padding-bottom: 1.5rem;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    animation: fadeInDown 0.5s ease-out;
+}
+.back-link {
+    display: inline-flex; align-items: center; gap: 8px;
+    color: #64748b; text-decoration: none; font-size: 0.9rem;
+    transition: color 0.2s;
+}
+.back-link:hover { color: #06b6d4; }
+
+/* Hero card */
+.report-hero {
+    background: linear-gradient(135deg, rgba(6,182,212,0.08), rgba(59,130,246,0.05));
+    border: 1px solid rgba(6,182,212,0.2);
+    border-radius: 24px; padding: 3rem;
+    margin-bottom: 2rem; position: relative; overflow: hidden;
+    animation: fadeInUp 0.6s ease-out;
+}
+.report-hero::before {
+    content: ''; position: absolute; top: -80px; right: -80px;
+    width: 300px; height: 300px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(6,182,212,0.15), transparent 70%);
+    pointer-events: none;
+}
+.report-eyebrow {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: rgba(6,182,212,0.1); border: 1px solid rgba(6,182,212,0.25);
+    border-radius: 100px; padding: 5px 14px;
+    font-size: 0.78rem; color: #06b6d4;
+    font-family: 'Space Mono', monospace; text-transform: uppercase; letter-spacing: 1px;
+    margin-bottom: 1.2rem;
+}
+.report-eyebrow::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: #06b6d4; box-shadow: 0 0 8px #06b6d4; animation: livePulse 2s infinite; }
+@keyframes livePulse { 0%,100% { opacity: 1; } 50% { opacity: 0.2; } }
+
+.report-title { font-family: 'Outfit', sans-serif; font-size: 2.5rem; font-weight: 800; color: #fff; margin: 0 0 1rem; line-height: 1.2; }
+.report-summary { color: #94a3b8; line-height: 1.7; font-size: 1.05rem; margin: 0; }
+
+/* Stat grid */
+.report-stats {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.2rem;
+    margin-bottom: 2rem;
+}
+.rstat-box {
+    background: rgba(10,16,38,0.9);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 18px; padding: 1.8rem 1rem;
+    text-align: center; position: relative; overflow: hidden;
+    animation: fadeInUp 0.6s ease-out forwards; opacity: 0;
+    transition: all 0.3s ease;
+}
+.rstat-box:hover { transform: translateY(-5px); border-color: rgba(6,182,212,0.3); }
+.rstat-box::before {
+    content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 3px;
+    background: linear-gradient(90deg, transparent, var(--stat-color), transparent);
+}
+.rstat-box:nth-child(1) { --stat-color: #06b6d4; animation-delay: 0.1s; }
+.rstat-box:nth-child(2) { --stat-color: #3b82f6; animation-delay: 0.2s; }
+.rstat-box:nth-child(3) { --stat-color: #f59e0b; animation-delay: 0.3s; }
+.rstat-box:nth-child(4) { --stat-color: #22c55e; animation-delay: 0.4s; }
+.rstat-num {
+    font-family: 'Outfit', sans-serif; font-size: 2.8rem; font-weight: 900;
+    color: var(--stat-color); line-height: 1;
+    animation: countUp 1s ease-out forwards;
+}
+.rstat-label { font-size: 0.78rem; color: #64748b; text-transform: uppercase; letter-spacing: 1px; margin-top: 6px; }
+
+/* Risk badge */
+.risk-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 8px 18px; border-radius: 100px; font-weight: 700;
+    font-family: 'Space Mono', monospace; font-size: 0.9rem;
+}
+.risk-high { background: rgba(239,68,68,0.15); color: #f87171; border: 1px solid rgba(239,68,68,0.3); }
+.risk-medium { background: rgba(234,179,8,0.12); color: #facc15; border: 1px solid rgba(234,179,8,0.3); }
+.risk-low { background: rgba(34,197,94,0.12); color: #4ade80; border: 1px solid rgba(34,197,94,0.3); }
+
+/* Recommendations */
+.reco-section {
+    background: rgba(10,16,38,0.7);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 24px; padding: 2.5rem;
+    margin-bottom: 2rem;
+    animation: fadeInUp 0.7s ease-out 0.3s forwards; opacity: 0;
+}
+.reco-section h2 { font-family: 'Outfit', sans-serif; font-size: 1.6rem; color: #fff; margin-bottom: 1.5rem; }
+.reco-item {
+    display: flex; align-items: flex-start; gap: 1.2rem;
+    padding: 1.2rem; border-radius: 12px;
+    margin-bottom: 0.8rem; background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.04);
+    transition: all 0.3s ease;
+    animation: slideInLeft 0.5s ease-out forwards; opacity: 0;
+}
+.reco-item:hover { background: rgba(6,182,212,0.05); border-color: rgba(6,182,212,0.2); transform: translateX(6px); }
+.reco-num {
+    min-width: 36px; height: 36px; border-radius: 50%;
+    background: rgba(6,182,212,0.15); color: #06b6d4;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 0.9rem; font-family: 'Space Mono', monospace;
+    border: 1px solid rgba(6,182,212,0.25);
+}
+.reco-item p { color: #cbd5e1; line-height: 1.6; margin: 0; font-size: 0.95rem; }
+
+/* PDF Button */
+.pdf-btn {
+    display: inline-flex; align-items: center; gap: 10px;
+    padding: 14px 28px; border-radius: 12px;
+    background: linear-gradient(135deg, #ef4444, #b91c1c);
+    color: #fff; font-family: 'Outfit', sans-serif;
+    font-weight: 700; font-size: 1rem; text-decoration: none;
+    transition: all 0.3s ease; position: relative; overflow: hidden;
+}
+.pdf-btn::before {
+    content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+    transition: left 0.5s;
+}
+.pdf-btn:hover::before { left: 100%; }
+.pdf-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(239,68,68,0.35); }
+
+.report-actions { display: flex; gap: 1rem; margin-bottom: 2rem; animation: fadeInUp 0.6s ease-out 0.5s forwards; opacity: 0; }
+
+@keyframes fadeInDown { from { opacity: 0; transform: translateY(-15px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes slideInLeft { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
+</style>
+
+<div class="report-page">
+    <!-- Top Bar -->
+    <div class="report-topbar">
+        <a href="/dashboard" class="back-link">
+            <i class="fas fa-arrow-left"></i> Back to Dashboard
+        </a>
+        <span class="risk-badge risk-{{ report.risk_level | lower }}">
+            <i class="fas fa-{% if report.risk_level == 'High' %}exclamation-triangle{% elif report.risk_level == 'Medium' %}exclamation-circle{% else %}check-circle{% endif %}"></i>
+            {{ report.risk_level }} Risk
+        </span>
+    </div>
+
+    <!-- Hero Section -->
+    <div class="report-hero">
+        <div class="report-eyebrow">Agentic AI Report</div>
+        <h1 class="report-title">{{ campaign.name }}</h1>
+        <p class="report-summary">{{ report.summary }}</p>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="report-stats">
+        <div class="rstat-box">
+            <div class="rstat-num">{{ report.delivery_rate }}%</div>
+            <div class="rstat-label">Delivery Rate</div>
+        </div>
+        <div class="rstat-box">
+            <div class="rstat-num">{{ report.open_rate }}%</div>
+            <div class="rstat-label">Open Rate</div>
+        </div>
+        <div class="rstat-box">
+            <div class="rstat-num">{{ report.click_rate }}%</div>
+            <div class="rstat-label">Click Rate</div>
+        </div>
+        <div class="rstat-box">
+            <div class="rstat-num">{{ report.report_rate }}%</div>
+            <div class="rstat-label">Report Rate</div>
+        </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="report-actions">
+        <a href="/download-report/{{ campaign.id }}" class="pdf-btn">
+            <i class="fas fa-file-pdf"></i> Download PDF Report
+        </a>
+        <a href="/dashboard" class="back-link" style="padding: 14px 24px; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: #94a3b8;">
+            <i class="fas fa-th-large"></i> Back to Dashboard
+        </a>
+    </div>
+
+    <!-- Recommendations -->
+    <div class="reco-section">
+        <h2><i class="fas fa-lightbulb" style="color:#06b6d4; margin-right:10px;"></i> AI Recommendations</h2>
+        {% for item in report.recommendations %}
+        <div class="reco-item" style="animation-delay: {{ loop.index0 * 0.1 + 0.3 }}s">
+            <div class="reco-num">{{ loop.index }}</div>
+            <p>{{ item }}</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
