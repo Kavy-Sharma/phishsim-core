@@ -18,10 +18,10 @@ app.secret_key = os.getenv("FLASK_SECRET_KEY", "dev-secret-change-me")
 # Perfection Tip: Use a connection pool in production, but for now we optimize manual connections
 def get_db_connection():
     return mysql.connector.connect(
-        host="localhost",
-        user="root",
-        password=os.getenv("DB_PASSWORD"),
-        database="phishsim_db",
+        host=os.getenv("DB_HOST", "localhost"),
+        user=os.getenv("DB_USER", "root"),
+        password=os.getenv("DB_PASSWORD", ""),
+        database=os.getenv("DB_NAME", "phishsim_db"),
         charset="utf8mb4",
         collation="utf8mb4_unicode_ci"
     )
@@ -358,6 +358,26 @@ def manage_users():
     db.close()
     return render_template("users.html", users=users)
 
+@app.route("/delete-user/<int:user_id>", methods=["POST"])
+@admin_required
+def delete_user(user_id):
+    db = get_db_connection()
+    cursor = db.cursor()
+    try:
+        # Don't let the user delete themselves
+        if user_id == session.get("user_id"):
+            flash("You cannot delete your own account.")
+        else:
+            cursor.execute("DELETE FROM users WHERE id = %s", (user_id,))
+            db.commit()
+            flash("User deleted successfully.")
+    except Exception as e:
+        flash(f"Error deleting user: {e}")
+    finally:
+        cursor.close()
+        db.close()
+    return redirect(url_for("manage_users"))
+
 @app.route("/dashboard")
 @login_required
 def dashboard():
@@ -419,11 +439,8 @@ def new_campaign():
         domain = request.form.get("company_domain")
         scenario = request.form.get("scenario")
         consent = request.form.get("consent_confirmed")
-        requested_mode = request.form.get("delivery_mode", "smtp")
-        if user["role"] == "admin":
-            delivery_mode = requested_mode if requested_mode in ("local", "smtp") else "local"
-        else:
-            delivery_mode = "smtp"
+        requested_mode = request.form.get("delivery_mode", "local")
+        delivery_mode = requested_mode if requested_mode in ("local", "smtp") else "local"
 
         # 2. Security Check: Ensure consent was ticked
         if not consent:
@@ -719,6 +736,72 @@ def campaign_report(campaign_id):
 
     report = build_campaign_report(campaign)
     return render_template("campaign_report.html", campaign=campaign, report=report)
+
+@app.route("/download-report/<int:campaign_id>")
+@login_required
+def download_report(campaign_id):
+    from fpdf import FPDF
+    user = current_user()
+    db = get_db_connection()
+    cursor = db.cursor(dictionary=True)
+    try:
+        ensure_email_tracking_table(cursor)
+        ensure_events_table(cursor)
+        db.commit()
+        if not user_can_access_campaign(cursor, campaign_id, user):
+            return "Campaign not found.", 404
+        campaign = get_campaign_metrics(cursor, campaign_id)
+        report = build_campaign_report(campaign)
+    finally:
+        cursor.close()
+        db.close()
+
+    if not campaign:
+        return "Campaign not found.", 404
+
+    pdf = FPDF()
+    pdf.add_page()
+    
+    # Title
+    pdf.set_font("Helvetica", size=20, style='B')
+    pdf.cell(0, 10, txt=f"PhishSim AI Report", ln=1, align='C')
+    pdf.set_font("Helvetica", size=14)
+    pdf.cell(0, 10, txt=f"Campaign: {campaign.get('name', 'Unknown')}", ln=1, align='C')
+    pdf.ln(10)
+    
+    # Risk & Metrics
+    pdf.set_font("Helvetica", size=12, style='B')
+    pdf.cell(0, 10, txt=f"Risk Level: {report['risk_level']}", ln=1)
+    pdf.set_font("Helvetica", size=12)
+    pdf.cell(0, 10, txt=f"Delivery Rate: {report['delivery_rate']}%", ln=1)
+    pdf.cell(0, 10, txt=f"Open Rate: {report['open_rate']}%", ln=1)
+    pdf.cell(0, 10, txt=f"Click Rate (Vulnerable): {report['click_rate']}%", ln=1)
+    pdf.cell(0, 10, txt=f"Report Rate (Secure): {report['report_rate']}%", ln=1)
+    pdf.ln(10)
+    
+    # AI Summary
+    pdf.set_font("Helvetica", size=14, style='B')
+    pdf.cell(0, 10, txt="Agentic AI Threat Analysis:", ln=1)
+    pdf.set_font("Helvetica", size=12)
+    pdf.multi_cell(0, 8, txt=str(report['summary']))
+    pdf.ln(10)
+    
+    # Recommendations
+    pdf.set_font("Helvetica", size=14, style='B')
+    pdf.cell(0, 10, txt="AI Recommendations:", ln=1)
+    pdf.set_font("Helvetica", size=12)
+    for i, rec in enumerate(report['recommendations'], 1):
+        pdf.multi_cell(0, 8, txt=f"{i}. {rec}")
+        pdf.ln(2)
+        
+    pdf_bytes = bytes(pdf.output())
+    
+    from flask import Response
+    return Response(
+        pdf_bytes,
+        mimetype="application/pdf",
+        headers={"Content-Disposition": f"attachment;filename=PhishSim_Report_{campaign_id}.pdf"}
+    )
 
 @app.route("/delete-campaign/<int:campaign_id>", methods=["POST"])
 @login_required

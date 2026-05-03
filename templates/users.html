@@ -51,14 +51,21 @@
         <h2>Existing Users</h2>
         <div class="user-list">
             {% for user in users %}
-            <div class="user-row">
+            <div class="user-row" style="display: flex; justify-content: space-between; align-items: center;">
                 <div>
                     <strong>{{ user.name }}</strong>
                     <p>{{ user.email }}{% if user.company_domain %} · {{ user.company_domain }}{% endif %}</p>
                 </div>
-                <span class="badge {% if user.role == 'admin' %}badge-launched{% else %}badge-draft{% endif %}">
-                    {{ user.role.replace('_', ' ') }}
-                </span>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span class="badge {% if user.role == 'admin' %}badge-launched{% else %}badge-draft{% endif %}">
+                        {{ user.role.replace('_', ' ') }}
+                    </span>
+                    <form action="/delete-user/{{ user.id }}" method="POST" onsubmit="return confirm('Delete this user?');" style="margin: 0;">
+                        <button type="submit" style="background: transparent; border: none; color: #f87171; cursor: pointer; padding: 5px;">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </form>
+                </div>
             </div>
             {% endfor %}
         </div>

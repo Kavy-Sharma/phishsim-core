@@ -10,31 +10,53 @@ from urllib.parse import urljoin
 
 import urllib3
 from bs4 import BeautifulSoup
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+import httpx
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
 def get_page_source(domain):
-    """Uses Selenium to load the page fully (including JS-rendered content)."""
-    options = Options()
-    options.add_argument("--headless=new")
-    options.add_argument("--disable-blink-features=AutomationControlled")
-    options.add_argument("--no-sandbox")
-    options.add_argument("--disable-dev-shm-usage")
-
-    driver = webdriver.Chrome(options=options)
-
+    """Fetches page source using httpx, falls back to Jina AI if content is too thin."""
+    url = f"https://{domain}"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    }
+    
+    html = None
     try:
-        driver.get(f"https://{domain}")
-        time.sleep(5)
-        html = driver.page_source
+        with httpx.Client(verify=False, timeout=15.0, follow_redirects=True) as client:
+            response = client.get(url, headers=headers)
+            response.raise_for_status()
+            html = response.text
     except Exception as e:
-        print(f"Selenium error: {e}")
-        html = None
-    finally:
-        driver.quit()
+        print(f"httpx direct fetch error: {e}")
+        
+    needs_fallback = False
+    if not html:
+        needs_fallback = True
+    else:
+        soup = BeautifulSoup(html, "html.parser")
+        meta_desc = soup.find("meta", {"name": "description"})
+        paragraphs = soup.find_all("p")
+        
+        has_meta = meta_desc and meta_desc.get("content")
+        has_paragraphs = len(paragraphs) >= 3
+        
+        if not has_meta and not has_paragraphs:
+            needs_fallback = True
+            
+    if needs_fallback:
+        print(f"Content thin or request failed for {domain}, falling back to Jina AI...")
+        jina_url = f"https://r.jina.ai/{url}"
+        jina_headers = headers.copy()
+        jina_headers["X-Return-Format"] = "html"
+        try:
+            with httpx.Client(verify=False, timeout=20.0, follow_redirects=True) as client:
+                response = client.get(jina_url, headers=jina_headers)
+                response.raise_for_status()
+                html = response.text
+        except Exception as e:
+            print(f"Jina AI fallback error: {e}")
 
     return html
 
@@ -212,8 +234,8 @@ def build_employee_profiles(csv_path, company_profile):
 
 
 if __name__ == "__main__":
-    company = scrape_company("lpsoul.com")
+    company = scrape_company("google.com")
     print(json.dumps(company, indent=4, ensure_ascii=False))
     print("---")
-    employees = build_employee_profiles("test_employees.csv", company)
+    employees = build_employee_profiles("data/test_employees.csv", company)
     print(json.dumps(employees, indent=4, ensure_ascii=False))

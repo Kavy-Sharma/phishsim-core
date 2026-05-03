@@ -120,30 +120,40 @@ Return ONLY this JSON structure with no extra text, no markdown, no explanation:
             "body_html": f"<p>Dear {employee_profile['name']},</p><p>We detected a security notice that requires your review today.</p><p><a href='TRACKING_LINK'>Review Security Notice</a></p><p>Thank you,<br>IT Security Team</p>"
         })
 
-    # --- Clean markdown fences ---
-    raw = raw.replace("```json", "").replace("```", "").strip()
+    # --- Clean and Extract JSON robustly ---
+    # 1. Remove <think>...</think> blocks used by DeepSeek-R1 and similar reasoning models
+    raw = re.sub(r'<think>.*?</think>', '', raw, flags=re.DOTALL).strip()
+    
+    # 2. Extract markdown code blocks if present
+    json_str = raw
+    code_block_match = re.search(r'```(?:json)?\s*(\{.*?\})\s*```', raw, re.DOTALL)
+    if code_block_match:
+        json_str = code_block_match.group(1)
 
-    # --- Extract JSON object from response ---
-    match = re.search(r'\{.*\}', raw, re.DOTALL)
-    if match:
-        raw = match.group()
+    # 3. Robustly parse the JSON by checking valid bracket pairs
+    parsed = None
+    start_idx = json_str.find('{')
+    
+    while start_idx != -1:
+        end_idx = json_str.rfind('}')
+        if end_idx > start_idx:
+            try:
+                candidate = json.loads(json_str[start_idx:end_idx+1])
+                if isinstance(candidate, dict) and "subject" in candidate and "body_html" in candidate:
+                    parsed = candidate
+                    break
+            except json.JSONDecodeError:
+                pass
+        start_idx = json_str.find('{', start_idx + 1)
+
+    if parsed:
+        return clean_email_data(parsed)
     else:
-        print(f"No JSON found. Raw output:\n{raw}")
+        print(f"Failed to extract valid JSON. Raw output:\n{raw}")
         return clean_email_data({
-            "subject": "Security Notice",
-            "sender_name": "IT Department",
-            "body_html": raw
-        })
-
-    # --- Parse JSON safely ---
-    try:
-        return clean_email_data(json.loads(raw))
-    except json.JSONDecodeError as e:
-        print(f"JSON decode error: {e}\nRaw: {raw}")
-        return clean_email_data({
-            "subject": "Security Notice",
-            "sender_name": "IT Department",
-            "body_html": raw
+            "subject": "Action Required: Security Notice Review",
+            "sender_name": "IT Security Team",
+            "body_html": f"<p>Dear {employee_profile['name']},</p><p>We detected a security notice that requires your review today.</p><p><a href='TRACKING_LINK'>Review Security Notice</a></p><p>Thank you,<br>IT Security Team</p>"
         })
 
 
