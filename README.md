@@ -18,11 +18,11 @@
 ---
 
 ## 🖥️ The Agentic OS Experience
-Experience a high-fidelity, cyberpunk-inspired control center. Our custom-built **Terminal UI** and **Glassmorphic Dashboard** provide a seamless "Operating System" feel right in your browser.
+Experience a high-fidelity, cyberpunk-inspired control center. Our custom-built UI provides a seamless "Operating System" feel right in your browser.
 
-- **Neon Aesthetics**: Deep-dark backgrounds with cyan and blue neon accents.
-- **Interactive Terminal**: A fully functional command-line interface for system interactions.
-- **Bento Grid Layout**: Modern, high-density visualization of campaign metrics and system health.
+- **Dynamic Terminals**: Fully interactive command-line interfaces featuring fluid minimize animations, expandable viewports, and floating `[LIVE]` telemetry badges.
+- **Neon Glassmorphism**: Deep-dark backgrounds with cyan and blue neon accents, frosted glass panels, and immersive hover states.
+- **Data Visualization**: High-fidelity `Chart.js` radar mappings for instantaneous vulnerability signature analysis.
 
 ---
 
@@ -33,17 +33,17 @@ Experience a high-fidelity, cyberpunk-inspired control center. Our custom-built 
 | **OSINT Scraper** | Automatically mines company descriptions and writing tones from public data. | `osint_miner` |
 | **Generative AI** | Crafts department-specific phishing emails using psychological triggers. | `Claude-3.5-Sonnet` |
 | **Live Telemetry** | Real-time tracking of opens (pixel) and clicks with IP/User-Agent logging. | `Flask-Core` |
-| **Multi-Mode Delivery** | Switch between **Trial (Mailtrap/smtp4dev)** and **Live (SMTP)** with one click. | `SMTP-Relay` |
-| **AI-PDF Reporting** | Generates detailed risk reports with AI-driven recommendations. | `Report-Gen` |
+| **Multi-Mode Delivery** | Switch between **Sandbox (smtp4dev)** and **Live (SMTP)** with one click. | `SMTP-Relay` |
+| **AI-PDF Reporting** | Generates professionally branded PDF risk reports with actionable AI recommendations. | `FPDF / AI` |
 
 ---
 
 ## 🛠️ Tech Stack
 - **Backend:** `Python 3.9+`, `Flask`
-- **Database:** `MySQL` (Structured for speed and relational integrity)
-- **Frontend:** `Vanilla JS`, `Custom CSS` (Zero frameworks, pure glassmorphism)
+- **Database:** `MySQL` (Includes automated schema self-healing and dynamic migrations)
+- **Frontend:** `Vanilla JS`, `Vanilla CSS` (Zero frameworks, pure custom styling)
 - **AI:** `OpenRouter` / `Anthropic Claude`
-- **Email:** `SMTPLib` (Configurable for Local, Mailtrap, or Production SMTP)
+- **Email:** `SMTPLib` (Configurable for Local testing or Production SMTP)
 
 ---
 
@@ -59,33 +59,42 @@ cd Phishsim.ai
 pip install -r requirements.txt
 ```
 
-### 2. Environment Configuration
-Create a `.env` file in the root directory:
+### 2. Database Setup (Cloud or Local)
+For local development, install MySQL and ensure `DB_HOST=localhost`.
+For free cloud deployment, we recommend **TiDB Serverless**:
+1. Go to [tidbcloud.com](https://tidbcloud.com/) and create a free serverless cluster.
+2. Get your connection parameters (Host, Port `4000`, User, Password).
+
+### 3. Environment Configuration
+Create a `.env` file based on the provided defaults. Ensure these are set for production:
 ```env
-# AI CONFIG
-OPENROUTER_API_KEY=sk-or-v1-...
-
-# DATABASE
+APP_BASE_URL=https://your-app-name.onrender.com
+DB_HOST=gateway01.us-east-1.prod.aws.tidbcloud.com
+DB_PORT=4000
+DB_USER=your_prefix.root
 DB_PASSWORD=your_secure_password
-
-# EMAIL MODES
-EMAIL_PROVIDER=local  # Options: local, mailtrap, smtp
-LOCAL_SMTP_PORT=25    # Default for smtp4dev
+DB_NAME=test
+DB_SSL_DISABLED=False
 ```
 
-### 3. Launch System
-```bash
-python app.py
-```
-> Access the interface at: `http://127.0.0.1:5000`
+### 4. Deployment (Render.com)
+PhishSim is pre-configured for Render.com's Free Web Service tier:
+1. Connect your GitHub repository to Render.
+2. **Environment:** `Python 3`
+3. **Build Command:** `pip install -r requirements.txt`
+4. **Start Command:** `gunicorn app:app`
+5. Inject your `.env` securely via the Render dashboard.
+
+> Note: On the very first request, the app will automatically build the `users`, `campaigns`, and `events` tables, and run self-healing scripts to ensure your database is up to date!
 
 ---
 
 ## 📊 Roadmap
-- [x] **Phase 1**: Agentic OS UI Overhaul (Terminal & Bento Grid)
-- [x] **Phase 2**: Multi-Mode SMTP Integration (Trial vs Live)
-- [ ] **Phase 3**: In-App Email Previewer (Capture emails without SMTP)
-- [ ] **Phase 4**: Advanced OSINT (Social Media Scrutiny)
+- [x] **Phase 1**: Agentic OS UI Overhaul (Terminals, Modals, Animations)
+- [x] **Phase 2**: Multi-Mode SMTP Integration & Self-Healing DB
+- [x] **Phase 3**: Premium PDF Generation & Radar Telemetry
+- [ ] **Phase 4**: In-App Email Previewer (Capture emails without SMTP)
+- [ ] **Phase 5**: Advanced OSINT (Social Media Scrutiny)
 
 ---
 

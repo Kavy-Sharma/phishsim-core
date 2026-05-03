@@ -19,11 +19,13 @@ app.secret_key = os.getenv("FLASK_SECRET_KEY", "dev-secret-change-me")
 def get_db_connection():
     return mysql.connector.connect(
         host=os.getenv("DB_HOST", "localhost"),
+        port=int(os.getenv("DB_PORT", 3306)),
         user=os.getenv("DB_USER", "root"),
         password=os.getenv("DB_PASSWORD", ""),
         database=os.getenv("DB_NAME", "phishsim_db"),
         charset="utf8mb4",
-        collation="utf8mb4_unicode_ci"
+        collation="utf8mb4_unicode_ci",
+        ssl_disabled=os.getenv("DB_SSL_DISABLED", "False").lower() == "true"
     )
 
 def ensure_auth_schema(cursor):
@@ -72,6 +74,40 @@ def ensure_auth_schema(cursor):
             None
         ))
 
+def ensure_core_tables(cursor):
+    """Creates the campaigns and employees tables if they do not exist."""
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS campaigns (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            user_id INT,
+            name VARCHAR(255),
+            company_domain VARCHAR(255),
+            scenario_type VARCHAR(255),
+            delivery_mode VARCHAR(20) DEFAULT 'local',
+            status VARCHAR(50) DEFAULT 'draft',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+    try:
+        cursor.execute("ALTER TABLE campaigns CHANGE target_domain company_domain VARCHAR(255)")
+    except Exception:
+        pass
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS employees (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            campaign_id INT,
+            name VARCHAR(255),
+            email VARCHAR(255),
+            department VARCHAR(255),
+            title VARCHAR(255)
+        )
+    """)
+    try:
+        cursor.execute("ALTER TABLE employees CHANGE role department VARCHAR(255)")
+        cursor.execute("ALTER TABLE employees ADD COLUMN title VARCHAR(255)")
+    except Exception:
+        pass
+
 @app.before_request
 def bootstrap_schema():
     if app.config.get("AUTH_SCHEMA_READY"):
@@ -80,6 +116,7 @@ def bootstrap_schema():
         db = get_db_connection()
         cursor = db.cursor(dictionary=True)
         ensure_auth_schema(cursor)
+        ensure_core_tables(cursor)
         db.commit()
         cursor.close()
         db.close()
@@ -264,8 +301,7 @@ def login():
 
         db = get_db_connection()
         cursor = db.cursor(dictionary=True)
-        ensure_auth_schema(cursor)
-        db.commit()
+        cursor = db.cursor(dictionary=True)
         cursor.execute("SELECT * FROM users WHERE email = %s", (email,))
         user = cursor.fetchone()
         cursor.close()
@@ -290,7 +326,6 @@ def signup():
 
         db = get_db_connection()
         cursor = db.cursor(dictionary=True)
-        ensure_auth_schema(cursor)
         try:
             cursor.execute("SELECT id FROM users WHERE email = %s", (email,))
             if cursor.fetchone():
@@ -320,6 +355,27 @@ def logout():
     session.clear()
     return redirect(url_for("home"))
 
+@app.route("/profile")
+@login_required
+def profile():
+    user = current_user()
+    db = get_db_connection()
+    cursor = db.cursor(dictionary=True)
+    try:
+        # Get overall stats for this user
+        cursor.execute("""
+            SELECT 
+                COUNT(*) as total_campaigns,
+                SUM(CASE WHEN status = 'launched' THEN 1 ELSE 0 END) as active_campaigns
+            FROM campaigns WHERE user_id = %s
+        """, (user["id"],))
+        stats = cursor.fetchone()
+    finally:
+        cursor.close()
+        db.close()
+        
+    return render_template("profile.html", user=user, stats=stats)
+
 @app.route("/users", methods=["GET", "POST"])
 @admin_required
 def manage_users():
@@ -335,7 +391,6 @@ def manage_users():
 
         db = get_db_connection()
         cursor = db.cursor(dictionary=True)
-        ensure_auth_schema(cursor)
         try:
             cursor.execute("""
                 INSERT INTO users (name, email, password_hash, role, company_domain)
@@ -350,8 +405,6 @@ def manage_users():
 
     db = get_db_connection()
     cursor = db.cursor(dictionary=True)
-    ensure_auth_schema(cursor)
-    db.commit()
     cursor.execute("SELECT id, name, email, role, company_domain, created_at FROM users ORDER BY id DESC")
     users = cursor.fetchall()
     cursor.close()
@@ -449,7 +502,6 @@ def new_campaign():
         # 3. Save to Database
         db = get_db_connection()
         cursor = db.cursor(dictionary=True)
-        ensure_auth_schema(cursor)
         sql = """
             INSERT INTO campaigns
                 (name, company_domain, scenario_type, status, user_id, delivery_mode)
@@ -762,37 +814,68 @@ def download_report(campaign_id):
     pdf = FPDF()
     pdf.add_page()
     
-    # Title
-    pdf.set_font("Helvetica", size=20, style='B')
-    pdf.cell(0, 10, txt=f"PhishSim AI Report", ln=1, align='C')
-    pdf.set_font("Helvetica", size=14)
-    pdf.cell(0, 10, txt=f"Campaign: {campaign.get('name', 'Unknown')}", ln=1, align='C')
-    pdf.ln(10)
+    # Premium Header Background
+    pdf.set_fill_color(10, 15, 30) # Dark cyber blue
+    pdf.rect(0, 0, 210, 40, 'F')
     
-    # Risk & Metrics
-    pdf.set_font("Helvetica", size=12, style='B')
-    pdf.cell(0, 10, txt=f"Risk Level: {report['risk_level']}", ln=1)
+    # Title
+    pdf.set_text_color(255, 255, 255)
+    pdf.set_font("Helvetica", size=24, style='B')
+    pdf.set_xy(10, 10)
+    pdf.cell(0, 10, txt="PhishSim Agentic AI Report", ln=1, align='C')
     pdf.set_font("Helvetica", size=12)
-    pdf.cell(0, 10, txt=f"Delivery Rate: {report['delivery_rate']}%", ln=1)
-    pdf.cell(0, 10, txt=f"Open Rate: {report['open_rate']}%", ln=1)
-    pdf.cell(0, 10, txt=f"Click Rate (Vulnerable): {report['click_rate']}%", ln=1)
-    pdf.cell(0, 10, txt=f"Report Rate (Secure): {report['report_rate']}%", ln=1)
+    pdf.cell(0, 10, txt=f"Simulation Target: {campaign.get('name', 'Unknown')}", ln=1, align='C')
+    
+    pdf.set_xy(10, 50)
+    
+    # Risk Badge Box
+    pdf.set_fill_color(240, 244, 248)
+    pdf.rect(10, 45, 190, 25, 'F')
+    pdf.set_text_color(6, 182, 212) # Cyan
+    pdf.set_font("Helvetica", size=14, style='B')
+    pdf.cell(0, 10, txt=f"Calculated Risk Level: {report['risk_level']}", ln=1)
+    
+    # Metrics
+    pdf.set_text_color(50, 50, 50)
+    pdf.set_font("Helvetica", size=11)
+    pdf.cell(45, 10, txt=f"Delivery: {report['delivery_rate']}%", border=0)
+    pdf.cell(45, 10, txt=f"Open: {report['open_rate']}%", border=0)
+    pdf.cell(50, 10, txt=f"Click (Vuln): {report['click_rate']}%", border=0)
+    pdf.cell(50, 10, txt=f"Report (Secure): {report['report_rate']}%", border=0, ln=1)
+    
     pdf.ln(10)
     
     # AI Summary
-    pdf.set_font("Helvetica", size=14, style='B')
-    pdf.cell(0, 10, txt="Agentic AI Threat Analysis:", ln=1)
-    pdf.set_font("Helvetica", size=12)
-    pdf.multi_cell(0, 8, txt=str(report['summary']))
+    pdf.set_text_color(6, 182, 212)
+    pdf.set_font("Helvetica", size=16, style='B')
+    pdf.cell(0, 10, txt="Agentic AI Threat Analysis", ln=1)
+    
+    pdf.set_text_color(70, 70, 70)
+    pdf.set_font("Helvetica", size=11)
+    # FPDF multi_cell height 6 for better reading
+    pdf.multi_cell(0, 6, txt=str(report['summary']))
     pdf.ln(10)
     
     # Recommendations
-    pdf.set_font("Helvetica", size=14, style='B')
-    pdf.cell(0, 10, txt="AI Recommendations:", ln=1)
-    pdf.set_font("Helvetica", size=12)
+    pdf.set_text_color(59, 130, 246) # Blue
+    pdf.set_font("Helvetica", size=16, style='B')
+    pdf.cell(0, 10, txt="Actionable Recommendations", ln=1)
+    
+    pdf.set_text_color(70, 70, 70)
+    pdf.set_font("Helvetica", size=11)
     for i, rec in enumerate(report['recommendations'], 1):
-        pdf.multi_cell(0, 8, txt=f"{i}. {rec}")
-        pdf.ln(2)
+        pdf.set_font("Helvetica", size=11, style='B')
+        pdf.cell(10, 6, txt=f"{i}.")
+        pdf.set_font("Helvetica", size=11)
+        pdf.multi_cell(0, 6, txt=f"{rec}")
+        pdf.ln(4)
+        
+    # Footer
+    pdf.set_auto_page_break(False)
+    pdf.set_y(-15)
+    pdf.set_font("Helvetica", size=8, style='I')
+    pdf.set_text_color(150, 150, 150)
+    pdf.cell(0, 10, "Report dynamically generated by PhishSim Agentic OS", align='C')
         
     pdf_bytes = bytes(pdf.output())
     

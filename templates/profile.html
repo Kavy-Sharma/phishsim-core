@@ -1,0 +1,331 @@
+{% extends "base.html" %}
+{% block title %}PhishSim - Operator Profile{% endblock %}
+{% block content %}
+<style>
+/* Premium Profile Layout */
+.profile-container {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    margin-top: 1rem;
+    max-width: 100vw;
+    margin-left: auto;
+    margin-right: auto;
+    box-sizing: border-box;
+    padding: 0 1rem;
+    overflow-x: hidden;
+}
+.profile-top-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+}
+* { box-sizing: border-box; }
+@media (max-width: 900px) {
+    .profile-top-row { grid-template-columns: 1fr; }
+}
+
+/* Glassmorphic Cards */
+.glass-panel {
+    background: rgba(10, 15, 30, 0.6);
+    border: 1px solid rgba(6, 182, 212, 0.2);
+    border-radius: 16px;
+    padding: 2rem;
+    backdrop-filter: blur(12px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.4), inset 0 0 20px rgba(6, 182, 212, 0.05);
+    position: relative;
+    overflow: hidden;
+}
+.glass-panel::before {
+    content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 3px;
+    background: linear-gradient(90deg, #06b6d4, #3b82f6);
+}
+
+/* Profile Header */
+.profile-header {
+    display: flex; align-items: center; gap: 20px; margin-bottom: 2rem;
+}
+.profile-avatar {
+    width: 80px; height: 80px;
+    background: linear-gradient(135deg, #06b6d4, #3b82f6);
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 2.5rem; color: #fff;
+    box-shadow: 0 0 20px rgba(6, 182, 212, 0.4);
+}
+.profile-info h1 { margin: 0; font-size: 1.8rem; color: #fff; font-family: 'Outfit', sans-serif; }
+.profile-info p { margin: 5px 0 0; color: #94a3b8; font-family: 'Space Mono', monospace; font-size: 0.9rem;}
+
+/* Interactive Terminal */
+.sys-terminal {
+    background: #050505; border-radius: 10px; border: 1px solid #1e293b;
+    padding: 1.5rem; font-family: 'Space Mono', monospace; font-size: 0.9rem;
+    color: #4ade80; height: 350px; overflow-y: auto;
+    box-shadow: inset 0 0 15px rgba(0,0,0,0.8);
+}
+.term-line { display: flex; margin-bottom: 8px; }
+.term-prompt { color: #06b6d4; margin-right: 10px; font-weight: bold; white-space: nowrap; }
+.term-cmd { color: #fff; }
+.term-output { color: #94a3b8; margin-bottom: 12px; padding-left: 10px; border-left: 2px solid #334155; }
+.term-highlight { color: #eab308; }
+.term-cursor {
+    display: inline-block; width: 8px; height: 1.1rem;
+    background: #06b6d4; animation: blink 1s step-end infinite;
+    vertical-align: middle;
+}
+.term-input {
+    background: transparent !important; background-color: transparent !important; border: none !important; color: #fff; font-family: 'Space Mono', monospace; font-size: 0.9rem; flex: 1; outline: none !important; margin-left: 5px; min-width: 50px; appearance: none; box-shadow: none !important; caret-color: #06b6d4;
+}
+.term-input:focus { outline: none !important; box-shadow: none !important; border: none !important; background: transparent !important; background-color: transparent !important; }
+.term-btn {
+    width: 12px; height: 12px; border-radius: 50%; cursor: pointer; transition: transform 0.2s;
+}
+.term-btn:hover { transform: scale(1.2); }
+
+/* Floating Icon */
+.floating-term-icon {
+    position: absolute; top: 0px; right: 20px;
+    width: auto; padding: 6px 12px; border-radius: 0 0 8px 8px;
+    background: linear-gradient(135deg, #06b6d4, #3b82f6);
+    color: white; display: flex; align-items: center; justify-content: center; gap: 8px;
+    font-size: 0.85rem; cursor: pointer; font-family: 'Space Mono', monospace; font-weight: bold;
+    box-shadow: 0 5px 15px rgba(6, 182, 212, 0.4);
+    animation: float 3s ease-in-out infinite;
+    z-index: 100;
+}
+@keyframes float {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-6px); }
+    100% { transform: translateY(0px); }
+}
+
+.terminal-wrapper {
+    width: 100%;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    transform-origin: top right;
+}
+.sys-terminal {
+    width: 100%;
+    min-height: 350px;
+}
+
+/* Chart Canvas container */
+.chart-container {
+    position: relative; height: 250px; width: 100%; display: flex; justify-content: center;
+}
+</style>
+
+<div class="profile-container">
+    <div style="padding: 1.5rem 0 1rem 0; margin-left: 0.5rem; animation: fadeInDown 0.6s ease-out;">
+        <h1 style="color: #fff; font-family: 'Outfit', sans-serif; font-size: 2.5rem; font-weight: 800; margin: 0 0 0.5rem 0;">Operator Profile</h1>
+        <p style="color: #64748b; font-size: 1rem; margin: 0;">System credentials, telemetry, and interactive command terminal.</p>
+    </div>
+
+    <div class="profile-top-row">
+        <!-- Left Column: Identity & Charts -->
+        <div class="glass-panel">
+            <div class="profile-header">
+                <div class="profile-avatar">
+                    <i class="fas fa-user-astronaut"></i>
+                </div>
+                <div class="profile-info">
+                    <h1>{{ user.name }}</h1>
+                    <p><i class="fas fa-fingerprint"></i> SYS_ID: {{ "%04d" | format(user.id) }}</p>
+                    <span class="badge-cyber badge-launching" style="margin-top: 8px; display: inline-block;">
+                        {{ user.role.upper() }} ACCESS
+                    </span>
+                </div>
+            </div>
+            
+            <div style="margin-top: 1.5rem;">
+                <p style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 5px;">Primary Email Relay</p>
+                <div style="background: rgba(255,255,255,0.03); padding: 10px 15px; border-radius: 8px; color: #fff; font-family: monospace;">
+                    {{ user.email }}
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-panel">
+            <h3 style="color: #fff; font-family: 'Space Mono', monospace; margin-bottom: 1rem;">
+                <i class="fas fa-chart-pie" style="color: #06b6d4;"></i> Activity Telemetry
+            </h3>
+            <div class="chart-container">
+                <canvas id="activityChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Row: Interactive Terminal -->
+    <div style="position: relative; width: 100%; padding-top: 15px; padding-right: 15px;">
+        <div class="floating-term-icon" onclick="restoreTerminal()" style="position: absolute; top: 0px; right: 0px; z-index: 20; border-radius: 8px;">
+            <i class="fas fa-satellite-dish"></i> LIVE
+        </div>
+        
+        <div class="glass-panel terminal-wrapper" id="terminalWrapper" style="display: flex; flex-direction: column; width: 100%; padding: 1.5rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h3 style="color: #fff; font-family: 'Space Mono', monospace; margin: 0;">
+                    <i class="fas fa-terminal" style="color: #06b6d4;"></i> OS Terminal
+                </h3>
+                <div style="display: flex; gap: 8px;">
+                    <div class="term-btn" style="background:#ef4444;" onclick="document.getElementById('termHistory').innerHTML='';"></div>
+                    <div class="term-btn" style="background:#eab308;" onclick="toggleTerminal()"></div>
+                    <div class="term-btn" style="background:#22c55e;" onclick="maximizeTerminal()"></div>
+                </div>
+            </div>
+
+            <div class="sys-terminal" id="sysTerminal" style="flex: 1; overflow-y: auto;" onclick="document.getElementById('cliInput').focus()">
+                <div id="termHistory"></div>
+                <div class="term-line" id="inputContainer" style="align-items: center; display: flex;">
+                    <span class="term-prompt">{{ user.name.split(' ')[0] | lower | replace("'", "") }}@phishsim:~$</span>
+                    <input type="text" id="cliInput" class="term-input" autocomplete="off" spellcheck="false" autofocus>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js Injection -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+// --- Chart.js Implementation ---
+document.addEventListener('DOMContentLoaded', function() {
+    const ctx = document.getElementById('activityChart').getContext('2d');
+    
+    // Check if user has campaigns, otherwise show placeholder data
+    const totalCamps = {{ stats.total_campaigns or 0 }};
+    const activeCamps = {{ stats.active_campaigns or 0 }};
+    const drafted = totalCamps - activeCamps;
+    
+    let dataValues = [];
+    let bgColors = [];
+    let chartLabels = [];
+    
+    if (totalCamps === 0) {
+        dataValues = [1];
+        bgColors = ['rgba(148, 163, 184, 0.1)'];
+        chartLabels = ['No Data Available'];
+    } else {
+        dataValues = [activeCamps, drafted];
+        bgColors = ['rgba(6, 182, 212, 0.6)', 'rgba(59, 130, 246, 0.6)'];
+        chartLabels = ['Launched Campaigns', 'Drafts'];
+    }
+
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: chartLabels,
+            datasets: [{
+                data: dataValues,
+                backgroundColor: bgColors,
+                borderColor: ['#06b6d4', '#3b82f6'],
+                borderWidth: 1,
+                hoverOffset: 4
+            }]
+        },
+        options: {
+            devicePixelRatio: window.devicePixelRatio || 2, // Fix blurriness
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'bottom', labels: { color: '#94a3b8', font: { family: 'Space Mono', size: 13 } } }
+            },
+            cutout: '75%'
+        }
+    });
+
+    // --- Fully Interactive Terminal ---
+    const cliInput = document.getElementById('cliInput');
+    const termHistory = document.getElementById('termHistory');
+    const username = "{{ user.name.split(' ')[0] | lower | replace("'", "") }}";
+    let cmdHistory = [];
+    let historyIndex = 0;
+
+    function processCmd(cmd) {
+        let output = "";
+        if (cmd === "whoami") {
+            output = `User: <span class="term-highlight">{{ user.name | replace('`', '\\`') }}</span>\nRole: {{ user.role | upper }}\nStatus: AUTHORIZED`;
+        } else if (cmd === "clear") {
+            termHistory.innerHTML = "";
+            return;
+        } else if (cmd === "help") {
+            output = `Available commands:\n  whoami   - Display current user identity\n  stats    - Show campaign telemetry\n  clear    - Clear terminal screen\n  reboot   - Restart agentic engine`;
+        } else if (cmd === "stats") {
+            output = `Total Campaigns: {{ stats.total_campaigns or 0 }}\nActive Pylads: {{ stats.active_campaigns or 0 }}`;
+        } else if (cmd === "reboot") {
+            output = `Rebooting... [OK]\nConnecting to AI nodes... [OK]`;
+        } else {
+            output = `bash: ${cmd}: command not found`;
+        }
+        
+        if (output) {
+            termHistory.innerHTML += `<div class="term-output">${output.replace(/\n/g, '<br>')}</div>`;
+        }
+    }
+
+    cliInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            const cmd = this.value.trim();
+            if (cmd) {
+                // Add to history
+                cmdHistory.push(cmd);
+                historyIndex = cmdHistory.length;
+                
+                // Echo cmd
+                const div = document.createElement('div');
+                div.className = 'term-line';
+                div.innerHTML = `<span class="term-prompt">${username}@phishsim:~$</span> <span class="term-cmd">${cmd}</span>`;
+                termHistory.appendChild(div);
+                
+                // Process cmd
+                processCmd(cmd);
+            }
+            this.value = '';
+            document.getElementById('sysTerminal').scrollTop = document.getElementById('sysTerminal').scrollHeight;
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            if (historyIndex > 0) {
+                historyIndex--;
+                this.value = cmdHistory[historyIndex];
+            }
+        } else if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            if (historyIndex < cmdHistory.length - 1) {
+                historyIndex++;
+                this.value = cmdHistory[historyIndex];
+            } else {
+                historyIndex = cmdHistory.length;
+                this.value = '';
+            }
+        }
+    });
+});
+
+// Terminal Window Controls
+function toggleTerminal() {
+    const term = document.getElementById('terminalWrapper');
+    term.style.transform = 'scale(0) translate(0px, 0px)';
+    term.style.opacity = '0';
+    term.style.pointerEvents = 'none';
+}
+
+function restoreTerminal() {
+    const term = document.getElementById('terminalWrapper');
+    term.style.transform = 'scale(1) translate(0px, 0px)';
+    term.style.opacity = '1';
+    term.style.pointerEvents = 'all';
+    setTimeout(() => document.getElementById('cliInput').focus(), 400);
+}
+
+let isExpanded = false;
+function maximizeTerminal() {
+    const term = document.getElementById('terminalWrapper');
+    if (!isExpanded) {
+        term.style.height = "700px";
+        isExpanded = true;
+    } else {
+        term.style.height = "auto";
+        isExpanded = false;
+    }
+}
+</script>
+{% endblock %}

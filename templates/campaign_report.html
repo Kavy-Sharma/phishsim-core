@@ -177,6 +177,16 @@ body { background: #020617 !important; }
         </div>
     </div>
 
+    <!-- AI Visualization (Chart.js) -->
+    <div class="glass-panel" style="margin-bottom: 2rem; background: rgba(10, 15, 30, 0.4); border: 1px solid rgba(6, 182, 212, 0.1); border-radius: 16px; padding: 1.5rem; animation: fadeInUp 0.6s ease-out 0.4s forwards; opacity: 0;">
+        <h3 style="color: #fff; font-family: 'Space Mono', monospace; margin-top: 0; text-align: center;">
+            <i class="fas fa-radar" style="color: #06b6d4;"></i> Vulnerability Signature
+        </h3>
+        <div style="position: relative; height: 350px; width: 100%; display: flex; justify-content: center;">
+            <canvas id="metricsChart"></canvas>
+        </div>
+    </div>
+
     <!-- Actions -->
     <div class="report-actions">
         <a href="/download-report/{{ campaign.id }}" class="pdf-btn">
@@ -198,4 +208,51 @@ body { background: #020617 !important; }
         {% endfor %}
     </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const ctx = document.getElementById('metricsChart').getContext('2d');
+    
+    const delivery = {{ report.delivery_rate }};
+    const open = {{ report.open_rate }};
+    const click = {{ report.click_rate }};
+    const reportRate = {{ report.report_rate }};
+    
+    new Chart(ctx, {
+        type: 'radar',
+        data: {
+            labels: ['Delivery', 'Open Rate', 'Click Rate (Vulnerability)', 'Report Rate (Security)'],
+            datasets: [{
+                label: 'Campaign Metrics %',
+                data: [delivery, open, click, reportRate],
+                backgroundColor: 'rgba(6, 182, 212, 0.2)',
+                borderColor: '#06b6d4',
+                pointBackgroundColor: ['#3b82f6', '#eab308', '#ef4444', '#22c55e'],
+                pointBorderColor: '#fff',
+                pointHoverBackgroundColor: '#fff',
+                pointHoverBorderColor: '#06b6d4',
+                borderWidth: 2,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                r: {
+                    min: 0,
+                    max: 100,
+                    angleLines: { color: 'rgba(255, 255, 255, 0.1)' },
+                    grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                    pointLabels: { color: '#94a3b8', font: { family: 'Space Mono', size: 12 } },
+                    ticks: { display: false }
+                }
+            },
+            plugins: {
+                legend: { display: false }
+            }
+        }
+    });
+});
+</script>
 {% endblock %}

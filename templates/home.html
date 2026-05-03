@@ -82,8 +82,11 @@
 
 <!-- Interactive Terminal Section -->
 <section class="terminal-section" id="terminal-section" style="padding: 2rem 0 6rem 0; display: flex; justify-content: center; background: linear-gradient(180deg, rgba(15, 23, 42, 0.8), #020617);">
-    <div id="terminal-wrapper" style="position: relative; z-index: 10;">
-        <div class="terminal-container" id="terminal-main">
+    <div id="terminal-wrapper" style="position: relative; z-index: 10; width: 100%; max-width: 900px; padding-right: 15px; padding-top: 15px;">
+        <div class="floating-term-icon" onclick="openTerminal()" style="position: absolute; top: 0px; right: 0px; z-index: 20; border-radius: 8px;">
+            <i class="fas fa-satellite-dish"></i> LIVE
+        </div>
+        <div class="terminal-container" id="terminal-main" style="width: 100%; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); transform-origin: top right;">
             <div class="terminal-header">
                 <div class="terminal-title">
                     <i class="fas fa-terminal"></i> root@phishsim.ai
@@ -109,17 +112,13 @@
                 </div>
                 <div class="terminal-input-row">
                     <span class="prompt">user@phishsim.ai:~$</span>
-                    <input type="text" id="terminal-input" autocomplete="off" spellcheck="false">
+                    <input type="text" id="terminal-input" autocomplete="off" spellcheck="false" style="background: transparent !important; background-color: transparent !important; border: none !important; color: #fff; font-family: 'Space Mono', monospace; font-size: 0.9rem; flex: 1; outline: none !important; margin-left: 5px; box-shadow: none !important; appearance: none; caret-color: #06b6d4;">
                 </div>
             </div>
         </div>
     </div>
 </section>
 
-<!-- Floating Terminal Icon -->
-<div class="terminal-icon-mini" id="terminal-mini" onclick="openTerminal()" style="position: fixed; bottom: 30px; right: 30px; z-index: 9999;">
-    <i class="fas fa-terminal"></i>
-</div>
 
 <!-- Enterprise Vertical Bars (Brside Inspiration) -->
 <section class="enterprise-section">
@@ -428,32 +427,33 @@ function closeModal() {
 
 // --- Ultrarealistic Terminal Logic ---
 const termMain = document.getElementById('terminal-main');
-const termMini = document.getElementById('terminal-mini');
 const termInput = document.getElementById('terminal-input');
 const termOutput = document.getElementById('terminal-output');
 const termBody = document.getElementById('terminal-body');
 
 function closeTerminal() {
-    termMain.classList.remove('open');
-    termMain.classList.add('closing');
-    setTimeout(() => {
-        termMain.style.display = 'none';
-        termMain.classList.remove('closing');
-        termMini.style.display = 'flex';
-        termMini.classList.add('pop-in');
-    }, 400); // Matches CSS transition duration
+    termMain.style.transform = 'scale(0) translate(0px, 0px)';
+    termMain.style.opacity = '0';
+    termMain.style.pointerEvents = 'none';
 }
 
 function openTerminal() {
-    termMini.style.display = 'none';
-    termMain.style.display = 'flex';
-    termMain.classList.add('open');
-    document.getElementById('terminal-section').scrollIntoView({ behavior: 'smooth', block: 'center' });
-    termInput.focus();
+    termMain.style.transform = 'scale(1) translate(0px, 0px)';
+    termMain.style.opacity = '1';
+    termMain.style.pointerEvents = 'all';
+    setTimeout(() => termInput.focus(), 400);
 }
 
+let isExpanded = false;
 function maximizeTerminal() {
-    termMain.classList.toggle('fullscreen');
+    if (!isExpanded) {
+        termMain.style.transition = "height 0.4s ease";
+        termMain.style.height = "700px";
+        isExpanded = true;
+    } else {
+        termMain.style.height = "500px";
+        isExpanded = false;
+    }
 }
 
 function rebootTerminal() {
