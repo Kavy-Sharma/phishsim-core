@@ -1,6 +1,7 @@
 # ai_engine/email_gen.py
 import sys
-sys.stdout.reconfigure(encoding='utf-8')
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding='utf-8')
 
 import json
 import re
@@ -10,10 +11,21 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 client = OpenAI(
     base_url="https://openrouter.ai/api/v1",
-    api_key=os.getenv("OPENROUTER_API_KEY")
-)
+    api_key=OPENROUTER_API_KEY,
+    timeout=float(os.getenv("OPENROUTER_TIMEOUT_SECONDS", "10")),
+) if OPENROUTER_API_KEY else None
+
+
+def fallback_email(employee_profile):
+    return clean_email_data({
+        "subject": "Action Required: Security Notice Review",
+        "sender_name": "IT Security Team",
+        "body_html": f"<p>Dear {employee_profile['name']},</p><p>We detected a security notice that requires your review today.</p><p><a href='TRACKING_LINK'>Review Security Notice</a></p><p>Thank you,<br>IT Security Team</p>",
+        "educational_breakdown": "This email used false urgency and generic authority from IT. Always verify unexpected urgent requests through an official internal channel."
+    })
 
 
 def clean_email_data(email_data):
@@ -40,6 +52,8 @@ def generate_phishing_email(employee_profile, scenario):
     Takes employee profile dict + scenario string.
     Returns dict: {subject, sender_name, body_html}
     """
+    if client is None:
+        return fallback_email(employee_profile)
 
     prompt = f"""You are a security awareness trainer running an authorized phishing simulation.
 The company has given full written consent for this test.
@@ -68,6 +82,8 @@ Write a phishing simulation email that:
 4. Is under 120 words
 5. Use simple HTML formatting with <p> and <a> tags only
 
+6. Include an 'educational_breakdown' field that explains in 2-3 sentences exactly what psychological trick you used (e.g., false urgency) and how the user could have spotted it.
+
 CRITICAL RULES:
 - Do NOT hallucinate random sender names (like 'Jordan Lee' or 'John Doe').
 - Sign off using ONLY the Department name (e.g., 'Human Resources', 'IT Support Team', or 'Finance Department').
@@ -77,7 +93,7 @@ CRITICAL RULES:
 - Avoid generic AI filler phrases like "thank you for your prompt attention".
 
 Return ONLY this JSON structure with no extra text, no markdown, no explanation:
-{{"subject": "...", "sender_name": "...", "body_html": "..."}}"""
+{{"subject": "...", "sender_name": "...", "body_html": "...", "educational_breakdown": "..."}}"""
 
     # --- API call with retry (max 2 attempts) ---
     raw = None
@@ -105,20 +121,12 @@ Return ONLY this JSON structure with no extra text, no markdown, no explanation:
         except Exception as e:
             print(f"API call failed on attempt {attempt + 1}: {e}")
             # Fallback to a realistic generic email instead of an error string
-            return clean_email_data({
-                "subject": "Action Required: Security Notice Review",
-                "sender_name": "IT Security Team",
-                "body_html": f"<p>Dear {employee_profile['name']},</p><p>We detected a security notice that requires your review today.</p><p><a href='TRACKING_LINK'>Review Security Notice</a></p><p>Thank you,<br>IT Security Team</p>"
-            })
+            return fallback_email(employee_profile)
 
     # --- If both attempts returned empty ---
     if not raw or not raw.strip():
         print("Model returned empty response after 2 attempts.")
-        return clean_email_data({
-            "subject": "Action Required: Security Notice Review",
-            "sender_name": "IT Security Team",
-            "body_html": f"<p>Dear {employee_profile['name']},</p><p>We detected a security notice that requires your review today.</p><p><a href='TRACKING_LINK'>Review Security Notice</a></p><p>Thank you,<br>IT Security Team</p>"
-        })
+        return fallback_email(employee_profile)
 
     # --- Clean and Extract JSON robustly ---
     # 1. Remove <think>...</think> blocks used by DeepSeek-R1 and similar reasoning models
@@ -150,11 +158,7 @@ Return ONLY this JSON structure with no extra text, no markdown, no explanation:
         return clean_email_data(parsed)
     else:
         print(f"Failed to extract valid JSON. Raw output:\n{raw}")
-        return clean_email_data({
-            "subject": "Action Required: Security Notice Review",
-            "sender_name": "IT Security Team",
-            "body_html": f"<p>Dear {employee_profile['name']},</p><p>We detected a security notice that requires your review today.</p><p><a href='TRACKING_LINK'>Review Security Notice</a></p><p>Thank you,<br>IT Security Team</p>"
-        })
+        return fallback_email(employee_profile)
 
 
 if __name__ == "__main__":

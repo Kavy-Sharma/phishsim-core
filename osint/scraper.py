@@ -1,11 +1,13 @@
 # osint/scraper.py
 import sys
-sys.stdout.reconfigure(encoding='utf-8')
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding='utf-8')
 
 import json
 import re
 import csv
 import time
+import os
 from urllib.parse import urljoin
 
 import urllib3
@@ -23,8 +25,11 @@ def get_page_source(domain):
     }
     
     html = None
+    direct_timeout = float(os.getenv("OSINT_DIRECT_TIMEOUT_SECONDS", "5"))
+    fallback_timeout = float(os.getenv("OSINT_FALLBACK_TIMEOUT_SECONDS", "7"))
+
     try:
-        with httpx.Client(verify=False, timeout=15.0, follow_redirects=True) as client:
+        with httpx.Client(verify=False, timeout=direct_timeout, follow_redirects=True) as client:
             response = client.get(url, headers=headers)
             response.raise_for_status()
             html = response.text
@@ -51,7 +56,7 @@ def get_page_source(domain):
         jina_headers = headers.copy()
         jina_headers["X-Return-Format"] = "html"
         try:
-            with httpx.Client(verify=False, timeout=20.0, follow_redirects=True) as client:
+            with httpx.Client(verify=False, timeout=fallback_timeout, follow_redirects=True) as client:
                 response = client.get(jina_url, headers=jina_headers)
                 response.raise_for_status()
                 html = response.text

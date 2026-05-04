@@ -8,11 +8,17 @@ from datetime import datetime
 from functools import wraps
 from werkzeug.security import generate_password_hash, check_password_hash
 from ai_engine.report_agent import build_campaign_report
+from send_email import get_email_settings, send_phishing_email
 
 load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = os.getenv("FLASK_SECRET_KEY", "dev-secret-change-me")
+SCHEMA_FLAGS = {
+    "auth": "AUTH_SCHEMA_READY",
+    "email": "EMAIL_SCHEMA_READY",
+    "events": "EVENTS_SCHEMA_READY",
+}
 
 # --- Database Connection Helper ---
 # Perfection Tip: Use a connection pool in production, but for now we optimize manual connections
@@ -220,7 +226,21 @@ def ensure_email_tracking_table(cursor):
     for ddl in [
         "ALTER TABLE emails_sent ADD COLUMN recipient_email VARCHAR(255)",
         "ALTER TABLE emails_sent ADD COLUMN status VARCHAR(50) DEFAULT 'sent'",
-        "ALTER TABLE emails_sent ADD COLUMN error_message TEXT"
+        "ALTER TABLE emails_sent ADD COLUMN error_message TEXT",
+        "ALTER TABLE emails_sent ADD COLUMN educational_breakdown TEXT",
+        "ALTER TABLE emails_sent ADD COLUMN subject VARCHAR(255)",
+        "ALTER TABLE emails_sent ADD COLUMN sender_name VARCHAR(255)",
+        "ALTER TABLE emails_sent ADD COLUMN body_html TEXT"
+    ]:
+        try:
+            cursor.execute(ddl)
+        except Exception:
+            pass
+
+    for ddl in [
+        "CREATE INDEX idx_emails_sent_campaign_status ON emails_sent (campaign_id, status)",
+        "CREATE INDEX idx_emails_sent_campaign_tracking ON emails_sent (campaign_id, tracking_id)",
+        "CREATE INDEX idx_emails_sent_tracking ON emails_sent (tracking_id)"
     ]:
         try:
             cursor.execute(ddl)
@@ -239,11 +259,31 @@ def ensure_events_table(cursor):
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
+    for ddl in [
+        "CREATE INDEX idx_events_tracking_type ON events (tracking_id, event_type)",
+        "CREATE INDEX idx_events_tracking ON events (tracking_id)"
+    ]:
+        try:
+            cursor.execute(ddl)
+        except Exception:
+            pass
+
+def ensure_email_schema_once(cursor):
+    """Runs heavier email/event schema checks once per app process."""
+    changed = False
+    if not app.config.get(SCHEMA_FLAGS["email"]):
+        ensure_email_tracking_table(cursor)
+        app.config[SCHEMA_FLAGS["email"]] = True
+        changed = True
+    if not app.config.get(SCHEMA_FLAGS["events"]):
+        ensure_events_table(cursor)
+        app.config[SCHEMA_FLAGS["events"]] = True
+        changed = True
+    return changed
 
 def get_campaign_metrics(cursor, campaign_id):
     """Loads one campaign with employee, delivery, and event metrics."""
-    ensure_email_tracking_table(cursor)
-    ensure_events_table(cursor)
+    ensure_email_schema_once(cursor)
     cursor.execute("SELECT * FROM campaigns WHERE id = %s", (campaign_id,))
     campaign = cursor.fetchone()
     if not campaign:
@@ -292,6 +332,89 @@ def get_campaign_metrics(cursor, campaign_id):
 @app.route("/")
 def home():
     return render_template("home.html")
+
+@app.route("/demo-login")
+def demo_login():
+    """Instantly creates a populated demo account and logs the user in."""
+    import uuid
+    import random
+    from datetime import datetime, timedelta
+    
+    db = get_db_connection()
+    cursor = db.cursor(dictionary=True)
+    
+    demo_email = f"demo_{uuid.uuid4().hex[:8]}@phishsim.ai"
+    cursor.execute("""
+        INSERT INTO users (name, email, password_hash, role, company_domain)
+        VALUES (%s, %s, %s, 'company_user', 'demo-corp.com')
+    """, ("Demo Admin", demo_email, generate_password_hash("demo_pass")))
+    
+    user_id = cursor.lastrowid
+    
+    # Preload Campaign 1 (Launched & Successful)
+    cursor.execute("""
+        INSERT INTO campaigns (user_id, name, company_domain, scenario_type, delivery_mode, status)
+        VALUES (%s, 'Q3 Finance Phish (Simulated)', 'demo-corp.com', 'ceo_fraud', 'local', 'launched')
+    """, (user_id,))
+    camp1_id = cursor.lastrowid
+    
+    # Preload Campaign 2 (Launched & Completed)
+    cursor.execute("""
+        INSERT INTO campaigns (user_id, name, company_domain, scenario_type, delivery_mode, status)
+        VALUES (%s, 'Mandatory HR Training (Simulated)', 'demo-corp.com', 'hr_update', 'smtp', 'launched')
+    """, (user_id,))
+    camp2_id = cursor.lastrowid
+    
+    # Populate Fake Emails & Events for Camp 1
+    ensure_email_tracking_table(cursor)
+    ensure_events_table(cursor)
+    
+    for i in range(1, 46): # 45 fake employees
+        trk_id = str(uuid.uuid4())
+        cursor.execute("""
+            INSERT INTO emails_sent (campaign_id, tracking_id, recipient_email, status, educational_breakdown, subject, sender_name, body_html)
+            VALUES (%s, %s, %s, 'sent', 'This email used false urgency from the CEO. Always verify wire transfers via phone.', %s, %s, %s)
+        """, (camp1_id, trk_id, f"employee{i}@demo-corp.com", "URGENT: Wire Transfer Approval Needed Today", "CEO's Office", f"<p>Dear employee,</p><p>I am in a meeting all day and need you to process an urgent wire transfer for our new vendor. The payment must go out before 3 PM.</p><p>Please click here to <a href='TRACKING_LINK'>review the invoice and wire details</a>.</p><p>Let me know once it's done.</p>"))
+        
+        # 60% Open Rate
+        if random.random() < 0.60:
+            cursor.execute("INSERT INTO events (tracking_id, event_type, ip_address) VALUES (%s, 'open', '127.0.0.1')", (trk_id,))
+            
+            # 30% Click Rate (of those who opened)
+            if random.random() < 0.30:
+                cursor.execute("INSERT INTO events (tracking_id, event_type, ip_address) VALUES (%s, 'click', '127.0.0.1')", (trk_id,))
+            
+            # 10% Report Rate
+            elif random.random() < 0.10:
+                cursor.execute("INSERT INTO events (tracking_id, event_type, ip_address) VALUES (%s, 'report', '127.0.0.1')", (trk_id,))
+                
+    # Populate Fake Emails & Events for Camp 2
+    for i in range(1, 31): # 30 fake employees
+        trk_id = str(uuid.uuid4())
+        cursor.execute("""
+            INSERT INTO emails_sent (campaign_id, tracking_id, recipient_email, status, educational_breakdown, subject, sender_name, body_html)
+            VALUES (%s, %s, %s, 'sent', 'This email impersonated HR and created a false compliance deadline.', %s, %s, %s)
+        """, (camp2_id, trk_id, f"staff{i}@demo-corp.com", "Action Required: Annual HR Benefits Update", "Human Resources", f"<p>Hello,</p><p>Our records indicate that you have not yet confirmed your benefits enrollment for the upcoming year. The deadline is tomorrow at 5 PM.</p><p>Failure to complete this may result in a lapse of coverage.</p><p>Please log in immediately to <a href='TRACKING_LINK'>update your enrollment status</a>.</p><p>Regards,<br>HR Department</p>"))
+        
+        # 80% Open Rate (HR is tricky!)
+        if random.random() < 0.80:
+            cursor.execute("INSERT INTO events (tracking_id, event_type, ip_address) VALUES (%s, 'open', '127.0.0.1')", (trk_id,))
+            
+            # 40% Click Rate
+            if random.random() < 0.40:
+                cursor.execute("INSERT INTO events (tracking_id, event_type, ip_address) VALUES (%s, 'click', '127.0.0.1')", (trk_id,))
+            
+            # 5% Report Rate
+            elif random.random() < 0.05:
+                cursor.execute("INSERT INTO events (tracking_id, event_type, ip_address) VALUES (%s, 'report', '127.0.0.1')", (trk_id,))
+                
+    db.commit()
+    cursor.close()
+    db.close()
+    
+    session["user_id"] = user_id
+    flash("Welcome to the PhishSim Demo! We've pre-loaded some active campaigns and statistics for you.", "success")
+    return redirect(url_for("dashboard"))
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -438,15 +561,13 @@ def dashboard():
     db = get_db_connection()
     cursor = db.cursor(dictionary=True)
     try:
-        # Schema guards - only run once or in background
-        ensure_email_tracking_table(cursor)
-        ensure_events_table(cursor)
-        db.commit()
+        if ensure_email_schema_once(cursor):
+            db.commit()
 
         # 1. FETCH ALL CAMPAIGNS WITH AGGREGATED METRICS IN ONE SINGLE QUERY (PERFECTION!)
         # This replaces the N+1 problem (looping through campaigns and running queries)
         if user["role"] == "admin":
-            where_clause = ""
+            where_clause = "WHERE c.company_domain != 'demo-corp.com' OR c.company_domain IS NULL"
             params = ()
         else:
             where_clause = "WHERE c.user_id = %s"
@@ -471,15 +592,33 @@ def dashboard():
         """
         cursor.execute(sql, params)
         campaigns = cursor.fetchall()
+        total_employees = sum(c['employee_count'] for c in campaigns)
+        total_opens = sum(c['opens'] for c in campaigns)
+        total_clicks = sum(c['clicks'] for c in campaigns)
+        total_reports = sum(c['reports'] for c in campaigns)
+        
+        global_risk = 0
+        if total_opens > 0:
+            global_risk = int((total_clicks / total_opens) * 100)
+        elif total_employees > 0 and total_clicks > 0: # fallback
+            global_risk = int((total_clicks / total_employees) * 100)
+            
+        global_stats = {
+            "total_campaigns": len(campaigns),
+            "total_employees": total_employees,
+            "global_risk": global_risk,
+            "total_reports": total_reports
+        }
         
     except Exception as e:
         print(f"Dashboard query failed: {e}")
         campaigns = []
+        global_stats = {"total_campaigns": 0, "total_employees": 0, "global_risk": 0, "total_reports": 0}
     finally:
         cursor.close()
         db.close()
         
-    return render_template("dashboard.html", campaigns=campaigns)
+    return render_template("dashboard.html", campaigns=campaigns, global_stats=global_stats)
 
 # 1. ADD THIS ROUTE: This shows the "Create Campaign" page
 @app.route("/new-campaign", methods=["GET", "POST"])
@@ -569,7 +708,6 @@ import threading
 
 def process_campaign_background(campaign_id):
     """Runs the AI generation and email dispatching in the background so the browser doesn't freeze."""
-    import time
     try:
         db = get_db_connection()
         cursor = db.cursor(dictionary=True)
@@ -583,14 +721,21 @@ def process_campaign_background(campaign_id):
         employees = cursor.fetchall()
         ensure_email_tracking_table(cursor)
         db.commit()
+
+        if not employees:
+            cursor.execute("UPDATE campaigns SET status = 'failed' WHERE id = %s", (campaign_id,))
+            db.commit()
+            cursor.close()
+            db.close()
+            return
         
-        try:
+        if os.getenv("PHISHSIM_ENABLE_OSINT", "false").strip().lower() in ("1", "true", "yes"):
             from osint.scraper import scrape_company
             company_profile = scrape_company(campaign["company_domain"])
-        except ImportError:
+        else:
             company_profile = {
                 "company_name": campaign.get("company_domain", "Your Company"),
-                "description": "Standard corporate description",
+                "description": "",
                 "writing_tone": "professional and urgent"
             }
         
@@ -601,28 +746,42 @@ def process_campaign_background(campaign_id):
                 return {
                     "subject": "Important Policy Update",
                     "sender_name": "HR Department",
-                    "body_html": "<p>Please review the attached document.</p><p><a href='TRACKING_LINK'>Review Document</a></p>"
+                    "body_html": "<p>Please review the attached document.</p><p><a href='TRACKING_LINK'>Review Document</a></p>",
+                    "educational_breakdown": "This email attempts to create urgency about a policy update. Real policy updates will be communicated through official internal channels."
                 }
 
-        from send_email import send_phishing_email
-
+        import uuid
         sent_count = 0
         failed_count = 0
+        generation_cache = {}
 
         for emp in employees:
-            import uuid
             tracking_id = str(uuid.uuid4())
-            time.sleep(0.2) # Minimal delay to avoid rate limits
 
+            department = emp.get("department") or "staff"
+            title = emp.get("title") or "employee"
             emp_context = {
                 "name": emp.get("name", "Employee"),
-                "department": emp.get("department", "staff"),
-                "title": emp.get("title", "employee"),
+                "department": department,
+                "title": title,
                 "company_name": company_profile.get("company_name", ""),
+                "company_description": company_profile.get("description", ""),
                 "company_tone": company_profile.get("writing_tone", "")
             }
             
-            email_data = generate_phishing_email(emp_context, campaign["scenario_type"])
+            cache_key = (campaign["scenario_type"], department, title)
+            if cache_key not in generation_cache:
+                template_context = emp_context.copy()
+                template_context["name"] = "{employee_name}"
+                generation_cache[cache_key] = generate_phishing_email(template_context, campaign["scenario_type"])
+
+            email_data = generation_cache[cache_key].copy()
+            employee_name = emp.get("name") or "there"
+            for key in ("subject", "sender_name", "body_html", "educational_breakdown"):
+                if isinstance(email_data.get(key), str):
+                    email_data[key] = email_data[key].replace("{employee_name}", employee_name)
+
+            breakdown = email_data.get("educational_breakdown", "This was a simulated phishing email designed to test security awareness.")
             
             result = send_phishing_email(
                 to_email=emp["email"],
@@ -643,8 +802,8 @@ def process_campaign_background(campaign_id):
             
             tracking_sql = """
                 INSERT INTO emails_sent
-                    (campaign_id, tracking_id, recipient_email, status, error_message)
-                VALUES (%s, %s, %s, %s, %s)
+                    (campaign_id, tracking_id, recipient_email, status, error_message, educational_breakdown, subject, sender_name, body_html)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
             """
             try:
                 cursor.execute(tracking_sql, (
@@ -652,11 +811,18 @@ def process_campaign_background(campaign_id):
                     tracking_id,
                     emp["email"],
                     send_status,
-                    error_message
+                    error_message,
+                    breakdown,
+                    email_data["subject"],
+                    email_data["sender_name"],
+                    email_data["body_html"]
                 ))
-                db.commit() # Commit after each email so we get live updates
             except Exception as db_err:
                 print(f"Tracking DB error: {db_err}")
+                failed_count += 1
+
+            if (sent_count + failed_count) % 5 == 0 or True:  # commit every email for reliability
+                db.commit()
             
         if sent_count and failed_count:
             final_status = "launched_with_errors"
@@ -693,6 +859,29 @@ def launch_campaign(campaign_id):
             cursor.close()
             db.close()
             return "Campaign not found.", 404
+
+        if campaign.get("status") == "launching":
+            cursor.close()
+            db.close()
+            flash("This campaign is already launching.")
+            return redirect(url_for("dashboard"))
+
+        cursor.execute("SELECT COUNT(*) AS count FROM employees WHERE campaign_id = %s", (campaign_id,))
+        employee_count = cursor.fetchone()["count"]
+        if employee_count == 0:
+            cursor.close()
+            db.close()
+            flash("Upload at least one target before launching.")
+            return redirect(url_for("dashboard"))
+
+        if campaign.get("delivery_mode") == "smtp":
+            settings = get_email_settings("smtp")
+            if not settings["host"] or not settings["user"] or not settings["password"]:
+                cursor.close()
+                db.close()
+                flash("SMTP delivery is not configured. Add SMTP_HOST, SMTP_USER, SMTP_PASS, and EMAIL_FROM in .env, or use Local delivery.")
+                return redirect(url_for("dashboard"))
+
         # Immediately set status to launching and show dashboard to user
         cursor.execute("UPDATE campaigns SET status = 'launching' WHERE id = %s", (campaign_id,))
         db.commit()
@@ -740,12 +929,13 @@ def simulation_reveal():
     """Shows after 3 seconds on fake login - explains the simulation."""
     tracking_id = request.args.get('id')
     scenario_type = None
+    breakdown = None
     if tracking_id:
         try:
             db = get_db_connection()
             cursor = db.cursor(dictionary=True)
             cursor.execute("""
-                SELECT c.scenario_type 
+                SELECT c.scenario_type, e.educational_breakdown 
                 FROM campaigns c
                 JOIN emails_sent e ON c.id = e.campaign_id
                 WHERE e.tracking_id = %s
@@ -753,11 +943,12 @@ def simulation_reveal():
             res = cursor.fetchone()
             if res:
                 scenario_type = res['scenario_type'].replace('_', ' ').title()
+                breakdown = res.get('educational_breakdown')
             cursor.close()
             db.close()
         except:
             pass
-    return render_template("simulated.html", scenario=scenario_type)
+    return render_template("simulated.html", scenario=scenario_type, breakdown=breakdown)
 
 @app.route("/report/<tracking_id>")
 def report_email(tracking_id):
@@ -773,9 +964,8 @@ def campaign_report(campaign_id):
     db = get_db_connection()
     cursor = db.cursor(dictionary=True)
     try:
-        ensure_email_tracking_table(cursor)
-        ensure_events_table(cursor)
-        db.commit()
+        if ensure_email_schema_once(cursor):
+            db.commit()
         if not user_can_access_campaign(cursor, campaign_id, user):
             return "Campaign not found.", 404
         campaign = get_campaign_metrics(cursor, campaign_id)
@@ -797,9 +987,8 @@ def download_report(campaign_id):
     db = get_db_connection()
     cursor = db.cursor(dictionary=True)
     try:
-        ensure_email_tracking_table(cursor)
-        ensure_events_table(cursor)
-        db.commit()
+        if ensure_email_schema_once(cursor):
+            db.commit()
         if not user_can_access_campaign(cursor, campaign_id, user):
             return "Campaign not found.", 404
         campaign = get_campaign_metrics(cursor, campaign_id)
@@ -886,6 +1075,26 @@ def download_report(campaign_id):
         headers={"Content-Disposition": f"attachment;filename=PhishSim_Report_{campaign_id}.pdf"}
     )
 
+@app.route("/clone-campaign/<int:campaign_id>", methods=["POST"])
+@login_required
+def clone_campaign(campaign_id):
+    user = current_user()
+    db = get_db_connection()
+    cursor = db.cursor(dictionary=True)
+    campaign = user_can_access_campaign(cursor, campaign_id, user)
+    if not campaign:
+        return "Campaign not found.", 404
+
+    new_name = campaign["name"] + " (Clone)"
+    cursor.execute("""
+        INSERT INTO campaigns (user_id, name, company_domain, scenario_type, delivery_mode, status)
+        VALUES (%s, %s, %s, %s, %s, 'draft')
+    """, (user["id"], new_name, campaign["company_domain"], campaign["scenario_type"], campaign["delivery_mode"]))
+    db.commit()
+    cursor.close()
+    db.close()
+    return redirect(url_for("dashboard"))
+
 @app.route("/delete-campaign/<int:campaign_id>", methods=["POST"])
 @login_required
 def delete_campaign(campaign_id):
@@ -913,6 +1122,73 @@ def delete_campaign(campaign_id):
     except Exception as e:
         print(f"Delete failed: {e}")
     return redirect(url_for('dashboard'))
+
+@app.route("/campaign-emails/<int:campaign_id>")
+@login_required
+def campaign_emails(campaign_id):
+    """Shows a beautiful page of all AI-generated emails for a campaign."""
+    user = current_user()
+    db = get_db_connection()
+    cursor = db.cursor(dictionary=True)
+    try:
+        campaign = user_can_access_campaign(cursor, campaign_id, user)
+        if not campaign:
+            return "Campaign not found or access denied", 404
+        
+        cursor.execute("""
+            SELECT id, recipient_email, subject, sender_name, body_html, educational_breakdown, status, tracking_id
+            FROM emails_sent 
+            WHERE campaign_id = %s
+            ORDER BY id ASC
+        """, (campaign_id,))
+        emails = cursor.fetchall()
+        
+        # Replace TRACKING_LINK placeholder in stored bodies with the simulated page link
+        base_url = os.getenv("APP_BASE_URL", "http://127.0.0.1:5000").rstrip("/")
+        for email in emails:
+            if email.get("body_html") and email.get("tracking_id"):
+                tracking_url = f"{base_url}/click/{email['tracking_id']}"
+                email["body_html"] = email["body_html"].replace("TRACKING_LINK", tracking_url)
+        
+        return render_template("campaign_emails.html", campaign=campaign, emails=emails)
+    finally:
+        cursor.close()
+        db.close()
+
+@app.route("/exit-demo")
+def exit_demo():
+    """Deletes the demo user and their campaigns, then logs out."""
+    user = current_user()
+    if user and user.get("company_domain") == "demo-corp.com":
+        db = get_db_connection()
+        cursor = db.cursor()
+        try:
+            # Delete campaigns and cascade
+            cursor.execute("SELECT id FROM campaigns WHERE user_id = %s", (user["id"],))
+            campaigns = cursor.fetchall()
+            for (camp_id,) in campaigns:
+                try:
+                    cursor.execute("SELECT tracking_id FROM emails_sent WHERE campaign_id = %s", (camp_id,))
+                    tracking_ids = [r[0] for r in cursor.fetchall()]
+                    if tracking_ids:
+                        format_strings = ','.join(['%s'] * len(tracking_ids))
+                        cursor.execute(f"DELETE FROM events WHERE tracking_id IN ({format_strings})", tuple(tracking_ids))
+                    cursor.execute("DELETE FROM emails_sent WHERE campaign_id = %s", (camp_id,))
+                except: pass
+                cursor.execute("DELETE FROM employees WHERE campaign_id = %s", (camp_id,))
+            
+            cursor.execute("DELETE FROM campaigns WHERE user_id = %s", (user["id"],))
+            cursor.execute("DELETE FROM users WHERE id = %s", (user["id"],))
+            db.commit()
+        except Exception as e:
+            print(f"Error exiting demo: {e}")
+        finally:
+            cursor.close()
+            db.close()
+    
+    session.clear()
+    flash("Demo ended successfully. Your temporary data has been cleared.", "success")
+    return redirect(url_for("home"))
 
 if __name__ == "__main__":
     app.run(debug=True)

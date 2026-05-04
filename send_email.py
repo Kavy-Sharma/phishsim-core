@@ -7,19 +7,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-def smtp_login(server, user, password):
-    """Uses AUTH LOGIN so Mailtrap's exact authentication/quota error is preserved."""
-    code, response = server.docmd("AUTH", "LOGIN")
-    if code != 334:
-        raise smtplib.SMTPAuthenticationError(code, response)
 
-    code, response = server.docmd(base64.b64encode(user.encode()).decode())
-    if code != 334:
-        raise smtplib.SMTPAuthenticationError(code, response)
-
-    code, response = server.docmd(base64.b64encode(password.encode()).decode())
-    if code != 235:
-        raise smtplib.SMTPAuthenticationError(code, response)
 
 def get_email_settings(delivery_mode=None):
     """Builds SMTP settings from .env without tying the app to one provider."""
@@ -89,6 +77,12 @@ def send_phishing_email(to_email, subject, sender_name, body_html, tracking_id, 
     msg["To"] = to_email
     
     msg.attach(MIMEText(body_html, "html"))
+
+
+    if not settings["host"]:
+        error = f"{settings['provider'].upper()} host missing from .env file."
+        print(f"Error: {error}")
+        return {"success": False, "error": error}
     
     if settings["provider"] in ("mailtrap", "smtp") and (not settings["user"] or not settings["password"]):
         error = f"{settings['provider'].upper()} credentials missing from .env file."
@@ -97,11 +91,12 @@ def send_phishing_email(to_email, subject, sender_name, body_html, tracking_id, 
         
     try:
         smtp_class = smtplib.SMTP_SSL if settings["encryption"] == "ssl" else smtplib.SMTP
-        with smtp_class(settings["host"], settings["port"], timeout=30) as server:
+        timeout = float(os.getenv("SMTP_TIMEOUT_SECONDS", "6"))
+        with smtp_class(settings["host"], settings["port"], timeout=timeout) as server:
             if settings["encryption"] == "starttls":
                 server.starttls()
             if settings["user"] and settings["password"]:
-                smtp_login(server, settings["user"], settings["password"])
+                server.login(settings["user"], settings["password"])
             server.send_message(msg)
             print(f"Successfully sent simulation email to {to_email} via {settings['provider']}")
             return {"success": True, "error": None}

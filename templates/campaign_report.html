@@ -189,6 +189,9 @@ body { background: #020617 !important; }
 
     <!-- Actions -->
     <div class="report-actions">
+        <a href="/campaign-emails/{{ campaign.id }}" class="back-link" style="padding: 14px 24px; border: 1px solid rgba(59,130,246,0.3); border-radius: 12px; color: #fff; background: rgba(59,130,246,0.1);">
+            <i class="fas fa-envelope-open-text"></i> View Generated Emails
+        </a>
         <a href="/download-report/{{ campaign.id }}" class="pdf-btn">
             <i class="fas fa-file-pdf"></i> Download PDF Report
         </a>
@@ -254,5 +257,65 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 });
+
+function openPreviewModal(campaignId) {
+    document.getElementById('emailPreviewModal').style.display = 'flex';
+    document.getElementById('emailPreviewContent').innerHTML = '<div style="text-align:center; color:#94a3b8; padding: 2rem;">Loading emails...</div>';
+    
+    fetch('/campaign-emails/' + campaignId)
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                document.getElementById('emailPreviewContent').innerHTML = '<div style="color:#ef4444; padding:2rem;">' + data.error + '</div>';
+                return;
+            }
+            
+            if (!data.emails || data.emails.length === 0) {
+                document.getElementById('emailPreviewContent').innerHTML = '<div style="color:#94a3b8; padding:2rem; text-align:center;">No emails found for this campaign.</div>';
+                return;
+            }
+
+            let html = '';
+            data.emails.forEach((email, index) => {
+                html += `
+                <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; margin-bottom: 1.5rem; overflow: hidden;">
+                    <div style="background: rgba(0,0,0,0.2); padding: 12px 20px; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                        <div style="color: #94a3b8; font-size: 0.85rem; margin-bottom: 4px;">To: <span style="color:#fff;">${email.recipient_email}</span></div>
+                        <div style="color: #94a3b8; font-size: 0.85rem; margin-bottom: 4px;">From: <span style="color:#fff;">${email.sender_name || 'System'}</span></div>
+                        <div style="color: #94a3b8; font-size: 0.85rem;">Subject: <span style="color:#fff; font-weight:600;">${email.subject || 'No Subject'}</span></div>
+                    </div>
+                    <div style="padding: 20px; color: #cbd5e1; font-size: 0.95rem; line-height: 1.6; background: #fff; color: #1e293b;">
+                        ${email.body_html || '<em>Body not recorded.</em>'}
+                    </div>
+                    <div style="background: rgba(6,182,212,0.1); padding: 12px 20px; border-top: 1px solid rgba(6,182,212,0.2); font-size: 0.85rem; color: #06b6d4;">
+                        <strong>AI Insight:</strong> ${email.educational_breakdown || 'No breakdown available.'}
+                    </div>
+                </div>
+                `;
+            });
+            document.getElementById('emailPreviewContent').innerHTML = html;
+        })
+        .catch(err => {
+            document.getElementById('emailPreviewContent').innerHTML = '<div style="color:#ef4444; padding:2rem;">Failed to load emails.</div>';
+        });
+}
+
+function closePreviewModal() {
+    document.getElementById('emailPreviewModal').style.display = 'none';
+}
 </script>
+
+<!-- Preview Modal -->
+<div id="emailPreviewModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:9999; align-items:center; justify-content:center; backdrop-filter: blur(5px);">
+    <div style="background: #0f172a; border: 1px solid rgba(59,130,246,0.3); border-radius: 20px; width: 90%; max-width: 800px; max-height: 85vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);">
+        <div style="padding: 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.2);">
+            <h3 style="margin: 0; color: #fff; font-family: 'Outfit', sans-serif;"><i class="fas fa-robot" style="color: #3b82f6;"></i> AI Generated Emails</h3>
+            <button onclick="closePreviewModal()" style="background: none; border: none; color: #94a3b8; font-size: 1.5rem; cursor: pointer;">&times;</button>
+        </div>
+        <div id="emailPreviewContent" style="padding: 1.5rem; overflow-y: auto; flex-grow: 1;">
+            <!-- Emails inserted here -->
+        </div>
+    </div>
+</div>
+
 {% endblock %}

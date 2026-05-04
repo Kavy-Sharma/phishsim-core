@@ -1,0 +1,352 @@
+{% extends 'base.html' %}
+{% block title %}AI Generated Emails — {{ campaign.name }}{% endblock %}
+{% block content %}
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&family=Space+Mono&display=swap" rel="stylesheet">
+<style>
+body { background: #020617 !important; }
+
+.emails-page { max-width: 1100px; margin: 0 auto; padding: 2rem; }
+
+/* Top bar */
+.emails-topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 2.5rem; padding-bottom: 1.5rem;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    animation: fadeDown 0.5s ease-out;
+}
+.back-link-styled {
+    display: inline-flex; align-items: center; gap: 8px;
+    color: #64748b; text-decoration: none; font-size: 0.9rem;
+    transition: color 0.2s;
+}
+.back-link-styled:hover { color: #06b6d4; }
+
+/* Page header */
+.emails-hero {
+    background: linear-gradient(135deg, rgba(59,130,246,0.08), rgba(6,182,212,0.04));
+    border: 1px solid rgba(59,130,246,0.2);
+    border-radius: 20px; padding: 2.5rem;
+    margin-bottom: 2.5rem;
+    animation: fadeUp 0.6s ease-out;
+    position: relative; overflow: hidden;
+}
+.emails-hero::before {
+    content: ''; position: absolute; top: -60px; right: -60px;
+    width: 250px; height: 250px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(59,130,246,0.15), transparent 70%);
+    pointer-events: none;
+}
+.emails-eyebrow {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.25);
+    border-radius: 100px; padding: 5px 14px;
+    font-size: 0.78rem; color: #3b82f6;
+    font-family: 'Space Mono', monospace; text-transform: uppercase; letter-spacing: 1px;
+    margin-bottom: 1rem;
+}
+.emails-eyebrow::before {
+    content: ''; width: 6px; height: 6px; border-radius: 50%;
+    background: #3b82f6; box-shadow: 0 0 8px #3b82f6;
+    animation: pulse 2s infinite;
+}
+@keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.2; } }
+.emails-title {
+    font-family: 'Outfit', sans-serif; font-size: 2rem; font-weight: 800;
+    color: #fff; margin: 0 0 0.5rem;
+}
+.emails-meta { color: #64748b; font-size: 0.9rem; }
+.emails-count {
+    font-family: 'Space Mono', monospace; font-size: 2rem; font-weight: 900;
+    color: #3b82f6; text-align: right;
+}
+.emails-count small { display: block; font-size: 0.75rem; color: #64748b; font-weight: normal; letter-spacing: 1px; text-transform: uppercase; margin-top: 4px; }
+
+/* Layout: sidebar list + viewer */
+.emails-layout {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: 1.5rem;
+    align-items: start;
+    animation: fadeUp 0.7s ease-out 0.1s both;
+}
+
+/* Sidebar */
+.email-list {
+    background: rgba(10,16,38,0.8);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 16px;
+    overflow: hidden;
+    position: sticky;
+    top: 80px;
+    max-height: calc(100vh - 120px);
+    display: flex;
+    flex-direction: column;
+}
+.email-list-header {
+    padding: 1rem 1.2rem;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    font-family: 'Space Mono', monospace;
+    font-size: 0.75rem;
+    color: #475569;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    background: rgba(0,0,0,0.2);
+    flex-shrink: 0;
+}
+.email-list-body {
+    overflow-y: auto;
+    flex: 1;
+}
+.email-list-body::-webkit-scrollbar { width: 4px; }
+.email-list-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+
+.email-list-item {
+    padding: 1rem 1.2rem;
+    cursor: pointer;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    transition: all 0.2s;
+    position: relative;
+}
+.email-list-item:hover { background: rgba(59,130,246,0.06); }
+.email-list-item.active {
+    background: rgba(59,130,246,0.1);
+    border-left: 3px solid #3b82f6;
+}
+.email-list-item.active::before {
+    content: '';
+    position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+    background: #3b82f6;
+}
+.eli-to { font-size: 0.8rem; color: #94a3b8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 4px; }
+.eli-subject { font-size: 0.88rem; color: #fff; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 4px; }
+.eli-from { font-size: 0.75rem; color: #475569; }
+
+/* Email Viewer */
+.email-viewer {
+    background: rgba(10,16,38,0.8);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 16px;
+    overflow: hidden;
+    min-height: 500px;
+}
+.ev-header {
+    background: rgba(0,0,0,0.2);
+    padding: 1.5rem;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.ev-subject {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.3rem; font-weight: 800; color: #fff;
+    margin-bottom: 1rem;
+}
+.ev-meta-row {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 8px; font-size: 0.85rem;
+}
+.ev-meta-label { color: #475569; width: 50px; flex-shrink: 0; }
+.ev-meta-value { color: #94a3b8; }
+.ev-meta-value strong { color: #fff; }
+
+/* Email body rendered */
+.ev-body {
+    padding: 0;
+}
+.ev-body-inner {
+    background: #fff;
+    color: #1e293b;
+    padding: 2rem;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 0.95rem;
+    line-height: 1.7;
+    min-height: 200px;
+}
+.ev-body-inner a {
+    color: #2563eb;
+}
+
+/* AI Insight box */
+.ev-insight {
+    padding: 1.2rem 1.5rem;
+    background: rgba(6,182,212,0.06);
+    border-top: 1px solid rgba(6,182,212,0.15);
+    display: flex; gap: 12px; align-items: flex-start;
+}
+.ev-insight-icon {
+    font-size: 1.2rem; color: #06b6d4; flex-shrink: 0; margin-top: 2px;
+}
+.ev-insight-text { font-size: 0.88rem; color: #94a3b8; line-height: 1.6; }
+.ev-insight-text strong { color: #06b6d4; display: block; margin-bottom: 4px; }
+
+/* Empty state */
+.ev-empty {
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    height: 400px; gap: 1rem;
+    color: #334155;
+}
+.ev-empty i { font-size: 3rem; }
+.ev-empty p { font-size: 0.95rem; }
+
+/* Pagination */
+.email-nav {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1rem 1.5rem;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    background: rgba(0,0,0,0.1);
+}
+.email-nav-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 8px 16px; border-radius: 8px;
+    background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.2);
+    color: #94a3b8; font-size: 0.85rem; cursor: pointer;
+    transition: all 0.2s; font-family: 'Outfit', sans-serif;
+}
+.email-nav-btn:hover { background: rgba(59,130,246,0.2); color: #fff; }
+.email-nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+.email-nav-counter {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.8rem; color: #475569;
+}
+
+@keyframes fadeDown { from { opacity:0; transform: translateY(-12px); } to { opacity:1; transform: translateY(0); } }
+@keyframes fadeUp { from { opacity:0; transform: translateY(20px); } to { opacity:1; transform: translateY(0); } }
+</style>
+
+<div class="emails-page">
+    <!-- Top bar -->
+    <div class="emails-topbar">
+        <a href="/campaign-report/{{ campaign.id }}" class="back-link-styled">
+            <i class="fas fa-arrow-left"></i> Back to Report
+        </a>
+        <span style="font-family: 'Space Mono', monospace; font-size: 0.78rem; color: #334155; text-transform: uppercase; letter-spacing: 1px;">
+            {{ campaign.scenario_type | replace('_', ' ') | title }} Scenario
+        </span>
+    </div>
+
+    <!-- Hero -->
+    <div class="emails-hero">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
+            <div>
+                <div class="emails-eyebrow">AI Generated Content</div>
+                <h1 class="emails-title">{{ campaign.name }}</h1>
+                <p class="emails-meta">
+                    Browse every email the AI generated for this campaign.<br>
+                    Each one was crafted from scratch for the recipient's role and department.
+                </p>
+            </div>
+            <div class="emails-count">
+                {{ emails | length }}
+                <small>Emails Generated</small>
+            </div>
+        </div>
+    </div>
+
+    {% if emails %}
+    <!-- Email Client Layout -->
+    <div class="emails-layout">
+        <!-- Sidebar List -->
+        <div class="email-list">
+            <div class="email-list-header">
+                <i class="fas fa-inbox" style="color: #3b82f6; margin-right: 6px;"></i>
+                Inbox ({{ emails | length }})
+            </div>
+            <div class="email-list-body">
+                {% for email in emails %}
+                <div class="email-list-item {% if loop.first %}active{% endif %}"
+                     onclick="showEmail({{ loop.index0 }})"
+                     id="list-item-{{ loop.index0 }}">
+                    <div class="eli-to">To: {{ email.recipient_email }}</div>
+                    <div class="eli-subject">{{ email.subject or 'No Subject' }}</div>
+                    <div class="eli-from">From: {{ email.sender_name or 'AI Engine' }}</div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Email Viewer -->
+        <div class="email-viewer" id="email-viewer">
+            <div class="ev-header" id="ev-header">
+                <div class="ev-subject" id="ev-subject">{{ emails[0].subject or 'No Subject' }}</div>
+                <div class="ev-meta-row">
+                    <span class="ev-meta-label">From</span>
+                    <span class="ev-meta-value"><strong id="ev-from">{{ emails[0].sender_name or 'AI Engine' }}</strong></span>
+                </div>
+                <div class="ev-meta-row">
+                    <span class="ev-meta-label">To</span>
+                    <span class="ev-meta-value" id="ev-to">{{ emails[0].recipient_email }}</span>
+                </div>
+            </div>
+            <div class="ev-body">
+                <div class="ev-body-inner" id="ev-body">
+                    {{ emails[0].body_html | safe if emails[0].body_html else '<em style="color:#94a3b8;">Email body not available.</em>' }}
+                </div>
+            </div>
+            {% if emails[0].educational_breakdown %}
+            <div class="ev-insight">
+                <div class="ev-insight-icon"><i class="fas fa-lightbulb"></i></div>
+                <div class="ev-insight-text">
+                    <strong>AI Psychological Insight</strong>
+                    <span id="ev-insight-text">{{ emails[0].educational_breakdown }}</span>
+                </div>
+            </div>
+            {% endif %}
+            <!-- Nav -->
+            <div class="email-nav">
+                <button class="email-nav-btn" onclick="prevEmail()" id="btn-prev" disabled>
+                    <i class="fas fa-chevron-left"></i> Previous
+                </button>
+                <span class="email-nav-counter" id="nav-counter">1 / {{ emails | length }}</span>
+                <button class="email-nav-btn" onclick="nextEmail()" id="btn-next" {% if emails|length <= 1 %}disabled{% endif %}>
+                    Next <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    const emails = {{ emails | tojson }};
+    let current = 0;
+
+    function showEmail(idx) {
+        current = idx;
+        const e = emails[idx];
+
+        // Update viewer
+        document.getElementById('ev-subject').textContent = e.subject || 'No Subject';
+        document.getElementById('ev-from').textContent = e.sender_name || 'AI Engine';
+        document.getElementById('ev-to').textContent = e.recipient_email;
+        document.getElementById('ev-body').innerHTML = e.body_html || '<em style="color:#94a3b8;">Body not available.</em>';
+
+        const insightEl = document.getElementById('ev-insight-text');
+        if (insightEl) insightEl.textContent = e.educational_breakdown || '';
+
+        // Update sidebar active
+        document.querySelectorAll('.email-list-item').forEach((el, i) => {
+            el.classList.toggle('active', i === idx);
+        });
+
+        // Scroll sidebar item into view
+        const listItem = document.getElementById('list-item-' + idx);
+        if (listItem) listItem.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+
+        // Update nav
+        document.getElementById('nav-counter').textContent = (idx + 1) + ' / ' + emails.length;
+        document.getElementById('btn-prev').disabled = idx === 0;
+        document.getElementById('btn-next').disabled = idx === emails.length - 1;
+    }
+
+    function prevEmail() { if (current > 0) showEmail(current - 1); }
+    function nextEmail() { if (current < emails.length - 1) showEmail(current + 1); }
+    </script>
+
+    {% else %}
+    <div class="email-viewer">
+        <div class="ev-empty">
+            <i class="fas fa-inbox"></i>
+            <p>No emails were generated for this campaign yet.</p>
+            <a href="/dashboard" style="color: #3b82f6;">Return to Dashboard</a>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
