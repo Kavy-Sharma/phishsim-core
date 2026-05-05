@@ -112,6 +112,31 @@
 .chart-container {
     position: relative; height: 250px; width: 100%; display: flex; justify-content: center;
 }
+.password-panel {
+    margin-top: 1.5rem;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    padding-top: 1.5rem;
+}
+.password-panel h3 { color: #fff; margin: 0 0 1rem; font-family: 'Space Mono', monospace; font-size: 0.95rem; }
+.password-panel input {
+    width: 100%;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: #fff;
+    border-radius: 10px;
+    padding: 12px;
+    margin-bottom: 0.8rem;
+}
+.password-panel button {
+    width: 100%;
+    border: 0;
+    border-radius: 10px;
+    padding: 12px;
+    color: #fff;
+    background: linear-gradient(135deg, #06b6d4, #3b82f6);
+    font-weight: 700;
+    cursor: pointer;
+}
 </style>
 
 <div class="profile-container">
@@ -141,6 +166,15 @@
                 <div style="background: rgba(255,255,255,0.03); padding: 10px 15px; border-radius: 8px; color: #fff; font-family: monospace;">
                     {{ user.email }}
                 </div>
+            </div>
+            <div class="password-panel">
+                <h3><i class="fas fa-key" style="color:#06b6d4;"></i> Password</h3>
+                <p style="color:#64748b; font-size:0.86rem;">Passwords are stored as secure hashes, so they cannot be displayed. You can change yours here.</p>
+                <form method="POST" action="/change-password">
+                    <input type="password" name="current_password" placeholder="Current password" required>
+                    <input type="password" name="new_password" placeholder="New password" required>
+                    <button type="submit">Update Password</button>
+                </form>
             </div>
         </div>
 

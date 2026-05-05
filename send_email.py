@@ -8,41 +8,99 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
+LOCAL_PROVIDERS = {"local", "smtp4dev", "sandbox"}
+SMTP_PROVIDERS = {"smtp", "gmail", "live", "production", "prod"}
+DEPLOYMENT_ENV_VARS = (
+    "RENDER",
+    "RENDER_EXTERNAL_URL",
+    "K_SERVICE",
+    "DYNO",
+    "WEBSITE_HOSTNAME",
+    "VERCEL",
+    "FLY_APP_NAME",
+)
+
+
+def _clean(value, default=""):
+    return (value if value is not None else default).strip()
+
+
+def _is_truthy(value):
+    return _clean(value).lower() in ("1", "true", "yes", "on")
+
+
+def is_deployed_environment():
+    """Best-effort check for hosted environments where smtp4dev is unavailable."""
+    explicit = _clean(os.getenv("PHISHSIM_ENV") or os.getenv("APP_ENV")).lower()
+    if explicit in ("production", "prod", "live", "deployed"):
+        return True
+    if explicit in ("development", "dev", "local"):
+        return False
+    return any(_clean(os.getenv(name)) for name in DEPLOYMENT_ENV_VARS)
+
+
+def resolve_email_provider(delivery_mode=None):
+    """Resolves explicit or auto delivery mode to a concrete SMTP provider."""
+    requested = _clean(
+        delivery_mode or os.getenv("EMAIL_PROVIDER") or os.getenv("EMAIL_MODE") or "auto"
+    ).lower()
+
+    if requested in LOCAL_PROVIDERS:
+        return "local"
+    if requested in SMTP_PROVIDERS:
+        return "smtp"
+    if requested == "mailtrap":
+        return "mailtrap"
+    if requested in ("auto", ""):
+        return "smtp" if is_deployed_environment() else "local"
+
+    return requested
+
+
+def _smtp_password():
+    password = os.getenv("SMTP_PASS")
+    host = _clean(os.getenv("SMTP_HOST", ""))
+    if password and "gmail" in host.lower() and _is_truthy(os.getenv("SMTP_STRIP_PASSWORD_SPACES", "true")):
+        return password.replace(" ", "")
+    return password
+
 
 def get_email_settings(delivery_mode=None):
     """Builds SMTP settings from .env without tying the app to one provider."""
-    provider = (delivery_mode or os.getenv("EMAIL_PROVIDER", os.getenv("EMAIL_MODE", "mailtrap"))).strip().lower()
+    provider = resolve_email_provider(delivery_mode)
 
     if provider == "local":
         return {
             "provider": provider,
-            "host": os.getenv("LOCAL_SMTP_HOST", "127.0.0.1"),
-            "port": int(os.getenv("LOCAL_SMTP_PORT", "1025")),
+            "host": _clean(os.getenv("LOCAL_SMTP_HOST", "127.0.0.1")),
+            "port": int(_clean(os.getenv("LOCAL_SMTP_PORT", "1025"))),
             "user": None,
             "password": None,
             "encryption": "none",
-            "from_email": os.getenv("EMAIL_FROM", "training@phishsim.local"),
+            "from_email": _clean(os.getenv("LOCAL_EMAIL_FROM") or os.getenv("EMAIL_FROM"), "training@phishsim.local"),
         }
 
     if provider == "smtp":
+        smtp_user = _clean(os.getenv("SMTP_USER"))
+        host = _clean(os.getenv("SMTP_HOST") or ("smtp.gmail.com" if smtp_user else ""))
         return {
             "provider": provider,
-            "host": os.getenv("SMTP_HOST", ""),
-            "port": int(os.getenv("SMTP_PORT", "587")),
-            "user": os.getenv("SMTP_USER"),
-            "password": os.getenv("SMTP_PASS"),
-            "encryption": os.getenv("SMTP_ENCRYPTION", "starttls").strip().lower(),
-            "from_email": os.getenv("EMAIL_FROM", "security-training@example.com"),
+            "host": host,
+            "port": int(_clean(os.getenv("SMTP_PORT", "587"))),
+            "user": smtp_user,
+            "password": _smtp_password(),
+            "encryption": _clean(os.getenv("SMTP_ENCRYPTION", "starttls")).lower(),
+            "from_email": _clean(os.getenv("SMTP_FROM_EMAIL") or os.getenv("SMTP_USER") or os.getenv("EMAIL_FROM"), "security-training@example.com"),
         }
 
     return {
         "provider": "mailtrap",
-        "host": os.getenv("MAILTRAP_HOST", "sandbox.smtp.mailtrap.io"),
-        "port": int(os.getenv("MAILTRAP_PORT", "2525")),
-        "user": os.getenv("MAILTRAP_USER"),
+        "host": _clean(os.getenv("MAILTRAP_HOST", "sandbox.smtp.mailtrap.io")),
+        "port": int(_clean(os.getenv("MAILTRAP_PORT", "2525"))),
+        "user": _clean(os.getenv("MAILTRAP_USER")),
         "password": os.getenv("MAILTRAP_PASS"),
-        "encryption": os.getenv("MAILTRAP_ENCRYPTION", "none").strip().lower(),
-        "from_email": os.getenv("EMAIL_FROM", "noreply@phishsim-ai.com"),
+        "encryption": _clean(os.getenv("MAILTRAP_ENCRYPTION", "none")).lower(),
+        "from_email": _clean(os.getenv("MAILTRAP_FROM_EMAIL") or os.getenv("EMAIL_FROM"), "noreply@phishsim-ai.com"),
     }
 
 
@@ -94,7 +152,9 @@ def send_phishing_email(to_email, subject, sender_name, body_html, tracking_id, 
         timeout = float(os.getenv("SMTP_TIMEOUT_SECONDS", "6"))
         with smtp_class(settings["host"], settings["port"], timeout=timeout) as server:
             if settings["encryption"] == "starttls":
+                server.ehlo()
                 server.starttls()
+                server.ehlo()
             if settings["user"] and settings["password"]:
                 server.login(settings["user"], settings["password"])
             server.send_message(msg)

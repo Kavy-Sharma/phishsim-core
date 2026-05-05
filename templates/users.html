@@ -3,72 +3,199 @@
 {% block title %}Users - PhishSim AI{% endblock %}
 
 {% block content %}
-<div class="dashboard-header">
-    <div>
-        <h1>Users</h1>
-        <p>Create admins and company users for role-based campaign access.</p>
+<style>
+.users-page { max-width: 1180px; margin: 0 auto; padding: 2rem; }
+.users-header { display:flex; justify-content:space-between; align-items:flex-end; gap:1rem; margin-bottom:2rem; }
+.users-header h1 { color:#fff; margin:0; font-size:2.3rem; font-family:'Outfit', sans-serif; }
+.users-header p { color:#64748b; margin:0.4rem 0 0; }
+.users-layout { display:grid; grid-template-columns:minmax(300px, 380px) minmax(0, 1fr); gap:1.5rem; align-items:start; }
+.users-card {
+    background:rgba(10,16,38,0.88); border:1px solid rgba(59,130,246,0.16);
+    border-radius:18px; padding:1.5rem; box-shadow:0 20px 50px rgba(0,0,0,0.28);
+}
+.users-card h2 { color:#fff; margin:0 0 1rem; font-size:1.2rem; }
+.users-form-grid { display:grid; gap:0.9rem; }
+.users-form-grid label { color:#94a3b8; font-size:0.78rem; text-transform:uppercase; letter-spacing:1px; font-family:'Space Mono', monospace; }
+.users-form-grid input, .users-form-grid select {
+    width:100%; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08);
+    border-radius:10px; color:#fff; padding:12px; outline:none;
+}
+.users-form-grid small { display:block; color:#64748b; margin-top:5px; line-height:1.4; }
+.users-list { display:grid; gap:0.9rem; max-width:100%; overflow:hidden; }
+.user-row {
+    display:grid; grid-template-columns:minmax(0, 1fr) auto; gap:1rem; align-items:center;
+    background:rgba(255,255,255,0.035); border:1px solid rgba(255,255,255,0.06);
+    border-radius:14px; padding:1rem; min-width:0;
+}
+.user-main { min-width:0; }
+.user-main strong { color:#fff; display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.user-main p { color:#94a3b8; margin:0.25rem 0 0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.user-actions { display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap; justify-content:flex-end; }
+.icon-btn {
+    width:38px; height:38px; border-radius:10px; border:1px solid rgba(255,255,255,0.08);
+    background:rgba(255,255,255,0.04); color:#94a3b8; cursor:pointer;
+}
+.icon-btn:hover { color:#fff; border-color:rgba(59,130,246,0.35); }
+.icon-btn.danger:hover { color:#f87171; border-color:rgba(239,68,68,0.35); }
+.reset-form {
+    grid-column:1 / -1; display:none; grid-template-columns:minmax(180px, 1fr) auto; gap:0.6rem;
+    margin-top:0.8rem; padding-top:0.8rem; border-top:1px solid rgba(255,255,255,0.06);
+}
+.reset-form.show { display:grid; }
+.reset-form input {
+    background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08);
+    border-radius:10px; color:#fff; padding:10px;
+}
+.reset-form button {
+    border:0; border-radius:10px; padding:10px 14px; color:#fff;
+    background:linear-gradient(135deg,#06b6d4,#3b82f6); cursor:pointer; font-weight:700;
+}
+.verify-pill { font-size:0.72rem; padding:3px 8px; border-radius:999px; border:1px solid rgba(34,197,94,0.25); color:#4ade80; background:rgba(34,197,94,0.08); }
+.verify-pill.pending { border-color:rgba(245,158,11,0.25); color:#facc15; background:rgba(245,158,11,0.08); }
+.confirm-modal {
+    position:fixed; inset:0; z-index:50000; display:none; align-items:center; justify-content:center;
+    background:rgba(2,6,23,0.72); backdrop-filter:blur(10px); padding:1.5rem;
+}
+.confirm-modal.show { display:flex; }
+.confirm-box {
+    width:min(420px,100%); background:rgba(10,16,38,0.96);
+    border:1px solid rgba(239,68,68,0.28); border-radius:18px; padding:1.5rem;
+    box-shadow:0 24px 70px rgba(0,0,0,0.5);
+}
+.confirm-box h3 { color:#fff; margin:0 0 0.5rem; }
+.confirm-box p { color:#94a3b8; margin:0 0 1.2rem; }
+.confirm-actions { display:grid; grid-template-columns:1fr 1fr; gap:0.8rem; }
+.confirm-cancel, .confirm-danger {
+    border:0; border-radius:10px; padding:12px; cursor:pointer; color:#fff; font-weight:700;
+}
+.confirm-cancel { background:rgba(148,163,184,0.14); color:#cbd5e1; }
+.confirm-danger { background:linear-gradient(135deg,#ef4444,#b91c1c); }
+@media (max-width: 860px) { .users-layout { grid-template-columns:1fr; } .user-row { grid-template-columns:1fr; } .user-actions { justify-content:flex-start; } }
+</style>
+
+<div class="users-page">
+    <div class="users-header">
+        <div>
+            <h1>Users</h1>
+            <p>Create users, view verification status, and reset passwords.</p>
+        </div>
+    </div>
+
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <div class="form-alert">{{ messages[0] }}</div>
+        {% endif %}
+    {% endwith %}
+
+    <div class="users-layout">
+        <section class="users-card">
+            <h2>Create User</h2>
+            <form method="POST" class="users-form-grid">
+                <div>
+                    <label for="name">Name</label>
+                    <input type="text" id="name" name="name" placeholder="Security Manager" required>
+                </div>
+                <div>
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" placeholder="manager@gmail.com" required>
+                </div>
+                <div>
+                    <label for="password">Temporary Password</label>
+                    <input type="password" id="password" name="password" required>
+                    <small>Passwords are stored as hashes. They cannot be displayed later, only reset.</small>
+                </div>
+                <div>
+                    <label for="role">Role</label>
+                    <select id="role" name="role">
+                        <option value="company_user">Company User</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="company_domain">Company Domain</label>
+                    <input type="text" id="company_domain" name="company_domain" placeholder="testing.local">
+                    <small>Optional while testing. If blank, the email domain is used.</small>
+                </div>
+                <button type="submit" class="btn-primary" style="width:100%;">Create User</button>
+            </form>
+        </section>
+
+        <section class="users-card">
+            <h2>Existing Users</h2>
+            <div class="users-list">
+                {% for user in users %}
+                <div class="user-row">
+                    <div class="user-main">
+                        <strong>{{ user.name }}</strong>
+                        <p>{{ user.email }}{% if user.company_domain %} · {{ user.company_domain }}{% endif %}</p>
+                    </div>
+                    <div class="user-actions">
+                        <span class="verify-pill {% if not user.email_verified %}pending{% endif %}">
+                            {% if user.email_verified %}Verified{% else %}Unverified{% endif %}
+                        </span>
+                        <span class="badge {% if user.role == 'admin' %}badge-launched{% else %}badge-draft{% endif %}">
+                            {{ user.role.replace('_', ' ') }}
+                        </span>
+                        <button type="button" class="icon-btn" title="Reset password" onclick="toggleReset({{ user.id }})"><i class="fas fa-key"></i></button>
+                        <form action="/delete-user/{{ user.id }}" method="POST" data-confirm-title="Delete user?" data-confirm-message="This will delete the user account. Campaign data may remain attached to historical records." style="margin:0;">
+                            <button type="submit" class="icon-btn danger" title="Delete user"><i class="fas fa-trash-alt"></i></button>
+                        </form>
+                    </div>
+                    <form id="reset-{{ user.id }}" class="reset-form" action="/reset-user-password/{{ user.id }}" method="POST">
+                        <input type="password" name="new_password" placeholder="New password" required>
+                        <button type="submit">Reset</button>
+                    </form>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
     </div>
 </div>
 
-{% with messages = get_flashed_messages() %}
-    {% if messages %}
-        <div class="form-alert">{{ messages[0] }}</div>
-    {% endif %}
-{% endwith %}
-
-<div class="dashboard-grid" style="grid-template-columns: minmax(320px, 420px) 1fr;">
-    <section class="card">
-        <h2>Create User</h2>
-        <form method="POST">
-            <div class="form-group">
-                <label for="name">Name</label>
-                <input type="text" id="name" name="name" placeholder="Security Manager" required>
-            </div>
-            <div class="form-group">
-                <label for="email">Email</label>
-                <input type="email" id="email" name="email" placeholder="manager@company.com" required>
-            </div>
-            <div class="form-group">
-                <label for="password">Temporary Password</label>
-                <input type="password" id="password" name="password" required>
-            </div>
-            <div class="form-group">
-                <label for="role">Role</label>
-                <select id="role" name="role">
-                    <option value="company_user">Company User</option>
-                    <option value="admin">Admin</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="company_domain">Company Domain</label>
-                <input type="text" id="company_domain" name="company_domain" placeholder="company.com">
-            </div>
-            <button type="submit" class="btn-primary" style="width: 100%;">Create User</button>
-        </form>
-    </section>
-
-    <section class="card">
-        <h2>Existing Users</h2>
-        <div class="user-list">
-            {% for user in users %}
-            <div class="user-row" style="display: flex; justify-content: space-between; align-items: center;">
-                <div>
-                    <strong>{{ user.name }}</strong>
-                    <p>{{ user.email }}{% if user.company_domain %} · {{ user.company_domain }}{% endif %}</p>
-                </div>
-                <div style="display: flex; align-items: center; gap: 10px;">
-                    <span class="badge {% if user.role == 'admin' %}badge-launched{% else %}badge-draft{% endif %}">
-                        {{ user.role.replace('_', ' ') }}
-                    </span>
-                    <form action="/delete-user/{{ user.id }}" method="POST" onsubmit="return confirm('Delete this user?');" style="margin: 0;">
-                        <button type="submit" style="background: transparent; border: none; color: #f87171; cursor: pointer; padding: 5px;">
-                            <i class="fas fa-trash-alt"></i>
-                        </button>
-                    </form>
-                </div>
-            </div>
-            {% endfor %}
+<div class="confirm-modal" id="confirm-modal" aria-hidden="true">
+    <div class="confirm-box">
+        <h3 id="confirm-title">Delete?</h3>
+        <p id="confirm-message">This action cannot be undone.</p>
+        <div class="confirm-actions">
+            <button type="button" class="confirm-cancel" id="confirm-cancel">Cancel</button>
+            <button type="button" class="confirm-danger" id="confirm-danger">Delete</button>
         </div>
-    </section>
+    </div>
 </div>
+
+<script>
+function toggleReset(id) {
+    document.getElementById("reset-" + id).classList.toggle("show");
+}
+
+(function() {
+    const modal = document.getElementById("confirm-modal");
+    const title = document.getElementById("confirm-title");
+    const message = document.getElementById("confirm-message");
+    const cancel = document.getElementById("confirm-cancel");
+    const danger = document.getElementById("confirm-danger");
+    let pendingForm = null;
+
+    document.querySelectorAll("form[data-confirm-title]").forEach((form) => {
+        form.addEventListener("submit", function(e) {
+            e.preventDefault();
+            pendingForm = form;
+            title.textContent = form.dataset.confirmTitle || "Confirm action";
+            message.textContent = form.dataset.confirmMessage || "This action cannot be undone.";
+            modal.classList.add("show");
+            modal.setAttribute("aria-hidden", "false");
+        });
+    });
+
+    cancel.addEventListener("click", function() {
+        pendingForm = null;
+        modal.classList.remove("show");
+        modal.setAttribute("aria-hidden", "true");
+    });
+
+    danger.addEventListener("click", function() {
+        if (pendingForm) pendingForm.submit();
+    });
+})();
+</script>
 {% endblock %}

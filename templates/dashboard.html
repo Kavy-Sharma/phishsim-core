@@ -85,6 +85,11 @@ body { background: #020617 !important; }
 
 .camp-card-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 1.2rem; }
 .camp-name { font-family: 'Outfit', sans-serif; font-size: 1.3rem; font-weight: 700; color: #fff; margin: 0 0 6px 0; }
+.camp-owner {
+    display: inline-flex; align-items: center; gap: 6px;
+    color: #94a3b8; font-size: 0.78rem; font-family: 'Space Mono', monospace;
+    margin-top: 4px;
+}
 
 /* Badges */
 .badge-cyber {
@@ -245,6 +250,31 @@ body { background: #020617 !important; }
     border-radius: 12px; padding: 1.2rem; margin-top: 1rem;
 }
 .error-box p { margin: 0; font-size: 0.85rem; color: #fca5a5; }
+
+.confirm-modal {
+    position: fixed; inset: 0; z-index: 50000;
+    display: none; align-items: center; justify-content: center;
+    background: rgba(2, 6, 23, 0.72); backdrop-filter: blur(10px);
+    padding: 1.5rem;
+}
+.confirm-modal.show { display: flex; }
+.confirm-box {
+    width: min(420px, 100%);
+    background: rgba(10, 16, 38, 0.96);
+    border: 1px solid rgba(239, 68, 68, 0.28);
+    border-radius: 18px;
+    padding: 1.5rem;
+    box-shadow: 0 24px 70px rgba(0,0,0,0.5);
+}
+.confirm-box h3 { color: #fff; margin: 0 0 0.5rem; }
+.confirm-box p { color: #94a3b8; margin: 0 0 1.2rem; }
+.confirm-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; }
+.confirm-cancel, .confirm-danger {
+    border: 0; border-radius: 10px; padding: 12px; cursor: pointer;
+    color: #fff; font-weight: 700; font-family: 'Outfit', sans-serif;
+}
+.confirm-cancel { background: rgba(148, 163, 184, 0.14); color: #cbd5e1; }
+.confirm-danger { background: linear-gradient(135deg, #ef4444, #b91c1c); }
 </style>
 
 <div class="dash-page">
@@ -305,6 +335,9 @@ body { background: #020617 !important; }
             <div class="camp-card-top">
                 <div>
                     <h3 class="camp-name">{{ camp.name }}</h3>
+                    {% if current_user.role == 'admin' %}
+                    <div class="camp-owner"><i class="fas fa-user"></i> {{ camp.owner_name or 'Unknown user' }} · {{ camp.owner_email or 'no email' }}</div>
+                    {% endif %}
                     <span class="badge-cyber badge-{% if camp.status == 'launched' %}launched{% elif camp.status == 'launched_with_errors' %}warning{% elif camp.status == 'failed' %}failed{% elif camp.status == 'launching' %}launching{% else %}draft{% endif %}">
                         <i class="fas fa-{% if camp.status == 'launched' %}check-circle{% elif camp.status == 'failed' %}times-circle{% elif camp.status == 'launching' %}spinner fa-spin{% else %}circle{% endif %}"></i>
                         {{ camp.status.replace('_', ' ') }}
@@ -382,7 +415,7 @@ body { background: #020617 !important; }
                 <form action="/clone-campaign/{{ camp.id }}" method="POST">
                     <button type="submit" class="camp-action-btn btn-retry" style="margin-bottom:0;"><i class="fas fa-copy"></i> Clone</button>
                 </form>
-                <form action="/delete-campaign/{{ camp.id }}" method="POST" onsubmit="return confirm('Delete this campaign permanently?');">
+                <form action="/delete-campaign/{{ camp.id }}" method="POST" data-confirm-title="Delete campaign?" data-confirm-message="This will permanently delete this campaign, its targets, generated emails, and events.">
                     <button type="submit" class="camp-action-btn btn-delete" style="margin-bottom:0;"><i class="fas fa-trash-alt"></i> Delete</button>
                 </form>
             </div>
@@ -391,4 +424,45 @@ body { background: #020617 !important; }
     </div>
     {% endif %}
 </div>
+<div class="confirm-modal" id="confirm-modal" aria-hidden="true">
+    <div class="confirm-box">
+        <h3 id="confirm-title">Delete?</h3>
+        <p id="confirm-message">This action cannot be undone.</p>
+        <div class="confirm-actions">
+            <button type="button" class="confirm-cancel" id="confirm-cancel">Cancel</button>
+            <button type="button" class="confirm-danger" id="confirm-danger">Delete</button>
+        </div>
+    </div>
+</div>
+<script>
+    (function() {
+        const modal = document.getElementById("confirm-modal");
+        const title = document.getElementById("confirm-title");
+        const message = document.getElementById("confirm-message");
+        const cancel = document.getElementById("confirm-cancel");
+        const danger = document.getElementById("confirm-danger");
+        let pendingForm = null;
+
+        document.querySelectorAll("form[data-confirm-title]").forEach((form) => {
+            form.addEventListener("submit", function(e) {
+                e.preventDefault();
+                pendingForm = form;
+                title.textContent = form.dataset.confirmTitle || "Confirm action";
+                message.textContent = form.dataset.confirmMessage || "This action cannot be undone.";
+                modal.classList.add("show");
+                modal.setAttribute("aria-hidden", "false");
+            });
+        });
+
+        cancel.addEventListener("click", function() {
+            pendingForm = null;
+            modal.classList.remove("show");
+            modal.setAttribute("aria-hidden", "true");
+        });
+
+        danger.addEventListener("click", function() {
+            if (pendingForm) pendingForm.submit();
+        });
+    })();
+</script>
 {% endblock %}

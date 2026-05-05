@@ -4,21 +4,103 @@ import os
 import mysql.connector
 import csv
 import io
+import re
+import time
+import uuid
 from datetime import datetime
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 from functools import wraps
+import smtplib
 from werkzeug.security import generate_password_hash, check_password_hash
 from ai_engine.report_agent import build_campaign_report
-from send_email import get_email_settings, send_phishing_email
+from send_email import get_email_settings, resolve_email_provider, send_phishing_email
 
 load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = os.getenv("FLASK_SECRET_KEY", "dev-secret-change-me")
+app.config.update(
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE="Lax",
+    SESSION_COOKIE_SECURE=(
+        os.getenv("FLASK_COOKIE_SECURE", "").strip().lower() in ("1", "true", "yes", "on")
+        or any(os.getenv(name) for name in ("RENDER", "RENDER_EXTERNAL_URL", "DYNO", "K_SERVICE"))
+    ),
+    PERMANENT_SESSION_LIFETIME=3600,
+)
 SCHEMA_FLAGS = {
     "auth": "AUTH_SCHEMA_READY",
     "email": "EMAIL_SCHEMA_READY",
     "events": "EVENTS_SCHEMA_READY",
 }
+LOGIN_ATTEMPTS = {}
+FREE_EMAIL_DOMAINS = {
+    "gmail.com", "googlemail.com", "yahoo.com", "ymail.com", "outlook.com", "hotmail.com",
+    "live.com", "icloud.com", "me.com", "aol.com", "proton.me", "protonmail.com",
+    "zoho.com", "mail.com", "gmx.com", "gmx.net", "yandex.com", "pm.me"
+}
+DISPOSABLE_EMAIL_DOMAINS = {
+    "mailinator.com", "tempmail.com", "10minutemail.com", "guerrillamail.com",
+    "trashmail.com", "yopmail.com", "getnada.com", "sharklasers.com"
+}
+
+
+def normalize_domain(value):
+    domain = (value or "").strip().lower()
+    domain = re.sub(r"^https?://", "", domain)
+    domain = domain.split("/")[0].split(":")[0]
+    domain = domain[4:] if domain.startswith("www.") else domain
+    return domain.strip(".")
+
+
+def email_domain(email):
+    email = (email or "").strip().lower()
+    if not re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", email):
+        return ""
+    return normalize_domain(email.rsplit("@", 1)[1])
+
+
+def is_valid_company_domain(domain):
+    return bool(re.match(r"^(?!-)[a-z0-9-]{1,63}(?<!-)(\.(?!-)[a-z0-9-]{1,63}(?<!-))+$", domain or ""))
+
+
+def validate_password(password):
+    checks = [
+        (len(password or "") >= 10, "Use at least 10 characters."),
+        (re.search(r"[A-Z]", password or ""), "Add at least one uppercase letter."),
+        (re.search(r"[a-z]", password or ""), "Add at least one lowercase letter."),
+        (re.search(r"\d", password or ""), "Add at least one number."),
+        (re.search(r"[^A-Za-z0-9]", password or ""), "Add at least one symbol."),
+    ]
+    failures = [message for ok, message in checks if not ok]
+    return failures
+
+
+def validate_signup_identity(name, email, password, company_domain):
+    if len(name) < 2:
+        return "Enter your full name."
+    domain_from_email = email_domain(email)
+    if not domain_from_email:
+        return "Enter a valid email address."
+    if not password:
+        return "Enter a password."
+    return None
+
+
+def login_limited(identifier):
+    now = time.time()
+    attempts = [stamp for stamp in LOGIN_ATTEMPTS.get(identifier, []) if now - stamp < 900]
+    LOGIN_ATTEMPTS[identifier] = attempts
+    return len(attempts) >= 8
+
+
+def record_failed_login(identifier):
+    LOGIN_ATTEMPTS.setdefault(identifier, []).append(time.time())
+
+
+def clear_failed_logins(identifier):
+    LOGIN_ATTEMPTS.pop(identifier, None)
 
 # --- Database Connection Helper ---
 # Perfection Tip: Use a connection pool in production, but for now we optimize manual connections
@@ -44,13 +126,17 @@ def ensure_auth_schema(cursor):
             password_hash VARCHAR(255),
             role VARCHAR(50) DEFAULT 'company_user',
             company_domain VARCHAR(255),
+            email_verified BOOLEAN DEFAULT FALSE,
+            verification_token VARCHAR(80),
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
 
     for ddl in [
         "ALTER TABLE campaigns ADD COLUMN user_id INT",
-        "ALTER TABLE campaigns ADD COLUMN delivery_mode VARCHAR(20) DEFAULT 'local'"
+        "ALTER TABLE campaigns ADD COLUMN delivery_mode VARCHAR(20) DEFAULT 'local'",
+        "ALTER TABLE users ADD COLUMN email_verified BOOLEAN DEFAULT FALSE",
+        "ALTER TABLE users ADD COLUMN verification_token VARCHAR(80)"
     ]:
         try:
             cursor.execute(ddl)
@@ -65,13 +151,13 @@ def ensure_auth_schema(cursor):
     if existing_admin:
         cursor.execute("""
             UPDATE users
-            SET password_hash = %s, role = 'admin'
+            SET password_hash = %s, role = 'admin', email_verified = TRUE
             WHERE id = %s
         """, (generate_password_hash(admin_password), existing_admin["id"]))
     else:
         cursor.execute("""
-            INSERT INTO users (name, email, password_hash, role, company_domain)
-            VALUES (%s, %s, %s, %s, %s)
+            INSERT INTO users (name, email, password_hash, role, company_domain, email_verified)
+            VALUES (%s, %s, %s, %s, %s, TRUE)
         """, (
             "Platform Admin",
             admin_email,
@@ -130,6 +216,44 @@ def bootstrap_schema():
     except Exception as e:
         print(f"Auth schema check failed: {e}")
 
+
+@app.after_request
+def add_security_headers(response):
+    response.headers.setdefault("X-Content-Type-Options", "nosniff")
+    response.headers.setdefault("X-Frame-Options", "DENY")
+    response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
+    response.headers.setdefault("Permissions-Policy", "camera=(), microphone=(), geolocation=()")
+    return response
+
+def send_verification_email(to_email, token):
+    settings = get_email_settings("smtp")
+    if not settings["host"] or not settings["user"] or not settings["password"]:
+        return False, "SMTP is not configured for account verification."
+
+    base_url = os.getenv("APP_BASE_URL", "http://127.0.0.1:5000").rstrip("/")
+    verify_url = f"{base_url}/verify-email/{token}"
+    msg = MIMEMultipart("alternative")
+    msg["Subject"] = "Verify your PhishSim AI account"
+    msg["From"] = f"PhishSim AI <{settings['from_email']}>"
+    msg["To"] = to_email
+    msg.attach(MIMEText(
+        f"<p>Welcome to PhishSim AI.</p><p>Verify your account before creating campaigns:</p><p><a href='{verify_url}'>Verify email</a></p>",
+        "html"
+    ))
+    try:
+        smtp_class = smtplib.SMTP_SSL if settings["encryption"] == "ssl" else smtplib.SMTP
+        with smtp_class(settings["host"], settings["port"], timeout=float(os.getenv("SMTP_TIMEOUT_SECONDS", "6"))) as server:
+            if settings["encryption"] == "starttls":
+                server.ehlo()
+                server.starttls()
+                server.ehlo()
+            server.login(settings["user"], settings["password"])
+            server.send_message(msg)
+        return True, None
+    except Exception as e:
+        return False, str(e)
+
+
 def current_user():
     user_id = session.get("user_id")
     if not user_id:
@@ -142,7 +266,7 @@ def current_user():
     try:
         db = get_db_connection()
         cursor = db.cursor(dictionary=True)
-        cursor.execute("SELECT id, name, email, role, company_domain FROM users WHERE id = %s", (user_id,))
+        cursor.execute("SELECT id, name, email, role, company_domain, email_verified FROM users WHERE id = %s", (user_id,))
         g.user = cursor.fetchone()
         cursor.close()
         db.close()
@@ -421,9 +545,13 @@ def login():
     if request.method == "POST":
         email = request.form.get("email", "").strip().lower()
         password = request.form.get("password", "")
+        login_key = f"{request.remote_addr or 'unknown'}:{email}"
+
+        if login_limited(login_key):
+            flash("Too many failed login attempts. Please wait a few minutes and try again.")
+            return render_template("login.html")
 
         db = get_db_connection()
-        cursor = db.cursor(dictionary=True)
         cursor = db.cursor(dictionary=True)
         cursor.execute("SELECT * FROM users WHERE email = %s", (email,))
         user = cursor.fetchone()
@@ -431,10 +559,13 @@ def login():
         db.close()
 
         if user and check_password_hash(user["password_hash"], password):
+            clear_failed_logins(login_key)
+            session.permanent = True
             session["user_id"] = user["id"]
             session["role"] = user["role"]
             return redirect(request.args.get("next") or url_for("dashboard"))
 
+        record_failed_login(login_key)
         flash("Invalid email or password.")
 
     return render_template("login.html")
@@ -445,7 +576,12 @@ def signup():
         name = request.form.get("name", "").strip()
         email = request.form.get("email", "").strip().lower()
         password = request.form.get("password", "")
-        company_domain = request.form.get("company_domain", "").strip() or None
+        company_domain = normalize_domain(request.form.get("company_domain", ""))
+
+        validation_error = validate_signup_identity(name, email, password, company_domain)
+        if validation_error:
+            flash(validation_error)
+            return redirect(url_for("signup"))
 
         db = get_db_connection()
         cursor = db.cursor(dictionary=True)
@@ -455,15 +591,22 @@ def signup():
                 flash("Email already registered.")
                 return redirect(url_for('signup'))
                 
+            token = uuid.uuid4().hex
             cursor.execute("""
-                INSERT INTO users (name, email, password_hash, role, company_domain)
-                VALUES (%s, %s, %s, %s, %s)
-            """, (name, email, generate_password_hash(password), "company_user", company_domain))
+                INSERT INTO users (name, email, password_hash, role, company_domain, email_verified, verification_token)
+                VALUES (%s, %s, %s, %s, %s, FALSE, %s)
+            """, (name, email, generate_password_hash(password), "company_user", company_domain, token))
             db.commit()
             cursor.execute("SELECT id, role FROM users WHERE email = %s", (email,))
             user = cursor.fetchone()
+            session.permanent = True
             session["user_id"] = user["id"]
             session["role"] = user["role"]
+            sent, error = send_verification_email(email, token)
+            if sent:
+                flash("Account created. A verification link was sent to your email; you can still test campaigns before verifying.")
+            else:
+                flash(f"Account created, but verification email could not be sent: {error}")
             return redirect(url_for("dashboard"))
         except Exception as e:
             flash(f"Signup failed: {e}")
@@ -472,6 +615,29 @@ def signup():
             db.close()
             
     return render_template("signup.html")
+
+@app.route("/verify-email/<token>")
+def verify_email(token):
+    db = get_db_connection()
+    cursor = db.cursor(dictionary=True)
+    try:
+        cursor.execute("SELECT id FROM users WHERE verification_token = %s", (token,))
+        user = cursor.fetchone()
+        if not user:
+            flash("Verification link is invalid or expired.")
+            return redirect(url_for("login"))
+        cursor.execute("""
+            UPDATE users
+            SET email_verified = TRUE, verification_token = NULL
+            WHERE id = %s
+        """, (user["id"],))
+        db.commit()
+        session["user_id"] = user["id"]
+        flash("Email verified.")
+        return redirect(url_for("dashboard"))
+    finally:
+        cursor.close()
+        db.close()
 
 @app.route("/logout")
 def logout():
@@ -499,6 +665,32 @@ def profile():
         
     return render_template("profile.html", user=user, stats=stats)
 
+@app.route("/change-password", methods=["POST"])
+@login_required
+def change_password():
+    user = current_user()
+    current_password = request.form.get("current_password", "")
+    new_password = request.form.get("new_password", "")
+    if not new_password:
+        flash("Enter a new password.")
+        return redirect(url_for("profile"))
+
+    db = get_db_connection()
+    cursor = db.cursor(dictionary=True)
+    try:
+        cursor.execute("SELECT password_hash FROM users WHERE id = %s", (user["id"],))
+        row = cursor.fetchone()
+        if not row or not check_password_hash(row["password_hash"], current_password):
+            flash("Current password is incorrect.")
+            return redirect(url_for("profile"))
+        cursor.execute("UPDATE users SET password_hash = %s WHERE id = %s", (generate_password_hash(new_password), user["id"]))
+        db.commit()
+        flash("Password updated.")
+    finally:
+        cursor.close()
+        db.close()
+    return redirect(url_for("profile"))
+
 @app.route("/users", methods=["GET", "POST"])
 @admin_required
 def manage_users():
@@ -507,17 +699,27 @@ def manage_users():
         email = request.form.get("email", "").strip().lower()
         password = request.form.get("password", "")
         role = request.form.get("role", "company_user")
-        company_domain = request.form.get("company_domain", "").strip() or None
+        company_domain = normalize_domain(request.form.get("company_domain", ""))
 
         if role not in ("admin", "company_user"):
             role = "company_user"
+
+        domain_from_email = email_domain(email)
+        if not name or not domain_from_email:
+            flash("Enter a valid name and email.")
+            return redirect(url_for("manage_users"))
+        if not password:
+            flash("Enter a temporary password.")
+            return redirect(url_for("manage_users"))
+        if not company_domain:
+            company_domain = domain_from_email
 
         db = get_db_connection()
         cursor = db.cursor(dictionary=True)
         try:
             cursor.execute("""
-                INSERT INTO users (name, email, password_hash, role, company_domain)
-                VALUES (%s, %s, %s, %s, %s)
+                INSERT INTO users (name, email, password_hash, role, company_domain, email_verified)
+                VALUES (%s, %s, %s, %s, %s, TRUE)
             """, (name, email, generate_password_hash(password), role, company_domain))
             db.commit()
         except Exception as e:
@@ -554,6 +756,24 @@ def delete_user(user_id):
         db.close()
     return redirect(url_for("manage_users"))
 
+@app.route("/reset-user-password/<int:user_id>", methods=["POST"])
+@admin_required
+def reset_user_password(user_id):
+    new_password = request.form.get("new_password", "")
+    if not new_password:
+        flash("Enter a new password.")
+        return redirect(url_for("manage_users"))
+    db = get_db_connection()
+    cursor = db.cursor()
+    try:
+        cursor.execute("UPDATE users SET password_hash = %s WHERE id = %s", (generate_password_hash(new_password), user_id))
+        db.commit()
+        flash("User password reset.")
+    finally:
+        cursor.close()
+        db.close()
+    return redirect(url_for("manage_users"))
+
 @app.route("/dashboard")
 @login_required
 def dashboard():
@@ -576,6 +796,8 @@ def dashboard():
         sql = f"""
             SELECT 
                 c.*,
+                u.name AS owner_name,
+                u.email AS owner_email,
                 (SELECT COUNT(*) FROM employees e WHERE e.campaign_id = c.id) as employee_count,
                 (SELECT COUNT(*) FROM emails_sent es WHERE es.campaign_id = c.id AND COALESCE(es.status, 'sent') = 'sent') as emails_sent,
                 (SELECT COUNT(*) FROM emails_sent es WHERE es.campaign_id = c.id AND es.status = 'failed') as emails_failed,
@@ -584,6 +806,7 @@ def dashboard():
                 COUNT(DISTINCT CASE WHEN e.event_type = 'click' THEN e.tracking_id END) as clicks,
                 COUNT(DISTINCT CASE WHEN e.event_type = 'report' THEN e.tracking_id END) as reports
             FROM campaigns c
+            LEFT JOIN users u ON c.user_id = u.id
             LEFT JOIN emails_sent es_join ON c.id = es_join.campaign_id
             LEFT JOIN events e ON es_join.tracking_id = e.tracking_id
             {where_clause}
@@ -628,15 +851,23 @@ def new_campaign():
     if request.method == "POST":
         # 1. Get data from the form
         name = request.form.get("campaign_name")
-        domain = request.form.get("company_domain")
+        domain = normalize_domain(request.form.get("company_domain") or user.get("company_domain") or email_domain(user.get("email")))
         scenario = request.form.get("scenario")
         consent = request.form.get("consent_confirmed")
-        requested_mode = request.form.get("delivery_mode", "local")
-        delivery_mode = requested_mode if requested_mode in ("local", "smtp") else "local"
+        requested_mode = request.form.get("delivery_mode", "smtp" if user["role"] != "admin" else "local")
+        delivery_mode = requested_mode if requested_mode in ("local", "smtp") else "smtp"
+        if user["role"] != "admin":
+            delivery_mode = "smtp"
 
         # 2. Security Check: Ensure consent was ticked
         if not consent:
             return "Error: You must confirm consent before launching.", 400
+        if not domain:
+            flash("Add a domain or testing label for this campaign.")
+            return redirect(url_for("new_campaign"))
+        if delivery_mode == "smtp" and not request.form.get("deliverability_confirmed"):
+            flash("Confirm that your organization has allowlisted the simulation sender before using Live Mode.")
+            return redirect(url_for("new_campaign"))
 
         # 3. Save to Database
         db = get_db_connection()
@@ -656,7 +887,7 @@ def new_campaign():
         # 4. Redirect to Dashboard (we will show the campaign there later)
         return redirect(url_for('dashboard'))
 
-    return render_template("new_campaign.html")
+    return render_template("new_campaign.html", user=user)
 
 # 2. ADD THIS ROUTE: Handles CSV upload for employees
 @app.route("/upload-employees/<int:campaign_id>", methods=["POST"])
@@ -687,19 +918,23 @@ def upload_employees(campaign_id):
             db = get_db_connection()
             cursor = db.cursor()
             sql = "INSERT INTO employees (name, email, department, title, campaign_id) VALUES (%s, %s, %s, %s, %s)"
+            inserted = 0
             
             for row in reader:
                 name = row.get("name", "")
-                email = row.get("email", "")
+                email = row.get("email", "").strip().lower()
                 department = row.get("department", "")
                 title = row.get("title", "")
                 
                 if email:
                     cursor.execute(sql, (name, email, department, title, campaign_id))
+                    inserted += 1
                     
             db.commit()
             cursor.close()
             db.close()
+            if inserted == 0:
+                flash("No target emails were found in the CSV.")
             return redirect(url_for("dashboard"))
         except Exception as e:
             return f"Error processing CSV: {str(e)}", 500
@@ -874,12 +1109,18 @@ def launch_campaign(campaign_id):
             flash("Upload at least one target before launching.")
             return redirect(url_for("dashboard"))
 
-        if campaign.get("delivery_mode") == "smtp":
-            settings = get_email_settings("smtp")
+        if user["role"] != "admin" and campaign.get("delivery_mode") == "local":
+            cursor.execute("UPDATE campaigns SET delivery_mode = 'smtp' WHERE id = %s", (campaign_id,))
+            db.commit()
+            campaign["delivery_mode"] = "smtp"
+
+        resolved_provider = resolve_email_provider(campaign.get("delivery_mode"))
+        if resolved_provider == "smtp":
+            settings = get_email_settings(campaign.get("delivery_mode"))
             if not settings["host"] or not settings["user"] or not settings["password"]:
                 cursor.close()
                 db.close()
-                flash("SMTP delivery is not configured. Add SMTP_HOST, SMTP_USER, SMTP_PASS, and EMAIL_FROM in .env, or use Local delivery.")
+                flash("SMTP delivery is not configured. Add SMTP_HOST, SMTP_USER, SMTP_PASS, and SMTP_FROM_EMAIL in .env.")
                 return redirect(url_for("dashboard"))
 
         # Immediately set status to launching and show dashboard to user
@@ -986,6 +1227,9 @@ def download_report(campaign_id):
     user = current_user()
     db = get_db_connection()
     cursor = db.cursor(dictionary=True)
+    campaign = None
+    email_rows = []
+    department_rows = []
     try:
         if ensure_email_schema_once(cursor):
             db.commit()
@@ -993,6 +1237,31 @@ def download_report(campaign_id):
             return "Campaign not found.", 404
         campaign = get_campaign_metrics(cursor, campaign_id)
         report = build_campaign_report(campaign)
+        cursor.execute("""
+            SELECT es.recipient_email, es.status, es.error_message, es.subject, es.sender_name,
+                   es.educational_breakdown, emp.department, emp.title
+            FROM emails_sent es
+            LEFT JOIN employees emp
+                ON emp.campaign_id = es.campaign_id AND emp.email = es.recipient_email
+            WHERE es.campaign_id = %s
+            ORDER BY es.id ASC
+            LIMIT 12
+        """, (campaign_id,))
+        email_rows = cursor.fetchall()
+        cursor.execute("""
+            SELECT COALESCE(emp.department, 'Unassigned') AS department,
+                   COUNT(DISTINCT emp.id) AS targets,
+                   SUM(CASE WHEN ev.event_type = 'click' THEN 1 ELSE 0 END) AS clicks,
+                   SUM(CASE WHEN ev.event_type = 'report' THEN 1 ELSE 0 END) AS reports
+            FROM employees emp
+            LEFT JOIN emails_sent es ON es.campaign_id = emp.campaign_id AND es.recipient_email = emp.email
+            LEFT JOIN events ev ON ev.tracking_id = es.tracking_id
+            WHERE emp.campaign_id = %s
+            GROUP BY COALESCE(emp.department, 'Unassigned')
+            ORDER BY clicks DESC, targets DESC
+            LIMIT 8
+        """, (campaign_id,))
+        department_rows = cursor.fetchall()
     finally:
         cursor.close()
         db.close()
@@ -1000,73 +1269,163 @@ def download_report(campaign_id):
     if not campaign:
         return "Campaign not found.", 404
 
-    pdf = FPDF()
-    pdf.add_page()
-    
-    # Premium Header Background
-    pdf.set_fill_color(10, 15, 30) # Dark cyber blue
-    pdf.rect(0, 0, 210, 40, 'F')
-    
-    # Title
-    pdf.set_text_color(255, 255, 255)
-    pdf.set_font("Helvetica", size=24, style='B')
-    pdf.set_xy(10, 10)
-    pdf.cell(0, 10, txt="PhishSim Agentic AI Report", ln=1, align='C')
-    pdf.set_font("Helvetica", size=12)
-    pdf.cell(0, 10, txt=f"Simulation Target: {campaign.get('name', 'Unknown')}", ln=1, align='C')
-    
-    pdf.set_xy(10, 50)
-    
-    # Risk Badge Box
-    pdf.set_fill_color(240, 244, 248)
-    pdf.rect(10, 45, 190, 25, 'F')
-    pdf.set_text_color(6, 182, 212) # Cyan
-    pdf.set_font("Helvetica", size=14, style='B')
-    pdf.cell(0, 10, txt=f"Calculated Risk Level: {report['risk_level']}", ln=1)
-    
-    # Metrics
-    pdf.set_text_color(50, 50, 50)
-    pdf.set_font("Helvetica", size=11)
-    pdf.cell(45, 10, txt=f"Delivery: {report['delivery_rate']}%", border=0)
-    pdf.cell(45, 10, txt=f"Open: {report['open_rate']}%", border=0)
-    pdf.cell(50, 10, txt=f"Click (Vuln): {report['click_rate']}%", border=0)
-    pdf.cell(50, 10, txt=f"Report (Secure): {report['report_rate']}%", border=0, ln=1)
-    
-    pdf.ln(10)
-    
-    # AI Summary
-    pdf.set_text_color(6, 182, 212)
-    pdf.set_font("Helvetica", size=16, style='B')
-    pdf.cell(0, 10, txt="Agentic AI Threat Analysis", ln=1)
-    
-    pdf.set_text_color(70, 70, 70)
-    pdf.set_font("Helvetica", size=11)
-    # FPDF multi_cell height 6 for better reading
-    pdf.multi_cell(0, 6, txt=str(report['summary']))
-    pdf.ln(10)
-    
-    # Recommendations
-    pdf.set_text_color(59, 130, 246) # Blue
-    pdf.set_font("Helvetica", size=16, style='B')
-    pdf.cell(0, 10, txt="Actionable Recommendations", ln=1)
-    
-    pdf.set_text_color(70, 70, 70)
-    pdf.set_font("Helvetica", size=11)
-    for i, rec in enumerate(report['recommendations'], 1):
-        pdf.set_font("Helvetica", size=11, style='B')
-        pdf.cell(10, 6, txt=f"{i}.")
-        pdf.set_font("Helvetica", size=11)
-        pdf.multi_cell(0, 6, txt=f"{rec}")
+    def clean_pdf_text(value):
+        text = str(value or "")
+        replacements = {
+            "\u2014": "-", "\u2013": "-", "\u2018": "'", "\u2019": "'",
+            "\u201c": '"', "\u201d": '"', "\u2192": "->", "\u2022": "-",
+            "\u00a0": " ",
+        }
+        for src, dst in replacements.items():
+            text = text.replace(src, dst)
+        text = re.sub(r"<[^>]+>", " ", text)
+        text = re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f]", " ", text)
+        text = re.sub(r"[ \t]+", " ", text).strip()
+        words = []
+        for word in text.split(" "):
+            if len(word) > 60:
+                words.extend(word[i:i + 60] for i in range(0, len(word), 60))
+            else:
+                words.append(word)
+        return " ".join(words).encode("latin-1", "replace").decode("latin-1")
+
+    def clipped_pdf_text(value, max_chars):
+        text = clean_pdf_text(value)
+        return text if len(text) <= max_chars else text[:max_chars - 3] + "..."
+
+    def ensure_pdf_space(pdf, needed=24):
+        if pdf.get_y() + needed > pdf.page_break_trigger:
+            pdf.add_page()
+
+    def section_title(pdf, title, color=(37, 99, 235)):
+        ensure_pdf_space(pdf, 22)
         pdf.ln(4)
-        
-    # Footer
-    pdf.set_auto_page_break(False)
+        pdf.set_x(pdf.l_margin)
+        pdf.set_text_color(*color)
+        pdf.set_font("Helvetica", "B", 14)
+        pdf.cell(0, 8, clipped_pdf_text(title, 80), ln=1)
+        pdf.set_draw_color(219, 234, 254)
+        pdf.line(10, pdf.get_y(), 200, pdf.get_y())
+        pdf.ln(3)
+
+    def paragraph(pdf, text, size=10.5):
+        ensure_pdf_space(pdf, 18)
+        pdf.set_x(pdf.l_margin)
+        pdf.set_text_color(51, 65, 85)
+        pdf.set_font("Helvetica", "", size)
+        pdf.multi_cell(190, 6, clean_pdf_text(text))
+
+    def table_cell(pdf, width, height, text, max_chars, ln=0):
+        pdf.cell(width, height, clipped_pdf_text(text, max_chars), ln=ln)
+
+    pdf = FPDF()
+    pdf.set_auto_page_break(True, margin=16)
+    pdf.add_page()
+
+    pdf.set_fill_color(10, 15, 30)
+    pdf.rect(0, 0, 210, 46, "F")
+    pdf.set_text_color(255, 255, 255)
+    pdf.set_font("Helvetica", "B", 22)
+    pdf.set_xy(10, 10)
+    pdf.cell(0, 9, "PhishSim AI Security Report", ln=1, align="C")
+    pdf.set_font("Helvetica", "", 11)
+    pdf.cell(0, 8, clean_pdf_text(f"{campaign.get('name', 'Campaign')} | {campaign.get('company_domain', 'Unknown domain')}"), ln=1, align="C")
+    pdf.cell(0, 8, clean_pdf_text(f"Generated {datetime.utcnow().strftime('%Y-%m-%d %H:%M UTC')}"), ln=1, align="C")
+
+    pdf.set_y(55)
+    pdf.set_fill_color(240, 244, 255)
+    pdf.set_draw_color(191, 219, 254)
+    pdf.rect(10, 52, 190, 30, "DF")
+    pdf.set_text_color(15, 23, 42)
+    pdf.set_font("Helvetica", "B", 13)
+    pdf.cell(0, 8, clean_pdf_text(f"Calculated Risk Level: {report['risk_level']}"), ln=1)
+    pdf.set_font("Helvetica", "", 10)
+    pdf.cell(45, 8, clean_pdf_text(f"Delivery: {report['delivery_rate']}%"))
+    pdf.cell(45, 8, clean_pdf_text(f"Open: {report['open_rate']}%"))
+    pdf.cell(50, 8, clean_pdf_text(f"Click: {report['click_rate']}%"))
+    pdf.cell(50, 8, clean_pdf_text(f"Report: {report['report_rate']}%"), ln=1)
+
+    section_title(pdf, "Executive Summary")
+    paragraph(pdf, report["summary"])
+    paragraph(pdf, f"This report covers {campaign.get('employee_count', 0)} target employee(s), {campaign.get('emails_sent', 0)} delivered simulation email(s), {campaign.get('emails_failed', 0)} failed delivery attempt(s), {campaign.get('opens', 0)} open event(s), {campaign.get('clicks', 0)} click event(s), and {campaign.get('reports', 0)} employee report event(s).")
+
+    section_title(pdf, "Behavioral Interpretation")
+    click_rate = float(report["click_rate"])
+    report_rate = float(report["report_rate"])
+    if click_rate >= 25:
+        paragraph(pdf, "The click rate indicates a material social-engineering exposure. Prioritize employees and departments that clicked before running a broad retest.")
+    elif click_rate > 0:
+        paragraph(pdf, "The campaign found some susceptible behavior, but the exposure appears containable with targeted coaching and a short follow-up simulation.")
+    else:
+        paragraph(pdf, "No click events were recorded. Continue reinforcing reporting behavior and run a different scenario to avoid overfitting to one phishing style.")
+    if report_rate <= click_rate and campaign.get("emails_sent"):
+        paragraph(pdf, "Reporting behavior should be strengthened. A healthy security culture normally produces visible reports even when some users click.")
+    else:
+        paragraph(pdf, "Reporting behavior is a positive signal. Keep the reporting workflow prominent and reward fast reports.")
+
+    section_title(pdf, "Department Risk View")
+    if department_rows:
+        pdf.set_font("Helvetica", "B", 9)
+        pdf.set_text_color(15, 23, 42)
+        table_cell(pdf, 70, 7, "Department", 28)
+        table_cell(pdf, 35, 7, "Targets", 12)
+        table_cell(pdf, 35, 7, "Clicks", 12)
+        table_cell(pdf, 35, 7, "Reports", 12, ln=1)
+        pdf.set_font("Helvetica", "", 9)
+        pdf.set_text_color(51, 65, 85)
+        for row in department_rows:
+            ensure_pdf_space(pdf, 10)
+            table_cell(pdf, 70, 7, row.get("department"), 28)
+            table_cell(pdf, 35, 7, str(row.get("targets") or 0), 12)
+            table_cell(pdf, 35, 7, str(row.get("clicks") or 0), 12)
+            table_cell(pdf, 35, 7, str(row.get("reports") or 0), 12, ln=1)
+    else:
+        paragraph(pdf, "No department data was available for this campaign.")
+
+    section_title(pdf, "Actionable Recommendations")
+    for i, rec in enumerate(report["recommendations"], 1):
+        paragraph(pdf, f"{i}. {rec}")
+
+    section_title(pdf, "30-Day Remediation Plan")
+    plan_items = [
+        "Week 1: Notify managers of aggregate risk findings and confirm the reporting workflow is easy to find.",
+        "Week 2: Run focused micro-training on sender verification, urgent-payment pressure, and link inspection.",
+        "Week 3: Coach departments or roles with click events using examples from this campaign.",
+        "Week 4: Launch a follow-up simulation with a different scenario and compare click/report rates."
+    ]
+    for item in plan_items:
+        paragraph(pdf, item)
+
+    section_title(pdf, "Email Content and Delivery Notes")
+    paragraph(pdf, "Simulation emails include click tracking, open tracking where supported by the mail client, and a report button. Open tracking can be affected by image blocking, privacy proxies, and client-side security controls.")
+    paragraph(pdf, "For Gmail or other live SMTP delivery, ask IT to allowlist the sender or configure a mail-flow exception. Without this, security filters may place simulations in spam.")
+    if email_rows:
+        pdf.set_font("Helvetica", "B", 9)
+        pdf.set_text_color(15, 23, 42)
+        table_cell(pdf, 62, 7, "Recipient", 30)
+        table_cell(pdf, 25, 7, "Status", 10)
+        table_cell(pdf, 90, 7, "Subject", 45, ln=1)
+        pdf.set_font("Helvetica", "", 8.5)
+        pdf.set_text_color(51, 65, 85)
+        for row in email_rows[:8]:
+            ensure_pdf_space(pdf, 10)
+            table_cell(pdf, 62, 6, row.get("recipient_email", ""), 32)
+            table_cell(pdf, 25, 6, row.get("status", ""), 10)
+            table_cell(pdf, 90, 6, row.get("subject", ""), 48, ln=1)
+
+    section_title(pdf, "Audit Notes")
+    paragraph(pdf, "Use this PDF for internal security-awareness review only. PhishSim AI is designed for authorized simulations where the organization has permission to test the listed recipients.")
+    paragraph(pdf, f"Campaign ID: {campaign_id}. Scenario: {(campaign.get('scenario_type') or 'unknown').replace('_', ' ')}. Delivery mode: {campaign.get('delivery_mode') or 'unknown'}.")
+
+    if pdf.get_y() > 260:
+        pdf.add_page()
     pdf.set_y(-15)
-    pdf.set_font("Helvetica", size=8, style='I')
-    pdf.set_text_color(150, 150, 150)
-    pdf.cell(0, 10, "Report dynamically generated by PhishSim Agentic OS", align='C')
+    pdf.set_font("Helvetica", "I", 8)
+    pdf.set_text_color(100, 116, 139)
+    pdf.cell(0, 10, "Generated by PhishSim AI for authorized security training.", align="C")
         
-    pdf_bytes = bytes(pdf.output())
+    pdf_output = pdf.output()
+    pdf_bytes = pdf_output.encode("latin-1") if isinstance(pdf_output, str) else bytes(pdf_output)
     
     from flask import Response
     return Response(
@@ -1086,10 +1445,11 @@ def clone_campaign(campaign_id):
         return "Campaign not found.", 404
 
     new_name = campaign["name"] + " (Clone)"
+    cloned_delivery_mode = campaign["delivery_mode"] if user["role"] == "admin" else "smtp"
     cursor.execute("""
         INSERT INTO campaigns (user_id, name, company_domain, scenario_type, delivery_mode, status)
         VALUES (%s, %s, %s, %s, %s, 'draft')
-    """, (user["id"], new_name, campaign["company_domain"], campaign["scenario_type"], campaign["delivery_mode"]))
+    """, (user["id"], new_name, campaign["company_domain"], campaign["scenario_type"], cloned_delivery_mode))
     db.commit()
     cursor.close()
     db.close()
