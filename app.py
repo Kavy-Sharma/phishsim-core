@@ -14,7 +14,7 @@ from functools import wraps
 import smtplib
 from werkzeug.security import generate_password_hash, check_password_hash
 from ai_engine.report_agent import build_campaign_report
-from send_email import get_email_settings, resolve_email_provider, send_phishing_email
+from send_email import get_email_settings, is_deployed_environment, resolve_email_provider, send_phishing_email
 
 load_dotenv()
 
@@ -537,6 +537,7 @@ def demo_login():
     db.close()
     
     session["user_id"] = user_id
+    session["role"] = "company_user"
     flash("Welcome to the PhishSim Demo! We've pre-loaded some active campaigns and statistics for you.", "success")
     return redirect(url_for("dashboard"))
 
@@ -802,15 +803,27 @@ def dashboard():
                 (SELECT COUNT(*) FROM emails_sent es WHERE es.campaign_id = c.id AND COALESCE(es.status, 'sent') = 'sent') as emails_sent,
                 (SELECT COUNT(*) FROM emails_sent es WHERE es.campaign_id = c.id AND es.status = 'failed') as emails_failed,
                 (SELECT error_message FROM emails_sent es WHERE es.campaign_id = c.id AND es.status = 'failed' ORDER BY id DESC LIMIT 1) as latest_error,
-                COUNT(DISTINCT CASE WHEN e.event_type IN ('open', 'click', 'report') THEN e.tracking_id END) as opens,
-                COUNT(DISTINCT CASE WHEN e.event_type = 'click' THEN e.tracking_id END) as clicks,
-                COUNT(DISTINCT CASE WHEN e.event_type = 'report' THEN e.tracking_id END) as reports
+                (
+                    SELECT COUNT(DISTINCT ev.tracking_id)
+                    FROM events ev
+                    JOIN emails_sent es ON ev.tracking_id = es.tracking_id
+                    WHERE es.campaign_id = c.id AND ev.event_type IN ('open', 'click', 'report')
+                ) as opens,
+                (
+                    SELECT COUNT(DISTINCT ev.tracking_id)
+                    FROM events ev
+                    JOIN emails_sent es ON ev.tracking_id = es.tracking_id
+                    WHERE es.campaign_id = c.id AND ev.event_type = 'click'
+                ) as clicks,
+                (
+                    SELECT COUNT(DISTINCT ev.tracking_id)
+                    FROM events ev
+                    JOIN emails_sent es ON ev.tracking_id = es.tracking_id
+                    WHERE es.campaign_id = c.id AND ev.event_type = 'report'
+                ) as reports
             FROM campaigns c
             LEFT JOIN users u ON c.user_id = u.id
-            LEFT JOIN emails_sent es_join ON c.id = es_join.campaign_id
-            LEFT JOIN events e ON es_join.tracking_id = e.tracking_id
             {where_clause}
-            GROUP BY c.id
             ORDER BY c.id DESC
         """
         cursor.execute(sql, params)
@@ -848,15 +861,16 @@ def dashboard():
 @login_required
 def new_campaign():
     user = current_user()
+    local_delivery_available = not is_deployed_environment()
     if request.method == "POST":
         # 1. Get data from the form
         name = request.form.get("campaign_name")
         domain = normalize_domain(request.form.get("company_domain") or user.get("company_domain") or email_domain(user.get("email")))
         scenario = request.form.get("scenario")
         consent = request.form.get("consent_confirmed")
-        requested_mode = request.form.get("delivery_mode", "smtp" if user["role"] != "admin" else "local")
+        requested_mode = request.form.get("delivery_mode", "local" if user["role"] == "admin" and local_delivery_available else "smtp")
         delivery_mode = requested_mode if requested_mode in ("local", "smtp") else "smtp"
-        if user["role"] != "admin":
+        if user["role"] != "admin" or not local_delivery_available:
             delivery_mode = "smtp"
 
         # 2. Security Check: Ensure consent was ticked
@@ -887,7 +901,7 @@ def new_campaign():
         # 4. Redirect to Dashboard (we will show the campaign there later)
         return redirect(url_for('dashboard'))
 
-    return render_template("new_campaign.html", user=user)
+    return render_template("new_campaign.html", user=user, local_delivery_available=local_delivery_available)
 
 # 2. ADD THIS ROUTE: Handles CSV upload for employees
 @app.route("/upload-employees/<int:campaign_id>", methods=["POST"])
@@ -1109,7 +1123,7 @@ def launch_campaign(campaign_id):
             flash("Upload at least one target before launching.")
             return redirect(url_for("dashboard"))
 
-        if user["role"] != "admin" and campaign.get("delivery_mode") == "local":
+        if (user["role"] != "admin" or is_deployed_environment()) and campaign.get("delivery_mode") == "local":
             cursor.execute("UPDATE campaigns SET delivery_mode = 'smtp' WHERE id = %s", (campaign_id,))
             db.commit()
             campaign["delivery_mode"] = "smtp"

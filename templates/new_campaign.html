@@ -618,8 +618,8 @@
             <!-- Delivery Mode -->
             <div class="nc-group">
                 <label>Delivery Mode</label>
-                <div class="delivery-grid {% if current_user.role != 'admin' %}single-mode{% endif %}">
-                    {% if current_user.role == 'admin' %}
+                <div class="delivery-grid {% if not local_delivery_available %}single-mode{% endif %}">
+                    {% if local_delivery_available %}
                     <div class="delivery-option">
                         <input type="radio" name="delivery_mode" id="d1" value="local" checked>
                         <label class="delivery-label" for="d1">
@@ -632,7 +632,7 @@
                     </div>
                     {% endif %}
                     <div class="delivery-option">
-                        <input type="radio" name="delivery_mode" id="d2" value="smtp" {% if current_user.role != 'admin' %}checked{% endif %}>
+                        <input type="radio" name="delivery_mode" id="d2" value="smtp" {% if not local_delivery_available %}checked{% endif %}>
                         <label class="delivery-label" for="d2">
                             <i class="fas fa-paper-plane" style="color:#3b82f6; font-size:1.3rem; flex-shrink:0;"></i>
                             <div>
