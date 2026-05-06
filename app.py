@@ -14,7 +14,7 @@ from functools import wraps
 import smtplib
 from werkzeug.security import generate_password_hash, check_password_hash
 from ai_engine.report_agent import build_campaign_report
-from send_email import get_email_settings, is_deployed_environment, resolve_email_provider, send_phishing_email
+from send_email import get_email_settings, is_deployed_environment, send_phishing_email
 
 load_dotenv()
 
@@ -1149,13 +1149,12 @@ def launch_campaign(campaign_id):
             db.commit()
             campaign["delivery_mode"] = "smtp"
 
-        resolved_provider = resolve_email_provider(campaign.get("delivery_mode"))
-        if resolved_provider == "smtp":
+        if not is_deployed_environment():
             settings = get_email_settings(campaign.get("delivery_mode"))
-            if not settings["host"] or not settings["user"] or not settings["password"]:
+            if not settings["host"]:
                 cursor.close()
                 db.close()
-                flash("SMTP delivery is not configured. Add SMTP_HOST, SMTP_USER, SMTP_PASS, and SMTP_FROM_EMAIL in .env.")
+                flash("SMTP delivery is not configured.")
                 return redirect(url_for("dashboard"))
 
         # Immediately set status to launching and show dashboard to user
