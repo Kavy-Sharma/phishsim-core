@@ -226,28 +226,49 @@ def add_security_headers(response):
     return response
 
 def send_verification_email(to_email, token):
-    settings = get_email_settings("smtp")
-    if not settings["host"] or not settings["user"] or not settings["password"]:
-        return False, "SMTP is not configured for account verification."
-
     base_url = os.getenv("APP_BASE_URL", "http://127.0.0.1:5000").rstrip("/")
     verify_url = f"{base_url}/verify-email/{token}"
+    body_html = f"<p>Welcome to PhishSim AI.</p><p>Verify your account before creating campaigns:</p><p><a href='{verify_url}'>Verify email</a></p>"
+
+    if is_deployed_environment():
+        import requests as req
+        api_key = os.getenv("RESEND_API_KEY", "").strip()
+        if not api_key:
+            return False, "RESEND_API_KEY missing."
+        try:
+            resp = req.post(
+                "https://api.resend.com/emails",
+                headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+                json={
+                    "from": "PhishSim AI <onboarding@resend.dev>",
+                    "to": [to_email],
+                    "subject": "Verify your PhishSim AI account",
+                    "html": body_html,
+                },
+                timeout=10,
+            )
+            if resp.status_code in (200, 201):
+                return True, None
+            return False, resp.text
+        except Exception as e:
+            return False, str(e)
+
+    # Local: use smtplib
+    settings = get_email_settings("smtp")
+    if not settings["host"]:
+        return False, "SMTP not configured."
     msg = MIMEMultipart("alternative")
     msg["Subject"] = "Verify your PhishSim AI account"
     msg["From"] = f"PhishSim AI <{settings['from_email']}>"
     msg["To"] = to_email
-    msg.attach(MIMEText(
-        f"<p>Welcome to PhishSim AI.</p><p>Verify your account before creating campaigns:</p><p><a href='{verify_url}'>Verify email</a></p>",
-        "html"
-    ))
+    msg.attach(MIMEText(body_html, "html"))
     try:
         smtp_class = smtplib.SMTP_SSL if settings["encryption"] == "ssl" else smtplib.SMTP
-        with smtp_class(settings["host"], settings["port"], timeout=float(os.getenv("SMTP_TIMEOUT_SECONDS", "6"))) as server:
+        with smtp_class(settings["host"], settings["port"], timeout=6) as server:
             if settings["encryption"] == "starttls":
-                server.ehlo()
-                server.starttls()
-                server.ehlo()
-            server.login(settings["user"], settings["password"])
+                server.ehlo(); server.starttls(); server.ehlo()
+            if settings["user"] and settings["password"]:
+                server.login(settings["user"], settings["password"])
             server.send_message(msg)
         return True, None
     except Exception as e:
