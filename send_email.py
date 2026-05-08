@@ -22,8 +22,33 @@ def is_deployed_environment():
     return any(_clean(os.getenv(name)) for name in DEPLOYMENT_ENV_VARS)
 
 def get_email_settings(delivery_mode=None):
-    """Returns settings dict — kept for compatibility with app.py checks."""
-    if is_deployed_environment():
+    """Returns settings dict — kept for compatibility with app.py checks.
+
+    Priority:
+      1. explicit delivery_mode argument (from campaign)
+      2. EMAIL_MODE env var
+      3. Auto-detect: deployed → mailtrap (if configured) or resend
+    """
+    explicit_mode = _clean(delivery_mode or os.getenv("EMAIL_MODE", "")).lower()
+
+    # --- Mailtrap sandbox (works on Render: port 2525 is NOT blocked) ---
+    if explicit_mode == "mailtrap":
+        return {
+            "provider": "smtp",
+            "host": "sandbox.smtp.mailtrap.io",
+            "port": 2525,
+            "user": _clean(os.getenv("MAILTRAP_USER")),
+            "password": _clean(os.getenv("MAILTRAP_PASS")),
+            "encryption": "starttls",
+            "from_email": _clean(os.getenv("EMAIL_FROM", "training@phishsim.ai")),
+        }
+
+    # --- Resend HTTP API (requires a verified custom domain for real inboxes) ---
+    if explicit_mode == "resend" or (
+        is_deployed_environment()
+        and explicit_mode not in ("smtp", "mailtrap", "local")
+        and _clean(os.getenv("RESEND_API_KEY"))
+    ):
         return {
             "provider": "resend",
             "host": "api.resend.com",
@@ -31,17 +56,31 @@ def get_email_settings(delivery_mode=None):
             "user": "resend",
             "password": _clean(os.getenv("RESEND_API_KEY")),
             "encryption": "https",
-            "from_email": "onboarding@resend.dev",
+            "from_email": _clean(os.getenv("RESEND_FROM_EMAIL", "onboarding@resend.dev")),
         }
-    else:
+
+    # --- Real Gmail / corporate SMTP ---
+    if explicit_mode == "smtp":
         return {
-            "provider": "local",
-            "host": _clean(os.getenv("LOCAL_SMTP_HOST", "127.0.0.1")),
-            "port": int(_clean(os.getenv("LOCAL_SMTP_PORT", "1025"))),
-            "user": None,
-            "password": None,
-            "from_email": _clean(os.getenv("EMAIL_FROM"), "training@phishsim.local"),
+            "provider": "smtp",
+            "host": _clean(os.getenv("SMTP_HOST")),
+            "port": int(_clean(os.getenv("SMTP_PORT", "587"))),
+            "user": _clean(os.getenv("SMTP_USER")),
+            "password": _clean(os.getenv("SMTP_PASS")),
+            "encryption": _clean(os.getenv("SMTP_ENCRYPTION", "starttls")),
+            "from_email": _clean(os.getenv("SMTP_FROM_EMAIL", os.getenv("EMAIL_FROM", "training@phishsim.local"))),
         }
+
+    # --- Local smtp4dev / default ---
+    return {
+        "provider": "local",
+        "host": _clean(os.getenv("LOCAL_SMTP_HOST", "127.0.0.1")),
+        "port": int(_clean(os.getenv("LOCAL_SMTP_PORT", "1025"))),
+        "user": None,
+        "password": None,
+        "from_email": _clean(os.getenv("EMAIL_FROM"), "training@phishsim.local"),
+    }
+
 
 def send_phishing_email(to_email, subject, sender_name, body_html, tracking_id, delivery_mode=None):
     """Sends one phishing simulation email."""
@@ -68,14 +107,15 @@ def send_phishing_email(to_email, subject, sender_name, body_html, tracking_id, 
     body_html += report_button_html
     body_html += f'\n<img src="{pixel_url}" width="1" height="1" style="display:none;" />'
 
-    # ── DEPLOYED: use Resend HTTPS API (Render blocks SMTP) ──────────────────
-    if is_deployed_environment():
+    settings = get_email_settings(delivery_mode)
+
+    if settings["provider"] == "resend":
         api_key = _clean(os.getenv("RESEND_API_KEY"))
         if not api_key:
             return {"success": False, "error": "RESEND_API_KEY missing from environment."}
 
         payload = {
-            "from": f"{sender_name} <onboarding@resend.dev>",
+            "from": f"{sender_name} <{settings['from_email']}>",
             "to": [to_email],
             "subject": subject,
             "html": body_html,
@@ -101,12 +141,11 @@ def send_phishing_email(to_email, subject, sender_name, body_html, tracking_id, 
             print(f"Resend exception for {to_email}: {e}")
             return {"success": False, "error": str(e)}
 
-    # ── LOCAL: use smtp4dev on localhost ─────────────────────────────────────
+    # SMTP delivery path (local or explicit smtp mode)
     import smtplib
     from email.mime.multipart import MIMEMultipart
     from email.mime.text import MIMEText
 
-    settings = get_email_settings()
     msg = MIMEMultipart("alternative")
     msg["Subject"] = subject
     msg["From"]    = f"{sender_name} <{settings['from_email']}>"
@@ -115,9 +154,13 @@ def send_phishing_email(to_email, subject, sender_name, body_html, tracking_id, 
 
     try:
         with smtplib.SMTP(settings["host"], settings["port"], timeout=6) as server:
+            if settings["encryption"] == "starttls":
+                server.starttls()
+            if settings["user"] and settings["password"]:
+                server.login(settings["user"], settings["password"])
             server.send_message(msg)
-            print(f"Local SMTP: sent to {to_email}")
+            print(f"SMTP: sent to {to_email} using {settings['host']}:{settings['port']}")
             return {"success": True, "error": None}
     except Exception as e:
-        print(f"Local SMTP failed for {to_email}: {e}")
+        print(f"SMTP failed for {to_email}: {e}")
         return {"success": False, "error": str(e)}

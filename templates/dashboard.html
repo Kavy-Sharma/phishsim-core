@@ -329,20 +329,61 @@ body { background: #020617 !important; }
     </div>
     {% else %}
 
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+        <h2 style="color: #fff; font-family: 'Outfit', sans-serif; font-size: 1.5rem; margin: 0;">Your Campaigns</h2>
+        <div style="display: flex; gap: 0.8rem; align-items: center;">
+            <!-- Manage toggle: hidden by default, appears on click like real SaaS -->
+            <button type="button" id="manage-toggle" onclick="toggleManageMode()"
+                style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;
+                       border-radius:8px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);
+                       color:#94a3b8;font-size:0.85rem;cursor:pointer;font-family:'Outfit',sans-serif;
+                       transition:all 0.2s;">
+                <i class="fas fa-sliders"></i> Manage
+            </button>
+            <button type="button" id="delete-selected"
+                onclick="confirmBulkDelete()"
+                style="display:none;padding:8px 16px;border-radius:8px;
+                       background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);
+                       color:#f87171;font-size:0.85rem;cursor:pointer;font-family:'Outfit',sans-serif;
+                       transition:all 0.2s;">
+                <i class="fas fa-trash-alt"></i> Delete Selected (<span id="selected-count">0</span>)
+            </button>
+        </div>
+    </div>
+
+    <form id="bulk-delete-form" action="/delete-campaigns" method="POST" style="display: none;">
+        <input type="hidden" name="campaign_ids" id="selected-ids">
+    </form>
+
     <div class="camp-grid">
         {% for camp in campaigns %}
-        <div class="camp-card" style="animation-delay: {{ loop.index0 * 0.1 }}s">
+        <div class="camp-card" style="animation-delay: {{ loop.index0 * 0.1 }}s"
+             data-status="{{ camp.status }}">
             <div class="camp-card-top">
-                <div>
-                    <h3 class="camp-name">{{ camp.name }}</h3>
-                    {% if current_user.role == 'admin' %}
-                    <div class="camp-owner"><i class="fas fa-user"></i> {{ camp.owner_name or 'Unknown user' }} · {{ camp.owner_email or 'no email' }}</div>
-                    {% endif %}
-                    <span class="badge-cyber badge-{% if camp.status == 'launched' %}launched{% elif camp.status == 'launched_with_errors' %}warning{% elif camp.status == 'failed' %}failed{% elif camp.status == 'launching' %}launching{% else %}draft{% endif %}">
-                        <i class="fas fa-{% if camp.status == 'launched' %}check-circle{% elif camp.status == 'failed' %}times-circle{% elif camp.status == 'launching' %}spinner fa-spin{% else %}circle{% endif %}"></i>
-                        {{ camp.status.replace('_', ' ') }}
-                    </span>
-                    <span class="badge-cyber badge-draft" style="margin-left: 6px;">{{ (camp.delivery_mode or 'local').upper() }}</span>
+                <div style="display: flex; align-items: flex-start; gap: 12px;">
+                    <!-- Checkbox: hidden by default, shown in manage mode -->
+                    <input type="checkbox" class="camp-checkbox" value="{{ camp.id }}"
+                           style="accent-color:#06b6d4; margin-top:4px; display:none; flex-shrink:0;">
+                    <div>
+                        <h3 class="camp-name">{{ camp.name }}</h3>
+                        {% if current_user.role == 'admin' %}
+                        <div class="camp-owner"><i class="fas fa-user"></i> {{ camp.owner_name or 'Unknown user' }} · {{ camp.owner_email or 'no email' }}</div>
+                        {% endif %}
+                        <span class="badge-cyber badge-{% if camp.status == 'launched' %}launched{% elif camp.status == 'launched_with_errors' %}warning{% elif camp.status == 'failed' %}failed{% elif camp.status == 'launching' %}launching{% else %}draft{% endif %}">
+                            <i class="fas fa-{% if camp.status == 'launched' %}check-circle{% elif camp.status == 'failed' %}times-circle{% elif camp.status == 'launching' %}spinner fa-spin{% else %}circle{% endif %}"></i>
+                            {{ camp.status.replace('_', ' ') }}
+                        </span>
+                        {% set mode = camp.delivery_mode or 'local' %}
+                        {% if mode == 'smtp' %}
+                            <span class="badge-cyber" style="margin-left:6px; background:rgba(59,130,246,0.1); color:#60a5fa; border:1px solid rgba(59,130,246,0.25);"><i class="fas fa-paper-plane"></i> Live Send</span>
+                        {% elif mode == 'mailtrap' %}
+                            <span class="badge-cyber" style="margin-left:6px; background:rgba(16,185,129,0.1); color:#34d399; border:1px solid rgba(16,185,129,0.25);"><i class="fas fa-shield-halved"></i> Safe Send</span>
+                        {% elif mode == 'preview' %}
+                            <span class="badge-cyber" style="margin-left:6px; background:rgba(168,85,247,0.1); color:#c084fc; border:1px solid rgba(168,85,247,0.25);"><i class="fas fa-eye"></i> Preview</span>
+                        {% else %}
+                            <span class="badge-cyber" style="margin-left:6px; background:rgba(6,182,212,0.1); color:#22d3ee; border:1px solid rgba(6,182,212,0.25);"><i class="fas fa-flask"></i> Sandbox</span>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
 
@@ -407,7 +448,15 @@ body { background: #020617 !important; }
                     <div class="ms-label">Reports</div>
                 </div>
             </div>
+            {% if camp.delivery_mode == 'preview' %}
+            <!-- Preview: show inbox button prominently -->
+            <a href="/campaign-emails/{{ camp.id }}" class="camp-action-btn"
+               style="background:linear-gradient(135deg,rgba(168,85,247,0.2),rgba(168,85,247,0.1));color:#c084fc;border:1px solid rgba(168,85,247,0.35);margin-bottom:8px;">
+                <i class="fas fa-inbox"></i> View Generated Inbox
+            </a>
+            {% else %}
             <a href="/campaign-emails/{{ camp.id }}" class="camp-action-btn" style="background: rgba(59,130,246,0.1); color: #60a5fa; border: 1px solid rgba(59,130,246,0.3); margin-bottom: 8px;"><i class="fas fa-envelope-open-text"></i> View AI Emails</a>
+            {% endif %}
             <a href="/campaign-report/{{ camp.id }}" class="camp-action-btn btn-report"><i class="fas fa-file-alt"></i> View AI Report</a>
             {% endif %}
 
@@ -435,34 +484,116 @@ body { background: #020617 !important; }
     </div>
 </div>
 <script>
+    // ── Confirm-modal wiring (delete single campaign) ──────────────────────
     (function() {
-        const modal = document.getElementById("confirm-modal");
-        const title = document.getElementById("confirm-title");
+        const modal   = document.getElementById("confirm-modal");
+        const title   = document.getElementById("confirm-title");
         const message = document.getElementById("confirm-message");
-        const cancel = document.getElementById("confirm-cancel");
-        const danger = document.getElementById("confirm-danger");
+        const cancel  = document.getElementById("confirm-cancel");
+        const danger  = document.getElementById("confirm-danger");
         let pendingForm = null;
 
         document.querySelectorAll("form[data-confirm-title]").forEach((form) => {
             form.addEventListener("submit", function(e) {
                 e.preventDefault();
                 pendingForm = form;
-                title.textContent = form.dataset.confirmTitle || "Confirm action";
+                title.textContent   = form.dataset.confirmTitle   || "Confirm action";
                 message.textContent = form.dataset.confirmMessage || "This action cannot be undone.";
+                danger.onclick = () => pendingForm && pendingForm.submit();
                 modal.classList.add("show");
                 modal.setAttribute("aria-hidden", "false");
             });
         });
-
-        cancel.addEventListener("click", function() {
+        cancel.addEventListener("click", () => {
             pendingForm = null;
             modal.classList.remove("show");
             modal.setAttribute("aria-hidden", "true");
         });
+    })();
 
-        danger.addEventListener("click", function() {
-            if (pendingForm) pendingForm.submit();
+    // ── Manage Mode (checkbox select) ─────────────────────────────────────
+    let manageActive = false;
+
+    function toggleManageMode() {
+        manageActive = !manageActive;
+        const btn        = document.getElementById("manage-toggle");
+        const checkboxes = document.querySelectorAll(".camp-checkbox");
+        const delBtn     = document.getElementById("delete-selected");
+
+        checkboxes.forEach(cb => {
+            cb.style.display = manageActive ? "block" : "none";
+            if (!manageActive) cb.checked = false;
         });
+
+        if (manageActive) {
+            btn.innerHTML = '<i class="fas fa-check"></i> Done';
+            btn.style.background = "rgba(6,182,212,0.12)";
+            btn.style.borderColor = "rgba(6,182,212,0.4)";
+            btn.style.color = "#22d3ee";
+        } else {
+            btn.innerHTML = '<i class="fas fa-sliders"></i> Manage';
+            btn.style.background = "rgba(255,255,255,0.05)";
+            btn.style.borderColor = "rgba(255,255,255,0.1)";
+            btn.style.color = "#94a3b8";
+            delBtn.style.display = "none";
+        }
+        updateDeleteBtn();
+    }
+
+    function updateDeleteBtn() {
+        const checked = document.querySelectorAll(".camp-checkbox:checked");
+        const delBtn  = document.getElementById("delete-selected");
+        const countEl = document.getElementById("selected-count");
+        if (countEl) countEl.textContent = checked.length;
+        delBtn.style.display = (manageActive && checked.length > 0) ? "inline-flex" : "none";
+    }
+
+    document.querySelectorAll(".camp-checkbox").forEach(cb => {
+        cb.addEventListener("change", updateDeleteBtn);
+    });
+
+    function confirmBulkDelete() {
+        const checked = Array.from(document.querySelectorAll(".camp-checkbox:checked"));
+        if (!checked.length) return;
+        const ids = checked.map(c => c.value);
+        document.getElementById("selected-ids").value = ids.join(",");
+
+        const modal   = document.getElementById("confirm-modal");
+        const title   = document.getElementById("confirm-title");
+        const message = document.getElementById("confirm-message");
+        const danger  = document.getElementById("confirm-danger");
+        title.textContent   = `Delete ${ids.length} campaign${ids.length > 1 ? 's' : ''}?`;
+        message.textContent = `This will permanently delete ${ids.length} campaign(s), their targets, generated emails, and events.`;
+        danger.onclick = () => document.getElementById("bulk-delete-form").submit();
+        modal.classList.add("show");
+        modal.setAttribute("aria-hidden", "false");
+    }
+
+    // ── Auto-refresh while any campaign is 'launching' ────────────────────
+    (function() {
+        const launchingCards = document.querySelectorAll(".camp-card[data-status='launching']");
+        if (launchingCards.length === 0) return; // nothing to poll
+
+        let pollInterval = null;
+
+        function pollStatus() {
+            fetch(window.location.href, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                .then(r => r.text())
+                .then(html => {
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    const stillLaunching = doc.querySelectorAll(".camp-card[data-status='launching']").length > 0;
+                    if (!stillLaunching) {
+                        // All done — do a full reload to get fresh data
+                        clearInterval(pollInterval);
+                        window.location.reload();
+                    }
+                })
+                .catch(() => {}); // silently ignore network errors
+        }
+
+        // Poll every 4 seconds
+        pollInterval = setInterval(pollStatus, 4000);
     })();
 </script>
 {% endblock %}

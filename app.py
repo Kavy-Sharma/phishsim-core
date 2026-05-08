@@ -231,16 +231,41 @@ def send_verification_email(to_email, token):
     body_html = f"<p>Welcome to PhishSim AI.</p><p>Verify your account before creating campaigns:</p><p><a href='{verify_url}'>Verify email</a></p>"
 
     if is_deployed_environment():
+        email_mode = os.getenv("EMAIL_MODE", "").strip().lower()
+
+        # Mailtrap sandbox path (no domain needed, works on Render free tier)
+        if email_mode == "mailtrap":
+            settings = get_email_settings("mailtrap")
+            import smtplib as _smtplib
+            from email.mime.multipart import MIMEMultipart as _MIME
+            from email.mime.text import MIMEText as _MIMEText
+            msg = _MIME("alternative")
+            msg["Subject"] = "Verify your PhishSim AI account"
+            msg["From"] = f"PhishSim AI <{settings['from_email']}>"
+            msg["To"] = to_email
+            msg.attach(_MIMEText(body_html, "html"))
+            try:
+                with _smtplib.SMTP(settings["host"], settings["port"], timeout=10) as server:
+                    server.ehlo()
+                    server.starttls()
+                    server.login(settings["user"], settings["password"])
+                    server.send_message(msg)
+                return True, None
+            except Exception as e:
+                return False, str(e)
+
+        # Resend path (requires a custom domain added to Resend dashboard)
         import requests as req
         api_key = os.getenv("RESEND_API_KEY", "").strip()
         if not api_key:
             return False, "RESEND_API_KEY missing."
+        from_email = os.getenv("RESEND_FROM_EMAIL", "onboarding@resend.dev")
         try:
             resp = req.post(
                 "https://api.resend.com/emails",
                 headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
                 json={
-                    "from": "PhishSim AI <onboarding@resend.dev>",
+                    "from": f"PhishSim AI <{from_email}>",
                     "to": [to_email],
                     "subject": "Verify your PhishSim AI account",
                     "html": body_html,
@@ -253,8 +278,9 @@ def send_verification_email(to_email, token):
         except Exception as e:
             return False, str(e)
 
-    # Local: use smtplib
-    settings = get_email_settings("smtp")
+    # Local: use the configured EMAIL_MODE (smtp4dev or real Gmail)
+    current_mode = os.getenv("EMAIL_MODE", "local").strip().lower()
+    settings = get_email_settings(current_mode)
     if not settings["host"]:
         return False, "SMTP not configured."
     msg = MIMEMultipart("alternative")
@@ -267,7 +293,7 @@ def send_verification_email(to_email, token):
         with smtp_class(settings["host"], settings["port"], timeout=6) as server:
             if settings["encryption"] == "starttls":
                 server.ehlo(); server.starttls(); server.ehlo()
-            if settings["user"] and settings["password"]:
+            if settings.get("user") and settings.get("password"):
                 server.login(settings["user"], settings["password"])
             server.send_message(msg)
         return True, None
@@ -440,7 +466,7 @@ def get_campaign_metrics(cursor, campaign_id):
     cursor.execute("""
         SELECT COUNT(*) as sent
         FROM emails_sent
-        WHERE campaign_id = %s AND COALESCE(status, 'sent') = 'sent'
+        WHERE campaign_id = %s AND COALESCE(status, 'sent') IN ('sent', 'previewed')
     """, (campaign_id,))
     campaign["emails_sent"] = cursor.fetchone()["sent"]
 
@@ -821,7 +847,7 @@ def dashboard():
                 u.name AS owner_name,
                 u.email AS owner_email,
                 (SELECT COUNT(*) FROM employees e WHERE e.campaign_id = c.id) as employee_count,
-                (SELECT COUNT(*) FROM emails_sent es WHERE es.campaign_id = c.id AND COALESCE(es.status, 'sent') = 'sent') as emails_sent,
+                (SELECT COUNT(*) FROM emails_sent es WHERE es.campaign_id = c.id AND COALESCE(es.status, 'sent') IN ('sent', 'previewed')) as emails_sent,
                 (SELECT COUNT(*) FROM emails_sent es WHERE es.campaign_id = c.id AND es.status = 'failed') as emails_failed,
                 (SELECT error_message FROM emails_sent es WHERE es.campaign_id = c.id AND es.status = 'failed' ORDER BY id DESC LIMIT 1) as latest_error,
                 (
@@ -883,15 +909,29 @@ def dashboard():
 def new_campaign():
     user = current_user()
     local_delivery_available = not is_deployed_environment()
+    # Safe Send = Mailtrap sandbox (works on Render, no domain needed)
+    safe_send_available = bool(
+        os.getenv("MAILTRAP_USER", "").strip() and os.getenv("MAILTRAP_PASS", "").strip()
+    )
+    # Preview mode = no sending at all, show in-app — always available
+    preview_available = True
+
     if request.method == "POST":
         # 1. Get data from the form
         name = request.form.get("campaign_name")
         domain = normalize_domain(request.form.get("company_domain") or user.get("company_domain") or email_domain(user.get("email")))
         scenario = request.form.get("scenario")
         consent = request.form.get("consent_confirmed")
-        requested_mode = request.form.get("delivery_mode", "local" if user["role"] == "admin" and local_delivery_available else "smtp")
-        delivery_mode = requested_mode if requested_mode in ("local", "smtp") else "smtp"
-        if user["role"] != "admin" or not local_delivery_available:
+        requested_mode = request.form.get("delivery_mode", "smtp")
+
+        VALID_MODES = {"local", "smtp", "mailtrap", "preview"}
+        delivery_mode = requested_mode if requested_mode in VALID_MODES else "smtp"
+
+        # local mode only allowed on localhost
+        if delivery_mode == "local" and not local_delivery_available:
+            delivery_mode = "smtp"
+        # mailtrap only when credentials are present
+        if delivery_mode == "mailtrap" and not safe_send_available:
             delivery_mode = "smtp"
 
         # 2. Security Check: Ensure consent was ticked
@@ -922,7 +962,13 @@ def new_campaign():
         # 4. Redirect to Dashboard (we will show the campaign there later)
         return redirect(url_for('dashboard'))
 
-    return render_template("new_campaign.html", user=user, local_delivery_available=local_delivery_available)
+    return render_template(
+        "new_campaign.html",
+        user=user,
+        local_delivery_available=local_delivery_available,
+        safe_send_available=safe_send_available,
+        preview_available=preview_available,
+    )
 
 # 2. ADD THIS ROUTE: Handles CSV upload for employees
 @app.route("/upload-employees/<int:campaign_id>", methods=["POST"])
@@ -1052,23 +1098,51 @@ def process_campaign_background(campaign_id):
                     email_data[key] = email_data[key].replace("{employee_name}", employee_name)
 
             breakdown = email_data.get("educational_breakdown", "This was a simulated phishing email designed to test security awareness.")
-            
-            result = send_phishing_email(
-                to_email=emp["email"],
-                subject=email_data["subject"],
-                sender_name=email_data["sender_name"],
-                body_html=email_data["body_html"],
-                tracking_id=tracking_id,
-                delivery_mode=campaign.get("delivery_mode")
-            )
 
-            result = result or {"success": False, "error": "Email helper returned no result."}
-            send_status = "sent" if result.get("success") else "failed"
-            error_message = result.get("error")
-            if send_status == "sent":
+            # Preview mode: skip actual sending, but inject tracking URLs and store complete body
+            # so in-app viewer shows the full email with working report button and click links
+            is_preview = campaign.get("delivery_mode") == "preview"
+            if is_preview:
+                base_url = os.getenv("APP_BASE_URL", "http://127.0.0.1:5000").rstrip("/")
+                tracking_url = f"{base_url}/click/{tracking_id}"
+                pixel_url    = f"{base_url}/pixel/{tracking_id}.png"
+                report_url   = f"{base_url}/report/{tracking_id}"
+
+                preview_body = email_data["body_html"].replace("TRACKING_LINK", tracking_url)
+                preview_body += f"""
+    <br><br>
+    <div style="font-family:Arial,sans-serif;text-align:center;margin-top:30px;padding:20px;
+                border-top:1px solid #e0e0e0;background-color:#f9f9f9;border-radius:8px;">
+        <p style="font-size:13px;color:#555;margin-bottom:12px;">
+            If you suspect this email is a phishing attempt, please report it immediately.</p>
+        <a href="{report_url}"
+           style="background-color:#dc3545;color:white;padding:10px 20px;text-decoration:none;
+                  border-radius:4px;font-weight:bold;font-size:14px;display:inline-block;">
+            Report Suspicious Email</a>
+    </div>"""
+                preview_body += f'\n<img src="{pixel_url}" width="1" height="1" style="display:none;" />'
+                email_data["body_html"] = preview_body
+
+                result = {"success": True, "error": None}
+                send_status = "previewed"
+                error_message = None
                 sent_count += 1
             else:
-                failed_count += 1
+                result = send_phishing_email(
+                    to_email=emp["email"],
+                    subject=email_data["subject"],
+                    sender_name=email_data["sender_name"],
+                    body_html=email_data["body_html"],
+                    tracking_id=tracking_id,
+                    delivery_mode=campaign.get("delivery_mode")
+                )
+                result = result or {"success": False, "error": "Email helper returned no result."}
+                send_status = "sent" if result.get("success") else "failed"
+                error_message = result.get("error")
+                if send_status == "sent":
+                    sent_count += 1
+                else:
+                    failed_count += 1
             
             tracking_sql = """
                 INSERT INTO emails_sent
@@ -1149,8 +1223,10 @@ def launch_campaign(campaign_id):
             db.commit()
             campaign["delivery_mode"] = "smtp"
 
-        if not is_deployed_environment():
-            settings = get_email_settings(campaign.get("delivery_mode"))
+        # Only validate SMTP host for modes that actually use SMTP directly
+        mode = campaign.get("delivery_mode", "smtp")
+        if mode not in ("preview", "mailtrap", "resend") and not is_deployed_environment():
+            settings = get_email_settings(mode)
             if not settings["host"]:
                 cursor.close()
                 db.close()
@@ -1162,16 +1238,37 @@ def launch_campaign(campaign_id):
         db.commit()
         cursor.close()
         db.close()
-        
+
         # Start background thread
         thread = threading.Thread(target=process_campaign_background, args=(campaign_id,))
         thread.daemon = True
         thread.start()
-        
+
+        # Preview campaigns: redirect directly to email viewer after a short moment
+        if mode == "preview":
+            flash("AI is generating your preview emails. They'll appear here in a few seconds.")
+            return redirect(url_for("campaign_emails", campaign_id=campaign_id))
+
         return redirect(url_for('dashboard'))
         
     except Exception as e:
         return f"Error launching campaign: {str(e)}", 500
+
+@app.route("/debug-email")
+def debug_email():
+    settings = get_email_settings()
+    return {
+        "deployed_environment": is_deployed_environment(),
+        "app_env": os.getenv("APP_ENV"),
+        "phishsim_env": os.getenv("PHISHSIM_ENV"),
+        "render_detected": bool(os.getenv("RENDER") or os.getenv("RENDER_EXTERNAL_URL") or os.getenv("K_SERVICE") or os.getenv("DYNO") or os.getenv("VERCEL") or os.getenv("FLY_APP_NAME")),
+        "email_provider": settings.get("provider"),
+        "smtp_host": settings.get("host"),
+        "smtp_port": settings.get("port"),
+        "smtp_user_configured": bool(settings.get("user")),
+        "from_email": settings.get("from_email"),
+        "resend_api_key_set": bool(os.getenv("RESEND_API_KEY")),
+    }
 
 # ==========================================
 # PHASE 4: TRACKING ROUTES
@@ -1515,6 +1612,53 @@ def delete_campaign(campaign_id):
         db.close()
     except Exception as e:
         print(f"Delete failed: {e}")
+    return redirect(url_for('dashboard'))
+
+@app.route("/delete-campaigns", methods=["POST"])
+@login_required
+def delete_campaigns():
+    """Deletes multiple campaigns and their associated data."""
+    user = current_user()
+    campaign_ids_str = request.form.get("campaign_ids", "")
+    if not campaign_ids_str:
+        flash("No campaigns selected.")
+        return redirect(url_for('dashboard'))
+    
+    try:
+        campaign_ids = [int(cid.strip()) for cid in campaign_ids_str.split(',') if cid.strip()]
+    except ValueError:
+        flash("Invalid campaign IDs.")
+        return redirect(url_for('dashboard'))
+    
+    deleted_count = 0
+    try:
+        db = get_db_connection()
+        cursor = db.cursor(dictionary=True)
+        
+        for campaign_id in campaign_ids:
+            campaign = user_can_access_campaign(cursor, campaign_id, user)
+            if campaign:
+                try:
+                    cursor.execute("DELETE FROM emails_sent WHERE campaign_id = %s", (campaign_id,))
+                except:
+                    pass
+                cursor.execute("DELETE FROM employees WHERE campaign_id = %s", (campaign_id,))
+                cursor.execute("DELETE FROM campaigns WHERE id = %s", (campaign_id,))
+                deleted_count += 1
+        
+        db.commit()
+        cursor.close()
+        db.close()
+        
+        if deleted_count > 0:
+            flash(f"Successfully deleted {deleted_count} campaign(s).")
+        else:
+            flash("No campaigns were deleted.")
+            
+    except Exception as e:
+        print(f"Bulk delete failed: {e}")
+        flash("An error occurred while deleting campaigns.")
+    
     return redirect(url_for('dashboard'))
 
 @app.route("/campaign-emails/<int:campaign_id>")
