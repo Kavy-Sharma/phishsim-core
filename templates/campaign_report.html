@@ -2,15 +2,14 @@
 {% block title %}AI Security Report — {{ campaign.name }}{% endblock %}
 {% block content %}
 <style>
-body { background: #020617 !important; }
+/* Removed hardcoded body background */
 
-.report-page { max-width: 900px; margin: 0 auto; padding: 2rem; }
+.report-page { max-width: 960px; margin: 0 auto; padding: 2rem; }
 
-/* Top back bar */
 .report-topbar {
     display: flex; align-items: center; justify-content: space-between;
     margin-bottom: 2rem; padding-bottom: 1.5rem;
-    border-bottom: 1px solid rgba(255,255,255,0.05);
+    border-bottom: 1px solid var(--border-color);
     animation: fadeInDown 0.5s ease-out;
 }
 .back-link {
@@ -24,9 +23,11 @@ body { background: #020617 !important; }
 .report-hero {
     background: linear-gradient(135deg, rgba(6,182,212,0.08), rgba(59,130,246,0.05));
     border: 1px solid rgba(6,182,212,0.2);
-    border-radius: 24px; padding: 3rem;
+    border-radius: 24px; padding: 2.5rem;
     margin-bottom: 2rem; position: relative; overflow: hidden;
     animation: fadeInUp 0.6s ease-out;
+    display: flex; gap: 2.5rem; align-items: center;
+    flex-wrap: wrap;
 }
 .report-hero::before {
     content: ''; position: absolute; top: -80px; right: -80px;
@@ -34,34 +35,56 @@ body { background: #020617 !important; }
     background: radial-gradient(circle, rgba(6,182,212,0.15), transparent 70%);
     pointer-events: none;
 }
+.report-hero-text { flex: 1; min-width: 200px; }
 .report-eyebrow {
     display: inline-flex; align-items: center; gap: 8px;
     background: rgba(6,182,212,0.1); border: 1px solid rgba(6,182,212,0.25);
     border-radius: 100px; padding: 5px 14px;
     font-size: 0.78rem; color: #06b6d4;
     font-family: 'Space Mono', monospace; text-transform: uppercase; letter-spacing: 1px;
-    margin-bottom: 1.2rem;
+    margin-bottom: 1rem;
 }
 .report-eyebrow::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: #06b6d4; box-shadow: 0 0 8px #06b6d4; animation: livePulse 2s infinite; }
 @keyframes livePulse { 0%,100% { opacity: 1; } 50% { opacity: 0.2; } }
+.report-title { font-family: 'Outfit', sans-serif; font-size: 2.2rem; font-weight: 800; color: var(--text-main); margin: 0 0 0.8rem; line-height: 1.2; }
+.report-summary { color: var(--text-muted); line-height: 1.7; font-size: 1rem; margin: 0; }
 
-.report-title { font-family: 'Outfit', sans-serif; font-size: 2.5rem; font-weight: 800; color: #fff; margin: 0 0 1rem; line-height: 1.2; }
-.report-summary { color: #94a3b8; line-height: 1.7; font-size: 1.05rem; margin: 0; }
+/* ── Human Security Score™ Gauge ── */
+.hss-gauge {
+    flex-shrink: 0;
+    width: 160px; text-align: center;
+    background: var(--bg-card); border-radius: 20px; padding: 1.5rem 1rem;
+    border: 1px solid var(--hss-color);
+    box-shadow: 0 0 30px color-mix(in srgb, var(--hss-color) 20%, transparent);
+    position: relative;
+}
+.hss-score {
+    font-family: 'Outfit', sans-serif; font-size: 4rem; font-weight: 900;
+    color: var(--hss-color); line-height: 1;
+    text-shadow: 0 0 20px color-mix(in srgb, var(--hss-color) 60%, transparent);
+}
+.hss-label-top { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 2px; color: #475569; font-family: 'Space Mono', monospace; margin-bottom: 0.3rem; }
+.hss-tier-badge {
+    display: inline-block; margin-top: 0.5rem;
+    padding: 4px 12px; border-radius: 100px; font-size: 0.78rem; font-weight: 700;
+    background: color-mix(in srgb, var(--hss-color) 15%, transparent);
+    color: var(--hss-color);
+    border: 1px solid color-mix(in srgb, var(--hss-color) 35%, transparent);
+}
+.hss-green  { --hss-color: #22c55e; }
+.hss-amber  { --hss-color: #f59e0b; }
+.hss-red    { --hss-color: #ef4444; }
 
 /* Stat grid */
-.report-stats {
-    display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.2rem;
-    margin-bottom: 2rem;
-}
+.report-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
 .rstat-box {
-    background: rgba(10,16,38,0.9);
-    border: 1px solid rgba(255,255,255,0.06);
-    border-radius: 18px; padding: 1.8rem 1rem;
+    background: var(--bg-card); border: 1px solid var(--border-color);
+    border-radius: 16px; padding: 1.5rem 1rem;
     text-align: center; position: relative; overflow: hidden;
     animation: fadeInUp 0.6s ease-out forwards; opacity: 0;
     transition: all 0.3s ease;
 }
-.rstat-box:hover { transform: translateY(-5px); border-color: rgba(6,182,212,0.3); }
+.rstat-box:hover { transform: translateY(-4px); border-color: rgba(6,182,212,0.3); }
 .rstat-box::before {
     content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 3px;
     background: linear-gradient(90deg, transparent, var(--stat-color), transparent);
@@ -70,12 +93,8 @@ body { background: #020617 !important; }
 .rstat-box:nth-child(2) { --stat-color: #3b82f6; animation-delay: 0.2s; }
 .rstat-box:nth-child(3) { --stat-color: #f59e0b; animation-delay: 0.3s; }
 .rstat-box:nth-child(4) { --stat-color: #22c55e; animation-delay: 0.4s; }
-.rstat-num {
-    font-family: 'Outfit', sans-serif; font-size: 2.8rem; font-weight: 900;
-    color: var(--stat-color); line-height: 1;
-    animation: countUp 1s ease-out forwards;
-}
-.rstat-label { font-size: 0.78rem; color: #64748b; text-transform: uppercase; letter-spacing: 1px; margin-top: 6px; }
+.rstat-num { font-family: 'Outfit', sans-serif; font-size: 2.4rem; font-weight: 900; color: var(--stat-color); line-height: 1; }
+.rstat-label { font-size: 0.75rem; color: #64748b; text-transform: uppercase; letter-spacing: 1px; margin-top: 6px; }
 
 /* Risk badge */
 .risk-badge {
@@ -87,40 +106,64 @@ body { background: #020617 !important; }
 .risk-medium { background: rgba(234,179,8,0.12); color: #facc15; border: 1px solid rgba(234,179,8,0.3); }
 .risk-low { background: rgba(34,197,94,0.12); color: #4ade80; border: 1px solid rgba(34,197,94,0.3); }
 
-/* Recommendations */
-.reco-section {
-    background: rgba(10,16,38,0.7);
-    border: 1px solid rgba(255,255,255,0.06);
-    border-radius: 24px; padding: 2.5rem;
-    margin-bottom: 2rem;
-    animation: fadeInUp 0.7s ease-out 0.3s forwards; opacity: 0;
+/* Panel shared */
+.r-panel {
+    background: var(--bg-card, rgba(10,16,38,0.7)); border: 1px solid var(--border-color, rgba(255,255,255,0.06));
+    border-radius: 20px; padding: 2rem; margin-bottom: 2rem;
+    animation: fadeInUp 0.6s ease-out forwards; opacity: 0;
 }
-.reco-section h2 { font-family: 'Outfit', sans-serif; font-size: 1.6rem; color: #fff; margin-bottom: 1.5rem; }
+.r-panel h2 { font-family: 'Outfit', sans-serif; font-size: 1.4rem; color: var(--text-main); margin: 0 0 1.5rem; }
+
+/* Department Heatmap */
+.dept-row { margin-bottom: 1rem; }
+.dept-row-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.dept-name { font-size: 0.9rem; color: var(--text-main); font-weight: 600; }
+.dept-meta { font-size: 0.8rem; color: #64748b; }
+.dept-bar-track { height: 8px; background: var(--border-color, rgba(255,255,255,0.05)); border-radius: 100px; overflow: hidden; }
+.dept-bar-fill { height: 100%; border-radius: 100px; transition: width 1s cubic-bezier(0.25,1,0.5,1); }
+.dept-bar-low  { background: linear-gradient(90deg, #22c55e, #4ade80); }
+.dept-bar-mid  { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+.dept-bar-high { background: linear-gradient(90deg, #ef4444, #f87171); }
+
+/* Repeat offender */
+.offender-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0.9rem 1.2rem; border-radius: 10px;
+    background: rgba(239,68,68,0.04); border: 1px solid rgba(239,68,68,0.12);
+    margin-bottom: 0.6rem;
+}
+.offender-info { font-size: 0.9rem; color: var(--text-main); }
+.offender-info small { color: var(--text-muted); margin-left: 8px; }
+.offender-badge {
+    font-size: 0.75rem; font-weight: 700; padding: 3px 10px; border-radius: 100px;
+    background: rgba(239,68,68,0.15); color: #f87171; border: 1px solid rgba(239,68,68,0.3);
+    white-space: nowrap;
+}
+
+/* Recommendations */
 .reco-item {
-    display: flex; align-items: flex-start; gap: 1.2rem;
-    padding: 1.2rem; border-radius: 12px;
-    margin-bottom: 0.8rem; background: rgba(255,255,255,0.02);
-    border: 1px solid rgba(255,255,255,0.04);
-    transition: all 0.3s ease;
-    animation: slideInLeft 0.5s ease-out forwards; opacity: 0;
+    display: flex; align-items: flex-start; gap: 1rem;
+    padding: 1.1rem; border-radius: 12px; margin-bottom: 0.8rem;
+    background: var(--bg-card, rgba(255,255,255,0.02)); border: 1px solid var(--border-color, rgba(255,255,255,0.04));
+    transition: all 0.3s ease; animation: slideInLeft 0.5s ease-out forwards; opacity: 0;
 }
 .reco-item:hover { background: rgba(6,182,212,0.05); border-color: rgba(6,182,212,0.2); transform: translateX(6px); }
 .reco-num {
-    min-width: 36px; height: 36px; border-radius: 50%;
+    min-width: 34px; height: 34px; border-radius: 50%;
     background: rgba(6,182,212,0.15); color: #06b6d4;
     display: flex; align-items: center; justify-content: center;
-    font-weight: 800; font-size: 0.9rem; font-family: 'Space Mono', monospace;
+    font-weight: 800; font-size: 0.85rem; font-family: 'Space Mono', monospace;
     border: 1px solid rgba(6,182,212,0.25);
 }
-.reco-item p { color: #cbd5e1; line-height: 1.6; margin: 0; font-size: 0.95rem; }
+.reco-item p { color: var(--text-main); line-height: 1.6; margin: 0; font-size: 0.93rem; }
 
 /* PDF Button */
 .pdf-btn {
     display: inline-flex; align-items: center; gap: 10px;
-    padding: 14px 28px; border-radius: 12px;
+    padding: 12px 24px; border-radius: 12px;
     background: linear-gradient(135deg, #ef4444, #b91c1c);
     color: #fff; font-family: 'Outfit', sans-serif;
-    font-weight: 700; font-size: 1rem; text-decoration: none;
+    font-weight: 700; font-size: 0.95rem; text-decoration: none;
     transition: all 0.3s ease; position: relative; overflow: hidden;
 }
 .pdf-btn::before {
@@ -129,9 +172,9 @@ body { background: #020617 !important; }
     transition: left 0.5s;
 }
 .pdf-btn:hover::before { left: 100%; }
-.pdf-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(239,68,68,0.35); }
+.pdf-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(239,68,68,0.35); }
 
-.report-actions { display: flex; gap: 1rem; margin-bottom: 2rem; animation: fadeInUp 0.6s ease-out 0.5s forwards; opacity: 0; }
+.report-actions { display: flex; gap: 1rem; margin-bottom: 2rem; flex-wrap: wrap; animation: fadeInUp 0.6s ease-out 0.5s forwards; opacity: 0; }
 
 @keyframes fadeInDown { from { opacity: 0; transform: translateY(-15px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
@@ -144,17 +187,30 @@ body { background: #020617 !important; }
         <a href="/dashboard" class="back-link">
             <i class="fas fa-arrow-left"></i> Back to Dashboard
         </a>
-        <span class="risk-badge risk-{{ report.risk_level | lower }}">
-            <i class="fas fa-{% if report.risk_level == 'High' %}exclamation-triangle{% elif report.risk_level == 'Medium' %}exclamation-circle{% else %}check-circle{% endif %}"></i>
-            {{ report.risk_level }} Risk
-        </span>
+        <div style="display:flex; gap:0.8rem; align-items:center; flex-wrap:wrap;">
+            <span class="risk-badge risk-{{ report.risk_level | lower }}">
+                <i class="fas fa-{% if report.risk_level == 'High' %}exclamation-triangle{% elif report.risk_level == 'Medium' %}exclamation-circle{% else %}check-circle{% endif %}"></i>
+                {{ report.risk_level }} Risk
+            </span>
+        </div>
     </div>
 
-    <!-- Hero Section -->
+    <!-- Hero Section with HSS -->
     <div class="report-hero">
-        <div class="report-eyebrow">Agentic AI Report</div>
-        <h1 class="report-title">{{ campaign.name }}</h1>
-        <p class="report-summary">{{ report.summary }}</p>
+        <div class="report-hero-text">
+            <div class="report-eyebrow">Agentic AI Report</div>
+            <h1 class="report-title">{{ campaign.name }}</h1>
+            <p class="report-summary">{{ report.summary }}</p>
+        </div>
+
+        <!-- Human Security Score™ -->
+        {% set hss = report.hss %}
+        <div class="hss-gauge hss-{{ hss.tier }}">
+            <div class="hss-label-top">Security Score™</div>
+            <div class="hss-score" id="hss-number" data-target="{{ hss.score }}">0</div>
+            <div style="color:#64748b; font-size:0.75rem; margin:4px 0;">/100</div>
+            <div class="hss-tier-badge">{{ hss.label }}</div>
+        </div>
     </div>
 
     <!-- Stats Grid -->
@@ -169,40 +225,85 @@ body { background: #020617 !important; }
         </div>
         <div class="rstat-box">
             <div class="rstat-num">{{ report.click_rate }}%</div>
-            <div class="rstat-label">Click Rate</div>
+            <div class="rstat-label">Click Rate ⚠</div>
         </div>
         <div class="rstat-box">
             <div class="rstat-num">{{ report.report_rate }}%</div>
-            <div class="rstat-label">Report Rate</div>
-        </div>
-    </div>
-
-    <!-- AI Visualization (Chart.js) -->
-    <div class="glass-panel" style="margin-bottom: 2rem; background: rgba(10, 15, 30, 0.4); border: 1px solid rgba(6, 182, 212, 0.1); border-radius: 16px; padding: 1.5rem; animation: fadeInUp 0.6s ease-out 0.4s forwards; opacity: 0;">
-        <h3 style="color: #fff; font-family: 'Space Mono', monospace; margin-top: 0; text-align: center;">
-            <i class="fas fa-radar" style="color: #06b6d4;"></i> Vulnerability Signature
-        </h3>
-        <div style="position: relative; height: 350px; width: 100%; display: flex; justify-content: center;">
-            <canvas id="metricsChart"></canvas>
+            <div class="rstat-label">Report Rate ✓</div>
         </div>
     </div>
 
     <!-- Actions -->
     <div class="report-actions">
-        <a href="/campaign-emails/{{ campaign.id }}" class="back-link" style="padding: 14px 24px; border: 1px solid rgba(59,130,246,0.3); border-radius: 12px; color: #fff; background: rgba(59,130,246,0.1);">
+        <a href="/campaign-emails/{{ campaign.id }}" class="back-link"
+           style="padding:12px 20px; border:1px solid rgba(59,130,246,0.3); border-radius:12px; color:#fff; background:rgba(59,130,246,0.1);">
             <i class="fas fa-envelope-open-text"></i> View Generated Emails
         </a>
         <a href="/download-report/{{ campaign.id }}" class="pdf-btn">
             <i class="fas fa-file-pdf"></i> Download PDF Report
         </a>
-        <a href="/dashboard" class="back-link" style="padding: 14px 24px; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: #94a3b8;">
-            <i class="fas fa-th-large"></i> Back to Dashboard
+        <a href="/dashboard" class="back-link"
+           style="padding:12px 20px; border:1px solid rgba(255,255,255,0.1); border-radius:12px; color:#94a3b8;">
+            <i class="fas fa-th-large"></i> Dashboard
         </a>
     </div>
 
-    <!-- Recommendations -->
-    <div class="reco-section">
-        <h2><i class="fas fa-lightbulb" style="color:#06b6d4; margin-right:10px;"></i> AI Recommendations</h2>
+    <!-- Vulnerability Radar -->
+    <div class="r-panel" style="animation-delay:0.2s;">
+        <h2><i class="fas fa-radar" style="color:#06b6d4;margin-right:10px;"></i>Vulnerability Signature</h2>
+        <div style="position:relative; height:320px; display:flex; justify-content:center;">
+            <canvas id="metricsChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Department Heatmap -->
+    {% if department_stats %}
+    <div class="r-panel" style="animation-delay:0.3s;">
+        <h2><i class="fas fa-building" style="color:#f59e0b;margin-right:10px;"></i>Department Heatmap</h2>
+        <p style="color:#64748b; font-size:0.88rem; margin:-0.8rem 0 1.5rem;">Click rate per department — Finance at 38%? That's immediately actionable.</p>
+        {% for dept in department_stats %}
+        {% set cr = dept.click_rate %}
+        <div class="dept-row">
+            <div class="dept-row-header">
+                <span class="dept-name">{{ dept.department }}</span>
+                <span class="dept-meta">{{ dept.clicks }} / {{ dept.targets }} clicked &nbsp;·&nbsp;
+                    <strong style="color:{% if cr >= 35 %}#f87171{% elif cr >= 15 %}#fbbf24{% else %}#4ade80{% endif %};">{{ cr }}%</strong>
+                </span>
+            </div>
+            <div class="dept-bar-track">
+                <div class="dept-bar-fill dept-bar-{% if cr >= 35 %}high{% elif cr >= 15 %}mid{% else %}low{% endif %}"
+                     style="width:{{ [cr, 100]|min }}%;"></div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Repeat Offenders -->
+    {% if repeat_offenders %}
+    <div class="r-panel" style="animation-delay:0.4s; border-color:rgba(239,68,68,0.15);">
+        <h2><i class="fas fa-repeat" style="color:#ef4444;margin-right:10px;"></i>Repeat Offenders
+            <span style="font-size:0.8rem;color:#64748b;font-weight:400;margin-left:10px;">Employees who clicked in multiple campaigns</span>
+        </h2>
+        {% for offender in repeat_offenders %}
+        <div class="offender-row">
+            <div class="offender-info">
+                <strong>{{ offender.name or offender.email }}</strong>
+                {% if offender.name %}<small>{{ offender.email }}</small>{% endif %}
+                {% if offender.department %}<small>· {{ offender.department }}</small>{% endif %}
+            </div>
+            <span class="offender-badge">
+                <i class="fas fa-flag" style="margin-right:4px;"></i>
+                Clicked {{ offender.campaigns_clicked }}× campaigns
+            </span>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- AI Recommendations -->
+    <div class="r-panel" style="animation-delay:0.5s;">
+        <h2><i class="fas fa-lightbulb" style="color:#06b6d4;margin-right:10px;"></i>AI Recommendations</h2>
         {% for item in report.recommendations %}
         <div class="reco-item" style="animation-delay: {{ loop.index0 * 0.1 + 0.3 }}s">
             <div class="reco-num">{{ loop.index }}</div>
@@ -214,108 +315,59 @@ body { background: #020617 !important; }
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
+// HSS counter animation
+(function() {
+    const el = document.getElementById('hss-number');
+    if (!el) return;
+    const target = parseInt(el.dataset.target, 10);
+    let current = 0;
+    const step = Math.ceil(target / 40);
+    const timer = setInterval(() => {
+        current = Math.min(current + step, target);
+        el.textContent = current;
+        if (current >= target) clearInterval(timer);
+    }, 30);
+})();
+
+// Radar chart
 document.addEventListener('DOMContentLoaded', function() {
     const ctx = document.getElementById('metricsChart').getContext('2d');
+    const getGridColor = () => document.body.classList.contains('light-theme') ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.08)';
     
-    const delivery = {{ report.delivery_rate }};
-    const open = {{ report.open_rate }};
-    const click = {{ report.click_rate }};
-    const reportRate = {{ report.report_rate }};
-    
-    new Chart(ctx, {
+    const chart = new Chart(ctx, {
         type: 'radar',
         data: {
             labels: ['Delivery', 'Open Rate', 'Click Rate (Vulnerability)', 'Report Rate (Security)'],
             datasets: [{
                 label: 'Campaign Metrics %',
-                data: [delivery, open, click, reportRate],
-                backgroundColor: 'rgba(6, 182, 212, 0.2)',
+                data: [{{ report.delivery_rate }}, {{ report.open_rate }}, {{ report.click_rate }}, {{ report.report_rate }}],
+                backgroundColor: 'rgba(6, 182, 212, 0.15)',
                 borderColor: '#06b6d4',
                 pointBackgroundColor: ['#3b82f6', '#eab308', '#ef4444', '#22c55e'],
-                pointBorderColor: '#fff',
-                pointHoverBackgroundColor: '#fff',
-                pointHoverBorderColor: '#06b6d4',
+                pointBorderColor: '#fff', pointHoverBackgroundColor: '#fff', pointHoverBorderColor: '#06b6d4',
                 borderWidth: 2,
             }]
         },
         options: {
-            responsive: true,
-            maintainAspectRatio: false,
+            responsive: true, maintainAspectRatio: false,
             scales: {
                 r: {
-                    min: 0,
-                    max: 100,
-                    angleLines: { color: 'rgba(255, 255, 255, 0.1)' },
-                    grid: { color: 'rgba(255, 255, 255, 0.1)' },
-                    pointLabels: { color: '#94a3b8', font: { family: 'Space Mono', size: 12 } },
+                    min: 0, max: 100,
+                    angleLines: { color: getGridColor() },
+                    grid:       { color: getGridColor() },
+                    pointLabels: { color: '#94a3b8', font: { family: 'Space Mono', size: 11 } },
                     ticks: { display: false }
                 }
             },
-            plugins: {
-                legend: { display: false }
-            }
+            plugins: { legend: { display: false } }
         }
     });
+
+    window.addEventListener('theme-changed', () => {
+        chart.options.scales.r.angleLines.color = getGridColor();
+        chart.options.scales.r.grid.color = getGridColor();
+        chart.update();
+    });
 });
-
-function openPreviewModal(campaignId) {
-    document.getElementById('emailPreviewModal').style.display = 'flex';
-    document.getElementById('emailPreviewContent').innerHTML = '<div style="text-align:center; color:#94a3b8; padding: 2rem;">Loading emails...</div>';
-    
-    fetch('/campaign-emails/' + campaignId)
-        .then(response => response.json())
-        .then(data => {
-            if (data.error) {
-                document.getElementById('emailPreviewContent').innerHTML = '<div style="color:#ef4444; padding:2rem;">' + data.error + '</div>';
-                return;
-            }
-            
-            if (!data.emails || data.emails.length === 0) {
-                document.getElementById('emailPreviewContent').innerHTML = '<div style="color:#94a3b8; padding:2rem; text-align:center;">No emails found for this campaign.</div>';
-                return;
-            }
-
-            let html = '';
-            data.emails.forEach((email, index) => {
-                html += `
-                <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; margin-bottom: 1.5rem; overflow: hidden;">
-                    <div style="background: rgba(0,0,0,0.2); padding: 12px 20px; border-bottom: 1px solid rgba(255,255,255,0.05);">
-                        <div style="color: #94a3b8; font-size: 0.85rem; margin-bottom: 4px;">To: <span style="color:#fff;">${email.recipient_email}</span></div>
-                        <div style="color: #94a3b8; font-size: 0.85rem; margin-bottom: 4px;">From: <span style="color:#fff;">${email.sender_name || 'System'}</span></div>
-                        <div style="color: #94a3b8; font-size: 0.85rem;">Subject: <span style="color:#fff; font-weight:600;">${email.subject || 'No Subject'}</span></div>
-                    </div>
-                    <div style="padding: 20px; color: #cbd5e1; font-size: 0.95rem; line-height: 1.6; background: #fff; color: #1e293b;">
-                        ${email.body_html || '<em>Body not recorded.</em>'}
-                    </div>
-                    <div style="background: rgba(6,182,212,0.1); padding: 12px 20px; border-top: 1px solid rgba(6,182,212,0.2); font-size: 0.85rem; color: #06b6d4;">
-                        <strong>AI Insight:</strong> ${email.educational_breakdown || 'No breakdown available.'}
-                    </div>
-                </div>
-                `;
-            });
-            document.getElementById('emailPreviewContent').innerHTML = html;
-        })
-        .catch(err => {
-            document.getElementById('emailPreviewContent').innerHTML = '<div style="color:#ef4444; padding:2rem;">Failed to load emails.</div>';
-        });
-}
-
-function closePreviewModal() {
-    document.getElementById('emailPreviewModal').style.display = 'none';
-}
 </script>
-
-<!-- Preview Modal -->
-<div id="emailPreviewModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:9999; align-items:center; justify-content:center; backdrop-filter: blur(5px);">
-    <div style="background: #0f172a; border: 1px solid rgba(59,130,246,0.3); border-radius: 20px; width: 90%; max-width: 800px; max-height: 85vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);">
-        <div style="padding: 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.2);">
-            <h3 style="margin: 0; color: #fff; font-family: 'Outfit', sans-serif;"><i class="fas fa-robot" style="color: #3b82f6;"></i> AI Generated Emails</h3>
-            <button onclick="closePreviewModal()" style="background: none; border: none; color: #94a3b8; font-size: 1.5rem; cursor: pointer;">&times;</button>
-        </div>
-        <div id="emailPreviewContent" style="padding: 1.5rem; overflow-y: auto; flex-grow: 1;">
-            <!-- Emails inserted here -->
-        </div>
-    </div>
-</div>
-
 {% endblock %}

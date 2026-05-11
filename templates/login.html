@@ -5,7 +5,7 @@
 {% block content %}
 <style>
 /* ---- Auth Page Reset ---- */
-body { background: #020617 !important; }
+/* Removed hardcoded body background so it inherits from style.css */
 
 .auth-page {
     min-height: 100vh;
@@ -15,7 +15,7 @@ body { background: #020617 !important; }
     position: relative;
     overflow: hidden;
     padding: 2rem;
-    background: #020617;
+    background: transparent;
 }
 
 /* Animated background canvas */
@@ -59,11 +59,10 @@ body { background: #020617 !important; }
     z-index: 10;
     width: 100%;
     max-width: 480px;
-    background: rgba(8, 15, 35, 0.85);
-    border: 1px solid rgba(6, 182, 212, 0.2);
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
     border-radius: 24px;
     padding: 3rem;
-    backdrop-filter: blur(20px);
     box-shadow: 0 0 60px rgba(6, 182, 212, 0.08), 0 40px 80px rgba(0,0,0,0.6);
     animation: cardEntrance 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards;
     opacity: 0;
@@ -127,12 +126,12 @@ body { background: #020617 !important; }
     font-family: 'Outfit', sans-serif;
     font-size: 2.2rem;
     font-weight: 700;
-    color: #fff;
+    color: var(--text-main);
     margin-bottom: 0.5rem;
     line-height: 1.2;
 }
 .auth-subtitle {
-    color: #64748b;
+    color: var(--text-muted);
     font-size: 0.95rem;
     margin-bottom: 2rem;
     line-height: 1.5;
@@ -177,18 +176,18 @@ body { background: #020617 !important; }
 }
 .auth-form-group input {
     width: 100%;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: transparent;
+    border: 1px solid var(--border-color);
     border-radius: 12px;
     padding: 14px 16px 14px 44px;
-    color: #fff;
+    color: var(--text-main);
     font-size: 0.95rem;
     font-family: 'Outfit', sans-serif;
     outline: none;
     transition: all 0.3s ease;
     box-sizing: border-box;
 }
-.auth-form-group input::placeholder { color: #334155; }
+.auth-form-group input::placeholder { color: var(--text-muted); }
 .auth-form-group input:focus {
     border-color: rgba(6, 182, 212, 0.6);
     background: rgba(6, 182, 212, 0.04);
@@ -306,14 +305,14 @@ body { background: #020617 !important; }
             <div class="auth-form-group">
                 <label for="email">Email Address</label>
                 <div class="auth-input-wrap">
-                    <input type="email" id="email" name="email" placeholder="you@company.com" required>
+                    <input type="email" id="email" name="email" placeholder="you@company.com" autocomplete="username" required>
                     <i class="fas fa-envelope"></i>
                 </div>
             </div>
             <div class="auth-form-group">
                 <label for="password">Password</label>
                 <div class="auth-input-wrap">
-                    <input type="password" id="password" name="password" placeholder="••••••••••" required>
+                    <input type="password" id="password" name="password" placeholder="••••••••••" autocomplete="current-password" required>
                     <i class="fas fa-lock"></i>
                 </div>
             </div>

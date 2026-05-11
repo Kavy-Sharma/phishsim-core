@@ -11,6 +11,38 @@ client = OpenAI(
     api_key=os.getenv("OPENROUTER_API_KEY")
 )
 
+
+def compute_human_security_score(click_rate, open_rate, report_rate, repeat_pct=0):
+    """Human Security Score™ — single 0-100 number for the organisation.
+
+    Scoring model (designed to feel meaningful to executives):
+      Start:             100 points
+      Click penalty:    -40 pts max  (click_rate/100 * 40)
+      Open penalty:     -10 pts max  (open_rate/100 * 10)
+      Report bonus:     +20 pts max  (report_rate/100 * 20)
+      Repeat penalty:   -15 pts max  (repeat_pct/100 * 15)
+    Clamped to [0, 100].
+    """
+    score = 100
+    score -= (click_rate  / 100) * 40
+    score -= (open_rate   / 100) * 10
+    score += (report_rate / 100) * 20
+    score -= (repeat_pct  / 100) * 15
+    score = max(0, min(100, round(score)))
+
+    if score >= 70:
+        tier  = "green"
+        label = "Good"
+    elif score >= 40:
+        tier  = "amber"
+        label = "At Risk"
+    else:
+        tier  = "red"
+        label = "Critical"
+
+    return {"score": score, "tier": tier, "label": label}
+
+
 def build_campaign_report(campaign):
     """Creates an Agentic AI campaign report using LLM analysis on tracked metrics."""
     employees = int(campaign.get("employee_count") or 0)
@@ -24,6 +56,10 @@ def build_campaign_report(campaign):
     click_rate = round((clicks / sent) * 100, 1) if sent else 0
     report_rate = round((reports / sent) * 100, 1) if sent else 0
     delivery_rate = round((sent / employees) * 100, 1) if employees else 0
+
+    # Repeat offender percentage (passed in from campaign dict if available)
+    repeat_pct = float(campaign.get("repeat_pct") or 0)
+    hss = compute_human_security_score(click_rate, open_rate, report_rate, repeat_pct)
 
     if click_rate >= 35 or (clicks >= reports * 3 and clicks > 0):
         risk_level = "High"
@@ -42,13 +78,14 @@ Analyze these phishing simulation results for '{campaign.get('name', 'Campaign')
 - Open Rate: {open_rate}% ({opens} opened)
 - Click Rate (Vulnerable): {click_rate}% ({clicks} clicked the malicious link)
 - Report Rate (Secure): {report_rate}% ({reports} reported it to IT)
+- Human Security Score™: {hss['score']}/100 ({hss['label']})
 
 Write a highly professional, agentic AI threat analysis. Do not use generic filler. Be specific about the scenario and the numbers.
 Provide exactly two things in JSON format:
 1. "summary": A 2-3 sentence executive summary analyzing the vulnerability.
 2. "recommendations": A list of 3 actionable, specific cybersecurity recommendations based on these exact metrics.
 
-CRITICAL: Return ONLY valid JSON: {{"summary": "...", "recommendations": ["...", "..."]}}"""
+CRITICAL: Return ONLY valid JSON: {{"summary": "...", "recommendations": ["...", "..."]}}""" 
 
     fallback_summary = "The campaign shows measurable risk and needs targeted follow-up training."
     fallback_recos = [
@@ -107,4 +144,5 @@ CRITICAL: Return ONLY valid JSON: {{"summary": "...", "recommendations": ["...",
         "click_rate": click_rate,
         "report_rate": report_rate,
         "recommendations": recommendations,
+        "hss": hss,
     }

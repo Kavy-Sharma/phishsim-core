@@ -2,7 +2,7 @@
 {% block title %}Dashboard — PhishSim AI{% endblock %}
 {% block content %}
 <style>
-/* Removed hardcoded body background */
+body { background: #020617 !important; }
 
 .dash-page { padding: 2rem; max-width: 1300px; margin: 0 auto; }
 
@@ -16,20 +16,20 @@
 }
 .dash-hero h1 {
     font-family: 'Outfit', sans-serif; font-size: 2.5rem;
-    font-weight: 800; margin: 0;
-    background: linear-gradient(135deg, var(--text-main) 40%, #06b6d4);
+    font-weight: 800; color: #fff; margin: 0;
+    background: linear-gradient(135deg, #fff 40%, #06b6d4);
     -webkit-background-clip: text; -webkit-text-fill-color: transparent;
 }
 .dash-hero p { color: #64748b; margin: 0.4rem 0 0; font-size: 1rem; }
 
 /* Summary stat bar */
 .dash-summary {
-    display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.2rem;
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.2rem;
     margin-bottom: 2.5rem;
 }
 .summary-stat {
-    background: var(--bg-card, rgba(15,23,42,0.7));
-    border: 1px solid var(--border-color, rgba(255,255,255,0.05));
+    background: rgba(15,23,42,0.7);
+    border: 1px solid rgba(255,255,255,0.05);
     border-radius: 16px; padding: 1.5rem;
     text-align: center; transition: all 0.3s ease;
     animation: fadeInUp 0.6s ease-out forwards;
@@ -44,7 +44,7 @@
 .summary-stat:hover { transform: translateY(-4px); border-color: rgba(6,182,212,0.3); }
 .summary-stat:hover::before { opacity: 1; }
 .summary-stat .s-icon { font-size: 1.8rem; margin-bottom: 0.8rem; }
-.summary-stat .s-num { font-family: 'Outfit', sans-serif; font-size: 2rem; font-weight: 800; color: var(--text-main); line-height: 1; }
+.summary-stat .s-num { font-family: 'Outfit', sans-serif; font-size: 2rem; font-weight: 800; color: #fff; line-height: 1; }
 .summary-stat .s-label { font-size: 0.8rem; color: #64748b; margin-top: 4px; letter-spacing: 1px; text-transform: uppercase; }
 .summary-stat:nth-child(1) { animation-delay: 0.1s; }
 .summary-stat:nth-child(2) { animation-delay: 0.2s; }
@@ -54,21 +54,21 @@
 /* Empty state */
 .dash-empty {
     text-align: center; padding: 6rem 2rem;
-    background: var(--bg-card, rgba(15,23,42,0.5));
-    border: 1px dashed var(--border-color, rgba(255,255,255,0.1));
+    background: rgba(15,23,42,0.5);
+    border: 1px dashed rgba(255,255,255,0.1);
     border-radius: 24px;
     animation: fadeInUp 0.7s ease-out forwards;
 }
 .dash-empty i { font-size: 4rem; color: #334155; margin-bottom: 1.5rem; }
-.dash-empty h3 { font-family: 'Outfit', sans-serif; font-size: 1.8rem; color: var(--text-main); margin-bottom: 0.8rem; }
+.dash-empty h3 { font-family: 'Outfit', sans-serif; font-size: 1.8rem; color: #fff; margin-bottom: 0.8rem; }
 .dash-empty p { color: #64748b; max-width: 400px; margin: 0 auto 2rem; }
 
 /* Campaign grid */
 .camp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 1.5rem; }
 
 .camp-card {
-    background: var(--bg-card, rgba(10, 16, 38, 0.9));
-    border: 1px solid var(--border-color, rgba(255,255,255,0.07));
+    background: rgba(10, 16, 38, 0.9);
+    border: 1px solid rgba(255,255,255,0.07);
     border-radius: 20px; padding: 1.8rem;
     transition: all 0.4s cubic-bezier(0.25,1,0.5,1);
     animation: fadeInUp 0.6s ease-out forwards; opacity: 0;
@@ -84,7 +84,7 @@
 .camp-card:hover::after { opacity: 1; }
 
 .camp-card-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 1.2rem; }
-.camp-name { font-family: 'Outfit', sans-serif; font-size: 1.3rem; font-weight: 700; color: var(--text-main); margin: 0 0 6px 0; }
+.camp-name { font-family: 'Outfit', sans-serif; font-size: 1.3rem; font-weight: 700; color: #fff; margin: 0 0 6px 0; }
 .camp-owner {
     display: inline-flex; align-items: center; gap: 6px;
     color: #94a3b8; font-size: 0.78rem; font-family: 'Space Mono', monospace;
@@ -104,17 +104,17 @@
 .badge-warning { background: rgba(234,179,8,0.12); color: #facc15; border: 1px solid rgba(234,179,8,0.3); }
 .badge-failed { background: rgba(239,68,68,0.12); color: #f87171; border: 1px solid rgba(239,68,68,0.3); }
 
-.camp-meta { background: var(--bg-card, rgba(255,255,255,0.03)); border: 1px solid var(--border-color, rgba(255,255,255,0.05)); border-radius: 12px; padding: 1rem; margin-bottom: 1.2rem; }
+.camp-meta { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; padding: 1rem; margin-bottom: 1.2rem; }
 .camp-meta p { margin: 0 0 6px 0; font-size: 0.88rem; color: #94a3b8; }
 .camp-meta p:last-child { margin: 0; }
-.camp-meta strong { color: var(--text-main); }
+.camp-meta strong { color: #cbd5e1; }
 .camp-meta .camp-domain { color: #06b6d4; font-weight: 600; }
 
-.camp-divider { height: 1px; background: var(--border-color, rgba(255,255,255,0.05)); margin: 1.2rem 0; }
+.camp-divider { height: 1px; background: rgba(255,255,255,0.05); margin: 1.2rem 0; }
 
 /* Stats row */
 .mini-stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 0.8rem; margin-bottom: 1.2rem; }
-.mini-stat { text-align: center; background: var(--bg-card, rgba(255,255,255,0.03)); border-radius: 10px; padding: 0.8rem 0.5rem; }
+.mini-stat { text-align: center; background: rgba(255,255,255,0.03); border-radius: 10px; padding: 0.8rem 0.5rem; }
 .mini-stat .ms-val { font-family: 'Outfit', sans-serif; font-size: 1.6rem; font-weight: 800; }
 .ms-opens { color: #06b6d4; }
 .ms-clicks { color: #f59e0b; }
@@ -198,7 +198,7 @@
 }
 .empty-title {
     font-family: 'Space Mono', monospace; font-size: 1.8rem;
-    color: var(--text-main); margin-bottom: 1rem;
+    color: #fff; margin-bottom: 1rem;
 }
 .empty-title .cursor {
     display: inline-block; width: 10px; height: 1.2rem;
@@ -276,7 +276,13 @@
 .confirm-cancel { background: rgba(148, 163, 184, 0.14); color: #cbd5e1; }
 .confirm-danger { background: linear-gradient(135deg, #ef4444, #b91c1c); }
 
-/* ── Enterprise & Cyberpunk Unified ── */
+/* ── Enterprise Mode Toggle Styles ── */
+.cyberpunk-view { display: block; animation: fadeIn 0.3s ease-out; }
+.enterprise-view { display: none; animation: fadeIn 0.3s ease-out; }
+
+body.light-theme .cyberpunk-view { display: none !important; }
+body.light-theme .enterprise-view { display: block !important; }
+
 @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
 
 .board-page { max-width: 1200px; margin: 0 auto; padding: 2.5rem 2rem; }
@@ -301,9 +307,8 @@
 
 .board-hss-hero {
     display: flex; align-items: center; gap: 2.5rem;
-    background: var(--bg-card); border-radius: 20px; padding: 2.5rem;
+    background: #fff; border-radius: 20px; padding: 2.5rem;
     box-shadow: 0 4px 24px rgba(0,0,0,0.06);
-    border: 1px solid var(--border-color);
     margin-bottom: 2rem; flex-wrap: wrap;
 }
 .board-score-ring {
@@ -318,8 +323,8 @@
 .board-score-ring .ring-sub {
     font-size: 0.7rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px;
 }
-.board-hss-text h2 { font-family: 'Outfit', sans-serif; font-size: 1.6rem; color:var(--text-main); margin:0 0 0.5rem; }
-.board-hss-text p { color: var(--text-muted); font-size: 0.95rem; line-height: 1.6; margin: 0; }
+.board-hss-text h2 { font-family: 'Outfit', sans-serif; font-size: 1.6rem; color:#0f172a; margin:0 0 0.5rem; }
+.board-hss-text p { color: #64748b; font-size: 0.95rem; line-height: 1.6; margin: 0; }
 .board-hss-badge {
     display: inline-flex; align-items: center; gap: 6px;
     padding: 6px 16px; border-radius: 100px; font-weight: 700;
@@ -372,18 +377,18 @@
 
 /* Risk trend chart */
 .risk-trend-card {
-    background: var(--bg-card, rgba(10,16,38,0.7));
-    border: 1px solid var(--border-color, rgba(255,255,255,0.06));
+    background: rgba(10,16,38,0.7);
+    border: 1px solid rgba(255,255,255,0.06);
     border-radius: 20px; padding: 2rem; margin-top: 2rem;
     animation: fadeInUp 0.6s ease-out 0.4s forwards; opacity: 0;
 }
 .risk-trend-card h2 {
-    font-family: 'Outfit', sans-serif; font-size: 1.3rem; color: var(--text-main);
+    font-family: 'Outfit', sans-serif; font-size: 1.3rem; color: #fff;
     margin: 0 0 1.5rem; display: flex; align-items: center; gap: 10px;
 }
 </style>
 
-<div class="dash-page">
+<div class="dash-page cyberpunk-view">
     <!-- Hero -->
     <div class="dash-hero">
         <div>
@@ -399,35 +404,6 @@
 
     <!-- Executive Dashboard -->
     {% if global_stats and global_stats.total_campaigns > 0 %}
-    <!-- HSS Ring Hero (Always visible now) -->
-    {% if global_hss %}
-    <div class="board-hss-hero">
-        <div class="board-score-ring">
-            <svg width="140" height="140" viewBox="0 0 140 140">
-                <circle cx="70" cy="70" r="58" fill="none" stroke="var(--border-color)" stroke-width="12"/>
-                <circle cx="70" cy="70" r="58" fill="none"
-                    stroke="{% if global_hss.tier == 'green' %}#22c55e{% elif global_hss.tier == 'amber' %}#f59e0b{% else %}#ef4444{% endif %}"
-                    stroke-width="12" stroke-linecap="round"
-                    stroke-dasharray="364.4"
-                    stroke-dashoffset="{{ 364.4 - (364.4 * global_hss.score / 100) | round(1) }}"
-                    style="transition: stroke-dashoffset 1.2s cubic-bezier(0.25,1,0.5,1);"/>
-            </svg>
-            <div>
-                <div class="ring-num" style="color:{% if global_hss.tier == 'green' %}#22c55e{% elif global_hss.tier == 'amber' %}#f59e0b{% else %}#ef4444{% endif %};">{{ global_hss.score }}</div>
-                <div class="ring-sub">/100</div>
-            </div>
-        </div>
-        <div class="board-hss-text">
-            <h2>Human Security Score™</h2>
-            <p>Your organisation's overall phishing resistance score based on click rate, open rate, reporting behaviour, and repeat offenders across all campaigns.</p>
-            <div class="board-hss-badge board-badge-{{ global_hss.tier }}">
-                <i class="fas fa-{% if global_hss.tier == 'green' %}check-circle{% elif global_hss.tier == 'amber' %}exclamation-circle{% else %}exclamation-triangle{% endif %}"></i>
-                {{ global_hss.label }} &mdash; {{ global_hss.score }}/100
-            </div>
-        </div>
-    </div>
-    {% endif %}
-
     <div class="dash-summary">
         <div class="summary-stat">
             <div class="s-icon" style="color: #3b82f6;"><i class="fas fa-layer-group"></i></div>
@@ -444,11 +420,22 @@
             <div class="s-num" style="color: #fca5a5;">{{ global_stats.global_risk }}%</div>
             <div class="s-label" style="color: #fca5a5;">Global Risk Score</div>
         </div>
+        {% if global_hss %}
+        <div class="summary-stat hss-summary-card {{ global_hss.tier }}">
+            <div class="s-icon" style="color:{% if global_hss.tier == 'green' %}#22c55e{% elif global_hss.tier == 'amber' %}#f59e0b{% else %}#ef4444{% endif %};">
+                <i class="fas fa-shield-alt"></i>
+            </div>
+            <div class="s-num" style="color:{% if global_hss.tier == 'green' %}#4ade80{% elif global_hss.tier == 'amber' %}#fbbf24{% else %}#f87171{% endif %};">{{ global_hss.score }}</div>
+            <div class="s-label">Security Score™</div>
+            <div style="font-size:0.72rem; margin-top:4px; color:{% if global_hss.tier == 'green' %}#4ade80{% elif global_hss.tier == 'amber' %}#fbbf24{% else %}#f87171{% endif %};">{{ global_hss.label }}</div>
+        </div>
+        {% else %}
         <div class="summary-stat">
             <div class="s-icon" style="color: #22c55e;"><i class="fas fa-shield-alt"></i></div>
             <div class="s-num">{{ global_stats.total_reports }}</div>
             <div class="s-label">Security Reports</div>
         </div>
+        {% endif %}
     </div>
     {% endif %}
 
@@ -467,7 +454,7 @@
     {% else %}
 
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-        <h2 style="color: var(--text-main); font-family: 'Outfit', sans-serif; font-size: 1.5rem; margin: 0;">Your Campaigns</h2>
+        <h2 style="color: #fff; font-family: 'Outfit', sans-serif; font-size: 1.5rem; margin: 0;">Your Campaigns</h2>
         <div style="display: flex; gap: 0.8rem; align-items: center;">
             <!-- Manage toggle: hidden by default, appears on click like real SaaS -->
             <button type="button" id="manage-toggle" onclick="toggleManageMode()"
@@ -634,7 +621,135 @@
     </div>
 </div>
 
+<!-- ══ Enterprise Mode (Light Theme View) ══ -->
+<div class="enterprise-view">
+<div class="board-page">
+    <div class="board-topbar">
+        <div class="board-title">
+            <i class="fas fa-shield-alt" style="color:#0f172a;"></i>
+            Enterprise Security Overview
+        </div>
+        <a href="/new-campaign" style="display:inline-flex;align-items:center;gap:8px;padding:10px 20px;border-radius:10px;background:#3b82f6;color:#fff;font-family:'Outfit',sans-serif;font-weight:700;font-size:0.9rem;text-decoration:none;transition:all 0.2s;">
+            <i class="fas fa-plus"></i> New Campaign
+        </a>
+    </div>
 
+    <!-- HSS Ring Hero -->
+    <div class="board-hss-hero">
+        <!-- SVG Ring Gauge -->
+        <div class="board-score-ring">
+            <svg width="140" height="140" viewBox="0 0 140 140">
+                <circle cx="70" cy="70" r="58" fill="none" stroke="#e2e8f0" stroke-width="12"/>
+                <circle cx="70" cy="70" r="58" fill="none"
+                    stroke="{% if global_hss.tier == 'green' %}#22c55e{% elif global_hss.tier == 'amber' %}#f59e0b{% else %}#ef4444{% endif %}"
+                    stroke-width="12" stroke-linecap="round"
+                    stroke-dasharray="364.4"
+                    stroke-dashoffset="{{ 364.4 - (364.4 * global_hss.score / 100) | round(1) }}"
+                    style="transition: stroke-dashoffset 1.2s cubic-bezier(0.25,1,0.5,1);"/>
+            </svg>
+            <div>
+                <div class="ring-num" style="color:{% if global_hss.tier == 'green' %}#15803d{% elif global_hss.tier == 'amber' %}#92400e{% else %}#b91c1c{% endif %};">{{ global_hss.score }}</div>
+                <div class="ring-sub">/100</div>
+            </div>
+        </div>
+
+        <div class="board-hss-text">
+            <h2>Human Security Score™</h2>
+            <p>Your organisation's overall phishing resistance score based on click rate, open rate, reporting behaviour, and repeat offenders across all campaigns.</p>
+            <div class="board-hss-badge board-badge-{{ global_hss.tier }}">
+                <i class="fas fa-{% if global_hss.tier == 'green' %}check-circle{% elif global_hss.tier == 'amber' %}exclamation-circle{% else %}exclamation-triangle{% endif %}"></i>
+                {{ global_hss.label }} &mdash; {{ global_hss.score }}/100
+            </div>
+        </div>
+    </div>
+
+    <!-- Stat Row -->
+    <div class="board-stat-row">
+        <div class="board-stat">
+            <div class="bs-num">{{ global_stats.total_campaigns }}</div>
+            <div class="bs-label">Campaigns Run</div>
+        </div>
+        <div class="board-stat">
+            <div class="bs-num">{{ global_stats.total_employees }}</div>
+            <div class="bs-label">Employees Tested</div>
+        </div>
+        <div class="board-stat">
+            <div class="bs-num">{{ global_stats.total_reports }}</div>
+            <div class="bs-label">Security Reports</div>
+        </div>
+    </div>
+
+    <!-- Risk Trend (Board) -->
+    {% if risk_trend | length >= 2 %}
+    <div class="board-trend-card">
+        <h3><i class="fas fa-chart-line" style="color:#3b82f6;margin-right:8px;"></i>Security Score™ Over Time</h3>
+        <div style="position:relative; height:200px;">
+            <canvas id="boardTrendChart"></canvas>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Per-campaign security scores -->
+    {% set launched_camps = campaigns | selectattr('hss') | list %}
+    {% if launched_camps %}
+    <div class="board-dept-card">
+        <h3><i class="fas fa-layer-group" style="color:#3b82f6;margin-right:8px;"></i>Campaign Security Scores</h3>
+        {% for c in launched_camps %}
+        {% set cr = c.hss.score %}
+        <div class="board-dept-row">
+            <div class="board-dept-label">
+                <span>{{ c.name }}</span>
+                <strong style="color:{% if cr >= 70 %}#15803d{% elif cr >= 40 %}#92400e{% else %}#b91c1c{% endif %};">{{ cr }}/100</strong>
+            </div>
+            <div class="board-dept-track">
+                <div class="board-dept-fill board-dept-{% if cr >= 70 %}low{% elif cr >= 40 %}mid{% else %}high{% endif %}"
+                     style="width:{{ cr }}%;"></div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Campaign History Table -->
+    <div class="board-dept-card">
+        <h3><i class="fas fa-history" style="color:#3b82f6;margin-right:8px;"></i>Campaign History</h3>
+        <table style="width:100%; border-collapse:collapse; font-size:0.88rem;">
+            <thead>
+                <tr style="border-bottom:2px solid #e2e8f0; color:#64748b; text-align:left;">
+                    <th style="padding:8px 0;">Campaign</th>
+                    <th style="padding:8px 0;">Scenario</th>
+                    <th style="padding:8px 0; text-align:center;">Targets</th>
+                    <th style="padding:8px 0; text-align:center;">Score</th>
+                    <th style="padding:8px 0;">Report</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for c in campaigns %}
+            {% if c.status in ['launched', 'launched_with_errors'] %}
+            <tr style="border-bottom:1px solid #f1f5f9; color:#334155;">
+                <td style="padding:10px 0;">{{ c.name }}</td>
+                <td style="padding:10px 0; color:#64748b;">{{ (c.scenario_type or '').replace('_',' ').title() }}</td>
+                <td style="padding:10px 0; text-align:center;">{{ c.employee_count }}</td>
+                <td style="padding:10px 0; text-align:center;">
+                    {% if c.hss %}
+                    <span style="font-weight:700; color:{% if c.hss.tier=='green' %}#15803d{% elif c.hss.tier=='amber' %}#92400e{% else %}#b91c1c{% endif %};">{{ c.hss.score }}</span>
+                    {% else %}&mdash;{% endif %}
+                </td>
+                <td style="padding:10px 0;">
+                    <a href="/campaign-report/{{ c.id }}" style="color:#3b82f6; text-decoration:none; font-size:0.82rem;">View →</a>
+                </td>
+            </tr>
+            {% endif %}
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <p style="text-align:center; color:#94a3b8; font-size:0.82rem; padding-bottom:2rem;">
+        Generated by PhishSim AI &nbsp;&middot;&nbsp; Click any campaign’s <em>View</em> to download a full PDF report.
+    </p>
+</div>
+</div>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     // ── Confirm-modal wiring (delete single campaign) ──────────────────────
@@ -763,13 +878,10 @@
             d.tier === 'green' ? '#22c55e' : d.tier === 'amber' ? '#f59e0b' : '#ef4444'
         );
 
-        // Dashboard chart (works for both light and dark modes)
+        // Dark dashboard chart
         const darkCtx = document.getElementById('trendChart');
         if (darkCtx) {
-            // Get current theme-aware border color
-            const getGridColor = () => document.body.classList.contains('light-theme') ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.06)';
-            
-            const chart = new Chart(darkCtx, {
+            new Chart(darkCtx, {
                 type: 'line',
                 data: {
                     labels,
@@ -786,8 +898,8 @@
                 options: {
                     responsive: true, maintainAspectRatio: false,
                     scales: {
-                        x: { ticks: { color: '#64748b', font: { size: 11 } }, grid: { color: getGridColor() } },
-                        y: { min: 0, max: 100, ticks: { color: '#64748b', font: { size: 11 }, stepSize: 20 }, grid: { color: getGridColor() } }
+                        x: { ticks: { color: '#64748b', font: { size: 11 } }, grid: { color: 'rgba(255,255,255,0.04)' } },
+                        y: { min: 0, max: 100, ticks: { color: '#64748b', font: { size: 11 }, stepSize: 20 }, grid: { color: 'rgba(255,255,255,0.06)' } }
                     },
                     plugins: {
                         legend: { display: false },
@@ -795,12 +907,36 @@
                     }
                 }
             });
-            
-            // Listen for theme changes to update grid colors
-            window.addEventListener('theme-changed', () => {
-                chart.options.scales.x.grid.color = getGridColor();
-                chart.options.scales.y.grid.color = getGridColor();
-                chart.update();
+        }
+
+        // Light board mode chart
+        const lightCtx = document.getElementById('boardTrendChart');
+        if (lightCtx) {
+            new Chart(lightCtx, {
+                type: 'line',
+                data: {
+                    labels,
+                    datasets: [{
+                        label: 'Security Score™',
+                        data: scores,
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59,130,246,0.08)',
+                        pointBackgroundColor: pointColors,
+                        pointRadius: 6, pointHoverRadius: 9,
+                        borderWidth: 2.5, fill: true, tension: 0.4,
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    scales: {
+                        x: { ticks: { color: '#475569', font: { size: 11 } }, grid: { color: '#f1f5f9' } },
+                        y: { min: 0, max: 100, ticks: { color: '#475569', font: { size: 11 }, stepSize: 20 }, grid: { color: '#f1f5f9' } }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { callbacks: { label: ctx => ` Score: ${ctx.raw}/100` } }
+                    }
+                }
             });
         }
     }

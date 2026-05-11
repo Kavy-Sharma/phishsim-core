@@ -61,38 +61,13 @@ Alice Sharma,alice@example.com,Finance,Accounts Manager,Manager
 Bob Patel,bob@example.com,IT,System Administrator,Mid
 ```
 
-## ⚙️ Local Setup
-```bash
-git clone https://github.com/Kavy-Sharma/phishsim-ai.git
-cd phishsim-ai
-python -m venv .venv
-.venv\Scripts\activate
-pip install -r requirements.txt
-```
+## 🔒 Source Code Access
+**Note:** To prevent misuse of the autonomous AI logic and protect the proprietary engine, the **full backend logic is kept in a private repository.** 
 
-Create a `.env` file locally:
-```env
-FLASK_SECRET_KEY=change-this-secret
-APP_BASE_URL=http://127.0.0.1:5000
+The files provided in this public repository showcase the architectural structure, the UI/UX design components, and the system schematics. 
 
-DB_HOST=localhost
-DB_PORT=3306
-DB_USER=root
-DB_PASSWORD=your-db-password
-DB_NAME=phishsim_db
-DB_SSL_DISABLED=True
-
-OPENROUTER_API_KEY=your-openrouter-key
-
-EMAIL_MODE=local
-LOCAL_SMTP_PORT=1025
-```
-
-Run the app:
-```bash
-python app.py
-```
-Access the interface at: `http://127.0.0.1:5000`
+**Want to collaborate, discuss the architecture, or view the full source code?**
+📧 **Contact Me on LinkedIn:** *(Insert your LinkedIn Profile Link here)*
 
 ## 🗺️ Continuous Evolution
 This platform is in a state of continuous, aggressive development. I am dedicated to pushing this to an enterprise level. Future updates currently in development:

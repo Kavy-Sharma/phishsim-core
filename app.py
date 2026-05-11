@@ -113,6 +113,7 @@ def get_db_connection():
         database=os.getenv("DB_NAME", "phishsim_db"),
         charset="utf8mb4",
         collation="utf8mb4_unicode_ci",
+        auth_plugin='mysql_native_password',
         ssl_disabled=os.getenv("DB_SSL_DISABLED", "False").lower() == "true"
     )
 
@@ -875,33 +876,76 @@ def dashboard():
         """
         cursor.execute(sql, params)
         campaigns = cursor.fetchall()
+        # Aggregate totals for summary bar
         total_employees = sum(c['employee_count'] for c in campaigns)
-        total_opens = sum(c['opens'] for c in campaigns)
-        total_clicks = sum(c['clicks'] for c in campaigns)
-        total_reports = sum(c['reports'] for c in campaigns)
-        
+        total_opens     = sum(c['opens']          for c in campaigns)
+        total_clicks    = sum(c['clicks']         for c in campaigns)
+        total_reports   = sum(c['reports']        for c in campaigns)
+
         global_risk = 0
         if total_opens > 0:
             global_risk = int((total_clicks / total_opens) * 100)
-        elif total_employees > 0 and total_clicks > 0: # fallback
+        elif total_employees > 0 and total_clicks > 0:
             global_risk = int((total_clicks / total_employees) * 100)
-            
+
+        # Compute per-campaign HSS and build risk trend
+        from ai_engine.report_agent import compute_human_security_score
+        risk_trend = []
+        hss_scores = []
+        for c in campaigns:
+            if c["status"] in ("launched", "launched_with_errors"):
+                sent = c["emails_sent"] or 0
+                if sent > 0:
+                    cr = round((c["clicks"] / sent) * 100, 1)
+                    orr = round((c["opens"]  / sent) * 100, 1)
+                    rr  = round((c["reports"]/ sent) * 100, 1)
+                    hss = compute_human_security_score(cr, orr, rr)
+                    c["hss"] = hss
+                    hss_scores.append(hss["score"])
+                    risk_trend.append({
+                        "name": c["name"],
+                        "hss":  hss["score"],
+                        "tier": hss["tier"],
+                    })
+                else:
+                    c["hss"] = None
+            else:
+                c["hss"] = None
+
+        global_hss = None
+        if hss_scores:
+            avg = round(sum(hss_scores) / len(hss_scores))
+            if avg >= 70:
+                global_hss = {"score": avg, "tier": "green",  "label": "Good"}
+            elif avg >= 40:
+                global_hss = {"score": avg, "tier": "amber",  "label": "At Risk"}
+            else:
+                global_hss = {"score": avg, "tier": "red",    "label": "Critical"}
+
         global_stats = {
             "total_campaigns": len(campaigns),
             "total_employees": total_employees,
             "global_risk": global_risk,
             "total_reports": total_reports
         }
-        
+
     except Exception as e:
         print(f"Dashboard query failed: {e}")
         campaigns = []
         global_stats = {"total_campaigns": 0, "total_employees": 0, "global_risk": 0, "total_reports": 0}
+        global_hss = None
+        risk_trend = []
     finally:
         cursor.close()
         db.close()
-        
-    return render_template("dashboard.html", campaigns=campaigns, global_stats=global_stats)
+
+    return render_template(
+        "dashboard.html",
+        campaigns=campaigns,
+        global_stats=global_stats,
+        global_hss=global_hss,
+        risk_trend=risk_trend,
+    )
 
 # 1. ADD THIS ROUTE: This shows the "Create Campaign" page
 @app.route("/new-campaign", methods=["GET", "POST"])
@@ -1108,14 +1152,14 @@ def process_campaign_background(campaign_id):
                 pixel_url    = f"{base_url}/pixel/{tracking_id}.png"
                 report_url   = f"{base_url}/report/{tracking_id}"
 
-                preview_body = email_data["body_html"].replace("TRACKING_LINK", tracking_url)
+                preview_body = email_data["body_html"].replace("TRACKING_LINK", tracking_url).replace("<a ", "<a target='_blank' ")
                 preview_body += f"""
     <br><br>
     <div style="font-family:Arial,sans-serif;text-align:center;margin-top:30px;padding:20px;
                 border-top:1px solid #e0e0e0;background-color:#f9f9f9;border-radius:8px;">
         <p style="font-size:13px;color:#555;margin-bottom:12px;">
             If you suspect this email is a phishing attempt, please report it immediately.</p>
-        <a href="{report_url}"
+        <a href="{report_url}" target="_blank"
            style="background-color:#dc3545;color:white;padding:10px 20px;text-decoration:none;
                   border-radius:4px;font-weight:bold;font-size:14px;display:inline-block;">
             Report Suspicious Email</a>
@@ -1335,12 +1379,59 @@ def campaign_report(campaign_id):
     user = current_user()
     db = get_db_connection()
     cursor = db.cursor(dictionary=True)
+    department_stats = []
+    repeat_offenders = []
     try:
         if ensure_email_schema_once(cursor):
             db.commit()
         if not user_can_access_campaign(cursor, campaign_id, user):
             return "Campaign not found.", 404
         campaign = get_campaign_metrics(cursor, campaign_id)
+
+        # Department heatmap: click rate per department
+        cursor.execute("""
+            SELECT
+                COALESCE(emp.department, 'Unassigned') AS department,
+                COUNT(DISTINCT emp.id)                   AS targets,
+                COUNT(DISTINCT CASE WHEN ev.event_type = 'click'  THEN emp.id END) AS clicks,
+                COUNT(DISTINCT CASE WHEN ev.event_type = 'open'   THEN emp.id END) AS opens,
+                COUNT(DISTINCT CASE WHEN ev.event_type = 'report' THEN emp.id END) AS reports
+            FROM employees emp
+            LEFT JOIN emails_sent es
+                ON es.campaign_id = emp.campaign_id AND es.recipient_email = emp.email
+            LEFT JOIN events ev ON ev.tracking_id = es.tracking_id
+            WHERE emp.campaign_id = %s
+            GROUP BY COALESCE(emp.department, 'Unassigned')
+            ORDER BY clicks DESC, targets DESC
+        """, (campaign_id,))
+        rows = cursor.fetchall()
+        for r in rows:
+            t = r["targets"] or 1
+            r["click_rate"] = round((r["clicks"] / t) * 100)
+            r["open_rate"]  = round((r["opens"]  / t) * 100)
+        department_stats = rows
+
+        # Repeat offenders: employees who clicked in THIS campaign AND at least one previous one
+        cursor.execute("""
+            SELECT emp.name, emp.email, emp.department,
+                   COUNT(DISTINCT es2.campaign_id) AS campaigns_clicked
+            FROM employees emp
+            JOIN emails_sent es  ON es.campaign_id = emp.campaign_id  AND es.recipient_email = emp.email
+            JOIN events     ev   ON ev.tracking_id  = es.tracking_id   AND ev.event_type = 'click'
+            JOIN emails_sent es2 ON es2.recipient_email = emp.email
+            JOIN events     ev2  ON ev2.tracking_id  = es2.tracking_id  AND ev2.event_type = 'click'
+            WHERE emp.campaign_id = %s
+            GROUP BY emp.email, emp.name, emp.department
+            HAVING COUNT(DISTINCT es2.campaign_id) > 1
+            ORDER BY campaigns_clicked DESC
+            LIMIT 10
+        """, (campaign_id,))
+        repeat_offenders = cursor.fetchall()
+
+        # Pass repeat_pct into campaign so HSS can use it
+        sent = int(campaign.get("emails_sent") or 0)
+        campaign["repeat_pct"] = round((len(repeat_offenders) / sent) * 100, 1) if sent else 0
+
     finally:
         cursor.close()
         db.close()
@@ -1349,7 +1440,13 @@ def campaign_report(campaign_id):
         return "Campaign not found.", 404
 
     report = build_campaign_report(campaign)
-    return render_template("campaign_report.html", campaign=campaign, report=report)
+    return render_template(
+        "campaign_report.html",
+        campaign=campaign,
+        report=report,
+        department_stats=department_stats,
+        repeat_offenders=repeat_offenders,
+    )
 
 @app.route("/download-report/<int:campaign_id>")
 @login_required
@@ -1466,15 +1563,22 @@ def download_report(campaign_id):
     pdf.set_y(55)
     pdf.set_fill_color(240, 244, 255)
     pdf.set_draw_color(191, 219, 254)
-    pdf.rect(10, 52, 190, 30, "DF")
+    pdf.rect(10, 52, 190, 35, "DF")
     pdf.set_text_color(15, 23, 42)
     pdf.set_font("Helvetica", "B", 13)
-    pdf.cell(0, 8, clean_pdf_text(f"Calculated Risk Level: {report['risk_level']}"), ln=1)
+    
+    hss_str = "N/A"
+    if "hss" in report and report["hss"]:
+        hss_str = f"{report['hss']['score']}/100 ({report['hss']['label']})"
+
+    pdf.cell(100, 8, clean_pdf_text(f"Calculated Risk Level: {report.get('risk_level', 'Unknown')}"))
+    pdf.cell(90, 8, clean_pdf_text(f"Human Security Score™: {hss_str}"), ln=1)
+    
     pdf.set_font("Helvetica", "", 10)
-    pdf.cell(45, 8, clean_pdf_text(f"Delivery: {report['delivery_rate']}%"))
-    pdf.cell(45, 8, clean_pdf_text(f"Open: {report['open_rate']}%"))
-    pdf.cell(50, 8, clean_pdf_text(f"Click: {report['click_rate']}%"))
-    pdf.cell(50, 8, clean_pdf_text(f"Report: {report['report_rate']}%"), ln=1)
+    pdf.cell(45, 8, clean_pdf_text(f"Delivery: {report.get('delivery_rate', 0)}%"))
+    pdf.cell(45, 8, clean_pdf_text(f"Open: {report.get('open_rate', 0)}%"))
+    pdf.cell(50, 8, clean_pdf_text(f"Click: {report.get('click_rate', 0)}%"))
+    pdf.cell(50, 8, clean_pdf_text(f"Report: {report.get('report_rate', 0)}%"), ln=1)
 
     section_title(pdf, "Executive Summary")
     paragraph(pdf, report["summary"])
@@ -1686,7 +1790,7 @@ def campaign_emails(campaign_id):
         for email in emails:
             if email.get("body_html") and email.get("tracking_id"):
                 tracking_url = f"{base_url}/click/{email['tracking_id']}"
-                email["body_html"] = email["body_html"].replace("TRACKING_LINK", tracking_url)
+                email["body_html"] = email["body_html"].replace("TRACKING_LINK", tracking_url).replace("<a ", "<a target='_blank' ")
         
         return render_template("campaign_emails.html", campaign=campaign, emails=emails)
     finally:

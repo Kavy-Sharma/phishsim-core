@@ -51,12 +51,15 @@
         <span class="theme-toggle-icon theme-toggle-sun"><i class="fas fa-sun"></i></span>
         <span class="theme-toggle-icon theme-toggle-moon"><i class="fas fa-moon"></i></span>
     </button>
+    <div id="theme-tooltip" style="position:fixed; right:5rem; bottom:2rem; background:rgba(15,23,42,0.95); color:#fff; padding:8px 16px; border-radius:8px; font-weight:700; font-family:'Outfit',sans-serif; opacity:0; pointer-events:none; transition:opacity 0.3s ease; z-index:30000; box-shadow:0 10px 25px rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.1);">
+        Cyberpunk Mode
+    </div>
 
     {% with messages = get_flashed_messages() %}
     {% if messages %}
     <div style="max-width: 1180px; margin: 1rem auto 0; padding: 0 1.5rem;">
         {% for message in messages %}
-        <div style="background: rgba(15,23,42,0.92); border: 1px solid rgba(6,182,212,0.35); color: #e2e8f0; border-radius: 10px; padding: 0.85rem 1rem; margin-bottom: 0.65rem; box-shadow: 0 12px 30px rgba(2,6,23,0.25);">
+        <div style="background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 10px; padding: 0.85rem 1rem; margin-bottom: 0.65rem; box-shadow: 0 12px 30px rgba(0,0,0,0.1);">
             {{ message }}
         </div>
         {% endfor %}
@@ -66,7 +69,7 @@
 
     {% block content %}{% endblock %}
     
-    <footer style="background: rgba(2,6,23,0.95); border-top: 1px solid rgba(255,255,255,0.05); padding: 3rem 2rem 1.5rem; margin-top: auto;">
+    <footer style="background: var(--bg-card); border-top: 1px solid var(--border-color); padding: 3rem 2rem 1.5rem; margin-top: auto;">
         <div style="max-width: 1200px; margin: 0 auto;">
             <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 2.5rem; margin-bottom: 2.5rem;">
                 <!-- Brand -->
@@ -107,8 +110,8 @@
                     </ul>
                 </div>
             </div>
-            <div style="border-top: 1px solid rgba(255,255,255,0.05); padding-top: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
-                <p style="color: #334155; font-size: 0.82rem; margin: 0;">&copy; 2026 PhishSim AI &mdash; Built by Kavy Sharma. For authorized security training only.</p>
+            <div style="border-top: 1px solid var(--border-color); padding-top: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                <p style="color: var(--text-muted); font-size: 0.82rem; margin: 0;">&copy; 2026 PhishSim AI &mdash; Built by Kavy Sharma. For authorized security training only.</p>
                 <div style="display: flex; gap: 1rem;">
                     <a href="https://github.com/Kavy-Sharma/phishsim-ai" target="_blank" rel="noopener noreferrer" style="color: #334155; font-size: 0.85rem; transition: color 0.2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#334155'"><i class="fab fa-github"></i></a>
                 </div>
@@ -120,20 +123,39 @@
             const storageKey = "phishsim-theme";
             const body = document.body;
             const toggle = document.getElementById("theme-toggle");
+            const tooltip = document.getElementById("theme-tooltip");
+            let tooltipTimeout;
 
-            function applyTheme(theme) {
+            function showTooltip(text, isLight) {
+                tooltip.textContent = text;
+                tooltip.style.background = isLight ? "rgba(255,255,255,0.95)" : "rgba(15,23,42,0.95)";
+                tooltip.style.color = isLight ? "#0f172a" : "#fff";
+                tooltip.style.borderColor = isLight ? "rgba(59,130,246,0.3)" : "rgba(255,255,255,0.1)";
+                tooltip.style.opacity = "1";
+                clearTimeout(tooltipTimeout);
+                tooltipTimeout = setTimeout(() => { tooltip.style.opacity = "0"; }, 3000);
+            }
+
+            function applyTheme(theme, showMsg = true) {
                 const isLight = theme === "light";
                 body.classList.toggle("light-theme", isLight);
                 toggle.setAttribute("aria-label", isLight ? "Switch to dark mode" : "Switch to light mode");
                 toggle.setAttribute("title", isLight ? "Switch to dark mode" : "Switch to light mode");
                 localStorage.setItem(storageKey, theme);
+                
+                if (showMsg) {
+                    showTooltip(isLight ? "Enterprise Mode Active" : "Cyberpunk Mode Active", isLight);
+                }
+
+                // Dispatch event so other scripts (like charts) can re-render
+                window.dispatchEvent(new CustomEvent('theme-changed', { detail: { theme } }));
             }
 
             const savedTheme = localStorage.getItem(storageKey);
-            applyTheme(savedTheme === "light" ? "light" : "dark");
+            applyTheme(savedTheme === "light" ? "light" : "dark", true);
 
             toggle.addEventListener("click", function() {
-                applyTheme(body.classList.contains("light-theme") ? "dark" : "light");
+                applyTheme(body.classList.contains("light-theme") ? "dark" : "light", true);
             });
         })();
     </script>
