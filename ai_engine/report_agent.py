@@ -6,10 +6,12 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 client = OpenAI(
     base_url="https://openrouter.ai/api/v1",
-    api_key=os.getenv("OPENROUTER_API_KEY")
-)
+    api_key=OPENROUTER_API_KEY,
+    timeout=float(os.getenv("OPENROUTER_TIMEOUT_SECONDS", "10")),
+) if OPENROUTER_API_KEY else None
 
 
 def compute_human_security_score(click_rate, open_rate, report_rate, repeat_pct=0):
@@ -87,27 +89,76 @@ Provide exactly two things in JSON format:
 
 CRITICAL: Return ONLY valid JSON: {{"summary": "...", "recommendations": ["...", "..."]}}""" 
 
-    fallback_summary = "The campaign shows measurable risk and needs targeted follow-up training."
-    fallback_recos = [
-        "Review email deliverability and image blocking rules.",
-        "Run short training on link checking and urgency cues.",
-        "Make the reporting process easier for employees."
-    ]
+    # --- Scenario-Specific Fallback Definitions ---
+    fallback_recos_by_scenario = {
+        "sso_credential_harvest": [
+            "Mandate Password Managers: Restrict password auto-fill to official domain names only to block credential clones.",
+            "Deploy FIDO2/WebAuthn MFA: Hardware keys or device-based MFA block credential replays even if employees click.",
+            "SSO Location Anomaly Policies: Enforce automated alerts and verification prompts for login attempts from anomalous regions."
+        ],
+        "cfo_wire_transfer": [
+            "Establish Out-of-Band Approvals: Mandate a secondary verification channel (verbal call or secure chat) for transfers over $5k.",
+            "Display Name Spoofing Banners: Implement external sender tags to visually flag external emails masquerading as executives.",
+            "Establish CFO Proxy Rules: Define a strict process for wire sign-offs during executive travel or unavailability."
+        ],
+        "urgent_it_patch": [
+            "Verify IT Communication Channels: Educate users that critical patches are never deployed via direct links in emails.",
+            "Automate System Updates: Configure MDM / central policy management to apply updates without requiring user action.",
+            "Require Admin Credentials: Block standard users from installing software/extensions to neutralize executable downloads."
+        ],
+        "package_delivery": [
+            "Redirect Personal Deliveries: Enforce policy prohibiting personal package delivery tracking to corporate email addresses.",
+            "Verify Shipping Origin: Train operations/front-desk staff to verify tracking numbers directly via the carrier's portal.",
+            "Block Malicious Redirects: Implement secure DNS resolution (e.g. Quad9) to block connection to simulated delivery domains."
+        ],
+        "authority_impersonation": [
+            "Implement DMARC/DKIM/SPF Policies: Enforce strict quarantine/reject policies to block domain spoofing attempts.",
+            "Execute Spoofing Drills: Run targeted awareness sessions on executive writing style, urgency indicators, and protocol bypasses.",
+            "Define Executive Contact Protocol: Establish official channels for emergency requests to prevent bypass of standard approvals."
+        ]
+    }
 
-    summary = fallback_summary
-    recommendations = fallback_recos
+    fallback_summaries_by_scenario = {
+        "sso_credential_harvest": "The campaign detected critical vulnerabilities in credential hygiene. Targeted employees entered single sign-on details on a simulated login clone, exposing the organization to full account compromise.",
+        "cfo_wire_transfer": "The CFO impersonation simulation exposed a high susceptibility to urgency-based compliance pressure. High-risk departments bypass standard controls when pressured by executive authority.",
+        "urgent_it_patch": "The urgent patch scenario revealed significant gaps in endpoint security compliance. Employees clicked direct installation links, bypassing official software deployment channels.",
+        "package_delivery": "The package delivery lure successfully exploited curiosity and personal interest. This threat vector bypasses standard corporate filters by mimicking routine courier tracking updates.",
+        "authority_impersonation": "The authority impersonation exercise highlights critical vulnerabilities to organizational hierarchy pressure. Attackers successfully leveraged urgency cues to bypass standard verification protocols."
+    }
+
+    scenario_key = campaign.get("scenario_type") or "authority_impersonation"
+    if scenario_key not in fallback_recos_by_scenario:
+        scenario_key = "authority_impersonation"
+
+    summary = fallback_summaries_by_scenario[scenario_key]
+    recommendations = fallback_recos_by_scenario[scenario_key]
 
     try:
-        response = client.chat.completions.create(
-            model="openrouter/free",
-            messages=[
-                {"role": "system", "content": "You are an AI Threat Analyst. Output ONLY raw JSON. No markdown, no <think> tags."},
-                {"role": "user", "content": prompt}
-            ],
-            temperature=0.3,
-            max_tokens=300
-        )
+        if client is None:
+            raise RuntimeError("OPENROUTER_API_KEY is not configured.")
         
+        # Try primary model first, then fallback model
+        response = None
+        for model_name in ["google/gemini-2.5-flash", "openrouter/free"]:
+            try:
+                response = client.chat.completions.create(
+                    model=model_name,
+                    messages=[
+                        {"role": "system", "content": "You are an AI Threat Analyst. Output ONLY raw JSON. No markdown, no <think> tags."},
+                        {"role": "user", "content": prompt}
+                    ],
+                    temperature=0.3,
+                    max_tokens=400
+                )
+                if response and response.choices and response.choices[0].message.content:
+                    break
+            except Exception as model_err:
+                print(f"Failed model call for {model_name}: {model_err}")
+                continue
+
+        if not response:
+            raise RuntimeError("All models failed or returned empty response.")
+
         raw = response.choices[0].message.content
         raw = re.sub(r'<think>.*?</think>', '', raw, flags=re.DOTALL).strip()
         
@@ -134,7 +185,7 @@ CRITICAL: Return ONLY valid JSON: {{"summary": "...", "recommendations": ["...",
             start_idx = json_str.find('{', start_idx + 1)
             
     except Exception as e:
-        print(f"AI Report Generation Failed: {e}")
+        print(f"AI Report Generation Failed, falling back to scenario defaults: {e}")
 
     return {
         "risk_level": risk_level,

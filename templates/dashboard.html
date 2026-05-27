@@ -4,7 +4,7 @@
 <style>
 /* Removed hardcoded body background */
 
-.dash-page { padding: 2rem; max-width: 1300px; margin: 0 auto; }
+.dash-page { padding: clamp(1.5rem, 3vw, 3rem); width: min(100%, 1500px); margin: 0 auto; box-sizing: border-box; }
 
 /* Animated header */
 .dash-hero {
@@ -15,7 +15,7 @@
     animation: fadeInDown 0.6s ease-out forwards;
 }
 .dash-hero h1 {
-    font-family: 'Outfit', sans-serif; font-size: 2.5rem;
+    font-family: var(--font-sans); font-size: 2.5rem;
     font-weight: 800; margin: 0;
     background: linear-gradient(135deg, var(--text-main) 40%, #06b6d4);
     -webkit-background-clip: text; -webkit-text-fill-color: transparent;
@@ -24,17 +24,17 @@
 
 /* Summary stat bar */
 .dash-summary {
-    display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.2rem;
+    display: grid; grid-template-columns: repeat(4, minmax(180px, 1fr)); gap: 1.2rem;
     margin-bottom: 2.5rem;
 }
 .summary-stat {
-    background: var(--bg-card, rgba(15,23,42,0.7));
+    background: var(--surface);
     border: 1px solid var(--border-color, rgba(255,255,255,0.05));
     border-radius: 16px; padding: 1.5rem;
     text-align: center; transition: all 0.3s ease;
     animation: fadeInUp 0.6s ease-out forwards;
     opacity: 0;
-    position: relative; overflow: hidden;
+    position: relative; overflow: visible;
 }
 .summary-stat::before {
     content: ''; position: absolute; inset: 0;
@@ -44,7 +44,7 @@
 .summary-stat:hover { transform: translateY(-4px); border-color: rgba(6,182,212,0.3); }
 .summary-stat:hover::before { opacity: 1; }
 .summary-stat .s-icon { font-size: 1.8rem; margin-bottom: 0.8rem; }
-.summary-stat .s-num { font-family: 'Outfit', sans-serif; font-size: 2rem; font-weight: 800; color: var(--text-main); line-height: 1; }
+.summary-stat .s-num { font-family: var(--font-sans); font-size: 2rem; font-weight: 800; color: var(--text-main); line-height: 1; }
 .summary-stat .s-label { font-size: 0.8rem; color: #64748b; margin-top: 4px; letter-spacing: 1px; text-transform: uppercase; }
 .summary-stat:nth-child(1) { animation-delay: 0.1s; }
 .summary-stat:nth-child(2) { animation-delay: 0.2s; }
@@ -54,20 +54,20 @@
 /* Empty state */
 .dash-empty {
     text-align: center; padding: 6rem 2rem;
-    background: var(--bg-card, rgba(15,23,42,0.5));
+    background: var(--surface);
     border: 1px dashed var(--border-color, rgba(255,255,255,0.1));
     border-radius: 24px;
     animation: fadeInUp 0.7s ease-out forwards;
 }
 .dash-empty i { font-size: 4rem; color: #334155; margin-bottom: 1.5rem; }
-.dash-empty h3 { font-family: 'Outfit', sans-serif; font-size: 1.8rem; color: var(--text-main); margin-bottom: 0.8rem; }
+.dash-empty h3 { font-family: var(--font-sans); font-size: 1.8rem; color: var(--text-main); margin-bottom: 0.8rem; }
 .dash-empty p { color: #64748b; max-width: 400px; margin: 0 auto 2rem; }
 
 /* Campaign grid */
-.camp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 1.5rem; }
+.camp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 1.5rem; }
 
 .camp-card {
-    background: var(--bg-card, rgba(10, 16, 38, 0.9));
+    background: var(--surface);
     border: 1px solid var(--border-color, rgba(255,255,255,0.07));
     border-radius: 20px; padding: 1.8rem;
     transition: all 0.4s cubic-bezier(0.25,1,0.5,1);
@@ -84,10 +84,10 @@
 .camp-card:hover::after { opacity: 1; }
 
 .camp-card-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 1.2rem; }
-.camp-name { font-family: 'Outfit', sans-serif; font-size: 1.3rem; font-weight: 700; color: var(--text-main); margin: 0 0 6px 0; }
+.camp-name { font-family: var(--font-sans); font-size: 1.3rem; font-weight: 700; color: var(--text-main); margin: 0 0 6px 0; }
 .camp-owner {
     display: inline-flex; align-items: center; gap: 6px;
-    color: #94a3b8; font-size: 0.78rem; font-family: 'Space Mono', monospace;
+    color: #94a3b8; font-size: 0.78rem; font-family: var(--font-mono);
     margin-top: 4px;
 }
 
@@ -96,10 +96,11 @@
     display: inline-flex; align-items: center; gap: 5px;
     padding: 4px 10px; border-radius: 100px; font-size: 0.75rem;
     font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;
-    font-family: 'Space Mono', monospace;
+    font-family: var(--font-mono);
 }
 .badge-draft { background: rgba(100,116,139,0.15); color: #64748b; border: 1px solid rgba(100,116,139,0.3); }
 .badge-launching { background: rgba(59,130,246,0.15); color: #60a5fa; border: 1px solid rgba(59,130,246,0.3); }
+.badge-scheduled { background: rgba(168,85,247,0.14); color: #c084fc; border: 1px solid rgba(168,85,247,0.3); }
 .badge-launched { background: rgba(34,197,94,0.12); color: #4ade80; border: 1px solid rgba(34,197,94,0.3); }
 .badge-warning { background: rgba(234,179,8,0.12); color: #facc15; border: 1px solid rgba(234,179,8,0.3); }
 .badge-failed { background: rgba(239,68,68,0.12); color: #f87171; border: 1px solid rgba(239,68,68,0.3); }
@@ -115,7 +116,7 @@
 /* Stats row */
 .mini-stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 0.8rem; margin-bottom: 1.2rem; }
 .mini-stat { text-align: center; background: var(--bg-card, rgba(255,255,255,0.03)); border-radius: 10px; padding: 0.8rem 0.5rem; }
-.mini-stat .ms-val { font-family: 'Outfit', sans-serif; font-size: 1.6rem; font-weight: 800; }
+.mini-stat .ms-val { font-family: var(--font-sans); font-size: 1.6rem; font-weight: 800; }
 .ms-opens { color: #06b6d4; }
 .ms-clicks { color: #f59e0b; }
 .ms-reports { color: #22c55e; }
@@ -125,7 +126,7 @@
 .camp-action-btn {
     display: block; width: 100%;
     padding: 12px; border-radius: 10px;
-    font-family: 'Outfit', sans-serif; font-weight: 700;
+    font-family: var(--font-sans); font-weight: 700;
     font-size: 0.95rem; text-align: center; cursor: pointer;
     border: none; transition: all 0.3s ease;
     text-decoration: none; margin-bottom: 8px;
@@ -197,7 +198,7 @@
     filter: drop-shadow(0 0 15px rgba(6, 182, 212, 0.4));
 }
 .empty-title {
-    font-family: 'Space Mono', monospace; font-size: 1.8rem;
+    font-family: var(--font-mono); font-size: 1.8rem;
     color: var(--text-main); margin-bottom: 1rem;
 }
 .empty-title .cursor {
@@ -206,6 +207,13 @@
     animation: blink 1s step-end infinite;
 }
 @keyframes blink { 50% { opacity: 0; } }
+
+@media (max-width: 980px) {
+    .dash-summary { grid-template-columns: repeat(2, minmax(160px, 1fr)); }
+}
+@media (max-width: 560px) {
+    .dash-summary, .camp-grid { grid-template-columns: 1fr; }
+}
 
 .empty-desc {
     color: #94a3b8; font-size: 1.1rem; max-width: 500px; margin: 0 auto 2.5rem; line-height: 1.6;
@@ -216,7 +224,7 @@
     display: inline-flex; align-items: center; gap: 8px;
     padding: 12px 24px; border-radius: 12px;
     background: linear-gradient(135deg, #06b6d4, #3b82f6);
-    color: #fff; font-family: 'Outfit', sans-serif;
+    color: #fff; font-family: var(--font-sans);
     font-weight: 700; font-size: 0.95rem; text-decoration: none;
     transition: all 0.3s ease; position: relative; overflow: hidden;
 }
@@ -231,7 +239,7 @@
 @keyframes fadeInDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes fadeInUp { from { opacity: 0; transform: translateY(25px); } to { opacity: 1; transform: translateY(0); } }
 
-.step-label { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; color: #475569; font-family: 'Space Mono', monospace; margin-bottom: 0.5rem; }
+.step-label { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; color: #475569; font-family: var(--font-mono); margin-bottom: 0.5rem; }
 .step-desc { font-size: 0.9rem; color: #94a3b8; margin-bottom: 1rem; }
 
 .file-upload-wrapper { margin-bottom: 0.8rem; }
@@ -271,7 +279,7 @@
 .confirm-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; }
 .confirm-cancel, .confirm-danger {
     border: 0; border-radius: 10px; padding: 12px; cursor: pointer;
-    color: #fff; font-weight: 700; font-family: 'Outfit', sans-serif;
+    color: #fff; font-weight: 700; font-family: var(--font-sans);
 }
 .confirm-cancel { background: rgba(148, 163, 184, 0.14); color: #cbd5e1; }
 .confirm-danger { background: linear-gradient(135deg, #ef4444, #b91c1c); }
@@ -286,7 +294,7 @@
     border-bottom: 2px solid #e2e8f0;
 }
 .board-title {
-    font-family: 'Outfit', sans-serif; font-size: 1.8rem; font-weight: 800;
+    font-family: var(--font-sans); font-size: 1.8rem; font-weight: 800;
     color: #0f172a; display: flex; align-items: center; gap: 12px;
 }
 .board-title img { height: 32px; }
@@ -294,7 +302,7 @@
     display: inline-flex; align-items: center; gap: 8px;
     padding: 10px 20px; border-radius: 10px;
     background: #0f172a; color: #fff;
-    font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 0.9rem;
+    font-family: var(--font-sans); font-weight: 700; font-size: 0.9rem;
     border: none; cursor: pointer; transition: all 0.2s;
 }
 .board-exit-btn:hover { background: #1e293b; }
@@ -312,13 +320,13 @@
 }
 .board-score-ring svg { position: absolute; top:0; left:0; transform: rotate(-90deg); }
 .board-score-ring .ring-num {
-    font-family: 'Outfit', sans-serif; font-size: 2.8rem; font-weight: 900;
+    font-family: var(--font-sans); font-size: 2.8rem; font-weight: 900;
     line-height: 1; text-align: center;
 }
 .board-score-ring .ring-sub {
     font-size: 0.7rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px;
 }
-.board-hss-text h2 { font-family: 'Outfit', sans-serif; font-size: 1.6rem; color:var(--text-main); margin:0 0 0.5rem; }
+.board-hss-text h2 { font-family: var(--font-sans); font-size: 1.6rem; color:var(--text-main); margin:0 0 0.5rem; }
 .board-hss-text p { color: var(--text-muted); font-size: 0.95rem; line-height: 1.6; margin: 0; }
 .board-hss-badge {
     display: inline-flex; align-items: center; gap: 6px;
@@ -334,14 +342,14 @@
     background: #fff; border-radius: 16px; padding: 1.5rem;
     box-shadow: 0 2px 12px rgba(0,0,0,0.05); text-align: center;
 }
-.board-stat .bs-num { font-family: 'Outfit', sans-serif; font-size: 2.2rem; font-weight: 800; color: #0f172a; }
+.board-stat .bs-num { font-family: var(--font-sans); font-size: 2.2rem; font-weight: 800; color: #0f172a; }
 .board-stat .bs-label { font-size: 0.8rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
 
 .board-dept-card {
     background: #fff; border-radius: 16px; padding: 1.8rem;
     box-shadow: 0 2px 12px rgba(0,0,0,0.05); margin-bottom: 2rem;
 }
-.board-dept-card h3 { font-family: 'Outfit', sans-serif; font-size: 1.1rem; color: #0f172a; margin: 0 0 1.2rem; }
+.board-dept-card h3 { font-family: var(--font-sans); font-size: 1.1rem; color: #0f172a; margin: 0 0 1.2rem; }
 .board-dept-row { margin-bottom: 0.9rem; }
 .board-dept-label { display: flex; justify-content: space-between; font-size: 0.88rem; color: #475569; margin-bottom: 5px; }
 .board-dept-track { height: 10px; background: #f1f5f9; border-radius: 100px; overflow: hidden; }
@@ -354,7 +362,7 @@
     background: #fff; border-radius: 16px; padding: 1.8rem;
     box-shadow: 0 2px 12px rgba(0,0,0,0.05); margin-bottom: 2rem;
 }
-.board-trend-card h3 { font-family: 'Outfit', sans-serif; font-size: 1.1rem; color: #0f172a; margin: 0 0 1.2rem; }
+.board-trend-card h3 { font-family: var(--font-sans); font-size: 1.1rem; color: #0f172a; margin: 0 0 1.2rem; }
 
 /* HSS card in dark dashboard summary */
 .hss-summary-card {
@@ -372,15 +380,76 @@
 
 /* Risk trend chart */
 .risk-trend-card {
-    background: var(--bg-card, rgba(10,16,38,0.7));
-    border: 1px solid var(--border-color, rgba(255,255,255,0.06));
-    border-radius: 20px; padding: 2rem; margin-top: 2rem;
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    margin-top: 2rem;
     animation: fadeInUp 0.6s ease-out 0.4s forwards; opacity: 0;
 }
 .risk-trend-card h2 {
-    font-family: 'Outfit', sans-serif; font-size: 1.3rem; color: var(--text-main);
+    font-family: var(--font-sans); font-size: 1.3rem; color: var(--text-main);
     margin: 0 0 1.5rem; display: flex; align-items: center; gap: 10px;
 }
+
+/* ── AI Simulation Stream ── */
+.dash-main-row {
+    display: grid;
+    grid-template-columns: 1fr 300px;
+    gap: 1.5rem;
+    align-items: start;
+}
+@media (max-width: 1100px) { .dash-main-row { grid-template-columns: 1fr; } }
+.ai-stream-panel {
+    position: sticky;
+    top: 72px;
+    background: var(--surface);
+    border: 1px solid rgba(6,182,212,0.2);
+    border-radius: 16px;
+    overflow: hidden;
+    animation: fadeInUp 0.7s ease-out 0.3s forwards;
+    opacity: 0;
+}
+.ai-stream-header {
+    display: flex; align-items: center; gap: 8px;
+    padding: 1rem 1.2rem;
+    border-bottom: 1px solid rgba(6,182,212,0.15);
+    background: rgba(6,182,212,0.04);
+}
+.ai-stream-header .live-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: #22c55e;
+    box-shadow: 0 0 8px #22c55e;
+    animation: pulseDot 2s ease-in-out infinite;
+}
+.ai-stream-header span {
+    font-family: var(--font-mono);
+    font-size: 0.72rem; color: #06b6d4;
+    text-transform: uppercase; letter-spacing: 1px;
+}
+.ai-stream-body {
+    height: 420px;
+    overflow-y: auto;
+    padding: 0.8rem;
+    display: flex; flex-direction: column; gap: 6px;
+    scroll-behavior: smooth;
+}
+.ai-stream-body::-webkit-scrollbar { width: 3px; }
+.ai-stream-body::-webkit-scrollbar-thumb { background: rgba(6,182,212,0.3); border-radius: 2px; }
+.ai-log-entry {
+    display: flex; gap: 8px; align-items: flex-start;
+    padding: 6px 8px; border-radius: 8px;
+    background: rgba(255,255,255,0.02);
+    border-left: 2px solid transparent;
+    font-size: 0.75rem; line-height: 1.5;
+    animation: slideInRight 0.3s ease-out;
+}
+@keyframes slideInRight { from { opacity:0; transform:translateX(10px); } to { opacity:1; transform:translateX(0); } }
+.ai-log-entry.type-ai   { border-color: #06b6d4; }
+.ai-log-entry.type-evt  { border-color: #22c55e; }
+.ai-log-entry.type-warn { border-color: #f59e0b; }
+.ai-log-time { color: #475569; font-family: var(--font-mono); flex-shrink: 0; font-size: 0.68rem; margin-top: 1px; }
+.ai-log-text { color: #94a3b8; }
+.ai-log-text strong { color: var(--text-main); }
 </style>
 
 <div class="dash-page">
@@ -401,7 +470,7 @@
     {% if global_stats and global_stats.total_campaigns > 0 %}
     <!-- HSS Ring Hero (Always visible now) -->
     {% if global_hss %}
-    <div class="board-hss-hero">
+    <div class="board-hss-hero" style="display: flex; align-items: center; gap: 2.5rem; flex-wrap: wrap; padding: 2.5rem; width: 100%; box-sizing: border-box; margin-bottom: 2rem;">
         <div class="board-score-ring">
             <svg width="140" height="140" viewBox="0 0 140 140">
                 <circle cx="70" cy="70" r="58" fill="none" stroke="var(--border-color)" stroke-width="12"/>
@@ -418,7 +487,15 @@
             </div>
         </div>
         <div class="board-hss-text">
-            <h2>Human Security Score™</h2>
+            <h2>
+                Human Security Score™
+                <span class="cyber-tooltip-wrap">
+                    <span class="tooltip-icon" style="width:16px; height:16px; font-size:0.6rem; margin-left: 4px;">?</span>
+                    <span class="cyber-tooltip-content" style="font-weight:normal; text-transform:none; font-size:0.75rem; letter-spacing:0; line-height:1.4; top: calc(100% + 8px); right: auto; left: 0; width: 260px;">
+                        The global security index of your workforce. Higher scores represent better phishing recognition rates and higher reporting ratios.
+                    </span>
+                </span>
+            </h2>
             <p>Your organisation's overall phishing resistance score based on click rate, open rate, reporting behaviour, and repeat offenders across all campaigns.</p>
             <div class="board-hss-badge board-badge-{{ global_hss.tier }}">
                 <i class="fas fa-{% if global_hss.tier == 'green' %}check-circle{% elif global_hss.tier == 'amber' %}exclamation-circle{% else %}exclamation-triangle{% endif %}"></i>
@@ -428,200 +505,278 @@
     </div>
     {% endif %}
 
-    <div class="dash-summary">
+    <div class="dash-summary" style="margin-bottom: 2.2rem;">
         <div class="summary-stat">
             <div class="s-icon" style="color: #3b82f6;"><i class="fas fa-layer-group"></i></div>
             <div class="s-num">{{ global_stats.total_campaigns }}</div>
-            <div class="s-label">Active Campaigns</div>
+            <div class="s-label" style="display:flex; align-items:center; justify-content:center; gap:6px;">
+                Active Campaigns
+                <span class="cyber-tooltip-wrap">
+                    <span class="tooltip-icon" style="width:14px; height:14px; font-size:0.55rem;">?</span>
+                    <span class="cyber-tooltip-content" style="font-weight:normal; text-transform:none; font-size:0.75rem; letter-spacing:0; line-height:1.4; bottom: calc(100% + 8px); top: auto; right: auto; left: -100px; width: 220px;">
+                        Total simulated phishing campaigns launched or scheduled across your company.
+                    </span>
+                </span>
+            </div>
         </div>
         <div class="summary-stat">
             <div class="s-icon" style="color: #a855f7;"><i class="fas fa-users"></i></div>
             <div class="s-num">{{ global_stats.total_employees }}</div>
-            <div class="s-label">Total Targets</div>
+            <div class="s-label" style="display:flex; align-items:center; justify-content:center; gap:6px;">
+                Total Targets
+                <span class="cyber-tooltip-wrap">
+                    <span class="tooltip-icon" style="width:14px; height:14px; font-size:0.55rem;">?</span>
+                    <span class="cyber-tooltip-content" style="font-weight:normal; text-transform:none; font-size:0.75rem; letter-spacing:0; line-height:1.4; bottom: calc(100% + 8px); top: auto; right: auto; left: -100px; width: 220px;">
+                        The total number of employees registered in your company directories receiving tests.
+                    </span>
+                </span>
+            </div>
         </div>
         <div class="summary-stat" style="border-color: rgba(239, 68, 68, 0.4); box-shadow: inset 0 0 20px rgba(239, 68, 68, 0.05);">
             <div class="s-icon" style="color: #ef4444;"><i class="fas fa-exclamation-triangle"></i></div>
             <div class="s-num" style="color: #fca5a5;">{{ global_stats.global_risk }}%</div>
-            <div class="s-label" style="color: #fca5a5;">Global Risk Score</div>
+            <div class="s-label" style="color: #fca5a5; display:flex; align-items:center; justify-content:center; gap:6px;">
+                Global Risk Score
+                <span class="cyber-tooltip-wrap">
+                    <span class="tooltip-icon" style="width:14px; height:14px; font-size:0.55rem; border-color: rgba(239, 68, 68, 0.4); color: #fca5a5;">?</span>
+                    <span class="cyber-tooltip-content" style="font-weight:normal; text-transform:none; font-size:0.75rem; letter-spacing:0; line-height:1.4; bottom: calc(100% + 8px); top: auto; right: auto; left: -100px; width: 220px;">
+                        Average vulnerability level. It rises with email link clicks and drops as users report mock phishes.
+                    </span>
+                </span>
+            </div>
         </div>
         <div class="summary-stat">
             <div class="s-icon" style="color: #22c55e;"><i class="fas fa-shield-alt"></i></div>
             <div class="s-num">{{ global_stats.total_reports }}</div>
-            <div class="s-label">Security Reports</div>
+            <div class="s-label" style="display:flex; align-items:center; justify-content:center; gap:6px;">
+                Security Reports
+                <span class="cyber-tooltip-wrap">
+                    <span class="tooltip-icon" style="width:14px; height:14px; font-size:0.55rem;">?</span>
+                    <span class="cyber-tooltip-content" style="font-weight:normal; text-transform:none; font-size:0.75rem; letter-spacing:0; line-height:1.4; bottom: calc(100% + 8px); top: auto; right: -50px; left: auto; width: 220px;">
+                        The number of times employees correctly identified and reported simulation emails.
+                    </span>
+                </span>
+            </div>
         </div>
     </div>
     {% endif %}
 
     {% if not campaigns %}
-    <div class="empty-terminal">
-        <div class="terminal-header">
-            <span></span><span></span><span></span>
+    <div class="empty-onboarding-container" style="margin-top: 2rem; margin-bottom: 3rem;">
+        <div style="text-align: center; margin-bottom: 2.5rem;">
+            <h3 style="font-family: var(--font-sans); font-size: 1.8rem; color: var(--text-main); font-weight: 700; margin-bottom: 0.5rem;">Launch Your First Simulation</h3>
+            <p style="color: var(--text-muted); font-size: 0.95rem; max-width: 500px; margin: 0 auto;">Follow these three steps to begin testing your organization's resilience against modern phishing threats.</p>
         </div>
-        <i class="fas fa-satellite-dish empty-icon"></i>
-        <h3 class="empty-title">Waiting for targets<span class="cursor"></span></h3>
-        <p class="empty-desc">The simulation engine is idle. Deploy your first Agentic AI phishing campaign to start gathering employee vulnerability telemetry.</p>
-        <a href="/new-campaign" class="hero-new-btn" style="padding: 14px 30px; font-size: 1.1rem;">
-            <i class="fas fa-bolt"></i> Initialize First Campaign
-        </a>
+        <div class="empty-step-grid">
+            <!-- Step 1 -->
+            <div class="empty-step-card step-1">
+                <div class="step-num">Step 01</div>
+                <div class="step-icon" style="font-size: 2rem; margin-bottom: 16px; color: var(--accent-cyan, #06b6d4);"><i class="ti ti-users-plus"></i></div>
+                <h4 class="step-title">Upload Targets</h4>
+                <p class="step-desc">Import employee lists and organizational hierarchies via CSV. Segment by departments and seniority to feed the generator.</p>
+                <a href="/new-campaign" class="step-action-btn">Configure targets <i class="ti ti-arrow-right"></i></a>
+            </div>
+            <!-- Step 2 -->
+            <div class="empty-step-card step-2">
+                <div class="step-num">Step 02</div>
+                <div class="step-icon" style="font-size: 2rem; margin-bottom: 16px; color: #a855f7;"><i class="ti ti-template"></i></div>
+                <h4 class="step-title">Choose Scenario</h4>
+                <p class="step-desc">Select a pretext category. Leverage spear-phishing templates tailored to department functions (IT, HR, Finance).</p>
+                <a href="/new-campaign" class="step-action-btn">Select pretext <i class="ti ti-arrow-right"></i></a>
+            </div>
+            <!-- Step 3 -->
+            <div class="empty-step-card step-3">
+                <div class="step-num">Step 03</div>
+                <div class="step-icon" style="font-size: 2rem; margin-bottom: 16px; color: #10b981;"><i class="ti ti-rocket"></i></div>
+                <h4 class="step-title">Launch Simulation</h4>
+                <p class="step-desc">Initiate the automated simulation. The AI engine will dynamically generate and deploy personalized phishes.</p>
+                <a href="/new-campaign" class="step-action-btn">Start testing <i class="ti ti-arrow-right"></i></a>
+            </div>
+        </div>
     </div>
     {% else %}
 
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-        <h2 style="color: var(--text-main); font-family: 'Outfit', sans-serif; font-size: 1.5rem; margin: 0;">Your Campaigns</h2>
-        <div style="display: flex; gap: 0.8rem; align-items: center;">
-            <!-- Manage toggle: hidden by default, appears on click like real SaaS -->
-            <button type="button" id="manage-toggle" onclick="toggleManageMode()"
-                style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;
-                       border-radius:8px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);
-                       color:#94a3b8;font-size:0.85rem;cursor:pointer;font-family:'Outfit',sans-serif;
-                       transition:all 0.2s;">
-                <i class="fas fa-sliders"></i> Manage
-            </button>
-            <button type="button" id="delete-selected"
-                onclick="confirmBulkDelete()"
-                style="display:none;padding:8px 16px;border-radius:8px;
-                       background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);
-                       color:#f87171;font-size:0.85rem;cursor:pointer;font-family:'Outfit',sans-serif;
-                       transition:all 0.2s;">
-                <i class="fas fa-trash-alt"></i> Delete Selected (<span id="selected-count">0</span>)
-            </button>
-        </div>
-    </div>
-
-    <form id="bulk-delete-form" action="/delete-campaigns" method="POST" style="display: none;">
-        <input type="hidden" name="campaign_ids" id="selected-ids">
-    </form>
-
-    <div class="camp-grid">
-        {% for camp in campaigns %}
-        <div class="camp-card" style="animation-delay: {{ loop.index0 * 0.1 }}s"
-             data-status="{{ camp.status }}">
-            <div class="camp-card-top">
-                <div style="display: flex; align-items: flex-start; gap: 12px;">
-                    <!-- Checkbox: hidden by default, shown in manage mode -->
-                    <input type="checkbox" class="camp-checkbox" value="{{ camp.id }}"
-                           style="accent-color:#06b6d4; margin-top:4px; display:none; flex-shrink:0;">
-                    <div>
-                        <h3 class="camp-name">{{ camp.name }}</h3>
-                        {% if current_user.role == 'admin' %}
-                        <div class="camp-owner"><i class="fas fa-user"></i> {{ camp.owner_name or 'Unknown user' }} · {{ camp.owner_email or 'no email' }}</div>
-                        {% endif %}
-                        <span class="badge-cyber badge-{% if camp.status == 'launched' %}launched{% elif camp.status == 'launched_with_errors' %}warning{% elif camp.status == 'failed' %}failed{% elif camp.status == 'launching' %}launching{% else %}draft{% endif %}">
-                            <i class="fas fa-{% if camp.status == 'launched' %}check-circle{% elif camp.status == 'failed' %}times-circle{% elif camp.status == 'launching' %}spinner fa-spin{% else %}circle{% endif %}"></i>
-                            {{ camp.status.replace('_', ' ') }}
-                        </span>
-                        {% set mode = camp.delivery_mode or 'local' %}
-                        {% if mode == 'smtp' %}
-                            <span class="badge-cyber" style="margin-left:6px; background:rgba(59,130,246,0.1); color:#60a5fa; border:1px solid rgba(59,130,246,0.25);"><i class="fas fa-paper-plane"></i> Live Send</span>
-                        {% elif mode == 'mailtrap' %}
-                            <span class="badge-cyber" style="margin-left:6px; background:rgba(16,185,129,0.1); color:#34d399; border:1px solid rgba(16,185,129,0.25);"><i class="fas fa-shield-halved"></i> Safe Send</span>
-                        {% elif mode == 'preview' %}
-                            <span class="badge-cyber" style="margin-left:6px; background:rgba(168,85,247,0.1); color:#c084fc; border:1px solid rgba(168,85,247,0.25);"><i class="fas fa-eye"></i> Preview</span>
-                        {% else %}
-                            <span class="badge-cyber" style="margin-left:6px; background:rgba(6,182,212,0.1); color:#22d3ee; border:1px solid rgba(6,182,212,0.25);"><i class="fas fa-flask"></i> Sandbox</span>
-                        {% endif %}
-                    </div>
+    <div class="dash-main-row">
+        <!-- Left: campaigns -->
+        <div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                <h2 style="color: var(--text-main); font-family: var(--font-sans); font-size: 1.5rem; margin: 0;">Your Campaigns</h2>
+                <div style="display: flex; gap: 0.8rem; align-items: center;">
+                    <button type="button" id="manage-toggle" onclick="toggleManageMode()"
+                        style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;
+                               border-radius:8px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);
+                               color:#94a3b8;font-size:0.85rem;cursor:pointer;font-family:var(--font-sans);
+                               transition:all 0.2s;">
+                        <i class="fas fa-sliders"></i> Manage
+                    </button>
+                    <button type="button" id="delete-selected"
+                        onclick="confirmBulkDelete()"
+                        style="display:none;padding:8px 16px;border-radius:8px;
+                               background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);
+                               color:#f87171;font-size:0.85rem;cursor:pointer;font-family:var(--font-sans);
+                               transition:all 0.2s;">
+                        <i class="fas fa-trash-alt"></i> Delete Selected (<span id="selected-count">0</span>)
+                    </button>
                 </div>
             </div>
 
-            <div class="camp-meta">
-                <p><strong>Target Domain:</strong> <span class="camp-domain">{{ camp.company_domain }}</span></p>
-                <p><strong>Scenario:</strong> {{ camp.scenario_type.replace('_', ' ').title() }}</p>
-            </div>
-
-            <div class="camp-divider"></div>
-
-            {% if camp.status == 'draft' %}
-                {% if camp.employee_count == 0 %}
-                <p class="step-label">Step 1 — Upload Targets</p>
-                <p class="step-desc">Upload a CSV of employee email addresses to prepare the simulation.</p>
-                <form action="/upload-employees/{{ camp.id }}" method="POST" enctype="multipart/form-data">
-                    <div class="file-upload-wrapper">
-                        <input type="file" name="employee_csv" id="file-{{ camp.id }}" class="file-upload-input" accept=".csv" required onchange="document.getElementById('fl-{{ camp.id }}').innerHTML='<i class=\'fas fa-file-csv\' style=\'color:#06b6d4\'></i> ' + this.files[0].name">
-                        <label for="file-{{ camp.id }}" class="file-upload-label" id="fl-{{ camp.id }}">
-                            <i class="fas fa-folder-open"></i> Choose CSV File
-                        </label>
-                    </div>
-                    <button type="submit" class="camp-action-btn btn-launch"><i class="fas fa-upload"></i> Upload Targets</button>
-                </form>
-                {% else %}
-                <p class="step-label">Step 2 — Launch Simulation</p>
-                <p class="step-desc"><span style="color:#06b6d4; font-weight:600;">{{ camp.employee_count }} employees loaded.</span> AI emails will be generated and dispatched immediately.</p>
-                <form action="/launch-campaign/{{ camp.id }}" method="POST">
-                    <button type="submit" class="camp-action-btn btn-launch"><i class="fas fa-rocket"></i> Launch Campaign</button>
-                </form>
-                {% endif %}
-
-            {% elif camp.status == 'launching' %}
-            <div class="launching-pulse">
-                <span class="pulse-dot"></span><span class="pulse-dot"></span><span class="pulse-dot"></span>
-                <p style="color:#60a5fa; font-weight:700; margin: 10px 0 4px;">Dispatching Campaign...</p>
-                <p style="color:#475569; font-size:0.82rem; margin:0;">AI is generating and sending emails. Refresh in a moment.</p>
-            </div>
-
-            {% elif camp.status == 'failed' %}
-            <div class="error-box">
-                <p style="color:#f87171; font-weight:700; margin-bottom:6px!important;"><i class="fas fa-times-circle"></i> Campaign Failed</p>
-                <p>The email provider rejected all sends. Check your SMTP config in <code>.env</code>.</p>
-                {% if camp.latest_error %}<p style="margin-top:6px!important; opacity:0.7;">Error: {{ camp.latest_error }}</p>{% endif %}
-            </div>
-            <form action="/launch-campaign/{{ camp.id }}" method="POST" style="margin-top:0.8rem;">
-                <button type="submit" class="camp-action-btn btn-retry"><i class="fas fa-redo"></i> Retry Campaign</button>
+            <form id="bulk-delete-form" action="/delete-campaigns" method="POST" style="display: none;">
+                <input type="hidden" name="campaign_ids" id="selected-ids">
             </form>
 
-            {% elif camp.status in ['launched', 'launched_with_errors'] %}
-            <p class="step-label">Live Tracking Statistics</p>
-            <div class="mini-stats">
-                <div class="mini-stat">
-                    <div class="ms-val ms-opens">{{ camp.opens }}</div>
-                    <div class="ms-label">Opens</div>
-                </div>
-                <div class="mini-stat">
-                    <div class="ms-val ms-clicks">{{ camp.clicks }}</div>
-                    <div class="ms-label">Clicks</div>
-                </div>
-                <div class="mini-stat">
-                    <div class="ms-val ms-reports">{{ camp.reports }}</div>
-                    <div class="ms-label">Reports</div>
+            <div class="camp-grid">
+                {% for camp in campaigns %}
+                <div class="camp-card" style="animation-delay: {{ loop.index0 * 0.1 }}s;"
+                     data-status="{{ camp.status }}">
+                    <!-- Card Top: Name + Badges -->
+                    <div class="camp-card-top">
+                        <div style="display: flex; align-items: flex-start; gap: 12px; width: 100%;">
+                            <input type="checkbox" class="camp-checkbox" value="{{ camp.id }}"
+                                   style="accent-color:#06b6d4; margin-top:4px; display:none; flex-shrink:0;">
+                            <div style="flex:1; min-width:0;">
+                                <h3 class="camp-name" style="margin-top: 0;">{{ camp.name }}</h3>
+                                {% if current_user.role == 'admin' %}
+                                <div class="camp-owner"><i class="fas fa-user"></i> {{ camp.owner_name or 'Unknown user' }} · {{ camp.owner_email or 'no email' }}</div>
+                                {% endif %}
+                                <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:6px;">
+                                    <span class="badge-cyber badge-{% if camp.status == 'launched' %}launched{% elif camp.status == 'launched_with_errors' %}warning{% elif camp.status == 'failed' %}failed{% elif camp.status == 'launching' %}launching{% elif camp.status == 'scheduled' %}scheduled{% else %}draft{% endif %}">
+                                        <i class="fas fa-{% if camp.status == 'launched' %}check-circle{% elif camp.status == 'failed' %}times-circle{% elif camp.status == 'launching' %}spinner fa-spin{% elif camp.status == 'scheduled' %}clock{% else %}circle{% endif %}"></i>
+                                        {{ camp.status.replace('_', ' ') }}
+                                    </span>
+                                    {% set mode = camp.delivery_mode or 'local' %}
+                                    {% if mode == 'smtp' %}
+                                        <span class="badge-cyber" style="background:rgba(59,130,246,0.1); color:#60a5fa; border:1px solid rgba(59,130,246,0.25);"><i class="fas fa-paper-plane"></i> Live Send</span>
+                                    {% elif mode == 'mailtrap' %}
+                                        <span class="badge-cyber" style="background:rgba(16,185,129,0.1); color:#34d399; border:1px solid rgba(16,185,129,0.25);"><i class="fas fa-shield-halved"></i> Safe Send</span>
+                                    {% elif mode == 'preview' %}
+                                        <span class="badge-cyber" style="background:rgba(168,85,247,0.1); color:#c084fc; border:1px solid rgba(168,85,247,0.25);"><i class="fas fa-eye"></i> Preview</span>
+                                    {% else %}
+                                        <span class="badge-cyber" style="background:rgba(6,182,212,0.1); color:#22d3ee; border:1px solid rgba(6,182,212,0.25);"><i class="fas fa-flask"></i> Sandbox</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div><!-- end camp-card-top -->
+
+                    <div class="camp-meta">
+                        <p><strong>Target Domain:</strong> <span class="camp-domain">{{ camp.company_domain }}</span></p>
+                        <p><strong>Scenario:</strong> {{ camp.scenario_type.replace('_', ' ').title() }}</p>
+                    </div>
+
+                    <div class="camp-divider"></div>
+
+                    {% if camp.status == 'draft' %}
+                        {% if camp.employee_count == 0 %}
+                        <p class="step-label">Step 1 — Upload Targets</p>
+                        <p class="step-desc">Upload a CSV of employee email addresses to prepare the simulation.</p>
+                        <a href="/new-campaign/upload/{{ camp.id }}" class="camp-action-btn btn-upload" style="display:flex; align-items:center; justify-content:center; gap:8px; text-decoration:none;">
+                            <i class="fas fa-upload"></i> Add / Harvest Targets
+                        </a>
+                        {% else %}
+                        <p class="step-label">Step 2 — Launch Simulation</p>
+                        <p class="step-desc">Ready to test {{ camp.employee_count }} target employees. AI agents are primed.</p>
+                        <form action="/launch-campaign/{{ camp.id }}" method="POST">
+                            <button type="submit" class="camp-action-btn btn-launch"><i class="fas fa-rocket"></i> Launch Campaign</button>
+                        </form>
+                        {% endif %}
+
+                    {% elif camp.status == 'failed' %}
+                    <div style="background: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 12px; padding: 1.2rem; margin-top: 1rem;">
+                        <p style="color:#fca5a5; font-weight:700; margin-bottom:6px!important;"><i class="fas fa-exclamation-circle"></i> Launch Failed</p>
+                        <p style="color:#cbd5e1; font-size:0.9rem; margin-bottom:0;">
+                            {{ camp.error_message or 'An unknown error occurred during AI generation or delivery setup.' }}
+                        </p>
+                    </div>
+                    <form action="/launch-campaign/{{ camp.id }}" method="POST" style="margin-top:0.8rem;">
+                        <button type="submit" class="camp-action-btn btn-launch"><i class="fas fa-redo"></i> Retry Launch</button>
+                    </form>
+
+                    {% elif camp.status == 'launching' %}
+                    <div style="background: rgba(168, 85, 247, 0.05); border: 1px solid rgba(168, 85, 247, 0.2); border-radius: 12px; padding: 1.2rem; margin-top: 1rem;">
+                        <p style="color:#c084fc; font-weight:700; margin-bottom:6px!important;"><i class="fas fa-spinner fa-spin"></i> Generating Campaign</p>
+                        <p style="color:#cbd5e1; font-size:0.9rem; margin-bottom:0;">
+                            AI agents are synthesizing target profiles and crafting custom phishing templates...
+                        </p>
+                    </div>
+
+                    {% elif camp.status == 'scheduled' %}
+                    <div style="background: rgba(234, 179, 8, 0.05); border: 1px solid rgba(234, 179, 8, 0.2); border-radius: 12px; padding: 1.2rem; margin-top: 1rem;">
+                        <p style="color:#facc15; font-weight:700; margin-bottom:6px!important;"><i class="fas fa-calendar-alt"></i> Scheduled Automation</p>
+                        <p style="color:#cbd5e1; font-size:0.9rem;">
+                            <strong>Frequency:</strong> {{ camp.schedule_frequency.title() }}<br>
+                            <strong>Next Run:</strong> {{ camp.scheduled_at.strftime('%Y-%m-%d %H:%M') if camp.scheduled_at else 'Pending' }}
+                        </p>
+                    </div>
+                    <form action="/launch-campaign/{{ camp.id }}" method="POST" style="margin-top:0.8rem;">
+                        <button type="submit" class="camp-action-btn btn-launch"><i class="fas fa-rocket"></i> Launch Now (Override)</button>
+                    </form>
+
+                    {% elif camp.status in ['launched', 'launched_with_errors'] %}
+                    <p class="step-label">Live Tracking Statistics</p>
+                    <div class="mini-stats">
+                        <div class="mini-stat">
+                            <div class="ms-val ms-opens">{{ camp.opens }}</div>
+                            <div class="ms-label">Opens</div>
+                        </div>
+                        <div class="mini-stat">
+                            <div class="ms-val ms-clicks">{{ camp.clicks }}</div>
+                            <div class="ms-label">Clicks</div>
+                        </div>
+                        <div class="mini-stat">
+                            <div class="ms-val ms-reports">{{ camp.reports }}</div>
+                            <div class="ms-label">Reports</div>
+                        </div>
+                    </div>
+                    {% if camp.delivery_mode == 'preview' %}
+                    <!-- Preview: show inbox button prominently -->
+                    <a href="/campaign-emails/{{ camp.id }}" class="camp-action-btn"
+                       style="background:linear-gradient(135deg,rgba(168,85,247,0.2),rgba(168,85,247,0.1));color:#c084fc;border:1px solid rgba(168,85,247,0.35);margin-bottom:8px;">
+                        <i class="fas fa-inbox"></i> View Generated Inbox
+                    </a>
+                    {% else %}
+                    <a href="/campaign-emails/{{ camp.id }}" class="camp-action-btn" style="background: rgba(59,130,246,0.1); color: #60a5fa; border: 1px solid rgba(59,130,246,0.3); margin-bottom: 8px;"><i class="fas fa-envelope-open-text"></i> View AI Emails</a>
+                    {% endif %}
+                    <a href="/campaign-report/{{ camp.id }}" class="camp-action-btn btn-report"><i class="fas fa-file-alt"></i> View AI Report</a>
+                    {% endif %}
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 1.2rem;">
+                        <form action="/clone-campaign/{{ camp.id }}" method="POST">
+                            <button type="submit" class="camp-action-btn btn-retry" style="margin-bottom:0;"><i class="fas fa-copy"></i> Clone</button>
+                        </form>
+                        <form action="/delete-campaign/{{ camp.id }}" method="POST" data-confirm-title="Delete campaign?" data-confirm-message="This will permanently delete this campaign, its targets, generated emails, and events.">
+                            <button type="submit" class="camp-action-btn btn-delete" style="margin-bottom:0;"><i class="fas fa-trash-alt"></i> Delete</button>
+                        </form>
+                    </div>
+                </div><!-- end camp-card -->
+                {% endfor %}
+            </div><!-- end camp-grid -->
+
+            <!-- Risk Trend chart -->
+            {% if risk_trend | length >= 2 %}
+            <div class="risk-trend-card" style="margin-top: 2rem; padding: 2rem;">
+                <h2><i class="fas fa-chart-line" style="color:#06b6d4;"></i> Security Score™ Trend</h2>
+                <p style="color:#64748b; font-size:0.88rem; margin:-1rem 0 1.2rem;">
+                    How your organisation's Human Security Score™ changes across campaigns.
+                </p>
+                <div style="position:relative; height:220px;">
+                    <canvas id="trendChart"></canvas>
                 </div>
             </div>
-            {% if camp.delivery_mode == 'preview' %}
-            <!-- Preview: show inbox button prominently -->
-            <a href="/campaign-emails/{{ camp.id }}" class="camp-action-btn"
-               style="background:linear-gradient(135deg,rgba(168,85,247,0.2),rgba(168,85,247,0.1));color:#c084fc;border:1px solid rgba(168,85,247,0.35);margin-bottom:8px;">
-                <i class="fas fa-inbox"></i> View Generated Inbox
-            </a>
-            {% else %}
-            <a href="/campaign-emails/{{ camp.id }}" class="camp-action-btn" style="background: rgba(59,130,246,0.1); color: #60a5fa; border: 1px solid rgba(59,130,246,0.3); margin-bottom: 8px;"><i class="fas fa-envelope-open-text"></i> View AI Emails</a>
             {% endif %}
-            <a href="/campaign-report/{{ camp.id }}" class="camp-action-btn btn-report"><i class="fas fa-file-alt"></i> View AI Report</a>
-            {% endif %}
+        </div><!-- end left col -->
 
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 1.2rem;">
-                <form action="/clone-campaign/{{ camp.id }}" method="POST">
-                    <button type="submit" class="camp-action-btn btn-retry" style="margin-bottom:0;"><i class="fas fa-copy"></i> Clone</button>
-                </form>
-                <form action="/delete-campaign/{{ camp.id }}" method="POST" data-confirm-title="Delete campaign?" data-confirm-message="This will permanently delete this campaign, its targets, generated emails, and events.">
-                    <button type="submit" class="camp-action-btn btn-delete" style="margin-bottom:0;"><i class="fas fa-trash-alt"></i> Delete</button>
-                </form>
+        <!-- Right: AI Simulation Stream -->
+        <div class="ai-stream-panel">
+            <div class="ai-stream-header">
+                <div class="live-dot"></div>
+                <span>AI Simulation Stream</span>
             </div>
+            <div class="ai-stream-body" id="ai-stream-body"></div>
         </div>
-        {% endfor %}
-    </div>
+
+    </div><!-- end dash-main-row -->
     {% endif %}
 
-    <!-- Risk Trend chart (shown when 2+ launched campaigns) -->
-    {% if risk_trend | length >= 2 %}
-    <div class="risk-trend-card">
-        <h2><i class="fas fa-chart-line" style="color:#06b6d4;"></i> Security Score™ Trend</h2>
-        <p style="color:#64748b; font-size:0.88rem; margin:-1rem 0 1.2rem;">
-            How your organisation's Human Security Score™ changes across campaigns.
-        </p>
-        <div style="position:relative; height:220px;">
-            <canvas id="trendChart"></canvas>
-        </div>
-    </div>
-    {% endif %}
 </div>
 <div class="confirm-modal" id="confirm-modal" aria-hidden="true">
     <div class="confirm-box">
@@ -816,5 +971,51 @@
             window.dispatchEvent(new Event('resize'));
         }, 100);
     });
+
+    // ── AI Simulation Stream ────────────────────────────────────────────────
+    (function() {
+        const body = document.getElementById('ai-stream-body');
+        if (!body) return;
+
+        const logs = [
+            { type: 'ai',   text: '<strong>AI Agent</strong> generated hyper-personalised CEO spoofing context.' },
+            { type: 'evt',  text: '<strong>Event:</strong> Email delivered to Finance Dept (12 targets).' },
+            { type: 'ai',   text: '<strong>OSINT scan</strong> harvested 3 LinkedIn profiles for context mapping.' },
+            { type: 'warn', text: '<strong>Alert:</strong> 2 targets clicked the phishing link — flagged for training.' },
+            { type: 'ai',   text: '<strong>AI Agent</strong> generated IT password-reset scenario vector.' },
+            { type: 'evt',  text: '<strong>Event:</strong> Email read by employee (Sales Dept).' },
+            { type: 'ai',   text: '<strong>AI Engine</strong> adapted payload to target timezone (UTC+5:30).' },
+            { type: 'warn', text: '<strong>Risk detected:</strong> Repeat offender flagged in HR Department.' },
+            { type: 'ai',   text: '<strong>LMS triggered:</strong> Training module assigned to 2 clickers.' },
+            { type: 'evt',  text: '<strong>Event:</strong> Campaign simulation completed — generating report.' },
+            { type: 'ai',   text: '<strong>AI Agent</strong> crafted shared-document lure for Engineering targets.' },
+            { type: 'evt',  text: '<strong>Event:</strong> No clicks detected in Engineering Dept — score improving.' },
+            { type: 'ai',   text: '<strong>Signature analysis</strong> complete — vulnerability heatmap updated.' },
+            { type: 'warn', text: '<strong>Warning:</strong> CEO email spoofing vector has 68% open rate industry-wide.' },
+            { type: 'evt',  text: '<strong>Event:</strong> PDF report queued for board presentation download.' },
+        ];
+
+        let idx = 0;
+        function now() {
+            const d = new Date();
+            return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+        }
+        function addLog() {
+            const entry = logs[idx % logs.length];
+            idx++;
+            const el = document.createElement('div');
+            el.className = `ai-log-entry type-${entry.type}`;
+            el.innerHTML = `<span class="ai-log-time">${now()}</span><span class="ai-log-text">${entry.text}</span>`;
+            body.appendChild(el);
+            // Keep max 30 entries
+            while (body.children.length > 30) body.removeChild(body.firstChild);
+            body.scrollTop = body.scrollHeight;
+        }
+
+        // Seed with 5 initial entries
+        for (let i = 0; i < 5; i++) addLog();
+        // Add new entry every 3.5 seconds
+        setInterval(addLog, 3500);
+    })();
 </script>
 {% endblock %}

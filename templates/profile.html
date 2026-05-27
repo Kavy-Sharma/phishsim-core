@@ -23,20 +23,19 @@
     .profile-top-row { grid-template-columns: 1fr; }
 }
 
-/* Glassmorphic Cards */
+/* Glassmorphic Cards overridden for window-mockup support */
 .glass-panel {
-    background: rgba(10, 15, 30, 0.6);
-    border: 1px solid rgba(6, 182, 212, 0.2);
-    border-radius: 16px;
-    padding: 2rem;
-    backdrop-filter: blur(12px);
-    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
     transition: all 0.3s ease;
 }
 body.light-theme .glass-panel {
-    background: #fff;
-    border-color: #e2e8f0;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+    background: transparent !important;
+    border-color: transparent !important;
+    box-shadow: none !important;
 }
 
 /* Profile Header */
@@ -50,8 +49,8 @@ body.light-theme .glass-panel {
     font-size: 2.5rem; color: #fff;
     box-shadow: 0 0 20px rgba(6, 182, 212, 0.3);
 }
-.profile-info h1 { margin: 0; font-size: 1.8rem; color: #fff; font-family: 'Outfit', sans-serif; }
-.profile-info p { margin: 5px 0 0; color: #94a3b8; font-family: 'Space Mono', monospace; font-size: 0.9rem;}
+.profile-info h1 { margin: 0; font-size: 1.8rem; color: #fff; font-family: var(--font-sans); }
+.profile-info p { margin: 5px 0 0; color: #94a3b8; font-family: var(--font-mono); font-size: 0.9rem;}
 body.light-theme .profile-info h1 { color: #0f172a; }
 body.light-theme .profile-info p { color: #64748b; }
 
@@ -65,7 +64,7 @@ body.light-theme .profile-info p { color: #64748b; }
     padding-top: 1.5rem;
 }
 body.light-theme .password-panel { border-color: #e2e8f0; }
-.password-panel h3 { color: #fff; margin: 0 0 1rem; font-family: 'Space Mono', monospace; font-size: 0.95rem; }
+.password-panel h3 { color: #fff; margin: 0 0 1rem; font-family: var(--font-mono); font-size: 0.95rem; }
 body.light-theme .password-panel h3 { color: #0f172a; }
 .password-panel input {
     width: 100%;
@@ -106,150 +105,308 @@ body.light-theme .audit-table td { color: #334155; border-color: #f1f5f9; }
 
 <div class="profile-container">
     <div style="padding: 1.5rem 0 1rem 0; margin-left: 0.5rem; animation: fadeInDown 0.6s ease-out;">
-        <h1 class="page-title" style="font-family: 'Outfit', sans-serif; font-size: 2.5rem; font-weight: 800; margin: 0 0 0.5rem 0;">Account Settings</h1>
+        <h1 class="page-title" style="font-family: var(--font-sans); font-size: 2.5rem; font-weight: 800; margin: 0 0 0.5rem 0;">Account Settings</h1>
         <p class="page-subtitle" style="font-size: 1rem; margin: 0;">Manage your security credentials and profile details.</p>
     </div>
 
     <div class="profile-top-row">
         <!-- Left Column: Identity -->
         <div class="glass-panel">
-            <div class="profile-header">
-                <div class="profile-avatar">
-                    <i class="fas fa-user-circle"></i>
+            <div class="window-mockup" style="margin-bottom: 0;">
+                <div class="window-header">
+                    <div class="window-dots">
+                        <span class="window-dot red"></span>
+                        <span class="window-dot yellow"></span>
+                        <span class="window-dot green"></span>
+                    </div>
+                    <span class="window-title">operator_identity.key</span>
                 </div>
-                <div class="profile-info">
-                    <h1>{{ user.name }}</h1>
-                    <p><i class="fas fa-id-badge"></i> Account ID: {{ "%04d" | format(user.id) }}</p>
-                    <span class="badge" style="background:rgba(59,130,246,0.15); color:#3b82f6; padding:4px 10px; margin-top:8px; display:inline-block; border-radius:100px;">
-                        {{ user.role.title() }}
-                    </span>
+                <div class="window-body" style="padding: 2rem;">
+                    <div class="profile-header">
+                        <div class="profile-avatar">
+                            <i class="fas fa-user-circle"></i>
+                        </div>
+                        <div class="profile-info">
+                            <h1>{{ user.name }}</h1>
+                            <p><i class="fas fa-id-badge"></i> Account ID: {{ "%04d" | format(user.id) }}</p>
+                            <span class="badge" style="background:rgba(59,130,246,0.15); color:#3b82f6; padding:4px 10px; margin-top:8px; display:inline-block; border-radius:100px;">
+                                {{ user.role.title() }}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 1.5rem;">
+                        <p style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 5px;" class="info-label">Primary Email Address</p>
+                        <div style="background: rgba(128,128,128,0.05); padding: 10px 15px; border-radius: 8px; font-family: monospace; border:1px solid rgba(128,128,128,0.1);" class="info-box">
+                            {{ user.email }}
+                        </div>
+                    </div>
+                    <div class="password-panel">
+                        <h3><i class="fas fa-key" style="color:#3b82f6;"></i> Update Password</h3>
+                        <p style="color:#64748b; font-size:0.86rem; margin-bottom: 1rem;">Use a strong, unique password to secure your account.</p>
+                        <form method="POST" action="/change-password">
+                            <input type="password" name="current_password" placeholder="Current password" required>
+                            <input type="password" name="new_password" placeholder="New password" required>
+                            <button type="submit">Update Password</button>
+                        </form>
+                    </div>
                 </div>
-            </div>
-            
-            <div style="margin-top: 1.5rem;">
-                <p style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 5px;" class="info-label">Primary Email Address</p>
-                <div style="background: rgba(128,128,128,0.05); padding: 10px 15px; border-radius: 8px; font-family: monospace; border:1px solid rgba(128,128,128,0.1);" class="info-box">
-                    {{ user.email }}
-                </div>
-            </div>
-            <div class="password-panel">
-                <h3><i class="fas fa-key" style="color:#3b82f6;"></i> Update Password</h3>
-                <p style="color:#64748b; font-size:0.86rem; margin-bottom: 1rem;">Use a strong, unique password to secure your account.</p>
-                <form method="POST" action="/change-password">
-                    <input type="password" name="current_password" placeholder="Current password" required>
-                    <input type="password" name="new_password" placeholder="New password" required>
-                    <button type="submit">Update Password</button>
-                </form>
             </div>
         </div>
 
         <div class="glass-panel" style="display:flex; flex-direction:column;">
-            <h3 style="font-family: 'Outfit', sans-serif; font-size: 1.2rem; margin-bottom: 1rem;" class="panel-title">
-                <i class="fas fa-shield-alt" style="color: #3b82f6;"></i> Security Audit Log
-            </h3>
-            <p style="color:#64748b; font-size:0.86rem;">Recent security events and authentication activities for your account.</p>
-            
-            <table class="audit-table">
-                <thead>
-                    <tr>
-                        <th>Date & Time</th>
-                        <th>Event Type</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>Today</td>
-                        <td>Account Login</td>
-                        <td><span style="color:#22c55e;"><i class="fas fa-check-circle"></i> Success</span></td>
-                    </tr>
-                    <tr>
-                        <td>Yesterday</td>
-                        <td>Session Expired</td>
-                        <td><span style="color:#f59e0b;"><i class="fas fa-info-circle"></i> Logged Out</span></td>
-                    </tr>
-                    <tr>
-                        <td>2 days ago</td>
-                        <td>Account Login</td>
-                        <td><span style="color:#22c55e;"><i class="fas fa-check-circle"></i> Success</span></td>
-                    </tr>
-                    <tr>
-                        <td>5 days ago</td>
-                        <td>Password Changed</td>
-                        <td><span style="color:#22c55e;"><i class="fas fa-check-circle"></i> Success</span></td>
-                    </tr>
-                </tbody>
-            </table>
-            
-            <div style="margin-top:auto; padding-top:2rem; text-align:center;">
-                <button type="button" style="background:transparent; border:1px solid #3b82f6; color:#3b82f6; padding:8px 16px; border-radius:8px; cursor:pointer; font-weight:600; transition: all 0.2s;" onmouseover="this.style.background='rgba(59,130,246,0.1)'" onmouseout="this.style.background='transparent'">Download Full Audit Log</button>
+            <div class="window-mockup" style="margin-bottom: 0; display:flex; flex-direction:column; height:100%;">
+                <div class="window-header">
+                    <div class="window-dots">
+                        <span class="window-dot red"></span>
+                        <span class="window-dot yellow"></span>
+                        <span class="window-dot green"></span>
+                    </div>
+                    <span class="window-title">security_audit.log</span>
+                </div>
+                <div class="window-body" style="padding: 2rem; flex: 1; display:flex; flex-direction:column; box-sizing: border-box;">
+                    <h3 style="font-family: var(--font-sans); font-size: 1.2rem; margin-bottom: 1rem; margin-top: 0;" class="panel-title">
+                        <i class="fas fa-shield-alt" style="color: #3b82f6;"></i> Security Audit Log
+                    </h3>
+                    <p style="color:#64748b; font-size:0.86rem; margin-bottom: 1.2rem;">Recent security events and authentication activities for your account.</p>
+                    
+                    <table class="audit-table">
+                        <thead>
+                            <tr>
+                                <th>Date & Time</th>
+                                <th>Event Type</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if audit_events %}
+                            {% for event in audit_events %}
+                            <tr>
+                                <td>{{ event.created_at }}</td>
+                                <td>{{ event.event_type }}</td>
+                                <td><span style="color:{% if event.status == 'success' %}#22c55e{% else %}#f59e0b{% endif %};"><i class="fas fa-check-circle"></i> {{ event.status.title() }}</span></td>
+                            </tr>
+                            {% endfor %}
+                            {% else %}
+                            <tr>
+                                <td>Now</td>
+                                <td>No audit events yet</td>
+                                <td><span style="color:#94a3b8;"><i class="fas fa-info-circle"></i> Ready</span></td>
+                            </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                    
+                    <div style="margin-top:auto; padding-top:2rem; text-align:center;">
+                        <a href="/download-audit-log" style="display:inline-block;background:transparent; border:1px solid #3b82f6; color:#3b82f6; padding:8px 16px; border-radius:8px; cursor:pointer; font-weight:600; transition: all 0.2s; text-decoration:none;">Download Full Audit Log</a>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
     <div class="profile-top-row">
-        <!-- API Keys -->
+        <!-- Delivery Status -->
         <div class="glass-panel">
-            <h3 class="panel-title" style="font-family: 'Outfit', sans-serif; font-size: 1.2rem; margin-bottom: 1rem;">
-                <i class="fas fa-code" style="color: #06b6d4;"></i> Developer API
-            </h3>
-            <p style="color:#64748b; font-size:0.86rem; margin-bottom: 1.5rem;">Generate API keys to integrate PhishSim with your existing security tools.</p>
-            
-            <div style="background: rgba(6,182,212,0.05); border: 1px dashed rgba(6,182,212,0.3); border-radius: 12px; padding: 1.2rem; margin-bottom: 1rem;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                    <strong class="info-box" style="font-family: 'Space Mono', monospace; font-size: 0.9rem;">Production Key</strong>
-                    <span style="background: rgba(34,197,94,0.15); color: #22c55e; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: bold;">ACTIVE</span>
+            <div class="window-mockup" style="margin-bottom: 0;">
+                <div class="window-header">
+                    <div class="window-dots">
+                        <span class="window-dot red"></span>
+                        <span class="window-dot yellow"></span>
+                        <span class="window-dot green"></span>
+                    </div>
+                    <span class="window-title">deployment_status.cfg</span>
                 </div>
-                <div style="display: flex; gap: 10px;">
-                    <input type="text" readonly value="ps_live_************************" style="width: 100%; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); color: #94a3b8; border-radius: 8px; padding: 8px 12px; font-family: monospace; font-size: 0.85rem;" class="api-input">
-                    <button type="button" style="background: #3b82f6; color: #fff; border: none; border-radius: 8px; padding: 0 16px; cursor: pointer;" title="Copy to clipboard"><i class="fas fa-copy"></i></button>
+                <div class="window-body" style="padding: 2rem;">
+                    <h3 class="panel-title" style="font-family: var(--font-sans); font-size: 1.2rem; margin-bottom: 1rem; margin-top: 0;">
+                        <i class="fas fa-plug-circle-check" style="color: #06b6d4;"></i> Deployment Status
+                    </h3>
+                    <p style="color:#64748b; font-size:0.86rem; margin-bottom: 1.5rem;">Developer API keys are not required for this app. What matters is whether account email features can send safely in your current deployment.</p>
+                    
+                    <div style="background: rgba(6,182,212,0.05); border: 1px dashed rgba(6,182,212,0.3); border-radius: 12px; padding: 1.2rem; margin-bottom: 1rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <strong class="info-box" style="font-family: var(--font-mono); font-size: 0.9rem;">Account Email Channel</strong>
+                            <span style="background: {% if email_ready %}rgba(34,197,94,0.15){% else %}rgba(245,158,11,0.15){% endif %}; color: {% if email_ready %}#22c55e{% else %}#f59e0b{% endif %}; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: bold;">{% if email_ready %}READY{% else %}NOT CONFIGURED{% endif %}</span>
+                        </div>
+                        <p style="color:#64748b; font-size:0.84rem; margin:0;">Used for verification links, 2FA codes, and completion notifications. Campaign sending still uses the selected delivery mode.</p>
+                    </div>
+                    <div style="display:grid; gap:0.6rem; color:#64748b; font-size:0.86rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div><strong class="info-box">Email verified:</strong> {% if user.email_verified %}Yes{% else %}No{% endif %}</div>
+                            {% if not user.email_verified %}
+                            <button type="button" id="verify-id-btn" onclick="openVerifyModal(event)" class="act-btn success" style="height:26px;font-size:0.75rem;padding:0 8px;cursor:pointer;border:none;border-radius:4px;background:#22c55e;color:#fff;">
+                                <i class="fas fa-check-circle" style="margin-right:4px;"></i> Verify ID
+                            </button>
+                            {% endif %}
+                        </div>
+                        <div><strong class="info-box">2FA:</strong> {% if user.two_factor_enabled %}Enabled{% else %}Disabled{% endif %}</div>
+                        <div><strong class="info-box">Notifications:</strong> {% if user.email_notifications %}Enabled{% else %}Disabled{% endif %}</div>
+                    </div>
                 </div>
             </div>
-            <button type="button" style="width: 100%; padding: 12px; background: transparent; border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; color: var(--text-main); font-weight: 600; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='transparent'" class="btn-outline-theme">
-                <i class="fas fa-plus"></i> Generate New Key
-            </button>
         </div>
 
         <!-- Preferences -->
         <div class="glass-panel">
-            <h3 class="panel-title" style="font-family: 'Outfit', sans-serif; font-size: 1.2rem; margin-bottom: 1rem;">
-                <i class="fas fa-sliders-h" style="color: #f59e0b;"></i> Preferences
-            </h3>
-            <p style="color:#64748b; font-size:0.86rem; margin-bottom: 1.5rem;">Customize your platform experience and notifications.</p>
+            <div class="window-mockup" style="margin-bottom: 0;">
+                <div class="window-header">
+                    <div class="window-dots">
+                        <span class="window-dot red"></span>
+                        <span class="window-dot yellow"></span>
+                        <span class="window-dot green"></span>
+                    </div>
+                    <span class="window-title">preferences.ini</span>
+                </div>
+                <div class="window-body" style="padding: 2rem;">
+                    <h3 class="panel-title" style="font-family: var(--font-sans); font-size: 1.2rem; margin-bottom: 1rem; margin-top: 0;">
+                        <i class="fas fa-sliders-h" style="color: #f59e0b;"></i> Preferences
+                    </h3>
+                    <p style="color:#64748b; font-size:0.86rem; margin-bottom: 1.5rem;">Customize your platform experience and notifications.</p>
+                    <form method="POST" action="/update-profile-preferences">
+        
+                    <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.05);" class="pref-row">
+                        <div>
+                            <strong class="info-box" style="display: block; margin-bottom: 4px;">Email Notifications</strong>
+                            <span style="color: #64748b; font-size: 0.8rem;">Receive reports when campaigns finish.</span>
+                        </div>
+                        <label style="position: relative; display: inline-block; width: 44px; height: 24px;">
+                            <input type="checkbox" name="email_notifications" {% if user.email_notifications %}checked{% endif %} style="opacity: 0; width: 0; height: 0;">
+                            <span style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(255,255,255,0.1); border-radius: 34px; transition: .4s;" class="toggle-bg">
+                                <span style="position: absolute; content: ''; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; border-radius: 50%; transition: .4s;"></span>
+                            </span>
+                        </label>
+                    </div>
+        
+                    <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.05);" class="pref-row">
+                        <div>
+                            <strong class="info-box" style="display: block; margin-bottom: 4px;">Two-Factor Auth (2FA)</strong>
+                            <span style="color: #64748b; font-size: 0.8rem;">Require OTP code on login.</span>
+                        </div>
+                        <label style="position: relative; display: inline-block; width: 44px; height: 24px;">
+                            <input type="checkbox" name="two_factor_enabled" {% if user.two_factor_enabled %}checked{% endif %} style="opacity: 0; width: 0; height: 0;">
+                            <span style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(255,255,255,0.1); border-radius: 34px; transition: .4s;" class="toggle-bg">
+                                <span style="position: absolute; content: ''; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; border-radius: 50%; transition: .4s;"></span>
+                            </span>
+                        </label>
+                    </div>
+        
+                    <button type="submit" style="margin-top:1rem; width:100%; padding: 12px; background: linear-gradient(135deg, #3b82f6, #2563eb); border: 0; border-radius: 10px; color: #fff; font-weight: 700; cursor: pointer;">Save Preferences</button>
+                    </form>
+                    
+                    <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 0;">
+                        <div>
+                            <strong class="info-box" style="display: block; margin-bottom: 4px; color: #ef4444 !important;">Danger Zone</strong>
+                            <span style="color: #64748b; font-size: 0.8rem;">Permanently delete your account.</span>
+                        </div>
+                        <form id="delete-account-form" method="POST" action="/delete-account">
+                            <button type="button" onclick="showProfileConfirm('Delete your account permanently?', 'This deletes your data completely from the system.', () => document.getElementById('delete-account-form').submit())" style="background: transparent; border: 1px solid rgba(239,68,68,0.3); color: #ef4444; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-weight: 600;" onmouseover="this.style.background='rgba(239,68,68,0.1)'" onmouseout="this.style.background='transparent'">Delete Account</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-            <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.05);" class="pref-row">
-                <div>
-                    <strong class="info-box" style="display: block; margin-bottom: 4px;">Email Notifications</strong>
-                    <span style="color: #64748b; font-size: 0.8rem;">Receive reports when campaigns finish.</span>
-                </div>
-                <label style="position: relative; display: inline-block; width: 44px; height: 24px;">
-                    <input type="checkbox" checked style="opacity: 0; width: 0; height: 0;">
-                    <span style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #3b82f6; border-radius: 34px; transition: .4s;">
-                        <span style="position: absolute; content: ''; height: 18px; width: 18px; left: 23px; bottom: 3px; background-color: white; border-radius: 50%; transition: .4s;"></span>
-                    </span>
-                </label>
-            </div>
+    <!-- API Keys + 2FA Setup Row -->
+    <div class="profile-top-row" style="margin-top:0;">
 
-            <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.05);" class="pref-row">
-                <div>
-                    <strong class="info-box" style="display: block; margin-bottom: 4px;">Two-Factor Auth (2FA)</strong>
-                    <span style="color: #64748b; font-size: 0.8rem;">Require OTP code on login.</span>
+        <!-- API Key Registry -->
+        <div class="glass-panel">
+            <div class="window-mockup" style="margin-bottom:0;">
+                <div class="window-header">
+                    <div class="window-dots">
+                        <span class="window-dot red"></span>
+                        <span class="window-dot yellow"></span>
+                        <span class="window-dot green"></span>
+                    </div>
+                    <span class="window-title">api_keys.json</span>
                 </div>
-                <label style="position: relative; display: inline-block; width: 44px; height: 24px;">
-                    <input type="checkbox" style="opacity: 0; width: 0; height: 0;">
-                    <span style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(255,255,255,0.1); border-radius: 34px; transition: .4s;" class="toggle-bg">
-                        <span style="position: absolute; content: ''; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; border-radius: 50%; transition: .4s;"></span>
-                    </span>
-                </label>
-            </div>
-            
-            <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 0;">
-                <div>
-                    <strong class="info-box" style="display: block; margin-bottom: 4px; color: #ef4444 !important;">Danger Zone</strong>
-                    <span style="color: #64748b; font-size: 0.8rem;">Permanently delete your account.</span>
+                <div class="window-body" style="padding:2rem;">
+                    <h3 class="panel-title" style="font-family:var(--font-sans);font-size:1.2rem;margin:0 0 0.4rem;">
+                        <i class="fas fa-key" style="color:#a855f7;"></i> API Integration Keys
+                    </h3>
+                    <p style="color:#64748b;font-size:0.86rem;margin-bottom:1.5rem;">Use these keys to integrate PhishSim.ai with your SIEM, webhooks, or internal toolchain via the REST API.</p>
+
+                    <div style="margin-bottom:1rem;">
+                        <label style="font-size:0.78rem;color:#94a3b8;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:6px;">Live API Key</label>
+                        <div style="display:flex;gap:8px;align-items:center;">
+                            <input id="api-key-val" type="text" readonly value="psk_live_{{ '%032x' | format(user.id * 0xdeadbeef % (2**128)) }}" class="api-input"
+                                style="flex:1;background:rgba(168,85,247,0.05);border:1px solid rgba(168,85,247,0.2);border-radius:8px;padding:10px 12px;font-family:var(--font-mono);font-size:0.78rem;color:#c4b5fd;outline:none;">
+                            <button onclick="copyKey()" id="copy-btn" title="Copy key"
+                                style="padding:10px 14px;border-radius:8px;background:rgba(168,85,247,0.12);border:1px solid rgba(168,85,247,0.3);color:#a855f7;cursor:pointer;transition:all 0.2s;font-size:0.85rem;">
+                                <i class="fas fa-copy" id="copy-icon"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom:1.5rem;">
+                        <label style="font-size:0.78rem;color:#94a3b8;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:6px;">Webhook Endpoint (POST)</label>
+                        <input type="text" readonly value="https://api.phishsim.ai/v1/webhooks/events"
+                            style="width:100%;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:10px 12px;font-family:var(--font-mono);font-size:0.78rem;color:#64748b;box-sizing:border-box;outline:none;">
+                    </div>
+
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:0.8rem;">
+                        <div style="background:rgba(34,197,94,0.06);border:1px solid rgba(34,197,94,0.15);border-radius:8px;padding:10px 12px;">
+                            <i class="fas fa-circle" style="color:#22c55e;font-size:0.5rem;margin-right:6px;"></i>
+                            <span style="color:#94a3b8;">Status: <strong style="color:#4ade80;">Active</strong></span>
+                        </div>
+                        <div style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:10px 12px;">
+                            <i class="fas fa-code-branch" style="color:#64748b;margin-right:6px;font-size:0.8rem;"></i>
+                            <span style="color:#64748b;">API v1.0</span>
+                        </div>
+                    </div>
                 </div>
-                <button type="button" style="background: transparent; border: 1px solid rgba(239,68,68,0.3); color: #ef4444; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-weight: 600;" onmouseover="this.style.background='rgba(239,68,68,0.1)'" onmouseout="this.style.background='transparent'">Delete Account</button>
             </div>
+        </div>
+
+        <!-- 2FA Setup Card -->
+        <div class="glass-panel">
+            <div class="window-mockup" style="margin-bottom:0;">
+                <div class="window-header">
+                    <div class="window-dots">
+                        <span class="window-dot red"></span>
+                        <span class="window-dot yellow"></span>
+                        <span class="window-dot green"></span>
+                    </div>
+                    <span class="window-title">two_factor_auth.cfg</span>
+                </div>
+                <div class="window-body" style="padding:2rem;">
+                    <h3 class="panel-title" style="font-family:var(--font-sans);font-size:1.2rem;margin:0 0 0.4rem;">
+                        <i class="fas fa-mobile-screen-button" style="color:#06b6d4;"></i> Two-Factor Authentication
+                    </h3>
+                    <p style="color:#64748b;font-size:0.86rem;margin-bottom:1.5rem;">PhishSim.ai uses secure, email-delivered Two-Factor Authentication. Enter a test code to verify delivery and activate 2FA.</p>
+
+                    <div style="margin-bottom:1.2rem;">
+                        <button type="button" id="send-2fa-test-btn" onclick="send2faTestCode()" style="width:100%; padding:10px; border-radius:8px; background:rgba(6,182,212,0.1); border:1px solid rgba(6,182,212,0.3); color:#06b6d4; cursor:pointer; font-weight:600; font-size:0.82rem; transition:all 0.2s;">
+                            <i class="fas fa-paper-plane" style="margin-right:6px;"></i> Send 2FA Test Code
+                        </button>
+                        <div id="test-2fa-fallback" style="color:#eab308; font-size:0.78rem; margin-top:6px; display:none; font-family:monospace; background:rgba(234,179,8,0.08); padding:6px 10px; border-radius:6px; border:1px dashed rgba(234,179,8,0.2);"></div>
+                    </div>
+
+                    <div style="display:flex;gap:8px;align-items:center;">
+                        <input type="text" id="test-2fa-input" placeholder="Enter test code..." maxlength="6"
+                            style="flex:1;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:10px 12px;font-family:var(--font-mono);font-size:0.9rem;color:var(--text-main);letter-spacing:4px;outline:none;text-align:center;">
+                        <button type="button" id="verify-2fa-test-btn" onclick="verify2faTestCode()" style="padding:10px 16px;border-radius:8px;background:linear-gradient(135deg,#06b6d4,#3b82f6);border:none;color:#fff;cursor:pointer;font-weight:700;font-size:0.85rem;">Verify</button>
+                    </div>
+                    <div id="test-2fa-error" style="color:#ef4444; font-size:0.8rem; margin-top:6px; display:none;"></div>
+                    <div id="test-2fa-success" style="color:#22c55e; font-size:0.8rem; margin-top:6px; display:none;"></div>
+                    
+                    <p style="color:#334155;font-size:0.75rem;margin-top:0.8rem;">2FA status: <strong id="two-factor-status-label" style="color:{% if user.two_factor_enabled %}#4ade80{% else %}#f59e0b{% endif %};">{% if user.two_factor_enabled %}Enabled{% else %}Disabled{% endif %}</strong>.</p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Custom Profile Confirm Modal -->
+<div class="confirm-modal" id="profile-confirm-modal" aria-hidden="true" style="position:fixed; inset:0; z-index:50000; display:none; align-items:center; justify-content:center; background:rgba(2,6,23,0.72); backdrop-filter:blur(10px); padding:1.5rem;">
+    <div class="confirm-box" style="width:min(420px,100%); background:rgba(10,16,38,0.96); border:1px solid rgba(239,68,68,0.28); border-radius:18px; padding:1.5rem; box-shadow:0 24px 70px rgba(0,0,0,0.5);">
+        <h3 id="pc-title" style="color:#fff; margin:0 0 0.5rem; font-family:var(--font-sans);">Confirm</h3>
+        <p id="pc-message" style="color:#94a3b8; margin:0 0 1.2rem; font-size:0.9rem;">This action cannot be undone.</p>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.8rem;">
+            <button type="button" onclick="document.getElementById('profile-confirm-modal').style.display='none'" style="border:0; border-radius:10px; padding:12px; cursor:pointer; color:#cbd5e1; font-weight:700; font-family:var(--font-sans); background:rgba(148,163,184,0.14);">Cancel</button>
+            <button type="button" id="pc-confirm-btn" style="border:0; border-radius:10px; padding:12px; cursor:pointer; color:#fff; font-weight:700; font-family:var(--font-sans); background:linear-gradient(135deg,#ef4444,#b91c1c);">Delete</button>
         </div>
     </div>
 </div>
@@ -270,12 +427,273 @@ body.light-theme .api-input { background: #f8fafc !important; border-color: #cbd
 body.light-theme .btn-outline-theme { border-color: #cbd5e1 !important; }
 body.light-theme .pref-row { border-color: #e2e8f0 !important; }
 body.light-theme .toggle-bg { background-color: #cbd5e1 !important; }
+.pref-row input:checked + span { background-color: #3b82f6 !important; }
+.pref-row input:checked + span span { left: 23px !important; }
+.pref-row input:not(:checked) + span span { left: 3px !important; }
 </style>
 
 <!-- Chart.js Injection -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
-// Placeholder for any profile specific JS if needed later.
+// Custom modal logic
+function showProfileConfirm(title, message, callback) {
+    const modal = document.getElementById('profile-confirm-modal');
+    document.getElementById('pc-title').textContent = title;
+    document.getElementById('pc-message').textContent = message;
+    
+    const confirmBtn = document.getElementById('pc-confirm-btn');
+    // Clear old listeners
+    const newBtn = confirmBtn.cloneNode(true);
+    confirmBtn.parentNode.replaceChild(newBtn, confirmBtn);
+    
+    newBtn.addEventListener('click', () => {
+        modal.style.display = 'none';
+        callback();
+    });
+    
+    modal.style.display = 'flex';
+}
+
+function copyKey() {
+    const key = document.getElementById('api-key-val').value;
+    navigator.clipboard.writeText(key).catch(() => {
+        const el = document.createElement('textarea');
+        el.value = key;
+        document.body.appendChild(el);
+        el.select();
+        document.execCommand('copy');
+        document.body.removeChild(el);
+    });
+    const icon = document.getElementById('copy-icon');
+    const btn = document.getElementById('copy-btn');
+    icon.className = 'fas fa-check';
+    btn.style.color = '#22c55e';
+    btn.style.borderColor = 'rgba(34,197,94,0.4)';
+    btn.style.background = 'rgba(34,197,94,0.1)';
+    setTimeout(() => {
+        icon.className = 'fas fa-copy';
+        btn.style.color = '#a855f7';
+        btn.style.borderColor = 'rgba(168,85,247,0.3)';
+        btn.style.background = 'rgba(168,85,247,0.12)';
+    }, 2000);
+}
+
+// Identity Verification OTP Flow
+function openVerifyModal(event) {
+    if (event) event.preventDefault();
+    
+    const verifyBtn = document.getElementById('verify-id-btn');
+    const originalHtml = verifyBtn.innerHTML;
+    verifyBtn.disabled = true;
+    verifyBtn.innerHTML = '<i class="fas fa-spinner fa-spin" style="margin-right:4px;"></i> Sending...';
+    
+    fetch('/verify-identity', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        verifyBtn.disabled = false;
+        verifyBtn.innerHTML = originalHtml;
+        
+        if (data.success) {
+            document.getElementById('otp-error').style.display = 'none';
+            document.getElementById('otp-input').value = '';
+            document.getElementById('otp-verify-modal').style.display = 'flex';
+            
+            if (data.fallback_otp) {
+                const fallbackEl = document.getElementById('otp-fallback');
+                fallbackEl.innerHTML = `<i class="fas fa-exclamation-triangle"></i> SMTP simulated send.<br>Code: <strong>${data.fallback_otp}</strong>`;
+                fallbackEl.style.display = 'block';
+            } else {
+                document.getElementById('otp-fallback').style.display = 'none';
+            }
+        } else {
+            alert("Error: " + data.message);
+        }
+    })
+    .catch(error => {
+        verifyBtn.disabled = false;
+        verifyBtn.innerHTML = originalHtml;
+        alert("Verification request failed. Please try again.");
+    });
+}
+
+function closeOtpModal() {
+    document.getElementById('otp-verify-modal').style.display = 'none';
+}
+
+function submitOtpCode() {
+    const otp = document.getElementById('otp-input').value.trim();
+    if (otp.length !== 6) {
+        showOtpError("Code must be 6 digits.");
+        return;
+    }
+    
+    const confirmBtn = document.getElementById('otp-confirm-btn');
+    confirmBtn.disabled = true;
+    confirmBtn.textContent = 'Verifying...';
+    
+    const formData = new URLSearchParams();
+    formData.append('otp_code', otp);
+    
+    fetch('/verify-otp', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        confirmBtn.disabled = false;
+        confirmBtn.textContent = 'Verify';
+        
+        if (data.success) {
+            closeOtpModal();
+            location.reload();
+        } else {
+            showOtpError(data.message);
+        }
+    })
+    .catch(error => {
+        confirmBtn.disabled = false;
+        confirmBtn.textContent = 'Verify';
+        showOtpError("Verification failed. Please try again.");
+    });
+}
+
+function showOtpError(msg) {
+    const errEl = document.getElementById('otp-error');
+    errEl.textContent = msg;
+    errEl.style.display = 'block';
+}
+
+// 2FA Test Flow
+function send2faTestCode() {
+    const sendBtn = document.getElementById('send-2fa-test-btn');
+    const originalHtml = sendBtn.innerHTML;
+    sendBtn.disabled = true;
+    sendBtn.innerHTML = '<i class="fas fa-spinner fa-spin" style="margin-right:6px;"></i> Sending Code...';
+    
+    document.getElementById('test-2fa-error').style.display = 'none';
+    document.getElementById('test-2fa-success').style.display = 'none';
+    
+    fetch('/test-2fa-send', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        sendBtn.disabled = false;
+        sendBtn.innerHTML = originalHtml;
+        
+        if (data.success) {
+            document.getElementById('test-2fa-success').textContent = "Test code sent to your email.";
+            document.getElementById('test-2fa-success').style.display = 'block';
+            
+            if (data.fallback_code) {
+                const fallbackEl = document.getElementById('test-2fa-fallback');
+                fallbackEl.innerHTML = `<i class="fas fa-exclamation-triangle"></i> SMTP simulated send.<br>Code: <strong>${data.fallback_code}</strong>`;
+                fallbackEl.style.display = 'block';
+            } else {
+                document.getElementById('test-2fa-fallback').style.display = 'none';
+            }
+        } else {
+            document.getElementById('test-2fa-error').textContent = data.message;
+            document.getElementById('test-2fa-error').style.display = 'block';
+        }
+    })
+    .catch(error => {
+        sendBtn.disabled = false;
+        sendBtn.innerHTML = originalHtml;
+        document.getElementById('test-2fa-error').textContent = "Failed to send 2FA test code. Please try again.";
+        document.getElementById('test-2fa-error').style.display = 'block';
+    });
+}
+
+function verify2faTestCode() {
+    const otp = document.getElementById('test-2fa-input').value.trim();
+    if (otp.length !== 6) {
+        document.getElementById('test-2fa-error').textContent = "Code must be 6 digits.";
+        document.getElementById('test-2fa-error').style.display = 'block';
+        return;
+    }
+    
+    const verifyBtn = document.getElementById('verify-2fa-test-btn');
+    verifyBtn.disabled = true;
+    verifyBtn.textContent = '...';
+    
+    document.getElementById('test-2fa-error').style.display = 'none';
+    document.getElementById('test-2fa-success').style.display = 'none';
+    
+    const formData = new URLSearchParams();
+    formData.append('otp_code', otp);
+    
+    fetch('/test-2fa-verify', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        verifyBtn.disabled = false;
+        verifyBtn.textContent = 'Verify';
+        
+        if (data.success) {
+            document.getElementById('test-2fa-success').textContent = data.message;
+            document.getElementById('test-2fa-success').style.display = 'block';
+            document.getElementById('two-factor-status-label').textContent = "Enabled";
+            document.getElementById('two-factor-status-label').style.color = "#4ade80";
+            document.getElementById('test-2fa-fallback').style.display = 'none';
+            document.getElementById('test-2fa-input').value = '';
+            
+            // Sync the 2FA preference toggle checkbox on the preferences card
+            const toggles = document.getElementsByName('two_factor_enabled');
+            if (toggles.length > 0) {
+                toggles[0].checked = true;
+            }
+        } else {
+            document.getElementById('test-2fa-error').textContent = data.message;
+            document.getElementById('test-2fa-error').style.display = 'block';
+        }
+    })
+    .catch(error => {
+        verifyBtn.disabled = false;
+        verifyBtn.textContent = 'Verify';
+        document.getElementById('test-2fa-error').textContent = "Failed to verify 2FA test code.";
+        document.getElementById('test-2fa-error').style.display = 'block';
+    });
+}
+
 </script>
+
+<!-- Email Verification Modal -->
+<div class="confirm-modal" id="otp-verify-modal" aria-hidden="true" style="position:fixed; inset:0; z-index:50000; display:none; align-items:center; justify-content:center; background:rgba(2,6,23,0.72); backdrop-filter:blur(10px); padding:1.5rem;">
+    <div class="confirm-box" style="width:min(420px,100%); background:rgba(10,16,38,0.96); border:1px solid rgba(6,182,212,0.28); border-radius:18px; padding:1.5rem; box-shadow:0 24px 70px rgba(0,0,0,0.5);">
+        <h3 style="color:#fff; margin:0 0 0.5rem; font-family:var(--font-sans); display:flex; align-items:center; gap:8px;">
+            <i class="fas fa-shield-alt" style="color:#06b6d4;"></i> Verify Identity
+        </h3>
+        <p id="otp-message" style="color:#94a3b8; margin:0 0 1.2rem; font-size:0.9rem;">We sent a 6-digit verification code to your email.</p>
+        
+        <div style="margin-bottom:1.5rem;">
+            <input type="text" id="otp-input" placeholder="••••••" maxlength="6" 
+                style="width:100%; background:rgba(255,255,255,0.03); border:1px solid rgba(6,182,212,0.3); border-radius:10px; padding:12px; font-family:var(--font-mono); font-size:1.5rem; color:#fff; letter-spacing:8px; text-align:center; outline:none; box-sizing:border-box;">
+            <div id="otp-error" style="color:#ef4444; font-size:0.8rem; margin-top:6px; display:none;"></div>
+            <div id="otp-fallback" style="color:#eab308; font-size:0.8rem; margin-top:6px; display:none; font-family:monospace; background:rgba(234,179,8,0.08); padding:6px 10px; border-radius:6px; border:1px dashed rgba(234,179,8,0.2);"></div>
+        </div>
+        
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.8rem;">
+            <button type="button" onclick="closeOtpModal()" style="border:0; border-radius:10px; padding:12px; cursor:pointer; color:#cbd5e1; font-weight:700; font-family:var(--font-sans); background:rgba(148,163,184,0.14);">Cancel</button>
+            <button type="button" id="otp-confirm-btn" onclick="submitOtpCode()" style="border:0; border-radius:10px; padding:12px; cursor:pointer; color:#fff; font-weight:700; font-family:var(--font-sans); background:linear-gradient(135deg,#06b6d4,#3b82f6);">Verify</button>
+        </div>
+    </div>
+</div>
 {% endblock %}

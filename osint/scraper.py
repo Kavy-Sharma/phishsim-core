@@ -170,7 +170,7 @@ def scrape_company(domain):
         full_url = urljoin(f"https://{domain}", href)
         links.add(full_url)
 
-    profile["links"] = list(links)[:10]
+    profile["links"] = list(links)[:25] # Expand to search subpages
 
     social_patterns = {
         "linkedin": "linkedin.com",
@@ -188,6 +188,42 @@ def scrape_company(domain):
                 socials[name] = link
 
     profile["socials"] = socials
+
+    # --- Search for exposed emails on subpages (contact, about, etc.) ---
+    subpage_keywords = ["about", "contact", "team", "staff", "privacy", "help", "support", "career"]
+    subpages_to_crawl = []
+    for link in profile["links"]:
+        # Only crawl links from the same domain to prevent scraping third-party websites
+        if domain in link:
+            if any(kw in link.lower() for kw in subpage_keywords):
+                subpages_to_crawl.append(link)
+    
+    # De-duplicate crawl candidates
+    subpages_to_crawl = list(set(subpages_to_crawl))[:3]
+    
+    scraped_emails = set(filtered_emails)
+    
+    for page_url in subpages_to_crawl:
+        try:
+            print(f"OSINT Scraper crawling subpage: {page_url}")
+            with httpx.Client(verify=False, timeout=5, follow_redirects=True) as client:
+                res = client.get(page_url, headers=headers)
+                if res.status_code == 200:
+                    sub_html = res.text
+                    sub_emails = re.findall(r"[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+", sub_html)
+                    for semail in sub_emails:
+                        semail_lower = semail.lower()
+                        if "example.com" in semail_lower or "email.com" in semail_lower:
+                            continue
+                        if any(ext in semail_lower for ext in [".png", ".jpg", ".jpeg", ".svg", ".webp", ".css", ".js", ".mp4", ".webm"]):
+                            continue
+                        if not re.search(r"\.(com|org|net|edu|in|co)$", semail_lower):
+                            continue
+                        scraped_emails.add(semail)
+        except Exception as crawl_err:
+            print(f"Error crawling subpage {page_url}: {crawl_err}")
+
+    profile["emails"] = list(scraped_emails)[:10]
 
     # --- Recent context (headlines from articles or headings) ---
     articles = soup.find_all("article")

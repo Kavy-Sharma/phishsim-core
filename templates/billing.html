@@ -1,0 +1,567 @@
+{% extends "base.html" %}
+{% block title %}Billing & Subscription — PhishSim AI{% endblock %}
+{% block content %}
+<style>
+    .billing-container {
+        max-width: 1000px;
+        margin: 2rem auto;
+        padding: 0 1.5rem;
+    }
+
+    .billing-grid {
+        display: grid;
+        grid-template-columns: 1.2fr 1fr;
+        gap: 2rem;
+        margin-top: 1.5rem;
+    }
+
+    @media (max-width: 850px) {
+        .billing-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    /* Card preview styling */
+    .card-preview {
+        background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+        border: 1px solid rgba(99, 102, 241, 0.35);
+        border-radius: 16px;
+        padding: 1.8rem;
+        position: relative;
+        height: 200px;
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4), 0 0 25px rgba(99, 102, 241, 0.15);
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        overflow: hidden;
+        margin-bottom: 1.5rem;
+        transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .card-preview::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(6, 182, 212, 0.08) 0%, transparent 60%);
+        pointer-events: none;
+    }
+
+    .card-chip {
+        width: 42px;
+        height: 32px;
+        background: linear-gradient(135deg, #e2e8f0 0%, #94a3b8 100%);
+        border-radius: 6px;
+        position: relative;
+    }
+
+    .card-logo {
+        font-family: var(--font-sans);
+        font-weight: 800;
+        font-size: 1.1rem;
+        color: #fff;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .card-number {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 1.25rem;
+        color: #fff;
+        letter-spacing: 2px;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        margin: 1.5rem 0;
+    }
+
+    .card-meta {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.72rem;
+        color: #94a3b8;
+        text-transform: uppercase;
+        font-family: var(--font-mono);
+    }
+
+    .card-meta strong {
+        display: block;
+        color: #fff;
+        font-size: 0.85rem;
+        margin-top: 2px;
+        font-family: var(--font-sans);
+    }
+
+    /* Form Input elements */
+    .form-group {
+        margin-bottom: 1.2rem;
+    }
+
+    .form-group label {
+        display: block;
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: #64748b;
+        margin-bottom: 6px;
+    }
+
+    .form-input {
+        width: 100%;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid var(--border-color);
+        color: #fff;
+        border-radius: 10px;
+        padding: 12px 14px;
+        font-size: 0.95rem;
+        transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        box-sizing: border-box;
+    }
+
+    body.light-theme .form-input {
+        background: #f8fafc;
+        border-color: #cbd5e1;
+        color: #0f172a;
+    }
+
+    .form-input:focus {
+        border-color: #3b82f6;
+        background: rgba(59, 130, 246, 0.04);
+        outline: none;
+    }
+
+    body.light-theme .form-input:focus {
+        background: #fff;
+    }
+
+    .checkout-btn {
+        width: 100%;
+        padding: 14px;
+        background: linear-gradient(135deg, #0ea5e9, #6366f1);
+        border: none;
+        border-radius: 10px;
+        color: #fff;
+        font-weight: 700;
+        font-size: 0.95rem;
+        cursor: pointer;
+        transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+
+    .checkout-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(14, 165, 233, 0.35);
+    }
+
+    .plan-badge {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        padding: 4px 10px;
+        border-radius: 100px;
+        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+</style>
+
+<div class="billing-container">
+    <div style="padding: 1.5rem 0 1rem 0; animation: fadeInDown 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;">
+        <h1 class="page-title" style="font-family: var(--font-sans); font-size: 2.5rem; font-weight: 800; margin: 0 0 0.5rem 0;">Billing & Subscriptions</h1>
+        <p class="page-subtitle" style="font-size: 1rem; margin: 0; color: var(--text-muted);">Manage your plans, live Stripe receipts, and premium security operator settings.</p>
+    </div>
+
+    {% if current_user.role in ('pro', 'admin') %}
+    <!-- ACTIVE SUBSCRIPTION LEVEL -->
+    <div class="billing-grid" style="animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;">
+        <div class="glass-panel">
+            <div class="window-mockup" style="margin-bottom: 0;">
+                <div class="window-body" style="padding: 2.2rem;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.8rem; gap: 15px;">
+                        <div style="flex-grow:1;">
+                            {% if stripe_status == 'active' %}
+                            <span class="plan-badge" style="background:rgba(34,197,94,0.12); color:#22c55e; border-color:rgba(34,197,94,0.2);">
+                                <i class="ti ti-shield-check"></i> PRO ACTIVE
+                            </span>
+                            {% elif stripe_status == 'past_due' %}
+                            <span class="plan-badge" style="background:rgba(245,158,11,0.12); color:#f59e0b; border-color:rgba(245,158,11,0.2);">
+                                <i class="ti ti-alert-triangle"></i> PAST DUE
+                            </span>
+                            {% elif stripe_status == 'canceled' or stripe_status == 'inactive' %}
+                            <span class="plan-badge" style="background:rgba(239,68,68,0.12); color:#ef4444; border-color:rgba(239,68,68,0.2);">
+                                <i class="ti ti-circle-x"></i> INACTIVE
+                            </span>
+                            {% else %}
+                            <span class="plan-badge" style="background:rgba(168,85,247,0.12); color:#c084fc; border-color:rgba(168,85,247,0.2);">
+                                <i class="ti ti-info-circle"></i> {{ stripe_status | upper }}
+                            </span>
+                            {% endif %}
+                            <h2 style="font-size:1.6rem; color:#fff; margin:8px 0 0; font-family:var(--font-sans);">PRO Operator flat rate</h2>
+                        </div>
+                        <div style="text-align:right;">
+                            <span style="font-size:1.9rem; color:#fff; font-weight:800; font-family:var(--font-sans);">$24</span>
+                            <span style="color:var(--text-muted); font-size:0.85rem;">/month</span>
+                        </div>
+                    </div>
+
+                    <p style="color:var(--text-muted); font-size:0.92rem; line-height:1.6; margin-bottom:1.5rem;">
+                        Your subscription is active. You have full access to automated campaigns, drip frequencies, external SMTP mail servers, and PDF auditing.
+                    </p>
+
+                    <!-- Animated Usage Bar -->
+                    <div style="margin-top:1.5rem; margin-bottom:1.8rem;">
+                        <div style="display:flex; justify-content:space-between; font-size:0.82rem; color:var(--text-muted); margin-bottom:6px; font-family:var(--font-mono);">
+                            <span>Simulated Target Limit Usage</span>
+                            <strong>{{ targets_count }} / 50 targets</strong>
+                        </div>
+                        <div style="height:8px; background:rgba(255,255,255,0.06); border-radius:100px; overflow:hidden;">
+                            <div style="height:100%; border-radius:100px; 
+                                background:linear-gradient(90deg, #38bdf8, #6366f1);
+                                width:{% if targets_count >= 50 %}100%{% else %}{{ (targets_count / 50 * 100) | round(1) }}%{% endif %};
+                                transition: width 1.5s cubic-bezier(0.16,1,0.3,1);">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="border-top:1px solid rgba(255,255,255,0.06); padding-top:1.5rem; margin-bottom:1.8rem;">
+                        <h4 style="font-family:var(--font-mono); font-size:0.75rem; color:#64748b; margin:0 0 12px; text-transform:uppercase; letter-spacing:0.5px;">Subscription Telemetry</h4>
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; font-size:0.85rem; color:#cbd5e1; margin-bottom: 12px;">
+                            <div>Campaigns Run: <strong>{{ campaigns_count }}</strong></div>
+                            <div>Employees Simulated: <strong>{{ targets_count }}</strong></div>
+                            <div>Next Invoice Date: <strong style="color: #38bdf8;">{{ next_billing }}</strong></div>
+                            <div>Seats Limit: <strong>50 Seats</strong></div>
+                        </div>
+                    </div>
+
+                    <div style="display:flex; gap:12px; flex-wrap:wrap; border-top:1px solid rgba(255,255,255,0.06); padding-top:1.5rem;">
+                        {% if user.stripe_customer_id %}
+                        <form action="/billing/portal" method="POST" style="display:inline-block;">
+                            <button type="submit" class="checkout-btn" style="padding: 10px 20px; font-size: 0.85rem; width: auto; background: linear-gradient(135deg, #0ea5e9, #6366f1);">
+                                <i class="ti ti-credit-card"></i>
+                                Manage Subscription (Stripe Portal)
+                            </button>
+                        </form>
+                        {% endif %}
+                        <form action="/billing/cancel" method="POST" id="cancel-form" style="display:inline-block;">
+                            <button type="button" onclick="confirmCancel()" style="background:transparent; border:1px solid rgba(239,68,68,0.35); color:#f87171; padding:10px 20px; border-radius:10px; cursor:pointer; font-weight:600; font-size:0.85rem; transition:all 0.25s cubic-bezier(0.16,1,0.3,1); display:inline-flex; align-items:center; gap:6px;" onmouseover="this.style.background='rgba(239,68,68,0.08)'" onmouseout="this.style.background='transparent'">
+                                <i class="ti ti-trash"></i> Cancel Subscription
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- INVOICE LOGS -->
+        <div class="glass-panel">
+            <div class="window-mockup" style="margin-bottom: 0;">
+                <div class="window-body" style="padding: 2.2rem;">
+                    <h3 style="font-family:var(--font-sans); color:#fff; font-size:1.15rem; margin-top:0; margin-bottom:1.2rem; display:flex; align-items:center; gap:8px;">
+                        <i class="ti ti-receipt" style="color:#0ea5e9;"></i> Live Invoice Records
+                    </h3>
+                    <table style="width:100%; border-collapse:collapse; font-size:0.88rem; color:#cbd5e1;">
+                        <thead>
+                            <tr style="border-bottom:1px solid rgba(255,255,255,0.05); text-align:left;">
+                                <th style="padding:8px 0; color:var(--text-muted); font-family:var(--font-mono); font-size:0.75rem; letter-spacing:0.5px;">DATE</th>
+                                <th style="padding:8px 0; color:var(--text-muted); font-family:var(--font-mono); font-size:0.75rem; letter-spacing:0.5px;">STATUS</th>
+                                <th style="padding:8px 0; text-align:right; color:var(--text-muted); font-family:var(--font-mono); font-size:0.75rem; letter-spacing:0.5px;">AMOUNT</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if stripe_invoices %}
+                                {% for inv in stripe_invoices %}
+                                <tr style="border-bottom:1px solid rgba(255,255,255,0.03);">
+                                    <td style="padding:12px 0; font-family:var(--font-mono); font-size:0.82rem;">{{ inv.date }}</td>
+                                    <td>
+                                        <span style="font-size:0.7rem; padding:2px 6px; border-radius:4px; font-weight:700;
+                                            {% if inv.status == 'PAID' %}background:rgba(34,197,94,0.1); color:#22c55e;
+                                            {% else %}background:rgba(239,68,68,0.1); color:#ef4444;{% endif %}">
+                                            {{ inv.status }}
+                                        </span>
+                                    </td>
+                                    <td style="text-align:right; font-weight:bold; color:var(--text-main);">
+                                        {% if inv.hosted_invoice_url and inv.hosted_invoice_url != '#' %}
+                                        <a href="{{ inv.hosted_invoice_url }}" target="_blank" style="color:#38bdf8; text-decoration:none; display:inline-flex; align-items:center; gap:4px;">
+                                            {{ inv.amount }} <i class="ti ti-external-link" style="font-size:0.8rem;"></i>
+                                        </a>
+                                        {% else %}
+                                            {{ inv.amount }}
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                                <!-- Local/Mock Sandbox Invoice Fallback -->
+                                <tr style="border-bottom:1px solid rgba(255,255,255,0.03);">
+                                    <td style="padding:12px 0;">Today</td>
+                                    <td>
+                                        <span style="font-size:0.7rem; padding:2px 6px; border-radius:4px; background:rgba(34,197,94,0.1); color:#22c55e; font-weight:700;">
+                                            PAID (SANDBOX)
+                                        </span>
+                                    </td>
+                                    <td style="text-align:right; color:#22c55e; font-weight:bold;">$24.00</td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                    <p style="color:#64748b; font-size:0.78rem; margin-top:2rem; line-height:1.5; display:flex; align-items:center; gap:6px;">
+                        <i class="ti ti-lock" style="font-size:0.9rem;"></i> Secure receipts are logged in compliance vault. Cancel anytime.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <!-- PRICING/UPGRADE checkout view -->
+    <div class="billing-grid" style="animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;">
+        <div class="glass-panel" style="grid-column: span 2;">
+            <div class="window-mockup" style="margin-bottom: 0;">
+                <div class="window-body" style="padding: 2.5rem; display: grid; grid-template-columns: 1.2fr 1fr; gap: 2.5rem;">
+                    <div>
+                        <span class="plan-badge" style="background:rgba(6, 182, 212, 0.12); color:#06b6d4; border-color:rgba(6, 182, 212, 0.2); margin-bottom: 10px;">PRO FLAT TIER</span>
+                        <h2 style="font-size:2rem; color:#fff; margin:10px 0 1.2rem; font-family:var(--font-sans);">Upgrade to PRO</h2>
+                        
+                        <div class="upgrade-tabs" style="display: flex; gap: 10px; margin-bottom: 1.8rem; border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 12px; flex-wrap: wrap;">
+                            <button type="button" class="upgrade-tab active" onclick="switchUpgradeTab('stripe')" id="btn-tab-stripe" style="background: none; border: none; color: #fff; font-family: var(--font-sans); font-size: 0.9rem; font-weight: 700; cursor: pointer; padding: 6px 12px; border-bottom: 2px solid #06b6d4; transition: all 0.2s;">
+                                Stripe Checkout
+                            </button>
+                            <button type="button" class="upgrade-tab" onclick="switchUpgradeTab('sandbox')" id="btn-tab-sandbox" style="background: none; border: none; color: var(--text-muted); font-family: var(--font-sans); font-size: 0.9rem; font-weight: 700; cursor: pointer; padding: 6px 12px; border-bottom: 2px solid transparent; transition: all 0.2s;">
+                                Free Sandbox Activate
+                            </button>
+                            <button type="button" class="upgrade-tab" onclick="switchUpgradeTab('sales')" id="btn-tab-sales" style="background: none; border: none; color: var(--text-muted); font-family: var(--font-sans); font-size: 0.9rem; font-weight: 700; cursor: pointer; padding: 6px 12px; border-bottom: 2px solid transparent; transition: all 0.2s;">
+                                Contact Enterprise Sales
+                            </button>
+                        </div>
+
+                        <!-- Tab 1: Stripe -->
+                        <div id="content-tab-stripe" class="tab-content-panel">
+                            <p style="color:var(--text-muted); font-size:0.92rem; line-height:1.6; margin-bottom:1.5rem;">
+                                Establish continuous employee training cycles. The PRO plan provides unlimited simulated campaign deployments, custom mail templates, recurring schedulers, and API keys.
+                            </p>
+                            <div style="background:rgba(255,255,255,0.02); border:1px solid var(--border-color); border-radius:12px; padding:1.2rem; margin-bottom:1.8rem;">
+                                <div style="display:flex; justify-content:space-between; margin-bottom:8px; font-weight:bold; font-size:1.05rem;">
+                                    <span style="color:#fff;">PhishSim.ai PRO (Flat Rate)</span>
+                                    <span style="color:#22c55e;">$24.00 / month</span>
+                                </div>
+                                <div style="font-size:0.85rem; color:#94a3b8; border-top:1px dashed rgba(255,255,255,0.08); padding-top:8px; margin-top:8px; line-height:1.4;">
+                                    Covers up to 50 simulated employees. Flat monthly billing. No setup fees, cancel anytime.
+                                </div>
+                            </div>
+                            <form action="/billing/upgrade" method="POST">
+                                <button type="submit" class="checkout-btn" style="padding:15px; font-size:1rem; border-radius:10px;">
+                                    <i class="ti ti-credit-card" style="font-size:1.15rem;"></i> Proceed to Stripe Checkout ($24.00/mo)
+                                </button>
+                            </form>
+                        </div>
+
+                        <!-- Tab 2: Sandbox -->
+                        <div id="content-tab-sandbox" class="tab-content-panel" style="display: none;">
+                            <p style="color:var(--text-muted); font-size:0.92rem; line-height:1.6; margin-bottom:1.5rem;">
+                                <strong>What is Sandbox Activation?</strong><br>
+                                This is a developer utility designed for self-hosting, local debugging, or offline evaluation. Clicking the button below bypasses external Stripe checkout processors entirely and updates your local database instance to grant immediate, lifetime **PRO Operator** privileges. Recommended for testing the recurrence engine locally.
+                            </p>
+                            <form action="/billing/activate-free" method="POST" id="sandbox-form">
+                                <button type="button" onclick="confirmSandbox()" class="checkout-btn" style="padding:15px; font-size:1rem; border-radius:10px; background: linear-gradient(135deg, #10b981, #059669);">
+                                    <i class="ti ti-test-pipe" style="font-size:1.15rem;"></i> Activate Free PRO Status
+                                </button>
+                            </form>
+                        </div>
+
+                        <!-- Tab 3: Contact Sales -->
+                        <div id="content-tab-sales" class="tab-content-panel" style="display: none;">
+                            <form action="/api/contact-sales" method="POST" style="display: flex; flex-direction: column; gap: 12px;">
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                                    <div class="form-group" style="margin:0;">
+                                        <label for="sales-name">Your Name</label>
+                                        <input type="text" id="sales-name" name="name" class="form-input" placeholder="David Vance" required>
+                                    </div>
+                                    <div class="form-group" style="margin:0;">
+                                        <label for="sales-email">Business Email</label>
+                                        <input type="email" id="sales-email" name="email" class="form-input" value="{{ current_user.email }}" required>
+                                    </div>
+                                </div>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                                    <div class="form-group" style="margin:0;">
+                                        <label for="sales-phone">Phone Number</label>
+                                        <input type="text" id="sales-phone" name="phone" class="form-input" placeholder="+1 (555) 019-2834">
+                                    </div>
+                                    <div class="form-group" style="margin:0;">
+                                        <label for="sales-company">Company</label>
+                                        <input type="text" id="sales-company" name="company" class="form-input" placeholder="Acme Security Corp" value="{{ current_user.company_domain }}">
+                                    </div>
+                                </div>
+                                <div class="form-group" style="margin:0;">
+                                    <label for="sales-msg">Message / Custom Requirements</label>
+                                    <textarea id="sales-msg" name="message" class="form-input" rows="3" style="resize: none;" placeholder="Interested in custom seats capacity, offline deployment licensing, or white-labeled campaign setup."></textarea>
+                                </div>
+                                <button type="submit" class="checkout-btn" style="padding:12px; font-size:0.95rem; border-radius:10px; background: linear-gradient(135deg, #a855f7, #6366f1); margin-top: 8px;">
+                                    <i class="ti ti-mail-forward"></i> Submit Callback Request
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div style="border-left: 1px solid rgba(255,255,255,0.06); padding-left: 2.5rem;">
+                        <div style="margin-bottom: 1.5rem; padding: 1.2rem; background: rgba(6, 182, 212, 0.05); border: 1px solid rgba(6, 182, 212, 0.15); border-radius: 12px;">
+                            <span style="font-size: 0.72rem; font-family: var(--font-mono); text-transform: uppercase; color: #06b6d4; font-weight: 700; display: block; margin-bottom: 4px;">Current Plan: Free Tier</span>
+                            <span style="font-size: 0.85rem; color: #cbd5e1; font-weight: 600; display: block;">Campaign Limit: 3 Total Campaigns Max</span>
+                            <span style="font-size: 0.78rem; color: var(--text-muted); display: block; margin-top: 4px;">You have utilized this plan for basic testing. Upgrade to PRO to unlock the full platform.</span>
+                        </div>
+                        <h3 style="font-family:var(--font-sans); color:#fff; font-size:1.2rem; margin-top:0; margin-bottom:1.2rem; display:flex; align-items:center; gap:8px;">
+                            <i class="ti ti-gift" style="color:#0ea5e9;"></i> Premium Toolkit Unlocked
+                        </h3>
+                        <ul style="list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:14px; font-size:0.9rem; color:#cbd5e1;">
+                            <li style="display:flex; align-items:start;"><i class="ti ti-circle-check" style="color:#06b6d4; margin-right:10px; margin-top:3px; font-size:1.1rem; flex-shrink:0;"></i> <div><strong>Automation Engine:</strong> Configure daily, weekly, or monthly campaign drips.</div></li>
+                            <li style="display:flex; align-items:start;"><i class="ti ti-circle-check" style="color:#06b6d4; margin-right:10px; margin-top:3px; font-size:1.1rem; flex-shrink:0;"></i> <div><strong>Live Senders:</strong> Send campaign simulation emails via your custom SMTP server.</div></li>
+                            <li style="display:flex; align-items:start;"><i class="ti ti-circle-check" style="color:#06b6d4; margin-right:10px; margin-top:3px; font-size:1.1rem; flex-shrink:0;"></i> <div><strong>Audit PDF:</strong> Generate clean PDF remediation reports to share with executives.</div></li>
+                            <li style="display:flex; align-items:start;"><i class="ti ti-circle-check" style="color:#06b6d4; margin-right:10px; margin-top:3px; font-size:1.1rem; flex-shrink:0;"></i> <div><strong>API Tokens:</strong> Export employee risk and simulation activity events in real-time.</div></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Custom Cyber Confirmation Modal -->
+<div class="confirm-modal-overlay" id="custom-confirm-modal" style="
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    background: rgba(2, 6, 23, 0.85);
+    backdrop-filter: blur(8px);
+    align-items: center;
+    justify-content: center;
+">
+    <div class="confirm-modal-box" id="confirm-modal-card" style="
+        background: linear-gradient(135deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.98));
+        border: 1px solid rgba(239, 68, 68, 0.3);
+        border-radius: 16px;
+        padding: 2.2rem;
+        width: 100%;
+        max-width: 460px;
+        box-shadow: 0 25px 60px rgba(0,0,0,0.55), 0 0 35px rgba(239, 68, 68, 0.05);
+        text-align: center;
+        animation: modalScaleUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+    ">
+        <div id="confirm-modal-icon" style="font-size: 2.8rem; color: #ef4444; margin-bottom: 1.2rem; transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);">
+            <i class="ti ti-alert-triangle"></i>
+        </div>
+        <h3 id="confirm-modal-title" style="font-family: var(--font-sans); color: #fff; font-size: 1.45rem; font-weight: 800; margin: 0 0 0.8rem 0; letter-spacing: 0.5px;">Downgrade Subscription?</h3>
+        <p id="confirm-modal-desc" style="color: var(--text-muted); font-size: 0.9rem; line-height: 1.55; margin: 0 0 2.2rem 0;"></p>
+        
+        <div style="display: flex; gap: 14px; justify-content: center;">
+            <button type="button" id="confirm-btn-yes" class="checkout-btn" style="padding: 10px 24px; font-size: 0.9rem; width: auto; font-weight: 700; border-radius: 8px; margin: 0; cursor: pointer; border: none;">Yes, Proceed</button>
+            <button type="button" id="confirm-btn-no" style="background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: var(--text-main); padding: 10px 24px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.9rem; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.05)'">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    function confirmCancel() {
+        const modal = document.getElementById('custom-confirm-modal');
+        const card = document.getElementById('confirm-modal-card');
+        const icon = document.getElementById('confirm-modal-icon');
+        const title = document.getElementById('confirm-modal-title');
+        const desc = document.getElementById('confirm-modal-desc');
+        const btnYes = document.getElementById('confirm-btn-yes');
+        const btnNo = document.getElementById('confirm-btn-no');
+
+        // Configure for Cancel (Red Theme)
+        icon.innerHTML = '<i class="ti ti-alert-triangle"></i>';
+        icon.style.color = '#ef4444';
+        card.style.borderColor = 'rgba(239, 68, 68, 0.35)';
+        card.style.boxShadow = '0 25px 60px rgba(0,0,0,0.55), 0 0 35px rgba(239, 68, 68, 0.08)';
+        title.textContent = 'Cancel PRO Subscription?';
+        desc.innerHTML = 'Are you sure you want to cancel your PRO subscription? Your account will downgrade back to the Free tier immediately, limiting campaign creation and disabling automation.';
+        btnYes.textContent = 'Yes, Downgrade Account';
+        btnYes.style.background = 'linear-gradient(135deg, #ef4444, #dc2626)';
+
+        // Wire event handlers
+        btnYes.onclick = function() {
+            document.getElementById('cancel-form').submit();
+        };
+        btnNo.onclick = function() {
+            modal.style.display = 'none';
+        };
+
+        modal.style.display = 'flex';
+    }
+
+    function confirmSandbox() {
+        const modal = document.getElementById('custom-confirm-modal');
+        const card = document.getElementById('confirm-modal-card');
+        const icon = document.getElementById('confirm-modal-icon');
+        const title = document.getElementById('confirm-modal-title');
+        const desc = document.getElementById('confirm-modal-desc');
+        const btnYes = document.getElementById('confirm-btn-yes');
+        const btnNo = document.getElementById('confirm-btn-no');
+
+        // Configure for Sandbox (Green Theme)
+        icon.innerHTML = '<i class="ti ti-test-pipe"></i>';
+        icon.style.color = '#10b981';
+        card.style.borderColor = 'rgba(16, 185, 129, 0.35)';
+        card.style.boxShadow = '0 25px 60px rgba(0,0,0,0.55), 0 0 35px rgba(16, 185, 129, 0.08)';
+        title.textContent = 'Activate Sandbox PRO Mode?';
+        desc.innerHTML = 'This will bypass external payment checks and instantly activate **PRO Operator** privileges on this local database instance. This is designed for testing and offline evaluation.';
+        btnYes.textContent = 'Yes, Activate Sandbox';
+        btnYes.style.background = 'linear-gradient(135deg, #10b981, #059669)';
+
+        // Wire event handlers
+        btnYes.onclick = function() {
+            document.getElementById('sandbox-form').submit();
+        };
+        btnNo.onclick = function() {
+            modal.style.display = 'none';
+        };
+
+        modal.style.display = 'flex';
+    }
+
+    function switchUpgradeTab(tabId) {
+        document.querySelectorAll('.tab-content-panel').forEach(el => {
+            el.style.display = 'none';
+        });
+        document.querySelectorAll('.upgrade-tab').forEach(el => {
+            el.classList.remove('active');
+            el.style.color = 'var(--text-muted)';
+            el.style.borderBottomColor = 'transparent';
+        });
+
+        const selectedContent = document.getElementById('content-tab-' + tabId);
+        if (selectedContent) selectedContent.style.display = 'block';
+
+        const selectedTab = document.getElementById('btn-tab-' + tabId);
+        if (selectedTab) {
+            selectedTab.classList.add('active');
+            selectedTab.style.color = '#fff';
+            if (tabId === 'stripe') selectedTab.style.borderBottomColor = '#06b6d4';
+            else if (tabId === 'sandbox') selectedTab.style.borderBottomColor = '#10b981';
+            else if (tabId === 'sales') selectedTab.style.borderBottomColor = '#a855f7';
+        }
+    }
+</script>
+
+<style>
+    /* Theme adaptive colors */
+    body:not(.light-theme) .page-title { color: #fff !important; }
+    body.light-theme .page-title { color: #0f172a !important; }
+    body.light-theme .card-preview { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); }
+    
+    @keyframes modalScaleUp {
+        from { opacity: 0; transform: scale(0.92) translateY(10px); }
+        to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+</style>
+{% endblock %}

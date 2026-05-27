@@ -1,0 +1,230 @@
+{% extends "base.html" %}
+{% block title %}{{ solution.title | default('—') }} — PhishSim AI{% endblock %}
+{% block content %}
+<style>
+    .solution-detail-container {
+        max-width: 900px;
+        margin: 2.5rem auto;
+        padding: 0 1.5rem;
+        animation: fadeInUp 0.6s ease-out;
+    }
+    
+    .solution-header {
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 2rem;
+        margin-bottom: 2.5rem;
+    }
+
+    .solution-icon-box {
+        width: 64px;
+        height: 64px;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 1.5rem;
+        font-size: 2rem;
+    }
+
+    .solution-meta-row {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .solution-badge {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        padding: 4px 10px;
+        border-radius: 100px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+    }
+
+    .read-time {
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .blog-content {
+        line-height: 1.8;
+        font-size: 1.05rem;
+        color: #cbd5e1;
+    }
+
+    body.light-theme .blog-content {
+        color: #334155;
+    }
+
+    .blog-content p {
+        margin-bottom: 1.5rem;
+    }
+
+    .blog-content h3 {
+        color: #fff;
+        margin: 2rem 0 1rem 0;
+        font-family: var(--font-sans);
+        font-weight: 700;
+        font-size: 1.4rem;
+    }
+
+    body.light-theme .blog-content h3 {
+        color: #0f172a;
+    }
+
+    .spec-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1.8rem 0;
+        font-size: 0.9rem;
+    }
+
+    .spec-table th {
+        text-align: left;
+        padding: 10px 0;
+        color: var(--text-muted);
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
+        letter-spacing: 0.5px;
+        border-bottom: 1px solid var(--border-color);
+        text-transform: uppercase;
+    }
+
+    .spec-table td {
+        padding: 14px 0;
+        border-bottom: 1px solid var(--border-color);
+        vertical-align: top;
+    }
+
+    .spec-vector {
+        font-weight: 600;
+        font-family: var(--font-sans);
+        color: #fff;
+    }
+
+    body.light-theme .spec-vector {
+        color: #0f172a;
+    }
+
+    .why-matters-box {
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin: 2.5rem 0;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+    }
+
+    .back-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--text-muted);
+        text-decoration: none;
+        font-size: 0.85rem;
+        font-family: var(--font-mono);
+        transition: all 0.2s;
+        margin-bottom: 1.5rem;
+        cursor: pointer;
+    }
+
+    .back-btn:hover {
+        color: var(--cyan);
+        transform: translateX(-4px);
+    }
+</style>
+
+<div class="solution-detail-container">
+    <a href="/#solutions" class="back-btn">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12,19 5,12 12,5"></polyline></svg>
+        Back to Solutions
+    </a>
+
+    <div class="glass-panel" style="padding: 2.5rem 3rem;">
+        <div class="solution-header">
+            <div class="solution-icon-box" style="background: rgba({{ solution.rgba_accent | default('6, 182, 212') }}, 0.1); border: 1px solid rgba({{ solution.rgba_accent | default('6, 182, 212') }}, 0.25);">
+                <i class="ti {{ solution.icon | default('ti-help') }}" style="color: {{ solution.accent_color | default('var(--cyan)') }};"></i>
+            </div>
+            
+            <div class="solution-meta-row">
+                <span class="solution-badge" style="background: rgba({{ solution.rgba_accent | default('6, 182, 212') }}, 0.12); color: {{ solution.accent_color | default('var(--cyan)') }}; border: 1px solid rgba({{ solution.rgba_accent | default('6, 182, 212') }}, 0.25);">
+                    {{ solution.badge_text | default('—') }}
+                </span>
+                <span class="read-time">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12,6 12,12 16,14"></polyline></svg>
+                    {{ solution.read_time | default('—') }}
+                </span>
+            </div>
+
+            <h1 style="font-family: var(--font-sans); font-size: 2.4rem; font-weight: 800; color: #fff; margin: 0 0 8px; line-height: 1.2;" class="page-title">
+                {{ solution.title | default('—') }}
+            </h1>
+            <p style="font-size: 1.15rem; color: var(--text-muted); margin: 0; line-height: 1.5;">
+                {{ solution.subtitle | default('—') }}
+            </p>
+        </div>
+
+        <div class="blog-content">
+            {{ solution.intro | default('—') | safe }}
+
+            <h3>Technical Specifications</h3>
+            <table class="spec-table">
+                <thead>
+                    <tr>
+                        <th style="width: 30%;">Vector / Protocol</th>
+                        <th style="width: 70%;">Capabilities & Operational Spec</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="spec-vector" style="color: {{ solution.accent_color | default('var(--cyan)') }};">{{ solution.spec_title_1 | default('—') }}</td>
+                        <td style="color: var(--text-muted);">{{ solution.spec_desc_1 | default('—') }}</td>
+                    </tr>
+                    <tr>
+                        <td class="spec-vector" style="color: {{ solution.accent_color | default('var(--cyan)') }};">{{ solution.spec_title_2 | default('—') }}</td>
+                        <td style="color: var(--text-muted);">{{ solution.spec_desc_2 | default('—') }}</td>
+                    </tr>
+                    <tr>
+                        <td class="spec-vector" style="color: {{ solution.accent_color | default('var(--cyan)') }};">{{ solution.spec_title_3 | default('—') }}</td>
+                        <td style="color: var(--text-muted);">{{ solution.spec_desc_3 | default('—') }}</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="why-matters-box">
+                <h4 style="color: #fff; font-family: var(--font-sans); font-size: 1rem; margin-top: 0; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
+                    <i class="ti ti-info-circle" style="color: {{ solution.accent_color | default('var(--cyan)') }};"></i> Why It Matters
+                </h4>
+                <p style="color: var(--text-muted); font-size: 0.9rem; line-height: 1.6; margin: 0;">
+                    {{ solution.why_matters | default('—') }}
+                </p>
+            </div>
+
+            {{ solution.body | default('—') | safe }}
+        </div>
+
+        <div style="margin-top: 3.5rem; padding-top: 2rem; border-top: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap;">
+            <div>
+                <h4 style="color: #fff; font-family: var(--font-sans); font-size: 1.1rem; margin: 0 0 4px;">Deploy simulations today</h4>
+                <p style="color: var(--text-muted); font-size: 0.85rem; margin: 0;">Launch automated threat models in sandbox mode for free.</p>
+            </div>
+            {% if current_user %}
+            <a href="/dashboard" class="btn-primary-action" style="padding: 12px 24px; font-size: 0.9rem; width: auto; text-decoration: none; text-align: center;">
+                Go to Dashboard
+            </a>
+            {% else %}
+            <a href="/demo-login" class="btn-primary-action" style="padding: 12px 24px; font-size: 0.9rem; width: auto; text-decoration: none; text-align: center;">
+                Try Live Demo
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -9,20 +9,526 @@
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@400;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600;700&family=Space+Mono&display=swap" rel="stylesheet">
     
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <!-- Tabler Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
     
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
+    <link rel="alternate icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}">
+    <link rel="shortcut icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='favicon.png') }}">
+    
+    <!-- Vanilla Tilt for 3D Cards -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vanilla-tilt/1.8.0/vanilla-tilt.min.js"></script>
+    
+    <!-- CountUp JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/countup.js/2.8.0/countUp.umd.js"></script>
+
     <!-- Main Stylesheet -->
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body class="{% block body_class %}{% endblock %}">
-    {% if current_user and current_user.company_domain == 'demo-corp.com' %}
-    <div style="background: linear-gradient(90deg, #f59e0b, #ef4444); color: white; text-align: center; padding: 8px; font-weight: bold; font-family: 'Outfit', sans-serif; font-size: 0.9rem; z-index: 1000; position: relative;">
-        You are in a Live Demo Session. Data is temporary.
-        <a href="/exit-demo" style="color: white; text-decoration: underline; margin-left: 15px; font-weight: 800;">Exit Demo & Clear Data</a>
+
+<!-- ═══════════════════════════════════════════════════════════
+     INTERACTIVE PAGE LOADER — Cyberpunk hex-grid style
+     Users can interact with particles while page loads.
+     ═══════════════════════════════════════════════════════════ -->
+<div id="page-loader" style="
+    position: fixed; inset: 0; z-index: 99999;
+    background: #020617;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    transition: opacity 0.5s ease, visibility 0.5s ease;
+">
+    <!-- Interactive canvas -->
+    <canvas id="loader-canvas" style="position:absolute;inset:0;width:100%;height:100%;"></canvas>
+
+    <!-- Center content -->
+    <div style="position:relative;z-index:2;text-align:center;">
+        <!-- Logo -->
+        <div style="display:flex;align-items:center;gap:12px;justify-content:center;margin-bottom:2rem;">
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#06b6d4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+            <span style="font-family:var(--font-sans);font-size:1.8rem;font-weight:900;color:#fff;">PhishSim<span style="color:#06b6d4;">.ai</span></span>
+        </div>
+
+        <!-- Animated hexagon spinner -->
+        <div id="loader-hex" style="
+            width:80px; height:80px; margin:0 auto 2rem;
+            position:relative;
+        ">
+            <svg viewBox="0 0 100 100" style="width:100%;height:100%;">
+                <polygon points="50,5 90,27.5 90,72.5 50,95 10,72.5 10,27.5"
+                    fill="none" stroke="rgba(6,182,212,0.2)" stroke-width="4"/>
+                <polygon points="50,5 90,27.5 90,72.5 50,95 10,72.5 10,27.5"
+                    fill="none" stroke="#06b6d4" stroke-width="4"
+                    stroke-dasharray="265" stroke-dashoffset="265"
+                    style="animation:hexSpin 1.4s ease-in-out infinite;">
+                </polygon>
+                <text x="50" y="58" text-anchor="middle" font-family="var(--font-sans)" font-size="22" font-weight="900" fill="#06b6d4" id="loader-pct">0</text>
+            </svg>
+        </div>
+
+        <!-- Status line -->
+        <div id="loader-status" style="
+            font-family:var(--font-mono); font-size:0.78rem;
+            color:#334155; letter-spacing:2px; text-transform:uppercase;
+            margin-bottom:0.8rem;
+        ">INITIALIZING ENGINE</div>
+
+        <!-- Hint -->
+        <div style="color:#1e293b;font-size:0.72rem;font-family:var(--font-mono);">
+            ↑ Move your cursor around — the particles react
+        </div>
     </div>
+
+    <!-- Bottom scan line -->
+    <div style="
+        position:absolute; bottom:0; left:0; right:0; height:2px;
+        background: linear-gradient(90deg, transparent, #06b6d4, #3b82f6, transparent);
+        animation: scanBottom 2s ease-in-out infinite;
+    "></div>
+</div>
+
+<style>
+@keyframes hexSpin {
+    0%   { stroke-dashoffset: 265; }
+    60%  { stroke-dashoffset: 0; }
+    100% { stroke-dashoffset: -265; }
+}
+@keyframes scanBottom {
+    0%,100% { opacity: 0.3; transform: scaleX(0.3); }
+    50%      { opacity: 1;   transform: scaleX(1); }
+}
+@keyframes particleFade {
+    0%,100% { opacity: 0.4; }
+    50%      { opacity: 0.9; }
+}
+</style>
+
+<script>
+(function() {
+    const loader    = document.getElementById('page-loader');
+    const canvas    = document.getElementById('loader-canvas');
+    const pctEl     = document.getElementById('loader-pct');
+    const statusEl  = document.getElementById('loader-status');
+    const statuses  = ['LOADING ASSETS', 'CONNECTING', 'DECRYPTING', 'ALMOST READY'];
+
+    if (!loader || !canvas) return;
+
+    // If a campaign status-poll triggered this reload, skip the loader entirely
+    if (sessionStorage.getItem('skipLoader') === '1') {
+        sessionStorage.removeItem('skipLoader');
+        loader.style.opacity = '0';
+        loader.style.visibility = 'hidden';
+        return;
+    }
+    // Canvas setup
+    const ctx = canvas.getContext('2d');
+    let W = canvas.width  = window.innerWidth;
+    let H = canvas.height = window.innerHeight;
+    window.addEventListener('resize', () => { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; });
+
+    // Mouse tracking for interaction
+    let mx = -9999, my = -9999;
+    canvas.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; });
+    canvas.addEventListener('touchmove', e => {
+        if (e.touches[0]) { mx = e.touches[0].clientX; my = e.touches[0].clientY; }
+    }, { passive: true });
+
+    // Generate floating hex-grid nodes
+    const nodes = Array.from({ length: 60 }, () => ({
+        x:  Math.random() * W,
+        y:  Math.random() * H,
+        vx: (Math.random() - 0.5) * 0.4,
+        vy: (Math.random() - 0.5) * 0.4,
+        r:  Math.random() * 2 + 1,
+        alpha: Math.random() * 0.5 + 0.2
+    }));
+
+    function drawLoader() {
+        ctx.clearRect(0, 0, W, H);
+        nodes.forEach(p => {
+            // Mouse repulsion — particles run away from cursor
+            const dx = p.x - mx, dy = p.y - my;
+            const dist = Math.hypot(dx, dy);
+            if (dist < 120) {
+                const force = (120 - dist) / 120;
+                p.vx += (dx / dist) * force * 0.6;
+                p.vy += (dy / dist) * force * 0.6;
+            }
+            // Speed limit + drift back
+            const speed = Math.hypot(p.vx, p.vy);
+            if (speed > 3) { p.vx *= 0.85; p.vy *= 0.85; }
+            p.x += p.vx; p.y += p.vy;
+            if (p.x < 0) p.x = W; if (p.x > W) p.x = 0;
+            if (p.y < 0) p.y = H; if (p.y > H) p.y = 0;
+
+            // Draw node
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(6,182,212,${p.alpha})`;
+            ctx.fill();
+        });
+        // Draw connecting lines
+        for (let i = 0; i < nodes.length; i++) {
+            for (let j = i + 1; j < nodes.length; j++) {
+                const d = Math.hypot(nodes[i].x - nodes[j].x, nodes[i].y - nodes[j].y);
+                if (d < 100) {
+                    ctx.beginPath();
+                    ctx.moveTo(nodes[i].x, nodes[i].y);
+                    ctx.lineTo(nodes[j].x, nodes[j].y);
+                    ctx.strokeStyle = `rgba(6,182,212,${0.08 * (1 - d / 100)})`;
+                    ctx.lineWidth = 0.5;
+                    ctx.stroke();
+                }
+            }
+        }
+        requestAnimationFrame(drawLoader);
+    }
+    drawLoader();
+
+    // Animate progress counter 0→100
+    let pct = 0;
+    const pctTimer = setInterval(() => {
+        pct = Math.min(pct + Math.random() * 12 + 4, 99);
+        if (pctEl) pctEl.textContent = Math.round(pct);
+        if (statusEl) statusEl.textContent = statuses[Math.floor(pct / 25)] || statuses[3];
+    }, 80);
+
+    // Dismiss loader when page is ready
+    function dismissLoader() {
+        clearInterval(pctTimer);
+        let currentPct = pct;
+        const finishTimer = setInterval(() => {
+            currentPct = Math.min(currentPct + 10, 100);
+            if (pctEl) pctEl.textContent = Math.round(currentPct);
+            if (currentPct >= 100) {
+                clearInterval(finishTimer);
+                if (statusEl) statusEl.textContent = 'READY';
+                setTimeout(() => {
+                    loader.style.opacity = '0';
+                    loader.style.visibility = 'hidden';
+                }, 300);
+            }
+        }, 30);
+    }
+
+    // Intercept clicks on all local anchors and form submissions to show loader instantly
+    document.addEventListener("click", (e) => {
+        const anchor = e.target.closest("a");
+        if (!anchor) return;
+        
+        const href = anchor.getAttribute("href");
+        const target = anchor.getAttribute("target");
+        
+        if (!href || href.startsWith("#") || href.startsWith("javascript:") || target === "_blank") {
+            return;
+        }
+        
+        if (href.startsWith("mailto:") || href.startsWith("tel:") || anchor.hasAttribute("download")) {
+            return;
+        }
+
+        if (loader) {
+            if (pctEl) pctEl.textContent = '0';
+            if (statusEl) statusEl.textContent = 'CONNECTING';
+            loader.style.opacity = '1';
+            loader.style.visibility = 'visible';
+            pct = 0;
+        }
+    });
+
+    document.addEventListener("submit", (e) => {
+        const form = e.target;
+        const target = form.getAttribute("target");
+        
+        if (target === "_blank" || e.defaultPrevented) {
+            return;
+        }
+
+        // Only show loader if the form is valid to prevent freezing the UI on browser-validation failure
+        if (typeof form.checkValidity === 'function' && !form.checkValidity()) {
+            return;
+        }
+        
+        if (loader) {
+            if (pctEl) pctEl.textContent = '0';
+            if (statusEl) statusEl.textContent = 'PROCESSING SECURE UPLOAD';
+            loader.style.opacity = '1';
+            loader.style.visibility = 'visible';
+        }
+    });
+
+    if (document.readyState === 'complete') {
+        dismissLoader();
+    } else {
+        window.addEventListener('load', dismissLoader);
+        // Safety fallback — never block for more than 4s
+        setTimeout(dismissLoader, 4000);
+    }
+})();
+</script>
+
+
+    {% if current_user and current_user.company_domain == 'demo-corp.com' %}
+    <!-- ═══════════════════════════════════════════════════════════
+         INTERACTIVE FLOATING CYBER HUD (SANDBOX CONTROLLER)
+         Replacing the messy top bar with a premium floating console.
+         ═══════════════════════════════════════════════════════════ -->
+    <div class="cyber-hud-container" id="cyber-hud">
+        <!-- Compact View -->
+        <div class="hud-pill">
+            <span class="hud-pulse-dot"></span>
+            <span class="hud-glitch-text" data-text="SANDBOX ACTIVE">SANDBOX ACTIVE</span>
+            <i class="ti ti-chevron-up hud-chevron"></i>
+        </div>
+        
+        <!-- Expanded Panel -->
+        <div class="hud-panel">
+            <div class="hud-header">
+                <i class="ti ti-terminal"></i> SECURITY TELEMETRY
+            </div>
+            <div class="hud-divider"></div>
+            <div class="hud-grid">
+                <div class="hud-item">
+                    <span class="hud-label"><i class="ti ti-cpu"></i> OPERATING NODE:</span>
+                    <span class="hud-value">Eagle-AI v2.0</span>
+                </div>
+                <div class="hud-item">
+                    <span class="hud-label"><i class="ti ti-database"></i> STORAGE ENVIRONMENT:</span>
+                    <span class="hud-value" style="color: #c084fc;">TRANSIENT (MEM_DB)</span>
+                </div>
+                <div class="hud-item">
+                    <span class="hud-label"><i class="ti ti-clock"></i> SECURE UTC CLOCK:</span>
+                    <span class="hud-value" id="hud-clock" style="color: #fbbf24; font-family: var(--font-mono);">00:00:00</span>
+                </div>
+            </div>
+            <div class="hud-divider"></div>
+            <a href="/exit-demo" class="hud-exit-btn">
+                <i class="ti ti-shield-x"></i> WIPE SESSION & EXIT
+            </a>
+        </div>
+    </div>
+
+    <style>
+    .cyber-hud-container {
+        position: fixed;
+        bottom: 24px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 20000;
+        font-family: var(--font-mono), monospace;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        pointer-events: auto;
+    }
+    
+    .hud-pill {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 20px;
+        background: rgba(8, 12, 26, 0.85);
+        border: 1px solid rgba(56, 189, 248, 0.45);
+        border-radius: 50px;
+        box-shadow: 0 10px 30px rgba(6, 182, 212, 0.25), inset 0 0 15px rgba(6, 182, 212, 0.1);
+        backdrop-filter: blur(12px);
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    
+    .hud-pill:hover {
+        border-color: rgba(56, 189, 248, 0.8);
+        box-shadow: 0 12px 35px rgba(6, 182, 212, 0.4);
+        transform: translateY(-2px);
+    }
+    
+    .hud-pulse-dot {
+        width: 8px;
+        height: 8px;
+        background-color: #22d3ee;
+        border-radius: 50%;
+        box-shadow: 0 0 10px #22d3ee;
+        animation: hudPulse 1.5s infinite ease-in-out;
+    }
+    
+    .hud-glitch-text {
+        font-size: 0.72rem;
+        font-weight: 800;
+        color: #22d3ee;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+    }
+    
+    .hud-chevron {
+        font-size: 0.85rem;
+        color: rgba(255, 255, 255, 0.6);
+        transition: transform 0.3s ease;
+    }
+    
+    /* Panel styling */
+    .hud-panel {
+        max-height: 0;
+        opacity: 0;
+        overflow: hidden;
+        width: 320px;
+        background: linear-gradient(135deg, rgba(8, 12, 26, 0.98) 0%, rgba(5, 7, 15, 0.98) 100%);
+        border: 1px solid rgba(56, 189, 248, 0.3);
+        border-radius: 16px;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+        backdrop-filter: blur(16px);
+        margin-top: 12px;
+        padding: 0 20px;
+        display: flex;
+        flex-direction: column;
+        transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        transform: scale(0.95);
+    }
+    
+    /* Expanded State */
+    .cyber-hud-container:hover .hud-panel,
+    .cyber-hud-container.expanded .hud-panel {
+        max-height: 280px;
+        opacity: 1;
+        padding: 20px;
+        transform: scale(1);
+    }
+    
+    .cyber-hud-container:hover .hud-chevron,
+    .cyber-hud-container.expanded .hud-chevron {
+        transform: rotate(180deg);
+    }
+    
+    .hud-header {
+        font-size: 0.7rem;
+        font-weight: 800;
+        color: rgba(255, 255, 255, 0.4);
+        letter-spacing: 1px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    
+    .hud-divider {
+        height: 1px;
+        background: rgba(255, 255, 255, 0.08);
+        margin: 12px 0;
+    }
+    
+    .hud-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .hud-item {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+    
+    .hud-label {
+        font-size: 0.62rem;
+        color: rgba(255, 255, 255, 0.45);
+        letter-spacing: 0.5px;
+    }
+    
+    .hud-value {
+        font-size: 0.78rem;
+        color: #fff;
+        font-weight: 600;
+    }
+    
+    .hud-exit-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(220, 38, 38, 0.25) 100%);
+        border: 1px solid rgba(239, 68, 68, 0.4);
+        border-radius: 8px;
+        color: #fca5a5;
+        text-decoration: none;
+        padding: 8px 16px;
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        transition: all 0.25s ease;
+    }
+    
+    .hud-exit-btn:hover {
+        background: linear-gradient(135deg, #ef4444, #dc2626);
+        color: #fff;
+        border-color: #ef4444;
+        box-shadow: 0 0 15px rgba(239, 68, 68, 0.4);
+        transform: translateY(-1px);
+    }
+    
+    /* Adapt for Light Theme */
+    body.light-theme .hud-pill {
+        background: rgba(255, 255, 255, 0.9);
+        border-color: rgba(37, 99, 235, 0.35);
+        box-shadow: 0 10px 25px rgba(37, 99, 235, 0.15);
+    }
+    body.light-theme .hud-panel {
+        background: linear-gradient(135deg, #ffffff 0%, #f0f4ff 100%);
+        border-color: rgba(37, 99, 235, 0.2);
+        box-shadow: 0 20px 40px rgba(37, 99, 235, 0.12);
+    }
+    body.light-theme .hud-value {
+        color: #0f172a;
+    }
+    body.light-theme .hud-label,
+    body.light-theme .hud-header {
+        color: #64748b;
+    }
+    body.light-theme .hud-divider {
+        background: rgba(37, 99, 235, 0.08);
+    }
+    
+    @keyframes hudPulse {
+        0%, 100% { opacity: 0.6; transform: scale(0.9); }
+        50% { opacity: 1; transform: scale(1.15); box-shadow: 0 0 12px #22d3ee; }
+    }
+    </style>
+    <script>
+        (function() {
+            function updateHudClock() {
+                const clockEl = document.getElementById('hud-clock');
+                if (clockEl) {
+                    const now = new Date();
+                    const hours = String(now.getUTCHours()).padStart(2, '0');
+                    const minutes = String(now.getUTCMinutes()).padStart(2, '0');
+                    const seconds = String(now.getUTCSeconds()).padStart(2, '0');
+                    clockEl.textContent = `${hours}:${minutes}:${seconds}`;
+                }
+            }
+            setInterval(updateHudClock, 1000);
+            updateHudClock();
+            
+            // Toggle expanded on click for touch devices
+            const hud = document.getElementById('cyber-hud');
+            if (hud) {
+                hud.querySelector('.hud-pill').addEventListener('click', function(e) {
+                    hud.classList.toggle('expanded');
+                    e.stopPropagation();
+                });
+                document.addEventListener('click', function() {
+                    hud.classList.remove('expanded');
+                });
+                hud.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                });
+            }
+        })();
+    </script>
     {% endif %}
     <nav class="navbar">
         <div class="nav-container">
@@ -32,14 +538,18 @@
             </a>
             <div class="nav-links">
                 <a href="/" class="nav-link">Home</a>
+                <a href="/threat-analyzer" class="nav-link"><i class="ti ti-cpu" style="margin-right:4px;"></i>Threat Analyzer</a>
+                <a href="/dark-vector" class="nav-link"><i class="ti ti-scan" style="margin-right:4px;"></i>Dark Vector AI</a>
+                <a href="/provenance" class="nav-link"><i class="ti ti-code" style="margin-right:4px;"></i>Provenance AI</a>
                 {% if current_user %}
                 <a href="/dashboard" class="nav-link">Dashboard</a>
                 {% if current_user.role == 'admin' %}
-                <a href="/users" class="nav-link">Users</a>
+                <a href="/admin" class="nav-link" style="color:#f59e0b;"><i class="ti ti-shield-lock" style="margin-right:4px;"></i>Admin</a>
                 {% endif %}
-                <a href="/profile" class="nav-link"><i class="fas fa-terminal"></i> Profile</a>
+                <a href="/profile" class="nav-link"><i class="ti ti-terminal"></i> Profile</a>
+                <a href="/billing" class="nav-link"><i class="ti ti-credit-card"></i> Billing</a>
                 <a href="/new-campaign" class="btn-primary-sm">New Campaign</a>
-                <a href="/logout" class="nav-link"><i class="fas fa-sign-out-alt"></i></a>
+                <a href="/logout" class="nav-link"><i class="ti ti-logout"></i></a>
                 {% else %}
                 <a href="/login" class="btn-primary-sm">Login</a>
                 {% endif %}
@@ -47,13 +557,25 @@
         </div>
     </nav>
 
-    <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Switch to light mode" title="Switch theme">
-        <span class="theme-toggle-icon theme-toggle-sun"><i class="fas fa-sun"></i></span>
-        <span class="theme-toggle-icon theme-toggle-moon"><i class="fas fa-moon"></i></span>
+    <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Switch to enterprise mode" title="Switch theme">
+        <span class="theme-toggle-icon theme-toggle-dark">DARK</span>
+        <span class="theme-toggle-icon theme-toggle-light">LIGHT</span>
     </button>
-    <div id="theme-tooltip" style="position:fixed; right:5rem; bottom:2rem; background:rgba(15,23,42,0.95); color:#fff; padding:8px 16px; border-radius:8px; font-weight:700; font-family:'Outfit',sans-serif; opacity:0; pointer-events:none; transition:opacity 0.3s ease; z-index:30000; box-shadow:0 10px 25px rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.1);">
-        Cyberpunk Mode
+    <div class="theme-tooltip" id="theme-tooltip">
+        Cyber mode
     </div>
+
+    <!-- Navbar Scroll Script -->
+    <script>
+    window.addEventListener('scroll', function() {
+        const nav = document.querySelector('.navbar');
+        if(window.scrollY > 80) {
+            nav.classList.add('nav-scrolled');
+        } else {
+            nav.classList.remove('nav-scrolled');
+        }
+    });
+    </script>
 
     {% with messages = get_flashed_messages() %}
     {% if messages %}
@@ -76,13 +598,13 @@
                 <div>
                     <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 1rem;">
                         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
-                        <span style="font-family: 'Outfit', sans-serif; font-size: 1.2rem; font-weight: 800; color: #fff;">PhishSim<span style="color: #3b82f6;">.ai</span></span>
+                        <span style="font-family: var(--font-sans); font-size: 1.2rem; font-weight: 800; color: #fff;">PhishSim<span style="color: #3b82f6;">.ai</span></span>
                     </div>
                     <p style="color: #475569; font-size: 0.88rem; line-height: 1.6; margin: 0; max-width: 250px;">AI-powered phishing simulation platform. Train your team, measure risk, and build a stronger human firewall.</p>
                 </div>
                 <!-- Product -->
                 <div>
-                    <h4 style="color: #fff; font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 1rem; font-family: 'Space Mono', monospace;">Product</h4>
+                    <h4 style="color: #fff; font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 1rem; font-family: var(--font-mono);">Product</h4>
                     <ul style="list-style: none; padding: 0; display: flex; flex-direction: column; gap: 0.6rem;">
                         <li><a href="/demo-login" style="color: #64748b; font-size: 0.88rem; text-decoration: none; transition: color 0.2s;" onmouseover="this.style.color='#06b6d4'" onmouseout="this.style.color='#64748b'">Live Demo</a></li>
                         <li><a href="/signup" style="color: #64748b; font-size: 0.88rem; text-decoration: none; transition: color 0.2s;" onmouseover="this.style.color='#06b6d4'" onmouseout="this.style.color='#64748b'">Get Started</a></li>
@@ -92,7 +614,7 @@
                 </div>
                 <!-- Scenarios -->
                 <div>
-                    <h4 style="color: #fff; font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 1rem; font-family: 'Space Mono', monospace;">Scenarios</h4>
+                    <h4 style="color: #fff; font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 1rem; font-family: var(--font-mono);">Scenarios</h4>
                     <ul style="list-style: none; padding: 0; display: flex; flex-direction: column; gap: 0.6rem;">
                         <li><span style="color: #64748b; font-size: 0.88rem;">CEO Fraud</span></li>
                         <li><span style="color: #64748b; font-size: 0.88rem;">IT Alert</span></li>
@@ -102,7 +624,7 @@
                 </div>
                 <!-- Legal -->
                 <div>
-                    <h4 style="color: #fff; font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 1rem; font-family: 'Space Mono', monospace;">Legal</h4>
+                    <h4 style="color: #fff; font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 1rem; font-family: var(--font-mono);">Legal</h4>
                     <ul style="list-style: none; padding: 0; display: flex; flex-direction: column; gap: 0.6rem;">
                         <li><span style="color: #64748b; font-size: 0.88rem;">Authorized Use Only</span></li>
                         <li><span style="color: #64748b; font-size: 0.88rem;">No Credentials Collected</span></li>
@@ -113,7 +635,7 @@
             <div style="border-top: 1px solid var(--border-color); padding-top: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
                 <p style="color: var(--text-muted); font-size: 0.82rem; margin: 0;">&copy; 2026 PhishSim AI &mdash; Built by Kavy Sharma. For authorized security training only.</p>
                 <div style="display: flex; gap: 1rem;">
-                    <a href="https://github.com/Kavy-Sharma/phishsim-ai" target="_blank" rel="noopener noreferrer" style="color: #334155; font-size: 0.85rem; transition: color 0.2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#334155'"><i class="fab fa-github"></i></a>
+                    <a href="https://github.com/Kavy-Sharma/phishsim-ai" target="_blank" rel="noopener noreferrer" style="color: #334155; font-size: 0.85rem; transition: color 0.2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#334155'"><i class="ti ti-brand-github"></i></a>
                 </div>
             </div>
         </div>
@@ -131,20 +653,20 @@
                 tooltip.style.background = isLight ? "rgba(255,255,255,0.95)" : "rgba(15,23,42,0.95)";
                 tooltip.style.color = isLight ? "#0f172a" : "#fff";
                 tooltip.style.borderColor = isLight ? "rgba(59,130,246,0.3)" : "rgba(255,255,255,0.1)";
-                tooltip.style.opacity = "1";
+                tooltip.classList.add("show");
                 clearTimeout(tooltipTimeout);
-                tooltipTimeout = setTimeout(() => { tooltip.style.opacity = "0"; }, 3000);
+                tooltipTimeout = setTimeout(() => { tooltip.classList.remove("show"); }, 2200);
             }
 
             function applyTheme(theme, showMsg = true) {
                 const isLight = theme === "light";
                 body.classList.toggle("light-theme", isLight);
-                toggle.setAttribute("aria-label", isLight ? "Switch to dark mode" : "Switch to light mode");
-                toggle.setAttribute("title", isLight ? "Switch to dark mode" : "Switch to light mode");
+                toggle.setAttribute("aria-label", isLight ? "Switch to cyber mode" : "Switch to enterprise mode");
+                toggle.setAttribute("title", isLight ? "Switch to cyber mode" : "Switch to enterprise mode");
                 localStorage.setItem(storageKey, theme);
                 
                 if (showMsg) {
-                    showTooltip(isLight ? "Enterprise Mode Active" : "Cyberpunk Mode Active", isLight);
+                    showTooltip(isLight ? "Enterprise mode" : "Cyber mode", isLight);
                 }
 
                 // Dispatch event so other scripts (like charts) can re-render
@@ -158,6 +680,182 @@
                 applyTheme(body.classList.contains("light-theme") ? "dark" : "light", true);
             });
         })();
+    </script>
+    <script>
+        (function() {
+            const selectors = [
+                ".auth-card", ".nc-card", ".dash-hero", ".summary-stat", ".board-hss-hero",
+                ".camp-card", ".risk-trend-card", ".profile-container > *", ".admin-topbar",
+                ".astat", ".admin-section", ".emails-hero", ".emails-layout", ".report-hero",
+                ".rstat-box", ".r-panel", ".report-actions"
+            ].join(",");
+            const items = Array.from(document.querySelectorAll(selectors));
+            items.forEach((el, index) => {
+                el.classList.add("app-reveal");
+                el.style.setProperty("--reveal-delay", `${Math.min(index * 45, 360)}ms`);
+            });
+            const obs = new IntersectionObserver((entries) => {
+                entries.forEach((entry) => {
+                    if (!entry.isIntersecting) return;
+                    entry.target.classList.add("is-visible");
+                    obs.unobserve(entry.target);
+                });
+            }, { threshold: 0.12 });
+            items.forEach((el) => obs.observe(el));
+        })();
+    </script>
+    <script>
+        // Global mouse spotlight effect for h1, h2 and cyber-spotlight-text elements
+        document.addEventListener('DOMContentLoaded', () => {
+            const updateSpotlight = (e) => {
+                const target = e.target.closest('h1, h2, .cyber-spotlight-text');
+                if (target) {
+                    const rect = target.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+                    target.style.setProperty('--mouse-x', `${x}px`);
+                    target.style.setProperty('--mouse-y', `${y}px`);
+                }
+            };
+            document.addEventListener('mousemove', updateSpotlight, { passive: true });
+            document.addEventListener('touchmove', (e) => {
+                if (e.touches[0]) {
+                    const target = e.target.closest('h1, h2, .cyber-spotlight-text');
+                    if (target) {
+                        const rect = target.getBoundingClientRect();
+                        const x = e.touches[0].clientX - rect.left;
+                        const y = e.touches[0].clientY - rect.top;
+                        target.style.setProperty('--mouse-x', `${x}px`);
+                        target.style.setProperty('--mouse-y', `${y}px`);
+                    }
+                }
+            }, { passive: true });
+        });
+    </script>
+    {% if current_user and latest_active_campaign %}
+    <!-- Floating Persistent Active Campaign Strip -->
+    <div class="floating-campaign-strip collapsed" id="campaign-strip">
+        <div class="strip-content">
+            <div class="strip-pulse-dot status-{{ latest_active_campaign.status }}" title="Status: {{ latest_active_campaign.status }}"></div>
+            <div class="strip-text" style="color: var(--text-main);">
+                <span style="font-weight: 700; color: var(--accent-cyan);">Latest Campaign:</span> 
+                <strong>{{ latest_active_campaign.name }}</strong> 
+                <span style="color: var(--text-muted); margin: 0 8px;">|</span>
+                <span>Sent: <strong style="color: var(--text-main);">{{ latest_active_campaign.sent }}</strong></span>
+                <span style="color: var(--text-muted); margin: 0 8px;">|</span>
+                <span>Click Rate: <strong style="color: {% if latest_active_campaign.click_rate >= 20 %}#ef4444{% elif latest_active_campaign.click_rate >= 5 %}#f59e0b{% else %}#10b981{% endif %};">{{ latest_active_campaign.click_rate }}%</strong></span>
+            </div>
+            <a href="/campaign-report/{{ latest_active_campaign.id }}" class="strip-action-btn">
+                View Report <i class="ti ti-chart-bar" style="vertical-align: middle; margin-left: 2px;"></i>
+            </a>
+            <button type="button" class="strip-close-btn" onclick="closeCampaignStrip()" aria-label="Close campaign strip">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    </div>
+    
+    <!-- Floating Open Trigger Icon -->
+    <div class="campaign-strip-trigger" id="campaign-strip-trigger" onclick="openCampaignStrip()" title="Open Latest Campaign Strip">
+        <i class="fas fa-chart-line"></i>
+    </div>
+
+    <script>
+    function closeCampaignStrip() {
+        const strip = document.getElementById('campaign-strip');
+        const trigger = document.getElementById('campaign-strip-trigger');
+        if (strip && trigger) {
+            strip.classList.add('collapsed');
+            trigger.classList.add('visible');
+            localStorage.setItem('campaign_strip_closed', 'true');
+        }
+    }
+    
+    function openCampaignStrip() {
+        const strip = document.getElementById('campaign-strip');
+        const trigger = document.getElementById('campaign-strip-trigger');
+        if (strip && trigger) {
+            strip.classList.remove('collapsed');
+            trigger.classList.remove('visible');
+            localStorage.setItem('campaign_strip_closed', 'false');
+        }
+    }
+
+    document.addEventListener("DOMContentLoaded", function() {
+        const strip = document.getElementById('campaign-strip');
+        const trigger = document.getElementById('campaign-strip-trigger');
+        const isClosed = localStorage.getItem('campaign_strip_closed');
+        
+        if (strip && trigger) {
+            if (isClosed === 'true') {
+                strip.classList.add('collapsed');
+                trigger.classList.add('visible');
+            } else {
+                strip.classList.remove('collapsed');
+                trigger.classList.remove('visible');
+            }
+        }
+    });
+    </script>
+    {% endif %}
+    <!-- Global Holographic Cursor Dot -->
+    <div class="cursor-glow-dot" id="cursor-glow-dot"></div>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const dot = document.getElementById("cursor-glow-dot") || document.createElement("div");
+            if (!dot.parentNode) {
+                dot.className = "cursor-glow-dot";
+                document.body.appendChild(dot);
+            }
+
+            let mouseX = window.innerWidth / 2;
+            let mouseY = window.innerHeight / 2;
+            let dotX = mouseX;
+            let dotY = mouseY;
+            const speed = 0.15;
+            let hasMoved = false;
+
+            document.addEventListener("mousemove", (e) => {
+                mouseX = e.clientX;
+                mouseY = e.clientY;
+                if (!hasMoved) {
+                    dotX = mouseX;
+                    dotY = mouseY;
+                    dot.style.opacity = "1";
+                    hasMoved = true;
+                }
+            });
+
+            function animateDot() {
+                dotX += (mouseX - dotX) * speed;
+                dotY += (mouseY - dotY) * speed;
+                dot.style.left = `${dotX}px`;
+                dot.style.top = `${dotY}px`;
+                requestAnimationFrame(animateDot);
+            }
+            animateDot();
+
+            // Hover effects on interactive elements
+            const attachHoverEvents = () => {
+                document.querySelectorAll("a, button, input, select, textarea, [role='button'], .custom-option, .delivery-label, .scenario-card-label, .theme-toggle, .weekday-btn, .dom-btn").forEach(el => {
+                    if (el.dataset.hasCursorHover) return;
+                    el.dataset.hasCursorHover = "true";
+                    el.addEventListener("mouseenter", () => {
+                        dot.style.width = "30px";
+                        dot.style.height = "30px";
+                        dot.style.borderColor = "#ff007f";
+                        dot.style.borderStyle = "dashed";
+                    });
+                    el.addEventListener("mouseleave", () => {
+                        dot.style.width = "18px";
+                        dot.style.height = "18px";
+                        dot.style.borderColor = "rgba(0, 240, 255, 0.7)";
+                        dot.style.borderStyle = "solid";
+                    });
+                });
+            };
+            attachHoverEvents();
+            setInterval(attachHoverEvents, 2000);
+        });
     </script>
 </body>
 </html>

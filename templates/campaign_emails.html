@@ -41,7 +41,7 @@
     background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.25);
     border-radius: 100px; padding: 5px 14px;
     font-size: 0.78rem; color: #3b82f6;
-    font-family: 'Space Mono', monospace; text-transform: uppercase; letter-spacing: 1px;
+    font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 1px;
     margin-bottom: 1rem;
 }
 .emails-eyebrow::before {
@@ -51,12 +51,12 @@
 }
 @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.2; } }
 .emails-title {
-    font-family: 'Outfit', sans-serif; font-size: 2rem; font-weight: 800;
+    font-family: var(--font-sans); font-size: 2rem; font-weight: 800;
     color: var(--text-main); margin: 0 0 0.5rem;
 }
 .emails-meta { color: var(--text-muted); font-size: 0.9rem; }
 .emails-count {
-    font-family: 'Space Mono', monospace; font-size: 2rem; font-weight: 900;
+    font-family: var(--font-mono); font-size: 2rem; font-weight: 900;
     color: var(--accent-blue); text-align: right;
 }
 .emails-count small { display: block; font-size: 0.75rem; color: var(--text-muted); font-weight: normal; letter-spacing: 1px; text-transform: uppercase; margin-top: 4px; }
@@ -72,10 +72,10 @@
 
 /* Sidebar */
 .email-list {
-    background: var(--bg-card);
-    border: 1px solid var(--border-color);
-    border-radius: 16px;
-    overflow: hidden;
+    background: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    overflow: visible !important;
     position: sticky;
     top: 80px;
     max-height: calc(100vh - 120px);
@@ -85,7 +85,7 @@
 .email-list-header {
     padding: 1rem 1.2rem;
     border-bottom: 1px solid var(--border-color);
-    font-family: 'Space Mono', monospace;
+    font-family: var(--font-mono);
     font-size: 0.75rem;
     color: var(--text-muted);
     text-transform: uppercase;
@@ -123,10 +123,10 @@
 
 /* Email Viewer */
 .email-viewer {
-    background: var(--bg-card);
-    border: 1px solid var(--border-color);
-    border-radius: 16px;
-    overflow: hidden;
+    background: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    overflow: visible !important;
     min-height: 500px;
 }
 .ev-header {
@@ -135,7 +135,7 @@
     border-bottom: 1px solid var(--border-color);
 }
 .ev-subject {
-    font-family: 'Outfit', sans-serif;
+    font-family: var(--font-sans);
     font-size: 1.3rem; font-weight: 800; color: var(--text-main);
     margin-bottom: 1rem;
 }
@@ -199,12 +199,12 @@
     padding: 8px 16px; border-radius: 8px;
     background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.2);
     color: #94a3b8; font-size: 0.85rem; cursor: pointer;
-    transition: all 0.2s; font-family: 'Outfit', sans-serif;
+    transition: all 0.2s; font-family: var(--font-sans);
 }
 .email-nav-btn:hover { background: rgba(59,130,246,0.2); color: #fff; }
 .email-nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
 .email-nav-counter {
-    font-family: 'Space Mono', monospace;
+    font-family: var(--font-mono);
     font-size: 0.8rem; color: #475569;
 }
 
@@ -218,7 +218,7 @@
         <a href="/campaign-report/{{ campaign.id }}" class="back-link-styled">
             <i class="fas fa-arrow-left"></i> Back to Report
         </a>
-        <span style="font-family: 'Space Mono', monospace; font-size: 0.78rem; color: #334155; text-transform: uppercase; letter-spacing: 1px;">
+        <span style="font-family: var(--font-mono); font-size: 0.78rem; color: #334155; text-transform: uppercase; letter-spacing: 1px;">
             {{ campaign.scenario_type | replace('_', ' ') | title }} Scenario
         </span>
     </div>
@@ -278,60 +278,84 @@
     <!-- Email Client Layout -->
     <div class="emails-layout">
         <!-- Sidebar List -->
-        <div class="email-list">
-            <div class="email-list-header">
-                <i class="fas fa-inbox" style="color: #3b82f6; margin-right: 6px;"></i>
-                Inbox ({{ emails | length }})
-            </div>
-            <div class="email-list-body">
-                {% for email in emails %}
-                <div class="email-list-item {% if loop.first %}active{% endif %}"
-                     onclick="showEmail({{ loop.index0 }})"
-                     id="list-item-{{ loop.index0 }}">
-                    <div class="eli-to">To: {{ email.recipient_email }}</div>
-                    <div class="eli-subject">{{ email.subject or 'No Subject' }}</div>
-                    <div class="eli-from">From: {{ email.sender_name or 'AI Engine' }}</div>
+        <div class="window-mockup" style="position: sticky; top: 80px; max-height: calc(100vh - 120px); display: flex; flex-direction: column; margin-bottom: 0;">
+            <div class="window-header">
+                <div class="window-dots">
+                    <span class="window-dot red"></span>
+                    <span class="window-dot yellow"></span>
+                    <span class="window-dot green"></span>
                 </div>
-                {% endfor %}
+                <span class="window-title">inbox_list.log</span>
+            </div>
+            <div class="window-body" style="padding: 0; flex: 1; display: flex; flex-direction: column; overflow: hidden;">
+                <div class="email-list">
+                    <div class="email-list-header">
+                        <i class="fas fa-inbox" style="color: #3b82f6; margin-right: 6px;"></i>
+                        Inbox ({{ emails | length }})
+                    </div>
+                    <div class="email-list-body">
+                        {% for email in emails %}
+                        <div class="email-list-item {% if loop.first %}active{% endif %}"
+                             onclick="showEmail({{ loop.index0 }})"
+                             id="list-item-{{ loop.index0 }}">
+                            <div class="eli-to">To: {{ email.recipient_email }}</div>
+                            <div class="eli-subject">{{ email.subject or 'No Subject' }}</div>
+                            <div class="eli-from">From: {{ email.sender_name or 'AI Engine' }}</div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
             </div>
         </div>
 
         <!-- Email Viewer -->
-        <div class="email-viewer" id="email-viewer">
-            <div class="ev-header" id="ev-header">
-                <div class="ev-subject" id="ev-subject">{{ emails[0].subject or 'No Subject' }}</div>
-                <div class="ev-meta-row">
-                    <span class="ev-meta-label">From</span>
-                    <span class="ev-meta-value"><strong id="ev-from">{{ emails[0].sender_name or 'AI Engine' }}</strong></span>
+        <div class="window-mockup" style="margin-bottom: 0;">
+            <div class="window-header">
+                <div class="window-dots">
+                    <span class="window-dot red"></span>
+                    <span class="window-dot yellow"></span>
+                    <span class="window-dot green"></span>
                 </div>
-                <div class="ev-meta-row">
-                    <span class="ev-meta-label">To</span>
-                    <span class="ev-meta-value" id="ev-to">{{ emails[0].recipient_email }}</span>
-                </div>
+                <span class="window-title">email_view.eml</span>
             </div>
-            <div class="ev-body">
-                <div class="ev-body-inner" id="ev-body">
-                    {{ emails[0].body_html | safe if emails[0].body_html else '<em style="color:#94a3b8;">Email body not available.</em>' }}
+            <div class="window-body" style="padding: 0;">
+                <div class="email-viewer" id="email-viewer">
+                    <div class="ev-header" id="ev-header">
+                        <div class="ev-subject" id="ev-subject">{{ emails[0].subject or 'No Subject' }}</div>
+                        <div class="ev-meta-row">
+                            <span class="ev-meta-label">From</span>
+                            <span class="ev-meta-value"><strong id="ev-from">{{ emails[0].sender_name or 'AI Engine' }}</strong></span>
+                        </div>
+                        <div class="ev-meta-row">
+                            <span class="ev-meta-label">To</span>
+                            <span class="ev-meta-value" id="ev-to">{{ emails[0].recipient_email }}</span>
+                        </div>
+                    </div>
+                    <div class="ev-body">
+                        <div class="ev-body-inner" id="ev-body">
+                            {{ emails[0].body_html | safe if emails[0].body_html else '<em style="color:#94a3b8;">Email body not available.</em>' }}
+                        </div>
+                    </div>
+                    {% if emails[0].educational_breakdown %}
+                    <div class="ev-insight">
+                        <div class="ev-insight-icon"><i class="fas fa-lightbulb"></i></div>
+                        <div class="ev-insight-text">
+                            <strong>AI Psychological Insight</strong>
+                            <span id="ev-insight-text">{{ emails[0].educational_breakdown }}</span>
+                        </div>
+                    </div>
+                    {% endif %}
+                    <!-- Nav -->
+                    <div class="email-nav">
+                        <button class="email-nav-btn" onclick="prevEmail()" id="btn-prev" disabled>
+                            <i class="fas fa-chevron-left"></i> Previous
+                        </button>
+                        <span class="email-nav-counter" id="nav-counter">1 / {{ emails | length }}</span>
+                        <button class="email-nav-btn" onclick="nextEmail()" id="btn-next" {% if emails|length <= 1 %}disabled{% endif %}>
+                            Next <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
                 </div>
-            </div>
-            {% if emails[0].educational_breakdown %}
-            <div class="ev-insight">
-                <div class="ev-insight-icon"><i class="fas fa-lightbulb"></i></div>
-                <div class="ev-insight-text">
-                    <strong>AI Psychological Insight</strong>
-                    <span id="ev-insight-text">{{ emails[0].educational_breakdown }}</span>
-                </div>
-            </div>
-            {% endif %}
-            <!-- Nav -->
-            <div class="email-nav">
-                <button class="email-nav-btn" onclick="prevEmail()" id="btn-prev" disabled>
-                    <i class="fas fa-chevron-left"></i> Previous
-                </button>
-                <span class="email-nav-counter" id="nav-counter">1 / {{ emails | length }}</span>
-                <button class="email-nav-btn" onclick="nextEmail()" id="btn-next" {% if emails|length <= 1 %}disabled{% endif %}>
-                    Next <i class="fas fa-chevron-right"></i>
-                </button>
             </div>
         </div>
     </div>
@@ -388,7 +412,20 @@
 (function(){
     const isLaunching = {{ 'true' if campaign.status == 'launching' else 'false' }};
     if (!isLaunching) return;
-    setInterval(function() { window.location.reload(); }, 3000);
+    
+    const interval = setInterval(function() {
+        fetch("/api/campaign-status/{{ campaign.id }}")
+            .then(res => res.json())
+            .then(data => {
+                if (data && data.status !== "launching") {
+                    clearInterval(interval);
+                    // Suppress the page loader on this programmatic reload
+                    sessionStorage.setItem('skipLoader', '1');
+                    window.location.reload();
+                }
+            })
+            .catch(err => console.error("Error polling campaign status:", err));
+    }, 2000);
 })();
 </script>
 {% endblock %}

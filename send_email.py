@@ -1,4 +1,5 @@
 import os
+import re
 import requests
 from dotenv import load_dotenv
 
@@ -21,24 +22,31 @@ def is_deployed_environment():
         return False
     return any(_clean(os.getenv(name)) for name in DEPLOYMENT_ENV_VARS)
 
-def get_email_settings(delivery_mode=None):
+def get_email_settings(delivery_mode=None, mailtrap_user_override=None, mailtrap_pass_override=None):
     """Returns settings dict — kept for compatibility with app.py checks.
 
     Priority:
-      1. explicit delivery_mode argument (from campaign)
-      2. EMAIL_MODE env var
-      3. Auto-detect: deployed → mailtrap (if configured) or resend
+        1. explicit delivery_mode argument (from campaign)
+        2. EMAIL_MODE env var
+        3. Auto-detect: deployed → mailtrap (if configured) or resend
     """
     explicit_mode = _clean(delivery_mode or os.getenv("EMAIL_MODE", "")).lower()
 
     # --- Mailtrap sandbox (works on Render: port 2525 is NOT blocked) ---
     if explicit_mode == "mailtrap":
+        mt_user = _clean(os.getenv("MAILTRAP_USER"))
+        mt_pass = _clean(os.getenv("MAILTRAP_PASS"))
+        # Allow per-call credential overrides (for user-provided Mailtrap inboxes)
+        if mailtrap_user_override:
+            mt_user = mailtrap_user_override
+        if mailtrap_pass_override:
+            mt_pass = mailtrap_pass_override
         return {
             "provider": "smtp",
             "host": "sandbox.smtp.mailtrap.io",
             "port": 2525,
-            "user": _clean(os.getenv("MAILTRAP_USER")),
-            "password": _clean(os.getenv("MAILTRAP_PASS")),
+            "user": mt_user,
+            "password": mt_pass,
             "encryption": "starttls",
             "from_email": _clean(os.getenv("EMAIL_FROM", "training@phishsim.ai")),
         }
@@ -82,7 +90,21 @@ def get_email_settings(delivery_mode=None):
     }
 
 
-def send_phishing_email(to_email, subject, sender_name, body_html, tracking_id, delivery_mode=None):
+def replace_all_links_with_tracking(body_html, tracking_url):
+    """Replaces the TRACKING_LINK placeholder and any href targets in <a> tags with the tracking_url."""
+    # First, if the literal placeholder "TRACKING_LINK" is present, replace it
+    body_html = body_html.replace("TRACKING_LINK", tracking_url)
+    
+    # Then replace any href in any <a> tags
+    def replacer(match):
+        return f"{match.group(1)}{match.group(2)}{tracking_url}{match.group(2)}{match.group(4)}"
+    
+    body_html = re.sub(r'(<a\b[^>]*?\bhref\s*=\s*)(["\'])(.*?)\2([^>]*?>)', replacer, body_html, flags=re.IGNORECASE)
+    return body_html
+
+
+def send_phishing_email(to_email, subject, sender_name, body_html, tracking_id, delivery_mode=None,
+                        mailtrap_user=None, mailtrap_pass=None):
     """Sends one phishing simulation email."""
 
     base_url = _clean(os.getenv("APP_BASE_URL", "http://127.0.0.1:5000"), "/")
@@ -90,9 +112,10 @@ def send_phishing_email(to_email, subject, sender_name, body_html, tracking_id, 
     pixel_url    = f"{base_url}/pixel/{tracking_id}.png"
     report_url   = f"{base_url}/report/{tracking_id}"
 
-    body_html = body_html.replace("TRACKING_LINK", tracking_url)
-
-    report_button_html = f"""
+    # If the email body doesn't already contain the report button, replace links and append it
+    if "Report Suspicious Email" not in body_html:
+        body_html = replace_all_links_with_tracking(body_html, tracking_url)
+        report_button_html = f"""
     <br><br>
     <div style="font-family:Arial,sans-serif;text-align:center;margin-top:30px;padding:20px;
                 border-top:1px solid #e0e0e0;background-color:#f9f9f9;border-radius:8px;">
@@ -104,10 +127,12 @@ def send_phishing_email(to_email, subject, sender_name, body_html, tracking_id, 
             Report Suspicious Email</a>
     </div>
     """
-    body_html += report_button_html
-    body_html += f'\n<img src="{pixel_url}" width="1" height="1" style="display:none;" />'
+        body_html += report_button_html
+        body_html += f'\n<img src="{pixel_url}" width="1" height="1" style="display:none;" />'
 
-    settings = get_email_settings(delivery_mode)
+    settings = get_email_settings(delivery_mode,
+                                  mailtrap_user_override=mailtrap_user,
+                                  mailtrap_pass_override=mailtrap_pass)
 
     if settings["provider"] == "resend":
         api_key = _clean(os.getenv("RESEND_API_KEY"))
@@ -154,7 +179,7 @@ def send_phishing_email(to_email, subject, sender_name, body_html, tracking_id, 
 
     try:
         with smtplib.SMTP(settings["host"], settings["port"], timeout=6) as server:
-            if settings["encryption"] == "starttls":
+            if settings.get("encryption") == "starttls":
                 server.starttls()
             if settings["user"] and settings["password"]:
                 server.login(settings["user"], settings["password"])

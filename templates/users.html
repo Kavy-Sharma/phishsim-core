@@ -6,16 +6,19 @@
 <style>
 .users-page { max-width: 1180px; margin: 0 auto; padding: 2rem; }
 .users-header { display:flex; justify-content:space-between; align-items:flex-end; gap:1rem; margin-bottom:2rem; }
-.users-header h1 { color:var(--text-main); margin:0; font-size:2.3rem; font-family:'Outfit', sans-serif; }
+.users-header h1 { color:var(--text-main); margin:0; font-size:2.3rem; font-family:var(--font-sans); }
 .users-header p { color:var(--text-muted); margin:0.4rem 0 0; }
 .users-layout { display:grid; grid-template-columns:minmax(300px, 380px) minmax(0, 1fr); gap:1.5rem; align-items:start; }
+/* Users card overridden for window-mockup support */
 .users-card {
-    background:var(--bg-card); border:1px solid var(--border-color);
-    border-radius:18px; padding:1.5rem; box-shadow:0 20px 50px rgba(0,0,0,0.1);
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    box-shadow: none !important;
 }
 .users-card h2 { color:var(--text-main); margin:0 0 1rem; font-size:1.2rem; }
 .users-form-grid { display:grid; gap:0.9rem; }
-.users-form-grid label { color:var(--text-muted); font-size:0.78rem; text-transform:uppercase; letter-spacing:1px; font-family:'Space Mono', monospace; }
+.users-form-grid label { color:var(--text-muted); font-size:0.78rem; text-transform:uppercase; letter-spacing:1px; font-family:var(--font-mono); }
 .users-form-grid input, .users-form-grid select {
     width:100%; background:rgba(0,0,0,0.05); border:1px solid var(--border-color);
     border-radius:10px; color:var(--text-main); padding:12px; outline:none;
@@ -37,6 +40,13 @@
 }
 .icon-btn:hover { color:var(--text-main); border-color:var(--accent-blue); }
 .icon-btn.danger:hover { color:#f87171; border-color:rgba(239,68,68,0.35); }
+.role-form { margin:0; }
+.role-btn {
+    min-width:38px; height:38px; border-radius:10px; border:1px solid var(--border-color);
+    background:rgba(0,0,0,0.05); color:var(--text-muted); cursor:pointer; padding:0 11px;
+}
+.role-btn:hover { color:#fff; border-color:rgba(59,130,246,0.45); background:linear-gradient(135deg,#06b6d4,#3b82f6); }
+.role-btn.warning:hover { border-color:rgba(245,158,11,0.55); background:linear-gradient(135deg,#f59e0b,#ef4444); }
 .reset-form {
     grid-column:1 / -1; display:none; grid-template-columns:minmax(180px, 1fr) auto; gap:0.6rem;
     margin-top:0.8rem; padding-top:0.8rem; border-top:1px solid var(--border-color);
@@ -89,64 +99,109 @@
 
     <div class="users-layout">
         <section class="users-card">
-            <h2>Create User</h2>
-            <form method="POST" class="users-form-grid">
-                <div>
-                    <label for="name">Name</label>
-                    <input type="text" id="name" name="name" placeholder="Security Manager" required>
+            <div class="window-mockup" style="margin-bottom: 0;">
+                <div class="window-header">
+                    <div class="window-dots">
+                        <span class="window-dot red"></span>
+                        <span class="window-dot yellow"></span>
+                        <span class="window-dot green"></span>
+                    </div>
+                    <span class="window-title">add_user.sh</span>
                 </div>
-                <div>
-                    <label for="email">Email</label>
-                    <input type="email" id="email" name="email" placeholder="manager@gmail.com" required>
+                <div class="window-body" style="padding: 1.5rem;">
+                    <h2 style="margin-top: 0; font-family: var(--font-sans);">Create User</h2>
+                    <form method="POST" class="users-form-grid">
+                        <div>
+                            <label for="name">Name</label>
+                            <input type="text" id="name" name="name" placeholder="Security Manager" required>
+                        </div>
+                        <div>
+                            <label for="email">Email</label>
+                            <input type="email" id="email" name="email" placeholder="manager@gmail.com" required>
+                        </div>
+                        <div>
+                            <label for="password">Temporary Password</label>
+                            <input type="password" id="password" name="password" required>
+                            <small>Passwords are stored as hashes. They cannot be displayed later, only reset.</small>
+                        </div>
+                        <div>
+                            <label for="role">Role</label>
+                            <select id="role" name="role">
+                                <option value="company_user">Company User</option>
+                                <option value="admin">Admin</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="company_domain">Company Domain</label>
+                            <input type="text" id="company_domain" name="company_domain" placeholder="testing.local">
+                            <small>Optional while testing. If blank, the email domain is used.</small>
+                        </div>
+                        <button type="submit" class="btn-primary" style="width:100%;">Create User</button>
+                    </form>
                 </div>
-                <div>
-                    <label for="password">Temporary Password</label>
-                    <input type="password" id="password" name="password" required>
-                    <small>Passwords are stored as hashes. They cannot be displayed later, only reset.</small>
-                </div>
-                <div>
-                    <label for="role">Role</label>
-                    <select id="role" name="role">
-                        <option value="company_user">Company User</option>
-                        <option value="admin">Admin</option>
-                    </select>
-                </div>
-                <div>
-                    <label for="company_domain">Company Domain</label>
-                    <input type="text" id="company_domain" name="company_domain" placeholder="testing.local">
-                    <small>Optional while testing. If blank, the email domain is used.</small>
-                </div>
-                <button type="submit" class="btn-primary" style="width:100%;">Create User</button>
-            </form>
+            </div>
         </section>
 
         <section class="users-card">
-            <h2>Existing Users</h2>
-            <div class="users-list">
-                {% for user in users %}
-                <div class="user-row">
-                    <div class="user-main">
-                        <strong>{{ user.name }}</strong>
-                        <p>{{ user.email }}{% if user.company_domain %} · {{ user.company_domain }}{% endif %}</p>
+            <div class="window-mockup" style="margin-bottom: 0;">
+                <div class="window-header">
+                    <div class="window-dots">
+                        <span class="window-dot red"></span>
+                        <span class="window-dot yellow"></span>
+                        <span class="window-dot green"></span>
                     </div>
-                    <div class="user-actions">
-                        <span class="verify-pill {% if not user.email_verified %}pending{% endif %}">
-                            {% if user.email_verified %}Verified{% else %}Unverified{% endif %}
-                        </span>
-                        <span class="badge {% if user.role == 'admin' %}badge-launched{% else %}badge-draft{% endif %}">
-                            {{ user.role.replace('_', ' ') }}
-                        </span>
-                        <button type="button" class="icon-btn" title="Reset password" onclick="toggleReset({{ user.id }})"><i class="fas fa-key"></i></button>
-                        <form action="/delete-user/{{ user.id }}" method="POST" data-confirm-title="Delete user?" data-confirm-message="This will delete the user account. Campaign data may remain attached to historical records." style="margin:0;">
-                            <button type="submit" class="icon-btn danger" title="Delete user"><i class="fas fa-trash-alt"></i></button>
-                        </form>
-                    </div>
-                    <form id="reset-{{ user.id }}" class="reset-form" action="/reset-user-password/{{ user.id }}" method="POST">
-                        <input type="password" name="new_password" placeholder="New password" required>
-                        <button type="submit">Reset</button>
-                    </form>
+                    <span class="window-title">existing_users.db</span>
                 </div>
-                {% endfor %}
+                <div class="window-body" style="padding: 1.5rem;">
+                    <h2 style="margin-top: 0; font-family: var(--font-sans);">Existing Users</h2>
+                    <div class="users-list">
+                        {% for user in users %}
+                        {% set role_action = 'company_user' if user.role == 'admin' else 'admin' %}
+                        <div class="user-row">
+                            <div class="user-main">
+                                <strong>{{ user.name }}</strong>
+                                <p>{{ user.email }}{% if user.company_domain %} · {{ user.company_domain }}{% endif %}</p>
+                            </div>
+                            <div class="user-actions">
+                                <span class="verify-pill {% if not user.email_verified %}pending{% endif %}">
+                                    {% if user.email_verified %}Verified{% else %}Unverified{% endif %}
+                                </span>
+                                {% if not user.email_verified %}
+                                <form action="/verify-user/{{ user.id }}" method="POST" class="role-form"
+                                      data-confirm-title="Verify user?"
+                                      data-confirm-message="This marks the user's email as verified without requiring an email link."
+                                      data-confirm-action="Verify">
+                                    <button type="submit" class="role-btn" title="Mark verified">
+                                        <i class="fas fa-envelope-circle-check"></i>
+                                    </button>
+                                </form>
+                                {% endif %}
+                                <span class="badge {% if user.role == 'admin' %}badge-launched{% else %}badge-draft{% endif %}">
+                                    {{ user.role.replace('_', ' ') }}
+                                </span>
+                                <form action="/set-user-role/{{ user.id }}" method="POST" class="role-form"
+                                      data-confirm-title="{% if user.role == 'admin' %}Remove admin access?{% else %}Make user admin?{% endif %}"
+                                      data-confirm-message="{% if user.role == 'admin' %}This user will become a company user and lose admin-only controls.{% else %}This user will be able to manage users and admin-only delivery options.{% endif %}"
+                                      data-confirm-action="{% if user.role == 'admin' %}Remove admin{% else %}Make admin{% endif %}">
+                                    <input type="hidden" name="role" value="{{ role_action }}">
+                                    <button type="submit" class="role-btn {% if user.role == 'admin' %}warning{% endif %}"
+                                            title="{% if user.role == 'admin' %}Remove admin{% else %}Make admin{% endif %}">
+                                        <i class="fas {% if user.role == 'admin' %}fa-user-minus{% else %}fa-user-shield{% endif %}"></i>
+                                    </button>
+                                </form>
+                                <button type="button" class="icon-btn" title="Reset password" onclick="toggleReset({{ user.id }})"><i class="fas fa-key"></i></button>
+                                <form action="/delete-user/{{ user.id }}" method="POST" data-confirm-title="Delete user?" data-confirm-message="This will delete the user account. Campaign data may remain attached to historical records." style="margin:0;">
+                                    <button type="submit" class="icon-btn danger" title="Delete user"><i class="fas fa-trash-alt"></i></button>
+                                </form>
+                            </div>
+                            <form id="reset-{{ user.id }}" class="reset-form" action="/reset-user-password/{{ user.id }}" method="POST">
+                                <input type="password" name="new_password" placeholder="New password" required>
+                                <button type="submit">Reset</button>
+                            </form>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
             </div>
         </section>
     </div>
@@ -182,6 +237,7 @@ function toggleReset(id) {
             pendingForm = form;
             title.textContent = form.dataset.confirmTitle || "Confirm action";
             message.textContent = form.dataset.confirmMessage || "This action cannot be undone.";
+            danger.textContent = form.dataset.confirmAction || "Delete";
             modal.classList.add("show");
             modal.setAttribute("aria-hidden", "false");
         });
@@ -189,6 +245,7 @@ function toggleReset(id) {
 
     cancel.addEventListener("click", function() {
         pendingForm = null;
+        danger.textContent = "Delete";
         modal.classList.remove("show");
         modal.setAttribute("aria-hidden", "true");
     });

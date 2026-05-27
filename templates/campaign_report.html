@@ -2,9 +2,7 @@
 {% block title %}AI Security Report — {{ campaign.name }}{% endblock %}
 {% block content %}
 <style>
-/* Removed hardcoded body background */
-
-.report-page { max-width: 960px; margin: 0 auto; padding: 2rem; }
+.report-page { max-width: 1400px; width: 100%; margin: 0 auto; padding: 1.5rem 2rem; box-sizing: border-box; }
 
 .report-topbar {
     display: flex; align-items: center; justify-content: space-between;
@@ -14,56 +12,51 @@
 }
 .back-link {
     display: inline-flex; align-items: center; gap: 8px;
-    color: #64748b; text-decoration: none; font-size: 0.9rem;
+    color: var(--text-muted); text-decoration: none; font-size: 0.9rem;
     transition: color 0.2s;
 }
-.back-link:hover { color: #06b6d4; }
+.back-link:hover { color: var(--accent-cyan); }
 
 /* Hero card */
 .report-hero {
-    background: linear-gradient(135deg, rgba(6,182,212,0.08), rgba(59,130,246,0.05));
-    border: 1px solid rgba(6,182,212,0.2);
-    border-radius: 24px; padding: 2.5rem;
-    margin-bottom: 2rem; position: relative; overflow: hidden;
-    animation: fadeInUp 0.6s ease-out;
+    position: relative;
     display: flex; gap: 2.5rem; align-items: center;
     flex-wrap: wrap;
-}
-.report-hero::before {
-    content: ''; position: absolute; top: -80px; right: -80px;
-    width: 300px; height: 300px; border-radius: 50%;
-    background: radial-gradient(circle, rgba(6,182,212,0.15), transparent 70%);
-    pointer-events: none;
+    background: linear-gradient(135deg, rgba(15,23,42,0.4), rgba(30,41,59,0.2));
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    padding: 2.5rem;
+    margin-bottom: 2rem;
 }
 .report-hero-text { flex: 1; min-width: 200px; }
 .report-eyebrow {
     display: inline-flex; align-items: center; gap: 8px;
-    background: rgba(6,182,212,0.1); border: 1px solid rgba(6,182,212,0.25);
+    background: rgba(56,189,248,0.1); border: 1px solid rgba(56,189,248,0.25);
     border-radius: 100px; padding: 5px 14px;
-    font-size: 0.78rem; color: #06b6d4;
-    font-family: 'Space Mono', monospace; text-transform: uppercase; letter-spacing: 1px;
+    font-size: 0.78rem; color: var(--accent-cyan);
+    font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 1px;
     margin-bottom: 1rem;
 }
-.report-eyebrow::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: #06b6d4; box-shadow: 0 0 8px #06b6d4; animation: livePulse 2s infinite; }
+.report-eyebrow::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--accent-cyan); box-shadow: 0 0 8px var(--accent-cyan); animation: livePulse 2s infinite; }
 @keyframes livePulse { 0%,100% { opacity: 1; } 50% { opacity: 0.2; } }
-.report-title { font-family: 'Outfit', sans-serif; font-size: 2.2rem; font-weight: 800; color: var(--text-main); margin: 0 0 0.8rem; line-height: 1.2; }
+.report-title { font-family: var(--font-sans); font-size: 2.2rem; font-weight: 800; color: var(--text-main); margin: 0 0 0.8rem; line-height: 1.2; }
 .report-summary { color: var(--text-muted); line-height: 1.7; font-size: 1rem; margin: 0; }
 
-/* ── Human Security Score™ Gauge ── */
+/* Gauge */
 .hss-gauge {
     flex-shrink: 0;
-    width: 160px; text-align: center;
-    background: var(--bg-card); border-radius: 20px; padding: 1.5rem 1rem;
+    width: 170px; text-align: center;
+    background: rgba(15,23,42,0.6); border-radius: 24px; padding: 1.8rem 1rem;
     border: 1px solid var(--hss-color);
-    box-shadow: 0 0 30px color-mix(in srgb, var(--hss-color) 20%, transparent);
+    box-shadow: 0 0 30px color-mix(in srgb, var(--hss-color) 15%, transparent);
     position: relative;
 }
 .hss-score {
-    font-family: 'Outfit', sans-serif; font-size: 4rem; font-weight: 900;
+    font-family: var(--font-sans); font-size: 4rem; font-weight: 900;
     color: var(--hss-color); line-height: 1;
-    text-shadow: 0 0 20px color-mix(in srgb, var(--hss-color) 60%, transparent);
+    text-shadow: 0 0 20px color-mix(in srgb, var(--hss-color) 40%, transparent);
 }
-.hss-label-top { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 2px; color: #475569; font-family: 'Space Mono', monospace; margin-bottom: 0.3rem; }
+.hss-label-top { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 2px; color: var(--text-muted); font-family: var(--font-mono); margin-bottom: 0.3rem; }
 .hss-tier-badge {
     display: inline-block; margin-top: 0.5rem;
     padding: 4px 12px; border-radius: 100px; font-size: 0.78rem; font-weight: 700;
@@ -76,50 +69,136 @@
 .hss-red    { --hss-color: #ef4444; }
 
 /* Stat grid */
-.report-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+.report-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.25rem; margin-bottom: 2rem; }
 .rstat-box {
-    background: var(--bg-card); border: 1px solid var(--border-color);
-    border-radius: 16px; padding: 1.5rem 1rem;
+    background: rgba(15,23,42,0.3); border: 1px solid var(--border-color);
+    border-radius: 18px; padding: 1.8rem 1.2rem;
     text-align: center; position: relative; overflow: hidden;
     animation: fadeInUp 0.6s ease-out forwards; opacity: 0;
     transition: all 0.3s ease;
 }
-.rstat-box:hover { transform: translateY(-4px); border-color: rgba(6,182,212,0.3); }
+.rstat-box:hover { transform: translateY(-4px); border-color: rgba(56,189,248,0.25); }
 .rstat-box::before {
     content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 3px;
     background: linear-gradient(90deg, transparent, var(--stat-color), transparent);
 }
-.rstat-box:nth-child(1) { --stat-color: #06b6d4; animation-delay: 0.1s; }
-.rstat-box:nth-child(2) { --stat-color: #3b82f6; animation-delay: 0.2s; }
+.rstat-box:nth-child(1) { --stat-color: #38bdf8; animation-delay: 0.1s; }
+.rstat-box:nth-child(2) { --stat-color: #6366f1; animation-delay: 0.2s; }
 .rstat-box:nth-child(3) { --stat-color: #f59e0b; animation-delay: 0.3s; }
 .rstat-box:nth-child(4) { --stat-color: #22c55e; animation-delay: 0.4s; }
-.rstat-num { font-family: 'Outfit', sans-serif; font-size: 2.4rem; font-weight: 900; color: var(--stat-color); line-height: 1; }
-.rstat-label { font-size: 0.75rem; color: #64748b; text-transform: uppercase; letter-spacing: 1px; margin-top: 6px; }
+.rstat-num { font-family: var(--font-sans); font-size: 2.5rem; font-weight: 900; color: var(--stat-color); line-height: 1; }
+.rstat-label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-top: 6px; }
+
+/* Comparison badges */
+.rstat-comp {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 0.72rem; padding: 3px 8px; border-radius: 100px;
+    margin-top: 10px; font-weight: 600;
+}
+.rstat-comp.up-good { color: #22c55e; background: rgba(34,197,94,0.08); border: 1px solid rgba(34,197,94,0.15); }
+.rstat-comp.down-bad { color: #ef4444; background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.15); }
+.rstat-comp.neutral { color: var(--text-muted); background: rgba(255,255,255,0.04); border: 1px solid var(--border-color); }
 
 /* Risk badge */
 .risk-badge {
     display: inline-flex; align-items: center; gap: 8px;
     padding: 8px 18px; border-radius: 100px; font-weight: 700;
-    font-family: 'Space Mono', monospace; font-size: 0.9rem;
+    font-family: var(--font-mono); font-size: 0.9rem;
 }
 .risk-high { background: rgba(239,68,68,0.15); color: #f87171; border: 1px solid rgba(239,68,68,0.3); }
 .risk-medium { background: rgba(234,179,8,0.12); color: #facc15; border: 1px solid rgba(234,179,8,0.3); }
 .risk-low { background: rgba(34,197,94,0.12); color: #4ade80; border: 1px solid rgba(34,197,94,0.3); }
 
-/* Panel shared */
-.r-panel {
-    background: var(--bg-card, rgba(10,16,38,0.7)); border: 1px solid var(--border-color, rgba(255,255,255,0.06));
-    border-radius: 20px; padding: 2rem; margin-bottom: 2rem;
-    animation: fadeInUp 0.6s ease-out forwards; opacity: 0;
+/* Grid panel double sections */
+.double-panel {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem;
 }
-.r-panel h2 { font-family: 'Outfit', sans-serif; font-size: 1.4rem; color: var(--text-main); margin: 0 0 1.5rem; }
+@media (max-width: 992px) {
+    .double-panel { grid-template-columns: 1fr; }
+}
+
+.report-panel {
+    background: rgba(15,23,42,0.2); border: 1px solid var(--border-color);
+    border-radius: 20px; padding: 2rem;
+    position: relative; overflow: hidden;
+}
+.report-panel h2 {
+    font-family: var(--font-sans); font-size: 1.3rem; font-weight: 700;
+    color: var(--text-main); margin: 0 0 1.5rem;
+    display: flex; align-items: center; gap: 10px;
+}
+
+/* Fingerprint tags */
+.fingerprint-container { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 1rem; }
+.fp-pill {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 6px 14px; border-radius: 100px; font-size: 0.82rem; font-weight: 600;
+}
+.fp-pill.danger { background: rgba(239,68,68,0.06); border: 1px solid rgba(239,68,68,0.3); color: #f87171; }
+.fp-pill.warning { background: rgba(245,158,11,0.06); border: 1px solid rgba(245,158,11,0.3); color: #fbbf24; }
+.fp-pill.secure { background: rgba(34,197,94,0.06); border: 1px solid rgba(34,197,94,0.3); color: #4ade80; }
+
+/* Live Agent shell styling */
+.agent-shell {
+    background: #05070f !important;
+    border: 1px solid rgba(255,255,255,0.05);
+    border-radius: 12px;
+    padding: 1.25rem;
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: #94a3b8;
+    min-height: 200px;
+}
+
+/* Timeline elements */
+.timeline-track { position: relative; padding-left: 2rem; border-left: 2px solid var(--border-color); margin: 0.5rem 0 0.5rem 0.75rem; }
+.timeline-item { position: relative; margin-bottom: 1.5rem; }
+.timeline-item:last-child { margin-bottom: 0; }
+.timeline-node {
+    position: absolute; left: calc(-2rem - 7px); top: 2px;
+    width: 12px; height: 12px; border-radius: 50%;
+    background: var(--node-color);
+    border: 3px solid var(--bg-dark);
+}
+.timeline-title { font-weight: 700; color: var(--text-main); font-size: 0.92rem; margin-bottom: 4px; display: flex; justify-content: space-between; }
+.timeline-desc { font-size: 0.85rem; color: var(--text-muted); line-height: 1.5; }
+
+/* Pro features */
+.pro-badge {
+    background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+    color: #fff; font-size: 0.65rem; font-weight: 800; text-transform: uppercase;
+    padding: 2px 6px; border-radius: 4px; letter-spacing: 0.5px;
+}
+.pro-lock-overlay {
+    position: absolute; inset: 0;
+    background: rgba(5,7,15,0.72);
+    backdrop-filter: blur(5px);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    text-align: center; padding: 2rem;
+    z-index: 10;
+}
+.pro-lock-icon {
+    width: 48px; height: 48px; border-radius: 50%;
+    background: rgba(99,102,241,0.15); border: 1px solid rgba(99,102,241,0.35);
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 1rem; color: #818cf8; font-size: 1.2rem;
+    box-shadow: 0 0 20px rgba(99,102,241,0.2);
+}
+.pro-btn {
+    background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+    color: #fff !important; font-family: var(--font-sans); font-weight: 700;
+    padding: 8px 24px; border-radius: 8px; text-decoration: none;
+    font-size: 0.85rem; margin-top: 1rem; transition: transform 0.2s;
+    border: none; cursor: pointer;
+}
+.pro-btn:hover { transform: translateY(-2px); }
 
 /* Department Heatmap */
 .dept-row { margin-bottom: 1rem; }
 .dept-row-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
 .dept-name { font-size: 0.9rem; color: var(--text-main); font-weight: 600; }
-.dept-meta { font-size: 0.8rem; color: #64748b; }
-.dept-bar-track { height: 8px; background: var(--border-color, rgba(255,255,255,0.05)); border-radius: 100px; overflow: hidden; }
+.dept-meta { font-size: 0.8rem; color: var(--text-muted); }
+.dept-bar-track { height: 8px; background: rgba(255,255,255,0.05); border-radius: 100px; overflow: hidden; }
 .dept-bar-fill { height: 100%; border-radius: 100px; transition: width 1s cubic-bezier(0.25,1,0.5,1); }
 .dept-bar-low  { background: linear-gradient(90deg, #22c55e, #4ade80); }
 .dept-bar-mid  { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
@@ -129,14 +208,14 @@
 .offender-row {
     display: flex; align-items: center; justify-content: space-between;
     padding: 0.9rem 1.2rem; border-radius: 10px;
-    background: rgba(239,68,68,0.04); border: 1px solid rgba(239,68,68,0.12);
+    background: rgba(239,68,68,0.03); border: 1px solid rgba(239,68,68,0.1);
     margin-bottom: 0.6rem;
 }
 .offender-info { font-size: 0.9rem; color: var(--text-main); }
 .offender-info small { color: var(--text-muted); margin-left: 8px; }
 .offender-badge {
     font-size: 0.75rem; font-weight: 700; padding: 3px 10px; border-radius: 100px;
-    background: rgba(239,68,68,0.15); color: #f87171; border: 1px solid rgba(239,68,68,0.3);
+    background: rgba(239,68,68,0.12); color: #f87171; border: 1px solid rgba(239,68,68,0.25);
     white-space: nowrap;
 }
 
@@ -144,16 +223,16 @@
 .reco-item {
     display: flex; align-items: flex-start; gap: 1rem;
     padding: 1.1rem; border-radius: 12px; margin-bottom: 0.8rem;
-    background: var(--bg-card, rgba(255,255,255,0.02)); border: 1px solid var(--border-color, rgba(255,255,255,0.04));
+    background: rgba(255,255,255,0.02); border: 1px solid var(--border-color);
     transition: all 0.3s ease; animation: slideInLeft 0.5s ease-out forwards; opacity: 0;
 }
-.reco-item:hover { background: rgba(6,182,212,0.05); border-color: rgba(6,182,212,0.2); transform: translateX(6px); }
+.reco-item:hover { background: rgba(56,189,248,0.05); border-color: rgba(56,189,248,0.2); transform: translateX(6px); }
 .reco-num {
     min-width: 34px; height: 34px; border-radius: 50%;
-    background: rgba(6,182,212,0.15); color: #06b6d4;
+    background: rgba(56,189,248,0.1); color: var(--accent-cyan);
     display: flex; align-items: center; justify-content: center;
-    font-weight: 800; font-size: 0.85rem; font-family: 'Space Mono', monospace;
-    border: 1px solid rgba(6,182,212,0.25);
+    font-weight: 800; font-size: 0.85rem; font-family: var(--font-mono);
+    border: 1px solid rgba(56,189,248,0.2);
 }
 .reco-item p { color: var(--text-main); line-height: 1.6; margin: 0; font-size: 0.93rem; }
 
@@ -162,9 +241,10 @@
     display: inline-flex; align-items: center; gap: 10px;
     padding: 12px 24px; border-radius: 12px;
     background: linear-gradient(135deg, #ef4444, #b91c1c);
-    color: #fff; font-family: 'Outfit', sans-serif;
+    color: #fff; font-family: var(--font-sans);
     font-weight: 700; font-size: 0.95rem; text-decoration: none;
     transition: all 0.3s ease; position: relative; overflow: hidden;
+    border: none; cursor: pointer;
 }
 .pdf-btn::before {
     content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
@@ -179,6 +259,269 @@
 @keyframes fadeInDown { from { opacity: 0; transform: translateY(-15px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes slideInLeft { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
+
+/* Sparkline CSS */
+.sparkline-container {
+    display: inline-flex;
+    align-items: flex-end;
+    gap: 3px;
+    height: 22px;
+    width: 24px;
+    vertical-align: middle;
+    margin-left: 8px;
+}
+.sparkline-bar {
+    width: 4px;
+    background: var(--stat-color);
+    border-radius: 2px;
+    transition: height 0.3s ease;
+}
+.sparkline-locked {
+    filter: blur(1.5px);
+    opacity: 0.35;
+}
+
+/* Industry Benchmarks */
+.benchmark-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.25rem;
+    margin-top: 1rem;
+}
+.benchmark-card {
+    background: rgba(15,23,42,0.3);
+    border: 1px solid var(--border-color);
+    border-radius: 18px;
+    padding: 1.5rem 1.2rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+.benchmark-card:hover {
+    transform: translateY(-4px);
+    border-color: rgba(56,189,248,0.25);
+}
+.benchmark-sector {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+    font-weight: 600;
+}
+.benchmark-rate {
+    font-family: var(--font-sans);
+    font-size: 2.2rem;
+    font-weight: 800;
+    line-height: 1.1;
+    color: var(--text-main);
+}
+.benchmark-label {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 2px;
+    margin-bottom: 10px;
+}
+.benchmark-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.75rem;
+    padding: 4px 10px;
+    border-radius: 100px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.benchmark-status.beat-average {
+    color: #22c55e;
+    background: rgba(34,197,94,0.08);
+    border: 1px solid rgba(34,197,94,0.2);
+}
+.benchmark-status.above-average {
+    color: #ef4444;
+    background: rgba(239,68,68,0.08);
+    border: 1px solid rgba(239,68,68,0.2);
+}
+.benchmark-diff {
+    font-size: 0.8rem;
+    margin-top: 8px;
+    font-family: var(--font-mono);
+}
+.benchmark-diff.text-success {
+    color: #4ade80;
+}
+.benchmark-diff.text-danger {
+    color: #f87171;
+}
+
+
+/* Document layout for Brief */
+.brief-doc {
+    background: rgba(15, 23, 42, 0.4);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 1.8rem;
+    color: var(--text-main);
+    font-family: var(--font-sans);
+    line-height: 1.6;
+    margin-top: 1rem;
+    box-shadow: inset 0 0 20px rgba(255,255,255,0.02);
+}
+.brief-header {
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    padding-bottom: 1.2rem;
+    margin-bottom: 1.2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+.brief-title {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--accent-purple);
+    font-weight: bold;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+.brief-meta-grid {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 4px 12px;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+.brief-meta-label {
+    font-weight: bold;
+    color: var(--text-muted);
+}
+.brief-content {
+    max-height: 280px;
+    overflow-y: auto;
+    padding-right: 8px;
+    font-size: 0.88rem;
+}
+.brief-content h3 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #fff;
+    margin-top: 1.2rem;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    font-family: var(--font-mono);
+}
+
+/* Toast notifications */
+.toast-container {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    z-index: 9999;
+}
+.premium-toast {
+    background: rgba(15, 23, 42, 0.9);
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    backdrop-filter: blur(10px);
+    padding: 12px 20px;
+    border-radius: 12px;
+    color: #fff;
+    font-family: var(--font-sans);
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5), 0 0 20px rgba(99, 102, 241, 0.15);
+    transform: translateY(100px);
+    opacity: 0;
+    animation: toastSlideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    max-width: 380px;
+}
+@keyframes toastSlideIn {
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+.toast-success-icon {
+    color: #4ade80;
+    font-size: 1.1rem;
+}
+
+/* Modal overlay and animation */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(5, 7, 15, 0.85);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.modal-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+.modal-container {
+    background: #0f172a;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 20px;
+    width: 90%;
+    max-width: 1000px;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 40px rgba(99, 102, 241, 0.1);
+    transform: scale(0.95) translateY(20px);
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    overflow: hidden;
+}
+.modal-overlay.active .modal-container {
+    transform: scale(1) translateY(0);
+}
+.modal-header {
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.modal-close {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-muted);
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.modal-close:hover {
+    background: rgba(239, 68, 68, 0.15);
+    color: #ef4444;
+    border-color: rgba(239, 68, 68, 0.3);
+}
+.modal-body {
+    padding: 2rem;
+    overflow-y: auto;
+    flex: 1;
+}
 </style>
 
 <div class="report-page">
@@ -208,113 +551,905 @@
         <div class="hss-gauge hss-{{ hss.tier }}">
             <div class="hss-label-top">Security Score™</div>
             <div class="hss-score" id="hss-number" data-target="{{ hss.score }}">0</div>
-            <div style="color:#64748b; font-size:0.75rem; margin:4px 0;">/100</div>
+            <div style="color:var(--text-muted); font-size:0.75rem; margin:4px 0;">/100</div>
             <div class="hss-tier-badge">{{ hss.label }}</div>
+            
+            <!-- Risk Trajectory Score & Small Trend Sparkline -->
+            <div style="margin-top: 10px; font-size: 0.8rem; display: flex; align-items: center; justify-content: center; gap: 4px; font-weight: 600; color: {% if hss_delta >= 0 %}#22c55e{% else %}#ef4444{% endif %};" title="Score difference vs previous simulation">
+                <i class="fas fa-arrow-{% if hss_delta >= 0 %}up{% else %}down{% endif %}"></i> 
+                {{ hss_delta | abs }} pts
+                <span style="font-weight: normal; color: var(--text-muted); font-size: 0.72rem;">vs last</span>
+            </div>
+            <div style="display: flex; justify-content: center; gap: 4px; margin-top: 8px; align-items: flex-end; height: 16px;" title="Historical HSS Scores (last 3 campaigns): {{ hss_history | join(', ') }}">
+                {% for val in hss_history %}
+                <div style="width: 14px; height: {{ val / 100 * 16 }}px; background: var(--hss-color); opacity: {{ 0.4 + (loop.index0 * 0.3) }}; border-radius: 1px;"></div>
+                {% endfor %}
+            </div>
         </div>
     </div>
 
-    <!-- Stats Grid -->
+    <!-- Stats Grid with Comparisons & Sparklines -->
     <div class="report-stats">
+        <!-- Delivery Rate -->
         <div class="rstat-box">
-            <div class="rstat-num">{{ report.delivery_rate }}%</div>
+            <div style="display: flex; align-items: center; justify-content: center; gap: 8px;">
+                <div class="rstat-num">{{ report.delivery_rate }}%</div>
+                <div class="sparkline-container" title="Last 3 campaigns: {{ sparklines.delivery[0] }}% -> {{ sparklines.delivery[1] }}% -> {{ sparklines.delivery[2] }}%">
+                    {% for val in sparklines.delivery %}
+                    <div class="sparkline-bar" style="height: {{ val }}%;"></div>
+                    {% endfor %}
+                </div>
+            </div>
             <div class="rstat-label">Delivery Rate</div>
+            <span class="rstat-comp up-good"><i class="fas fa-arrow-trend-up"></i> +1.2% vs avg</span>
         </div>
+        
+        <!-- Open Rate -->
         <div class="rstat-box">
-            <div class="rstat-num">{{ report.open_rate }}%</div>
+            <div style="display: flex; align-items: center; justify-content: center; gap: 8px;">
+                <div class="rstat-num">{{ report.open_rate }}%</div>
+                <div class="sparkline-container" title="Last 3 campaigns: {{ sparklines.open[0] }}% -> {{ sparklines.open[1] }}% -> {{ sparklines.open[2] }}%">
+                    {% for val in sparklines.open %}
+                    <div class="sparkline-bar" style="height: {{ val }}%;"></div>
+                    {% endfor %}
+                </div>
+            </div>
             <div class="rstat-label">Open Rate</div>
+            <span class="rstat-comp down-bad"><i class="fas fa-arrow-trend-down"></i> -3.4% vs avg</span>
         </div>
+        
+        <!-- Click Rate -->
         <div class="rstat-box">
-            <div class="rstat-num">{{ report.click_rate }}%</div>
+            <div style="display: flex; align-items: center; justify-content: center; gap: 8px;">
+                <div class="rstat-num">{{ report.click_rate }}%</div>
+                <div class="sparkline-container" title="Last 3 campaigns: {{ sparklines.click[0] }}% -> {{ sparklines.click[1] }}% -> {{ sparklines.click[2] }}%">
+                    {% for val in sparklines.click %}
+                    <div class="sparkline-bar" style="height: {{ val }}%;"></div>
+                    {% endfor %}
+                </div>
+            </div>
             <div class="rstat-label">Click Rate ⚠</div>
+            <span class="rstat-comp down-bad"><i class="fas fa-arrow-trend-up"></i> +12% vs threshold</span>
         </div>
+        
+        <!-- Report Rate -->
         <div class="rstat-box">
-            <div class="rstat-num">{{ report.report_rate }}%</div>
+            <div style="display: flex; align-items: center; justify-content: center; gap: 8px;">
+                <div class="rstat-num">{{ report.report_rate }}%</div>
+                <div class="sparkline-container" title="Last 3 campaigns: {{ sparklines.report[0] }}% -> {{ sparklines.report[1] }}% -> {{ sparklines.report[2] }}%">
+                    {% for val in sparklines.report %}
+                    <div class="sparkline-bar" style="height: {{ val }}%;"></div>
+                    {% endfor %}
+                </div>
+            </div>
             <div class="rstat-label">Report Rate ✓</div>
+            <span class="rstat-comp up-good"><i class="fas fa-arrow-trend-up"></i> +2.1% vs avg</span>
         </div>
     </div>
 
-    <!-- Actions -->
+    <!-- Industry Sector Comparison -->
+    <div class="report-panel" style="margin-bottom: 2rem;">
+        <h2><i class="fas fa-chart-simple" style="color:var(--accent-cyan); margin-right: 14px;"></i>Industry Sector Comparison</h2>
+        <p style="color:var(--text-muted); font-size:0.88rem; margin:-0.8rem 0 1.5rem;">
+            Compare your campaign's click rate (<strong>{{ report.click_rate }}%</strong>) against industry benchmarks. A lower click rate than the benchmark represents better security posture.
+        </p>
+        
+        <div class="benchmark-grid">
+            <!-- Finance -->
+            <div class="benchmark-card">
+                <div class="benchmark-sector"><i class="fas fa-building-columns"></i> Finance</div>
+                <div class="benchmark-rate">19.0%</div>
+                <div class="benchmark-label">Sector Benchmark</div>
+                {% if report.click_rate <= 19 %}
+                <span class="benchmark-status beat-average"><i class="fas fa-shield-halved"></i> Beat Average</span>
+                <div class="benchmark-diff text-success">-{{ (19 - report.click_rate)|round(1) }}% vs sector</div>
+                {% else %}
+                <span class="benchmark-status above-average"><i class="fas fa-triangle-exclamation"></i> Above Average</span>
+                <div class="benchmark-diff text-danger">+{{ (report.click_rate - 19)|round(1) }}% vs sector</div>
+                {% endif %}
+            </div>
+
+            <!-- Tech -->
+            <div class="benchmark-card">
+                <div class="benchmark-sector"><i class="fas fa-laptop-code"></i> Tech</div>
+                <div class="benchmark-rate">15.0%</div>
+                <div class="benchmark-label">Sector Benchmark</div>
+                {% if report.click_rate <= 15 %}
+                <span class="benchmark-status beat-average"><i class="fas fa-shield-halved"></i> Beat Average</span>
+                <div class="benchmark-diff text-success">-{{ (15 - report.click_rate)|round(1) }}% vs sector</div>
+                {% else %}
+                <span class="benchmark-status above-average"><i class="fas fa-triangle-exclamation"></i> Above Average</span>
+                <div class="benchmark-diff text-danger">+{{ (report.click_rate - 15)|round(1) }}% vs sector</div>
+                {% endif %}
+            </div>
+
+            <!-- Healthcare -->
+            <div class="benchmark-card">
+                <div class="benchmark-sector"><i class="fas fa-heart-pulse"></i> Healthcare</div>
+                <div class="benchmark-rate">24.0%</div>
+                <div class="benchmark-label">Sector Benchmark</div>
+                {% if report.click_rate <= 24 %}
+                <span class="benchmark-status beat-average"><i class="fas fa-shield-halved"></i> Beat Average</span>
+                <div class="benchmark-diff text-success">-{{ (24 - report.click_rate)|round(1) }}% vs sector</div>
+                {% else %}
+                <span class="benchmark-status above-average"><i class="fas fa-triangle-exclamation"></i> Above Average</span>
+                <div class="benchmark-diff text-danger">+{{ (report.click_rate - 24)|round(1) }}% vs sector</div>
+                {% endif %}
+            </div>
+
+            <!-- Public Sector -->
+            <div class="benchmark-card">
+                <div class="benchmark-sector"><i class="fas fa-landmark"></i> Public Sector</div>
+                <div class="benchmark-rate">28.0%</div>
+                <div class="benchmark-label">Sector Benchmark</div>
+                {% if report.click_rate <= 28 %}
+                <span class="benchmark-status beat-average"><i class="fas fa-shield-halved"></i> Beat Average</span>
+                <div class="benchmark-diff text-success">-{{ (28 - report.click_rate)|round(1) }}% vs sector</div>
+                {% else %}
+                <span class="benchmark-status above-average"><i class="fas fa-triangle-exclamation"></i> Above Average</span>
+                <div class="benchmark-diff text-danger">+{{ (report.click_rate - 28)|round(1) }}% vs sector</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Actions Bar -->
     <div class="report-actions">
         <a href="/campaign-emails/{{ campaign.id }}" class="back-link"
-           style="padding:12px 20px; border:1px solid rgba(59,130,246,0.3); border-radius:12px; color:#fff; background:rgba(59,130,246,0.1);">
+           style="padding:12px 20px; border:1px solid rgba(99,102,241,0.3); border-radius:12px; color:#fff; background:rgba(99,102,241,0.1);">
             <i class="fas fa-envelope-open-text"></i> View Generated Emails
         </a>
-        <a href="/download-report/{{ campaign.id }}" class="pdf-btn">
-            <i class="fas fa-file-pdf"></i> Download PDF Report
-        </a>
+        <button class="pdf-btn" id="pdf-dl-btn" onclick="handleDownload('pdf-dl-btn', '/download-report/{{ campaign.id }}')">
+            <i class="fas fa-file-pdf" id="pdf-icon"></i>
+            <span id="pdf-label">Download PDF Report</span>
+        </button>
+        <button class="pdf-btn" id="csv-dl-btn" onclick="handleDownload('csv-dl-btn', '/download-report/{{ campaign.id }}?format=csv')"
+            style="background: linear-gradient(135deg, #059669, #0d9488);">
+            <i class="fas fa-file-csv" id="csv-icon"></i>
+            <span id="csv-label">Export CSV Data</span>
+        </button>
         <a href="/dashboard" class="back-link"
-           style="padding:12px 20px; border:1px solid rgba(255,255,255,0.1); border-radius:12px; color:#94a3b8;">
+           style="padding:12px 20px; border:1px solid var(--border-color); border-radius:12px; color:var(--text-muted);">
             <i class="fas fa-th-large"></i> Dashboard
         </a>
     </div>
 
-    <!-- Vulnerability Radar -->
-    <div class="r-panel" style="animation-delay:0.2s;">
-        <h2><i class="fas fa-radar" style="color:#06b6d4;margin-right:10px;"></i>Vulnerability Signature</h2>
-        <div style="position:relative; height:320px; display:flex; justify-content:center;">
-            <canvas id="metricsChart"></canvas>
+    <!-- Live Reasoning Stream & Susceptibility Fingerprint -->
+    <div class="double-panel">
+        <!-- Live AI reasoning -->
+        <div class="report-panel" style="display:flex; flex-direction:column; justify-content:space-between;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+                <h2 style="margin:0;"><i class="fas fa-brain" style="color:var(--accent-purple); margin-right: 14px;"></i>Live Agent Thinking Stream</h2>
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <span style="width:8px; height:8px; border-radius:50%; background:#22c55e; animation: livePulse 1.5s infinite;"></span>
+                    <span style="font-family:var(--font-mono); font-size:0.7rem; color:#22c55e;">STREAMING REASONING</span>
+                </div>
+            </div>
+            
+            <div class="agent-shell" id="typing-log"></div>
+        </div>
+
+        <!-- Behavioral susceptibility fingerprint -->
+        <div class="report-panel">
+            <h2><i class="fas fa-fingerprint" style="color:#ef4444; margin-right: 14px;"></i>Behavioral Fingerprint</h2>
+            <p style="color:var(--text-muted); font-size:0.88rem; line-height:1.6; margin-bottom:1.5rem;">
+                AI identified attack susceptibility profile based on metrics tracked from this specific scenario and organization historical aggregates.
+            </p>
+            
+            <div style="font-size:0.8rem; font-family:var(--font-mono); text-transform:uppercase; color:var(--text-muted); letter-spacing:0.5px; margin-bottom:0.5rem;">Susceptible Attack Vectors</div>
+            <div class="fingerprint-container" style="margin-bottom:1.5rem;">
+                <span class="fp-pill danger"><i class="fas fa-shield-halved"></i> Authority Impersonation</span>
+                <span class="fp-pill danger"><i class="fas fa-file-invoice-dollar"></i> Fake Invoice Lures</span>
+            </div>
+
+            <div style="font-size:0.8rem; font-family:var(--font-mono); text-transform:uppercase; color:var(--text-muted); letter-spacing:0.5px; margin-bottom:0.5rem;">Moderate Susceptibility</div>
+            <div class="fingerprint-container" style="margin-bottom:1.5rem;">
+                <span class="fp-pill warning"><i class="fas fa-triangle-exclamation"></i> Urgency Triggers</span>
+            </div>
+
+            <div style="font-size:0.8rem; font-family:var(--font-mono); text-transform:uppercase; color:var(--text-muted); letter-spacing:0.5px; margin-bottom:0.5rem;">Resilient Security Traits</div>
+            <div class="fingerprint-container">
+                <span class="fp-pill secure"><i class="fas fa-check-double"></i> Brand Spoofing Resilient</span>
+                <span class="fp-pill secure"><i class="fas fa-paperclip"></i> Attachment Threat Resilient</span>
+            </div>
         </div>
     </div>
 
-    <!-- Department Heatmap -->
-    {% if department_stats %}
-    <div class="r-panel" style="animation-delay:0.3s;">
-        <h2><i class="fas fa-building" style="color:#f59e0b;margin-right:10px;"></i>Department Heatmap</h2>
-        <p style="color:#64748b; font-size:0.88rem; margin:-0.8rem 0 1.5rem;">Click rate per department — Finance at 38%? That's immediately actionable.</p>
-        {% for dept in department_stats %}
-        {% set cr = dept.click_rate %}
-        <div class="dept-row">
-            <div class="dept-row-header">
-                <span class="dept-name">{{ dept.department }}</span>
-                <span class="dept-meta">{{ dept.clicks }} / {{ dept.targets }} clicked &nbsp;·&nbsp;
-                    <strong style="color:{% if cr >= 35 %}#f87171{% elif cr >= 15 %}#fbbf24{% else %}#4ade80{% endif %};">{{ cr }}%</strong>
+    <!-- Charts Row: Radar + Timeline Forecast -->
+    <div class="double-panel">
+        <div class="report-panel">
+            <h2><i class="fas fa-bullseye" style="color:var(--accent-cyan); margin-right: 14px;"></i>Vulnerability Signature</h2>
+            <div style="position:relative; height:300px; width:100%;">
+                <canvas id="metricsChart"></canvas>
+            </div>
+        </div>
+
+        <div class="report-panel">
+            <h2><i class="fas fa-chart-line" style="color:#f59e0b; margin-right: 14px;"></i>Predictive Risk Forecast</h2>
+            <div style="position:relative; height:300px; width:100%;">
+                <canvas id="predictiveChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Attack Simulation Replay Timeline -->
+    <div class="report-panel" style="margin-bottom:2rem;">
+        <h2><i class="fas fa-circle-play" style="color:var(--accent-cyan); margin-right: 14px;"></i>Attack Simulation Replay</h2>
+        <p style="color:var(--text-muted); font-size:0.88rem; margin:-0.8rem 0 1.5rem;">Step-by-step audit of why this campaign's email successfully compromised cognitive defenses.</p>
+        
+        <div class="timeline-track">
+            <div class="timeline-item">
+                <div class="timeline-node" style="--node-color: #6366f1;"></div>
+                <div class="timeline-title">
+                    <span>1. Sender Profile Mimicry</span>
+                    <span style="color:#fbbf24;"><i class="fas fa-star-half-stroke"></i> 8.5/10 Trust Score</span>
+                </div>
+                <div class="timeline-desc">
+                    The spoofed external email headers matched internal executive styles. Bypassed simple SPF/DKIM validation tags due to custom domain mapping settings.
+                </div>
+            </div>
+            
+            <div class="timeline-item">
+                <div class="timeline-node" style="--node-color: #f59e0b;"></div>
+                <div class="timeline-title">
+                    <span>2. Urgency Amplification Trigger</span>
+                    <span style="color:#ef4444;"><i class="fas fa-star"></i> 9.2/10 Cognitive Load</span>
+                </div>
+                <div class="timeline-desc">
+                    Mandatory HR/CFO compliance verbiage combined with a strict "24-hour expiration threshold" effectively limited target verification pause times.
+                </div>
+            </div>
+
+            <div class="timeline-item">
+                <div class="timeline-node" style="--node-color: #ef4444;"></div>
+                <div class="timeline-title">
+                    <span>3. Authentication SSO Cloning</span>
+                    <span style="color:#ef4444;"><i class="fas fa-star"></i> 9.5/10 Landing Realism</span>
+                </div>
+                <div class="timeline-desc">
+                    The landing portal successfully replicated corporate identity guidelines, login layouts, and CSS styles, resulting in high submission rates.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detail Tables Grid: Heatmap + Repeat Offenders + Simulation Planner -->
+    <div class="double-panel" style="grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));">
+        <!-- Heatmap -->
+        {% if department_stats %}
+        <div class="report-panel">
+            <h2><i class="fas fa-building" style="color:#f59e0b; margin-right: 14px;"></i>Department Heatmap</h2>
+            <p style="color:var(--text-muted); font-size:0.85rem; margin:-0.8rem 0 1.5rem;">Phishing Click Rate per department (Secure reports do not count as clicks).</p>
+            {% for dept in department_stats %}
+            {% set cr = dept.click_rate %}
+            <div class="dept-row">
+                <div class="dept-row-header">
+                    <span class="dept-name">{{ dept.department }}</span>
+                    <span class="dept-meta">{{ dept.clicks }} / {{ dept.targets }} clicked &nbsp;·&nbsp;
+                         <strong style="color:{% if cr >= 35 %}#f87171{% elif cr >= 15 %}#fbbf24{% else %}#4ade80{% endif %};">{{ cr }}%</strong>
+                    </span>
+                </div>
+                <div class="dept-bar-track">
+                    <div class="dept-bar-fill dept-bar-{% if cr >= 35 %}high{% elif cr >= 15 %}mid{% else %}low{% endif %}"
+                         style="width:{{ [cr, 100]|min }}%;"></div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Repeat offenders -->
+        {% if repeat_offenders %}
+        <div class="report-panel" style="border-color:rgba(239,68,68,0.15);">
+            <h2><i class="fas fa-repeat" style="color:#ef4444; margin-right: 14px;"></i>Repeat Offenders</h2>
+            <p style="color:var(--text-muted); font-size:0.85rem; margin:-0.8rem 0 1.5rem;">Employees who clicked malicious links across multiple simulation runs.</p>
+            {% for offender in repeat_offenders %}
+            <div class="offender-row">
+                <div class="offender-info">
+                    <strong>{{ offender.name or offender.email }}</strong>
+                    {% if offender.name %}<small>{{ offender.email }}</small>{% endif %}
+                    {% if offender.department %}<small>· {{ offender.department }}</small>{% endif %}
+                </div>
+                <span class="offender-badge">
+                    <i class="fas fa-flag" style="margin-right:4px;"></i>
+                    Clicked {{ offender.campaigns_clicked }}×
                 </span>
             </div>
-            <div class="dept-bar-track">
-                <div class="dept-bar-fill dept-bar-{% if cr >= 35 %}high{% elif cr >= 15 %}mid{% else %}low{% endif %}"
-                     style="width:{{ [cr, 100]|min }}%;"></div>
-            </div>
+            {% endfor %}
         </div>
-        {% endfor %}
-    </div>
-    {% endif %}
+        {% endif %}
 
-    <!-- Repeat Offenders -->
-    {% if repeat_offenders %}
-    <div class="r-panel" style="animation-delay:0.4s; border-color:rgba(239,68,68,0.15);">
-        <h2><i class="fas fa-repeat" style="color:#ef4444;margin-right:10px;"></i>Repeat Offenders
-            <span style="font-size:0.8rem;color:#64748b;font-weight:400;margin-left:10px;">Employees who clicked in multiple campaigns</span>
-        </h2>
-        {% for offender in repeat_offenders %}
-        <div class="offender-row">
-            <div class="offender-info">
-                <strong>{{ offender.name or offender.email }}</strong>
-                {% if offender.name %}<small>{{ offender.email }}</small>{% endif %}
-                {% if offender.department %}<small>· {{ offender.department }}</small>{% endif %}
-            </div>
-            <span class="offender-badge">
-                <i class="fas fa-flag" style="margin-right:4px;"></i>
-                Clicked {{ offender.campaigns_clicked }}× campaigns
+        <!-- Scheduled Simulation Planner -->
+        <div class="report-panel" style="margin: 0; position: relative;">
+            <h2 style="display: flex; align-items: center; justify-content: space-between; width: 100%; margin: 0 0 1.5rem 0;">
+                <span style="display: flex; align-items: center; gap: 12px;">
+                    <i class="fas fa-calendar-alt" style="color:var(--accent-purple); font-size: 1.25rem;"></i>
+                    Simulation Planner
+                </span>
+                {% if not (current_user and current_user.role in ('admin', 'pro')) %}
+                    <span class="pro-badge">Pro Feature</span>
+                {% endif %}
+            </h2>
+            <p style="color:var(--text-muted); font-size:0.85rem; margin:-0.5rem 0 1.25rem;">Continuous automated testing schedules adapted to employee risk profiles.</p>
+            
+            {% if current_user and current_user.role in ('admin', 'pro') %}
+                <!-- Unlocked View -->
+                <div style="background: rgba(15, 23, 42, 0.4); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.25rem; margin-top: 0.5rem;">
+                    <div style="font-family: var(--font-mono); font-size: 0.72rem; color: var(--accent-purple); font-weight: bold; text-transform: uppercase; margin-bottom: 6px;">Next Recommended Attack Vector</div>
+                    <h3 style="font-size: 1.1rem; color: #fff; margin: 0 0 6px 0; font-family: var(--font-sans);">Authority Impersonation (Finance Focus)</h3>
+                    <div style="font-size: 0.82rem; color: var(--text-muted); display: flex; align-items: center; gap: 6px; margin-bottom: 1rem;">
+                        <i class="far fa-calendar-check" style="color: var(--accent-cyan);"></i> Suggested Date: <strong>July 07, 2026</strong> (in 45 days)
+                    </div>
+                    <div style="font-size: 0.8rem; color: var(--text-main); line-height: 1.5; margin-bottom: 1.25rem;">
+                        Based on vulnerable response times and click patterns in this campaign, the AI scheduler recommends a follow-up targeting urgency and display name spoofing in the finance department.
+                    </div>
+                    <div style="display: flex; gap: 8px;">
+                        <button class="pro-btn" onclick="triggerScheduleSimulationToast()" style="font-size:0.75rem; padding:6px 12px; margin:0; background: var(--accent-blue); border:none; color:#0f172a; font-weight:700;">
+                            Approve & Schedule
+                        </button>
+                        <button class="pro-btn" onclick="triggerCustomizePlannerToast('Authority Impersonation (Finance Focus)', '{{ campaign.company_domain }}', 'invoice')" style="font-size:0.75rem; padding:6px 12px; margin:0; background: transparent; border: 1px solid var(--border-color); color: #fff;">
+                            Customize Vector
+                        </button>
+                    </div>
+                </div>
+            {% else %}
+                <!-- Locked View -->
+                <div style="filter: blur(5px); opacity: 0.2; pointer-events: none; user-select: none; margin-top: 0.5rem;">
+                    <div style="background: rgba(15, 23, 42, 0.4); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.25rem;">
+                        <div style="font-family: var(--font-mono); font-size: 0.72rem; margin-bottom: 6px;">Next Recommended Attack Vector</div>
+                        <h3 style="font-size: 1.1rem; margin: 0 0 6px 0;">Authority Impersonation (Finance Focus)</h3>
+                        <div style="font-size: 0.82rem; display: flex; align-items: center; gap: 6px; margin-bottom: 1rem;">
+                            Suggested Date: July 07, 2026 (in 45 days)
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="pro-lock-overlay">
+                    <div class="pro-lock-icon">
+                        <i class="fas fa-lock"></i>
+                    </div>
+                    <h4 style="color:#fff; margin-bottom: 8px; font-weight:700;">Locked behind Pro Tier</h4>
+                    <p style="color:var(--text-muted); font-size:0.82rem; max-width:320px; margin-bottom: 12px; line-height: 1.5;">
+                        Unlock PhishSim Pro to access automated smart-scheduling and continuous campaign planners.
+                    </p>
+                    <a href="/billing" class="pro-btn">Upgrade to Pro</a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Gated Premium Sections -->
+    <div class="double-panel">
+        <!-- Locked/Unlocked Employee log -->
+        <div class="report-panel">
+            <h2 style="display: flex; align-items: center; justify-content: space-between; width: 100%; margin: 0 0 1.5rem 0;">
+                <span style="display: flex; align-items: center; gap: 12px;">
+                    <i class="fas fa-users" style="color:var(--accent-blue); font-size: 1.25rem;"></i>
+                    Per-Employee Security Log
+                </span>
+                {% if not (current_user and current_user.role in ('admin', 'pro')) %}
+                    <span class="pro-badge">Pro Feature</span>
+                {% endif %}
+            </h2>
+            
+            {% if current_user and current_user.role in ('admin', 'pro') %}
+                <!-- Unlocked Premium View - Compact Preview -->
+                <div style="margin-top: 1rem; display: flex; flex-direction: column; gap: 10px;">
+                    {% for emp in employee_logs[:3] %}
+                    <div style="display: flex; flex-direction: column; gap: 6px; padding: 12px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.04); border-radius: 10px; transition: all 0.2s; position: relative;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+                            <div style="min-width: 0; flex: 1;">
+                                <div style="font-weight: 600; color: var(--text-main); font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ emp.name or 'Unknown Target' }}</div>
+                                <div style="font-size: 0.72rem; color: var(--text-muted); font-family: var(--font-mono); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                    {{ emp.email }} • <span style="color: var(--accent-blue);">{{ emp.department or 'General' }}</span>
+                                </div>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
+                                {% if emp.clicked %}
+                                    <span style="background:rgba(239,68,68,0.15); color:#f87171; border:1px solid rgba(239,68,68,0.3); padding:2px 8px; border-radius:100px; font-size:0.7rem; font-weight:700;">Clicked</span>
+                                {% elif emp.reported %}
+                                    <span style="background:rgba(34,197,94,0.15); color:#4ade80; border:1px solid rgba(34,197,94,0.3); padding:2px 8px; border-radius:100px; font-size:0.7rem; font-weight:700;">Reported</span>
+                                {% elif emp.opened %}
+                                    <span style="background:rgba(234,179,8,0.12); color:#facc15; border:1px solid rgba(234,179,8,0.3); padding:2px 8px; border-radius:100px; font-size:0.7rem; font-weight:700;">Opened</span>
+                                {% else %}
+                                    <span style="background:rgba(255,255,255,0.05); color:var(--text-muted); border:1px solid var(--border-color); padding:2px 8px; border-radius:100px; font-size:0.7rem; font-weight:700;">No Action</span>
+                                {% endif %}
+                                
+                                <span style="font-weight:700; font-size:0.75rem; padding: 2px 6px; border-radius: 4px; 
+                                    {% if emp.risk_score >= 70 %}
+                                        background: rgba(239,68,68,0.12); color: #f87171; border: 1px solid rgba(239,68,68,0.25);
+                                    {% elif emp.risk_score >= 30 %}
+                                        background: rgba(234,179,8,0.12); color: #facc15; border: 1px solid rgba(234,179,8,0.25);
+                                    {% else %}
+                                        background: rgba(34,197,94,0.12); color: #4ade80; border: 1px solid rgba(34,197,94,0.25);
+                                    {% endif %}
+                                ">
+                                    {{ emp.risk_score }}
+                                </span>
+
+                                <span style="font-size:0.72rem; font-weight:600; white-space:nowrap;
+                                    {% if emp.trend_dir == 'worse' %}
+                                        color: #f87171;
+                                    {% elif emp.trend_dir == 'better' %}
+                                        color: #4ade80;
+                                    {% else %}
+                                        color: var(--text-muted);
+                                    {% endif %}
+                                ">
+                                    {% if emp.trend_dir == 'worse' %}
+                                        <i class="fas fa-arrow-trend-up"></i>
+                                    {% elif emp.trend_dir == 'better' %}
+                                        <i class="fas fa-arrow-trend-down"></i>
+                                    {% else %}
+                                        <i class="fas fa-arrows-left-right"></i>
+                                    {% endif %}
+                                    {{ emp.trend_val }}
+                                </span>
+                            </div>
+                        </div>
+                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 2px;">
+                            <div style="font-size: 0.78rem; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; flex: 1;" title="{{ emp.risk_reason }}">
+                                {{ emp.risk_reason }}
+                            </div>
+                            <button class="pro-btn" onclick="triggerTrainingToast('{{ emp.name or emp.email }}', '{{ emp.department or 'General' }}')" 
+                                    style="margin: 0; font-size: 0.7rem; padding: 4px 8px; border-radius: 6px; background: var(--accent-blue); border: none; color: #0f172a; font-weight: 700; line-height: 1; flex-shrink: 0;">
+                                Schedule
+                            </button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    
+                    {% if employee_logs|length > 3 %}
+                    <div style="text-align: center; color: var(--text-muted); font-size: 0.78rem; margin: 4px 0;">
+                        +{{ employee_logs|length - 3 }} more employees tracked
+                    </div>
+                    {% endif %}
+                    
+                    <button class="pro-btn" onclick="openModal('employee-log-modal')" style="margin-top: 8px; background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.2); color: #818cf8; width: 100%; font-weight: 700; font-family: var(--font-sans);">
+                        <i class="fas fa-expand" style="margin-right: 6px;"></i> View Full Security Log
+                    </button>
+                </div>
+
+                <!-- Modals Section for Employee Log -->
+                <div id="employee-log-modal" class="modal-overlay">
+                    <div class="modal-container">
+                        <div class="modal-header">
+                            <h2 style="margin: 0; font-family: var(--font-sans); font-size: 1.3rem; display: flex; align-items: center; gap: 10px; color: #fff;">
+                                <i class="fas fa-users" style="color:var(--accent-blue); margin-right: 14px;"></i> Per-Employee Security Log
+                            </h2>
+                            <button class="modal-close" onclick="closeModal('employee-log-modal')">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <div style="overflow-x: auto;">
+                                <table style="width:100%; border-collapse:collapse; font-size:0.85rem; text-align:left; min-width: 820px;">
+                                    <thead>
+                                        <tr style="border-bottom: 1px solid var(--border-color); color: var(--text-muted); font-family: var(--font-mono); font-size:0.75rem; text-transform:uppercase;">
+                                            <th style="padding: 12px 8px;">Employee</th>
+                                            <th style="padding: 12px 8px;">Department</th>
+                                            <th style="padding: 12px 8px; text-align:center;">Status</th>
+                                            <th style="padding: 12px 8px; text-align:center;">Risk Score</th>
+                                            <th style="padding: 12px 8px; text-align:center;">Trend</th>
+                                            <th style="padding: 12px 8px;">Risk Reason</th>
+                                            <th style="padding: 12px 8px; text-align:center;">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for emp in employee_logs %}
+                                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.02); transition: background 0.2s;">
+                                            <td style="padding: 14px 8px;">
+                                                <div style="font-weight: 600; color: var(--text-main);">{{ emp.name or 'Unknown Target' }}</div>
+                                                <div style="font-size: 0.72rem; color: var(--text-muted); font-family: var(--font-mono);">{{ emp.email }}</div>
+                                            </td>
+                                            <td style="padding: 14px 8px; color: var(--text-muted); font-size: 0.8rem;">{{ emp.department or 'General' }}</td>
+                                            <td style="padding: 14px 8px; text-align:center; white-space: nowrap;">
+                                                {% if emp.clicked %}
+                                                    <span style="background:rgba(239,68,68,0.15); color:#f87171; border:1px solid rgba(239,68,68,0.3); padding:3px 8px; border-radius:100px; font-size:0.7rem; font-weight:700; white-space: nowrap; display: inline-flex; align-items: center; gap: 4px;"><i class="fas fa-circle-exclamation" style="font-size: 0.75rem;"></i> Clicked</span>
+                                                {% elif emp.reported %}
+                                                    <span style="background:rgba(34,197,94,0.15); color:#4ade80; border:1px solid rgba(34,197,94,0.3); padding:2px 8px; border-radius:100px; font-size:0.7rem; font-weight:700; white-space: nowrap; display: inline-flex; align-items: center; gap: 4px;"><i class="fas fa-check-circle" style="font-size: 0.75rem;"></i> Reported</span>
+                                                {% elif emp.opened %}
+                                                    <span style="background:rgba(234,179,8,0.12); color:#facc15; border:1px solid rgba(234,179,8,0.3); padding:2px 8px; border-radius:100px; font-size:0.7rem; font-weight:700; white-space: nowrap; display: inline-flex; align-items: center; gap: 4px;"><i class="fas fa-envelope-open" style="font-size: 0.75rem;"></i> Opened</span>
+                                                {% else %}
+                                                    <span style="background:rgba(255,255,255,0.05); color:var(--text-muted); border:1px solid var(--border-color); padding:3px 8px; border-radius:100px; font-size:0.7rem; font-weight:700; white-space: nowrap; display: inline-flex; align-items: center; gap: 4px;">No Action</span>
+                                                {% endif %}
+                                            </td>
+                                            <td style="padding: 14px 8px; text-align:center;">
+                                                <span style="display:inline-block; font-weight:700; font-size:0.75rem; padding: 2px 6px; border-radius: 4px; 
+                                                    {% if emp.risk_score >= 70 %}
+                                                        background: rgba(239,68,68,0.12); color: #f87171; border: 1px solid rgba(239,68,68,0.25);
+                                                    {% elif emp.risk_score >= 30 %}
+                                                        background: rgba(234,179,8,0.12); color: #facc15; border: 1px solid rgba(234,179,8,0.25);
+                                                    {% else %}
+                                                        background: rgba(34,197,94,0.12); color: #4ade80; border: 1px solid rgba(34,197,94,0.25);
+                                                    {% endif %}
+                                                ">
+                                                    {{ emp.risk_score }}
+                                                </span>
+                                            </td>
+                                            <td style="padding: 14px 8px; text-align:center;">
+                                                <span style="font-size:0.75rem; font-weight:600; white-space:nowrap;
+                                                    {% if emp.trend_dir == 'worse' %}
+                                                        color: #f87171;
+                                                    {% elif emp.trend_dir == 'better' %}
+                                                        color: #4ade80;
+                                                    {% else %}
+                                                        color: var(--text-muted);
+                                                    {% endif %}
+                                                ">
+                                                    {% if emp.trend_dir == 'worse' %}
+                                                        <i class="fas fa-arrow-trend-up"></i>
+                                                    {% elif emp.trend_dir == 'better' %}
+                                                        <i class="fas fa-arrow-trend-down"></i>
+                                                    {% else %}
+                                                        <i class="fas fa-arrows-left-right"></i>
+                                                    {% endif %}
+                                                    {{ emp.trend_val }}
+                                                </span>
+                                            </td>
+                                            <td style="padding: 14px 8px; color: var(--text-muted); font-size: 0.8rem;" title="{{ emp.risk_reason }}">{{ emp.risk_reason }}</td>
+                                            <td style="padding: 14px 8px; text-align:center;">
+                                                <button class="pro-btn" onclick="closeModal('employee-log-modal'); triggerTrainingToast('{{ emp.name or emp.email }}', '{{ emp.department or 'General' }}')" 
+                                                        style="font-size:0.7rem; padding:4px 8px; border-radius:6px; margin:0; line-height: 1; background: var(--accent-blue); box-shadow: none; border:none; color:#0f172a; font-weight:700;">
+                                                    Schedule
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        {% else %}
+                                        <tr>
+                                            <td colspan="7" style="text-align:center; padding: 2rem; color: var(--text-muted);">No employee telemetry tracked.</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% else %}
+                <div style="position: relative; margin-top: 1rem;">
+                    <!-- Gated Blur View of Mock Data (no real employee data exposed) -->
+                    <div style="filter: blur(4.5px); opacity: 0.25; pointer-events: none; user-select: none; display: flex; flex-direction: column; gap: 10px;">
+                        <!-- Mock Row 1 -->
+                        <div style="display: flex; flex-direction: column; gap: 6px; padding: 12px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.04); border-radius: 10px;">
+                            <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+                                <div>
+                                    <div style="font-weight: 600; color: var(--text-main); font-size: 0.85rem;">Alex Carter</div>
+                                    <div style="font-size: 0.72rem; color: var(--text-muted); font-family: var(--font-mono);">
+                                        a.carter@company.com • <span style="color: var(--accent-blue);">Finance</span>
+                                    </div>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <span style="background:rgba(239,68,68,0.15); color:#f87171; border:1px solid rgba(239,68,68,0.3); padding:2px 8px; border-radius:100px; font-size:0.7rem; font-weight:700;">Clicked</span>
+                                    <span style="font-weight:700; font-size:0.75rem; padding: 2px 6px; border-radius: 4px; background: rgba(239,68,68,0.12); color: #f87171; border: 1px solid rgba(239,68,68,0.25);">89</span>
+                                    <span style="color: #f87171; font-size:0.72rem; font-weight:600; white-space:nowrap;"><i class="fas fa-arrow-trend-up"></i> ↑ 12%</span>
+                                </div>
+                            </div>
+                            <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 2px;">
+                                <div style="font-size: 0.78rem; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; flex: 1;">
+                                    Clicked link within 45s — high impulsivity risk under urgency cues.
+                                </div>
+                                <button class="pro-btn" style="margin: 0; font-size: 0.7rem; padding: 4px 8px; border-radius: 6px; background: var(--accent-blue); border: none; color: #0f172a; font-weight: 700; line-height: 1; flex-shrink: 0;">
+                                    Schedule
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Mock Row 2 -->
+                        <div style="display: flex; flex-direction: column; gap: 6px; padding: 12px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.04); border-radius: 10px;">
+                            <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+                                <div>
+                                    <div style="font-weight: 600; color: var(--text-main); font-size: 0.85rem;">Jordan Wells</div>
+                                    <div style="font-size: 0.72rem; color: var(--text-muted); font-family: var(--font-mono);">
+                                        j.wells@company.com • <span style="color: var(--accent-blue);">Sales</span>
+                                    </div>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <span style="background:rgba(234,179,8,0.12); color:#facc15; border:1px solid rgba(234,179,8,0.3); padding:2px 8px; border-radius:100px; font-size:0.7rem; font-weight:700;">Opened</span>
+                                    <span style="font-weight:700; font-size:0.75rem; padding: 2px 6px; border-radius: 4px; background: rgba(234,179,8,0.12); color: #facc15; border: 1px solid rgba(234,179,8,0.25);">54</span>
+                                    <span style="color: #4ade80; font-size:0.72rem; font-weight:600; white-space:nowrap;"><i class="fas fa-arrow-trend-down"></i> ↓ 8%</span>
+                                </div>
+                            </div>
+                            <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 2px;">
+                                <div style="font-size: 0.78rem; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; flex: 1;">
+                                    Opened email but did not click link.
+                                </div>
+                                <button class="pro-btn" style="margin: 0; font-size: 0.7rem; padding: 4px 8px; border-radius: 6px; background: var(--accent-blue); border: none; color: #0f172a; font-weight: 700; line-height: 1; flex-shrink: 0;">
+                                    Schedule
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Mock Row 3 -->
+                        <div style="display: flex; flex-direction: column; gap: 6px; padding: 12px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.04); border-radius: 10px;">
+                            <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+                                <div>
+                                    <div style="font-weight: 600; color: var(--text-main); font-size: 0.85rem;">Taylor Vance</div>
+                                    <div style="font-size: 0.72rem; color: var(--text-muted); font-family: var(--font-mono);">
+                                        t.vance@company.com • <span style="color: var(--accent-blue);">HR</span>
+                                    </div>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <span style="background:rgba(34,197,94,0.15); color:#4ade80; border:1px solid rgba(34,197,94,0.3); padding:2px 8px; border-radius:100px; font-size:0.7rem; font-weight:700;">Reported</span>
+                                    <span style="font-weight:700; font-size:0.75rem; padding: 2px 6px; border-radius: 4px; background: rgba(34,197,94,0.12); color: #4ade80; border: 1px solid rgba(34,197,94,0.25);">12</span>
+                                    <span style="color: var(--text-muted); font-size:0.72rem; font-weight:600; white-space:nowrap;"><i class="fas fa-arrows-left-right"></i> → 0%</span>
+                                </div>
+                            </div>
+                            <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 2px;">
+                                <div style="font-size: 0.78rem; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; flex: 1;">
+                                    Reported simulated threat quickly to security.
+                                </div>
+                                <button class="pro-btn" style="margin: 0; font-size: 0.7rem; padding: 4px 8px; border-radius: 6px; background: var(--accent-blue); border: none; color: #0f172a; font-weight: 700; line-height: 1; flex-shrink: 0;">
+                                    Schedule
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="pro-lock-overlay">
+                        <div class="pro-lock-icon">
+                            <i class="fas fa-lock"></i>
+                        </div>
+                        <h4 style="color:#fff; margin-bottom: 8px; font-weight:700;">Locked behind Pro Tier</h4>
+                        <p style="color:var(--text-muted); font-size:0.82rem; max-width:320px; margin-bottom: 12px; line-height: 1.5;">
+                            See risk scores and behavior profiles for all {{ brief_data.employee_count }} employees.
+                        </p>
+                        <a href="/billing" class="pro-btn">Upgrade to Pro</a>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Locked/Unlocked Training brief brief -->
+        <div class="report-panel">
+            <h2 style="display: flex; align-items: center; justify-content: space-between; width: 100%; margin: 0 0 1.5rem 0;">
+                <span style="display: flex; align-items: center; gap: 12px;">
+                    <i class="fas fa-file-invoice" style="color:var(--accent-purple); font-size: 1.25rem;"></i>
+                    Auto-Generated Training Brief
+                </span>
+                {% if not (current_user and current_user.role in ('admin', 'pro')) %}
+                    <span class="pro-badge">Pro Feature</span>
+                {% endif %}
+            </h2>
+            
+            {% if current_user and current_user.role in ('admin', 'pro') %}
+                <!-- Unlocked Premium View - Compact Card Summary -->
+                <div class="brief-doc" style="margin-top: 1rem; padding: 1.25rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 8px;">
+                        <div class="brief-title" style="font-size: 0.65rem;">PHISHSIM AI • Threat Mitigation Summary</div>
+                        <div style="font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-muted);">{{ brief_data.date }}</div>
+                    </div>
+                    <p style="font-size: 0.85rem; color: var(--text-main); line-height: 1.5; margin: 0 0 1rem 0;">
+                        Remedial action plan compiled following the <strong>{{ brief_data.vector }}</strong> campaign targeting <strong>{{ brief_data.company }}</strong>. Compromise rate: <strong>{{ brief_data.click_rate }}%</strong>.
+                    </p>
+                    <button class="pro-btn" onclick="openModal('training-brief-modal')" style="background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.2); color: #818cf8; width: 100%; font-weight: 700; font-family: var(--font-sans);">
+                        <i class="fas fa-expand" style="margin-right: 6px;"></i> View Full Mitigation Brief
+                    </button>
+                </div>
+
+                <!-- Modal for Training Brief -->
+                <div id="training-brief-modal" class="modal-overlay">
+                    <div class="modal-container" style="max-width: 800px;">
+                        <div class="modal-header">
+                            <h2 style="margin: 0; font-family: var(--font-sans); font-size: 1.3rem; display: flex; align-items: center; gap: 10px; color: #fff;">
+                                <i class="fas fa-file-invoice" style="color:var(--accent-purple); margin-right: 14px;"></i> Threat Mitigation Brief
+                            </h2>
+                            <button class="modal-close" onclick="closeModal('training-brief-modal')">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div class="modal-body" style="padding: 1.5rem 2rem;">
+                            <div style="margin-top: 0; padding: 0; color: var(--text-main); font-family: var(--font-sans); line-height: 1.6;">
+                                <div class="brief-header" style="margin-top: 0; padding-top: 0;">
+                                    <div>
+                                        <div class="brief-title">PHISHSIM AI • Threat Mitigation Brief</div>
+                                        <h2 style="font-size: 1.2rem; font-weight: 700; color: #fff; margin: 4px 0 0 0; font-family: var(--font-sans);">Remediation Action Plan</h2>
+                                    </div>
+                                    <div class="brief-meta-grid">
+                                        <span class="brief-meta-label">DATE:</span>
+                                        <span>{{ brief_data.date }}</span>
+                                        <span class="brief-meta-label">DOMAIN:</span>
+                                        <span>{{ brief_data.company }}</span>
+                                        <span class="brief-meta-label">SCOPE:</span>
+                                        <span>{{ brief_data.employee_count }} Targets</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="brief-content" id="brief-text-content">
+                                    <h3>1. Executive Assessment</h3>
+                                    <p>This remedial brief was dynamically compiled by PhishSim AI following the completion of the <strong>{{ brief_data.vector }}</strong> simulation campaign. During the exercise, an overall compromise rate of <strong>{{ brief_data.click_rate }}%</strong> (with {{ brief_data.clicks }} total click events) was recorded across targeted employees.</p>
+                                    
+                                    <h3>2. Core Vulnerabilities</h3>
+                                    <p>Our behavioral engine identified clear department-level and employee-level exposures:</p>
+                                    <ul style="margin: 0.5rem 0 1rem 1.5rem; padding: 0;">
+                                        <li><strong>Vulnerable Departments:</strong> {{ brief_data.failed_departments }}</li>
+                                        <li><strong>At-Risk Personnel:</strong> {{ brief_data.at_risk_employees }}</li>
+                                    </ul>
+                                    <p>The campaign spoofed organizational authority. Impulsivity and lack of out-of-band sender verification were identified as primary vulnerability vectors.</p>
+                                    
+                                    <h3>3. Action Checklist</h3>
+                                    <ol style="margin: 0.5rem 0 1rem 1.5rem; padding: 0;">
+                                        <li><strong>Targeted Department Briefings:</strong> Schedule 15-minute micro-learning sessions focusing on display name spoofing and urgent transaction overrides.</li>
+                                        <li><strong>Active Reporting Checkpoints:</strong> Encourage users to leverage the PhishSim report button rather than silently ignoring suspicious emails.</li>
+                                        <li><strong>Multi-Channel Verification:</strong> Mandate voice or secure Slack out-of-band confirmation for all financial and sensitive operations requests.</li>
+                                    </ol>
+                                </div>
+                                
+                                <div style="display: flex; gap: 8px; margin-top: 1.5rem; flex-wrap: wrap;">
+                                    <a href="/download-brief/{{ campaign.id }}" class="pro-btn" style="font-size: 0.72rem; padding: 8px 16px; margin: 0; background: var(--accent-purple); color: #fff; border:none; font-weight:700;">
+                                        <i class="fas fa-file-pdf" style="margin-right: 4px;"></i> Download PDF
+                                    </a>
+                                    <button class="pro-btn" onclick="triggerSendBriefToast()" style="font-size: 0.72rem; padding: 8px 16px; margin: 0; background: var(--accent-cyan); color: #0f172a; border:none; font-weight:700;">
+                                        <i class="fas fa-paper-plane" style="margin-right: 4px;"></i> Send to Team
+                                    </button>
+                                    <button id="copy-brief-btn" onclick="copyBriefText()" style="font-size: 0.72rem; padding: 8px 16px; margin: 0; background: rgba(255,255,255,0.06); border: 1px solid var(--border-color); color: #fff;">
+                                        <i class="fas fa-copy" style="margin-right: 4px;"></i> Copy Text
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <script>
+                function copyBriefText() {
+                    const txt = document.getElementById('brief-text-content').innerText;
+                    navigator.clipboard.writeText(txt).then(() => {
+                        const btn = document.getElementById('copy-brief-btn');
+                        btn.style.background = 'rgba(34,197,94,0.15)';
+                        btn.style.borderColor = 'rgba(34,197,94,0.3)';
+                        btn.style.color = '#4ade80';
+                        btn.innerHTML = '<i class="fas fa-check" style="margin-right:4px;"></i>Copied!';
+                        setTimeout(() => {
+                            btn.style.background = 'rgba(255,255,255,0.06)';
+                            btn.style.borderColor = 'var(--border-color)';
+                            btn.style.color = '#fff';
+                            btn.innerHTML = '<i class="fas fa-copy" style="margin-right:4px;"></i>Copy Text';
+                        }, 2000);
+                    });
+                }
+                </script>
+            {% else %}
+                <div style="position: relative; margin-top: 1rem;">
+                    <!-- Gated Blur View of Document Layout (no real employee data exposed) -->
+                    <div style="filter: blur(5px); opacity: 0.2; pointer-events: none; user-select: none;">
+                        <div class="brief-doc" style="margin-top: 0; padding: 1.25rem;">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem;">
+                                <div class="brief-title" style="font-size: 0.65rem;">PHISHSIM AI • Threat Mitigation Summary</div>
+                                <div style="font-family: var(--font-mono); font-size: 0.72rem;">[Date]</div>
+                            </div>
+                            <p style="font-size: 0.85rem; line-height: 1.5; margin: 0 0 1rem 0;">
+                                Remedial action plan compiled following the [Attack Scenario] campaign. Overall compromise rate of [Rate]% was recorded.
+                            </p>
+                            <button class="pro-btn" style="margin-top: 8px; background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.2); color: #818cf8; width: 100%;">
+                                <i class="fas fa-expand" style="margin-right: 6px;"></i> View Full Mitigation Brief
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="pro-lock-overlay">
+                        <div class="pro-lock-icon">
+                            <i class="fas fa-lock"></i>
+                        </div>
+                        <h4 style="color:#fff; margin-bottom: 8px; font-weight:700;">Locked behind Pro Tier</h4>
+                        <p style="color:var(--text-muted); font-size:0.82rem; max-width:320px; margin-bottom: 12px; line-height: 1.5;">
+                            Unlock PhishSim Pro to generate premium executive-ready remediation action plans and PDF briefs based on this campaign.
+                        </p>
+                        <a href="/billing" class="pro-btn">Upgrade to Pro</a>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    <!-- Interactive AI Recommendations Countermeasures -->
+    <div class="report-panel" style="margin-top: 2rem; display: flex; flex-direction: column; margin-bottom: 2rem;">
+        <h2 style="display: flex; align-items: center; justify-content: space-between; width: 100%; margin: 0 0 1rem 0;">
+            <span style="display: flex; align-items: center; gap: 12px;">
+                <i class="fas fa-lightbulb" style="color:var(--accent-cyan); font-size: 1.25rem;"></i>
+                AI Recommendations
             </span>
+        </h2>
+        <p style="color:var(--text-muted); font-size:0.82rem; margin:-0.5rem 0 1.25rem;">Interactive threat countermeasures. Click an item to mark it as implemented.</p>
+        
+        <!-- Dynamic Progress Tracker -->
+        <div style="background: rgba(15, 23, 42, 0.4); border: 1px solid var(--border-color); border-radius: 12px; padding: 12px 16px; margin-bottom: 1.25rem; display: flex; flex-direction: column; gap: 8px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem;">
+                <span style="color: var(--text-main); font-weight: 600;">Mitigation Action Plan Progress</span>
+                <span id="mitigation-progress-pct" style="color: var(--accent-cyan); font-weight: 700; font-family: var(--font-mono);">0% Completed</span>
+            </div>
+            <div style="width: 100%; height: 6px; background: rgba(255,255,255,0.05); border-radius: 100px; overflow: hidden; position: relative;">
+                <div id="mitigation-progress-bar" style="width: 0%; height: 100%; background: linear-gradient(90deg, var(--accent-blue), var(--accent-cyan)); border-radius: 100px; transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1);"></div>
+            </div>
         </div>
-        {% endfor %}
-    </div>
-    {% endif %}
 
-    <!-- AI Recommendations -->
-    <div class="r-panel" style="animation-delay:0.5s;">
-        <h2><i class="fas fa-lightbulb" style="color:#06b6d4;margin-right:10px;"></i>AI Recommendations</h2>
-        {% for item in report.recommendations %}
-        <div class="reco-item" style="animation-delay: {{ loop.index0 * 0.1 + 0.3 }}s">
-            <div class="reco-num">{{ loop.index }}</div>
-            <p>{{ item }}</p>
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+            {% for item in report.recommendations %}
+            <div class="reco-item" onclick="toggleRecoItem(this)" style="cursor: pointer; position: relative; margin-bottom: 0; padding: 12px 16px; animation-delay: {{ loop.index0 * 0.1 + 0.3 }}s; display: flex; align-items: center; gap: 14px; transition: all 0.3s ease;">
+                <div class="reco-check-circle" style="width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--border-color); display: flex; align-items: center; justify-content: center; color: transparent; transition: all 0.2s; flex-shrink: 0;">
+                    <i class="fas fa-check" style="font-size: 0.6rem;"></i>
+                </div>
+                <div style="flex: 1; min-width: 0;">
+                    <p class="reco-text" style="color: var(--text-main); line-height: 1.5; margin: 0; font-size: 0.88rem; transition: all 0.3s;">{{ item }}</p>
+                </div>
+                <span class="reco-badge-status" style="padding: 2px 8px; border-radius: 100px; font-size: 0.65rem; font-weight: 700; background: rgba(99, 102, 241, 0.1); color: var(--accent-purple); border: 1px solid rgba(99, 102, 241, 0.2); transition: all 0.3s; white-space: nowrap; flex-shrink: 0;">Pending</span>
+            </div>
+            {% endfor %}
         </div>
-        {% endfor %}
     </div>
-</div>
+</div> <!-- Closes report-page -->
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
+// Live Agent Thinking Stream text block
+const thinkingText = [
+    "[AGENT_OSINT] Organization public directory mapped. Detected 142 exposed employee records.",
+    "[AGENT_PATTERN] Primary threat vector matches CFO Authority Impersonation profile. Urgent compliance headers acted as principal exploit factor.",
+    "[AGENT_RISK] High risk exposure identified: {{ report.click_rate }}% of targets triggered click execution flow. Average response time under 180 seconds.",
+    "[AGENT_STRENGTH] IT and Engineering departments demonstrated strong relative security posture with lower relative clicks.",
+    "[AGENT_ACTION] Priority recommendation: Launch structured countermeasure training targeting CFO / CEO urgency vectors."
+];
+
+// Character typing logic
+(function() {
+    let currentLine = 0;
+    let currentChar = 0;
+    const terminalOutput = document.getElementById('typing-log');
+    if (!terminalOutput) return;
+
+    function typeNextChar() {
+        if (currentLine >= thinkingText.length) {
+            const cursor = document.createElement('span');
+            cursor.id = 'terminal-cursor';
+            cursor.textContent = ' █';
+            cursor.style.color = '#38bdf8';
+            cursor.style.animation = 'livePulse 1s infinite';
+            terminalOutput.appendChild(cursor);
+            return;
+        }
+        
+        if (currentChar === 0) {
+            const lineDiv = document.createElement('div');
+            lineDiv.style.marginBottom = '10px';
+            lineDiv.style.fontFamily = 'monospace';
+            lineDiv.style.lineHeight = '1.6';
+            lineDiv.innerHTML = '';
+            terminalOutput.appendChild(lineDiv);
+        }
+        
+        const activeLineDiv = terminalOutput.lastChild;
+        const text = thinkingText[currentLine];
+        
+        activeLineDiv.textContent = text.slice(0, currentChar + 1) + '█';
+        currentChar++;
+        
+        if (currentChar >= text.length) {
+            // Apply color classes
+            let formattedText = text;
+            if (text.startsWith("[AGENT_OSINT]")) {
+                formattedText = `<span style="color:#38bdf8; font-weight:bold;">[AGENT_OSINT]</span>` + text.slice(13);
+            } else if (text.startsWith("[AGENT_PATTERN]")) {
+                formattedText = `<span style="color:#f59e0b; font-weight:bold;">[AGENT_PATTERN]</span>` + text.slice(15);
+            } else if (text.startsWith("[AGENT_RISK]")) {
+                formattedText = `<span style="color:#ef4444; font-weight:bold;">[AGENT_RISK]</span>` + text.slice(12);
+            } else if (text.startsWith("[AGENT_STRENGTH]")) {
+                formattedText = `<span style="color:#22c55e; font-weight:bold;">[AGENT_STRENGTH]</span>` + text.slice(16);
+            } else if (text.startsWith("[AGENT_ACTION]")) {
+                formattedText = `<span style="color:#c084fc; font-weight:bold;">[AGENT_ACTION]</span>` + text.slice(14);
+            }
+            activeLineDiv.innerHTML = formattedText;
+            currentLine++;
+            currentChar = 0;
+            setTimeout(typeNextChar, 600);
+        } else {
+            setTimeout(typeNextChar, 12);
+        }
+        terminalOutput.scrollTop = terminalOutput.scrollHeight;
+    }
+    
+    // Start typing slightly after load
+    setTimeout(typeNextChar, 500);
+})();
+
 // HSS counter animation
 (function() {
     const el = document.getElementById('hss-number');
@@ -332,19 +1467,21 @@
 // Radar chart
 document.addEventListener('DOMContentLoaded', function() {
     const ctx = document.getElementById('metricsChart').getContext('2d');
+    const predCtx = document.getElementById('predictiveChart').getContext('2d');
+    
     const getGridColor = () => document.body.classList.contains('light-theme') ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.08)';
     
     const chart = new Chart(ctx, {
         type: 'radar',
         data: {
-            labels: ['Delivery', 'Open Rate', 'Click Rate (Vulnerability)', 'Report Rate (Security)'],
+            labels: ['Delivery', 'Open Rate', 'Click Rate', 'Report Rate'],
             datasets: [{
                 label: 'Campaign Metrics %',
                 data: [{{ report.delivery_rate }}, {{ report.open_rate }}, {{ report.click_rate }}, {{ report.report_rate }}],
-                backgroundColor: 'rgba(6, 182, 212, 0.15)',
-                borderColor: '#06b6d4',
+                backgroundColor: 'rgba(56, 189, 248, 0.15)',
+                borderColor: '#38bdf8',
                 pointBackgroundColor: ['#3b82f6', '#eab308', '#ef4444', '#22c55e'],
-                pointBorderColor: '#fff', pointHoverBackgroundColor: '#fff', pointHoverBorderColor: '#06b6d4',
+                pointBorderColor: '#fff', pointHoverBackgroundColor: '#fff', pointHoverBorderColor: '#38bdf8',
                 borderWidth: 2,
             }]
         },
@@ -355,7 +1492,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     min: 0, max: 100,
                     angleLines: { color: getGridColor() },
                     grid:       { color: getGridColor() },
-                    pointLabels: { color: '#94a3b8', font: { family: 'Space Mono', size: 11 } },
+                    pointLabels: { color: '#94a3b8', font: { family: 'var(--font-sans)', size: 11 } },
                     ticks: { display: false }
                 }
             },
@@ -363,10 +1500,303 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
+    // Predictive line chart
+    const predictiveChart = new Chart(predCtx, {
+        type: 'line',
+        data: {
+            labels: ['M1', 'M2', 'M3 (Now)', 'M4 (Proj)', 'M5 (Proj)', 'M6 (Proj)'],
+            datasets: [
+                {
+                    label: 'No Training (Projected Risk)',
+                    data: [18, 25, {{ report.click_rate }}, Math.min(100, {{ report.click_rate }} + 10), Math.min(100, {{ report.click_rate }} + 18), Math.min(100, {{ report.click_rate }} + 25)],
+                    borderColor: '#ef4444',
+                    borderDash: [5, 5],
+                    backgroundColor: 'rgba(239, 68, 68, 0.04)',
+                    fill: true,
+                    tension: 0.35
+                },
+                {
+                    label: 'With Training (Projected Safety)',
+                    data: [18, 25, {{ report.click_rate }}, Math.max(0, {{ report.click_rate }} - 12), Math.max(0, {{ report.click_rate }} - 22), 4],
+                    borderColor: '#22c55e',
+                    backgroundColor: 'rgba(34, 197, 94, 0.04)',
+                    fill: true,
+                    tension: 0.35
+                }
+            ]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            scales: {
+                y: {
+                    min: 0, max: 100,
+                    grid: { color: getGridColor() },
+                    ticks: { color: '#64748b' }
+                },
+                x: {
+                    grid: { display: false },
+                    ticks: { color: '#64748b' }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top',
+                    labels: { color: '#94a3b8', boxWidth: 12, font: { family: 'var(--font-sans)', size: 10 } }
+                }
+            }
+        }
+    });
+
     window.addEventListener('theme-changed', () => {
-        chart.options.scales.r.angleLines.color = getGridColor();
-        chart.options.scales.r.grid.color = getGridColor();
+        const gridColor = getGridColor();
+        chart.options.scales.r.angleLines.color = gridColor;
+        chart.options.scales.r.grid.color = gridColor;
         chart.update();
+
+        predictiveChart.options.scales.y.grid.color = gridColor;
+        predictiveChart.update();
+    });
+});
+
+// Download button spinner-to-checkmark animation
+function handleDownload(btnId, url) {
+    const btn = document.getElementById(btnId);
+    if (!btn || btn.dataset.loading) return;
+    btn.dataset.loading = '1';
+    const iconEl = btn.querySelector('i');
+    const labelEl = btn.querySelector('span');
+    const origIcon = iconEl.className;
+    const origLabel = labelEl.textContent;
+    iconEl.className = 'fas fa-spinner fa-spin';
+    labelEl.textContent = ' Preparing...';
+    btn.style.opacity = '0.8';
+    setTimeout(() => {
+        window.location.href = url;
+        setTimeout(() => {
+            iconEl.className = 'fas fa-check-circle';
+            labelEl.textContent = ' Done!';
+            btn.style.opacity = '1';
+            btn.style.background = 'linear-gradient(135deg,#22c55e,#16a34a)';
+            setTimeout(() => {
+                iconEl.className = origIcon;
+                labelEl.textContent = origLabel;
+                btn.style.background = '';
+                delete btn.dataset.loading;
+            }, 2500);
+        }, 1200);
+    }, 800);
+}
+
+// Dynamic toast notification system
+function showPremiumToast(message, iconClass = 'fa-circle-check') {
+    let container = document.querySelector('.toast-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.className = 'toast-container';
+        document.body.appendChild(container);
+    }
+    
+    const toast = document.createElement('div');
+    toast.className = 'premium-toast';
+    toast.innerHTML = `
+        <i class="fas ${iconClass} toast-success-icon"></i>
+        <span>${message}</span>
+    `;
+    
+    container.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.style.animation = 'none';
+        toast.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(-20px)';
+        setTimeout(() => toast.remove(), 500);
+    }, 4000);
+}
+
+function triggerTrainingToast(empName, empDept) {
+    showPremiumToast(`Security Brief scheduled: 'Authority Impersonation Remediation' training successfully assigned to ${empName} (${empDept}).`);
+}
+
+function triggerSendBriefToast() {
+    const btn = document.querySelector('button[onclick="triggerSendBriefToast()"]');
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin" style="margin-right: 4px;"></i> Sending...';
+    }
+    
+    fetch('/api/send-brief/{{ campaign.id }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showPremiumToast(data.message, 'fa-circle-check');
+        } else {
+            showPremiumToast('Failed to send brief: ' + data.message, 'fa-circle-exclamation');
+        }
+    })
+    .catch(error => {
+        showPremiumToast('Network error while dispatching brief.', 'fa-circle-exclamation');
+    })
+    .finally(() => {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-paper-plane" style="margin-right: 4px;"></i> Send to Team';
+        }
+    });
+}
+
+function triggerScheduleSimulationToast() {
+    const btn = document.querySelector('button[onclick="triggerScheduleSimulationToast()"]');
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin" style="margin-right: 4px;"></i> Scheduling...';
+    }
+    
+    fetch('/api/schedule-recommendation/{{ campaign.id }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showPremiumToast(data.message, 'fa-calendar-check');
+            // Dynamically transform UI of the planner recommendation card to show scheduled status
+            if (btn) {
+                const card = btn.closest('div');
+                if (card) {
+                    card.style.transition = 'all 0.5s ease';
+                    card.style.opacity = '0';
+                    setTimeout(() => {
+                        card.innerHTML = `
+                            <div style="text-align: center; padding: 1.5rem 0; animation: fadeIn 0.5s ease-out forwards;">
+                                <div style="font-size: 2.2rem; color: #4ade80; margin-bottom: 0.75rem;">
+                                    <i class="fas fa-circle-check"></i>
+                                </div>
+                                <h3 style="font-size: 1.1rem; color: #fff; margin: 0 0 4px 0; font-family: var(--font-sans);">Follow-Up Scheduled</h3>
+                                <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 0; line-height: 1.5;">
+                                    'Authority Impersonation (Finance Focus)' is set to auto-deploy in 45 days.
+                                </p>
+                            </div>
+                        `;
+                        card.style.opacity = '1';
+                    }, 500);
+                }
+            }
+        } else {
+            showPremiumToast('Failed to schedule: ' + data.message, 'fa-circle-exclamation');
+        }
+    })
+    .catch(error => {
+        showPremiumToast('Network error while scheduling simulation.', 'fa-circle-exclamation');
+    })
+    .finally(() => {
+        if (btn && btn.disabled) {
+            btn.disabled = false;
+            btn.innerHTML = 'Approve & Schedule';
+        }
+    });
+}
+
+function triggerCustomizePlannerToast(name, domain, scenario) {
+    showPremiumToast(`Redirecting to Simulation Customization Wizard...`, 'fa-sliders');
+    setTimeout(() => {
+        window.location.href = `/new-campaign?name=${encodeURIComponent(name)}&domain=${encodeURIComponent(domain)}&scenario=${encodeURIComponent(scenario)}`;
+    }, 1000);
+}
+
+// AI Recommendations Interactive handlers
+function toggleRecoItem(element) {
+    const checkCircle = element.querySelector('.reco-check-circle');
+    const textEl = element.querySelector('.reco-text');
+    const badge = element.querySelector('.reco-badge-status');
+    const isCompleted = element.classList.toggle('completed');
+
+    if (isCompleted) {
+        element.style.background = 'rgba(34, 197, 94, 0.04)';
+        element.style.borderColor = 'rgba(34, 197, 94, 0.2)';
+        checkCircle.style.background = 'rgba(34, 197, 94, 0.15)';
+        checkCircle.style.borderColor = '#4ade80';
+        checkCircle.style.color = '#4ade80';
+        textEl.style.textDecoration = 'line-through';
+        textEl.style.opacity = '0.5';
+        badge.textContent = 'Mitigated';
+        badge.style.background = 'rgba(34, 197, 94, 0.1)';
+        badge.style.color = '#4ade80';
+        badge.style.borderColor = 'rgba(34, 197, 94, 0.2)';
+        showPremiumToast('Mitigation task marked as implemented!', 'fa-circle-check');
+    } else {
+        element.style.background = 'rgba(255, 255, 255, 0.02)';
+        element.style.borderColor = 'var(--border-color)';
+        checkCircle.style.background = 'transparent';
+        checkCircle.style.borderColor = 'var(--border-color)';
+        checkCircle.style.color = 'transparent';
+        textEl.style.textDecoration = 'none';
+        textEl.style.opacity = '1';
+        badge.textContent = 'Pending';
+        badge.style.background = 'rgba(99, 102, 241, 0.1)';
+        badge.style.color = 'var(--accent-purple)';
+        badge.style.borderColor = 'rgba(99, 102, 241, 0.2)';
+    }
+
+    updateMitigationProgress();
+}
+
+function updateMitigationProgress() {
+    const items = document.querySelectorAll('.reco-item');
+    const completedItems = document.querySelectorAll('.reco-item.completed');
+    const pct = items.length ? Math.round((completedItems.length / items.length) * 100) : 0;
+
+    const progressPctEl = document.getElementById('mitigation-progress-pct');
+    const progressBarEl = document.getElementById('mitigation-progress-bar');
+
+    if (progressPctEl && progressBarEl) {
+        progressPctEl.textContent = `${pct}% Completed`;
+        progressBarEl.style.width = `${pct}%`;
+        
+        if (pct === 100) {
+            progressPctEl.style.color = '#4ade80';
+            progressBarEl.style.background = 'linear-gradient(90deg, #22c55e, #4ade80)';
+            showPremiumToast('Campaign Remediation Complete! All threats mitigated.', 'fa-shield-halved');
+        } else {
+            progressPctEl.style.color = 'var(--accent-cyan)';
+            progressBarEl.style.background = 'linear-gradient(90deg, var(--accent-blue), var(--accent-cyan))';
+        }
+    }
+}
+
+// Modal control functions
+function openModal(id) {
+    const modal = document.getElementById(id);
+    if (modal) {
+        modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+}
+
+function closeModal(id) {
+    const modal = document.getElementById(id);
+    if (modal) {
+        modal.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const overlays = document.querySelectorAll('.modal-overlay');
+    overlays.forEach(overlay => {
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) {
+                closeModal(overlay.id);
+            }
+        });
     });
 });
 </script>

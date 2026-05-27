@@ -1,376 +1,544 @@
 {% extends 'base.html' %}
 
-{% block title %}Login — PhishSim AI{% endblock %}
+{% block title %}Login - PhishSim AI{% endblock %}
 
 {% block content %}
 <style>
-/* ---- Auth Page Reset ---- */
-/* Removed hardcoded body background so it inherits from style.css */
-
 .auth-page {
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    min-height: calc(100vh - 72px);
     position: relative;
+    display: grid;
+    grid-template-columns: minmax(280px, 0.92fr) minmax(320px, 480px);
+    gap: 2rem;
+    align-items: center;
+    max-width: 1180px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 5rem 1.5rem;
     overflow: hidden;
-    padding: 2rem;
-    background: transparent;
 }
 
-/* Animated background canvas */
 #auth-canvas {
     position: fixed;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
+    inset: 0;
+    width: 100%;
+    height: 100%;
     z-index: 0;
     pointer-events: none;
 }
 
-/* Glowing radial gradient blobs */
-.auth-blob-1 {
-    position: fixed;
-    width: 600px; height: 600px;
+.auth-orbit {
+    position: absolute;
+    width: min(52vw, 560px);
+    aspect-ratio: 1;
+    left: -160px;
+    top: 50%;
+    transform: translateY(-50%);
+    border: 1px solid rgba(56,189,248,0.12);
     border-radius: 50%;
-    background: radial-gradient(circle, rgba(6, 182, 212, 0.12) 0%, transparent 70%);
-    top: -200px; left: -200px;
-    animation: blobDrift 8s ease-in-out infinite alternate;
     pointer-events: none;
-    z-index: 0;
-}
-.auth-blob-2 {
-    position: fixed;
-    width: 500px; height: 500px;
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(59, 130, 246, 0.1) 0%, transparent 70%);
-    bottom: -150px; right: -150px;
-    animation: blobDrift 10s ease-in-out infinite alternate-reverse;
-    pointer-events: none;
-    z-index: 0;
-}
-@keyframes blobDrift {
-    0% { transform: translate(0, 0) scale(1); }
-    100% { transform: translate(40px, 30px) scale(1.1); }
+    z-index: 1;
 }
 
-/* ---- Auth Card ---- */
+.auth-orbit::before,
+.auth-orbit::after {
+    content: "";
+    position: absolute;
+    inset: 16%;
+    border: 1px solid rgba(99,102,241,0.12);
+    border-radius: 50%;
+}
+
+.auth-orbit::after {
+    inset: 32%;
+    border-color: rgba(52,211,153,0.1);
+}
+
+.auth-copy,
 .auth-card {
     position: relative;
-    z-index: 10;
-    width: 100%;
-    max-width: 480px;
-    background: var(--bg-card);
-    border: 1px solid var(--border-color);
-    border-radius: 24px;
-    padding: 3rem;
-    box-shadow: 0 0 60px rgba(6, 182, 212, 0.08), 0 40px 80px rgba(0,0,0,0.6);
-    animation: cardEntrance 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-    opacity: 0;
-    transform: translateY(30px);
-}
-@keyframes cardEntrance {
-    to { opacity: 1; transform: translateY(0); }
+    z-index: 2;
 }
 
-/* Terminal-style top bar */
-.auth-terminal-bar {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 2rem;
-    padding-bottom: 1.5rem;
-    border-bottom: 1px solid rgba(255,255,255,0.05);
-}
-.auth-dot { width: 12px; height: 12px; border-radius: 50%; }
-.auth-dot.red { background: #ff5f57; }
-.auth-dot.yellow { background: #febc2e; }
-.auth-dot.green { background: #28c840; }
-.auth-terminal-label {
-    margin-left: auto;
-    font-family: 'Space Mono', monospace;
-    font-size: 0.75rem;
-    color: #475569;
-    letter-spacing: 1px;
+.auth-copy {
+    padding: 1rem 0;
 }
 
-/* Eyebrow badge */
 .auth-eyebrow {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    background: rgba(6, 182, 212, 0.1);
-    border: 1px solid rgba(6, 182, 212, 0.25);
-    border-radius: 100px;
-    padding: 5px 14px;
-    font-size: 0.78rem;
-    color: #06b6d4;
-    letter-spacing: 1px;
+    padding: 6px 14px;
+    border-radius: 999px;
+    border: 1px solid rgba(56,189,248,0.22);
+    background: rgba(56,189,248,0.08);
+    color: var(--app-cyan);
+    font-family: var(--font-mono);
+    font-size: 0.76rem;
+    font-weight: 700;
     text-transform: uppercase;
-    margin-bottom: 1.2rem;
-    font-family: 'Space Mono', monospace;
+    letter-spacing: 0.08em;
+    margin-bottom: 1.4rem;
 }
+
 .auth-eyebrow::before {
-    content: '';
-    width: 6px; height: 6px;
+    content: "";
+    width: 7px;
+    height: 7px;
     border-radius: 50%;
-    background: #06b6d4;
-    box-shadow: 0 0 8px #06b6d4;
-    animation: pulse 2s infinite;
+    background: var(--app-cyan);
+    box-shadow: 0 0 14px rgba(56,189,248,0.8);
+    animation: authPulse 2s infinite;
 }
-@keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.3; }
+
+@keyframes authPulse {
+    50% { opacity: 0.35; transform: scale(0.75); }
+}
+
+.auth-copy h1 {
+    font-size: clamp(2.6rem, 5vw, 4.7rem);
+    line-height: 1.04;
+    letter-spacing: 0;
+    margin: 0 0 1.2rem;
+    max-width: 720px;
+}
+
+.auth-copy h1 span {
+    color: transparent;
+    background: radial-gradient(circle at 30% 30%, #fff, var(--app-cyan) 34%, var(--app-blue) 78%);
+    -webkit-background-clip: text;
+    background-clip: text;
+}
+
+.auth-copy p {
+    max-width: 560px;
+    color: var(--app-muted);
+    font-size: 1.05rem;
+    line-height: 1.75;
+}
+
+.auth-signal-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    margin-top: 2rem;
+    max-width: 620px;
+}
+
+.auth-signal {
+    min-height: 116px;
+    border: 1px solid rgba(148,220,255,0.14);
+    border-radius: 14px;
+    padding: 16px;
+    background:
+        linear-gradient(145deg, rgba(255,255,255,0.065), rgba(255,255,255,0.018)),
+        rgba(10,16,38,0.55);
+    position: relative;
+    overflow: hidden;
+}
+
+.auth-signal::after {
+    content: "";
+    position: absolute;
+    width: 110px;
+    height: 110px;
+    right: -54px;
+    top: -54px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(56,189,248,0.26), transparent 66%);
+}
+
+.auth-signal strong {
+    display: block;
+    color: var(--app-text);
+    font-size: 1.2rem;
+    margin-bottom: 0.35rem;
+}
+
+.auth-signal span {
+    color: var(--app-muted);
+    font-size: 0.78rem;
+    line-height: 1.45;
+}
+
+.auth-card {
+    width: 100%;
+    border-radius: 16px;
+    border: 1px solid rgba(148,220,255,0.18);
+    background:
+        linear-gradient(145deg, rgba(255,255,255,0.085), rgba(255,255,255,0.025)),
+        rgba(5,7,15,0.78);
+    box-shadow: 0 30px 90px rgba(0,0,0,0.42), 0 0 54px rgba(56,189,248,0.12);
+    backdrop-filter: blur(18px);
+    overflow: hidden;
+    animation: authEnter 0.65s cubic-bezier(0.16,1,0.3,1) both;
+}
+
+@keyframes authEnter {
+    from { opacity: 0; transform: translateY(24px) scale(0.98); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.auth-terminal-bar {
+    height: 48px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 16px;
+    border-bottom: 1px solid rgba(148,220,255,0.12);
+    background: linear-gradient(90deg, rgba(2,6,23,0.9), rgba(15,23,42,0.72));
+}
+
+.auth-dot {
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+}
+.auth-dot.red { background: #ff5f57; }
+.auth-dot.yellow { background: #ffbd2e; }
+.auth-dot.green { background: #28c840; }
+
+.auth-terminal-label {
+    margin-left: auto;
+    color: var(--app-muted);
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+}
+
+.auth-card-body {
+    padding: 2rem;
 }
 
 .auth-title {
-    font-family: 'Outfit', sans-serif;
-    font-size: 2.2rem;
-    font-weight: 700;
-    color: var(--text-main);
-    margin-bottom: 0.5rem;
-    line-height: 1.2;
-}
-.auth-subtitle {
-    color: var(--text-muted);
-    font-size: 0.95rem;
-    margin-bottom: 2rem;
-    line-height: 1.5;
+    margin: 0 0 0.55rem;
+    font-size: 2rem;
+    color: var(--app-text);
 }
 
-/* Flash messages */
+.auth-subtitle {
+    margin-bottom: 1.6rem;
+    color: var(--app-muted);
+    line-height: 1.6;
+}
+
 .form-alert {
-    background: rgba(239, 68, 68, 0.12);
-    border: 1px solid rgba(239, 68, 68, 0.4);
-    color: #fca5a5;
-    padding: 12px 16px;
-    border-radius: 12px;
-    margin-bottom: 1.5rem;
+    margin-bottom: 1.2rem;
+    padding: 12px 14px;
+    border-radius: 10px;
+    border: 1px solid rgba(248,113,113,0.3);
+    background: rgba(248,113,113,0.11);
+    color: #fecaca;
     font-size: 0.9rem;
 }
 
-/* ---- Form Inputs ---- */
 .auth-form-group {
-    margin-bottom: 1.4rem;
-    position: relative;
+    margin-bottom: 1.15rem;
 }
+
 .auth-form-group label {
     display: block;
-    font-size: 0.85rem;
-    color: #94a3b8;
     margin-bottom: 8px;
-    letter-spacing: 0.5px;
-    font-family: 'Space Mono', monospace;
+    color: var(--app-muted);
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
 }
+
 .auth-input-wrap {
     position: relative;
 }
-.auth-input-wrap i {
+
+.auth-input-wrap > i {
     position: absolute;
-    left: 16px;
+    left: 14px;
     top: 50%;
     transform: translateY(-50%);
-    color: #475569;
-    font-size: 0.95rem;
-    transition: color 0.3s;
+    color: rgba(148,220,255,0.54);
     pointer-events: none;
 }
+
 .auth-form-group input {
     width: 100%;
-    background: transparent;
-    border: 1px solid var(--border-color);
-    border-radius: 12px;
-    padding: 14px 16px 14px 44px;
-    color: var(--text-main);
-    font-size: 0.95rem;
-    font-family: 'Outfit', sans-serif;
+    padding: 14px 44px;
+    border-radius: 10px;
+    border: 1px solid rgba(148,220,255,0.14);
+    background: rgba(0,0,0,0.24);
+    color: var(--app-text);
     outline: none;
-    transition: all 0.3s ease;
-    box-sizing: border-box;
-}
-.auth-form-group input::placeholder { color: var(--text-muted); }
-.auth-form-group input:focus {
-    border-color: rgba(6, 182, 212, 0.6);
-    background: rgba(6, 182, 212, 0.04);
-    box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.1), 0 0 20px rgba(6, 182, 212, 0.08);
-}
-.auth-form-group input:focus + i,
-.auth-input-wrap:focus-within i {
-    color: #06b6d4;
+    transition: border-color 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
 }
 
-/* ---- Submit Button ---- */
+.auth-form-group input:focus {
+    border-color: rgba(56,189,248,0.45);
+    background: rgba(56,189,248,0.045);
+    box-shadow: 0 0 0 3px rgba(56,189,248,0.12);
+}
+
+.auth-eye {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 34px;
+    height: 34px;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--app-muted);
+    cursor: pointer;
+}
+
+.auth-eye:hover {
+    color: var(--app-cyan);
+    background: rgba(56,189,248,0.08);
+}
+
 .auth-submit-btn {
     width: 100%;
-    padding: 15px;
-    background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%);
-    border: none;
-    border-radius: 12px;
-    color: #fff;
-    font-size: 1rem;
+    min-height: 50px;
+    margin-top: 0.45rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    border-radius: 10px;
+    font-size: 0.92rem;
     font-weight: 700;
-    font-family: 'Outfit', sans-serif;
-    letter-spacing: 1px;
-    cursor: pointer;
-    margin-top: 0.5rem;
-    position: relative;
-    overflow: hidden;
-    transition: all 0.3s ease;
+    letter-spacing: 0.04em;
     text-transform: uppercase;
 }
-.auth-submit-btn::before {
-    content: '';
-    position: absolute;
-    top: 0; left: -100%;
-    width: 100%; height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
-    transition: left 0.5s ease;
-}
-.auth-submit-btn:hover::before { left: 100%; }
-.auth-submit-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 30px rgba(6, 182, 212, 0.4);
-}
-.auth-submit-btn:active { transform: translateY(0); }
 
-/* Divider */
-.auth-divider {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin: 1.5rem 0;
-    color: #334155;
-    font-size: 0.8rem;
-}
-.auth-divider::before, .auth-divider::after {
-    content: ''; flex: 1; height: 1px; background: rgba(255,255,255,0.05);
-}
-
-/* Footer hint */
 .auth-footer {
+    margin: 1.35rem 0 0;
     text-align: center;
-    margin-top: 1.5rem;
-    color: #475569;
-    font-size: 0.9rem;
+    color: var(--app-muted);
 }
-.auth-footer a {
-    color: #06b6d4;
-    text-decoration: none;
-    font-weight: 600;
-    transition: color 0.2s;
-}
-.auth-footer a:hover { color: #67e8f9; }
 
-/* Scan line animation on card */
-.auth-card::after {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; width: 100%;
-    height: 2px;
-    background: linear-gradient(90deg, transparent, #06b6d4, transparent);
-    animation: scanLine 3s ease-in-out infinite;
-    border-radius: 24px 24px 0 0;
+.auth-footer a {
+    color: var(--app-cyan);
+    font-weight: 700;
 }
-@keyframes scanLine {
-    0% { top: 0; opacity: 1; }
-    80% { opacity: 0.5; }
-    100% { top: 100%; opacity: 0; }
+
+body.light-theme .auth-card,
+body.light-theme .auth-signal {
+    background: rgba(255,255,255,0.82) !important;
+    border-color: rgba(37,99,235,0.16) !important;
+    box-shadow: 0 22px 58px rgba(37,99,235,0.1), inset 0 0 0 1px rgba(255,255,255,0.65) !important;
+}
+
+body.light-theme .auth-terminal-bar {
+    background: linear-gradient(90deg, rgba(255,255,255,0.88), rgba(219,234,254,0.76));
+}
+
+body.light-theme .form-alert {
+    color: #991b1b;
+    background: rgba(254,226,226,0.8);
+}
+
+@media (max-width: 920px) {
+    .auth-page {
+        grid-template-columns: 1fr;
+        padding-top: 3rem;
+    }
+    .auth-copy {
+        text-align: center;
+    }
+    .auth-copy p,
+    .auth-signal-grid {
+        margin-left: auto;
+        margin-right: auto;
+    }
+}
+
+@media (max-width: 620px) {
+    .auth-page {
+        padding: 2rem 1rem 4rem;
+    }
+    .auth-signal-grid {
+        grid-template-columns: 1fr;
+    }
+    .auth-card-body {
+        padding: 1.35rem;
+    }
 }
 </style>
 
-<div class="auth-blob-1"></div>
-<div class="auth-blob-2"></div>
-<canvas id="auth-canvas"></canvas>
+<canvas id="auth-canvas" aria-hidden="true"></canvas>
 
-<div class="auth-page">
-    <div class="auth-card">
-        <!-- Terminal top bar -->
+<main class="auth-page">
+    <div class="auth-orbit" aria-hidden="true"></div>
+
+    <section class="auth-copy" aria-label="Login overview">
+        <span class="auth-eyebrow">Secure Portal</span>
+        <h1>{% if requires_2fa %}Verify the <span>session</span>.{% else %}Return to your <span>simulation console</span>.{% endif %}</h1>
+        <p>{% if requires_2fa %}One more security check keeps campaign data and employee risk reports protected.{% else %}Launch authorized phishing simulations, review live signals, and turn campaign results into security training decisions.{% endif %}</p>
+
+        <div class="auth-signal-grid" aria-hidden="true">
+            <div class="auth-signal">
+                <strong>Live</strong>
+                <span>Open, click, and report tracking</span>
+            </div>
+            <div class="auth-signal">
+                <strong>AI</strong>
+                <span>Context-aware email generation</span>
+            </div>
+            <div class="auth-signal">
+                <strong>PDF</strong>
+                <span>Audit-ready risk reporting</span>
+            </div>
+        </div>
+    </section>
+
+    <section class="auth-card" aria-label="Login form">
         <div class="auth-terminal-bar">
             <span class="auth-dot red"></span>
             <span class="auth-dot yellow"></span>
             <span class="auth-dot green"></span>
-            <span class="auth-terminal-label">SECURE_ACCESS :: phishsim.ai</span>
+            <span class="auth-terminal-label">secure_access.phishsim</span>
         </div>
 
-        <span class="auth-eyebrow">Secure Portal</span>
-        <h1 class="auth-title">Welcome back.</h1>
-        <p class="auth-subtitle">Sign in to your PhishSim AI workspace to manage campaigns and view reports.</p>
+        <div class="auth-card-body">
+            <span class="auth-eyebrow">{% if requires_2fa %}Two-Factor Check{% else %}Workspace Login{% endif %}</span>
+            <h2 class="auth-title">{% if requires_2fa %}Enter your code.{% else %}Welcome back.{% endif %}</h2>
+            <p class="auth-subtitle">{% if requires_2fa %}Use the six-digit code for this login attempt.{% else %}Sign in to manage campaigns, employees, and reports.{% endif %}</p>
 
-        {% with messages = get_flashed_messages() %}
-            {% if messages %}
-                <div class="form-alert"><i class="fas fa-exclamation-triangle" style="margin-right:8px;"></i>{{ messages[0] }}</div>
-            {% endif %}
-        {% endwith %}
+            {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    <div class="form-alert"><i class="ti ti-alert-triangle" style="margin-right:8px;"></i>{{ messages[0] }}</div>
+                {% endif %}
+            {% endwith %}
 
-        <form method="POST">
-            <div class="auth-form-group">
-                <label for="email">Email Address</label>
-                <div class="auth-input-wrap">
-                    <input type="email" id="email" name="email" placeholder="you@company.com" autocomplete="username" required>
-                    <i class="fas fa-envelope"></i>
+            <form method="POST">
+                {% if requires_2fa %}
+                <div class="auth-form-group">
+                    <label for="otp_code">Two-Factor Code</label>
+                    <div class="auth-input-wrap">
+                        <input type="text" id="otp_code" name="otp_code" placeholder="000000" inputmode="numeric" pattern="[0-9]{6}" required>
+                        <i class="ti ti-shield"></i>
+                    </div>
                 </div>
-            </div>
-            <div class="auth-form-group">
-                <label for="password">Password</label>
-                <div class="auth-input-wrap">
-                    <input type="password" id="password" name="password" placeholder="••••••••••" autocomplete="current-password" required>
-                    <i class="fas fa-lock"></i>
+                {% else %}
+                <div class="auth-form-group">
+                    <label for="email">Email Address</label>
+                    <div class="auth-input-wrap">
+                        <input type="email" id="email" name="email" placeholder="you@company.com" autocomplete="username" autocapitalize="none" spellcheck="false" required readonly onfocus="this.removeAttribute('readonly')" onmouseenter="this.removeAttribute('readonly')">
+                        <i class="ti ti-mail"></i>
+                    </div>
                 </div>
-            </div>
-            <button type="submit" class="auth-submit-btn">
-                <i class="fas fa-terminal" style="margin-right: 8px;"></i> Initialize Session
-            </button>
-        </form>
+                <div class="auth-form-group">
+                    <label for="password">Password</label>
+                    <div class="auth-input-wrap">
+                        <input type="password" id="password" name="password" placeholder="Password" autocomplete="current-password" required readonly onfocus="this.removeAttribute('readonly')" onmouseenter="this.removeAttribute('readonly')">
+                        <i class="ti ti-lock"></i>
+                        <button type="button" id="pw-eye" class="auth-eye" tabindex="-1" onclick="togglePw()" aria-label="Show or hide password">
+                            <i class="ti ti-eye" id="pw-eye-icon"></i>
+                        </button>
+                    </div>
+                </div>
+                {% endif %}
+                <button type="submit" class="auth-submit-btn">
+                    <i class="ti ti-terminal"></i>
+                    {% if requires_2fa %}Verify Code{% else %}Initialize Session{% endif %}
+                </button>
+            </form>
 
-        <p class="auth-footer">No account? <a href="{{ url_for('signup') }}">Create one here →</a></p>
-    </div>
-</div>
+            <p class="auth-footer">No account? <a href="{{ url_for('signup') }}">Create one here</a></p>
+        </div>
+    </section>
+</main>
 
 <script>
-// Particle canvas for auth page
-const canvas = document.getElementById('auth-canvas');
-const ctx = canvas.getContext('2d');
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
-window.addEventListener('resize', () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; });
+function togglePw() {
+    const input = document.getElementById("password");
+    const icon = document.getElementById("pw-eye-icon");
+    if (!input || !icon) return;
+    const visible = input.type === "text";
+    input.type = visible ? "password" : "text";
+    icon.classList.toggle("ti-eye", visible);
+    icon.classList.toggle("ti-eye-off", !visible);
+    input.focus();
+}
 
-const particles = Array.from({length: 60}, () => ({
-    x: Math.random() * canvas.width,
-    y: Math.random() * canvas.height,
-    r: Math.random() * 1.5 + 0.5,
-    vx: (Math.random() - 0.5) * 0.3,
-    vy: (Math.random() - 0.5) * 0.3,
-    alpha: Math.random() * 0.4 + 0.1
-}));
+(function() {
+    const canvas = document.getElementById("auth-canvas");
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    let width = 0;
+    let height = 0;
+    let particles = [];
+    const pointer = { x: -9999, y: -9999 };
 
-function drawAuth() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    particles.forEach(p => {
-        p.x += p.vx; p.y += p.vy;
-        if (p.x < 0) p.x = canvas.width;
-        if (p.x > canvas.width) p.x = 0;
-        if (p.y < 0) p.y = canvas.height;
-        if (p.y > canvas.height) p.y = 0;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(6, 182, 212, ${p.alpha})`;
-        ctx.fill();
-    });
-    // Draw connections
-    particles.forEach((a, i) => {
-        particles.slice(i + 1).forEach(b => {
-            const d = Math.hypot(a.x - b.x, a.y - b.y);
-            if (d < 120) {
+    function resize() {
+        width = canvas.width = window.innerWidth * window.devicePixelRatio;
+        height = canvas.height = window.innerHeight * window.devicePixelRatio;
+        canvas.style.width = `${window.innerWidth}px`;
+        canvas.style.height = `${window.innerHeight}px`;
+        const count = Math.min(72, Math.max(38, Math.floor(window.innerWidth / 22)));
+        particles = Array.from({ length: count }, () => ({
+            x: Math.random() * width,
+            y: Math.random() * height,
+            vx: (Math.random() - 0.5) * 0.34 * window.devicePixelRatio,
+            vy: (Math.random() - 0.5) * 0.34 * window.devicePixelRatio,
+            r: (Math.random() * 1.7 + 0.8) * window.devicePixelRatio
+        }));
+    }
+
+    function draw() {
+        const light = document.body.classList.contains("light-theme");
+        ctx.clearRect(0, 0, width, height);
+        ctx.fillStyle = light ? "rgba(37,99,235,0.28)" : "rgba(56,189,248,0.44)";
+        particles.forEach(particle => {
+            const dx = particle.x - pointer.x * window.devicePixelRatio;
+            const dy = particle.y - pointer.y * window.devicePixelRatio;
+            const dist = Math.hypot(dx, dy);
+            if (dist < 130 * window.devicePixelRatio) {
+                const force = (130 * window.devicePixelRatio - dist) / (130 * window.devicePixelRatio);
+                particle.vx += (dx / Math.max(dist, 1)) * force * 0.18;
+                particle.vy += (dy / Math.max(dist, 1)) * force * 0.18;
+            }
+            particle.x += particle.vx;
+            particle.y += particle.vy;
+            particle.vx *= 0.993;
+            particle.vy *= 0.993;
+            if (particle.x < 0 || particle.x > width) particle.vx *= -1;
+            if (particle.y < 0 || particle.y > height) particle.vy *= -1;
+            particle.x = Math.max(0, Math.min(width, particle.x));
+            particle.y = Math.max(0, Math.min(height, particle.y));
+            ctx.beginPath();
+            ctx.arc(particle.x, particle.y, particle.r, 0, Math.PI * 2);
+            ctx.fill();
+        });
+
+        for (let i = 0; i < particles.length; i++) {
+            for (let j = i + 1; j < particles.length; j++) {
+                const dist = Math.hypot(particles[i].x - particles[j].x, particles[i].y - particles[j].y);
+                const max = 112 * window.devicePixelRatio;
+                if (dist > max) continue;
+                const opacity = (1 - dist / max) * (light ? 0.13 : 0.18);
+                ctx.strokeStyle = light ? `rgba(37,99,235,${opacity})` : `rgba(56,189,248,${opacity})`;
+                ctx.lineWidth = window.devicePixelRatio;
                 ctx.beginPath();
-                ctx.moveTo(a.x, a.y);
-                ctx.lineTo(b.x, b.y);
-                ctx.strokeStyle = `rgba(6, 182, 212, ${0.06 * (1 - d / 120)})`;
-                ctx.lineWidth = 0.5;
+                ctx.moveTo(particles[i].x, particles[i].y);
+                ctx.lineTo(particles[j].x, particles[j].y);
                 ctx.stroke();
             }
-        });
-    });
-    requestAnimationFrame(drawAuth);
-}
-drawAuth();
+        }
+        requestAnimationFrame(draw);
+    }
+
+    window.addEventListener("resize", resize);
+    window.addEventListener("mousemove", event => {
+        pointer.x = event.clientX;
+        pointer.y = event.clientY;
+    }, { passive: true });
+    window.addEventListener("touchmove", event => {
+        if (!event.touches[0]) return;
+        pointer.x = event.touches[0].clientX;
+        pointer.y = event.touches[0].clientY;
+    }, { passive: true });
+    resize();
+    draw();
+})();
 </script>
 {% endblock %}

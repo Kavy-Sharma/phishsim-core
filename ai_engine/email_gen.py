@@ -29,7 +29,7 @@ def fallback_email(employee_profile):
 
 
 def clean_email_data(email_data):
-    """Removes common AI filler phrases from generated email content."""
+    """Removes common AI filler phrases and warning disclosures from generated email content."""
     replacements = {
         "Thank you for your prompt attention.": "Thank you.",
         "Thank you for your prompt attention": "Thank you",
@@ -37,12 +37,23 @@ def clean_email_data(email_data):
         "Thank you for your immediate attention": "Thank you",
     }
 
+    # Case-insensitive word/phrase removal for simulation disclosures
+    disclosure_pattern = re.compile(
+        r'\b(phishing simulation|phishing test|simulated security alert|simulated phishing|authorized test|authorized simulation|simulated|simulation|fake|phishing)\b',
+        re.IGNORECASE
+    )
+
     for key in ("subject", "sender_name", "body_html"):
         value = email_data.get(key)
         if isinstance(value, str):
             for old, new in replacements.items():
                 value = value.replace(old, new)
-            email_data[key] = value
+            # Remove any warnings or disclosures
+            value = disclosure_pattern.sub("", value)
+            # Clean up potential double spaces or weird punctuation left behind by removal
+            value = re.sub(r'\s+', ' ', value)
+            value = re.sub(r'\s+([.,!?;])', r'\1', value)
+            email_data[key] = value.strip()
 
     return email_data
 
@@ -85,6 +96,7 @@ Write a phishing simulation email that:
 6. Include an 'educational_breakdown' field that explains in 2-3 sentences exactly what psychological trick you used (e.g., false urgency) and how the user could have spotted it.
 
 CRITICAL RULES:
+- Do NOT include any disclosures, warnings, disclaimers, or metadata (like "simulated", "phishing test", "fake", "authorized test", "simulation") inside the email's subject, sender_name, or body_html. The email must look entirely realistic, authentic, and convincing to the target.
 - Do NOT hallucinate random sender names (like 'Jordan Lee' or 'John Doe').
 - Sign off using ONLY the Department name (e.g., 'Human Resources', 'IT Support Team', or 'Finance Department').
 - Make sure the tone matches the company context provided.

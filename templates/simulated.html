@@ -1,80 +1,585 @@
 {% extends 'base.html' %}
 
-{% block title %}Simulation Completed - PhishSim AI{% endblock %}
+{% block title %}Security Training Portal - PhishSim AI{% endblock %}
 
 {% block content %}
-<div style="max-width: 800px; margin: 0 auto; text-align: center; padding-top: 2rem;">
+<div style="max-width: 1200px; margin: 0 auto; padding: 2rem; box-sizing: border-box;">
     
-    <div style="margin-bottom: 2rem; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: var(--radius-lg); padding: 2rem;">
-        <!-- Alert Icon -->
-        <div style="display: flex; justify-content: center; margin-bottom: 1rem; color: #ef4444;">
-            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Top Alert Header -->
+    <div style="background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.25); border-radius: var(--radius-lg); padding: 2rem; margin-bottom: 2.2rem; display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap;">
+        <div style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.35); width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #ef4444; flex-shrink: 0; animation: bounceAlert 2s infinite ease-in-out;">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="12" cy="12" r="10"></circle>
                 <line x1="12" y1="8" x2="12" y2="12"></line>
                 <line x1="12" y1="16" x2="12.01" y2="16"></line>
             </svg>
         </div>
-        <h1 style="font-size: 2.5rem; margin-bottom: 0.5rem; color: #ef4444;">CRITICAL SECURITY ALERT</h1>
-        <p style="font-size: 1.25rem; color: var(--text-main); margin-bottom: 0;">Oops! You just fell for a simulated phishing attack.</p>
-        
-        {% if scenario %}
-        <div style="margin-top: 1.5rem;">
-            <p style="font-size: 1rem; color: var(--accent-cyan); display: inline-block; padding: 0.5rem 1rem; border: 1px solid rgba(6, 182, 212, 0.3); border-radius: var(--radius-full); background: rgba(6, 182, 212, 0.1);">
-                Scenario Detected: <strong>{{ scenario }}</strong>
-            </p>
+        <div style="flex-grow: 1; text-align: left;">
+            <span style="font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 2px; text-transform: uppercase; color: #f87171; background: rgba(239,68,68,0.12); padding: 4px 10px; border-radius: 4px; font-weight: 700; border: 1px solid rgba(239,68,68,0.25);">
+                Simulation Triggered
+            </span>
+            <h1 style="font-size: 2.1rem; margin: 8px 0 4px 0; color: #ef4444; font-weight: 800; font-family: var(--font-sans);">Employee Security Briefing</h1>
+            <p style="font-size: 1.05rem; color: var(--text-main); margin: 0; line-height: 1.5;">Oops! You just interacted with a simulated email threat. <strong>Don't panic!</strong> This was an authorized test, but it is a critical learning opportunity.</p>
         </div>
-        {% endif %}
-
-        {% if breakdown %}
-        <div style="margin-top: 1.5rem; text-align: left; background: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.3); border-radius: var(--radius-lg); padding: 1.5rem;">
-            <h3 style="color: #4ade80; margin-top: 0; margin-bottom: 0.8rem; font-size: 1.2rem; display: flex; align-items: center; gap: 8px;">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a10 10 0 1 0 10 10H12V2z"/><path d="M12 12 2.1 12"/><path d="M12 12 21.9 21.9"/></svg>
-                AI Analysis: Why this tricked you
-            </h3>
-            <p style="color: #fff; margin: 0; line-height: 1.6; font-size: 1.05rem;">{{ breakdown }}</p>
+        <div style="text-align: right; flex-shrink: 0;">
+            <span style="font-family: var(--font-mono); font-size: 0.85rem; color: var(--accent-cyan); display: inline-block; padding: 0.5rem 1.2rem; border: 1px solid rgba(6, 182, 212, 0.25); border-radius: var(--radius-lg); background: rgba(6, 182, 212, 0.05);">
+                Vector: <strong>{{ scenario }}</strong>
+            </span>
         </div>
-        {% endif %}
-        
-        <p style="font-size: 1rem; color: var(--text-muted); margin-top: 1.5rem;">Don't panic! You haven't been compromised. This was an authorized security training exercise to test our human firewall.</p>
     </div>
 
-    <div class="card" style="text-align: left; margin-bottom: 2rem;">
-        <h2 style="color: var(--accent-cyan); margin-bottom: 1rem;">How to spot the phish next time:</h2>
+    <!-- Main Grid -->
+    <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 2rem; margin-bottom: 2.2rem; align-items: start;">
         
-        <ul style="list-style-type: none; padding: 0; display: flex; flex-direction: column; gap: 1rem;">
-            <li style="display: flex; gap: 1rem; align-items: flex-start;">
-                <div style="background: rgba(6, 182, 212, 0.2); padding: 0.5rem; border-radius: var(--radius-full); color: var(--accent-cyan);">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
-                </div>
-                <div>
-                    <strong>Check the Sender Address</strong>
-                    <p style="margin: 0; font-size: 0.9rem; color: var(--text-muted);">Does the email address exactly match the company domain? Watch out for slight misspellings like 'rnicrosoft' instead of 'microsoft'.</p>
-                </div>
-            </li>
+        <!-- Left: Interactive Email Client -->
+        <div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem;">
+                <h2 style="font-family: var(--font-sans); font-size: 1.25rem; font-weight: 700; color: #fff; margin: 0;">
+                    <i class="fas fa-magnifying-glass-chart" style="color: var(--accent-cyan); margin-right: 6px;"></i> Spot the Threat
+                </h2>
+                <span style="font-size: 0.78rem; color: var(--text-muted); font-family: var(--font-mono);">
+                    Hover over red dots <span style="display:inline-block; width:8px; height:8px; background:#ef4444; border-radius:50%; margin: 0 2px;"></span> to view flag analysis
+                </span>
+            </div>
             
-            <li style="display: flex; gap: 1rem; align-items: flex-start;">
-                <div style="background: rgba(139, 92, 246, 0.2); padding: 0.5rem; border-radius: var(--radius-full); color: var(--accent-purple);">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+            <div class="mock-email-client" style="background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border-color); border-radius: 12px; text-align: left; overflow: visible; box-shadow: 0 15px 35px rgba(0,0,0,0.3); position: relative; z-index: 10;">
+                <!-- Client header -->
+                <div style="background: rgba(255,255,255,0.02); border-bottom: 1px solid var(--border-color); border-radius: 12px 12px 0 0; padding: 12px 18px; display: flex; align-items: center; justify-content: space-between;">
+                    <span style="font-family: var(--font-sans); font-size: 0.85rem; font-weight: 700; color: var(--text-muted);"><i class="fas fa-envelope-open" style="margin-right: 6px;"></i> Threat Outlook (Simulated)</span>
+                    <div style="display: flex; gap: 6px;">
+                        <span style="width: 10px; height: 10px; border-radius: 50%; background: #ef4444; display: inline-block;"></span>
+                        <span style="width: 10px; height: 10px; border-radius: 50%; background: #f59e0b; display: inline-block;"></span>
+                        <span style="width: 10px; height: 10px; border-radius: 50%; background: #22c55e; display: inline-block;"></span>
+                    </div>
                 </div>
-                <div>
-                    <strong>Hover Over Links</strong>
-                    <p style="margin: 0; font-size: 0.9rem; color: var(--text-muted);">Before clicking, hover your mouse over the link. Does the destination URL match where you think you're going?</p>
+                <!-- Sender/Subject metadata with Hotspots -->
+                <div style="padding: 1.5rem; border-bottom: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 8px; position: relative;">
+                    <!-- Hotspot 1 -->
+                    <div style="font-size: 0.9rem; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                        <span><strong>From:</strong> {{ sender_name or 'Management Security' }}</span> 
+                        <span class="cyber-tooltip-wrap">
+                            <span class="tooltip-icon hotspot-dot" style="background: rgba(239, 68, 68, 0.2); border-color: #ef4444; color: #ef4444; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; width: 18px; height: 18px; font-size: 0.65rem; font-weight: bold; animation: pulseHotspot 1.6s infinite ease-in-out;">!</span>
+                            <span class="cyber-tooltip-content" style="top: 25px; width: 280px; font-weight: normal; left: 0; right: auto; text-transform: none;">
+                                <strong>🚨 Sender Domain Mismatch:</strong> Watch the address closely! Phishing attackers mimic coworkers or executives using external accounts or lookalike domains (e.g., <code>boss@company-sec-alert.com</code> instead of <code>boss@company.com</code>).
+                            </span>
+                        </span>
+                    </div>
+                    <!-- Hotspot 2 -->
+                    <div style="font-size: 0.9rem; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                        <span><strong>Subject:</strong> {{ subject or 'Critical Account Update Required' }}</span>
+                        <span class="cyber-tooltip-wrap">
+                            <span class="tooltip-icon hotspot-dot" style="background: rgba(239, 68, 68, 0.2); border-color: #ef4444; color: #ef4444; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; width: 18px; height: 18px; font-size: 0.65rem; font-weight: bold; animation: pulseHotspot 1.6s infinite ease-in-out; animation-delay: 0.4s;">!</span>
+                            <span class="cyber-tooltip-content" style="top: 25px; width: 280px; font-weight: normal; left: 0; right: auto; text-transform: none;">
+                                <strong>⚠️ High Urgency Subject:</strong> Notice the coercive language. Phrases like "Immediate review", "Suspension alert", or "Security warning" are engineered to induce panic, prompting quick actions without verification.
+                            </span>
+                        </span>
+                    </div>
+                    <div style="font-size: 0.85rem; color: var(--text-muted);">
+                        <strong>To:</strong> {{ recipient_email or 'employee@company.com' }}
+                    </div>
                 </div>
-            </li>
+                <!-- Body with Hotspot 3 -->
+                <div style="padding: 2rem; background: rgba(255,255,255,0.01); border-radius: 0 0 12px 12px; line-height: 1.6; color: var(--text-main); position: relative;">
+                    <div class="email-body-content" style="font-family: Arial, sans-serif; font-size: 0.95rem; color: #cbd5e1; border: 1px dashed rgba(255,255,255,0.05); padding: 1.2rem; border-radius: 8px; background: rgba(0,0,0,0.1);">
+                        {{ body_html | safe }}
+                    </div>
+                    
+                    <!-- Hotspot 3 -->
+                    <div style="margin-top: 1.8rem; display: flex; align-items: center; gap: 8px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 1.2rem;">
+                        <span style="font-size: 0.82rem; font-family: var(--font-mono); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); background: rgba(239, 68, 68, 0.08); padding: 4px 10px; border-radius: 6px; display: inline-flex; align-items: center; gap: 6px;">
+                            <i class="fas fa-link"></i> Action Link / Button
+                        </span>
+                        <span class="cyber-tooltip-wrap">
+                            <span class="tooltip-icon hotspot-dot" style="background: rgba(239, 68, 68, 0.2); border-color: #ef4444; color: #ef4444; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; width: 18px; height: 18px; font-size: 0.65rem; font-weight: bold; animation: pulseHotspot 1.6s infinite ease-in-out; animation-delay: 0.8s;">!</span>
+                            <span class="cyber-tooltip-content" style="bottom: 25px; top: auto; width: 280px; font-weight: normal; left: 0; right: auto; text-transform: none;">
+                                <strong>🛑 Unverified Hyperlinks:</strong> Clicking links inside unexpected emails usually forwards targets to credential harvesting portals. Always verify URLs by hovering to preview the link path first.
+                            </span>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right column: Cards -->
+        <div style="display: flex; flex-direction: column; gap: 1.5rem;">
             
-            <li style="display: flex; gap: 1rem; align-items: flex-start;">
-                <div style="background: rgba(239, 68, 68, 0.2); padding: 0.5rem; border-radius: var(--radius-full); color: #ef4444;">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+            <!-- Gamified Personal Rating Card -->
+            {% if personal_stats %}
+            <div class="glass-panel" style="padding: 1.8rem; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 220px;">
+                <h3 style="font-family: var(--font-sans); color: var(--accent-cyan); font-size: 1.15rem; margin: 0 0 1.2rem 0; font-weight: 700; width:100%;"><i class="fas fa-trophy" style="margin-right:6px;"></i> Personal Security Index</h3>
+                
+                <!-- Circular Progress Ring -->
+                <div style="position: relative; width: 100px; height: 100px; margin-bottom: 1rem;">
+                    <svg width="100" height="100" viewBox="0 0 100 100">
+                        <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="8"/>
+                        <circle cx="50" cy="50" r="42" fill="none" 
+                                stroke="{% if personal_stats.score >= 80 %}#22c55e{% elif personal_stats.score >= 50 %}#f59e0b{% else %}#ef4444{% endif %}" 
+                                stroke-width="8" stroke-dasharray="263.8" 
+                                stroke-dashoffset="{{ 263.8 - (263.8 * personal_stats.score / 100) }}"
+                                stroke-linecap="round" 
+                                style="transition: stroke-dashoffset 1s ease;" />
+                    </svg>
+                    <div style="position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                        <span style="font-size: 1.6rem; font-weight: 900; color: #fff; font-family: var(--font-sans);">{{ personal_stats.score }}</span>
+                        <span style="font-size: 0.62rem; color: var(--text-muted); font-family: var(--font-mono); text-transform: uppercase;">Points</span>
+                    </div>
                 </div>
-                <div>
-                    <strong>Beware of Urgency</strong>
-                    <p style="margin: 0; font-size: 0.9rem; color: var(--text-muted);">Phishing emails often demand immediate action (e.g., "Account suspended!"). Take a breath and verify through an official channel.</p>
+                
+                <div style="font-size: 0.85rem; color: #cbd5e1; line-height: 1.5;">
+                    {% if personal_stats.total_clicks == 0 %}
+                        <span style="color: #4ade80; font-weight: 700;"><i class="fas fa-check-double"></i> Excellent Threat Resistance!</span><br>
+                        You have spotted and avoided all threats in the last {{ personal_stats.total_sent }} simulations.
+                    {% else %}
+                        <span>Fell for: <strong>{{ personal_stats.total_clicks }}</strong> / {{ personal_stats.total_sent }} simulation campaigns.</span><br>
+                        <span style="color: var(--text-muted); font-size: 0.76rem; display: block; margin-top: 6px; line-height:1.4;">Reporting emails increases this score by 15 points. Link clicks deduct 30 points. Help keep our network secure!</span>
+                    {% endif %}
                 </div>
-            </li>
-        </ul>
+            </div>
+            {% endif %}
+
+            <!-- Psychology breakdown card -->
+            <div class="glass-panel" style="padding: 1.8rem;">
+                <h3 style="font-family: var(--font-sans); color: var(--accent-cyan); font-size: 1.15rem; margin: 0 0 1rem 0; font-weight: 700; display:flex; align-items:center; gap:8px;">
+                    <i class="fas fa-brain" style="color: var(--accent-purple);"></i>
+                    Psychology Breakdown
+                </h3>
+                <p style="color: var(--text-muted); font-size: 0.86rem; line-height: 1.6; margin-bottom: 0;">
+                    {{ breakdown or "Attackers rely on basic human responses like compliance, fear, urgency, or curiosity to blind target judgment. Identifying which psychological triggers are used makes you significantly less susceptible." }}
+                </p>
+                <div style="margin-top: 1rem; border-top: 1px dashed rgba(255,255,255,0.06); padding-top: 1rem;">
+                    <span style="font-size:0.75rem; font-family:var(--font-mono); text-transform:uppercase; color:var(--accent-purple); font-weight:700; display:block; margin-bottom:4px;">Techniques Utilized:</span>
+                    <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                        {% if scenario_key == 'ceo_fraud' %}
+                        <span style="font-size:0.72rem; background:rgba(139,92,246,0.12); color:#c084fc; border:1px solid rgba(139,92,246,0.2); padding:3px 8px; border-radius:4px; font-weight:700;">AUTHORITY</span>
+                        <span style="font-size:0.72rem; background:rgba(6,182,212,0.12); color:#67e8f9; border:1px solid rgba(6,182,212,0.2); padding:3px 8px; border-radius:4px; font-weight:700;">URGENCY</span>
+                        {% elif scenario_key == 'it_alert' %}
+                        <span style="font-size:0.72rem; background:rgba(239,68,68,0.12); color:#fca5a5; border:1px solid rgba(239,68,68,0.2); padding:3px 8px; border-radius:4px; font-weight:700;">FEAR</span>
+                        <span style="font-size:0.72rem; background:rgba(139,92,246,0.12); color:#c084fc; border:1px solid rgba(139,92,246,0.2); padding:3px 8px; border-radius:4px; font-weight:700;">AUTHORITY</span>
+                        {% elif scenario_key == 'hr_update' %}
+                        <span style="font-size:0.72rem; background:rgba(245,158,11,0.12); color:#fde047; border:1px solid rgba(245,158,11,0.2); padding:3px 8px; border-radius:4px; font-weight:700;">CURIOSITY</span>
+                        <span style="font-size:0.72rem; background:rgba(6,182,212,0.12); color:#67e8f9; border:1px solid rgba(6,182,212,0.2); padding:3px 8px; border-radius:4px; font-weight:700;">URGENCY</span>
+                        {% else %}
+                        <span style="font-size:0.72rem; background:rgba(6,182,212,0.12); color:#67e8f9; border:1px solid rgba(6,182,212,0.2); padding:3px 8px; border-radius:4px; font-weight:700;">URGENCY</span>
+                        <span style="font-size:0.72rem; background:rgba(239,68,68,0.12); color:#fca5a5; border:1px solid rgba(239,68,68,0.2); padding:3px 8px; border-radius:4px; font-weight:700;">SCARCITY</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- YouTube Video Embed Card -->
+            {% set video_ids = {
+                'ceo_fraud': '3R3w1tE_58E',
+                'it_alert': '9_v0_aJ_N70',
+                'hr_update': 'yP9_o_1u64M',
+                'invoice': 'Z0p9vY1p6gM'
+            } %}
+            {% set video_id = video_ids.get(scenario_key, '3R3w1tE_58E') %}
+            <div class="glass-panel" style="padding: 1.8rem;">
+                <h3 style="font-family: var(--font-sans); color: var(--accent-cyan); font-size: 1.15rem; margin: 0 0 1rem 0; font-weight: 700; display:flex; align-items:center; gap:8px;">
+                    <i class="fas fa-circle-play" style="color: #ef4444;"></i> Micro-Learning Video
+                </h3>
+                <div class="video-container" style="position:relative; padding-bottom:56.25%; height:0; overflow:hidden; border-radius:10px; border:1px solid rgba(255,255,255,0.08); background: #000;">
+                    <iframe src="https://www.youtube.com/embed/{{ video_id }}" style="position:absolute; top:0; left:0; width:100%; height:100%; border:none;" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                </div>
+            </div>
+
+        </div>
     </div>
-    
-    <p style="color: var(--text-muted); font-size: 0.9rem;">Please close this window and return to your work.</p>
+
+    <!-- Quiz & Completion Drawer Section -->
+    <div class="glass-panel" id="quiz-block" style="padding: 2.5rem; text-align: left; margin-bottom: 2.5rem; border-color: rgba(6, 182, 212, 0.2); background: linear-gradient(135deg, rgba(8, 12, 26, 0.6) 0%, rgba(10, 16, 38, 0.4) 100%);">
+        
+        <div id="quiz-intro">
+            <span style="font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 1px; color: var(--accent-cyan); text-transform: uppercase; font-weight: 700; display:block; margin-bottom: 4px;">Human Firewall Certification</span>
+            <h2 style="font-family: var(--font-sans); font-size: 1.6rem; font-weight: 800; color: #fff; margin: 0 0 0.8rem 0;">Test Your Spotting Skills</h2>
+            <p style="color: var(--text-muted); font-size: 0.9rem; line-height: 1.6; margin: 0 0 2rem 0; max-width: 800px;">Complete this short 3-question quiz about today's threat vector. Passing logs your compliance training records, updating your organization status.</p>
+        </div>
+
+        <!-- Quiz Progress Bar -->
+        <div style="height: 4px; background: rgba(255,255,255,0.03); border-radius: 100px; margin-bottom: 2rem; overflow: hidden; display: flex; gap: 4px;">
+            <div id="quiz-progress-fill" style="width: 33.3%; height: 100%; background: linear-gradient(90deg, var(--accent-cyan), var(--accent-purple)); transition: width 0.3s ease; border-radius: 100px;"></div>
+        </div>
+
+        <!-- Question View Box -->
+        <div id="quiz-question-box">
+            <span id="quiz-q-num" style="font-family: var(--font-mono); font-size: 0.8rem; color: var(--accent-purple); font-weight: 700; display:block; margin-bottom: 8px;">QUESTION 1 OF 3</span>
+            <h4 id="quiz-q-text" style="font-size: 1.15rem; color: #fff; margin: 0 0 1.5rem 0; font-family: var(--font-sans); font-weight: 700; line-height:1.45;"></h4>
+            
+            <div id="quiz-options-list" style="display: flex; flex-direction: column; gap: 0.8rem; margin-bottom: 2rem;">
+                <!-- Dynamically rendered -->
+            </div>
+            
+            <!-- Result Toast inline -->
+            <div id="quiz-feedback-box" style="display:none; padding: 1rem 1.2rem; border-radius: 8px; margin-bottom: 1.5rem; font-size: 0.88rem; line-height:1.5;"></div>
+
+            <div style="display: flex; justify-content: flex-end;">
+                <button type="button" id="quiz-next-btn" class="btn-primary-sm" style="padding: 10px 24px; font-size: 0.88rem; font-weight: 700; border-radius: 8px; cursor: pointer;" disabled>
+                    Submit Answer <i class="fas fa-arrow-right" style="margin-left: 6px;"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Completion Success Screen -->
+        <div id="quiz-success-box" style="display: none; text-align: center; padding: 1rem 0;">
+            <div style="width: 58px; height: 58px; background: rgba(34, 197, 94, 0.15); border: 1px solid rgba(34, 197, 94, 0.35); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #22c55e; margin: 0 auto 1.5rem; font-size: 1.5rem; box-shadow: 0 0 15px rgba(34,197,94,0.25);">
+                <i class="fas fa-shield-halved"></i>
+            </div>
+            <h3 style="font-family: var(--font-sans); font-size: 1.5rem; color: #fff; margin: 0 0 0.5rem 0; font-weight: 800;">Training Certification Granted!</h3>
+            <p style="color: var(--text-muted); font-size: 0.95rem; margin: 0 auto 2rem; max-width: 520px; line-height: 1.6;">You have correctly identified the phishing identifiers and techniques. Your training completion logs have been compiled. A reinforcement update has been triggered.</p>
+            
+            <div style="display:flex; justify-content:center; gap:12px;">
+                <button type="button" class="btn-primary-sm" onclick="window.close();" style="padding: 10px 24px; font-size: 0.88rem; font-weight: 700; border-radius: 8px; cursor: pointer;">
+                    Return to Work
+                </button>
+            </div>
+        </div>
+
+    </div>
 
 </div>
+
+<script>
+(function() {
+    const trackingId = "{{ tracking_id or '' }}";
+    const scenarioKey = "{{ scenario_key or 'ceo_fraud' }}";
+    
+    // Quiz Definitions
+    const quizData = {
+        ceo_fraud: [
+            {
+                q: "What was the primary psychological technique used in today's simulated CEO email?",
+                options: [
+                    "Urgency & Authority (Impersonating corporate demands to bypass normal skepticisms)",
+                    "Scarcity & Social Proof (Claiming item/product shortages or crowd incentives)",
+                    "Financial Greed / Sympathy (Demanding wire cashbacks or donations)"
+                ],
+                answer: 0,
+                explain: "Correct! CEO fraud exploits your default compliance with authority figures coupled with tight urgency deadlines to prevent validation verification."
+            },
+            {
+                q: "How could you verify if this was a real request from your CEO?",
+                options: [
+                    "Reply directly to the email asking if they really sent it",
+                    "Click the links and check if the login screen features the corporate branding",
+                    "Verify the request through a separate, known channel like Slack, Teams, or a telephone call"
+                ],
+                answer: 2,
+                explain: "Correct! Always authenticate suspicious directives via a separate verified network rather than replying to the potential compromise thread."
+            },
+            {
+                q: "Why are Business Email Compromise (BEC) attacks highly successful?",
+                options: [
+                    "Because targets are intimidated by authority and tend to fulfill executive requests quickly",
+                    "Because executive emails are bypass filtered automatically by IT spam systems",
+                    "Because attackers only target companies during critical server maintenance periods"
+                ],
+                answer: 0,
+                explain: "Correct! Attackers leverage organizational hierarchy because targets feel highly pressured to execute orders coming from leadership quickly."
+            }
+        ],
+        it_alert: [
+            {
+                q: "What is the key indicator of a malicious password expiry or server alert email?",
+                options: [
+                    "The email containing standard corporate logos and signatures",
+                    "A mismatching sender domain address when checking metadata headers",
+                    "Receiving alert notifications during normal corporate working hours"
+                ],
+                answer: 1,
+                explain: "Correct! Domain spoofing is the primary flag. IT alerts originating from external email address providers are almost always fraudulent."
+            },
+            {
+                q: "If clicking a reset password link directs you to a corporate login interface, what is the best practice?",
+                options: [
+                    "Inspect the browser address bar immediately to ensure the domain matches your secure portal",
+                    "Quickly enter your old credentials to test if the database is active",
+                    "Forward the URL to a coworker to check if their account was also locked"
+                ],
+                answer: 0,
+                explain: "Correct! Check the browser address bar. Harvesting links look identical to corporate logons but are hosted on foreign URL strings."
+            },
+            {
+                q: "What psychological lever makes IT security warning emails highly dangerous?",
+                options: [
+                    "They utilize FOMO (fear of missing out) by offering system credit upgrades",
+                    "They exploit fear and urgency relating to immediate loss of network and email access",
+                    "They are usually written in technical jargon that users cannot read"
+                ],
+                answer: 1,
+                explain: "Correct! Fear of being locked out or penalized for inactivity forces targets to act instantly without checking details."
+            }
+        ],
+        hr_update: [
+            {
+                q: "An email demands you review an urgent HR benefits or wage update link immediately. What should you do?",
+                options: [
+                    "Click it immediately to verify you aren't missing salary adjustments",
+                    "Authenticate the communication by checking the company intranet or contacting HR directly",
+                    "Ignore it entirely and assume it was sent to you by mistake"
+                ],
+                answer: 1,
+                explain: "Correct! Real payroll or benefits announcements are published on internal corporate networks or verified channels. Confirm before clicking."
+            },
+            {
+                q: "What psychological technique is a benefits announcement simulation exploiting?",
+                options: [
+                    "Authority coercion exclusively",
+                    "Anger and frustration",
+                    "Curiosity, financial incentive, and urgency to avoid missing out"
+                ],
+                answer: 2,
+                explain: "Correct! Offering positive outcomes (bonuses, benefit adjustments) exploits greed and curiosity, making targets lower their defenses."
+            },
+            {
+                q: "How can you distinguish a mock login portal from your company HR system?",
+                options: [
+                    "Verify the URL. Attackers cannot host harvesting forms on your actual corporate domain",
+                    "A mock portal will not display company colors or employee layout graphics",
+                    "A mock portal always displays error warnings upon loading"
+                ],
+                answer: 0,
+                explain: "Correct! Attackers replicate the look of company pages, but they cannot spoof the true browser URL domain."
+            }
+        ],
+        invoice: [
+            {
+                q: "You receive an unexpected invoice or billing notification in your email. What is the safest action?",
+                options: [
+                    "Pay it quickly to avoid accounting interest penalties",
+                    "Avoid opening attachments or links, and contact your finance manager to verify the invoice number",
+                    "Forward the payment link to your private email address to review later"
+                ],
+                answer: 1,
+                explain: "Correct! Unexpected bills should never be opened or clicked. Verify via accounting registries first."
+            },
+            {
+                q: "What is the primary vector risk associated with fake billing statement emails?",
+                options: [
+                    "Malicious scripts and payload triggers hidden inside PDF/Office billing attachments",
+                    "Domain registry redirects",
+                    "Direct bank wire routing manipulation"
+                ],
+                answer: 0,
+                explain: "Correct! Billing templates are commonly loaded with malicious PDF/Macro file attachments designed to download spyware when clicked."
+            },
+            {
+                q: "What are the common indicators of billing or invoice phishing?",
+                options: [
+                    "A standard receipt header from a known vendor with standard terms",
+                    "Suspicious sender addresses, unexpected invoices, and high urgency to settle claims",
+                    "Receiving monthly statements on the first day of the fiscal quarter"
+                ],
+                answer: 1,
+                explain: "Correct! Vague details, unexpected invoice numbers, and strong wording demanding immediate payment are core flags."
+            }
+        ]
+    };
+
+    const questions = quizData[scenarioKey] || quizData.ceo_fraud;
+    let currentStep = 0;
+    let selectedOption = null;
+
+    // DOM Elements
+    const qNumEl = document.getElementById('quiz-q-num');
+    const qTextEl = document.getElementById('quiz-q-text');
+    const optionsEl = document.getElementById('quiz-options-list');
+    const feedbackEl = document.getElementById('quiz-feedback-box');
+    const nextBtn = document.getElementById('quiz-next-btn');
+    const progressFill = document.getElementById('quiz-progress-fill');
+    const introEl = document.getElementById('quiz-intro');
+    const qBoxEl = document.getElementById('quiz-question-box');
+    const successEl = document.getElementById('quiz-success-box');
+
+    function renderQuestion() {
+        if (currentStep >= questions.length) {
+            completeQuiz();
+            return;
+        }
+
+        const currentQ = questions[currentStep];
+        selectedOption = null;
+        nextBtn.disabled = true;
+        nextBtn.innerHTML = 'Submit Answer <i class="fas fa-arrow-right" style="margin-left: 6px;"></i>';
+        
+        qNumEl.textContent = `QUESTION ${currentStep + 1} OF 3`;
+        qTextEl.textContent = currentQ.q;
+        optionsEl.innerHTML = '';
+        feedbackEl.style.display = 'none';
+
+        currentQ.options.forEach((opt, idx) => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'quiz-option-btn';
+            btn.textContent = opt;
+            Object.assign(btn.style, {
+                textAlign: 'left',
+                width: '100%',
+                background: 'rgba(255,255,255,0.02)',
+                border: '1px solid var(--border-color)',
+                borderRadius: '8px',
+                padding: '12px 16px',
+                color: 'var(--text-main)',
+                fontSize: '0.9rem',
+                cursor: 'pointer',
+                fontFamily: 'var(--font-sans)',
+                transition: 'all 0.2s',
+                display: 'block'
+            });
+
+            btn.addEventListener('mouseover', () => {
+                if (selectedOption === null) {
+                    btn.style.background = 'rgba(6, 182, 212, 0.05)';
+                    btn.style.borderColor = 'rgba(6, 182, 212, 0.3)';
+                }
+            });
+            btn.addEventListener('mouseout', () => {
+                if (selectedOption !== idx) {
+                    btn.style.background = 'rgba(255,255,255,0.02)';
+                    btn.style.borderColor = 'var(--border-color)';
+                }
+            });
+
+            btn.addEventListener('click', () => {
+                if (selectedOption !== null) return; // Answer locked
+                selectedOption = idx;
+                
+                // Highlight choice
+                const isCorrect = idx === currentQ.answer;
+                if (isCorrect) {
+                    btn.style.background = 'rgba(34, 197, 94, 0.12)';
+                    btn.style.borderColor = '#22c55e';
+                    btn.style.color = '#4ade80';
+                    feedbackEl.className = 'feedback-correct';
+                    feedbackEl.style.background = 'rgba(34,197,94,0.08)';
+                    feedbackEl.style.border = '1px solid rgba(34,197,94,0.2)';
+                    feedbackEl.style.color = '#4ade80';
+                    feedbackEl.innerHTML = `<i class="fas fa-check-circle"></i> <strong>Correct!</strong> ${currentQ.explain}`;
+                    nextBtn.disabled = false;
+                } else {
+                    btn.style.background = 'rgba(239, 68, 68, 0.12)';
+                    btn.style.borderColor = '#ef4444';
+                    btn.style.color = '#f87171';
+                    feedbackEl.className = 'feedback-incorrect';
+                    feedbackEl.style.background = 'rgba(239,68,68,0.08)';
+                    feedbackEl.style.border = '1px solid rgba(239,68,68,0.2)';
+                    feedbackEl.style.color = '#fca5a5';
+                    feedbackEl.innerHTML = `<i class="fas fa-times-circle"></i> <strong>Incorrect:</strong> Review the flag points in the mock client above and try again.`;
+                    
+                    // Reset selectedOption to let them try again
+                    setTimeout(() => {
+                        selectedOption = null;
+                        btn.style.background = 'rgba(255,255,255,0.02)';
+                        btn.style.borderColor = 'var(--border-color)';
+                        btn.style.color = 'var(--text-main)';
+                        feedbackEl.style.display = 'none';
+                    }, 2500);
+                }
+                feedbackEl.style.display = 'block';
+            });
+
+            optionsEl.appendChild(btn);
+        });
+
+        // Update progress bar
+        progressFill.style.width = `${((currentStep + 1) / 3) * 100}%`;
+    }
+
+    nextBtn.addEventListener('click', () => {
+        currentStep++;
+        renderQuestion();
+    });
+
+    function completeQuiz() {
+        introEl.style.display = 'none';
+        qBoxEl.style.display = 'none';
+        successEl.style.display = 'block';
+
+        // Submit AJAX callback to backend
+        if (trackingId) {
+            const formData = new FormData();
+            formData.append('tracking_id', trackingId);
+
+            fetch('/complete-training', {
+                method: 'POST',
+                body: formData
+            })
+            .then(res => res.json())
+            .then(data => {
+                console.log("Training complete callback:", data);
+            })
+            .catch(err => {
+                console.error("Failed to post training complete logs:", err);
+            });
+        }
+    }
+
+    // Initialize Quiz
+    renderQuestion();
+
+})();
+</script>
+
+<style>
+/* Hotspot pulsing overlays */
+@keyframes pulseHotspot {
+    0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.6); }
+    50% { transform: scale(1.15); box-shadow: 0 0 10px 4px rgba(239, 68, 68, 0); }
+}
+@keyframes bounceAlert {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-4px); }
+}
+
+.hotspot-dot {
+    position: relative;
+}
+
+/* Tooltip hover bridge to prevent premature cursor exit */
+.cyber-tooltip-content::before {
+    content: '';
+    position: absolute;
+    top: -15px;
+    bottom: -15px;
+    left: -15px;
+    right: -15px;
+    background: transparent;
+    z-index: -1;
+    pointer-events: auto;
+}
+
+/* Light mode overrides for interactive hotspots */
+body.light-theme .mock-email-client {
+    background: #ffffff !important;
+    border-color: #e2e8f0 !important;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.04) !important;
+}
+body.light-theme .email-body-content {
+    background: #f8fafc !important;
+    color: #334155 !important;
+}
+body.light-theme .mock-email-client div {
+    color: #0f172a !important;
+}
+body.light-theme .quiz-option-btn {
+    background: #f8fafc !important;
+    border-color: #cbd5e1 !important;
+    color: #334155 !important;
+}
+body.light-theme .quiz-option-btn:hover {
+    background: rgba(37, 99, 235, 0.05) !important;
+    border-color: rgba(37, 99, 235, 0.3) !important;
+}
+body.light-theme #quiz-block {
+    background: #ffffff !important;
+    border-color: rgba(37, 99, 235, 0.15) !important;
+    box-shadow: 0 10px 30px rgba(37, 99, 235, 0.04) !important;
+}
+body.light-theme #quiz-block h2, 
+body.light-theme #quiz-block h3, 
+body.light-theme #quiz-block h4,
+body.light-theme #quiz-block p,
+body.light-theme #quiz-block span {
+    color: #0f172a !important;
+}
+</style>
 {% endblock %}

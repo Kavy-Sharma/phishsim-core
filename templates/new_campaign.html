@@ -2,15 +2,113 @@
 {% block title %}New Campaign — PhishSim AI{% endblock %}
 {% block content %}
 <style>
-/* Removed hardcoded body background */
+    /* Custom Dropdown Animation Styles */
+    .custom-select-container {
+        position: relative;
+        width: 100%;
+        user-select: none;
+        z-index: 100;
+    }
+    .custom-select-trigger {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 16px;
+        background: rgba(0, 0, 0, 0.2) !important;
+        border: 1px solid var(--border-color) !important;
+        border-radius: 10px;
+        color: var(--text-main);
+        cursor: pointer;
+        font-family: var(--font-sans);
+        font-size: 0.9rem;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 0 10px rgba(6, 182, 212, 0.03);
+    }
+    body.light-theme .custom-select-trigger {
+        background: rgba(255, 255, 255, 0.7) !important;
+        color: #0f172a;
+        border-color: #cbd5e1 !important;
+    }
+    .custom-select-trigger:hover {
+        border-color: rgba(6, 182, 212, 0.6) !important;
+        box-shadow: 0 0 15px rgba(6, 182, 212, 0.12);
+    }
+    .custom-select-container.open .custom-select-trigger {
+        border-color: #06b6d4 !important;
+        box-shadow: 0 0 20px rgba(6, 182, 212, 0.18);
+    }
+    .custom-options-container {
+        position: absolute;
+        top: calc(100% + 6px);
+        left: 0;
+        right: 0;
+        background: rgba(10, 16, 38, 0.98);
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        overflow: hidden;
+        opacity: 0;
+        pointer-events: none;
+        transform: translateY(-10px);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        backdrop-filter: blur(12px);
+        z-index: 110;
+    }
+    body.light-theme .custom-options-container {
+        background: rgba(255, 255, 255, 0.98);
+        border-color: #cbd5e1;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+    .custom-select-container.open .custom-options-container {
+        opacity: 1;
+        pointer-events: auto;
+        transform: translateY(0);
+    }
+    .custom-select-container.open .fa-chevron-down {
+        transform: rotate(180deg);
+    }
+    .custom-option {
+        padding: 12px 16px;
+        cursor: pointer;
+        color: var(--text-muted);
+        font-size: 0.9rem;
+        transition: all 0.2s ease;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    body.light-theme .custom-option {
+        color: #475569;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.03);
+    }
+    .custom-option:last-child {
+        border-bottom: none;
+    }
+    .custom-option:hover {
+        background: rgba(6, 182, 212, 0.1);
+        color: #06b6d4;
+    }
+    body.light-theme .custom-option:hover {
+        background: rgba(59, 130, 246, 0.08);
+        color: #2563eb;
+    }
+    .custom-option.active {
+        background: rgba(6, 182, 212, 0.15);
+        color: #22d3ee;
+        font-weight: 600;
+    }
+    body.light-theme .custom-option.active {
+        background: rgba(59, 130, 246, 0.12);
+        color: #1d4ed8;
+    }
 
     .nc-page {
-        max-width: 680px;
+        max-width: 1200px;
         margin: 0 auto;
         padding: 2rem;
     }
 
-    /* Header */
     .nc-back {
         display: inline-flex;
         align-items: center;
@@ -26,19 +124,19 @@
         color: #06b6d4;
     }
 
-    /* Card */
     .nc-card {
-        background: var(--bg-card);
-        border: 1px solid var(--border-color);
-        border-radius: 24px;
-        padding: 3rem;
-        backdrop-filter: blur(20px);
-        box-shadow: 0 0 60px rgba(6, 182, 212, 0.06), 0 40px 80px rgba(0, 0, 0, 0.2);
         position: relative;
-        overflow: hidden;
         animation: cardEntrance 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
         opacity: 0;
         transform: translateY(30px);
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+    }
+
+    body.light-theme .nc-card {
+        background: rgba(255, 255, 255, 0.7);
+        border-color: rgba(37, 99, 235, 0.15);
     }
 
     .nc-card::before {
@@ -53,7 +151,6 @@
         pointer-events: none;
     }
 
-    /* Animated scan line */
     .nc-card::after {
         content: '';
         position: absolute;
@@ -67,26 +164,13 @@
     }
 
     @keyframes scanLine {
-        0% {
-            top: 0;
-            opacity: 1;
-        }
-
-        80% {
-            opacity: 0.5;
-        }
-
-        100% {
-            top: 100%;
-            opacity: 0;
-        }
+        0% { top: 0; opacity: 1; }
+        80% { opacity: 0.5; }
+        100% { top: 100%; opacity: 0; }
     }
 
     @keyframes cardEntrance {
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
+        to { opacity: 1; transform: translateY(0); }
     }
 
     .nc-eyebrow {
@@ -99,7 +183,7 @@
         padding: 5px 14px;
         font-size: 0.78rem;
         color: #3b82f6;
-        font-family: 'Space Mono', monospace;
+        font-family: var(--font-mono);
         text-transform: uppercase;
         letter-spacing: 1px;
         margin-bottom: 1.2rem;
@@ -116,19 +200,12 @@
     }
 
     @keyframes blink {
-
-        0%,
-        100% {
-            opacity: 1;
-        }
-
-        50% {
-            opacity: 0.2;
-        }
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.2; }
     }
 
     .nc-title {
-        font-family: 'Outfit', sans-serif;
+        font-family: var(--font-sans);
         font-size: 2.2rem;
         font-weight: 800;
         color: var(--text-main);
@@ -141,18 +218,17 @@
         font-size: 0.95rem;
     }
 
-    /* Form Groups */
     .nc-group {
         margin-bottom: 1.6rem;
     }
 
     .nc-group label {
         display: block;
-        font-family: 'Space Mono', monospace;
+        font-family: var(--font-mono);
         font-size: 0.78rem;
         text-transform: uppercase;
         letter-spacing: 1px;
-        color: #475569;
+        color: var(--text-muted);
         margin-bottom: 8px;
     }
 
@@ -165,7 +241,7 @@
         left: 16px;
         top: 50%;
         transform: translateY(-50%);
-        color: #334155;
+        color: var(--text-muted);
         font-size: 0.9rem;
         pointer-events: none;
         transition: color 0.3s;
@@ -174,16 +250,22 @@
     .nc-input {
         width: 100%;
         padding: 14px 16px 14px 48px !important;
-        background: transparent;
+        background: rgba(0, 0, 0, 0.2);
         border: 1px solid var(--border-color);
         border-radius: 12px;
         color: var(--text-main);
         font-size: 0.95rem;
-        font-family: 'Outfit', sans-serif;
+        font-family: var(--font-sans);
         outline: none;
         transition: all 0.3s ease;
         box-sizing: border-box;
         appearance: none;
+    }
+
+    body.light-theme .nc-input {
+        background: #ffffff;
+        border-color: #cbd5e1;
+        color: #0f172a;
     }
 
     .nc-input::placeholder {
@@ -200,33 +282,6 @@
         color: #3b82f6;
     }
 
-    /* Select arrow */
-    .nc-select-wrap {
-        position: relative;
-    }
-
-    .nc-select-wrap::after {
-        content: "▼";
-        position: absolute;
-        right: 16px;
-        top: 50%;
-        transform: translateY(-50%);
-        color: #334155;
-        pointer-events: none;
-        font-size: 0.75rem;
-    }
-
-    .nc-select-wrap select {
-        cursor: pointer;
-    }
-
-    /* Scenario cards */
-    .scenario-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 0.8rem;
-    }
-
     .scenario-option {
         position: relative;
     }
@@ -235,6 +290,40 @@
         position: absolute;
         opacity: 0;
         pointer-events: none;
+    }
+
+    .scenario-option input[type="radio"]:checked + .scenario-card-label {
+        border-color: #06b6d4 !important;
+        box-shadow: 0 0 15px rgba(6, 182, 212, 0.25) !important;
+        background: rgba(6, 182, 212, 0.08) !important;
+    }
+
+    /* Highlight CEO Fraud specifically in red when checked */
+    .scenario-option input[type="radio"]#s1:checked + .scenario-card-label {
+        border-color: #ef4444 !important;
+        box-shadow: 0 0 15px rgba(239, 68, 68, 0.25) !important;
+        background: rgba(239, 68, 68, 0.08) !important;
+    }
+    
+    /* Highlight Urgent Invoice specifically in orange when checked */
+    .scenario-option input[type="radio"]#s4:checked + .scenario-card-label {
+        border-color: #f59e0b !important;
+        box-shadow: 0 0 15px rgba(245, 158, 11, 0.25) !important;
+        background: rgba(245, 158, 11, 0.08) !important;
+    }
+
+    /* Highlight IT Alert specifically in blue when checked */
+    .scenario-option input[type="radio"]#s2:checked + .scenario-card-label {
+        border-color: #3b82f6 !important;
+        box-shadow: 0 0 15px rgba(59, 130, 246, 0.25) !important;
+        background: rgba(59, 130, 246, 0.08) !important;
+    }
+
+    /* Highlight HR Update specifically in green when checked */
+    .scenario-option input[type="radio"]#s3:checked + .scenario-card-label {
+        border-color: #10b981 !important;
+        box-shadow: 0 0 15px rgba(16, 185, 129, 0.25) !important;
+        background: rgba(16, 185, 129, 0.08) !important;
     }
 
     .scenario-label {
@@ -249,52 +338,14 @@
         transition: all 0.3s ease;
     }
 
-    .scenario-label:hover {
-        border-color: rgba(59, 130, 246, 0.4);
-        background: rgba(59, 130, 246, 0.05);
-    }
-
-    .scenario-option input:checked+.scenario-label {
-        border-color: rgba(59, 130, 246, 0.6);
-        background: rgba(59, 130, 246, 0.08);
-        box-shadow: 0 0 20px rgba(59, 130, 246, 0.1);
-    }
-
-    .scenario-icon {
-        font-size: 1.5rem;
-        flex-shrink: 0;
-    }
-
-    .scenario-info strong {
-        display: block;
-        color: var(--text-main);
-        font-size: 0.9rem;
-        margin-bottom: 2px;
-    }
-
-    .scenario-info small {
-        color: #64748b;
-        font-size: 0.78rem;
-    }
-
     .delivery-grid {
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 0.8rem;
     }
 
-    .delivery-grid.two-col {
-        grid-template-columns: 1fr 1fr;
-    }
-
     .delivery-grid.three-col {
-        grid-template-columns: 1fr 1fr;
-    }
-
-    @media (min-width: 600px) {
-        .delivery-grid.three-col {
-            grid-template-columns: 1fr 1fr 1fr;
-        }
+        grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
     }
 
     .delivery-option {
@@ -310,15 +361,21 @@
     .delivery-label {
         position: relative;
         display: flex;
-        align-items: flex-start;
-        gap: 12px;
-        min-height: 92px;
-        padding: 1rem 3rem 1rem 1rem;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 8px;
+        min-height: 100px;
+        padding: 1rem;
         border: 1px solid rgba(255, 255, 255, 0.07);
         border-radius: 12px;
         cursor: pointer;
         background: rgba(255, 255, 255, 0.02);
         transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+    }
+
+    .delivery-label i {
+        font-size: 1.5rem;
     }
 
     .delivery-label:hover {
@@ -329,43 +386,44 @@
     .delivery-option input:checked+.delivery-label {
         border-color: rgba(6, 182, 212, 0.86);
         background: linear-gradient(135deg, rgba(6, 182, 212, 0.14), rgba(59, 130, 246, 0.08));
-        box-shadow: 0 0 0 1px rgba(6, 182, 212, 0.28), 0 16px 34px rgba(6, 182, 212, 0.12);
+        box-shadow: 0 0 0 1px rgba(6, 182, 212, 0.28), 0 10px 25px rgba(6, 182, 212, 0.12);
         transform: translateY(-1px);
     }
 
     .delivery-option input:checked+.delivery-label::after {
         content: "\f00c";
         position: absolute;
-        top: 14px;
-        right: 14px;
-        width: 26px;
-        height: 26px;
+        top: 8px;
+        right: 8px;
+        width: 18px;
+        height: 18px;
         border-radius: 50%;
         display: grid;
         place-items: center;
         font-family: "Font Awesome 6 Free";
         font-weight: 900;
-        font-size: 0.78rem;
+        font-size: 0.6rem;
         color: #00131a;
         background: #22d3ee;
-        box-shadow: 0 0 18px rgba(34, 211, 238, 0.55);
+        box-shadow: 0 0 10px rgba(34, 211, 238, 0.55);
     }
 
     .delivery-option input:checked+.delivery-label i {
         color: #22d3ee !important;
-        filter: drop-shadow(0 0 10px rgba(34, 211, 238, 0.5));
+        filter: drop-shadow(0 0 8px rgba(34, 211, 238, 0.4));
     }
 
     .delivery-label strong {
         display: block;
         color: var(--text-main);
-        font-size: 0.9rem;
+        font-size: 0.85rem;
         margin-bottom: 2px;
     }
 
     .delivery-label small {
-        color: #64748b;
-        font-size: 0.78rem;
+        color: var(--text-muted);
+        font-size: 0.72rem;
+        line-height: 1.3;
     }
 
     body.light-theme .delivery-label {
@@ -382,27 +440,25 @@
     body.light-theme .delivery-option input:checked+.delivery-label {
         border-color: rgba(37, 99, 235, 0.72);
         background: linear-gradient(135deg, rgba(219, 234, 254, 0.92), rgba(255, 255, 255, 0.95));
-        box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.22), 0 16px 32px rgba(59, 130, 246, 0.16);
+        box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.22), 0 10px 20px rgba(59, 130, 246, 0.1);
     }
 
     body.light-theme .delivery-option input:checked+.delivery-label::after {
         color: #fff;
         background: #2563eb;
-        box-shadow: 0 8px 18px rgba(37, 99, 235, 0.28);
+        box-shadow: 0 4px 10px rgba(37, 99, 235, 0.25);
     }
 
     body.light-theme .delivery-option input:checked+.delivery-label i {
         color: #2563eb !important;
-        filter: drop-shadow(0 6px 12px rgba(37, 99, 235, 0.18));
     }
 
-    /* Consent */
     .consent-box {
-        background: rgba(234, 179, 8, 0.04);
-        border: 1px solid rgba(234, 179, 8, 0.2);
-        border-radius: 14px;
-        padding: 1.5rem;
-        margin: 1.8rem 0;
+        background: rgba(234, 179, 8, 0.03);
+        border: 1px solid rgba(234, 179, 8, 0.15);
+        border-radius: 12px;
+        padding: 1.2rem;
+        margin: 1.5rem 0;
         position: relative;
         overflow: hidden;
     }
@@ -420,14 +476,14 @@
     .consent-box label {
         display: flex;
         align-items: flex-start;
-        gap: 14px;
+        gap: 12px;
         cursor: pointer;
     }
 
     .consent-box input[type="checkbox"] {
-        width: 18px;
-        height: 18px;
-        margin-top: 2px;
+        width: 16px;
+        height: 16px;
+        margin-top: 3px;
         accent-color: #f59e0b;
         flex-shrink: 0;
         cursor: pointer;
@@ -436,27 +492,26 @@
     .consent-text strong {
         display: block;
         color: var(--text-main);
-        font-size: 0.95rem;
-        margin-bottom: 5px;
+        font-size: 0.9rem;
+        margin-bottom: 3px;
     }
 
     .consent-text span {
-        color: #94a3b8;
-        font-size: 0.88rem;
-        line-height: 1.5;
+        color: var(--text-muted);
+        font-size: 0.8rem;
+        line-height: 1.4;
     }
 
-    /* Submit button */
     .nc-submit {
         width: 100%;
-        padding: 16px;
+        padding: 15px;
         background: linear-gradient(135deg, #3b82f6, #06b6d4);
         border: none;
-        border-radius: 14px;
+        border-radius: 12px;
         color: #fff;
-        font-family: 'Outfit', sans-serif;
+        font-family: var(--font-sans);
         font-weight: 800;
-        font-size: 1.05rem;
+        font-size: 1rem;
         letter-spacing: 0.5px;
         cursor: pointer;
         position: relative;
@@ -476,65 +531,341 @@
         transition: left 0.5s;
     }
 
-    .nc-submit:hover::before {
-        left: 100%;
-    }
+    .nc-submit:hover::before { left: 100%; }
 
     .nc-submit:hover {
         transform: translateY(-2px);
-        box-shadow: 0 12px 35px rgba(59, 130, 246, 0.4);
-    }
-
-    .nc-submit:active {
-        transform: translateY(0);
+        box-shadow: 0 12px 30px rgba(59, 130, 246, 0.35);
     }
 
     .section-divider {
         height: 1px;
         background: rgba(255, 255, 255, 0.05);
-        margin: 2rem 0;
+        margin: 1.5rem 0;
     }
 
-    .domain-lock,
     .deliverability-box {
-        border: 1px solid rgba(59, 130, 246, 0.18);
-        background: rgba(59, 130, 246, 0.06);
-        border-radius: 14px;
+        border: 1px solid rgba(245, 158, 11, 0.2);
+        background: rgba(245, 158, 11, 0.04);
+        border-radius: 12px;
         padding: 1rem;
-        color: #94a3b8;
-        font-size: 0.9rem;
-    }
-
-    .domain-lock strong,
-    .deliverability-box strong {
-        color: var(--text-main);
-    }
-
-    .deliverability-box {
-        border-color: rgba(245, 158, 11, 0.28);
-        background: rgba(245, 158, 11, 0.06);
-    }
-
-    .deliverability-box ul {
-        margin: 0.8rem 0 0.9rem 1.2rem;
-        color: #cbd5e1;
+        color: var(--text-muted);
+        font-size: 0.85rem;
     }
 
     .deliverability-box label {
         display: flex;
-        gap: 10px;
+        gap: 8px;
         align-items: flex-start;
-        margin: 0;
-        color: #e2e8f0;
-        text-transform: none;
-        letter-spacing: 0;
-        font-family: 'Outfit', sans-serif;
-        font-size: 0.9rem;
+        margin-top: 10px;
+        color: var(--text-main);
     }
 
     .deliverability-box input {
         margin-top: 3px;
         accent-color: #f59e0b;
+    }
+
+    .pro-modal-overlay {
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(8, 12, 26, 0.85);
+        backdrop-filter: blur(8px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s ease;
+    }
+    .pro-modal-overlay.active {
+        opacity: 1;
+        pointer-events: auto;
+    }
+    .pro-modal-box {
+        background: rgba(15, 23, 42, 0.95);
+        border: 1px solid rgba(6, 182, 212, 0.3);
+        border-radius: 16px;
+        padding: 2.5rem;
+        max-width: 480px;
+        width: 90%;
+        text-align: center;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), 0 0 30px rgba(6, 182, 212, 0.15);
+        transform: scale(0.9);
+        transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .pro-modal-overlay.active .pro-modal-box {
+        transform: scale(1);
+    }
+    .pro-modal-icon {
+        font-size: 3rem;
+        color: #eab308;
+        margin-bottom: 1rem;
+        text-shadow: 0 0 20px rgba(234, 179, 8, 0.3);
+    }
+    .pro-modal-title {
+        font-size: 1.5rem;
+        color: #fff;
+        margin-bottom: 0.8rem;
+        font-weight: 700;
+    }
+    .pro-modal-desc {
+        color: #94a3b8;
+        font-size: 0.9rem;
+        line-height: 1.6;
+        margin-bottom: 1.8rem;
+    }
+    .pro-modal-features {
+        text-align: left;
+        background: rgba(255,255,255,0.02);
+        border: 1px solid rgba(255,255,255,0.05);
+        padding: 1rem 1.2rem;
+        border-radius: 8px;
+        margin-bottom: 1.8rem;
+        font-size: 0.85rem;
+        color: #cbd5e1;
+    }
+    .pro-modal-feature-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 8px;
+    }
+    .pro-modal-feature-item i {
+        color: #22d3ee;
+    }
+    .pro-modal-btn-upgrade {
+        display: inline-block;
+        width: 100%;
+        padding: 12px;
+        background: linear-gradient(135deg, #06b6d4, #3b82f6);
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        margin-bottom: 8px;
+        transition: opacity 0.2s;
+        text-decoration: none;
+    }
+    .pro-modal-btn-upgrade:hover {
+        opacity: 1;
+        background: linear-gradient(135deg, #0891b2, #2563eb) !important;
+        color: #ffffff !important;
+        text-decoration: none !important;
+    }
+    .pro-modal-btn-close {
+        background: transparent;
+        color: #64748b;
+        border: none;
+        cursor: pointer;
+        font-size: 0.85rem;
+        padding: 6px;
+    }
+    .pro-modal-btn-close:hover {
+        color: #94a3b8;
+    }
+
+    /* ── Expanded Form Grid on Desktop ── */
+    @media (min-width: 992px) {
+        .nc-grid-container {
+            display: grid;
+            grid-template-columns: 1.05fr 0.95fr;
+            gap: 3rem;
+            align-items: start;
+        }
+        .nc-col-left {
+            border-right: 1px solid var(--border-color);
+            padding-right: 3rem;
+        }
+        body.light-theme .nc-col-left {
+            border-right-color: rgba(37, 99, 235, 0.15);
+        }
+    }
+
+    /* ── Weekday Button Selection ── */
+    .weekday-selector-row {
+        display: flex;
+        gap: 8px;
+        margin-top: 8px;
+    }
+    .weekday-btn {
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        border: 1px solid var(--border-color);
+        background: rgba(0, 0, 0, 0.2);
+        color: var(--text-muted);
+        font-family: var(--font-mono);
+        font-size: 0.85rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .weekday-btn:hover {
+        border-color: rgba(6, 182, 212, 0.5);
+        color: var(--accent-cyan);
+    }
+    .weekday-btn.active {
+        background: linear-gradient(135deg, #06b6d4, #3b82f6);
+        border-color: transparent;
+        color: #fff;
+        box-shadow: 0 0 10px rgba(6, 182, 212, 0.35);
+    }
+    body.light-theme .weekday-btn {
+        background: #fff;
+        border-color: #cbd5e1;
+        color: #475569;
+    }
+    body.light-theme .weekday-btn.active {
+        background: linear-gradient(135deg, #2563eb, #3b82f6);
+        color: #fff;
+        border-color: transparent;
+    }
+
+    /* ── Day of Month Buttons ── */
+    .dom-grid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 6px;
+        margin-top: 8px;
+    }
+    .dom-btn {
+        height: 32px;
+        border-radius: 6px;
+        border: 1px solid var(--border-color);
+        background: rgba(0, 0, 0, 0.2);
+        color: var(--text-muted);
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .dom-btn:hover {
+        border-color: rgba(6, 182, 212, 0.5);
+        color: var(--accent-cyan);
+    }
+    .dom-btn.active {
+        background: linear-gradient(135deg, #06b6d4, #3b82f6);
+        border-color: transparent;
+        color: #fff;
+        box-shadow: 0 0 10px rgba(6, 182, 212, 0.35);
+    }
+    body.light-theme .dom-btn {
+        background: #fff;
+        border-color: #cbd5e1;
+        color: #475569;
+    }
+    body.light-theme .dom-btn.active {
+        background: linear-gradient(135deg, #2563eb, #3b82f6);
+        color: #fff;
+        border-color: transparent;
+    }
+
+    /* ── Custom Time Picker popover ── */
+    .custom-time-picker {
+        position: relative;
+        width: 100%;
+    }
+    .time-trigger {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 16px;
+        background: rgba(0, 0, 0, 0.2);
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        color: var(--text-main);
+        cursor: pointer;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+    }
+    .time-trigger:hover {
+        border-color: rgba(6, 182, 212, 0.5);
+    }
+    .time-popover {
+        position: absolute;
+        top: calc(100% + 6px);
+        left: 0;
+        width: 160px;
+        height: 180px;
+        background: rgba(10, 16, 38, 0.98);
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        display: flex;
+        overflow: hidden;
+        opacity: 0;
+        pointer-events: none;
+        transform: translateY(-10px);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        z-index: 150;
+        backdrop-filter: blur(12px);
+    }
+    .custom-time-picker.open .time-popover {
+        opacity: 1;
+        pointer-events: auto;
+        transform: translateY(0);
+    }
+    .time-col {
+        flex: 1;
+        overflow-y: auto;
+        height: 100%;
+        scrollbar-width: thin;
+    }
+    .time-col::-webkit-scrollbar {
+        width: 4px;
+    }
+    .time-col::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.15);
+        border-radius: 4px;
+    }
+    .time-item {
+        padding: 6px 10px;
+        text-align: center;
+        cursor: pointer;
+        color: var(--text-muted);
+        font-family: var(--font-mono);
+        font-size: 0.85rem;
+        transition: all 0.2s ease;
+    }
+    .time-item:hover {
+        background: rgba(6, 182, 212, 0.1);
+        color: var(--accent-cyan);
+    }
+    .time-item.selected {
+        background: rgba(6, 182, 212, 0.25);
+        color: var(--accent-cyan);
+        font-weight: 700;
+    }
+    body.light-theme .time-trigger {
+        background: rgba(255, 255, 255, 0.7);
+        color: #0f172a;
+        border-color: #cbd5e1;
+    }
+    body.light-theme .time-popover {
+        background: #ffffff;
+        border-color: #cbd5e1;
+        box-shadow: 0 10px 30px rgba(37,99,235,0.08);
+    }
+    body.light-theme .time-item {
+        color: #475569;
+    }
+    body.light-theme .time-item:hover {
+        background: rgba(37, 99, 235, 0.08);
+        color: #2563eb;
+    }
+    body.light-theme .time-item.selected {
+        background: rgba(37, 99, 235, 0.12);
+        color: #2563eb;
     }
 </style>
 
@@ -543,242 +874,840 @@
         <i class="fas fa-arrow-left"></i> Back to Dashboard
     </a>
 
-    <div class="nc-card">
+    <div class="nc-card" style="padding: 2.5rem;">
         <span class="nc-eyebrow">New Simulation</span>
         <h1 class="nc-title">Configure Campaign</h1>
         <p class="nc-subtitle">Set up the parameters for your next AI-driven phishing simulation.</p>
 
-        <form action="/new-campaign" method="POST">
-
-            <!-- Campaign Name -->
-            <div class="nc-group">
-                <label for="campaign_name">Campaign Name</label>
-                <div class="nc-input-wrap">
-                    <input class="nc-input" type="text" id="campaign_name" name="campaign_name"
-                        placeholder="e.g. Q3 Security Audit" required>
-                    <i class="fas fa-tag"></i>
-                </div>
+        <!-- Step Tracker -->
+        <div id="step-tracker" style="display:flex;align-items:center;gap:0;margin:1.8rem 0 2rem;">
+            <!-- Step 1 -->
+            <div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex:1;">
+                <div id="step-1-circle" style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#06b6d4,#3b82f6);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:0.85rem;box-shadow:0 0 14px rgba(6,182,212,0.4);transition:all 0.4s;">1</div>
+                <span style="font-size:0.72rem;color:#06b6d4;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;text-align:center;">Campaign Setup</span>
             </div>
-
-            <!-- Domain -->
-            <div class="nc-group">
-                <label for="company_domain">Company Domain</label>
-                <div class="nc-input-wrap">
-                    <input class="nc-input" type="text" id="company_domain" name="company_domain"
-                        placeholder="{{ current_user.company_domain or 'example.com' }}" value="{{ current_user.company_domain or '' }}">
-                    <i class="fas fa-globe"></i>
-                </div>
-                <p style="color:#64748b; font-size:0.82rem; margin:8px 0 0;">For testing, this can be any domain or label. It is used for AI context only.</p>
+            <div id="step-connector-1" style="flex:1;height:2px;background:rgba(255,255,255,0.05);margin-bottom:22px;transition:background 0.5s;"></div>
+            <!-- Step 2 -->
+            <div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex:1;">
+                <div id="step-2-circle" style="width:36px;height:36px;border-radius:50%;background:rgba(59,130,246,0.15);border:2px solid rgba(59,130,246,0.3);display:flex;align-items:center;justify-content:center;color:#60a5fa;font-weight:800;font-size:0.85rem;transition:all 0.4s;">2</div>
+                <span id="step-2-label" style="font-size:0.72rem;color:#475569;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;text-align:center;">Target Upload</span>
             </div>
+            <div id="step-connector-2" style="flex:1;height:2px;background:rgba(255,255,255,0.05);margin-bottom:22px;transition:background 0.5s;"></div>
+            <!-- Step 3 -->
+            <div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex:1;">
+                <div id="step-3-circle" style="width:36px;height:36px;border-radius:50%;background:rgba(34,197,94,0.1);border:2px solid rgba(34,197,94,0.2);display:flex;align-items:center;justify-content:center;color:#4ade80;font-weight:800;font-size:0.85rem;transition:all 0.4s;">3</div>
+                <span style="font-size:0.72rem;color:#475569;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;text-align:center;">Live Monitoring</span>
+            </div>
+        </div>
 
-            <div class="section-divider"></div>
+        {% if campaign_limit_reached %}
+        <div style="background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.25); padding: 1.5rem; border-radius: 12px; margin-bottom: 2rem; display: flex; align-items: center; gap: 1.2rem; box-shadow: 0 10px 25px rgba(239, 68, 68, 0.15);">
+            <div style="background: rgba(239, 68, 68, 0.15); width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #ef4444; flex-shrink: 0; border: 1px solid rgba(239, 68, 68, 0.3);">
+                <i class="fas fa-exclamation-triangle" style="font-size: 1.2rem;"></i>
+            </div>
+            <div style="flex-grow: 1; text-align: left;">
+                <h4 style="font-family: var(--font-sans); color: #fff; margin: 0 0 4px 0; font-size: 1.05rem; font-weight: 700;">Campaign Limit Reached (Free Tier)</h4>
+                <p style="color: var(--text-muted); font-size: 0.86rem; margin: 0; line-height: 1.45;">You have deployed the maximum of <strong>3 campaigns</strong> allowed on the Free plan. Upgrade to PhishSim.ai PRO to unlock unlimited campaigns, SMTP integrations, and automated reporting.</p>
+            </div>
+            <a href="/billing" class="btn-primary-sm" style="flex-shrink: 0; padding: 8px 18px; border-radius: 8px; font-weight: 700; font-size: 0.8rem; text-decoration: none; display: inline-block;">Compare Plans</a>
+        </div>
+        {% endif %}
 
-            <!-- Scenario Selection -->
-            <div class="nc-group">
-                <label>AI Generation Scenario</label>
-                <div class="scenario-grid">
-                    <div class="scenario-option">
-                        <input type="radio" name="scenario" id="s1" value="ceo_fraud" checked>
-                        <label class="scenario-label" for="s1">
-                            <span class="scenario-icon">👑</span>
-                            <div class="scenario-info">
-                                <strong>CEO Fraud</strong>
-                                <small>Wire transfer request from exec</small>
-                            </div>
-                        </label>
+        <form action="/new-campaign" method="POST" id="campaign-form" novalidate>
+            <div class="nc-grid-container">
+                
+                <!-- Left Column: Campaign Settings -->
+                <div class="nc-col-left">
+                    <!-- Campaign Name -->
+                    <div class="nc-group">
+                        <label for="campaign_name">Campaign Name</label>
+                        <div class="nc-input-wrap">
+                            <input class="nc-input" type="text" id="campaign_name" name="campaign_name"
+                                placeholder="e.g. Q3 Security Audit" required>
+                            <i class="fas fa-tag"></i>
+                        </div>
                     </div>
-                    <div class="scenario-option">
-                        <input type="radio" name="scenario" id="s2" value="it_alert">
-                        <label class="scenario-label" for="s2">
-                            <span class="scenario-icon">💻</span>
-                            <div class="scenario-info">
-                                <strong>IT Alert</strong>
-                                <small>Password reset / account lockout</small>
-                            </div>
-                        </label>
+
+                    <!-- Domain -->
+                    <div class="nc-group">
+                        <label for="company_domain">Company Domain</label>
+                        <div class="nc-input-wrap">
+                            <input class="nc-input" type="text" id="company_domain" name="company_domain"
+                                placeholder="{{ current_user.company_domain or 'example.com' }}" value="{{ current_user.company_domain or '' }}">
+                            <i class="fas fa-globe"></i>
+                        </div>
+                        <p style="color:#64748b; font-size:0.82rem; margin:8px 0 0;">For testing, this can be any domain or label. It is used for AI context only.</p>
                     </div>
-                    <div class="scenario-option">
-                        <input type="radio" name="scenario" id="s3" value="hr_update">
-                        <label class="scenario-label" for="s3">
-                            <span class="scenario-icon">📄</span>
-                            <div class="scenario-info">
-                                <strong>HR Update</strong>
-                                <small>Benefits portal / policy change</small>
+
+                    <div class="section-divider"></div>
+
+                    <!-- Scenario Selection -->
+                    <div class="nc-group">
+                        <label style="margin-bottom:1rem;display:block;">AI Generation Scenario</label>
+                        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;">
+
+                            <div class="scenario-option" style="position:relative;">
+                                <input type="radio" name="scenario" id="s1" value="ceo_fraud" checked style="position:absolute;opacity:0;">
+                                <label for="s1" style="display:flex;flex-direction:column;gap:10px;padding:1.2rem;border-radius:12px;border:1px solid rgba(239,68,68,0.2);background:rgba(239,68,68,0.04);cursor:pointer;transition:all 0.2s;" class="scenario-card-label">
+                                    <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+                                        <span style="font-size:1.8rem;">👑</span>
+                                        <span style="font-size:0.65rem;font-weight:800;padding:2px 8px;border-radius:100px;background:rgba(239,68,68,0.15);color:#f87171;border:1px solid rgba(239,68,68,0.3);text-transform:uppercase;letter-spacing:0.05em;">HIGH RISK</span>
+                                    </div>
+                                    <div>
+                                        <strong style="color:var(--text-main);font-size:0.9rem;display:block;margin-bottom:4px;">CEO Fraud</strong>
+                                        <span style="color:#64748b;font-size:0.78rem;line-height:1.4;display:block;">Urgent wire transfer request impersonating the executive team.</span>
+                                    </div>
+                                    <div style="display:flex;gap:2px;">
+                                        <i class="fas fa-star" style="color:#f59e0b;font-size:0.65rem;"></i><i class="fas fa-star" style="color:#f59e0b;font-size:0.65rem;"></i><i class="fas fa-star" style="color:#f59e0b;font-size:0.65rem;"></i><i class="fas fa-star" style="color:#f59e0b;font-size:0.65rem;"></i><i class="fas fa-star" style="color:#334155;font-size:0.65rem;"></i>
+                                        <span style="font-size:0.65rem;color:#64748b;margin-left:4px;">Difficulty</span>
+                                    </div>
+                                </label>
                             </div>
-                        </label>
-                    </div>
-                    <div class="scenario-option">
-                        <input type="radio" name="scenario" id="s4" value="invoice">
-                        <label class="scenario-label" for="s4">
-                            <span class="scenario-icon">💰</span>
-                            <div class="scenario-info">
-                                <strong>Urgent Invoice</strong>
-                                <small>Fake vendor invoice to finance</small>
+
+                            <div class="scenario-option" style="position:relative;">
+                                <input type="radio" name="scenario" id="s2" value="it_alert" style="position:absolute;opacity:0;">
+                                <label for="s2" style="display:flex;flex-direction:column;gap:10px;padding:1.2rem;border-radius:12px;border:1px solid rgba(59,130,246,0.2);background:rgba(59,130,246,0.04);cursor:pointer;transition:all 0.2s;" class="scenario-card-label">
+                                    <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+                                        <span style="font-size:1.8rem;">💻</span>
+                                        <span style="font-size:0.65rem;font-weight:800;padding:2px 8px;border-radius:100px;background:rgba(234,179,8,0.15);color:#facc15;border:1px solid rgba(234,179,8,0.3);text-transform:uppercase;letter-spacing:0.05em;">MEDIUM</span>
+                                    </div>
+                                    <div>
+                                        <strong style="color:var(--text-main);font-size:0.9rem;display:block;margin-bottom:4px;">IT Alert</strong>
+                                        <span style="color:#64748b;font-size:0.78rem;line-height:1.4;display:block;">System password reset or account lockout requiring immediate action.</span>
+                                    </div>
+                                    <div style="display:flex;gap:2px;">
+                                        <i class="fas fa-star" style="color:#f59e0b;font-size:0.65rem;"></i><i class="fas fa-star" style="color:#f59e0b;font-size:0.65rem;"></i><i class="fas fa-star" style="color:#f59e0b;font-size:0.65rem;"></i><i class="fas fa-star" style="color:#334155;font-size:0.65rem;"></i><i class="fas fa-star" style="color:#334155;font-size:0.65rem;"></i>
+                                        <span style="font-size:0.65rem;color:#64748b;margin-left:4px;">Difficulty</span>
+                                    </div>
+                                </label>
                             </div>
-                        </label>
+
+                            <div class="scenario-option" style="position:relative;">
+                                <input type="radio" name="scenario" id="s3" value="hr_update" style="position:absolute;opacity:0;">
+                                <label for="s3" style="display:flex;flex-direction:column;gap:10px;padding:1.2rem;border-radius:12px;border:1px solid rgba(16,185,129,0.2);background:rgba(16,185,129,0.04);cursor:pointer;transition:all 0.2s;" class="scenario-card-label">
+                                    <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+                                        <span style="font-size:1.8rem;">📄</span>
+                                        <span style="font-size:0.65rem;font-weight:800;padding:2px 8px;border-radius:100px;background:rgba(34,197,94,0.12);color:#4ade80;border:1px solid rgba(34,197,94,0.3);text-transform:uppercase;letter-spacing:0.05em;">LOW RISK</span>
+                                    </div>
+                                    <div>
+                                        <strong style="color:var(--text-main);font-size:0.9rem;display:block;margin-bottom:4px;">HR Update</strong>
+                                        <span style="color:#64748b;font-size:0.78rem;line-height:1.4;display:block;">Benefits portal or company policy change requiring employee login.</span>
+                                    </div>
+                                    <div style="display:flex;gap:2px;">
+                                        <i class="fas fa-star" style="color:#f59e0b;font-size:0.65rem;"></i><i class="fas fa-star" style="color:#f59e0b;font-size:0.65rem;"></i><i class="fas fa-star" style="color:#334155;font-size:0.65rem;"></i><i class="fas fa-star" style="color:#334155;font-size:0.65rem;"></i><i class="fas fa-star" style="color:#334155;font-size:0.65rem;"></i>
+                                        <span style="font-size:0.65rem;color:#64748b;margin-left:4px;">Difficulty</span>
+                                    </div>
+                                </label>
+                            </div>
+
+                            <div class="scenario-option" style="position:relative;">
+                                <input type="radio" name="scenario" id="s4" value="invoice" style="position:absolute;opacity:0;">
+                                <label for="s4" style="display:flex;flex-direction:column;gap:10px;padding:1.2rem;border-radius:12px;border:1px solid rgba(245,158,11,0.2);background:rgba(245,158,11,0.04);cursor:pointer;transition:all 0.2s;" class="scenario-card-label">
+                                    <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+                                        <span style="font-size:1.8rem;">💰</span>
+                                        <span style="font-size:0.65rem;font-weight:800;padding:2px 8px;border-radius:100px;background:rgba(239,68,68,0.15);color:#f87171;border:1px solid rgba(239,68,68,0.3);text-transform:uppercase;letter-spacing:0.05em;">HIGH RISK</span>
+                                    </div>
+                                    <div>
+                                        <strong style="color:var(--text-main);font-size:0.9rem;display:block;margin-bottom:4px;">Urgent Invoice</strong>
+                                        <span style="color:#64748b;font-size:0.78rem;line-height:1.4;display:block;">Fake vendor invoice sent directly to finance — urgent approval requested.</span>
+                                    </div>
+                                    <div style="display:flex;gap:2px;">
+                                        <i class="fas fa-star" style="color:#f59e0b;font-size:0.65rem;"></i><i class="fas fa-star" style="color:#f59e0b;font-size:0.65rem;"></i><i class="fas fa-star" style="color:#f59e0b;font-size:0.65rem;"></i><i class="fas fa-star" style="color:#f59e0b;font-size:0.65rem;"></i><i class="fas fa-star" style="color:#f59e0b;font-size:0.65rem;"></i>
+                                        <span style="font-size:0.65rem;color:#64748b;margin-left:4px;">Difficulty</span>
+                                    </div>
+                                </label>
+                            </div>
+
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="section-divider"></div>
+                <!-- Right Column: Dispatch & Automation -->
+                <div class="nc-col-right">
+                    <!-- Delivery Mode -->
+                    <div class="nc-group">
+                        <label>Delivery Mode</label>
+                        <div class="delivery-grid
+                            {%- if local_delivery_available and safe_send_available %} three-col
+                            {%- elif local_delivery_available or safe_send_available %} two-col
+                            {%- else %} two-col
+                            {%- endif %}">
 
-            <!-- Delivery Mode -->
-            <div class="nc-group">
-                <label>Delivery Mode</label>
-                <div class="delivery-grid
-                    {%- if local_delivery_available and safe_send_available %} three-col
-                    {%- elif local_delivery_available or safe_send_available %} two-col
-                    {%- else %} two-col
-                    {%- endif %}">
-
-                    <!-- Local / Sandbox — localhost admin only -->
-                    {% if local_delivery_available %}
-                    <div class="delivery-option">
-                        <input type="radio" name="delivery_mode" id="d_local" value="local" checked>
-                        <label class="delivery-label" for="d_local">
-                            <i class="fas fa-flask" style="color:#06b6d4; font-size:1.3rem; flex-shrink:0;"></i>
-                            <div>
-                                <strong>Sandbox Test</strong>
-                                <small>Captured locally — never leaves your machine</small>
+                            <!-- Local / Sandbox — localhost admin only -->
+                            {% if local_delivery_available %}
+                            <div class="delivery-option">
+                                <input type="radio" name="delivery_mode" id="d_local" value="local" checked>
+                                <label class="delivery-label" for="d_local">
+                                    <i class="fas fa-flask" style="color:#06b6d4;"></i>
+                                    <strong>Sandbox Test</strong>
+                                    <small>Captured locally</small>
+                                </label>
                             </div>
-                        </label>
+                            {% endif %}
+
+                            <!-- Live Mode — real Gmail / SMTP -->
+                            <div class="delivery-option">
+                                <input type="radio" name="delivery_mode" id="d_smtp" value="smtp"
+                                    {% if safe_send_available and not local_delivery_available %}checked{% endif %}>
+                                <label class="delivery-label" for="d_smtp">
+                                    <i class="fas fa-paper-plane" style="color:#3b82f6;"></i>
+                                    <strong>Live Send</strong>
+                                    <small>SMTP Inboxes</small>
+                                </label>
+                            </div>
+
+                            <!-- Safe Send (Mailtrap Sandbox) -->
+                            <div class="delivery-option">
+                                <input type="radio" name="delivery_mode" id="d_safe" value="{% if current_user.role == 'admin' and safe_send_available %}mailtrap{% else %}own_mailtrap{% endif %}"
+                                    {% if not local_delivery_available %}checked{% endif %}>
+                                <label class="delivery-label" for="d_safe">
+                                    <i class="fas fa-shield-halved" style="color:#10b981;"></i>
+                                    <strong>Safe Send</strong>
+                                    <small>Mailtrap Sandbox</small>
+                                </label>
+                            </div>
+
+                            <!-- Preview Mode — generate & show in-app, no sending -->
+                            {% if preview_available %}
+                            <div class="delivery-option">
+                                <input type="radio" name="delivery_mode" id="d_preview" value="preview"
+                                    {% if not local_delivery_available and not safe_send_available %}checked{% endif %}>
+                                <label class="delivery-label" for="d_preview">
+                                    <i class="fas fa-eye" style="color:#a855f7;"></i>
+                                    <strong>Preview Only</strong>
+                                    <small>In-App Viewer</small>
+                                </label>
+                            </div>
+                            {% endif %}
+
+                        </div>
+                    </div>
+
+                    {% if not (current_user.role == 'admin' and safe_send_available) %}
+                    <!-- Own Mailtrap credentials box -->
+                    <div id="own-mailtrap-box" style="display:none; margin-top:1rem; padding:1.2rem; border:1px solid rgba(6,182,212,0.28); background:rgba(6,182,212,0.05); border-radius:14px;">
+                        <p style="color:#06b6d4; font-size:0.88rem; font-weight:700; margin-bottom:0.8rem;">
+                            <i class="fas fa-info-circle" style="margin-right:6px;"></i>
+                            Get free credentials at <a href="https://mailtrap.io" target="_blank" style="color:#06b6d4;text-decoration:underline;">mailtrap.io</a>
+                        </p>
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.8rem;">
+                            <div class="nc-group" style="margin:0;">
+                                <label style="font-size:0.75rem; color:#475569; display:block; margin-bottom:6px;">Mailtrap Username</label>
+                                <div class="nc-input-wrap">
+                                    <input class="nc-input" type="text" name="own_mailtrap_user" id="own_mailtrap_user" placeholder="e.g. af358bdaff3116" autocomplete="off">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                            </div>
+                            <div class="nc-group" style="margin:0;">
+                                <label style="font-size:0.75rem; color:#475569; display:block; margin-bottom:6px;">Mailtrap Password</label>
+                                <div class="nc-input-wrap">
+                                    <input class="nc-input" type="password" name="own_mailtrap_pass" id="own_mailtrap_pass" placeholder="••••••••••••••" autocomplete="new-password">
+                                    <i class="fas fa-lock"></i>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     {% endif %}
 
-                    <!-- Live Mode — real Gmail / SMTP -->
-                    <div class="delivery-option">
-                        <input type="radio" name="delivery_mode" id="d_smtp" value="smtp"
-                            {% if not local_delivery_available and not safe_send_available %}checked{% endif %}>
-                        <label class="delivery-label" for="d_smtp">
-                            <i class="fas fa-paper-plane" style="color:#3b82f6; font-size:1.3rem; flex-shrink:0;"></i>
-                            <div>
-                                <strong>Live Send</strong>
-                                <small>Emails land in real inboxes via SMTP</small>
+                    <!-- Deliverability warning -->
+                    <div class="deliverability-box" id="deliverability-box" style="display:none; margin-top: 1rem;">
+                        <strong>Before Live Send:</strong> Gmail and Microsoft inboxes may place simulation emails in spam unless your organization allowlists the sender.
+                        <label>
+                            <input type="checkbox" name="deliverability_confirmed" value="yes" id="deliverability_confirmed">
+                            <span style="font-size: 0.82rem; margin-left: 6px;">I have completed allowlisting, or understand emails might go to spam.</span>
+                        </label>
+                    </div>
+
+                    <!-- Safe Send info box -->
+                    <div id="safe-send-box" style="display:none; margin-top:1rem; padding:1rem; border:1px solid rgba(16,185,129,0.25); background:rgba(16,185,129,0.06); border-radius:14px; color:#94a3b8; font-size:0.85rem;">
+                        <strong style="color:#10b981;"><i class="fas fa-circle-check" style="margin-right:6px;"></i>Safe Send Active</strong><br>
+                        Emails are captured securely in a sandbox environment — they will never reach a real inbox.
+                    </div>
+
+                    <!-- Preview info box -->
+                    <div id="preview-box" style="display:none; margin-top:1rem; padding:1rem; border:1px solid rgba(168,85,247,0.25); background:rgba(168,85,247,0.06); border-radius:14px; color:#94a3b8; font-size:0.85rem;">
+                        <strong style="color:#a855f7;"><i class="fas fa-eye" style="margin-right:6px;"></i>Preview Only</strong><br>
+                        The AI will generate emails shown in-app. Nothing is sent.
+                    </div>
+
+                    <div class="section-divider"></div>
+
+                    <!-- Schedule / Automation -->
+                    <div class="nc-group" style="position: relative; background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.06); padding: 1.5rem; border-radius: 12px; margin-bottom: 1.5rem;">
+                        <label style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem; font-weight: 700;">
+                            <span><i class="fas fa-clock" style="color: #06b6d4; margin-right: 8px;"></i>Automation Schedule</span>
+                        </label>
+                        
+                        <!-- Custom animated dropdown -->
+                        <div class="nc-select-wrap" style="margin-bottom: 1rem;">
+                            <div class="custom-select-container" id="custom-schedule-select">
+                                <input type="hidden" name="schedule_frequency" id="schedule_frequency" value="once">
+                                
+                                <div class="custom-select-trigger" id="custom-select-trigger">
+                                    <span id="custom-select-text"><i class="fas fa-play" style="color:#06b6d4; margin-right:8px;"></i> Run Once (One-Time Simulation)</span>
+                                    <i class="fas fa-chevron-down" style="color:#64748b; font-size:0.8rem; transition:transform 0.3s;"></i>
+                                </div>
+                                
+                                <div class="custom-options-container" id="custom-options-container">
+                                    <div class="custom-option active" data-value="once">
+                                        <i class="fas fa-play" style="color:#06b6d4; width:16px;"></i> Run Once (One-Time Simulation)
+                                    </div>
+                                    <div class="custom-option" data-value="daily" style="justify-content:space-between; display:flex; align-items:center; width:100%;">
+                                        <div style="display:flex; align-items:center; gap:8px;">
+                                            <i class="fas fa-calendar-day" style="color:#3b82f6; width:16px;"></i> Daily Automated Drip
+                                        </div>
+                                        {% if current_user.role not in ('admin', 'pro') %}
+                                        <span style="font-size:0.65rem;font-weight:800;padding:2px 8px;border-radius:100px;background:rgba(234,179,8,0.15);color:#facc15;border:1px solid rgba(234,179,8,0.3);text-transform:uppercase;letter-spacing:0.05em;display:flex;align-items:center;gap:4px;"><i class="fas fa-lock"></i> PRO</span>
+                                        {% endif %}
+                                    </div>
+                                    <div class="custom-option" data-value="weekly" style="justify-content:space-between; display:flex; align-items:center; width:100%;">
+                                        <div style="display:flex; align-items:center; gap:8px;">
+                                            <i class="fas fa-calendar-week" style="color:#a855f7; width:16px;"></i> Weekly Random Interval
+                                        </div>
+                                        {% if current_user.role not in ('admin', 'pro') %}
+                                        <span style="font-size:0.65rem;font-weight:800;padding:2px 8px;border-radius:100px;background:rgba(234,179,8,0.15);color:#facc15;border:1px solid rgba(234,179,8,0.3);text-transform:uppercase;letter-spacing:0.05em;display:flex;align-items:center;gap:4px;"><i class="fas fa-lock"></i> PRO</span>
+                                        {% endif %}
+                                    </div>
+                                    <div class="custom-option" data-value="monthly" style="justify-content:space-between; display:flex; align-items:center; width:100%;">
+                                        <div style="display:flex; align-items:center; gap:8px;">
+                                            <i class="fas fa-calendar-alt" style="color:#ec4899; width:16px;"></i> Monthly Compliance Cycle
+                                        </div>
+                                        {% if current_user.role not in ('admin', 'pro') %}
+                                        <span style="font-size:0.65rem;font-weight:800;padding:2px 8px;border-radius:100px;background:rgba(234,179,8,0.15);color:#facc15;border:1px solid rgba(234,179,8,0.3);text-transform:uppercase;letter-spacing:0.05em;display:flex;align-items:center;gap:4px;"><i class="fas fa-lock"></i> PRO</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="schedule-preview-box" id="schedule-preview-box" style="background: rgba(6, 182, 212, 0.06); border: 1px solid rgba(6, 182, 212, 0.15); padding: 1rem; border-radius: 8px; margin-bottom: 1.2rem; font-size: 0.82rem; color: #a5f3fc; line-height: 1.5;">
+                            <i class="fas fa-info-circle"></i> One-Time Simulation: Runs once immediately after you upload employee targets.
+                        </div>
+                        
+                        <!-- Hidden inputs for scheduled_at to submit to the backend and schedule values -->
+                        <input type="hidden" name="scheduled_at" id="scheduled_at">
+                        <input type="hidden" id="schedule_time_daily" value="09:00">
+                        <input type="hidden" id="schedule_day_weekly" value="1">
+                        <input type="hidden" id="schedule_time_weekly" value="09:00">
+                        <input type="hidden" id="schedule_day_monthly" value="1">
+                        <input type="hidden" id="schedule_time_monthly" value="09:00">
+        
+                        <!-- Frequency dependent scheduler inputs -->
+                        <div id="dynamic_scheduler_inputs" style="margin-top: 0.8rem; display: none;">
+                            <!-- Daily Time Picker -->
+                            <div id="schedule_inputs_daily" class="schedule-sub-panel" style="display: none; margin-bottom: 1.2rem;">
+                                <label style="color: var(--text-muted); font-size: 0.8rem; margin-bottom: 0.4rem; display: block;">Daily Run Time</label>
+                                <div class="custom-time-picker" id="time-picker-daily">
+                                    <div class="time-trigger">
+                                        <span class="time-display">09:00</span>
+                                        <i class="fas fa-clock"></i>
+                                    </div>
+                                    <div class="time-popover">
+                                        <div class="time-col hours-list"></div>
+                                        <div class="time-col minutes-list"></div>
+                                    </div>
+                                </div>
+                            </div>
+        
+                            <!-- Weekly Day & Time Pickers -->
+                            <div id="schedule_inputs_weekly" class="schedule-sub-panel" style="display: none; margin-bottom: 1.2rem;">
+                                <label style="color: var(--text-muted); font-size: 0.8rem; margin-bottom: 0.4rem; display: block;">Weekly Run Day</label>
+                                <div class="weekday-selector-row">
+                                    <button type="button" class="weekday-btn active" data-value="1">M</button>
+                                    <button type="button" class="weekday-btn" data-value="2">T</button>
+                                    <button type="button" class="weekday-btn" data-value="3">W</button>
+                                    <button type="button" class="weekday-btn" data-value="4">T</button>
+                                    <button type="button" class="weekday-btn" data-value="5">F</button>
+                                    <button type="button" class="weekday-btn" data-value="6">S</button>
+                                    <button type="button" class="weekday-btn" data-value="0">S</button>
+                                </div>
+                                <label style="color: var(--text-muted); font-size: 0.8rem; margin-top: 1rem; margin-bottom: 0.4rem; display: block;">Weekly Run Time</label>
+                                <div class="custom-time-picker" id="time-picker-weekly">
+                                    <div class="time-trigger">
+                                        <span class="time-display">09:00</span>
+                                        <i class="fas fa-clock"></i>
+                                    </div>
+                                    <div class="time-popover">
+                                        <div class="time-col hours-list"></div>
+                                        <div class="time-col minutes-list"></div>
+                                    </div>
+                                </div>
+                            </div>
+        
+                            <!-- Monthly Date & Time Pickers -->
+                            <div id="schedule_inputs_monthly" class="schedule-sub-panel" style="display: none; margin-bottom: 1.2rem;">
+                                <label style="color: var(--text-muted); font-size: 0.8rem; margin-bottom: 0.4rem; display: block;">Day of the Month</label>
+                                <div class="dom-grid">
+                                    {% for d in range(1, 29) %}
+                                    <button type="button" class="dom-btn{% if d == 1 %} active{% endif %}" data-value="{{ d }}">{{ d }}</button>
+                                    {% endfor %}
+                                </div>
+                                <label style="color: var(--text-muted); font-size: 0.8rem; margin-top: 1rem; margin-bottom: 0.4rem; display: block;">Monthly Run Time</label>
+                                <div class="custom-time-picker" id="time-picker-monthly">
+                                    <div class="time-trigger">
+                                        <span class="time-display">09:00</span>
+                                        <i class="fas fa-clock"></i>
+                                    </div>
+                                    <div class="time-popover">
+                                        <div class="time-col hours-list"></div>
+                                        <div class="time-col minutes-list"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Consent -->
+                    <div class="consent-box" style="margin-top: 0;">
+                        <label>
+                            <input type="checkbox" id="consent_confirmed" name="consent_confirmed" value="yes" required>
+                            <div class="consent-text">
+                                <strong>Authorization Required</strong>
+                                <span>I confirm that I have explicit written permission to perform a phishing simulation against this domain.</span>
                             </div>
                         </label>
                     </div>
 
-                    <!-- Safe Send — Mailtrap sandbox (works on Render, no domain needed) -->
-                    {% if safe_send_available %}
-                    <div class="delivery-option">
-                        <input type="radio" name="delivery_mode" id="d_safe" value="mailtrap"
-                            {% if not local_delivery_available %}checked{% endif %}>
-                        <label class="delivery-label" for="d_safe">
-                            <i class="fas fa-shield-halved" style="color:#10b981; font-size:1.3rem; flex-shrink:0;"></i>
-                            <div>
-                                <strong>Safe Send</strong>
-                                <small>Verified capture — no real inbox required</small>
-                            </div>
-                        </label>
-                    </div>
-                    {% endif %}
-
-                    <!-- Preview Mode — generate & show in-app, no sending -->
-                    {% if preview_available %}
-                    <div class="delivery-option">
-                        <input type="radio" name="delivery_mode" id="d_preview" value="preview">
-                        <label class="delivery-label" for="d_preview">
-                            <i class="fas fa-eye" style="color:#a855f7; font-size:1.3rem; flex-shrink:0;"></i>
-                            <div>
-                                <strong>Preview Only</strong>
-                                <small>AI generates emails shown in-app — nothing is sent</small>
-                            </div>
-                        </label>
-                    </div>
-                    {% endif %}
-
+                    <button type="submit" class="nc-submit" {% if campaign_limit_reached %}disabled style="opacity: 0.5; cursor: not-allowed; background: linear-gradient(135deg, #475569, #334155); box-shadow: none;"{% endif %}>
+                        <i class="fas fa-rocket" style="margin-right:8px;"></i> Create Campaign
+                    </button>
                 </div>
+
             </div>
-
-            <!-- Deliverability warning — only relevant for Live Send -->
-            <div class="deliverability-box" id="deliverability-box" style="display:none;">
-                <strong>Before Live Send:</strong> Gmail and Microsoft inboxes may place simulation emails in spam unless your organization allowlists the sender.
-                <ul>
-                    <li>Ask IT to allowlist your Gmail sender address or SMTP sender.</li>
-                    <li>For Google Workspace or Microsoft 365, add a mail-flow/spam-filter exception for the sender.</li>
-                    <li>If you later use a custom domain sender, configure SPF, DKIM, and DMARC for that domain.</li>
-                </ul>
-                <label>
-                    <input type="checkbox" name="deliverability_confirmed" value="yes" id="deliverability_confirmed">
-                    <span>I have completed the allowlisting step, or I understand these emails may land in spam.</span>
-                </label>
-            </div>
-
-            <!-- Safe Send info box -->
-            <div id="safe-send-box" style="display:none; margin-top:1rem; padding:1rem; border:1px solid rgba(16,185,129,0.25); background:rgba(16,185,129,0.06); border-radius:14px; color:#94a3b8; font-size:0.9rem;">
-                <strong style="color:#10b981;"><i class="fas fa-circle-check" style="margin-right:6px;"></i>Safe Send Active</strong><br>
-                Emails are securely captured in a monitored test environment — they will never reach a real inbox. Perfect for demos and internal testing.
-            </div>
-
-            <!-- Preview info box -->
-            <div id="preview-box" style="display:none; margin-top:1rem; padding:1rem; border:1px solid rgba(168,85,247,0.25); background:rgba(168,85,247,0.06); border-radius:14px; color:#94a3b8; font-size:0.9rem;">
-                <strong style="color:#a855f7;"><i class="fas fa-eye" style="margin-right:6px;"></i>Preview Only</strong><br>
-                The AI will generate personalised phishing emails for each target and display them in the campaign inbox viewer. Nothing is sent — ideal for reviewing content before a real launch.
-            </div>
-            <div class="section-divider"></div>
-
-            {% if current_user.role != 'admin' %}
-            <!-- Schedule / Automation -->
-            <div class="nc-group">
-                <label style="display: flex; justify-content: space-between; align-items: center;">
-                    <span>Automation Schedule</span>
-                    <span style="background: rgba(234, 179, 8, 0.2); color: #facc15; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; letter-spacing: 0;">PRO UPGRADE</span>
-                </label>
-                <div class="nc-select-wrap">
-                    <select class="nc-input" name="schedule" disabled style="opacity: 0.6; cursor: not-allowed; padding-left: 16px !important;">
-                        <option value="once">One-Time Send (Current Tier)</option>
-                        <option value="daily">Daily Automated Drip (Pro)</option>
-                        <option value="weekly">Weekly Random Interval (Pro)</option>
-                        <option value="monthly">Monthly Training Cycle (Pro)</option>
-                    </select>
-                </div>
-            </div>
-
-            <div class="section-divider"></div>
-            {% endif %}
-
-            <!-- Consent -->
-            <div class="consent-box">
-                <label>
-                    <input type="checkbox" name="consent_confirmed" value="yes" required>
-                    <div class="consent-text">
-                        <strong>Authorization Required</strong>
-                        <span>I confirm that I have explicit written permission to perform a phishing simulation against
-                            this domain and its employees.</span>
-                    </div>
-                </label>
-            </div>
-
-            <button type="submit" class="nc-submit">
-                <i class="fas fa-rocket" style="margin-right:8px;"></i> Create Campaign
-            </button>
         </form>
     </div>
 </div>
+
+<!-- PRO Upgrade Modal Overlay -->
+<div class="pro-modal-overlay" id="pro-modal">
+    <div class="pro-modal-box">
+        <div class="pro-modal-icon"><i class="fas fa-lock"></i></div>
+        <div class="pro-modal-title">PhishSim.ai PRO Feature</div>
+        <div class="pro-modal-desc">Upgrade your account to PRO to unlock automated daily, weekly, and monthly recurring simulation campaigns.</div>
+        <div class="pro-modal-features">
+            <div class="pro-modal-feature-item"><i class="fas fa-check-circle"></i> Continuous Automated Training Cycles</div>
+            <div class="pro-modal-feature-item"><i class="fas fa-check-circle"></i> Randomised Day/Hour Dispatch Delivery</div>
+            <div class="pro-modal-feature-item"><i class="fas fa-check-circle"></i> Live SMTP External Sending Modes</div>
+            <div class="pro-modal-feature-item"><i class="fas fa-check-circle"></i> Advanced PDF & CSV Compliance Reports</div>
+        </div>
+        <a href="/billing" class="pro-modal-btn-upgrade" id="pro-btn-upgrade">Compare Plans & Upgrade</a>
+        <button class="pro-modal-btn-close" id="pro-btn-close">Maybe Later</button>
+    </div>
+</div>
+
 <script>
     (function() {
-        const checkbox = document.getElementById("deliverability_confirmed");
-        const delivBox = document.getElementById("deliverability-box");
-        const safeSendBox = document.getElementById("safe-send-box");
-        const previewBox = document.getElementById("preview-box");
-        const radios = document.querySelectorAll("input[name='delivery_mode']");
+        const checkbox       = document.getElementById("deliverability_confirmed");
+        const delivBox       = document.getElementById("deliverability-box");
+        const ownMailtrapBox = document.getElementById("own-mailtrap-box");
+        const ownUser        = document.getElementById("own_mailtrap_user");
+        const ownPass        = document.getElementById("own_mailtrap_pass");
+        const radios         = document.querySelectorAll("input[name='delivery_mode']");
+        const form           = document.getElementById("campaign-form");
+        const consent        = document.getElementById("consent_confirmed");
 
         function syncDeliveryUI() {
             const selected = document.querySelector("input[name='delivery_mode']:checked");
-            const mode = selected ? selected.value : "smtp";
+            const mode = selected ? selected.value : "preview";
 
-            const isLive = mode === "smtp";
-            const isSafe = mode === "mailtrap";
-            const isPreview = mode === "preview";
+            const isLive       = mode === "smtp";
+            const isOwnMT      = mode === "own_mailtrap";
 
-            if (delivBox) { delivBox.style.display = isLive ? "block" : "none"; }
-            if (safeSendBox) { safeSendBox.style.display = isSafe ? "block" : "none"; }
-            if (previewBox) { previewBox.style.display = isPreview ? "block" : "none"; }
-            if (checkbox) { checkbox.required = isLive; }
+            if (delivBox)       delivBox.style.display        = isLive  ? "block" : "none";
+            if (ownMailtrapBox) ownMailtrapBox.style.display  = isOwnMT ? "block" : "none";
+            
+            const safeBox = document.getElementById("safe-send-box");
+            if (safeBox) safeBox.style.display = (mode === "own_mailtrap" || mode === "mailtrap") ? "block" : "none";
+            
+            const previewBox = document.getElementById("preview-box");
+            if (previewBox) previewBox.style.display = mode === "preview" ? "block" : "none";
+            
+            if (checkbox) checkbox.required = isLive;
+            if (ownUser)  ownUser.required  = isOwnMT;
+            if (ownPass)  ownPass.required  = isOwnMT;
         }
 
         radios.forEach((r) => r.addEventListener("change", syncDeliveryUI));
         syncDeliveryUI(); // run on page load
+        
+        // Custom Dropdown JS
+        const customSelect = document.getElementById("custom-schedule-select");
+        const customTrigger = document.getElementById("custom-select-trigger");
+        const customOptions = document.getElementById("custom-options-container");
+        const scheduleFreqInput = document.getElementById("schedule_frequency");
+        const schedulePreview = document.getElementById("schedule-preview-box");
+        const scheduledAtInput = document.getElementById("scheduled_at");
+        const isUserAdmin = {% if current_user.role in ('admin', 'pro') %}true{% else %}false{% endif %};
+        
+        const previews = {
+            once: "One-Time Simulation: Runs once immediately after you upload employee targets.",
+            daily: "Continuous Daily Training: The AI simulation engine will trigger automatically every day starting at your chosen time, spacing attacks dynamically to keep employees alert.",
+            weekly: "Weekly Simulation Interval: Triggered automatically once a week on a randomised day/time. This prevents targets from anticipating the simulation.",
+            monthly: "Monthly Compliance Program: Runs automatically once a month to continuously monitor your organization's security score and compliance progress."
+        };
+        
+        if (customTrigger && customOptions) {
+            customTrigger.addEventListener("click", function(e) {
+                e.stopPropagation();
+                customSelect.classList.toggle("open");
+            });
+            
+            document.addEventListener("click", function() {
+                customSelect.classList.remove("open");
+            });
+            
+            const options = customOptions.querySelectorAll(".custom-option");
+            options.forEach(option => {
+                option.addEventListener("click", function(e) {
+                    e.stopPropagation();
+                    const val = this.getAttribute("data-value");
+                    
+                    if (val !== "once" && !isUserAdmin) {
+                        const proModal = document.getElementById("pro-modal");
+                        if (proModal) proModal.classList.add("active");
+                        customSelect.classList.remove("open");
+                        return;
+                    }
+                    
+                    // Update active option styling
+                    options.forEach(opt => opt.classList.remove("active"));
+                    this.classList.add("active");
+                    
+                    // Update hidden input
+                    scheduleFreqInput.value = val;
+                    
+                    // Update trigger text
+                    const triggerText = document.getElementById("custom-select-text");
+                    triggerText.innerHTML = this.innerHTML.split('<span')[0].trim(); // omit badge if any
+                    
+                    // Update preview message
+                    if (schedulePreview) {
+                        schedulePreview.innerHTML = `<i class="fas fa-info-circle"></i> <strong>${val.charAt(0).toUpperCase() + val.slice(1)}:</strong> ${previews[val]}`;
+                    }
+                    
+                    // Update required/optional fields for scheduler
+                    const dynamicSchedulerInputs = document.getElementById("dynamic_scheduler_inputs");
+                    document.querySelectorAll(".schedule-sub-panel").forEach(p => p.style.display = "none");
+                    
+                    if (val === "once") {
+                        if (dynamicSchedulerInputs) dynamicSchedulerInputs.style.display = "none";
+                    } else {
+                        if (dynamicSchedulerInputs) dynamicSchedulerInputs.style.display = "block";
+                        const subPanel = document.getElementById(`schedule_inputs_${val}`);
+                        if (subPanel) subPanel.style.display = "block";
+                    }
+                    
+                    customSelect.classList.remove("open");
+                    updateStepTracker();
+                });
+            });
+        }
+
+        // Close PRO Modal listeners
+        const proModal = document.getElementById("pro-modal");
+        const proBtnClose = document.getElementById("pro-btn-close");
+        const proBtnUpgrade = document.getElementById("pro-btn-upgrade");
+        if (proModal && proBtnClose && proBtnUpgrade) {
+            proBtnClose.addEventListener("click", (e) => {
+                e.preventDefault();
+                proModal.classList.remove("active");
+            });
+            proBtnUpgrade.addEventListener("click", () => {
+                proModal.classList.remove("active");
+            });
+        }
+
+        // Reusable time picker initializer
+        function initCustomTimePicker(pickerId, hiddenInputId) {
+            const picker = document.getElementById(pickerId);
+            if (!picker) return;
+            const trigger = picker.querySelector(".time-trigger");
+            const display = picker.querySelector(".time-display");
+            const popover = picker.querySelector(".time-popover");
+            const hoursList = picker.querySelector(".hours-list");
+            const minutesList = picker.querySelector(".minutes-list");
+            const hiddenInput = document.getElementById(hiddenInputId);
+            
+            trigger.addEventListener("click", function(e) {
+                e.stopPropagation();
+                document.querySelectorAll(".custom-time-picker").forEach(p => {
+                    if (p !== picker) p.classList.remove("open");
+                });
+                picker.classList.toggle("open");
+            });
+            
+            // Hours
+            for (let h = 0; h < 24; h++) {
+                const hStr = String(h).padStart(2, "0");
+                const item = document.createElement("div");
+                item.className = "time-item";
+                if (hStr === "09") item.className += " selected";
+                item.textContent = hStr;
+                item.addEventListener("click", function(e) {
+                    e.stopPropagation();
+                    hoursList.querySelectorAll(".time-item").forEach(i => i.classList.remove("selected"));
+                    item.classList.add("selected");
+                    updateTime();
+                });
+                hoursList.appendChild(item);
+            }
+            
+            // Minutes
+            for (let m = 0; m < 60; m += 5) {
+                const mStr = String(m).padStart(2, "0");
+                const item = document.createElement("div");
+                item.className = "time-item";
+                if (mStr === "00") item.className += " selected";
+                item.textContent = mStr;
+                item.addEventListener("click", function(e) {
+                    e.stopPropagation();
+                    minutesList.querySelectorAll(".time-item").forEach(i => i.classList.remove("selected"));
+                    item.classList.add("selected");
+                    updateTime();
+                });
+                minutesList.appendChild(item);
+            }
+            
+            function updateTime() {
+                const selectedHour = hoursList.querySelector(".time-item.selected").textContent;
+                const selectedMinute = minutesList.querySelector(".time-item.selected").textContent;
+                const timeVal = `${selectedHour}:${selectedMinute}`;
+                display.textContent = timeVal;
+                hiddenInput.value = timeVal;
+            }
+        }
+
+        // Initialize pickers
+        initCustomTimePicker("time-picker-daily", "schedule_time_daily");
+        initCustomTimePicker("time-picker-weekly", "schedule_time_weekly");
+        initCustomTimePicker("time-picker-monthly", "schedule_time_monthly");
+
+        // Close pickers on click outside
+        document.addEventListener("click", function() {
+            document.querySelectorAll(".custom-time-picker").forEach(p => p.classList.remove("open"));
+        });
+
+        // Weekday selection
+        document.querySelectorAll(".weekday-btn").forEach(btn => {
+            btn.addEventListener("click", function(e) {
+                e.preventDefault();
+                document.querySelectorAll(".weekday-btn").forEach(b => b.classList.remove("active"));
+                btn.classList.add("active");
+                document.getElementById("schedule_day_weekly").value = btn.getAttribute("data-value");
+            });
+        });
+
+        // Day of Month Selection
+        document.querySelectorAll(".dom-btn").forEach(btn => {
+            btn.addEventListener("click", function(e) {
+                e.preventDefault();
+                document.querySelectorAll(".dom-btn").forEach(b => b.classList.remove("active"));
+                btn.classList.add("active");
+                document.getElementById("schedule_day_monthly").value = btn.getAttribute("data-value");
+            });
+        });
+
+        // Step tracker progress
+        function updateStepTracker() {
+            const name = document.getElementById('campaign_name');
+            const domain = document.getElementById('company_domain');
+            const scenario = document.querySelector('input[name="scenario"]:checked');
+            const consent = document.getElementById('consent_confirmed');
+            
+            const step1Done = name && name.value.trim().length > 2 && domain && domain.value.trim().length > 2 && scenario;
+            const step2Ready = step1Done && consent && consent.checked;
+            
+            const s1 = document.getElementById('step-1-circle');
+            const s2 = document.getElementById('step-2-circle');
+            const s2l = document.getElementById('step-2-label');
+            const c1 = document.getElementById('step-connector-1');
+            const c2 = document.getElementById('step-connector-2');
+            
+            if (step1Done) {
+                s1.innerHTML = '<i class="fas fa-check"></i>';
+                s1.style.background = 'linear-gradient(135deg,#22c55e,#16a34a)';
+                s1.style.boxShadow = '0 0 14px rgba(34,197,94,0.4)';
+                c1.style.background = 'linear-gradient(90deg,#22c55e,#06b6d4)';
+                s2.style.background = 'linear-gradient(135deg,#06b6d4,#3b82f6)';
+                s2.style.border = 'none';
+                s2.style.color = '#fff';
+                s2.style.boxShadow = '0 0 14px rgba(6,182,212,0.4)';
+                s2l.style.color = '#06b6d4';
+                s2l.style.fontWeight = '700';
+            } else {
+                s1.innerHTML = '1';
+                s1.style.background = 'linear-gradient(135deg,#06b6d4,#3b82f6)';
+                s1.style.boxShadow = '0 0 14px rgba(6,182,212,0.4)';
+                c1.style.background = 'rgba(255,255,255,0.05)';
+                s2.style.background = 'rgba(59,130,246,0.15)';
+                s2.style.border = '2px solid rgba(59,130,246,0.3)';
+                s2.style.color = '#60a5fa';
+                s2.style.boxShadow = 'none';
+                s2l.style.color = '#475569';
+                s2l.style.fontWeight = '600';
+            }
+            
+            if (step2Ready) {
+                c2.style.background = 'linear-gradient(90deg,#06b6d4,#22c55e)';
+            } else {
+                c2.style.background = 'rgba(255,255,255,0.05)';
+            }
+        }
+
+        // Watch inputs
+        ['campaign_name', 'company_domain'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.addEventListener('input', updateStepTracker);
+        });
+        document.querySelectorAll('input[name="scenario"]').forEach(r => r.addEventListener('change', updateStepTracker));
+        if (consent) consent.addEventListener('change', updateStepTracker);
+
+        // Pre-populate fields from query parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlName = urlParams.get('name');
+        const urlDomain = urlParams.get('domain');
+        const urlScenario = urlParams.get('scenario');
+
+        if (urlName) {
+            const nameField = document.getElementById('campaign_name');
+            if (nameField) {
+                nameField.value = urlName;
+                nameField.dispatchEvent(new Event('input'));
+            }
+        }
+        if (urlDomain) {
+            const domainField = document.getElementById('company_domain');
+            if (domainField) {
+                domainField.value = urlDomain;
+                domainField.dispatchEvent(new Event('input'));
+            }
+        }
+        if (urlScenario) {
+            const scenarioRadio = document.querySelector(`input[name="scenario"][value="${urlScenario}"]`);
+            if (scenarioRadio) {
+                scenarioRadio.checked = true;
+                scenarioRadio.dispatchEvent(new Event('change'));
+            }
+        }
+
+        updateStepTracker();
+
+        // Custom validation and calculation of scheduled_at
+        form.addEventListener("submit", function(e) {
+            e.preventDefault();
+
+            const freq = scheduleFreqInput.value;
+            if (freq !== "once") {
+                const now = new Date();
+                let targetDate = new Date();
+                let timeVal = "";
+                
+                if (freq === "daily") {
+                    timeVal = document.getElementById("schedule_time_daily").value;
+                    if (!timeVal) {
+                        showCustomAlert("Please specify a daily run time.");
+                        return;
+                    }
+                    const [hrs, mins] = timeVal.split(":").map(Number);
+                    targetDate.setHours(hrs, mins, 0, 0);
+                    if (targetDate <= now) {
+                        targetDate.setDate(targetDate.getDate() + 1);
+                    }
+                } else if (freq === "weekly") {
+                    const dayOfWeek = Number(document.getElementById("schedule_day_weekly").value);
+                    timeVal = document.getElementById("schedule_time_weekly").value;
+                    if (!timeVal) {
+                        showCustomAlert("Please specify a run time.");
+                        return;
+                    }
+                    const [hrs, mins] = timeVal.split(":").map(Number);
+                    targetDate.setHours(hrs, mins, 0, 0);
+                    const currentDay = targetDate.getDay();
+                    let distance = dayOfWeek - currentDay;
+                    if (distance < 0 || (distance === 0 && targetDate <= now)) {
+                        distance += 7;
+                    }
+                    targetDate.setDate(targetDate.getDate() + distance);
+                } else if (freq === "monthly") {
+                    const dayOfMonth = Number(document.getElementById("schedule_day_monthly").value);
+                    timeVal = document.getElementById("schedule_time_monthly").value;
+                    if (!timeVal) {
+                        showCustomAlert("Please specify a run time.");
+                        return;
+                    }
+                    const [hrs, mins] = timeVal.split(":").map(Number);
+                    targetDate.setHours(hrs, mins, 0, 0);
+                    
+                    targetDate.setDate(dayOfMonth);
+                    if (targetDate <= now) {
+                        targetDate.setMonth(targetDate.getMonth() + 1);
+                    }
+                }
+                
+                const yr = targetDate.getFullYear();
+                const mo = String(targetDate.getMonth() + 1).padStart(2, "0");
+                const dy = String(targetDate.getDate()).padStart(2, "0");
+                const hr = String(targetDate.getHours()).padStart(2, "0");
+                const mn = String(targetDate.getMinutes()).padStart(2, "0");
+                
+                scheduledAtInput.value = `${yr}-${mo}-${dy}T${hr}:${mn}`;
+            } else {
+                scheduledAtInput.value = "";
+            }
+
+            if (!form.checkValidity()) {
+                const firstInvalid = form.querySelector(":invalid");
+                let msg = "Please fill out all required fields.";
+                
+                if (firstInvalid) {
+                    if (firstInvalid === checkbox) {
+                        msg = "You must confirm you have allowlisted the sender before using Live Send.";
+                    } else if (firstInvalid.name === "consent_confirmed") {
+                        msg = "You must confirm you have authorization to run this simulation.";
+                    } else if (firstInvalid === ownUser || firstInvalid === ownPass) {
+                        msg = "Please enter your Mailtrap credentials.";
+                    } else if (firstInvalid.id === "campaign_name") {
+                        msg = "Please enter a campaign name.";
+                    }
+                }
+                
+                showCustomAlert(msg);
+                return;
+            }
+
+            const loader = document.getElementById('page-loader');
+            if (loader) loader.style.display = 'flex';
+            form.submit();
+        });
+
+        // Themed Custom Alert
+        function showCustomAlert(message) {
+            let alertBox = document.getElementById('custom-form-alert');
+            if (!alertBox) {
+                alertBox = document.createElement('div');
+                alertBox.id = 'custom-form-alert';
+                Object.assign(alertBox.style, {
+                    position: 'fixed', top: '20px', left: '50%', transform: 'translateX(-50%) translateY(-20px)',
+                    background: 'rgba(239, 68, 68, 0.95)', border: '1px solid #f87171',
+                    color: '#fff', padding: '12px 24px', borderRadius: '12px',
+                    boxShadow: '0 10px 25px rgba(239, 68, 68, 0.4)', zIndex: '9999',
+                    fontFamily: "var(--font-sans)", fontSize: '0.95rem', fontWeight: '500',
+                    opacity: '0', transition: 'all 0.3s ease', display: 'flex', alignItems: 'center', gap: '10px'
+                });
+                document.body.appendChild(alertBox);
+            }
+            alertBox.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${message}`;
+            
+            setTimeout(() => {
+                alertBox.style.transform = 'translateX(-50%) translateY(0)';
+                alertBox.style.opacity = '1';
+            }, 10);
+            
+            setTimeout(() => {
+                alertBox.style.transform = 'translateX(-50%) translateY(-20px)';
+                alertBox.style.opacity = '0';
+            }, 4000);
+        }
     })();
 </script>
 {% endblock %}

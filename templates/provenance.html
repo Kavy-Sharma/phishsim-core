@@ -1,0 +1,549 @@
+{% extends "base.html" %}
+{% block title %}Provenance AI — Software Supply Chain Security{% endblock %}
+{% block content %}
+<style>
+    .cyber-container {
+        max-width: 1200px;
+        margin: 2.5rem auto;
+        padding: 0 1.5rem;
+    }
+    
+    .scan-grid {
+        display: grid;
+        grid-template-columns: 1fr 1.2fr;
+        gap: 2rem;
+        margin-top: 1.5rem;
+    }
+    
+    @media (max-width: 968px) {
+        .scan-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .telemetry-row {
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid var(--border-color);
+        padding: 14px 18px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 0.8rem;
+        transition: all 0.2s ease;
+    }
+
+    .telemetry-row:hover {
+        background: rgba(6, 182, 212, 0.04);
+        border-color: rgba(6, 182, 212, 0.25);
+        transform: translateX(4px);
+    }
+
+    /* Gauge */
+    .gauge-wrapper {
+        position: relative;
+        width: 140px;
+        height: 140px;
+        margin: 0 auto 1rem;
+    }
+    
+    .gauge-svg {
+        transform: rotate(-90deg);
+        width: 100%;
+        height: 100%;
+    }
+    
+    .gauge-bg {
+        fill: none;
+        stroke: rgba(255, 255, 255, 0.05);
+        stroke-width: 8;
+    }
+    
+    .gauge-fill {
+        fill: none;
+        stroke-width: 8;
+        stroke-linecap: round;
+        transition: stroke-dashoffset 1s ease-out;
+        stroke-dasharray: 339.292;
+        stroke-dashoffset: 339.292;
+    }
+
+    body.light-theme .gauge-bg {
+        stroke: #e2e8f0;
+    }
+    
+    .gauge-text {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        font-family: var(--font-sans);
+    }
+    
+    .gauge-score {
+        font-size: 2.4rem;
+        font-weight: 800;
+        color: #fff;
+        line-height: 1;
+    }
+    
+    .gauge-label {
+        font-size: 0.65rem;
+        font-family: var(--font-mono);
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-top: 4px;
+    }
+
+    .indicator-pill {
+        display: inline-flex;
+        align-items: center;
+        padding: 3px 8px;
+        border-radius: 100px;
+        font-size: 0.65rem;
+        font-family: var(--font-mono);
+        font-weight: 700;
+        text-transform: uppercase;
+    }
+    
+    .indicator-pill.critical { background: rgba(239,68,68,0.12); color:#ef4444; border: 1px solid rgba(239,68,68,0.2); }
+    .indicator-pill.high { background: rgba(245,158,11,0.12); color:#f59e0b; border: 1px solid rgba(245,158,11,0.2); }
+    .indicator-pill.medium { background: rgba(59,130,246,0.12); color:#3b82f6; border: 1px solid rgba(59,130,246,0.2); }
+    .indicator-pill.low { background: rgba(16,185,129,0.12); color:#10b981; border: 1px solid rgba(16,185,129,0.2); }
+
+    /* Scan animation beam */
+    .scan-overlay {
+        position: absolute;
+        inset: 0;
+        background: rgba(2, 6, 23, 0.98) !important;
+        background-image: 
+            linear-gradient(rgba(6, 182, 212, 0.04) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(6, 182, 212, 0.04) 1px, transparent 1px) !important;
+        background-size: 20px 20px !important;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 10;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s ease;
+    }
+
+    .scan-beam {
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 4px;
+        background: linear-gradient(180deg, rgba(6, 182, 212, 0) 0%, rgba(6, 182, 212, 0.8) 50%, rgba(6, 182, 212, 0) 100%);
+        box-shadow: 0 0 15px rgba(6, 182, 212, 0.5);
+        animation: beamMove 2.5s infinite linear;
+    }
+
+    @keyframes beamMove {
+        0% { top: 0%; }
+        100% { top: 100%; }
+    }
+    
+    body.light-theme .scan-overlay {
+        background: rgba(241, 245, 249, 0.98) !important;
+        background-image: 
+            linear-gradient(rgba(37, 99, 235, 0.04) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(37, 99, 235, 0.04) 1px, transparent 1px) !important;
+    }
+
+    body.light-theme .scan-beam {
+        background: linear-gradient(180deg, rgba(37, 99, 235, 0) 0%, rgba(37, 99, 235, 0.8) 50%, rgba(37, 99, 235, 0) 100%);
+        box-shadow: 0 0 15px rgba(37, 99, 235, 0.5);
+    }
+
+    .log-line {
+        font-family: var(--font-mono);
+        font-size: 0.76rem;
+        margin-bottom: 6px;
+        line-height: 1.4;
+        white-space: pre-wrap;
+    }
+
+    .code-editor-wrapper {
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        position: relative;
+        background: rgba(0, 0, 0, 0.25);
+    }
+
+    .code-textarea {
+        min-height: 400px;
+        padding: 16px;
+        font-family: var(--font-mono), monospace;
+        font-size: 0.85rem;
+        line-height: 1.5;
+        resize: none;
+        border: none;
+        width: 100%;
+        margin: 0;
+        background: transparent;
+        color: #e2e8f0;
+        outline: none;
+    }
+
+    .vuln-card {
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid var(--border-color);
+        border-left: 4px solid #ef4444;
+        border-radius: 8px;
+        padding: 16px;
+        margin-bottom: 12px;
+        text-align: left;
+        transition: transform 0.2s ease;
+    }
+    .vuln-card:hover {
+        transform: translateX(4px);
+    }
+
+    body.light-theme .telemetry-row,
+    body.light-theme .vuln-card {
+        background: #ffffff;
+        border-color: #e2e8f0;
+    }
+    body.light-theme .telemetry-row:hover {
+        background: rgba(37, 99, 235, 0.03);
+    }
+</style>
+
+<div class="cyber-container">
+    <!-- Header Area -->
+    <div style="padding: 1.5rem 0 1rem 0; display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 1rem;">
+        <div>
+            <span style="display:inline-block; background:rgba(6, 182, 212, 0.08); border:1px solid rgba(6, 182, 212, 0.2); border-radius:100px; padding:4px 12px; font-size:0.75rem; font-weight:600; color:var(--cyan); letter-spacing:0.05em; text-transform:uppercase; margin-bottom:8px;">Software Supply Chain Security</span>
+            <h1 class="page-title" style="font-family: var(--font-sans); font-size: 2.4rem; font-weight: 800; margin: 0 0 0.5rem 0;">Provenance AI</h1>
+            <p class="page-subtitle" style="font-size: 0.95rem; margin: 0; color: var(--text-muted);">Perform AST checks to identify hardcoded secrets, SQL injection vectors, and package dependency flaws.</p>
+        </div>
+        <div>
+            <span style="font-family: var(--font-mono); font-size: 0.8rem; color: var(--accent-purple); display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border: 1px solid rgba(168, 85, 247, 0.25); border-radius: 8px; background: rgba(168, 85, 247, 0.04);">
+                <span style="width: 6px; height: 6px; background: var(--accent-purple); border-radius: 50%; box-shadow: 0 0 5px var(--accent-purple); animation: demoPulse 1.5s infinite ease-in-out;"></span> Source Auditor Running
+            </span>
+        </div>
+    </div>
+
+    <!-- Scan Input Panel -->
+    <div class="scan-grid" id="provenance-input-view">
+        <!-- LEFT: Source Code Editor paste -->
+        <div class="glass-panel" style="padding: 2rem; display: flex; flex-direction: column; justify-content: space-between; position: relative;">
+            <div id="scanning-overlay" class="scan-overlay">
+                <div class="scan-beam"></div>
+                <div style="font-family: var(--font-mono); color: var(--cyan); font-size: 0.85rem; font-weight: 700; letter-spacing: 1.5px; display:flex; align-items:center; gap:8px;">
+                    <i class="ti ti-loader-2 ti-spin"></i> PARSING AST STRUCTURES...
+                </div>
+            </div>
+            
+            <div>
+                <h3 style="font-family: var(--font-sans); color: #fff; margin-top: 0; margin-bottom: 8px;">Code Intake Console</h3>
+                <p style="color: var(--text-muted); font-size: 0.82rem; margin-bottom: 1.5rem; line-height: 1.5;">Paste python scripts, shell configuration settings, or dependencies list requirements file below to scan against threat models and OWASP rules.</p>
+                
+                <div class="code-editor-wrapper">
+                    <textarea id="code-textarea" class="code-textarea" placeholder="# Paste code or requirements file here...&#10;import os&#10;API_KEY = 'sk_live_51M0...'&#10;db_conn = 'mysql://admin:P@ssword123@db.host/db'"></textarea>
+                </div>
+            </div>
+
+            <div style="margin-top: 1.5rem; display: flex; gap: 10px;">
+                <button type="button" class="btn-primary-action cyber-glow-hover" style="flex: 1;" onclick="executeScan()">
+                    <i class="ti ti-code-sandbox" style="margin-right:6px; vertical-align:middle;"></i> Run Vulnerability Scan
+                </button>
+                <button type="button" class="preset-btn cyber-glow-hover" onclick="loadSample()" title="Load Sample script" style="padding: 12px 16px; background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); color: var(--cyan); border-radius: 8px; cursor: pointer;">
+                    <i class="ti ti-file-text"></i> Load Sample
+                </button>
+            </div>
+        </div>
+
+        <!-- RIGHT: Heuristics Scan Terminal Log -->
+        <div class="glass-panel" style="padding: 2rem; display: flex; flex-direction: column; min-height: 400px;">
+            <h3 style="font-family:var(--font-sans); color:#fff; font-size:1.1rem; margin-top:0; margin-bottom:1.5rem; text-align:left;">AST Analysis Streams</h3>
+            <div id="log-terminal" style="background:#020617 !important; border:1px solid var(--border-color); border-radius:10px; padding:1.2rem; flex: 1; overflow-y:auto; box-shadow: inset 0 0 15px rgba(0,0,0,0.5); font-family: var(--font-mono); color: #22d3ee; line-height: 1.45;">
+                <div class="log-line" style="color: #64748b;">Awaiting source script ingest for compiling analysis logs...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCAN RESULTS DASHBOARD (Initially Hidden) -->
+    <div id="provenance-results-view" style="display: none; animation: fadeInUp 0.5s ease-out; margin-top: 1rem;">
+        <!-- Header Controls -->
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 1.2rem; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+            <button onclick="resetRecon()" class="btn-primary-action cyber-glow-hover" style="width: auto; padding: 10px 20px; font-size: 0.85rem; margin: 0; text-transform: uppercase;">
+                <i class="ti ti-arrow-left" style="margin-right:6px; font-size:1.1rem; vertical-align:middle;"></i> Scan Another File
+            </button>
+            <span style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;">COMPLIANCE REPORT: SOURCE LEVEL GRANTED</span>
+        </div>
+
+        <!-- Top Overview: Score Gauge + Basic Stats -->
+        <div class="glass-panel" style="padding: 2.2rem; display: grid; grid-template-columns: 240px 1fr; gap: 2.5rem; margin-bottom: 2rem; align-items: center;">
+            <!-- Left: Circle Gauge -->
+            <div style="text-align: center;">
+                <div class="gauge-wrapper" style="width: 150px; height: 150px; margin-bottom: 12px;">
+                    <svg class="gauge-svg" viewBox="0 0 120 120">
+                        <circle class="gauge-bg" cx="60" cy="60" r="54" />
+                        <circle class="gauge-fill" id="gauge-circle-res" cx="60" cy="60" r="54" stroke="#ef4444" />
+                    </svg>
+                    <div class="gauge-text">
+                        <span class="gauge-score" id="risk-score" style="font-size: 2.6rem;">0</span>
+                        <span class="gauge-label">RISK INDEX</span>
+                    </div>
+                </div>
+                <div class="indicator-pill" id="risk-badge">VULNERABLE</div>
+            </div>
+
+            <!-- Right: Explanatory summary and core indicators -->
+            <div style="display: flex; flex-direction: column; gap: 1.2rem;">
+                <h2 style="font-family: var(--font-sans); color: #fff; margin: 0;">Code Security Summary</h2>
+                <p id="risk-summary-text" style="color: var(--text-muted); font-size: 0.88rem; line-height: 1.6; margin: 0;">AST analysis flagged critical security warnings inside your application. Hardcoded secret keys or unprotected database parameters present immediate infiltration vectors.</p>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-top: 8px;">
+                    <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; text-align: left;">
+                        <div style="font-family: var(--font-mono); font-size: 0.65rem; color:#64748b; text-transform: uppercase;">Total Vulnerabilities</div>
+                        <div style="font-size: 1.6rem; font-weight: 800; color: #ef4444; margin-top: 4px;" id="count-vulns">0</div>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; text-align: left;">
+                        <div style="font-family: var(--font-mono); font-size: 0.65rem; color:#64748b; text-transform: uppercase;">Critical / High Alerts</div>
+                        <div style="font-size: 1.6rem; font-weight: 800; color: #f59e0b; margin-top: 4px;" id="count-critical">0</div>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; text-align: left;">
+                        <div style="font-family: var(--font-mono); font-size: 0.65rem; color:#64748b; text-transform: uppercase;">Secrets Exposed</div>
+                        <div style="font-size: 1.6rem; font-weight: 800; color: #c084fc; margin-top: 4px;" id="count-secrets">0</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Detail Breakdown Grid -->
+        <div style="display: grid; grid-template-columns: 1.3fr 1fr; gap: 2rem; margin-bottom: 2rem; align-items: start;">
+            <!-- Detailed Vulnerability Finding List -->
+            <div class="glass-panel" style="padding: 1.8rem; border-radius: 12px; display: flex; flex-direction: column;">
+                <h3 style="font-family: var(--font-sans); font-size: 1.15rem; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 8px; margin-top: 0; margin-bottom: 1.2rem; border-bottom: 1px solid var(--border-color); padding-bottom: 8px;">
+                    <i class="ti ti-bug" style="color: #ef4444; font-size:1.4rem;"></i> Code Vulnerability Details
+                </h3>
+                <div style="flex: 1; max-height: 420px; overflow-y: auto;" id="vulnerabilities-list-container">
+                    <!-- Inserted dynamically -->
+                </div>
+            </div>
+
+            <!-- Software Bill of Materials (SBOM) & Packages Dependency Grid -->
+            <div class="glass-panel" style="padding: 1.8rem; border-radius: 12px; display: flex; flex-direction: column;">
+                <h3 style="font-family: var(--font-sans); font-size: 1.15rem; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 8px; margin-top: 0; margin-bottom: 1.2rem; border-bottom: 1px solid var(--border-color); padding-bottom: 8px;">
+                    <i class="ti ti-archive" style="color: var(--accent-cyan); font-size:1.4rem;"></i> Software Bill of Materials (SBOM)
+                </h3>
+                <div style="flex: 1; max-height: 420px; overflow-y: auto;" id="dependencies-list-container">
+                    <!-- Inserted dynamically -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const logTerminal = document.getElementById('log-terminal');
+    const scanningOverlay = document.getElementById('scanning-overlay');
+
+    const sampleScript = `import os
+import mysql.connector
+
+# Credentials block
+API_KEY = "sk_live_51M0dff8849FvV4492ad01d"
+db_password = "P@ssword2026_db"
+
+def handle_user_login(user_id, token):
+    # Intentional credentials leakage
+    print(f"Connecting using API credentials: {API_KEY}")
+    
+    # Unprotected SQL statement
+    conn = mysql.connector.connect(
+        host="database.secure.internal",
+        user="sysadmin",
+        password=db_password,
+        database="production_ledger"
+    )
+    cursor = conn.cursor()
+    
+    # Vulnerable injection vector
+    query = "SELECT * FROM sessions WHERE token_id = '" + token + "' AND user_id = " + str(user_id)
+    cursor.execute(query)
+    res = cursor.fetchall()
+    return res`;
+
+    function loadSample() {
+        document.getElementById('code-textarea').value = sampleScript;
+    }
+
+    function appendLog(lineText, type='info') {
+        const line = document.createElement('div');
+        line.className = 'log-line';
+        if (type === 'ok') {
+            line.innerHTML = `<span style="color:#22c55e;">[+] ${lineText}</span>`;
+        } else if (type === 'warn') {
+            line.innerHTML = `<span style="color:#ef4444;">[!] ${lineText}</span>`;
+        } else if (type === 'telemetry') {
+            line.innerHTML = `<span style="color:#a855f7;">[*] ${lineText}</span>`;
+        } else {
+            line.innerHTML = `<span style="color:#64748b;">[+] ${lineText}</span>`;
+        }
+        logTerminal.appendChild(line);
+        logTerminal.scrollTop = logTerminal.scrollHeight;
+    }
+
+    function resetRecon() {
+        document.getElementById('code-textarea').value = '';
+        document.getElementById('provenance-results-view').style.display = 'none';
+        document.getElementById('provenance-input-view').style.display = 'grid';
+        logTerminal.innerHTML = '<div class="log-line" style="color: #64748b;">Awaiting source script ingest for compiling analysis logs...</div>';
+    }
+
+    function executeScan() {
+        const code = document.getElementById('code-textarea').value.trim();
+        if (!code) {
+            alert("Please paste code or script instructions to scan.");
+            return;
+        }
+
+        scanningOverlay.style.opacity = '1';
+        logTerminal.innerHTML = '';
+        
+        appendLog(`Ingesting script payload segments...`, 'info');
+        
+        const logs = [
+            { text: `Bootstrapping Abstract Syntax Tree (AST) parser... [ OK ]`, delay: 600, type: 'ok' },
+            { text: `Running keyword search heuristics for exposed credential signatures...`, delay: 1200, type: 'info' },
+            { text: `Credentials alert: Hardcoded string matching API_KEY pattern found!`, delay: 1800, type: 'warn' },
+            { text: `Scanning SQL operations for non-parameterized query constructs...`, delay: 2400, type: 'info' },
+            { text: `Injection alert: Raw concatenation detected in cursor.execute() execution paths!`, delay: 3000, type: 'warn' },
+            { text: `Analyzing import package configurations for SBOM generation...`, delay: 3600, type: 'info' },
+            { text: `Discovered dependency: mysql-connector-python v8.0.30`, delay: 4000, type: 'telemetry' },
+            { text: `Re-verifying security constraints... Analysis completed.`, delay: 4600, type: 'ok' }
+        ];
+
+        logs.forEach(l => {
+            setTimeout(() => {
+                appendLog(l.text, l.type);
+            }, l.delay);
+        });
+
+        // Trigger AJAX scan request
+        const formData = new FormData();
+        formData.append('code', code);
+
+        setTimeout(() => {
+            fetch('/api/provenance/scan', {
+                method: 'POST',
+                body: formData
+            })
+            .then(res => res.json())
+            .then(data => {
+                scanningOverlay.style.opacity = '0';
+                if (data.success) {
+                    renderDashboard(data.results);
+                } else {
+                    alert(`Scan failure: ${data.message}`);
+                }
+            })
+            .catch(err => {
+                scanningOverlay.style.opacity = '0';
+                console.error("Scan error:", err);
+                alert("Server request failed. Please check active logs.");
+            });
+        }, 4800);
+    }
+
+    function renderDashboard(results) {
+        document.getElementById('provenance-input-view').style.display = 'none';
+        document.getElementById('provenance-results-view').style.display = 'block';
+
+        // Set counters
+        document.getElementById('count-vulns').textContent = results.vulnerabilities.length;
+        document.getElementById('count-critical').textContent = results.vulnerabilities.filter(v => v.severity === 'Critical' || v.severity === 'High').length;
+        document.getElementById('count-secrets').textContent = results.secrets_count;
+
+        // Render Gauge
+        const score = results.exposure_score;
+        document.getElementById('risk-score').textContent = score;
+        const radius = 54;
+        const circ = 2 * Math.PI * radius; // 339.292
+        const offset = circ - (score / 100) * circ;
+        const fill = document.getElementById('gauge-circle-res');
+        fill.style.strokeDashoffset = offset;
+
+        // Verdict Badge
+        const badge = document.getElementById('risk-badge');
+        if (score >= 70) {
+            badge.textContent = "CRITICAL THREAT";
+            badge.className = "indicator-pill critical";
+            fill.setAttribute("stroke", "#ef4444");
+        } else if (score >= 40) {
+            badge.textContent = "HIGH RISK";
+            badge.className = "indicator-pill high";
+            fill.setAttribute("stroke", "#f59e0b");
+        } else if (score > 0) {
+            badge.textContent = "MEDIUM EXPOSURE";
+            badge.className = "indicator-pill medium";
+            fill.setAttribute("stroke", "#3b82f6");
+        } else {
+            badge.textContent = "SECURE FILE";
+            badge.className = "indicator-pill low";
+            fill.setAttribute("stroke", "#10b981");
+        }
+
+        // Summary Text
+        document.getElementById('risk-summary-text').textContent = results.summary;
+
+        // Render Vulnerabilities
+        const vulnContainer = document.getElementById('vulnerabilities-list-container');
+        vulnContainer.innerHTML = '';
+        if (results.vulnerabilities.length === 0) {
+            vulnContainer.innerHTML = '<div style="font-size:0.8rem; color:var(--text-muted); text-align:center; padding: 2rem;">No security vulnerabilities identified in AST syntax checks.</div>';
+        } else {
+            results.vulnerabilities.forEach(v => {
+                let badgeClass = 'low';
+                let borderCol = 'var(--border-color)';
+                if (v.severity === 'Critical') { badgeClass = 'critical'; borderCol = '#ef4444'; }
+                else if (v.severity === 'High') { badgeClass = 'high'; borderCol = '#f59e0b'; }
+                else if (v.severity === 'Medium') { badgeClass = 'medium'; borderCol = '#3b82f6'; }
+
+                vulnContainer.innerHTML += `
+                    <div class="vuln-card" style="border-left-color: ${borderCol};">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                            <span style="font-weight: 700; color: #fff; font-size: 0.9rem;">${v.title}</span>
+                            <span class="indicator-pill ${badgeClass}" style="font-size: 0.55rem; padding: 2px 6px;">${v.severity}</span>
+                        </div>
+                        <div style="font-size: 0.72rem; color: var(--accent-cyan); font-family: var(--font-mono); margin-bottom: 6px;">Line ${v.line}: <code>${v.code_snippet}</code></div>
+                        <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0 0 8px 0; line-height: 1.4;">${v.description}</p>
+                        <div style="font-size: 0.76rem; color: #4ade80; border-top: 1px dashed rgba(255,255,255,0.04); padding-top: 6px;"><strong style="font-size:0.65rem; font-family:var(--font-mono); text-transform:uppercase; color:#22c55e;">Fix:</strong> ${v.fix}</div>
+                    </div>
+                `;
+            });
+        }
+
+        // Render SBOM / Dependencies
+        const depContainer = document.getElementById('dependencies-list-container');
+        depContainer.innerHTML = '';
+        if (results.dependencies.length === 0) {
+            depContainer.innerHTML = '<div style="font-size:0.8rem; color:var(--text-muted); text-align:center; padding: 2rem;">No external package dependencies declared in code imports.</div>';
+        } else {
+            results.dependencies.forEach(d => {
+                let badgeClass = 'low';
+                let statusText = 'Clean';
+                if (d.status === 'Vulnerable') { badgeClass = 'critical'; statusText = 'Vulnerable'; }
+                else if (d.status === 'Outdated') { badgeClass = 'high'; statusText = 'Outdated'; }
+
+                depContainer.innerHTML += `
+                    <div class="telemetry-row">
+                        <div style="text-align: left;">
+                            <div style="font-weight: 700; color: #fff; font-size: 0.85rem;">${d.name}</div>
+                            <div style="font-size: 0.7rem; color: var(--text-muted); margin-top:2px;">Version: ${d.version} &middot; Vulnerability: ${d.vulnerability || 'None'}</div>
+                        </div>
+                        <span class="indicator-pill ${badgeClass}" style="padding: 2px 8px; font-size: 0.6rem;">${statusText}</span>
+                    </div>
+                `;
+            });
+        }
+    }
+</script>
+{% endblock %}

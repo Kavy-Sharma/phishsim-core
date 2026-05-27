@@ -1,65 +1,289 @@
 {% extends 'base.html' %}
 
-{% block title %}Thank You - PhishSim AI{% endblock %}
+{% block title %}Vigilance Reward - PhishSim AI{% endblock %}
 
 {% block content %}
-<div style="max-width: 600px; margin: 0 auto; text-align: center; padding-top: 4rem;">
+<div style="max-width: 800px; margin: 0 auto; text-align: center; padding: 3rem 1.5rem;">
     
     <div style="margin-bottom: 2rem; animation: popIn 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; opacity: 0; transform: scale(0.8);">
-        <!-- Success Icon -->
-        <div style="display: inline-block; background: rgba(34, 197, 94, 0.1); padding: 2rem; border-radius: 50%; margin-bottom: 1.5rem; position: relative; box-shadow: 0 0 40px rgba(34, 197, 94, 0.4);">
-            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                <polyline points="9 12 11 14 15 10"></polyline>
-            </svg>
-            <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; border: 2px solid #22c55e; border-radius: 50%; animation: ripple 2s infinite;"></div>
+        
+        <!-- 3D Rotating Shield Badge -->
+        <div class="badge-3d-wrap" style="perspective: 1000px; display: inline-block; margin-bottom: 1.5rem;">
+            <div class="badge-3d" style="
+                width: 140px; height: 160px;
+                position: relative;
+                transform-style: preserve-3d;
+                animation: rotateBadge 8s linear infinite;
+                cursor: pointer;
+            " onclick="playVictorySound()">
+                <!-- Front Side of Shield -->
+                <div style="
+                    position: absolute; inset: 0;
+                    background: linear-gradient(135deg, rgba(34, 197, 94, 0.15), rgba(16, 185, 129, 0.2));
+                    border: 2px solid #22c55e;
+                    border-radius: 20px 20px 70px 70px;
+                    box-shadow: 0 0 30px rgba(34, 197, 94, 0.4), inset 0 0 15px rgba(34, 197, 94, 0.3);
+                    display: flex; flex-direction: column; align-items: center; justify-content: center;
+                    backface-visibility: hidden;
+                    z-index: 2;
+                ">
+                    <i class="fas fa-shield-halved" style="font-size: 3.5rem; color: #4ade80; filter: drop-shadow(0 0 8px #4ade80);"></i>
+                    <span style="font-family: var(--font-mono); font-size: 0.65rem; color: #4ade80; margin-top: 10px; font-weight: bold; letter-spacing: 1px;">VIGILANCE</span>
+                </div>
+                <!-- Back Side of Shield -->
+                <div style="
+                    position: absolute; inset: 0;
+                    background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(6, 182, 212, 0.2));
+                    border: 2px solid #06b6d4;
+                    border-radius: 20px 20px 70px 70px;
+                    box-shadow: 0 0 30px rgba(6, 182, 212, 0.4), inset 0 0 15px rgba(6, 182, 212, 0.3);
+                    display: flex; flex-direction: column; align-items: center; justify-content: center;
+                    transform: rotateY(180deg);
+                    backface-visibility: hidden;
+                ">
+                    <i class="fas fa-user-shield" style="font-size: 3.5rem; color: #22d3ee; filter: drop-shadow(0 0 8px #22d3ee);"></i>
+                    <span style="font-family: var(--font-mono); font-size: 0.65rem; color: #22d3ee; margin-top: 10px; font-weight: bold; letter-spacing: 1px;">GUARDIAN I</span>
+                </div>
+            </div>
         </div>
         
-        <h1 style="font-size: 3.5rem; margin-bottom: 1rem; color: #22c55e; text-shadow: 0 0 20px rgba(34, 197, 94, 0.3);">SECURITY EXCELLENCE</h1>
+        <h1 style="font-size: 2.5rem; margin-bottom: 0.5rem; color: #22c55e; text-shadow: 0 0 20px rgba(34, 197, 94, 0.3); font-weight: 900; letter-spacing: 1px;">ACHIEVEMENT UNLOCKED</h1>
+        <p style="color: #64748b; font-family: var(--font-mono); font-size: 0.85rem; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 2rem;">Workforce Threat Detection Protocol</p>
         
-        <div class="card" style="margin-top: 2rem; background: rgba(34, 197, 94, 0.05); border-color: rgba(34, 197, 94, 0.4); box-shadow: 0 10px 30px rgba(34, 197, 94, 0.1);">
-            <h2 style="color: white; margin-bottom: 1rem;">Threat Neutralized!</h2>
-            <p style="font-size: 1.1rem; color: var(--text-main); margin-bottom: 1rem;">
-                You correctly identified and reported a simulated phishing email.
+        <div class="card" style="margin-top: 1rem; background: rgba(34, 197, 94, 0.04); border-color: rgba(34, 197, 94, 0.25); box-shadow: 0 10px 30px rgba(34, 197, 94, 0.05); padding: 2.2rem; border-radius: 16px;">
+            <h2 style="color: white; margin-bottom: 1rem; font-size: 1.6rem; font-weight: 700;">Simulated Threat Neutralized!</h2>
+            <p style="font-size: 1.05rem; color: var(--text-main); margin-bottom: 1.2rem; line-height: 1.6;">
+                Excellent work, <strong>{{ recipient_name or 'Security Champion' }}</strong>! You successfully identified and reported the simulated phishing email target:
             </p>
-            <p style="color: var(--text-muted); margin: 0;">
-                Reporting suspicious emails is the absolute best way to keep our organization secure. You are the strongest link in our human firewall. Thank you for your vigilance.
+            <div style="background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 8px 16px; display: inline-block; font-family: var(--font-mono); font-size: 0.88rem; color: #38bdf8; margin-bottom: 1.5rem;">
+                Target: {{ recipient_email }}
+            </div>
+            <p style="color: var(--text-muted); margin: 0; font-size: 0.92rem; line-height: 1.6;">
+                By flagging this message, you prevent simulated attacks from compromising key directories. Reporting is the strongest action you can take to reinforce our company's cybersecurity firewall. Keep up the high vigilance!
             </p>
         </div>
     </div>
     
-    <button class="btn-primary-glow" onclick="window.close();" style="background: linear-gradient(135deg, #16a34a, #22c55e); margin-top: 2rem;">Secure Window & Close</button>
+    <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; margin-top: 2rem;">
+        <button class="btn-primary-glow" onclick="generateCertificate();" style="background: linear-gradient(135deg, #06b6d4, #3b82f6); display: inline-flex; align-items: center; gap: 8px; font-weight: 700; padding: 12px 24px;">
+            <i class="fas fa-file-invoice"></i> Download Certificate
+        </button>
+        <button class="btn-primary-glow" onclick="window.close();" style="background: linear-gradient(135deg, #16a34a, #22c55e); display: inline-flex; align-items: center; gap: 8px; font-weight: 700; padding: 12px 24px;">
+            <i class="fas fa-window-close"></i> Secure Window & Close
+        </button>
+    </div>
 
 </div>
 
+<!-- Confetti Script -->
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 <script>
-    // Fire confetti on load
-    window.onload = function() {
-        var duration = 3 * 1000;
-        var end = Date.now() + duration;
+    // Web Audio API victory sound synthesizer
+    function playVictorySound() {
+        try {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            if (!AudioContext) return;
+            const audioCtx = new AudioContext();
+            
+            const now = audioCtx.currentTime;
+            
+            // Oscillator 1 (Primary Synth Chime)
+            const osc1 = audioCtx.createOscillator();
+            const gain1 = audioCtx.createGain();
+            osc1.connect(gain1);
+            gain1.connect(audioCtx.destination);
+            
+            osc1.type = 'sine';
+            
+            // Rising major arpeggio
+            osc1.frequency.setValueAtTime(523.25, now); // C5
+            osc1.frequency.setValueAtTime(659.25, now + 0.08); // E5
+            osc1.frequency.setValueAtTime(783.99, now + 0.16); // G5
+            osc1.frequency.setValueAtTime(1046.50, now + 0.24); // C6
+            
+            gain1.gain.setValueAtTime(0, now);
+            gain1.gain.linearRampToValueAtTime(0.2, now + 0.04);
+            gain1.gain.exponentialRampToValueAtTime(0.01, now + 0.7);
+            
+            osc1.start(now);
+            osc1.stop(now + 0.7);
+            
+            // Oscillator 2 (Complementary High Sparkle)
+            const osc2 = audioCtx.createOscillator();
+            const gain2 = audioCtx.createGain();
+            osc2.connect(gain2);
+            gain2.connect(audioCtx.destination);
+            
+            osc2.type = 'triangle';
+            osc2.frequency.setValueAtTime(1046.50, now + 0.24);
+            osc2.frequency.linearRampToValueAtTime(2093.00, now + 0.45);
+            
+            gain2.gain.setValueAtTime(0, now + 0.24);
+            gain2.gain.linearRampToValueAtTime(0.1, now + 0.28);
+            gain2.gain.exponentialRampToValueAtTime(0.01, now + 0.6);
+            
+            osc2.start(now + 0.24);
+            osc2.stop(now + 0.6);
+            
+        } catch (e) {
+            console.log("Web Audio blocked or unsupported:", e);
+        }
+    }
+
+    // Fire confetti and play chime on load
+    window.addEventListener('load', () => {
+        // Play victory chime
+        playVictorySound();
+
+        // Confetti burst
+        const duration = 2.5 * 1000;
+        const end = Date.now() + duration;
 
         (function frame() {
             confetti({
-                particleCount: 5,
+                particleCount: 4,
                 angle: 60,
                 spread: 55,
-                origin: { x: 0 },
-                colors: ['#22c55e', '#16a34a', '#4ade80']
+                origin: { x: 0, y: 0.8 },
+                colors: ['#22c55e', '#10b981', '#34d399', '#06b6d4']
             });
             confetti({
-                particleCount: 5,
+                particleCount: 4,
                 angle: 120,
                 spread: 55,
-                origin: { x: 1 },
-                colors: ['#22c55e', '#16a34a', '#4ade80']
+                origin: { x: 1, y: 0.8 },
+                colors: ['#22c55e', '#10b981', '#34d399', '#06b6d4']
             });
 
             if (Date.now() < end) {
                 requestAnimationFrame(frame);
             }
         }());
-    };
+    });
+
+    // Ensure audio works via a quick page interaction fallback
+    document.body.addEventListener('click', () => {
+        playVictorySound();
+    }, { once: true });
+
+    // Client-side HTML5 Canvas certificate generation and download
+    function generateCertificate() {
+        const canvas = document.createElement("canvas");
+        canvas.width = 1200;
+        canvas.height = 800;
+        const ctx = canvas.getContext("2d");
+        
+        // 1. Background Fill
+        ctx.fillStyle = "#030712"; // Deep space background
+        ctx.fillRect(0, 0, 1200, 800);
+        
+        // Draw gridlines
+        ctx.strokeStyle = "rgba(6, 182, 212, 0.04)";
+        ctx.lineWidth = 1;
+        for (let x = 0; x < 1200; x += 40) {
+            ctx.beginPath();
+            ctx.moveTo(x, 0);
+            ctx.lineTo(x, 800);
+            ctx.stroke();
+        }
+        for (let y = 0; y < 800; y += 40) {
+            ctx.beginPath();
+            ctx.moveTo(0, y);
+            ctx.lineTo(1200, y);
+            ctx.stroke();
+        }
+        
+        // 2. Borders
+        ctx.strokeStyle = "#10b981"; // Emerald
+        ctx.lineWidth = 8;
+        ctx.strokeRect(30, 30, 1140, 740);
+        
+        ctx.strokeStyle = "#06b6d4"; // Cyan
+        ctx.lineWidth = 2;
+        ctx.strokeRect(45, 45, 1110, 710);
+        
+        // Corner accent bars
+        ctx.fillStyle = "#10b981";
+        // Top-Left
+        ctx.fillRect(20, 20, 60, 6);
+        ctx.fillRect(20, 20, 6, 60);
+        // Top-Right
+        ctx.fillRect(1120, 20, 60, 6);
+        ctx.fillRect(1174, 20, 6, 60);
+        // Bottom-Left
+        ctx.fillRect(20, 774, 60, 6);
+        ctx.fillRect(20, 720, 6, 60);
+        // Bottom-Right
+        ctx.fillRect(1120, 774, 60, 6);
+        ctx.fillRect(1174, 720, 6, 60);
+
+        // 3. Texts
+        ctx.fillStyle = "#94a3b8";
+        ctx.font = "bold 15px monospace";
+        ctx.textAlign = "center";
+        ctx.fillText("PHISHSIM.AI // GLOBAL WORKFORCE SECURITY INTEGRITY", 600, 100);
+        
+        ctx.fillStyle = "#10b981";
+        ctx.font = "800 42px sans-serif";
+        ctx.fillText("CERTIFICATE OF VIGILANCE", 600, 165);
+        
+        ctx.fillStyle = "#64748b";
+        ctx.font = "500 18px sans-serif";
+        ctx.fillText("THIS CERTIFICATE OF CYBERSECURITY EXCELLENCE IS AWARDED TO:", 600, 250);
+        
+        // Name
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "bold 48px sans-serif";
+        ctx.shadowColor = "#10b981";
+        ctx.shadowBlur = 15;
+        const nameVal = "{{ recipient_name }}".toUpperCase();
+        ctx.fillText(nameVal, 600, 335);
+        ctx.shadowBlur = 0; // reset shadow
+        
+        // Description
+        ctx.fillStyle = "#cbd5e1";
+        ctx.font = "18px sans-serif";
+        ctx.fillText("for successfully identifying, reporting, and neutralizing a simulated", 600, 420);
+        ctx.fillText("spear-phishing vector, reinforcing organizational resilience.", 600, 450);
+        
+        // Verification & Date
+        const now = new Date();
+        const dateStr = now.toLocaleDateString("en-US", { year: 'numeric', month: 'long', day: 'numeric' });
+        
+        ctx.fillStyle = "#64748b";
+        ctx.font = "14px monospace";
+        ctx.fillText(`DATE OF VERIFICATION: ${dateStr.toUpperCase()}`, 600, 530);
+        
+        // Verification Hash
+        const hashVal = "SHA256:" + Array.from({length: 40}, () => Math.floor(Math.random()*16).toString(16)).join("").toUpperCase();
+        ctx.fillText(`VERIFICATION HASH: ${hashVal}`, 600, 560);
+        
+        // Signatures
+        ctx.strokeStyle = "#334155";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(350, 670);
+        ctx.lineTo(550, 670);
+        ctx.moveTo(650, 670);
+        ctx.lineTo(850, 670);
+        ctx.stroke();
+        
+        ctx.fillStyle = "#64748b";
+        ctx.font = "13px sans-serif";
+        ctx.fillText("PhishSim.ai Security Core", 450, 690);
+        ctx.fillText("Threat Simulation Agent", 750, 690);
+        
+        ctx.fillStyle = "#22d3ee";
+        ctx.font = "italic 16px Georgia";
+        ctx.fillText("Automated System Verification", 450, 660);
+        ctx.fillText("AI Generation Engine", 750, 660);
+        
+        // Trigger Download
+        const link = document.createElement("a");
+        link.download = `PhishSim_Vigilance_Certificate_${nameVal.replace(/\s+/g, '_')}.png`;
+        link.href = canvas.toDataURL("image/png");
+        link.click();
+    }
 </script>
 
 <style>
@@ -67,9 +291,12 @@
     0% { opacity: 0; transform: scale(0.8); }
     100% { opacity: 1; transform: scale(1); }
 }
-@keyframes ripple {
-    0% { transform: scale(1); opacity: 1; }
-    100% { transform: scale(1.5); opacity: 0; }
+@keyframes rotateBadge {
+    0% { transform: rotateY(0deg); }
+    100% { transform: rotateY(360deg); }
+}
+body.light-theme h2 {
+    color: #0f172a !important;
 }
 </style>
 {% endblock %}

@@ -1,0 +1,1154 @@
+{% extends "base.html" %}
+{% block title %}AI Email Threat Analyzer — PhishSim AI{% endblock %}
+{% block content %}
+<style>
+    .analyzer-container {
+        max-width: 1200px;
+        margin: 2.5rem auto;
+        padding: 0 1.5rem;
+    }
+    
+    .analyzer-grid {
+        display: grid;
+        grid-template-columns: 1fr 1.2fr 1.1fr;
+        gap: 2rem;
+        margin-top: 1.5rem;
+    }
+    
+    @media (max-width: 1024px) {
+        .analyzer-grid {
+            grid-template-columns: 1.1fr 1fr;
+        }
+        .right-log-col {
+            grid-column: span 2;
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .analyzer-grid {
+            grid-template-columns: 1fr;
+        }
+        .right-log-col {
+            grid-column: span 1;
+        }
+    }
+
+    .mode-tab {
+        background: transparent;
+        border: none;
+        border-bottom: 2px solid transparent;
+        color: var(--text-muted);
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        font-weight: 700;
+        padding: 10px 16px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .mode-tab.active {
+        color: var(--accent-cyan);
+        border-bottom-color: var(--accent-cyan);
+    }
+    
+    .inbox-preset-row {
+        display: flex;
+        gap: 12px;
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid var(--border-color);
+        padding: 12px;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.25s;
+        min-width: 0;
+    }
+    
+    .inbox-preset-row:hover {
+        background: rgba(6, 182, 212, 0.04);
+        border-color: rgba(6, 182, 212, 0.25);
+    }
+    
+    .inbox-preset-row.active {
+        background: rgba(6, 182, 212, 0.08);
+        border-color: var(--accent-cyan);
+        box-shadow: 0 0 15px rgba(6, 182, 212, 0.1);
+    }
+
+    .avatar-circle {
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        color: #fff;
+        font-size: 0.85rem;
+        flex-shrink: 0;
+    }
+    
+    .gauge-wrapper {
+        position: relative;
+        width: 140px;
+        height: 140px;
+        margin: 0 auto 1rem;
+    }
+    
+    .gauge-svg {
+        transform: rotate(-90deg);
+        width: 100%;
+        height: 100%;
+    }
+    
+    .gauge-bg {
+        fill: none;
+        stroke: rgba(255, 255, 255, 0.05);
+        stroke-width: 8;
+    }
+    
+    .gauge-fill {
+        fill: none;
+        stroke-width: 8;
+        stroke-linecap: round;
+        transition: stroke-dashoffset 1s ease-out;
+        stroke-dasharray: 339.292;
+        stroke-dashoffset: 339.292;
+    }
+    
+    .gauge-text {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        font-family: var(--font-sans);
+    }
+    
+    .gauge-score {
+        font-size: 2.4rem;
+        font-weight: 800;
+        color: #fff;
+        line-height: 1;
+    }
+    
+    .gauge-label {
+        font-size: 0.65rem;
+        font-family: var(--font-mono);
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-top: 4px;
+    }
+    
+    .log-line {
+        font-family: var(--font-mono);
+        font-size: 0.76rem;
+        margin-bottom: 6px;
+        line-height: 1.4;
+        white-space: pre-wrap;
+    }
+    
+    .indicator-pill {
+        display: inline-flex;
+        align-items: center;
+        padding: 3px 8px;
+        border-radius: 100px;
+        font-size: 0.65rem;
+        font-family: var(--font-mono);
+        font-weight: 700;
+        text-transform: uppercase;
+    }
+    
+    .indicator-pill.critical { background: rgba(239,68,68,0.12); color:#ef4444; border: 1px solid rgba(239,68,68,0.2); }
+    .indicator-pill.high { background: rgba(245,158,11,0.12); color:#f59e0b; border: 1px solid rgba(245,158,11,0.2); }
+    .indicator-pill.medium { background: rgba(59,130,246,0.12); color:#3b82f6; border: 1px solid rgba(59,130,246,0.2); }
+    
+    .indicator-card {
+        background: rgba(255,255,255,0.01);
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        padding: 0.95rem;
+        margin-bottom: 0.8rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: start;
+        gap: 12px;
+        border-left-width: 4px;
+        transition: transform 0.2s ease;
+    }
+    .indicator-card:hover {
+        transform: translateX(3px);
+    }
+    
+    /* Dynamic border left severities */
+    .indicator-card.severity-critical { border-left-color: #ef4444; }
+    .indicator-card.severity-high { border-left-color: #f59e0b; }
+    .indicator-card.severity-medium { border-left-color: #3b82f6; }
+
+    .history-item {
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 10px 12px;
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        transition: all 0.2s;
+    }
+    .history-item:hover {
+        background: rgba(6, 182, 212, 0.04);
+        border-color: rgba(6, 182, 212, 0.2);
+    }
+
+    body.light-theme .inbox-preset-row,
+    body.light-theme .indicator-card,
+    body.light-theme .history-item {
+        background: #ffffff;
+        border-color: #e2e8f0;
+    }
+    body.light-theme .inbox-preset-row:hover,
+    body.light-theme .history-item:hover {
+        background: rgba(37, 99, 235, 0.03);
+    }
+
+    /* Start here animations */
+    @keyframes startPulse {
+        0% { opacity: 0.6; box-shadow: 0 0 4px rgba(6, 182, 212, 0.2); }
+        100% { opacity: 1; box-shadow: 0 0 12px rgba(6, 182, 212, 0.5); }
+    }
+    .presets-glow-pulse {
+        animation: borderPulse 2s infinite alternate;
+    }
+    @keyframes borderPulse {
+        0% { border-color: var(--border-color); }
+        100% { border-color: rgba(6, 182, 212, 0.45); box-shadow: 0 0 15px rgba(6, 182, 212, 0.05); }
+    }
+    body.light-theme .presets-glow-pulse {
+        animation: borderPulseLight 2s infinite alternate;
+    }
+    @keyframes borderPulseLight {
+        0% { border-color: #cbd5e1; }
+        100% { border-color: rgba(37, 99, 235, 0.5); box-shadow: 0 0 12px rgba(37, 99, 235, 0.08); }
+    }
+
+    /* Upgraded scan overlay */
+    .scan-overlay {
+        position: absolute;
+        inset: 0;
+        background: rgba(2, 6, 23, 0.98) !important;
+        background-image: 
+            linear-gradient(rgba(6, 182, 212, 0.04) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(6, 182, 212, 0.04) 1px, transparent 1px) !important;
+        background-size: 20px 20px !important;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 10;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s ease;
+    }
+    body.light-theme .scan-overlay {
+        background: rgba(241, 245, 249, 0.98) !important;
+        background-image: 
+            linear-gradient(rgba(37, 99, 235, 0.04) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(37, 99, 235, 0.04) 1px, transparent 1px) !important;
+    }
+</style>
+
+<!-- Floating Session History Drawer Overlay -->
+<div id="history-drawer-overlay" class="history-drawer-overlay" onclick="toggleHistoryDrawer()"></div>
+
+<!-- Floating Session History Drawer -->
+<div id="history-drawer" class="history-drawer">
+    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-color); padding-bottom:12px; margin-bottom: 20px;">
+        <h4 style="font-family:var(--font-mono); font-size:0.85rem; color:#fff; text-transform:uppercase; letter-spacing:1px; margin:0; display:flex; align-items:center; gap:6px;">
+            <i class="ti ti-history"></i> Scan History
+        </h4>
+        <button onclick="toggleHistoryDrawer()" class="history-drawer-close" style="padding:4px 8px; font-size:0.8rem; margin:0;"><i class="ti ti-x"></i></button>
+    </div>
+    <div id="session-history-list-drawer" style="display:flex; flex-direction:column; gap:8px; overflow-y:auto; flex:1;">
+        <div id="history-empty-state" style="font-size:0.75rem; color:var(--text-muted); text-align:center; padding:12px 0;">No scans run in this session yet.</div>
+    </div>
+</div>
+
+<!-- Floating History Trigger Button (Only visible after first scan completes) -->
+<button id="history-trigger-btn" class="history-trigger-btn" onclick="toggleHistoryDrawer()">
+    <i class="ti ti-history" style="font-size:1.2rem; margin-bottom: 8px;"></i>
+    <span style="writing-mode: vertical-rl; text-orientation: mixed; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 2px;">HISTORY</span>
+</button>
+
+<div class="analyzer-container">
+    <div style="padding: 1.5rem 0 1rem 0; animation: fadeInDown 0.6s ease-out; display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 1rem;">
+        <div>
+            <span style="display:inline-block; background:rgba(6, 182, 212, 0.08); border:1px solid rgba(6, 182, 212, 0.2); border-radius:100px; padding:4px 12px; font-size:0.75rem; font-weight:600; color:var(--cyan); letter-spacing:0.05em; text-transform:uppercase; margin-bottom:8px;">Public Cyber Suite</span>
+            <h1 class="page-title" style="font-family: var(--font-sans); font-size: 2.4rem; font-weight: 800; margin: 0 0 0.5rem 0;">AI Email Threat Analyzer</h1>
+            <p class="page-subtitle" style="font-size: 0.95rem; margin: 0; color: var(--text-muted);">Paste suspicious payloads to perform heuristics scans for social engineering models.</p>
+        </div>
+        
+        <!-- Toggle Tabs + Tooltip & Subtitle -->
+        <div style="display: flex; flex-direction: column; align-items: flex-end;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <div style="display: flex; background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); padding: 4px; border-radius: 8px; box-shadow: inset 0 0 8px rgba(0,0,0,0.2);">
+                    <button id="tab-mode-body" class="mode-tab active" onclick="switchAnalyzerMode('body')">
+                        <i class="ti ti-mail" style="margin-right:4px;"></i> Email Body Mode
+                    </button>
+                    <button id="tab-mode-headers" class="mode-tab" onclick="switchAnalyzerMode('headers')">
+                        <i class="ti ti-file-text" style="margin-right:4px;"></i> Raw Headers Mode
+                    </button>
+                </div>
+                
+                <!-- Tooltip info icon -->
+                <div class="cyber-tooltip-wrap">
+                    <span class="tooltip-icon">?</span>
+                    <div class="cyber-tooltip-content">
+                        Raw headers are the hidden technical metadata inside every email showing where it came from, how it was routed, and whether SPF/DKIM authentication passed. Right-click any email &rarr; <strong>View Source</strong> to copy them.
+                    </div>
+                </div>
+            </div>
+            <div id="analyzer-subtitle" style="font-family: var(--font-sans); font-size: 0.8rem; color: var(--text-muted); margin-top: 8px; text-align: right; min-height: 18px; transition: opacity 0.2s;">
+                Analyzes social engineering language, urgency triggers, and manipulation patterns.
+            </div>
+        </div>
+    </div>
+
+    <!-- VIEW 1: Input & presets area -->
+    <div class="analyzer-grid" id="analyzer-input-view">
+        <!-- LEFT PANEL: Mini Inbox Presets -->
+        <div style="display: flex; flex-direction: column; gap: 1.5rem;" class="reveal">
+            <div class="glass-panel presets-glow-pulse" style="padding: 1.5rem; position: relative;">
+                <h4 style="font-family: var(--font-mono); font-size: 0.72rem; color: #64748b; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between;">
+                    <span style="display:flex; align-items:center; gap:6px;"><i class="ti ti-inbox"></i> Scenario Inbox feed</span>
+                    <span class="start-here-badge" style="
+                        background: rgba(6, 182, 212, 0.12); color: var(--cyan);
+                        border: 1px solid rgba(6, 182, 212, 0.3); border-radius: 4px;
+                        padding: 2px 6px; font-size: 0.6rem; font-weight: 700;
+                        animation: startPulse 1.5s infinite alternate;
+                    ">START HERE</span>
+                </h4>
+                
+                <!-- Body mode inbox -->
+                <div id="body-presets-list" style="display: flex; flex-direction: column; gap: 10px;">
+                    <div class="inbox-preset-row cyber-glow-hover" id="preset-ceo" onclick="selectInboxPreset('ceo')">
+                        <div class="avatar-circle" style="background: linear-gradient(135deg, #ef4444, #f59e0b);">RS</div>
+                        <div style="flex: 1; min-width: 0;">
+                            <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 2px;">
+                                <span style="font-weight: 700; color: #fff; font-size: 0.82rem;">R. Sterling (CEO)</span>
+                                <span class="indicator-pill critical" style="font-size: 0.55rem; padding: 1px 5px; scale: 0.9;">Wire</span>
+                            </div>
+                            <div style="font-weight: 600; color: var(--cyan); font-size: 0.8rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">URGENT: Wire Transfer Authorization</div>
+                            <div style="font-size: 0.75rem; color: var(--text-muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">I am currently in an executive board meeting...</div>
+                        </div>
+                    </div>
+                    
+                    <div class="inbox-preset-row cyber-glow-hover" id="preset-it" onclick="selectInboxPreset('it')">
+                        <div class="avatar-circle" style="background: linear-gradient(135deg, #3b82f6, #06b6d4);">IT</div>
+                        <div style="flex: 1; min-width: 0;">
+                            <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 2px;">
+                                <span style="font-weight: 700; color: #fff; font-size: 0.82rem;">IT Support</span>
+                                <span class="indicator-pill high" style="font-size: 0.55rem; padding: 1px 5px; scale: 0.9;">SSO</span>
+                            </div>
+                            <div style="font-weight: 600; color: var(--cyan); font-size: 0.8rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">ACTION REQUIRED: Password Expiry</div>
+                            <div style="font-size: 0.75rem; color: var(--text-muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">Our corporate identity protocols require a reset...</div>
+                        </div>
+                    </div>
+                    
+                    <div class="inbox-preset-row cyber-glow-hover" id="preset-hr" onclick="selectInboxPreset('hr')">
+                        <div class="avatar-circle" style="background: linear-gradient(135deg, #10b981, #059669);">HR</div>
+                        <div style="flex: 1; min-width: 0;">
+                            <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 2px;">
+                                <span style="font-weight: 700; color: #fff; font-size: 0.82rem;">HR Operations</span>
+                                <span class="indicator-pill high" style="font-size: 0.55rem; padding: 1px 5px; scale: 0.9;">Salary</span>
+                            </div>
+                            <div style="font-weight: 600; color: var(--cyan); font-size: 0.8rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">Q3 Salary Adjustment guidelines</div>
+                            <div style="font-size: 0.75rem; color: var(--text-muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">We are pleased to release guidelines for Q3 adjustments...</div>
+                        </div>
+                    </div>
+
+                    <div class="inbox-preset-row cyber-glow-hover" id="preset-safe" onclick="selectInboxPreset('safe')">
+                        <div class="avatar-circle" style="background: #475569;">SV</div>
+                        <div style="flex: 1; min-width: 0;">
+                            <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 2px;">
+                                <span style="font-weight: 700; color: #fff; font-size: 0.82rem;">Sarah Vance</span>
+                                <span class="indicator-pill medium" style="font-size: 0.55rem; padding: 1px 5px; scale: 0.9; background:rgba(255,255,255,0.06); color:#94a3b8; border-color:rgba(255,255,255,0.1)">Safe</span>
+                            </div>
+                            <div style="font-weight: 600; color: var(--cyan); font-size: 0.8rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">Project status update: Phase 2</div>
+                            <div style="font-size: 0.75rem; color: var(--text-muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">Just wanted to confirm that we successfully deployed...</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Headers mode inbox -->
+                <div id="headers-presets-list" style="display: none; flex-direction: column; gap: 10px;">
+                    <div class="inbox-preset-row cyber-glow-hover" id="preset-ceo_headers" onclick="selectInboxPreset('ceo_headers')">
+                        <div class="avatar-circle" style="background: linear-gradient(135deg, #ef4444, #f59e0b);">RS</div>
+                        <div style="flex: 1; min-width: 0;">
+                            <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 2px;">
+                                <span style="font-weight: 700; color: #fff; font-size: 0.82rem;">R. Sterling (CEO)</span>
+                                <span class="indicator-pill critical" style="font-size: 0.55rem; padding: 1px 5px; scale: 0.9;">SPF-Fail</span>
+                            </div>
+                            <div style="font-weight: 600; color: var(--cyan); font-size: 0.8rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">From: r.sterling@demo-corp-ceo.com</div>
+                            <div style="font-size: 0.75rem; color: var(--text-muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">Received-SPF: fail · Reply-To Mismatch</div>
+                        </div>
+                    </div>
+
+                    <div class="inbox-preset-row cyber-glow-hover" id="preset-it_headers" onclick="selectInboxPreset('it_headers')">
+                        <div class="avatar-circle" style="background: linear-gradient(135deg, #3b82f6, #06b6d4);">IT</div>
+                        <div style="flex: 1; min-width: 0;">
+                            <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 2px;">
+                                <span style="font-weight: 700; color: #fff; font-size: 0.82rem;">IT Identity</span>
+                                <span class="indicator-pill high" style="font-size: 0.55rem; padding: 1px 5px; scale: 0.9;">Relays</span>
+                            </div>
+                            <div style="font-weight: 600; color: var(--cyan); font-size: 0.8rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">From: admin@support-demo-corp.com</div>
+                            <div style="font-size: 0.75rem; color: var(--text-muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">Multiple routing hops · Softfail SPF</div>
+                        </div>
+                    </div>
+
+                    <div class="inbox-preset-row cyber-glow-hover" id="preset-safe_headers" onclick="selectInboxPreset('safe_headers')">
+                        <div class="avatar-circle" style="background: #475569;">SV</div>
+                        <div style="flex: 1; min-width: 0;">
+                            <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 2px;">
+                                <span style="font-weight: 700; color: #fff; font-size: 0.82rem;">Sarah Vance</span>
+                                <span class="indicator-pill medium" style="font-size: 0.55rem; padding: 1px 5px; scale: 0.9; background:rgba(255,255,255,0.06); color:#94a3b8; border-color:rgba(255,255,255,0.1)">Passed</span>
+                            </div>
+                            <div style="font-weight: 600; color: var(--cyan); font-size: 0.8rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">From: s.vance@demo-corp.com</div>
+                            <div style="font-size: 0.75rem; color: var(--text-muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">SPF Pass · DKIM Clean signature</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MIDDLE COLUMN: Input Ingestion Terminal -->
+        <div class="glass-panel" style="animation: fadeInUp 0.6s ease-out; padding: 2rem; display: flex; flex-direction: column; justify-content: space-between;" class="reveal">
+            <div>
+                <label style="display:block; font-family:var(--font-mono); font-size:0.75rem; color:#64748b; text-transform:uppercase; letter-spacing:1px; margin-bottom:8px;">Email Ingestion Terminal</label>
+                
+                <!-- Textarea relative wrapper with scanning overlay -->
+                <div class="scan-beam-container" style="border: 1px solid var(--border-color); border-radius: 8px; position: relative;">
+                    <div id="scanning-overlay" class="scan-overlay">
+                        <div class="scan-beam"></div>
+                        <div style="font-family: var(--font-mono); color: var(--cyan); font-size: 0.85rem; font-weight: 700; letter-spacing: 1.5px; display:flex; align-items:center; gap:8px;">
+                            <i class="ti ti-loader-2 ti-spin"></i> INGESTING PAYLOAD...
+                        </div>
+                    </div>
+                    <textarea id="email-textarea" class="form-input" style="min-height: 450px; padding: 16px 16px 36px 16px; font-family:var(--font-mono); font-size:0.85rem; line-height:1.5; resize:none; border:none; width:100%; margin:0; background:transparent;" placeholder="Paste email content here..."></textarea>
+                    
+                    <!-- Live lines / character counter -->
+                    <div id="textarea-counter" style="position: absolute; bottom: 10px; right: 12px; font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-muted); pointer-events: none; z-index: 5;">0 lines &middot; 0 chars</div>
+                </div>
+            </div>
+            
+            <div style="margin-top: 1.5rem; display: flex; gap: 10px;">
+                <button type="button" class="btn-primary-action cyber-glow-hover" style="flex:1;" onclick="runAnalysis()">
+                    <i class="ti ti-cpu" style="margin-right:6px; vertical-align:middle;"></i> Scan Payload
+                </button>
+                <button type="button" id="reset-payload-btn" class="preset-btn cyber-glow-hover" onclick="resetAnalysis()" title="Reset scanner">
+                    <i class="ti ti-refresh" style="font-size:1rem;"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- RIGHT PANEL: Thread Heuristics logger (during execution) -->
+        <div class="glass-panel right-log-col" id="result-panel" style="animation: fadeInUp 0.6s ease-out; padding: 2rem; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 400px;" class="reveal">
+            <!-- Placeholder state -->
+            <div id="result-placeholder" style="text-align: center;">
+                <div style="width:72px; height:72px; border-radius:50%; background:rgba(255,255,255,0.02); border:1px dashed var(--border-color); display:flex; align-items:center; justify-content:center; margin:0 auto 1.5rem;">
+                    <i class="ti ti-scan" style="font-size:2rem; color:var(--text-muted); opacity:0.5;"></i>
+                </div>
+                <h3 style="color:#fff; font-size:1.15rem; margin-bottom:8px; font-family:var(--font-sans);">Awaiting Payload Scan</h3>
+                <p style="color:var(--text-muted); font-size:0.82rem; max-width:240px; margin:0 auto; line-height:1.5;">Input custom content or trigger a preset scenario to perform dynamic structural analysis.</p>
+            </div>
+
+            <!-- Scanning log state -->
+            <div id="result-loading" style="display: none; width: 100%;">
+                <h3 style="font-family:var(--font-sans); color:#fff; font-size:1.1rem; margin-top:0; margin-bottom:1.5rem; text-align:center;">Threat Heuristics Engine</h3>
+                <!-- Console log panel -->
+                <div id="log-terminal" style="background:#020617 !important; border:1px solid var(--border-color); border-radius:10px; padding:1.2rem; height:220px; overflow-y:auto; margin-bottom:1.5rem; box-shadow: inset 0 0 15px rgba(0,0,0,0.5);"></div>
+                <div style="color:var(--text-muted); font-size:0.75rem; text-align:center; font-family:var(--font-mono); letter-spacing:0.5px;">RUNNING THREAT DECRYPTION CYCLES...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- VIEW 2: Wide Full-width Results Dashboard (Appears after completion) -->
+    <div id="analyzer-results-view" style="display: none; animation: fadeInUp 0.5s ease-out; width: 100%;">
+        <!-- Header with Back Button -->
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 1.2rem; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+            <button onclick="goBackToInput()" class="btn-primary-action cyber-glow-hover" style="width: auto; padding: 10px 20px; font-size: 0.85rem; margin: 0; text-transform: uppercase;">
+                <i class="ti ti-arrow-left" style="margin-right:6px; font-size:1.1rem; vertical-align:middle;"></i> Scan Another Email
+            </button>
+            <span style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;">Intelligence Briefing &mdash; Decryption Complete</span>
+        </div>
+
+        <!-- Row 1: Gauge Left, Metrics & Recommendation Center-Right -->
+        <div class="glass-panel" style="padding: 2.2rem; display: grid; grid-template-columns: 240px 1fr; gap: 2.5rem; margin-bottom: 2rem; align-items: center;">
+            <!-- Left Part: Gauge -->
+            <div style="text-align: center;">
+                <div class="gauge-wrapper" style="width: 160px; height: 160px; margin-bottom: 12px;">
+                    <svg class="gauge-svg" viewBox="0 0 120 120">
+                        <circle class="gauge-bg" cx="60" cy="60" r="54" />
+                        <circle class="gauge-fill" id="gauge-circle-res" cx="60" cy="60" r="54" stroke="#ef4444" />
+                    </svg>
+                    <div class="gauge-text">
+                        <span class="gauge-score" id="risk-score-res" style="font-size: 2.8rem;">0</span>
+                        <span class="gauge-label" style="display: flex; align-items: center; gap: 4px; justify-content:center;">
+                            Risk Index
+                            <span class="cyber-tooltip-wrap">
+                                <span class="tooltip-icon" style="width:14px; height:14px; font-size:0.55rem;">?</span>
+                                <span class="cyber-tooltip-content" style="bottom: calc(100% + 8px); top: auto; right: -50px; font-weight:normal; text-transform:none; letter-spacing:0; font-size:0.75rem; width:250px;">
+                                    Computed by matching lexical urgency, payment directives, phishing domains, and security header integrity checks.
+                                </span>
+                            </span>
+                        </span>
+                    </div>
+                </div>
+                <div class="indicator-pill" id="verdict-badge-res" style="padding:4px 12px; font-size:0.75rem; letter-spacing:0.5px;">CRITICAL THREAT</div>
+            </div>
+
+            <!-- Center-Right Part: Verdict details, scale pointer, recommendation, CTA, copy link -->
+            <div style="display: flex; flex-direction: column; gap: 1.2rem;">
+                <!-- Horizontal Scale -->
+                <div style="width: 100%; position: relative; padding: 0 5px;">
+                    <div style="height: 8px; border-radius: 99px; background: linear-gradient(90deg, #10b981 0%, #f59e0b 50%, #ef4444 100%); width: 100%;"></div>
+                    <div style="display: flex; justify-content: space-between; font-size: 0.65rem; font-family: var(--font-mono); color: var(--text-muted); margin-top: 6px;">
+                        <span>Safe (0-30)</span>
+                        <span>Suspicious (31-65)</span>
+                        <span>Phishing (66-100)</span>
+                    </div>
+                    <div id="risk-scale-pointer-res" style="position: absolute; top: -3px; left: 0%; transform: translateX(-50%); width: 10px; height: 14px; background: #fff; border-radius: 2px; box-shadow: 0 0 8px #fff; border: 1px solid #000; transition: left 0.8s cubic-bezier(0.16, 1, 0.3, 1);"></div>
+                </div>
+
+                <!-- Recommendation Box -->
+                <div style="background: rgba(255,255,255,0.01); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.2rem;">
+                    <h4 style="font-family: var(--font-mono); font-size: 0.75rem; color: #64748b; margin: 0 0 6px; text-transform: uppercase; letter-spacing: 0.5px;">Mitigation Recommendation</h4>
+                    <p id="recommendation-text-res" style="color: #cbd5e1; font-size: 0.85rem; line-height: 1.5; margin: 0;"></p>
+                </div>
+
+                <!-- Share Button below recommendation -->
+                <div style="display: flex; justify-content: flex-start; gap: 15px; align-items: center; flex-wrap: wrap;">
+                    <button type="button" id="share-report-btn" class="cyber-glow-hover" style="
+                        display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+                        padding: 12px 24px; background: rgba(56, 189, 248, 0.05); border: 1px solid rgba(56, 189, 248, 0.25);
+                        border-radius: 99px; color: var(--cyan); font-family: var(--font-sans); font-size: 0.85rem;
+                        font-weight: 700; cursor: pointer; transition: all 0.25s ease;
+                    " onclick="generateShareLink()">
+                        <i class="ti ti-clipboard" id="share-btn-icon"></i> <span id="share-btn-text">Copy Intelligence Report Link</span>
+                    </button>
+
+                    <span id="scan-meta-res" style="font-size: 0.78rem; color: var(--text-muted); font-family: var(--font-mono);">Heuristics analyzed successfully.</span>
+                </div>
+
+                <!-- Teachable Conversion Funnel CTA -->
+                <div id="teachable-cta-card-res" style="display:none; background: rgba(6, 182, 212, 0.05); border: 1px solid rgba(6, 182, 212, 0.25); border-radius: 10px; padding: 1.2rem; margin-top: 4px; text-align: left;">
+                    <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 4px;">
+                        <i class="ti ti-bulb" style="color:var(--accent-cyan); font-size: 1.2rem;"></i>
+                        <span style="font-size: 0.88rem; font-weight: 700; color: #fff;">Teachable Action Plan</span>
+                    </div>
+                    <p style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.45; margin-bottom: 12px; margin-top: 4px;">This threat scenario represents a high-conversion security risk. Execute a test simulation template targeting your employees now.</p>
+                    <a href="/new-campaign" class="btn-primary-action cyber-glow-hover" style="display: inline-block; width: auto; padding: 8px 16px; font-size: 0.78rem; border-radius: 6px; font-family: var(--font-sans);">Train Your Team</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Row 2: Behavioral Brief and Indicator Cards side-by-side -->
+        <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 2rem; align-items: start;">
+            <!-- Left: Behavioral briefing (open by default) -->
+            <div class="glass-panel" style="padding: 1.8rem; border-radius: 12px;">
+                <h3 style="font-family: var(--font-sans); font-size: 1.15rem; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 8px; margin-top: 0; margin-bottom: 1.2rem; border-bottom: 1px solid var(--border-color); padding-bottom: 8px;">
+                    <i class="ti ti-brain" style="color:var(--accent-purple); font-size:1.4rem;"></i>
+                    Behavioral Risk Briefing
+                    <span class="cyber-tooltip-wrap">
+                        <span class="tooltip-icon" style="width:14px; height:14px; font-size:0.55rem;">?</span>
+                        <span class="cyber-tooltip-content" style="bottom: calc(100% + 8px); top: auto; left: 10px; font-weight:normal; text-transform:none; letter-spacing:0; font-size:0.75rem; width:240px;">
+                            Analyzes the psychological pretexting methods such as authority coercion, extreme urgency, or fear vectors that attackers use.
+                        </span>
+                    </span>
+                </h3>
+                <div id="psych-brief-text-res" style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.6;">
+                    <!-- Loaded dynamically -->
+                </div>
+            </div>
+
+            <!-- Right: Detected Risk Vectors (indicator cards) -->
+            <div class="glass-panel" style="padding: 1.8rem; border-radius: 12px;">
+                <h3 style="font-family: var(--font-sans); font-size: 1.15rem; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 8px; margin-top: 0; margin-bottom: 1.2rem; border-bottom: 1px solid var(--border-color); padding-bottom: 8px;">
+                    <i class="ti ti-alert-triangle" style="color:var(--accent-cyan); font-size:1.4rem;"></i>
+                    Detected Risk Vectors
+                    <span class="cyber-tooltip-wrap">
+                        <span class="tooltip-icon" style="width:14px; height:14px; font-size:0.55rem;">?</span>
+                        <span class="cyber-tooltip-content" style="bottom: calc(100% + 8px); top: auto; right: 0; font-weight:normal; text-transform:none; letter-spacing:0; font-size:0.75rem; width:240px;">
+                            Lists specific technical anomalies and phishing markers detected inside the email body or headers.
+                        </span>
+                    </span>
+                </h3>
+                <div id="indicators-list-res" style="max-height: 380px; overflow-y: auto; padding-right: 4px;">
+                    <!-- Inserted dynamically -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let analyzerMode = 'body'; // body or headers
+    let activePreset = null;
+    let sessionHistory = [];
+
+    const presets = {
+        ceo: `Subject: URGENT: Wire Transfer Authorization Required
+From: Richard Sterling <r.sterling@demo-corp-ceo.com>
+
+Hi,
+
+I am currently in an executive board conference call and cannot be interrupted. We need to finalize the deposit for the acquisition of our new logistics vendor immediately. 
+
+Please route $42,500.00 USD to the banking coordinate invoice attached below. Ensure this is completed before 3:00 PM EST today. Route it as a same-day priority wire.
+
+Link to acquisition statement: https://secure-logistics-finance.com/invoice/transfer
+
+Thank you,
+Richard`,
+        it: `Subject: ACTION REQUIRED: Password Expiration Notice
+From: IT Support Desk <admin@support-demo-corp.com>
+
+Our global domain identity protocols require all company users to update their credentials every 90 days. 
+
+Your account login verification expires within 12 hours. If you fail to verify your password today, your access to Slack, Salesforce, and corporate email will be suspended.
+
+Please click the security portal link below to update your password credentials immediately:
+https://verification-identity-sso.net/login/auth
+
+System Operations Team`,
+        hr: `Subject: Q3 Salary Adjustment and Bonus Schedule
+From: HR Operations <hr@demo-corp.com>
+
+Dear Employee,
+
+We are pleased to announce the corporate compensation structures and performance bonus allocations for the upcoming Q3 billing cycle. 
+
+Details regarding your specific department adjustment guidelines and payout ratios can be accessed through the global portal portal link:
+
+https://demo-corp-hr-portal.com/bonus/details
+
+Please note that these adjustments must be signed off by Friday to take effect.
+
+Best Regards,
+Human Resources`,
+        safe: `Subject: Project status update: Phase 2 milestone
+From: Sarah Vance <s.vance@demo-corp.com>
+
+Hi Team,
+
+Just wanted to confirm that we successfully deployed the main codebase upgrades to the sandbox environment. Everything looks great so far.
+
+The code reviews are scheduled for tomorrow morning at 10 AM. Please make sure to review the PR logs before the meeting.
+
+Thanks,
+Sarah`,
+        
+        // Header presets
+        ceo_headers: `Return-Path: <r.sterling@demo-corp-ceo.com>
+Received: from mail-sender.logistics-finance.com (mail-sender.logistics-finance.com [198.51.100.12])
+        by mx.demo-corp.com with ESMTPS id a18si9481234
+        for <ap-team@demo-corp.com>; Mon, 25 May 2026 14:12:00 -0400
+Received-SPF: fail (google.com: domain of r.sterling@demo-corp-ceo.com does not designate 198.51.100.12 as permitted sender)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=demo-corp-ceo.com; s=selector1;
+        h=from:to:subject:date:message-id; bh=abcdefg1234567=;
+From: "Richard Sterling" <r.sterling@demo-corp-ceo.com>
+To: "Accounts Payable" <ap-team@demo-corp.com>
+Reply-To: "Richard Sterling" <richard.sterling.direct@gmail.com>
+Subject: URGENT: Executive Wire Transfer Authorization
+Date: Mon, 25 May 2026 14:10:00 -0400`,
+        
+        it_headers: `Return-Path: <admin@support-demo-corp.com>
+Received: from relayserver.net (relayserver.net [192.0.2.55])
+        by backup-mx.relay-hops.net with ESMTP id e84si223411
+        by gateway.routing-hop.org with ESMTP id d99si442312
+        by outbound.mailrouting.co.uk with ESMTP id c11si99283
+        by support-demo-corp.com with ESMTP id b77si112233
+        for <employee-team@demo-corp.com>; Mon, 25 May 2026 10:05:00 -0400
+Received-SPF: softfail (google.com: domain of transition at support-demo-corp.com does not designate 192.0.2.55 as permitted sender)
+From: "IT Support Desk" <admin@support-demo-corp.com>
+To: "Demo Corp employee" <employee-team@demo-corp.com>
+Subject: ACTION REQUIRED: Password Expiration Notice
+Date: Mon, 25 May 2026 10:00:00 -0400`,
+
+        safe_headers: `Return-Path: <s.vance@demo-corp.com>
+Received: from mail.demo-corp.com (mail.demo-corp.com [198.51.100.5])
+        by mx.demo-corp.com with ESMTPS id d12si884920
+        for <team-dev@demo-corp.com>; Mon, 25 May 2026 09:30:00 -0400
+Received-SPF: pass (google.com: domain of s.vance@demo-corp.com designates 198.51.100.5 as permitted sender)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=demo-corp.com; s=s2048;
+        h=from:to:subject:date:message-id; bh=xyz789abc123=;
+From: "Sarah Vance" <s.vance@demo-corp.com>
+To: "Dev Team" <team-dev@demo-corp.com>
+Subject: Project status update: Phase 2 milestone
+Date: Mon, 25 May 2026 09:28:00 -0400`
+    };
+
+    // Gauge dimensions
+    const GAUGE_RADIUS = 54;
+    const GAUGE_CIRCUMFERENCE = 2 * Math.PI * GAUGE_RADIUS;
+
+    // Severity mapping
+    const SEVERITY_MAP = {
+        critical: { label: 'Critical', class: 'critical' },
+        high: { label: 'High', class: 'high' },
+        medium: { label: 'Medium', class: 'medium' }
+    };
+
+    const RISK_THRESHOLDS = {
+        critical: { limit: 75, rgb: '239, 68, 68', color: '#ef4444', verdict: 'CRITICAL THREAT' },
+        high: { limit: 45, rgb: '245, 158, 11', color: '#f59e0b', verdict: 'HIGH RISK' },
+        safe: { limit: 0, rgb: '16, 185, 129', color: '#10b981', verdict: 'LOW RISK' }
+    };
+
+    function getRiskLevel(score) {
+        if (score >= RISK_THRESHOLDS.critical.limit) return RISK_THRESHOLDS.critical;
+        if (score >= RISK_THRESHOLDS.high.limit) return RISK_THRESHOLDS.high;
+        return RISK_THRESHOLDS.safe;
+    }
+
+    // Switch Body vs Headers modes
+    function switchAnalyzerMode(mode) {
+        analyzerMode = mode;
+        
+        // Toggle tabs active class
+        document.getElementById('tab-mode-body').classList.toggle('active', mode === 'body');
+        document.getElementById('tab-mode-headers').classList.toggle('active', mode === 'headers');
+        
+        // Show/hide presets
+        document.getElementById('body-presets-list').style.display = mode === 'body' ? 'flex' : 'none';
+        document.getElementById('headers-presets-list').style.display = mode === 'headers' ? 'flex' : 'none';
+        
+        // Subtitle dynamic text
+        const subtitle = document.getElementById('analyzer-subtitle');
+        if (mode === 'body') {
+            subtitle.textContent = "Analyzes social engineering language, urgency triggers, and manipulation patterns.";
+        } else {
+            subtitle.textContent = "Analyzes SPF/DKIM authentication, routing hops, and domain spoofing signals.";
+        }
+        
+        // Change textarea placeholder
+        const textarea = document.getElementById('email-textarea');
+        if (mode === 'body') {
+            textarea.placeholder = "Paste the email message body or content here to scan for social engineering triggers...";
+        } else {
+            textarea.placeholder = "Paste the raw email header payload (Received, Return-Path, Authentication-Results, etc.) to scan DNS authenticity...";
+        }
+        
+        // Clear current active preset styles
+        document.querySelectorAll('.inbox-preset-row').forEach(row => row.classList.remove('active'));
+        
+        resetAnalysis();
+    }
+
+    // Load preset and run scan instantly
+    function selectInboxPreset(key) {
+        const textarea = document.getElementById('email-textarea');
+        if (!textarea || !presets[key]) return;
+        
+        textarea.value = presets[key];
+        updateCounter();
+        
+        // Mark selected inbox row as active
+        document.querySelectorAll('.inbox-preset-row').forEach(row => row.classList.remove('active'));
+        const row = document.getElementById(`preset-${key}`);
+        if (row) row.classList.add('active');
+        
+        runAnalysis();
+    }
+
+    function resetAnalysis() {
+        document.getElementById('email-textarea').value = '';
+        document.getElementById('analyzer-results-view').style.display = 'none';
+        document.getElementById('result-loading').style.display = 'none';
+        document.getElementById('result-placeholder').style.display = 'block';
+        document.getElementById('analyzer-input-view').style.display = 'grid';
+        document.querySelectorAll('.inbox-preset-row').forEach(row => row.classList.remove('active'));
+        updateCounter();
+    }
+
+    function goBackToInput() {
+        document.getElementById('analyzer-results-view').style.display = 'none';
+        document.getElementById('analyzer-input-view').style.display = 'grid';
+    }
+
+    // History Panel Logic
+    function toggleHistoryDrawer() {
+        const drawer = document.getElementById('history-drawer');
+        const overlay = document.getElementById('history-drawer-overlay');
+        if (!drawer) return;
+        
+        drawer.classList.toggle('open');
+        if (overlay) {
+            overlay.classList.toggle('active');
+        }
+    }
+
+    // Typewriter terminal printing
+    let currentLogsIndex = 0;
+    let logLinesTimeouts = [];
+
+    // Live character and line counter
+    const textarea = document.getElementById('email-textarea');
+    const counter = document.getElementById('textarea-counter');
+    
+    function updateCounter() {
+        if (!textarea || !counter) return;
+        const text = textarea.value;
+        const chars = text.length;
+        const lines = text ? text.split('\n').length : 0;
+        counter.innerHTML = `${lines} line${lines !== 1 ? 's' : ''} &middot; ${chars} char${chars !== 1 ? 's' : ''}`;
+    }
+    
+    if (textarea) {
+        textarea.addEventListener('input', updateCounter);
+        textarea.addEventListener('keyup', updateCounter);
+        textarea.addEventListener('paste', updateCounter);
+    }
+
+    function runAnalysis() {
+        const emailText = document.getElementById('email-textarea').value.trim();
+        const placeholder = document.getElementById('result-placeholder');
+        const loading = document.getElementById('result-loading');
+        const terminal = document.getElementById('log-terminal');
+        const overlay = document.getElementById('scanning-overlay');
+        
+        if (!emailText) {
+            alert('Please paste some email content or select a preset to analyze.');
+            return;
+        }
+
+        // Cancel running timeouts if any
+        logLinesTimeouts.forEach(t => clearTimeout(t));
+        logLinesTimeouts = [];
+        
+        // Return to input view grid if in results view
+        document.getElementById('analyzer-results-view').style.display = 'none';
+        document.getElementById('analyzer-input-view').style.display = 'grid';
+        
+        placeholder.style.display = 'none';
+        loading.style.display = 'block';
+        terminal.innerHTML = ''; 
+        
+        // Activate textarea scan overlay
+        overlay.classList.add('active');
+        document.getElementById('email-textarea').readOnly = true;
+
+        // Structured console steps
+        const steps = [
+            { tag: '[LEXICAL]', text: 'Scanning payload word dictionary indicators...', color: '#22d3ee' },
+            { tag: '[HEADER]', text: 'Inspecting Return-Path metadata and routing tags...', color: '#c084fc' },
+            { tag: '[URGENCY]', text: 'Computing psychological urgency vectors...', color: '#f59e0b' },
+            { tag: '[DOMAIN]', text: 'Verifying DNS spf and dkim signature alignment keys...', color: '#f87171' },
+            { tag: '[VERDICT]', text: 'Generating centralized mitigation matrix score...', color: '#34d399' }
+        ];
+
+        let index = 0;
+        function printNextStep() {
+            if (index < steps.length) {
+                const s = steps[index];
+                const lineDiv = document.createElement('div');
+                lineDiv.className = 'log-line';
+                terminal.appendChild(lineDiv);
+                
+                // Typewrite character-by-character
+                let charIdx = 0;
+                const fullText = `${s.tag} ${s.text}`;
+                
+                function typeChar() {
+                    if (charIdx < fullText.length) {
+                        if (fullText.substring(charIdx).startsWith(s.tag)) {
+                            // Print tag colored
+                            lineDiv.innerHTML += `<span style="color:${s.color}; font-weight:700;">${s.tag}</span>`;
+                            charIdx += s.tag.length;
+                        } else {
+                            lineDiv.innerHTML += fullText[charIdx];
+                            charIdx++;
+                        }
+                        terminal.scrollTop = terminal.scrollHeight;
+                        logLinesTimeouts.push(setTimeout(typeChar, 10));
+                    } else {
+                        index++;
+                        // Delay between steps
+                        logLinesTimeouts.push(setTimeout(printNextStep, 350));
+                    }
+                }
+                typeChar();
+            } else {
+                // Done printing log lines, execute server fetch
+                overlay.classList.remove('active');
+                document.getElementById('email-textarea').readOnly = false;
+                fetchThreatHeuristics(emailText);
+            }
+        }
+        
+        logLinesTimeouts.push(setTimeout(printNextStep, 100));
+    }
+
+    function fetchThreatHeuristics(emailText) {
+        const formData = new FormData();
+        formData.append('email_text', emailText);
+        formData.append('mode', analyzerMode);
+        
+        fetch('/api/analyze-threat', {
+            method: 'POST',
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                // Hide input view & logs, display wide results view
+                document.getElementById('result-loading').style.display = 'none';
+                document.getElementById('analyzer-input-view').style.display = 'none';
+                document.getElementById('analyzer-results-view').style.display = 'block';
+                
+                const score = data.score;
+                document.getElementById('risk-score-res').textContent = score;
+                
+                // Update Risk Index Gauge
+                const circle = document.getElementById('gauge-circle-res');
+                const offset = GAUGE_CIRCUMFERENCE - (score / 100) * GAUGE_CIRCUMFERENCE;
+                circle.style.strokeDasharray = GAUGE_CIRCUMFERENCE;
+                circle.style.strokeDashoffset = offset;
+                
+                const riskLevel = getRiskLevel(score);
+                circle.style.stroke = riskLevel.color;
+                
+                // Update Risk pointer scale position
+                document.getElementById('risk-scale-pointer-res').style.left = `${score}%`;
+                
+                // Verdict badge update
+                const badge = document.getElementById('verdict-badge-res');
+                badge.textContent = riskLevel.verdict;
+                badge.style.background = `rgba(${riskLevel.rgb}, 0.12)`;
+                badge.style.color = riskLevel.color;
+                badge.style.border = `1px solid rgba(${riskLevel.rgb}, 0.25)`;
+                
+                document.getElementById('scan-meta-res').textContent = `${data.word_count} tokens parsed.`;
+                document.getElementById('recommendation-text-res').textContent = data.recommendation;
+                
+                // Teachable Moment conversion CTA visibility
+                const ctaCard = document.getElementById('teachable-cta-card-res');
+                if (score > 65) {
+                    ctaCard.style.display = 'block';
+                    ctaCard.querySelector('a').href = `/new-campaign?scenario_prefill=${analyzerMode === 'headers' ? 'ceo_fraud' : 'ceo_fraud'}`;
+                } else {
+                    ctaCard.style.display = 'none';
+                }
+
+                // Psychological Behavioral brief text mapping
+                let briefHTML = "";
+                if (score > 65) {
+                    briefHTML = `
+                        <strong>Detected Conversion Pretext Indicators:</strong><br><br>
+                        This payload combines three highly effective psychological engineering tactics:<br><br>
+                        1. <strong>Authority Impersonation:</strong> Faking organizational hierarchy (executive signatures or domains) to bypass critical reviews.<br>
+                        2. <strong>Urgency Pressure:</strong> Imposing tight deadlines (e.g., 3 PM wire transfers or 12-hour resets) to force rapid compliance.<br>
+                        3. <strong>Consequence Warnings:</strong> Threatening lockouts, operational freezes, or legal reviews to leverage user concern.
+                    `;
+                } else if (score >= 35) {
+                    briefHTML = `
+                        <strong>Suspicious Indicators Registered:</strong><br><br>
+                        This payload contains moderate social engineering triggers. SPF/DKIM validation is lacking or email bodies use typical marketing pressure tags. Validate external domains directly before replying.
+                    `;
+                } else {
+                    briefHTML = `
+                        <strong>Safe Profile:</strong><br><br>
+                        The payload contains typical operational vocabulary. No urgency spikes or malicious DNS mismatch patterns were registered.
+                    `;
+                }
+                document.getElementById('psych-brief-text-res').innerHTML = briefHTML;
+
+                // Render Indicator Cards with Left Borders
+                const list = document.getElementById('indicators-list-res');
+                list.innerHTML = '';
+                
+                if (data.indicators.length === 0) {
+                    list.innerHTML = `
+                        <div style="text-align:center; padding: 1.5rem; color:var(--text-muted); font-size:0.8rem;">
+                            No threat markers or social engineering signatures detected.
+                        </div>
+                    `;
+                } else {
+                    data.indicators.forEach(ind => {
+                        const classSeverity = `severity-${(ind.severity || '').toLowerCase()}`;
+                        const labelSeverity = (ind.severity || 'Medium').toUpperCase();
+                        list.innerHTML += `
+                            <div class="indicator-card ${classSeverity}">
+                                <div>
+                                    <h5 style="color:#fff; margin:0 0 4px 0; font-size:0.82rem; font-family:var(--font-sans); font-weight:600;">${ind.title}</h5>
+                                    <p style="color:var(--text-muted); font-size:0.75rem; margin:0; line-height:1.45;">${ind.desc}</p>
+                                </div>
+                                <span class="indicator-pill ${ind.severity || 'medium'}">${labelSeverity}</span>
+                            </div>
+                        `;
+                    });
+                }
+                
+                // Show History Trigger Button
+                document.getElementById('history-trigger-btn').style.display = 'flex';
+                
+                // Add to Session History & auto open drawer briefly to signal addition
+                addScanToHistory(score, riskLevel.verdict, emailText);
+                
+                const drawer = document.getElementById('history-drawer');
+                const overlay = document.getElementById('history-drawer-overlay');
+                if (drawer && !drawer.classList.contains('open')) {
+                    drawer.classList.add('open');
+                    if (overlay) overlay.classList.add('active');
+                    setTimeout(() => {
+                        drawer.classList.remove('open');
+                        if (overlay) overlay.classList.remove('active');
+                    }, 2500);
+                }
+            } else {
+                alert(data.message || 'Analysis failed.');
+                resetAnalysis();
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert('Heuristics connection failed.');
+            resetAnalysis();
+        });
+    }
+
+    // History Panel Logic
+    function addScanToHistory(score, verdict, text) {
+        const preview = text.substring(0, 32).replace(/\n/g, ' ') + '...';
+        const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        
+        const historyObj = { score, verdict, text, preview, timestamp };
+        
+        sessionHistory = sessionHistory.filter(h => h.text !== text);
+        sessionHistory.unshift(historyObj);
+        
+        if (sessionHistory.length > 5) sessionHistory.pop();
+        renderHistoryList();
+    }
+
+    function renderHistoryList() {
+        const historyContainer = document.getElementById('session-history-list-drawer');
+        const emptyState = document.getElementById('history-empty-state');
+        if (!historyContainer) return;
+        
+        historyContainer.innerHTML = '';
+        
+        if (sessionHistory.length === 0) {
+            if (emptyState) historyContainer.appendChild(emptyState);
+            return;
+        }
+        
+        sessionHistory.forEach((hist, idx) => {
+            const riskLevel = getRiskLevel(hist.score);
+            historyContainer.innerHTML += `
+                <div class="history-item" onclick="loadHistoryItem(${idx})">
+                    <div style="min-width:0; flex:1; padding-right:8px;">
+                        <div style="font-weight:700; color:#fff; font-size:0.78rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${hist.preview}</div>
+                        <span style="font-size:0.65rem; color:var(--text-muted);">${hist.timestamp} · Index: ${hist.score}</span>
+                    </div>
+                    <span class="indicator-pill" style="background:rgba(${riskLevel.rgb}, 0.08); color:${riskLevel.color}; border: 1px solid rgba(${riskLevel.rgb}, 0.15); font-size:0.55rem; padding:1px 5px; flex-shrink:0;">${hist.score}</span>
+                </div>
+            `;
+        });
+    }
+
+    function loadHistoryItem(index) {
+        const hist = sessionHistory[index];
+        if (!hist) return;
+        
+        document.getElementById('email-textarea').value = hist.text;
+        document.querySelectorAll('.inbox-preset-row').forEach(row => row.classList.remove('active'));
+        updateCounter();
+        toggleHistoryDrawer();
+        runAnalysis();
+    }
+
+    // Share link copy to clipboard
+    function generateShareLink() {
+        const score = document.getElementById('risk-score-res').textContent;
+        const verdict = document.getElementById('verdict-badge-res').textContent;
+        
+        const base = window.location.origin + window.location.pathname;
+        const queryParams = `?score=${score}&verdict=${encodeURIComponent(verdict)}`;
+        
+        const btnText = document.getElementById('share-btn-text');
+        const btnIcon = document.getElementById('share-btn-icon');
+        
+        navigator.clipboard.writeText(base + queryParams)
+        .then(() => {
+            if (btnText && btnIcon) {
+                btnText.textContent = "Link Copied!";
+                btnIcon.className = "ti ti-check";
+                
+                setTimeout(() => {
+                    btnText.textContent = "Copy Intelligence Report Link";
+                    btnIcon.className = "ti ti-clipboard";
+                }, 2000);
+            }
+        })
+        .catch(err => {
+            console.error('Failed to copy share link: ', err);
+        });
+    }
+
+    // Check if URL parameters exist to auto load report
+    document.addEventListener('DOMContentLoaded', () => {
+        const params = new URLSearchParams(window.location.search);
+        const scoreParam = params.get('score');
+        const verdictParam = params.get('verdict');
+        
+        if (scoreParam && verdictParam) {
+            const score = parseInt(scoreParam);
+            document.getElementById('analyzer-input-view').style.display = 'none';
+            document.getElementById('analyzer-results-view').style.display = 'block';
+            
+            document.getElementById('risk-score-res').textContent = score;
+            const circle = document.getElementById('gauge-circle-res');
+            const offset = GAUGE_CIRCUMFERENCE - (score / 100) * GAUGE_CIRCUMFERENCE;
+            circle.style.strokeDasharray = GAUGE_CIRCUMFERENCE;
+            circle.style.strokeDashoffset = offset;
+            
+            const riskLevel = getRiskLevel(score);
+            circle.style.stroke = riskLevel.color;
+            
+            document.getElementById('risk-scale-pointer-res').style.left = `${score}%`;
+            
+            const badge = document.getElementById('verdict-badge-res');
+            badge.textContent = verdictParam;
+            badge.style.background = `rgba(${riskLevel.rgb}, 0.12)`;
+            badge.style.color = riskLevel.color;
+            badge.style.border = `1px solid rgba(${riskLevel.rgb}, 0.25)`;
+            
+            document.getElementById('scan-meta-res').textContent = `Shared threat briefing loaded.`;
+            document.getElementById('recommendation-text-res').textContent = riskLevel.limit >= 75 
+                ? "CRITICAL: Do not interact with this sender. Mark as phishing and delete."
+                : "WARNING: Verify the sender's identity through secondary secure channels.";
+                
+            let briefHTML = "";
+            if (score > 65) {
+                briefHTML = `
+                    <strong>Detected Conversion Pretext Indicators:</strong><br><br>
+                    This payload combines three highly effective psychological engineering tactics:<br><br>
+                    1. <strong>Authority Impersonation:</strong> Faking organizational hierarchy (executive signatures or domains) to bypass critical reviews.<br>
+                    2. <strong>Urgency Pressure:</strong> Imposing tight deadlines (e.g., 3 PM wire transfers or 12-hour resets) to force rapid compliance.<br>
+                    3. <strong>Consequence Warnings:</strong> Threatening lockouts, operational freezes, or legal reviews to leverage user concern.
+                `;
+            } else {
+                briefHTML = `
+                    <strong>Suspicious Indicators Registered:</strong><br><br>
+                    This payload contains moderate social engineering triggers. SPF/DKIM validation is lacking or email bodies use typical marketing pressure tags. Validate external domains directly before replying.
+                `;
+            }
+            document.getElementById('psych-brief-text-res').innerHTML = briefHTML;
+        }
+        
+        updateCounter();
+    });
+</script>
+{% endblock %}

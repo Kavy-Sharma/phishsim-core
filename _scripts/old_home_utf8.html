@@ -1,0 +1,792 @@
+﻿{% extends 'base.html' %}
+
+{% block title %}PhishSim AI - Agentic Phishing Simulator{% endblock %}
+
+{% block content %}
+<!-- Font Google -->
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&family=Space+Mono&display=swap" rel="stylesheet">
+
+<!-- Network Graph Background -->
+<canvas id="network-canvas"></canvas>
+
+<!-- Hero Section -->
+<section class="hero-modern" id="hero">
+    <div class="hero-container">
+        <div class="pill-badge">Powered by Agentic AI</div>
+        <h1 class="hero-title">
+            <span id="typewriter-text"></span><span class="cursor"></span>
+        </h1>
+        <p class="hero-subtitle">PhishSim AI runs AI-powered phishing simulations against your team. Upload a CSV, pick a scenario, and let the engine generate personalized emails, track who clicks, and deliver a full security report ΓÇö automatically.</p>
+        <div class="hero-cta-group">
+            <a href="/demo-login" class="btn-primary-glow" style="background: linear-gradient(135deg, #10b981, #059669); border-color: #34d399; box-shadow: 0 0 20px rgba(16, 185, 129, 0.4);"><i class="fas fa-play-circle"></i> Try Live Demo</a>
+            <a href="/signup" class="btn-primary-glow">Get Started Free</a>
+            <a href="#attack-flow" class="btn-outline-glow">How It Works</a>
+        </div>
+
+        <!-- Status Ticker -->
+        <div class="status-ticker">
+            <div class="ticker-content">
+                <span>≡ƒôº Emails are generated fresh for each employee using AI ΓÇö no static templates</span>
+                <span>≡ƒ¢í∩╕Å Simulated campaigns are fully authorized and safe ΓÇö no real credentials collected</span>
+                <span>ΓÜí Each email adapts to the target's department, title, and company context</span>
+                <span>≡ƒôè Open, click, and report events are tracked in real-time per employee</span>
+                <span>≡ƒôä AI generates a full PDF risk report at the end of every campaign</span>
+                <span>≡ƒöÆ Runs on Flask + MySQL ΓÇö your data stays within your own deployment</span>
+                <span>≡ƒôº Emails are generated fresh for each employee using AI ΓÇö no static templates</span>
+                <span>≡ƒ¢í∩╕Å Simulated campaigns are fully authorized and safe ΓÇö no real credentials collected</span>
+                <span>ΓÜí Each email adapts to the target's department, title, and company context</span>
+                <span>≡ƒôè Open, click, and report events are tracked in real-time per employee</span>
+                <span>≡ƒôä AI generates a full PDF risk report at the end of every campaign</span>
+                <span>≡ƒöÆ Runs on Flask + MySQL ΓÇö your data stays within your own deployment</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Anatomy of an Attack -->
+<section class="flow-section" id="attack-flow">
+    <div class="container">
+        <h2 class="section-title">The Anatomy of an Autonomous Attack</h2>
+        <p class="section-subtitle">Watch how the Agentic AI orchestrates a full-scale social engineering campaign without human intervention.</p>
+        
+        <button id="run-simulation-btn" class="modern-cyber-btn">
+            <span class="btn-glitch"></span>
+            <span class="btn-content">Γû╢ Execute Attack Simulation</span>
+        </button>
+
+        <div class="timeline-container">
+            <div class="timeline-line"></div>
+            <div class="timeline-cards">
+                <div class="timeline-card" onclick="openModal(1)" style="--delay: 1">
+                    <div class="card-icon"><i class="fas fa-search"></i></div>
+                    <h4>1. OSINT Gather</h4>
+                    <p>Scrapes domain & company data</p>
+                </div>
+                <div class="timeline-card" onclick="openModal(2)" style="--delay: 2">
+                    <div class="card-icon"><i class="fas fa-brain"></i></div>
+                    <h4>2. AI Crafting</h4>
+                    <p>Generates personalized emails</p>
+                </div>
+                <div class="timeline-card" onclick="openModal(3)" style="--delay: 3">
+                    <div class="card-icon"><i class="fas fa-envelope-open-text"></i></div>
+                    <h4>3. Delivery</h4>
+                    <p>Sent via SMTP to real inboxes</p>
+                </div>
+                <div class="timeline-card" onclick="openModal(4)" style="--delay: 4">
+                    <div class="card-icon"><i class="fas fa-mouse-pointer"></i></div>
+                    <h4>4. Tracking</h4>
+                    <p>Opens, clicks & reports logged</p>
+                </div>
+                <div class="timeline-card" onclick="openModal(5)" style="--delay: 5">
+                    <div class="card-icon"><i class="fas fa-chart-bar"></i></div>
+                    <h4>5. AI Report</h4>
+                    <p>Risk profile & PDF export</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Interactive Terminal Section -->
+<section class="terminal-section" id="terminal-section" style="display: flex; flex-direction: column; align-items: center; background: var(--bg-card); overflow: hidden; transition: padding 0.6s cubic-bezier(0.4,0,0.2,1), max-height 0.7s cubic-bezier(0.4,0,0.2,1); max-height: 900px; padding: 2rem 0 6rem 0;">
+    <!-- Minimised pill (only visible when closed) -->
+    <div id="term-pill" onclick="openTerminal()" style="display:none; align-items:center; gap:10px; background: rgba(6,182,212,0.08); border: 1px solid rgba(6,182,212,0.25); border-radius: 100px; padding: 8px 20px; cursor: pointer; font-family: 'Space Mono', monospace; font-size: 0.82rem; color: #06b6d4; transition: all 0.3s;" onmouseover="this.style.background='rgba(6,182,212,0.15)'" onmouseout="this.style.background='rgba(6,182,212,0.08)'">
+        <span style="width:8px;height:8px;border-radius:50%;background:#06b6d4;box-shadow:0 0 8px #06b6d4;animation:livePulse 2s infinite;"></span>
+        PhishSim Agentic OS &mdash; <span style="color:#fff;">click to open terminal</span>
+        <i class="fas fa-chevron-down" style="font-size:0.7rem;"></i>
+    </div>
+
+    <div id="terminal-wrapper" style="position: relative; z-index: 10; width: 100%; max-width: 900px; padding: 15px 15px 0 0;">
+        <!-- LIVE badge ΓÇö floats above terminal top-right, draggable -->
+        <div class="floating-term-icon" id="live-badge" onclick="openTerminal()"
+             style="position: absolute; top: 0px; right: 20px; z-index: 20; border-radius: 8px; cursor: grab;"
+             title="Drag to move">
+            <i class="fas fa-satellite-dish"></i> LIVE
+        </div>
+        <div class="terminal-container" id="terminal-main" style="width: 100%; transition: all 0.5s cubic-bezier(0.4,0,0.2,1); transform-origin: top center;">
+            <div class="terminal-header">
+                <div class="terminal-title">
+                    <i class="fas fa-terminal"></i> agent@phishsim.ai ΓÇö v2.0
+                </div>
+                <div class="terminal-dots">
+                    <span class="dot green" onclick="maximizeTerminal()" title="Expand"></span>
+                    <span class="dot yellow" onclick="minimizeTerminal()" title="Minimise"></span>
+                    <span class="dot red" onclick="rebootTerminal()" title="Reboot"></span>
+                </div>
+            </div>
+            <div class="terminal-body" id="terminal-body">
+                <div class="crt-overlay"></div>
+                <div id="terminal-output">
+                    <div style="text-align: center; margin-bottom: 25px; margin-top: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                        <img src="{{ url_for('static', filename='images/terminal_logo.png') }}" alt="PhishSim AI Logo" style="width: 120px; height: 120px; margin-bottom: 15px;">
+                        <div style="color: #3b82f6; font-weight: bold; font-size: 1.3rem; letter-spacing: 2px;">PHISHSIM AGENTIC OS</div>
+                        <div style="color: #64748b; font-size: 0.8rem; letter-spacing: 4px; margin-top: 5px;">v2.0 ΓÇö AUTONOMOUS SIMULATION ENGINE</div>
+                    </div>
+                    <div class="sys-msg-boot">[*] Loading PhishSim modules...</div>
+                    <div class="sys-msg-boot">[*] OpenRouter LLM connection... [OK]</div>
+                    <div class="sys-msg-boot">[*] MySQL tracking database... [OK]</div>
+                    <div class="sys-msg-boot">[*] SMTP relay configured... [OK]</div>
+                    <div class="sys-msg-boot">[*] OSINT engine... [PASSIVE MODE]</div>
+                    <div class="sys-msg" style="margin-top: 15px; color: #4ade80;">PhishSim Agentic OS ready. Type '<span style='color:#06b6d4;'>help</span>' for commands.</div>
+                </div>
+                <div class="terminal-input-row">
+                    <span class="prompt">agent@phishsim:/home/agent$</span>
+                    <input type="text" id="terminal-input" autocomplete="off" spellcheck="false" style="background: transparent !important; background-color: transparent !important; border: none !important; color: #fff; font-family: 'Space Mono', monospace; font-size: 0.9rem; flex: 1; outline: none !important; margin-left: 5px; box-shadow: none !important; appearance: none; caret-color: #06b6d4;">
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+<!-- Enterprise Vertical Bars (Brside Inspiration) -->
+<section class="enterprise-section">
+    <div class="container">
+        <h2 class="section-title" style="margin-bottom: 3rem;">Core Platform Capabilities</h2>
+        <div class="vertical-bars-container">
+            <div class="v-bar active">
+                <div class="v-bar-icon"><i class="fas fa-file-csv"></i></div>
+                <h3 class="v-bar-title">CSV Campaign Launch</h3>
+                <div class="v-bar-content">
+                    <p>Upload an employee CSV and provide your company domain. PhishSim parses departments and job titles to prepare a tailored simulation ΓÇö no manual setup needed.</p>
+                </div>
+            </div>
+            <div class="v-bar">
+                <div class="v-bar-icon"><i class="fas fa-robot"></i></div>
+                <h3 class="v-bar-title">Agentic Email Generation</h3>
+                <div class="v-bar-content">
+                    <p>The AI drafts a unique, context-aware phishing email for each employee. Each message references their role, department, and company tone ΓÇö generated fresh, every time.</p>
+                </div>
+            </div>
+            <div class="v-bar">
+                <div class="v-bar-icon"><i class="fas fa-chart-bar"></i></div>
+                <h3 class="v-bar-title">Real-Time Dashboards</h3>
+                <div class="v-bar-content">
+                    <p>Live metrics track emails sent, open rates, click rates, and how many employees correctly reported the simulation ΓÇö all updated as events happen.</p>
+                </div>
+            </div>
+            <div class="v-bar">
+                <div class="v-bar-icon"><i class="fas fa-brain"></i></div>
+                <h3 class="v-bar-title">AI Risk Analysis</h3>
+                <div class="v-bar-content">
+                    <p>After a campaign, the AI analyzes the click-rate data, identifies the most vulnerable departments, and writes a plain-language risk summary with actionable next steps.</p>
+                </div>
+            </div>
+            <div class="v-bar">
+                <div class="v-bar-icon"><i class="fas fa-file-signature"></i></div>
+                <h3 class="v-bar-title">Security Reports</h3>
+                <div class="v-bar-content">
+                    <p>Each completed campaign generates a detailed security posture report ΓÇö highlighting what worked, who clicked, and what training to prioritize next.</p>
+                </div>
+            </div>
+            <div class="v-bar">
+                <div class="v-bar-icon"><i class="fas fa-file-pdf"></i></div>
+                <h3 class="v-bar-title">PDF Export</h3>
+                <div class="v-bar-content">
+                    <p>Download a professionally formatted PDF report in one click ΓÇö ready for compliance audits, board reviews, or sharing with your security team.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- What PhishSim Reveals -->
+<section style="padding: 6rem 0; background: var(--bg-card);">
+    <div class="container">
+        <h2 class="section-title" style="margin-bottom: 0.8rem;">What a Real Campaign Reveals</h2>
+        <p class="section-subtitle" style="margin-bottom: 3.5rem;">Typical numbers from a PhishSim simulation on a 50-person company. These are the kinds of findings your AI report will show.</p>
+
+        <div style="display: grid; grid-template-columns: repeat(4,1fr); gap: 1.5rem; margin-bottom: 3.5rem;">
+            <div style="background: rgba(15,23,42,0.8); border: 1px solid rgba(255,255,255,0.06); border-radius: 20px; padding: 2rem; text-align: center; position: relative; overflow: hidden; transition: border-color 0.3s;" onmouseover="this.style.borderColor='rgba(59,130,246,0.4)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.06)'">
+                <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,#3b82f6,transparent);"></div>
+                <div style="font-family:'Outfit',sans-serif;font-size:3rem;font-weight:900;color:#3b82f6;line-height:1;">62<span style="font-size:1.5rem;">%</span></div>
+                <div style="font-size:0.8rem;color:#64748b;text-transform:uppercase;letter-spacing:1px;margin-top:8px;">Average Open Rate</div>
+                <div style="font-size:0.78rem;color:#334155;margin-top:6px;">vs 45% industry benchmark</div>
+            </div>
+            <div style="background: rgba(15,23,42,0.8); border: 1px solid rgba(239,68,68,0.2); border-radius: 20px; padding: 2rem; text-align: center; position: relative; overflow: hidden; transition: border-color 0.3s;" onmouseover="this.style.borderColor='rgba(239,68,68,0.5)'" onmouseout="this.style.borderColor='rgba(239,68,68,0.2)'">
+                <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,#ef4444,transparent);"></div>
+                <div style="font-family:'Outfit',sans-serif;font-size:3rem;font-weight:900;color:#f87171;line-height:1;">23<span style="font-size:1.5rem;">%</span></div>
+                <div style="font-size:0.8rem;color:#64748b;text-transform:uppercase;letter-spacing:1px;margin-top:8px;">Average Click Rate</div>
+                <div style="font-size:0.78rem;color:#334155;margin-top:6px;">Finance dept averages 38%</div>
+            </div>
+            <div style="background: rgba(15,23,42,0.8); border: 1px solid rgba(34,197,94,0.2); border-radius: 20px; padding: 2rem; text-align: center; position: relative; overflow: hidden; transition: border-color 0.3s;" onmouseover="this.style.borderColor='rgba(34,197,94,0.5)'" onmouseout="this.style.borderColor='rgba(34,197,94,0.2)'">
+                <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,#22c55e,transparent);"></div>
+                <div style="font-family:'Outfit',sans-serif;font-size:3rem;font-weight:900;color:#4ade80;line-height:1;">8<span style="font-size:1.5rem;">%</span></div>
+                <div style="font-size:0.8rem;color:#64748b;text-transform:uppercase;letter-spacing:1px;margin-top:8px;">Report Rate</div>
+                <div style="font-size:0.78rem;color:#334155;margin-top:6px;">Goal: bring this above 40%</div>
+            </div>
+            <div style="background: rgba(15,23,42,0.8); border: 1px solid rgba(6,182,212,0.2); border-radius: 20px; padding: 2rem; text-align: center; position: relative; overflow: hidden; transition: border-color 0.3s;" onmouseover="this.style.borderColor='rgba(6,182,212,0.5)'" onmouseout="this.style.borderColor='rgba(6,182,212,0.2)'">
+                <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,#06b6d4,transparent);"></div>
+                <div style="font-family:'Outfit',sans-serif;font-size:3rem;font-weight:900;color:#06b6d4;line-height:1;">&lt;5<span style="font-size:1.5rem;">min</span></div>
+                <div style="font-size:0.8rem;color:#64748b;text-transform:uppercase;letter-spacing:1px;margin-top:8px;">Setup to First Send</div>
+                <div style="font-size:0.78rem;color:#334155;margin-top:6px;">CSV &rarr; AI &rarr; dispatch</div>
+            </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+            <div style="background: rgba(239,68,68,0.04); border: 1px solid rgba(239,68,68,0.15); border-radius: 20px; padding: 2rem;">
+                <div style="font-family:'Outfit',sans-serif;font-size:1.2rem;font-weight:800;color:#f87171;margin-bottom:1.5rem;"><i class="fas fa-times-circle"></i> Without Simulation</div>
+                <ul style="list-style:none;padding:0;display:flex;flex-direction:column;gap:0.9rem;">
+                    <li style="display:flex;gap:10px;align-items:flex-start;color:#64748b;font-size:0.9rem;"><span style="color:#ef4444;margin-top:2px;">&times;</span> You don't know which employees would click a real attack</li>
+                    <li style="display:flex;gap:10px;align-items:flex-start;color:#64748b;font-size:0.9rem;"><span style="color:#ef4444;margin-top:2px;">&times;</span> No data on which departments are most exposed</li>
+                    <li style="display:flex;gap:10px;align-items:flex-start;color:#64748b;font-size:0.9rem;"><span style="color:#ef4444;margin-top:2px;">&times;</span> Security training is generic &mdash; not based on real behaviour</li>
+                    <li style="display:flex;gap:10px;align-items:flex-start;color:#64748b;font-size:0.9rem;"><span style="color:#ef4444;margin-top:2px;">&times;</span> Compliance reports have no evidence of human-layer testing</li>
+                </ul>
+            </div>
+            <div style="background: rgba(34,197,94,0.04); border: 1px solid rgba(34,197,94,0.15); border-radius: 20px; padding: 2rem;">
+                <div style="font-family:'Outfit',sans-serif;font-size:1.2rem;font-weight:800;color:#4ade80;margin-bottom:1.5rem;"><i class="fas fa-check-circle"></i> With PhishSim AI</div>
+                <ul style="list-style:none;padding:0;display:flex;flex-direction:column;gap:0.9rem;">
+                    <li style="display:flex;gap:10px;align-items:flex-start;color:#64748b;font-size:0.9rem;"><span style="color:#22c55e;margin-top:2px;">&check;</span> Know exactly who clicks before a real attacker finds out</li>
+                    <li style="display:flex;gap:10px;align-items:flex-start;color:#64748b;font-size:0.9rem;"><span style="color:#22c55e;margin-top:2px;">&check;</span> Department risk scores backed by real simulation data</li>
+                    <li style="display:flex;gap:10px;align-items:flex-start;color:#64748b;font-size:0.9rem;"><span style="color:#22c55e;margin-top:2px;">&check;</span> Each employee who clicks gets an instant AI teachable moment</li>
+                    <li style="display:flex;gap:10px;align-items:flex-start;color:#64748b;font-size:0.9rem;"><span style="color:#22c55e;margin-top:2px;">&check;</span> AI-generated PDF report ready for audits and board meetings</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Final CTA -->
+<section class="final-cta">
+    <div class="container" style="text-align: center;">
+        <h2 class="cta-title">Ready to Test Your Team?</h2>
+        <p class="cta-subtitle">Set up your first phishing simulation in under 5 minutes. No credit card, no complicated setup ΓÇö just a CSV and a company domain.</p>
+        <div style="display: flex; gap: 1.5rem; justify-content: center; flex-wrap: wrap;">
+            <a href="/demo-login" class="modern-cyber-btn pulse" style="font-size: 1.1rem; padding: 1rem 2.5rem; margin-bottom: 0;">
+                <span class="btn-glitch"></span>
+                <span class="btn-content"><i class="fas fa-play-circle"></i> Try Live Demo</span>
+            </a>
+            <a href="/signup" class="modern-cyber-btn" style="font-size: 1.1rem; padding: 1rem 2.5rem; margin-bottom: 0; border-color: #8b5cf6; box-shadow: 0 0 15px rgba(139,92,246,0.3);">
+                <span class="btn-glitch" style="background: rgba(139,92,246,0.1);"></span>
+                <span class="btn-content">Create Free Account <i class="fas fa-arrow-right"></i></span>
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- Modal for Tiles -->
+<div class="modal-overlay" id="info-modal" onclick="closeModal()">
+    <div class="modal-box" onclick="event.stopPropagation()">
+        <i class="fas fa-times modal-close" onclick="closeModal()"></i>
+        <h3 id="modal-title">Title</h3>
+        <p id="modal-text">Details here.</p>
+    </div>
+</div>
+
+<script>
+// --- Typewriter Animation ---
+const words = ["Simulate.", "Train.", "Analyze.", "Protect."];
+let i = 0;
+let timer;
+const typewriterEl = document.getElementById('typewriter-text');
+
+function typingEffect() {
+    let word = words[i].split("");
+    var loopTyping = function() {
+        if (word.length > 0) {
+            typewriterEl.innerHTML += word.shift();
+        } else {
+            setTimeout(deletingEffect, 2500);
+            return false;
+        }
+        timer = setTimeout(loopTyping, 100);
+    };
+    loopTyping();
+}
+
+function deletingEffect() {
+    let word = words[i].split("");
+    var loopDeleting = function() {
+        if (word.length > 0) {
+            word.pop();
+            typewriterEl.innerHTML = word.join("");
+        } else {
+            i = (i + 1) % words.length;
+            setTimeout(typingEffect, 500);
+            return false;
+        }
+        timer = setTimeout(loopDeleting, 50);
+    };
+    loopDeleting();
+}
+typingEffect();
+
+// --- Advanced Interactive Network Graph ---
+const canvas = document.getElementById('network-canvas');
+const ctx = canvas.getContext('2d');
+let width, height;
+let particles = [];
+let mouse = { x: null, y: null };
+
+function resize() {
+    width = canvas.width = window.innerWidth;
+    height = canvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resize);
+resize();
+
+window.addEventListener('mousemove', (e) => {
+    mouse.x = e.x;
+    mouse.y = e.y;
+});
+window.addEventListener('mouseout', () => {
+    mouse.x = null;
+    mouse.y = null;
+});
+window.addEventListener('click', (e) => {
+    // Generate new particles on click
+    for(let i=0; i<8; i++) {
+        let p = new Particle();
+        p.x = mouse.x;
+        p.y = mouse.y;
+        p.vx = (Math.random() - 0.5) * 4; // Burst outward
+        p.vy = (Math.random() - 0.5) * 4;
+        particles.push(p);
+    }
+});
+
+class Particle {
+    constructor() {
+        this.x = Math.random() * width;
+        this.y = Math.random() * height;
+        this.vx = (Math.random() - 0.5) * 0.4; // Very slow
+        this.vy = (Math.random() - 0.5) * 0.4; // Very slow
+        this.radius = Math.random() * 2 + 1;
+        this.baseX = this.x;
+        this.baseY = this.y;
+    }
+    update() {
+        this.x += this.vx;
+        this.y += this.vy;
+        
+        // Boundaries
+        if (this.x < 0 || this.x > width) this.vx *= -1;
+        if (this.y < 0 || this.y > height) this.vy *= -1;
+        
+        // Interactive Mouse Attract/Repel
+        if (mouse.x) {
+            let dx = mouse.x - this.x;
+            let dy = mouse.y - this.y;
+            let dist = Math.sqrt(dx*dx + dy*dy);
+            if (dist < 120) {
+                this.x -= dx * 0.02; // Repel
+                this.y -= dy * 0.02;
+            }
+        }
+    }
+    draw() {
+        const isLight = document.body.classList.contains('light-theme');
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fillStyle = isLight ? 'rgba(37, 99, 235, 0.52)' : 'rgba(6, 182, 212, 0.6)';
+        ctx.fill();
+    }
+}
+
+for (let j = 0; j < 100; j++) particles.push(new Particle());
+
+function animate() {
+    const isLight = document.body.classList.contains('light-theme');
+    const particleColor = isLight ? '37, 99, 235' : '6, 182, 212';
+    const mouseColor = isLight ? '#2563eb' : '#06b6d4';
+    const mouseLineColor = isLight ? '37, 99, 235' : '255, 255, 255';
+    ctx.clearRect(0, 0, width, height);
+    
+    // Draw mouse follower dot (neon blue)
+    if(mouse.x) {
+        ctx.beginPath();
+        ctx.arc(mouse.x, mouse.y, 6, 0, Math.PI * 2);
+        ctx.fillStyle = mouseColor;
+        ctx.shadowBlur = isLight ? 12 : 20;
+        ctx.shadowColor = mouseColor;
+        ctx.fill();
+        ctx.shadowBlur = 0; // reset
+    }
+
+    for (let j = 0; j < particles.length; j++) {
+        particles[j].update();
+        particles[j].draw();
+        
+        for (let k = j; k < particles.length; k++) {
+            const dx = particles[j].x - particles[k].x;
+            const dy = particles[j].y - particles[k].y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            
+            if (dist < 130) {
+                ctx.beginPath();
+                ctx.moveTo(particles[j].x, particles[j].y);
+                ctx.lineTo(particles[k].x, particles[k].y);
+                ctx.strokeStyle = `rgba(${particleColor}, ${(isLight ? 0.42 : 1) * (1 - dist/130)})`;
+                ctx.lineWidth = 0.5;
+                ctx.stroke();
+            }
+        }
+        
+        // Connect to mouse
+        if (mouse.x) {
+            const mdx = particles[j].x - mouse.x;
+            const mdy = particles[j].y - mouse.y;
+            const mdist = Math.sqrt(mdx*mdx + mdy*mdy);
+            if (mdist < 150) {
+                ctx.beginPath();
+                ctx.moveTo(particles[j].x, particles[j].y);
+                ctx.lineTo(mouse.x, mouse.y);
+                ctx.strokeStyle = `rgba(${mouseLineColor}, ${(isLight ? 0.55 : 0.8) - mdist/150})`;
+                ctx.lineWidth = 1;
+                ctx.stroke();
+            }
+        }
+    }
+    requestAnimationFrame(animate);
+}
+animate();
+
+// --- Execute Attack Simulation (Fancy Anim) ---
+document.getElementById('run-simulation-btn').addEventListener('click', function() {
+    const btn = this;
+    btn.classList.add('executing');
+    btn.querySelector('.btn-content').innerHTML = 'Initializing AI...';
+    
+    const cards = document.querySelectorAll('.timeline-card');
+    cards.forEach(c => c.classList.remove('active', 'animate-pop'));
+    
+    setTimeout(() => {
+        btn.querySelector('.btn-content').innerHTML = 'Γû╢ Execute Attack Simulation';
+        btn.classList.remove('executing');
+        
+        cards.forEach((card, idx) => {
+            setTimeout(() => {
+                card.classList.add('active', 'animate-pop');
+                simulateTerminalLog(`Module [${card.querySelector('h4').innerText}] executed successfully.`);
+            }, idx * 1200); // Slowed down significantly
+        });
+    }, 1500);
+});
+
+// --- Modal Logic with Cross ---
+const modalData = {
+    1: { title: "OSINT Gather", text: "PhishSim scrapes publicly available data about the target domain ΓÇö including company descriptions, industry context, and any inferable org structure ΓÇö to build a realistic backdrop for the simulation." },
+    2: { title: "AI Email Crafting", text: "The AI generates a unique phishing email for every employee based on their name, department, and job title. It picks a psychological trigger (urgency, authority, compliance) and writes the email from scratch ΓÇö no templates." },
+    3: { title: "Email Delivery", text: "Emails are dispatched through SMTP ΓÇö either via your own Gmail/SMTP or a local sandbox server. Each one contains an invisible tracking pixel and a unique click-tracking link." },
+    4: { title: "Behavioural Tracking", text: "Every open, click, and report action is logged instantly. This shows exactly who clicked the link, who ignored it, and who correctly flagged it as suspicious." },
+    5: { title: "AI Security Report", text: "Once the campaign is complete, the AI reads the raw event data and writes a multi-section risk report ΓÇö identifying vulnerable departments, explaining what was effective, and recommending training priorities." }
+};
+
+function openModal(id) {
+    document.getElementById('modal-title').textContent = modalData[id].title;
+    document.getElementById('modal-text').textContent = modalData[id].text;
+    document.getElementById('info-modal').classList.add('show');
+}
+
+function closeModal() {
+    document.getElementById('info-modal').classList.remove('show');
+}
+
+// --- Ultrarealistic Terminal Logic ---
+const termMain = document.getElementById('terminal-main');
+const termInput = document.getElementById('terminal-input');
+const termOutput = document.getElementById('terminal-output');
+const termBody = document.getElementById('terminal-body');
+
+function minimizeTerminal() {
+    const section = document.getElementById('terminal-section');
+    const wrapper = document.getElementById('terminal-wrapper');
+    const pill = document.getElementById('term-pill');
+    // Exactly like the profile terminal toggle
+    termMain.style.transform = 'scale(0) translate(0px, 0px)';
+    termMain.style.opacity = '0';
+    termMain.style.pointerEvents = 'none';
+    setTimeout(() => {
+        wrapper.style.display = 'none';
+        section.style.maxHeight = '80px';
+        section.style.padding = '1.5rem 0';
+        pill.style.display = 'flex';
+    }, 400);
+}
+
+function openTerminal() {
+    const section = document.getElementById('terminal-section');
+    const wrapper = document.getElementById('terminal-wrapper');
+    const pill = document.getElementById('term-pill');
+    pill.style.display = 'none';
+    wrapper.style.display = 'block';
+    section.style.maxHeight = '900px';
+    section.style.padding = '2rem 0 6rem 0';
+    setTimeout(() => {
+        termMain.style.transform = 'scale(1) translate(0px, 0px)';
+        termMain.style.opacity = '1';
+        termMain.style.pointerEvents = 'all';
+        setTimeout(() => termInput.focus(), 300);
+    }, 200);
+}
+
+// --- Draggable LIVE badge ---
+(function() {
+    const badge = document.getElementById('live-badge');
+    if (!badge) return;
+    let isDragging = false, startX, startY, origTop, origRight;
+    badge.addEventListener('mousedown', function(e) {
+        isDragging = true;
+        startX = e.clientX;
+        startY = e.clientY;
+        const rect = badge.getBoundingClientRect();
+        const wrapper = document.getElementById('terminal-wrapper');
+        const wRect = wrapper.getBoundingClientRect();
+        origTop = rect.top - wRect.top;
+        origRight = wRect.right - rect.right;
+        badge.style.cursor = 'grabbing';
+        e.preventDefault();
+    });
+    document.addEventListener('mousemove', function(e) {
+        if (!isDragging) return;
+        const dx = e.clientX - startX;
+        const dy = e.clientY - startY;
+        badge.style.top = Math.max(0, origTop + dy) + 'px';
+        badge.style.right = Math.max(0, origRight - dx) + 'px';
+    });
+    document.addEventListener('mouseup', function() {
+        if (isDragging) { isDragging = false; badge.style.cursor = 'grab'; }
+    });
+})();
+
+let isExpanded = false;
+function maximizeTerminal() {
+    if (!isExpanded) {
+        termMain.style.transition = "height 0.4s ease";
+        termMain.style.height = "700px";
+        isExpanded = true;
+    } else {
+        termMain.style.height = "500px";
+        isExpanded = false;
+    }
+}
+
+function rebootTerminal() {
+    termOutput.innerHTML = '';
+    const initialBoot = `
+        <div style="text-align: center; margin-bottom: 25px; margin-top: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+            <img src="/static/images/terminal_logo.png" alt="PhishSim AI Logo" style="width: 120px; height: 120px; margin-bottom: 15px;">
+            <div style="color: #3b82f6; font-weight: bold; font-size: 1.3rem; letter-spacing: 2px;">PHISHSIM AGENTIC OS</div>
+            <div style="color: #64748b; font-size: 0.8rem; letter-spacing: 4px; margin-top: 5px;">v2.0 \u2014 AUTONOMOUS SIMULATION ENGINE</div>
+        </div>
+        <div class="sys-msg-boot">[*] Rebooting PhishSim modules...</div>
+    `;
+    termOutput.innerHTML = initialBoot;
+    setTimeout(() => { termOutput.innerHTML += `<div class="sys-msg-boot">[*] OpenRouter LLM connection... [OK]</div>`; termBody.scrollTop = termBody.scrollHeight; }, 500);
+    setTimeout(() => { termOutput.innerHTML += `<div class="sys-msg-boot">[*] MySQL tracking database... [OK]</div>`; termBody.scrollTop = termBody.scrollHeight; }, 1000);
+    setTimeout(() => { termOutput.innerHTML += `<div class="sys-msg-boot">[*] SMTP relay configured... [OK]</div>`; termBody.scrollTop = termBody.scrollHeight; }, 1500);
+    setTimeout(() => { termOutput.innerHTML += `<div class="sys-msg" style="margin-top: 15px; color: #4ade80;">PhishSim Agentic OS ready. Type '<span style='color:#06b6d4;'>help</span>' for commands.</div>`; termBody.scrollTop = termBody.scrollHeight; }, 2000);
+    currentPath = "/home/agent";
+    document.querySelector('.terminal-input-row .prompt').innerText = `agent@phishsim:${currentPath}$`;
+}
+
+function simulateTerminalLog(text) {
+    if(termMain.style.display !== 'none') {
+        const line = document.createElement('div');
+        line.className = 'sys-msg-auto typing-effect';
+        line.innerText = `[SYS] ${text}`;
+        termOutput.appendChild(line);
+        termBody.scrollTop = termBody.scrollHeight;
+    }
+}
+
+// --- Virtual File System (PhishSim Specific) ---
+const vfs = {
+    "home": {
+        "agent": {
+            "README.md": "PhishSim Agentic OS v2.0\n================================\nAutonomous phishing simulation engine.\nPowered by OpenRouter LLMs + OSINT scraping.\n\nQuick Start:\n  run_agent     ΓåÆ Launch a full simulation\n  osint <domain>ΓåÆ Scan a target domain\n  campaigns     ΓåÆ List all active campaigns\n  status        ΓåÆ Engine status\n  help          ΓåÆ All commands",
+            "campaigns": {
+                "q3_finance_sim.json": '{\n  "id": 1,\n  "name": "Q3 Finance Phish",\n  "scenario": "ceo_fraud",\n  "targets": 45,\n  "sent": 45,\n  "opens": 27,\n  "clicks": 8,\n  "reports": 3,\n  "risk_score": "HIGH",\n  "status": "launched"\n}',
+                "hr_training_sim.json": '{\n  "id": 2,\n  "name": "Mandatory HR Training",\n  "scenario": "hr_update",\n  "targets": 30,\n  "sent": 30,\n  "opens": 24,\n  "clicks": 11,\n  "reports": 1,\n  "risk_score": "CRITICAL",\n  "status": "launched"\n}'
+            },
+            "osint_cache": {
+                "demo-corp.com.txt": "[OSINT REPORT] demo-corp.com\n==============================\nCompany: Demo Corporation Ltd.\nIndustry: Financial Services\nHeadcount: ~200 employees\nTech Stack: Microsoft 365, Salesforce, Slack\nExposed Subdomains: mail.demo-corp.com, hr.demo-corp.com\nLinkedIn Employees Found: 142\nDepartments: Finance, HR, IT, Operations, Legal\nSenior Roles: CFO, CHRO, CTO identified\nRisk Profile: HIGH ΓÇö Microsoft 365 users are prime CEO fraud targets",
+                "targets.csv": "name,email,department,title\nAlice Sharma,alice@demo-corp.com,Finance,Accounts Manager\nBob Patel,bob@demo-corp.com,HR,HR Business Partner\nCarol Singh,carol@demo-corp.com,IT,Systems Admin\nDavid Khan,david@demo-corp.com,Finance,Senior Analyst\n... (45 total employees loaded)"
+            },
+            "ai_output": {
+                "email_sample_1.html": "Subject: URGENT: Wire Transfer Required Before 3PM\nFrom: CEO's Office\n\n<p>Alice,</p>\n<p>I'm in back-to-back board meetings today. I need you to process a wire transfer of $47,500 for our new vendor agreement. This must go out by 3PM today.</p>\n<p>Please click here to <a href='#'>review the payment authorization form</a>.</p>\n<p>Do not discuss this with anyone else until confirmed. Thanks.</p>",
+                "risk_report_q3.txt": "PHISHSIM AI RISK REPORT\n=======================\nCampaign: Q3 Finance Phish\nRisk Level: HIGH\n\nKey Findings:\n- 60% open rate (industry avg: 45%)\n- 17.8% click rate (Finance dept most vulnerable)\n- CEO Fraud scenario most effective\n- 3 employees correctly reported the simulation\n\nAI Recommendation:\nΓåÆ Mandatory wire-transfer verification training for Finance\nΓåÆ Implement dual-approval policy for transactions >$10,000\nΓåÆ Schedule follow-up simulation in 30 days"
+            }
+        }
+    },
+    "var": {
+        "log": {
+            "engine.log": "[2026-05-04 09:14:22] Engine boot complete\n[2026-05-04 09:14:23] OpenRouter LLM connection: OK\n[2026-05-04 09:14:24] MySQL connection: OK\n[2026-05-04 09:14:25] SMTP relay: OK (Gmail)\n[2026-05-04 09:15:01] Campaign #1 started: 45 targets\n[2026-05-04 09:15:02] OSINT scan: demo-corp.com ΓåÆ 142 employees found\n[2026-05-04 09:15:45] AI generated 45 unique phishing emails\n[2026-05-04 09:16:12] 45/45 emails dispatched successfully\n[2026-05-04 09:18:44] Event: alice@demo-corp.com opened email\n[2026-05-04 09:19:01] Event: alice@demo-corp.com CLICKED link ΓÜá∩╕Å\n[2026-05-04 09:21:33] Event: carol@demo-corp.com reported email Γ£à",
+            "events.log": "[OPEN]   alice@demo-corp.com       09:18:44\n[OPEN]   bob@demo-corp.com         09:19:12\n[CLICK]  alice@demo-corp.com  ΓÜá∩╕Å   09:19:01\n[CLICK]  david@demo-corp.com  ΓÜá∩╕Å   09:20:55\n[REPORT] carol@demo-corp.com  Γ£à   09:21:33\n[OPEN]   james@demo-corp.com       09:22:10\n[CLICK]  james@demo-corp.com  ΓÜá∩╕Å   09:22:44"
+        }
+    },
+    "etc": {
+        "phishsim.conf": '{\n  "engine": "PhishSim Agentic OS v2.0",\n  "llm_provider": "OpenRouter",\n  "model": "openrouter/free",\n  "smtp_mode": "live",\n  "tracking": "pixel + click",\n  "osint": "enabled",\n  "db": "MySQL (TiDB Serverless)",\n  "deployment": "Render.com"\n}',
+        "scenarios.json": '[\n  "ceo_fraud    ΓåÆ Impersonates executive, urgent wire transfer",\n  "hr_update    ΓåÆ Fake HR compliance deadline",\n  "it_alert     ΓåÆ Account lockout / password reset",\n  "invoice      ΓåÆ Urgent vendor invoice to finance dept"\n]'
+    }
+};
+
+let currentPath = "/home/agent";
+document.querySelector('.prompt').innerText = `agent@phishsim:${currentPath}$`;
+
+function getDir(path) {
+    if (path === '/') return vfs;
+    let parts = path.split('/').filter(p => p);
+    let curr = vfs;
+    for (let p of parts) {
+        if (curr[p] !== undefined) curr = curr[p];
+        else return null;
+    }
+    return curr;
+}
+
+const availableCommands = ['clear', 'ls', 'cd', 'cat', 'pwd', 'whoami', 'osint', 'campaigns', 'status', 'run_agent', 'help'];
+
+termInput.addEventListener('keydown', function(e) {
+    if (e.key === 'Tab') {
+        e.preventDefault();
+        const val = this.value;
+        const parts = val.split(' ');
+        if (parts.length === 1) {
+            const matches = availableCommands.filter(c => c.startsWith(val));
+            if (matches.length === 1) this.value = matches[0] + ' ';
+        } else if (parts.length === 2 && (parts[0] === 'cat' || parts[0] === 'cd')) {
+            const dir = getDir(currentPath);
+            if (dir && typeof dir === 'object') {
+                const matches = Object.keys(dir).filter(k => k.startsWith(parts[1]));
+                if (matches.length === 1) this.value = parts[0] + ' ' + matches[0];
+            }
+        }
+    }
+});
+
+termInput.addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        const val = this.value.trim();
+        this.value = '';
+
+        const line = document.createElement('div');
+        line.innerHTML = `<span class="prompt">agent@phishsim:${currentPath}$</span> <span class="term-text">${val}</span>`;
+        termOutput.appendChild(line);
+
+        if (val === '') { termBody.scrollTop = termBody.scrollHeight; return; }
+
+        const args = val.split(' ').filter(a => a);
+        const cmd = args[0].toLowerCase();
+        let outputHTML = '';
+
+        if (cmd === 'help') {
+            outputHTML = `<div class="sys-msg-info" style="line-height:2;">
+[PHISHSIM ENGINE ΓÇö AVAILABLE COMMANDS]<br>
+<span style="color:#06b6d4;">osint &lt;domain&gt;</span>     ΓåÆ Run OSINT footprint on a company domain<br>
+<span style="color:#06b6d4;">campaigns</span>           ΓåÆ List all campaigns and live stats<br>
+<span style="color:#06b6d4;">run_agent</span>           ΓåÆ Trigger a full simulation sequence<br>
+<span style="color:#06b6d4;">status</span>              ΓåÆ Show engine + connection status<br>
+<span style="color:#06b6d4;">ls</span>                  ΓåÆ List files in current directory<br>
+<span style="color:#06b6d4;">cat &lt;file&gt;</span>         ΓåÆ Read a file<br>
+<span style="color:#06b6d4;">cd &lt;dir&gt;</span>           ΓåÆ Change directory<br>
+<span style="color:#06b6d4;">clear</span>               ΓåÆ Clear terminal<br>
+</div>`;
+        } else if (cmd === 'clear') {
+            termOutput.innerHTML = '';
+        } else if (cmd === 'whoami') {
+            outputHTML = `<div class="sys-msg">phishsim_agent <span style="color:#64748b;">ΓÇö Autonomous Security Simulation Engine</span></div>`;
+        } else if (cmd === 'pwd') {
+            outputHTML = `<div class="sys-msg">${currentPath}</div>`;
+        } else if (cmd === 'status') {
+            outputHTML = `<div class="sys-msg-success">[+] Engine: <span style="color:#4ade80;">ONLINE</span></div>`;
+            setTimeout(() => { termOutput.innerHTML += `<div class="sys-msg-success">[+] LLM (OpenRouter): <span style="color:#4ade80;">CONNECTED</span></div>`; termBody.scrollTop = termBody.scrollHeight; }, 200);
+            setTimeout(() => { termOutput.innerHTML += `<div class="sys-msg-success">[+] MySQL Database: <span style="color:#4ade80;">CONNECTED</span></div>`; termBody.scrollTop = termBody.scrollHeight; }, 400);
+            setTimeout(() => { termOutput.innerHTML += `<div class="sys-msg-success">[+] SMTP Relay: <span style="color:#4ade80;">READY</span></div>`; termBody.scrollTop = termBody.scrollHeight; }, 600);
+            setTimeout(() => { termOutput.innerHTML += `<div class="sys-msg-warn">[!] OSINT Module: <span style="color:#facc15;">PASSIVE MODE</span></div>`; termBody.scrollTop = termBody.scrollHeight; }, 800);
+            setTimeout(() => { termOutput.innerHTML += `<div class="sys-msg-info">ΓöÇΓöÇ 2 active campaigns | 75 targets | Global Risk: 24%</div>`; termBody.scrollTop = termBody.scrollHeight; }, 1000);
+        } else if (cmd === 'campaigns') {
+            outputHTML = `<div class="sys-msg-info">Loading campaign registry...</div>`;
+            setTimeout(() => { termOutput.innerHTML += `<div class="sys-msg" style="font-family:'Space Mono',monospace; font-size:0.8rem; line-height:1.8;">
+ID  NAME                          STATUS    TARGETS  CLICKS  RISK<br>
+<span style="color:#4ade80;">ΓöÇΓöÇ  ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ  ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ  ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ  ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ  ΓöÇΓöÇΓöÇΓöÇ</span><br>
+<span style="color:#facc15;">#1  Q3 Finance Phish (CEO Fraud)  launched  45       8       HIGH</span><br>
+<span style="color:#ef4444;">#2  Mandatory HR Training          launched  30       11      CRITICAL</span><br>
+</div>`; termBody.scrollTop = termBody.scrollHeight; }, 400);
+            setTimeout(() => { termOutput.innerHTML += `<div class="sys-msg-info">Tip: Use 'cat campaigns/q3_finance_sim.json' to see full details.</div>`; termBody.scrollTop = termBody.scrollHeight; }, 900);
+        } else if (cmd === 'osint') {
+            const target = args[1] || 'demo-corp.com';
+            outputHTML = `<div class="sys-msg-warn">[!] Initiating passive OSINT footprint on: <span style="color:#fff;">${target}</span></div>`;
+            setTimeout(() => { termOutput.innerHTML += `<div class="sys-msg-boot">    Resolving MX records...</div>`; termBody.scrollTop = termBody.scrollHeight; }, 500);
+            setTimeout(() => { termOutput.innerHTML += `<div class="sys-msg-boot">    Scraping public company profile...</div>`; termBody.scrollTop = termBody.scrollHeight; }, 1000);
+            setTimeout(() => { termOutput.innerHTML += `<div class="sys-msg-boot">    Cross-referencing LinkedIn employee data...</div>`; termBody.scrollTop = termBody.scrollHeight; }, 1500);
+            setTimeout(() => { termOutput.innerHTML += `<div class="sys-msg-success">[+] 142 employee profiles discovered</div>`; termBody.scrollTop = termBody.scrollHeight; }, 2200);
+            setTimeout(() => { termOutput.innerHTML += `<div class="sys-msg-success">[+] Industry: Financial Services ΓåÆ CEO Fraud scenario recommended</div>`; termBody.scrollTop = termBody.scrollHeight; }, 2700);
+            setTimeout(() => { termOutput.innerHTML += `<div class="sys-msg-success">[+] Tech stack fingerprint: Microsoft 365 detected</div>`; termBody.scrollTop = termBody.scrollHeight; }, 3100);
+            setTimeout(() => { termOutput.innerHTML += `<div class="sys-msg-warn">[!] 3 exposed subdomains found: mail.${target}, hr.${target}, portal.${target}</div>`; termBody.scrollTop = termBody.scrollHeight; }, 3600);
+            setTimeout(() => { termOutput.innerHTML += `<div class="sys-msg-info">ΓöÇΓöÇ OSINT report saved to osint_cache/${target}.txt</div>`; termBody.scrollTop = termBody.scrollHeight; }, 4000);
+        } else if (cmd === 'run_agent') {
+            document.getElementById('run-simulation-btn').click();
+            outputHTML = `<div class="sys-msg-success">[+] Bootstrapping PhishSim Agentic Engine...</div>`;
+            setTimeout(() => { termOutput.innerHTML += `<div class="sys-msg-boot">    Step 1/5: OSINT scan initiated...</div>`; termBody.scrollTop = termBody.scrollHeight; }, 500);
+            setTimeout(() => { termOutput.innerHTML += `<div class="sys-msg-boot">    Step 2/5: AI email generation (45 targets)...</div>`; termBody.scrollTop = termBody.scrollHeight; }, 1800);
+            setTimeout(() => { termOutput.innerHTML += `<div class="sys-msg-boot">    Step 3/5: Dispatching via SMTP relay...</div>`; termBody.scrollTop = termBody.scrollHeight; }, 3000);
+            setTimeout(() => { termOutput.innerHTML += `<div class="sys-msg-boot">    Step 4/5: Activating tracking pixels...</div>`; termBody.scrollTop = termBody.scrollHeight; }, 4200);
+            setTimeout(() => { termOutput.innerHTML += `<div class="sys-msg-success">[+] Step 5/5: Live event monitoring active</div>`; termBody.scrollTop = termBody.scrollHeight; }, 5400);
+            setTimeout(() => { termOutput.innerHTML += `<div class="sys-msg-warn">[!] First click detected: alice@demo-corp.com ΓÇö CEO Fraud ΓÜá∩╕Å</div>`; termBody.scrollTop = termBody.scrollHeight; }, 6000);
+        } else if (cmd === 'ls') {
+            const dir = getDir(currentPath);
+            if (dir && typeof dir === 'object') {
+                let items = Object.keys(dir).map(k => typeof dir[k] === 'object'
+                    ? `<span style="color:#3b82f6;font-weight:bold">${k}/</span>`
+                    : `<span style="color:#cbd5e1">${k}</span>`);
+                outputHTML = `<div class="sys-msg" style="display:flex;gap:20px;flex-wrap:wrap;">${items.join('')}</div>`;
+            }
+        } else if (cmd === 'cd') {
+            let target = args[1] || '/home/agent';
+            if (target === '..') {
+                if (currentPath !== '/') currentPath = currentPath.substring(0, currentPath.lastIndexOf('/')) || '/';
+            } else if (target === '/') {
+                currentPath = '/';
+            } else {
+                let newPath = target.startsWith('/') ? target : (currentPath === '/' ? '/' + target : currentPath + '/' + target);
+                const dir = getDir(newPath);
+                if (dir && typeof dir === 'object') {
+                    currentPath = newPath;
+                } else {
+                    outputHTML = `<div class="sys-msg-error">bash: cd: ${target}: No such file or directory</div>`;
+                }
+            }
+            document.querySelector('.terminal-input-row .prompt').innerText = `agent@phishsim:${currentPath}$`;
+        } else if (cmd === 'cat') {
+            if (!args[1]) {
+                outputHTML = `<div class="sys-msg-error">cat: missing operand</div>`;
+            } else {
+                const dir = getDir(currentPath);
+                if (dir && dir[args[1]] && typeof dir[args[1]] === 'string') {
+                    outputHTML = `<div class="sys-msg" style="white-space:pre-wrap; color:#94a3b8; font-size:0.85rem; border-left: 2px solid #1e293b; padding-left: 12px;">${dir[args[1]]}</div>`;
+                } else if (dir && dir[args[1]] && typeof dir[args[1]] === 'object') {
+                    outputHTML = `<div class="sys-msg-error">cat: ${args[1]}: Is a directory ΓÇö use 'cd ${args[1]}' then 'ls'</div>`;
+                } else {
+                    outputHTML = `<div class="sys-msg-error">cat: ${args[1]}: No such file or directory</div>`;
+                }
+            }
+        } else {
+            outputHTML = `<div class="sys-msg-error">phishsim: ${cmd}: command not found ΓÇö type 'help' for commands</div>`;
+        }
+
+        if (outputHTML) termOutput.innerHTML += outputHTML;
+        termBody.scrollTop = termBody.scrollHeight;
+    }
+});
+document.getElementById('terminal-main').addEventListener('click', () => { termInput.focus(); });
+
+// Removed random background ping text for cleaner UI
+
+// --- Vertical Accordion (Hover-to-expand) ---
+document.querySelectorAll('.v-bar').forEach(bar => {
+    bar.addEventListener('mouseenter', function() {
+        document.querySelectorAll('.v-bar').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+    });
+});
+// Keep the first one active if none hovered
+const barsContainer = document.querySelector('.vertical-bars-container');
+if (barsContainer) {
+    barsContainer.addEventListener('mouseleave', function() {
+        const anyActive = [...document.querySelectorAll('.v-bar')].some(b => b.classList.contains('active'));
+        if (!anyActive) document.querySelector('.v-bar').classList.add('active');
+    });
+}
+</script>
+{% endblock %}
