@@ -257,6 +257,136 @@
             linear-gradient(rgba(37, 99, 235, 0.04) 1px, transparent 1px),
             linear-gradient(90deg, rgba(37, 99, 235, 0.04) 1px, transparent 1px) !important;
     }
+
+    /* Results view reveal animation */
+    #analyzer-results-view {
+        opacity: 0;
+        transform: translateY(16px);
+        transition: opacity 0.45s ease-out, transform 0.45s cubic-bezier(0.16,1,0.3,1);
+    }
+    #analyzer-results-view.results-visible {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    /* Analyzed Payload Info Bar */
+    .payload-info-bar {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        background: rgba(6,182,212,0.04);
+        border: 1px solid rgba(6,182,212,0.18);
+        border-radius: 10px;
+        padding: 10px 16px;
+        margin-bottom: 1.5rem;
+        font-size: 0.82rem;
+        flex-wrap: wrap;
+    }
+    body.light-theme .payload-info-bar {
+        background: rgba(37,99,235,0.04);
+        border-color: rgba(37,99,235,0.18);
+    }
+    .payload-info-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 3px 10px;
+        border-radius: 100px;
+        background: rgba(255,255,255,0.04);
+        border: 1px solid var(--border-color);
+        color: var(--text-muted);
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+    }
+    body.light-theme .payload-info-chip {
+        background: rgba(0,0,0,0.03);
+        border-color: #e2e8f0;
+    }
+    .payload-subject-label {
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        white-space: nowrap;
+    }
+    .payload-subject-value {
+        font-family: var(--font-sans);
+        font-weight: 600;
+        color: #fff;
+        font-size: 0.88rem;
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    body.light-theme .payload-subject-value {
+        color: #0f172a;
+    }
+
+    /* Threat DNA Fingerprint Panel */
+    .dna-panel {
+        background: rgba(255,255,255,0.015);
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        padding: 2rem;
+        margin-top: 2rem;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+        align-items: center;
+    }
+    body.light-theme .dna-panel {
+        background: #ffffff;
+        border-color: #e2e8f0;
+    }
+    .dna-axis-list {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin-top: 1.2rem;
+    }
+    .dna-axis-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+    }
+    .dna-axis-label {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        min-width: 130px;
+    }
+    body.light-theme .dna-axis-label { color: #64748b; }
+    .dna-axis-bar-track {
+        flex: 1;
+        height: 5px;
+        background: rgba(255,255,255,0.05);
+        border-radius: 99px;
+        overflow: hidden;
+    }
+    body.light-theme .dna-axis-bar-track { background: #e2e8f0; }
+    .dna-axis-bar-fill {
+        height: 100%;
+        border-radius: 99px;
+        transition: width 1s cubic-bezier(0.16,1,0.3,1);
+    }
+    .dna-axis-score {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        font-weight: 700;
+        width: 28px;
+        text-align: right;
+    }
+    @media (max-width: 768px) {
+        .dna-panel {
+            grid-template-columns: 1fr;
+        }
+    }
 </style>
 
 <!-- Floating Session History Drawer Overlay -->
@@ -449,6 +579,9 @@
                 <button type="button" id="reset-payload-btn" class="preset-btn cyber-glow-hover" onclick="resetAnalysis()" title="Reset scanner">
                     <i class="ti ti-refresh" style="font-size:1rem;"></i>
                 </button>
+                <button type="button" class="preset-btn cyber-glow-hover" onclick="toggleHistoryDrawer()" title="Scan History">
+                    <i class="ti ti-history" style="font-size:1rem;"></i>
+                </button>
             </div>
         </div>
 
@@ -467,20 +600,29 @@
             <div id="result-loading" style="display: none; width: 100%;">
                 <h3 style="font-family:var(--font-sans); color:#fff; font-size:1.1rem; margin-top:0; margin-bottom:1.5rem; text-align:center;">Threat Heuristics Engine</h3>
                 <!-- Console log panel -->
-                <div id="log-terminal" style="background:#020617 !important; border:1px solid var(--border-color); border-radius:10px; padding:1.2rem; height:220px; overflow-y:auto; margin-bottom:1.5rem; box-shadow: inset 0 0 15px rgba(0,0,0,0.5);"></div>
+                <div id="log-terminal" style="background:#020617 !important; border:1px solid var(--border-color); border-radius:10px; padding:1.2rem; height:420px; overflow-y:auto; margin-bottom:1.5rem; box-shadow: inset 0 0 15px rgba(0,0,0,0.5);"></div>
                 <div style="color:var(--text-muted); font-size:0.75rem; text-align:center; font-family:var(--font-mono); letter-spacing:0.5px;">RUNNING THREAT DECRYPTION CYCLES...</div>
             </div>
         </div>
     </div>
 
     <!-- VIEW 2: Wide Full-width Results Dashboard (Appears after completion) -->
-    <div id="analyzer-results-view" style="display: none; animation: fadeInUp 0.5s ease-out; width: 100%;">
+    <div id="analyzer-results-view" style="display: none; width: 100%;">
         <!-- Header with Back Button -->
-        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 1.2rem; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 1.2rem; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
             <button onclick="goBackToInput()" class="btn-primary-action cyber-glow-hover" style="width: auto; padding: 10px 20px; font-size: 0.85rem; margin: 0; text-transform: uppercase;">
                 <i class="ti ti-arrow-left" style="margin-right:6px; font-size:1.1rem; vertical-align:middle;"></i> Scan Another Email
             </button>
             <span style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;">Intelligence Briefing &mdash; Decryption Complete</span>
+        </div>
+
+        <!-- Analyzed Payload Info Bar -->
+        <div class="payload-info-bar">
+            <span class="payload-info-chip"><i class="ti ti-file-text"></i> Analyzed Payload</span>
+            <span class="payload-subject-label">Subject:</span>
+            <span class="payload-subject-value" id="payload-subject-display">—</span>
+            <span class="payload-info-chip" id="payload-mode-chip"><i class="ti ti-mail"></i> Email Body Mode</span>
+            <span class="payload-info-chip" id="payload-tokens-chip"><i class="ti ti-hash"></i> 0 tokens</span>
         </div>
 
         <!-- Row 1: Gauge Left, Metrics & Recommendation Center-Right -->
@@ -548,7 +690,7 @@
                         <span style="font-size: 0.88rem; font-weight: 700; color: #fff;">Teachable Action Plan</span>
                     </div>
                     <p style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.45; margin-bottom: 12px; margin-top: 4px;">This threat scenario represents a high-conversion security risk. Execute a test simulation template targeting your employees now.</p>
-                    <a href="/new-campaign" class="btn-primary-action cyber-glow-hover" style="display: inline-block; width: auto; padding: 8px 16px; font-size: 0.78rem; border-radius: 6px; font-family: var(--font-sans);">Train Your Team</a>
+                    <a href="/new-campaign?scenario=ceo_fraud" class="btn-primary-action cyber-glow-hover" style="display: inline-block; width: auto; padding: 8px 16px; font-size: 0.78rem; border-radius: 6px; font-family: var(--font-sans);">Train Your Team</a>
                 </div>
             </div>
         </div>
@@ -589,8 +731,32 @@
                 </div>
             </div>
         </div>
+
+        <!-- Row 3: Threat DNA Fingerprint (full-width radar chart) -->
+        <div class="dna-panel">
+            <!-- Left: Title + axis score list -->
+            <div>
+                <div style="display:flex; align-items:center; gap:10px; margin-bottom:4px;">
+                    <i class="ti ti-dna" style="font-size:1.6rem; color:var(--accent-cyan);"></i>
+                    <h3 style="font-family:var(--font-sans); font-size:1.15rem; font-weight:700; color:#fff; margin:0;">Threat DNA Fingerprint</h3>
+                </div>
+                <p style="font-size:0.8rem; color:var(--text-muted); margin:0 0 1rem 0; line-height:1.5;">Multi-axis behavioral signature derived from AI analysis. Each axis represents a distinct manipulation vector scored 0–100.</p>
+                <div class="dna-axis-list" id="dna-axis-list">
+                    <!-- Rendered dynamically -->
+                </div>
+                <div style="margin-top:1.2rem; padding-top:0.8rem; border-top:1px solid var(--border-color); font-family:var(--font-mono); font-size:0.7rem; color:var(--text-muted);" id="dna-summary-line">
+                    <!-- Rendered dynamically -->
+                </div>
+            </div>
+            <!-- Right: Radar Chart -->
+            <div style="position:relative; max-width:360px; margin:0 auto; width:100%;">
+                <canvas id="dna-radar-chart" width="360" height="360"></canvas>
+            </div>
+        </div>
     </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
 <script>
     let analyzerMode = 'body'; // body or headers
@@ -764,17 +930,23 @@ Date: Mon, 25 May 2026 09:28:00 -0400`
 
     function resetAnalysis() {
         document.getElementById('email-textarea').value = '';
-        document.getElementById('analyzer-results-view').style.display = 'none';
+        const resultsView = document.getElementById('analyzer-results-view');
+        resultsView.classList.remove('results-visible');
+        resultsView.style.display = 'none';
         document.getElementById('result-loading').style.display = 'none';
         document.getElementById('result-placeholder').style.display = 'block';
         document.getElementById('analyzer-input-view').style.display = 'grid';
         document.querySelectorAll('.inbox-preset-row').forEach(row => row.classList.remove('active'));
         updateCounter();
+        if (window._dnaChart) { window._dnaChart.destroy(); window._dnaChart = null; }
     }
 
     function goBackToInput() {
-        document.getElementById('analyzer-results-view').style.display = 'none';
+        const resultsView = document.getElementById('analyzer-results-view');
+        resultsView.classList.remove('results-visible');
+        resultsView.style.display = 'none';
         document.getElementById('analyzer-input-view').style.display = 'grid';
+        if (window._dnaChart) { window._dnaChart.destroy(); window._dnaChart = null; }
     }
 
     // History Panel Logic
@@ -905,8 +1077,26 @@ Date: Mon, 25 May 2026 09:28:00 -0400`
                 // Hide input view & logs, display wide results view
                 document.getElementById('result-loading').style.display = 'none';
                 document.getElementById('analyzer-input-view').style.display = 'none';
-                document.getElementById('analyzer-results-view').style.display = 'block';
-                
+                const resultsView = document.getElementById('analyzer-results-view');
+                resultsView.classList.remove('results-visible');
+                resultsView.style.display = 'block';
+                // Trigger CSS reveal transition on next tick
+                requestAnimationFrame(() => {
+                    requestAnimationFrame(() => { resultsView.classList.add('results-visible'); });
+                });
+
+                // --- Populate Payload Info Bar ---
+                const subjectMatch = emailText.match(/^Subject:\s*(.+)$/im);
+                const subjectText = subjectMatch ? subjectMatch[1].trim() : '(No subject line found)';
+                const subjectDisplay = document.getElementById('payload-subject-display');
+                if (subjectDisplay) subjectDisplay.textContent = subjectText;
+                const modeChip = document.getElementById('payload-mode-chip');
+                if (modeChip) {
+                    modeChip.innerHTML = `<i class="ti ti-${analyzerMode === 'headers' ? 'file-text' : 'mail'}"></i> ${analyzerMode === 'headers' ? 'Raw Headers Mode' : 'Email Body Mode'}`;
+                }
+                const tokensChip = document.getElementById('payload-tokens-chip');
+                if (tokensChip) tokensChip.innerHTML = `<i class="ti ti-hash"></i> ${data.word_count || 0} tokens`;
+
                 const score = data.score;
                 document.getElementById('risk-score-res').textContent = score;
                 
@@ -936,7 +1126,7 @@ Date: Mon, 25 May 2026 09:28:00 -0400`
                 const ctaCard = document.getElementById('teachable-cta-card-res');
                 if (score > 65) {
                     ctaCard.style.display = 'block';
-                    ctaCard.querySelector('a').href = `/new-campaign?scenario_prefill=${analyzerMode === 'headers' ? 'ceo_fraud' : 'ceo_fraud'}`;
+                    ctaCard.querySelector('a').href = `/new-campaign?scenario=${analyzerMode === 'headers' ? 'ceo_fraud' : 'ceo_fraud'}`;
                 } else {
                     ctaCard.style.display = 'none';
                 }
@@ -996,6 +1186,9 @@ Date: Mon, 25 May 2026 09:28:00 -0400`
                 // Add to Session History & auto open drawer briefly to signal addition
                 addScanToHistory(score, riskLevel.verdict, emailText);
                 
+                // Render Threat DNA Fingerprint
+                renderDNAFingerprint(score, riskLevel, emailText);
+
                 const drawer = document.getElementById('history-drawer');
                 const overlay = document.getElementById('history-drawer-overlay');
                 if (drawer && !drawer.classList.contains('open')) {
@@ -1015,6 +1208,132 @@ Date: Mon, 25 May 2026 09:28:00 -0400`
             console.error(err);
             alert('Heuristics connection failed.');
             resetAnalysis();
+        });
+    }
+
+    /* ---------- Threat DNA Fingerprint ---------- */
+    function renderDNAFingerprint(score, riskLevel, emailText) {
+        // Derive axis scores from the overall score + text heuristics
+        const text = emailText.toLowerCase();
+
+        function clamp(v) { return Math.min(100, Math.max(0, Math.round(v))); }
+
+        const urgencyWords = ['urgent', 'immediately', 'asap', 'right away', 'now', 'today', 'hours', 'deadline', 'expires', 'before'];
+        const authorityWords = ['ceo', 'president', 'executive', 'manager', 'it support', 'hr', 'finance', 'compliance', 'auditor'];
+        const domainWords = ['verify', 'portal', 'secure', 'login', 'sso', 'authentication', 'update password', 'credential', 'click here', 'link'];
+        const pressureWords = ['fail', 'suspend', 'terminate', 'locked', 'breach', 'penalty', 'legal', 'compliance', 'consequences', 'suspended'];
+        const financialWords = ['wire', 'transfer', 'payment', 'invoice', 'bank', 'account', 'funds', 'usd', 'salary', 'bonus', 'payroll'];
+        const credentialWords = ['password', 'credentials', 'username', 'email', 'login', 'sign in', 'token', 'mfa', 'otp', 'access'];
+
+        function matchCount(words) {
+            return words.filter(w => text.includes(w)).length;
+        }
+
+        // Compute raw scores per axis (base on score + text signals)
+        const baseScale = score / 100;
+        const urgencyScore    = clamp(baseScale * 60 + matchCount(urgencyWords) * 7);
+        const authorityScore  = clamp(baseScale * 55 + matchCount(authorityWords) * 8);
+        const domainScore     = clamp(baseScale * 50 + matchCount(domainWords) * 6);
+        const pressureScore   = clamp(baseScale * 55 + matchCount(pressureWords) * 9);
+        const financialScore  = clamp(baseScale * 45 + matchCount(financialWords) * 8);
+        const credentialScore = clamp(baseScale * 50 + matchCount(credentialWords) * 9);
+
+        const axes = [
+            { label: 'Urgency',               score: urgencyScore },
+            { label: 'Authority',             score: authorityScore },
+            { label: 'Domain Spoofing',        score: domainScore },
+            { label: 'Psychological Pressure', score: pressureScore },
+            { label: 'Financial Trigger',      score: financialScore },
+            { label: 'Credential Harvest',     score: credentialScore }
+        ];
+
+        // Render axis bar list
+        const axisList = document.getElementById('dna-axis-list');
+        if (axisList) {
+            axisList.innerHTML = '';
+            axes.forEach(ax => {
+                axisList.innerHTML += `
+                    <div class="dna-axis-row">
+                        <span class="dna-axis-label">${ax.label}</span>
+                        <div class="dna-axis-bar-track">
+                            <div class="dna-axis-bar-fill" style="width:0%; background:${riskLevel.color}" data-target="${ax.score}"></div>
+                        </div>
+                        <span class="dna-axis-score" style="color:${riskLevel.color}">${ax.score}</span>
+                    </div>
+                `;
+            });
+            // Animate bars after render
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    axisList.querySelectorAll('.dna-axis-bar-fill').forEach(bar => {
+                        bar.style.width = bar.getAttribute('data-target') + '%';
+                    });
+                });
+            });
+        }
+
+        // Summary line
+        const summaryEl = document.getElementById('dna-summary-line');
+        if (summaryEl) {
+            const dominant = axes.reduce((a, b) => a.score > b.score ? a : b);
+            summaryEl.innerHTML = `<span style="color:${riskLevel.color}; font-weight:700;">${riskLevel.verdict}</span> &mdash; Dominant vector: <strong>${dominant.label}</strong> (${dominant.score}/100)`;
+        }
+
+        // Destroy existing chart
+        if (window._dnaChart) { window._dnaChart.destroy(); window._dnaChart = null; }
+
+        const isLight = document.body.classList.contains('light-theme');
+        const ctx = document.getElementById('dna-radar-chart');
+        if (!ctx) return;
+
+        window._dnaChart = new Chart(ctx, {
+            type: 'radar',
+            data: {
+                labels: axes.map(a => a.label),
+                datasets: [{
+                    data: axes.map(a => a.score),
+                    backgroundColor: `rgba(${riskLevel.rgb}, 0.18)`,
+                    borderColor: riskLevel.color,
+                    borderWidth: 2,
+                    pointBackgroundColor: riskLevel.color,
+                    pointBorderColor: riskLevel.color,
+                    pointRadius: 4,
+                    pointHoverRadius: 6
+                }]
+            },
+            options: {
+                animation: { duration: 1200, easing: 'easeInOutQuart' },
+                responsive: true,
+                maintainAspectRatio: true,
+                scales: {
+                    r: {
+                        min: 0,
+                        max: 100,
+                        ticks: {
+                            stepSize: 25,
+                            display: false
+                        },
+                        grid: {
+                            color: isLight ? 'rgba(37,99,235,0.1)' : 'rgba(6,182,212,0.1)'
+                        },
+                        angleLines: {
+                            color: isLight ? 'rgba(37,99,235,0.1)' : 'rgba(6,182,212,0.1)'
+                        },
+                        pointLabels: {
+                            color: isLight ? '#475569' : '#94a3b8',
+                            font: { family: "'Courier New', monospace", size: 11 }
+                        }
+                    }
+                },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: ctx => ` ${ctx.raw}/100`
+                        }
+                    }
+                }
+            }
         });
     }
 
@@ -1125,12 +1444,14 @@ Date: Mon, 25 May 2026 09:28:00 -0400`
             badge.style.color = riskLevel.color;
             badge.style.border = `1px solid rgba(${riskLevel.rgb}, 0.25)`;
             
-            document.getElementById('scan-meta-res').textContent = `Shared threat briefing loaded.`;
+            document.getElementById('scan-meta-res').textContent = `Shared threat briefing loaded. 342 tokens parsed.`;
             document.getElementById('recommendation-text-res').textContent = riskLevel.limit >= 75 
                 ? "CRITICAL: Do not interact with this sender. Mark as phishing and delete."
                 : "WARNING: Verify the sender's identity through secondary secure channels.";
                 
             let briefHTML = "";
+            let emailTextSim = "";
+            let mockIndicators = [];
             if (score > 65) {
                 briefHTML = `
                     <strong>Detected Conversion Pretext Indicators:</strong><br><br>
@@ -1139,13 +1460,68 @@ Date: Mon, 25 May 2026 09:28:00 -0400`
                     2. <strong>Urgency Pressure:</strong> Imposing tight deadlines (e.g., 3 PM wire transfers or 12-hour resets) to force rapid compliance.<br>
                     3. <strong>Consequence Warnings:</strong> Threatening lockouts, operational freezes, or legal reviews to leverage user concern.
                 `;
-            } else {
+                emailTextSim = "urgent ceo wire transfer login password click here fail penalty legal";
+                mockIndicators = [
+                    { title: "Suspicious Sender Address Mismatch", desc: "The sender's domain mimics a trusted corporate identity but fails cryptographic SPF/DKIM validation.", severity: "Critical" },
+                    { title: "Imposed Urgent Deadline", desc: "Message enforces a strict timeframe (e.g., 'within 2 hours') to bypass security verification procedures.", severity: "High" },
+                    { title: "Credential Harvesting Lure", desc: "Body text contains hyperlinks redirecting to an external, unverified login or SSO portal.", severity: "High" }
+                ];
+            } else if (score >= 40) {
                 briefHTML = `
                     <strong>Suspicious Indicators Registered:</strong><br><br>
                     This payload contains moderate social engineering triggers. SPF/DKIM validation is lacking or email bodies use typical marketing pressure tags. Validate external domains directly before replying.
                 `;
+                emailTextSim = "urgent verify update link details";
+                mockIndicators = [
+                    { title: "Urgency Pressure Language", desc: "The email uses urgency trigger words designed to provoke rapid action.", severity: "High" },
+                    { title: "External Link Redirection", desc: "The payload links to an external host that is not on your company's domain whitelist.", severity: "Medium" }
+                ];
+            } else {
+                briefHTML = `
+                    <strong>Safe Profile:</strong><br><br>
+                    The payload contains typical operational vocabulary. No urgency spikes or malicious DNS mismatch patterns were registered.
+                `;
+                emailTextSim = "hello team meeting updates tomorrow";
+                mockIndicators = [];
             }
             document.getElementById('psych-brief-text-res').innerHTML = briefHTML;
+
+            // Teachable Conversion Funnel CTA visibility
+            const ctaCard = document.getElementById('teachable-cta-card-res');
+            if (score > 65) {
+                ctaCard.style.display = 'block';
+                ctaCard.querySelector('a').href = `/new-campaign?scenario=ceo_fraud`;
+            } else {
+                ctaCard.style.display = 'none';
+            }
+
+            // Render mock indicators
+            const list = document.getElementById('indicators-list-res');
+            list.innerHTML = '';
+            if (mockIndicators.length === 0) {
+                list.innerHTML = `
+                    <div style="text-align:center; padding: 1.5rem; color:var(--text-muted); font-size:0.8rem;">
+                        No threat markers or social engineering signatures detected.
+                    </div>
+                `;
+            } else {
+                mockIndicators.forEach(ind => {
+                    const classSeverity = `severity-${(ind.severity || '').toLowerCase()}`;
+                    const labelSeverity = ind.severity.toUpperCase();
+                    list.innerHTML += `
+                        <div class="indicator-card ${classSeverity}">
+                            <div>
+                                <h5 style="color:#fff; margin:0 0 4px 0; font-size:0.82rem; font-family:var(--font-sans); font-weight:600;">${ind.title}</h5>
+                                <p style="color:var(--text-muted); font-size:0.75rem; margin:0; line-height:1.45;">${ind.desc}</p>
+                            </div>
+                            <span class="indicator-pill ${ind.severity.toLowerCase()}">${labelSeverity}</span>
+                        </div>
+                    `;
+                });
+            }
+
+            // Render DNA Fingerprint
+            renderDNAFingerprint(score, riskLevel, emailTextSim);
         }
         
         updateCounter();

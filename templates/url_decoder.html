@@ -1,0 +1,204 @@
+{% extends "base.html" %}
+{% block title %}Phishing URL Decoder — PhishSim AI{% endblock %}
+{% block content %}
+<style>
+.ud-container { max-width: 900px; margin: 0 auto; padding: 90px 1.5rem 4rem; }
+.ud-card {
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 20px; padding: 2.5rem; margin-bottom: 2rem;
+    backdrop-filter: blur(12px);
+}
+.ud-input {
+    width: 100%; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 12px; color: #e2e8f0; font-family: var(--font-mono); font-size: 0.85rem;
+    padding: 12px 16px; outline: none; transition: border-color 0.2s; box-sizing: border-box;
+}
+.ud-input:focus { border-color: #10b981; }
+.ud-btn {
+    padding: 12px 28px; border-radius: 10px; font-weight: 700; font-size: 0.95rem;
+    cursor: pointer; border: none; transition: all 0.25s cubic-bezier(0.22,1,0.36,1);
+    background: linear-gradient(135deg, #10b981, #059669); color: #fff;
+    display: inline-flex; align-items: center; gap: 8px;
+}
+.ud-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(16,185,129,0.4); }
+.ud-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+/* Redirect chain nodes */
+.chain-wrap { display: flex; flex-direction: column; gap: 0; }
+.chain-node {
+    display: flex; align-items: flex-start; gap: 14px; position: relative;
+    padding: 0 0 0 54px; min-height: 60px;
+}
+.node-dot {
+    position: absolute; left: 14px; top: 16px;
+    width: 26px; height: 26px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 0.72rem; z-index: 2;
+}
+.node-line {
+    position: absolute; left: 26px; top: 42px; width: 2px;
+    bottom: 0; background: rgba(255,255,255,0.06); z-index: 1;
+}
+.chain-node:last-child .node-line { display: none; }
+.node-body {
+    background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 10px; padding: 10px 14px; flex: 1; margin-top: 6px;
+    margin-bottom: 12px;
+}
+.verdict-banner {
+    text-align: center; padding: 1.5rem 2rem; border-radius: 16px; margin-bottom: 2rem;
+    font-weight: 900; font-size: 1.4rem; letter-spacing: 0.04em;
+}
+.shake { animation: udShake 0.45s ease; }
+@keyframes udShake {
+    0%,100%{transform:translateX(0)} 20%{transform:translateX(-6px)} 40%{transform:translateX(6px)}
+    60%{transform:translateX(-4px)} 80%{transform:translateX(4px)}
+}
+.check-row { display: flex; align-items: flex-start; gap: 14px; padding: 14px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+.check-row:last-child { border-bottom: none; }
+.status-badge { padding: 3px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; white-space: nowrap; flex-shrink: 0; }
+.badge-danger  { background: rgba(239,68,68,0.15);  color: #ef4444; border: 1px solid rgba(239,68,68,0.3); }
+.badge-safe    { background: rgba(16,185,129,0.15); color: #10b981; border: 1px solid rgba(16,185,129,0.3); }
+.badge-unknown { background: rgba(100,116,139,0.15);color: #94a3b8; border: 1px solid rgba(100,116,139,0.3); }
+</style>
+
+<div class="ud-container">
+  <a href="javascript:history.back()" style="display:inline-flex;align-items:center;gap:6px;color:#64748b;font-size:0.85rem;text-decoration:none;margin-bottom:2rem;transition:color 0.2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#64748b'">
+    <i class="ti ti-arrow-left"></i> Back
+  </a>
+
+  <div style="text-align:center; margin-bottom:3rem;">
+    <div style="display:inline-flex;align-items:center;gap:10px;margin-bottom:1rem;">
+      <div style="width:52px;height:52px;border-radius:14px;background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.3);display:flex;align-items:center;justify-content:center;">
+        <i class="ti ti-link" style="font-size:1.6rem;color:#10b981;"></i>
+      </div>
+    </div>
+    <h1 style="font-size:clamp(1.8rem,3vw,2.4rem);font-weight:900;color:#fff;margin-bottom:0.5rem;">Phishing URL Decoder</h1>
+    <p style="color:#64748b;font-size:0.95rem;max-width:550px;margin:0 auto;">Follow the full redirect chain of any suspicious URL and check the final destination against URLhaus malware intelligence.</p>
+  </div>
+
+  <div class="ud-card">
+    <label style="color:#94a3b8;font-size:0.8rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:10px;">
+      <i class="ti ti-link" style="margin-right:4px;"></i>Suspicious URL
+    </label>
+    <input id="url-input" class="ud-input" type="text" placeholder="https://bit.ly/suspect or paste any URL…">
+    <div id="ud-error" style="color:#f87171;font-size:0.78rem;margin-top:6px;display:none;"><i class="ti ti-alert-circle" style="margin-right:4px;"></i><span></span></div>
+    <div style="display:flex;justify-content:flex-end;margin-top:1.2rem;">
+      <button class="ud-btn" id="decode-btn" onclick="decodeUrl()">
+        <i class="ti ti-radar-2"></i> Decode & Trace
+      </button>
+    </div>
+  </div>
+
+  <div id="results-area" style="display:none;">
+    <div id="verdict-banner" class="verdict-banner"></div>
+
+    <div class="ud-card">
+      <h3 style="color:#fff;font-size:1rem;font-weight:700;margin-bottom:1.5rem;"><i class="ti ti-route" style="color:#10b981;margin-right:6px;"></i>Redirect Chain</h3>
+      <div class="chain-wrap" id="chain-wrap"></div>
+    </div>
+
+    <div class="ud-card">
+      <h3 style="color:#fff;font-size:1rem;font-weight:700;margin-bottom:1.2rem;"><i class="ti ti-shield" style="color:#f59e0b;margin-right:6px;"></i>Threat Intelligence</h3>
+      <div id="intel-list"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+function showErr(msg) {
+    const el = document.getElementById('ud-error');
+    const inp = document.getElementById('url-input');
+    el.querySelector('span').textContent = msg;
+    el.style.display = 'flex';
+    inp.classList.remove('shake');
+    void inp.offsetWidth;
+    inp.classList.add('shake');
+    inp.style.borderColor = '#ef4444';
+    setTimeout(() => { inp.style.borderColor = ''; el.style.display = 'none'; }, 3500);
+}
+
+async function decodeUrl() {
+    const url = document.getElementById('url-input').value.trim();
+    if (!url) { showErr('Enter a URL to decode.'); return; }
+    const btn = document.getElementById('decode-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="ti ti-loader-2" style="animation:spin 1s linear infinite;"></i> Tracing…';
+    const fd = new FormData();
+    fd.append('url', url);
+    try {
+        const res = await fetch('/api/url-decoder', { method: 'POST', body: fd });
+        const data = await res.json();
+        if (!data.success) { showErr(data.message || 'Failed to decode URL.'); return; }
+        renderResults(data);
+    } catch(e) {
+        showErr('Network error: ' + e.message);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="ti ti-radar-2"></i> Decode & Trace';
+    }
+}
+
+function renderResults(d) {
+    const colors = { 'DANGEROUS': '#ef4444', 'SUSPICIOUS': '#f59e0b', 'LIKELY SAFE': '#10b981' };
+    const bgMap  = { 'DANGEROUS': 'rgba(239,68,68,0.08)', 'SUSPICIOUS': 'rgba(245,158,11,0.08)', 'LIKELY SAFE': 'rgba(16,185,129,0.08)' };
+    const borderMap = { 'DANGEROUS': 'rgba(239,68,68,0.3)', 'SUSPICIOUS': 'rgba(245,158,11,0.3)', 'LIKELY SAFE': 'rgba(16,185,129,0.3)' };
+    const vb = document.getElementById('verdict-banner');
+    vb.style.background = bgMap[d.verdict];
+    vb.style.border = `1px solid ${borderMap[d.verdict]}`;
+    vb.style.color = colors[d.verdict];
+    vb.innerHTML = `<i class="ti ti-${d.verdict === 'LIKELY SAFE' ? 'circle-check' : 'alert-triangle'}" style="font-size:1.8rem;display:block;margin-bottom:8px;"></i>${d.verdict}`;
+
+    // Chain nodes
+    const cw = document.getElementById('chain-wrap');
+    cw.innerHTML = '';
+    d.chain.forEach((node, i) => {
+        const isFirst = i === 0, isFinal = node.is_final;
+        const dotColor = isFinal ? (d.verdict === 'LIKELY SAFE' ? '#10b981' : d.verdict === 'SUSPICIOUS' ? '#f59e0b' : '#ef4444') : (node.is_redirect ? '#f59e0b' : '#06b6d4');
+        const dotIcon = isFinal ? (d.verdict === 'LIKELY SAFE' ? 'ti-check' : 'ti-flag-3') : (node.is_redirect ? 'ti-arrow-right' : 'ti-point');
+        const nodeEl = document.createElement('div');
+        nodeEl.className = 'chain-node';
+        nodeEl.innerHTML = `
+            <div class="node-dot" style="background:rgba(${dotColor === '#10b981' ? '16,185,129' : dotColor === '#ef4444' ? '239,68,68' : dotColor === '#f59e0b' ? '245,158,11' : '6,182,212'},0.15);border:1.5px solid ${dotColor};color:${dotColor};">
+              <i class="ti ${dotIcon}" style="font-size:0.9rem;"></i>
+            </div>
+            <div class="node-line"></div>
+            <div class="node-body">
+              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px;">
+                <span style="font-family:var(--font-mono);font-size:0.75rem;color:#94a3b8;">HOP ${i}</span>
+                ${node.status_code ? `<span style="font-size:0.7rem;padding:2px 7px;border-radius:10px;background:rgba(255,255,255,0.05);color:#94a3b8;font-family:var(--font-mono);">HTTP ${node.status_code}</span>` : ''}
+                ${isFinal ? '<span style="font-size:0.7rem;padding:2px 7px;border-radius:10px;background:rgba(16,185,129,0.1);color:#10b981;border:1px solid rgba(16,185,129,0.3);">FINAL DESTINATION</span>' : ''}
+                ${node.is_redirect ? '<span style="font-size:0.7rem;padding:2px 7px;border-radius:10px;background:rgba(245,158,11,0.1);color:#f59e0b;border:1px solid rgba(245,158,11,0.3);">REDIRECT</span>' : ''}
+              </div>
+              <div style="color:#e2e8f0;font-family:var(--font-mono);font-size:0.78rem;word-break:break-all;">${node.url}</div>
+              ${node.error ? `<div style="color:#f87171;font-size:0.75rem;margin-top:4px;"><i class="ti ti-alert-circle"></i> ${node.error}</div>` : ''}
+            </div>`;
+        cw.appendChild(nodeEl);
+    });
+
+    // Intel
+    const il = document.getElementById('intel-list');
+    il.innerHTML = '';
+    const intelItems = [
+        { label: 'URLhaus Check', value: d.urlhaus_detail, badge: d.urlhaus_verdict === 'malicious' ? 'badge-danger' : d.urlhaus_verdict === 'unknown' ? 'badge-unknown' : 'badge-safe', badgeText: d.urlhaus_verdict.toUpperCase() },
+        { label: 'Redirect Hops', value: `${d.redirect_count} redirect${d.redirect_count !== 1 ? 's' : ''} followed`, badge: d.redirect_count > 3 ? 'badge-danger' : 'badge-safe', badgeText: d.redirect_count > 3 ? 'HIGH' : 'OK' },
+        { label: 'Final Domain', value: d.final_domain || '—', badge: 'badge-safe', badgeText: 'INFO' },
+    ];
+    intelItems.forEach(item => {
+        il.innerHTML += `<div class="check-row">
+          <span class="status-badge ${item.badge}">${item.badgeText}</span>
+          <div style="flex:1;">
+            <div style="color:#fff;font-weight:600;font-size:0.88rem;margin-bottom:2px;">${item.label}</div>
+            <div style="color:#64748b;font-size:0.8rem;font-family:var(--font-mono);">${item.value}</div>
+          </div>
+        </div>`;
+    });
+
+    document.getElementById('results-area').style.display = 'block';
+    document.getElementById('results-area').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+document.getElementById('url-input').addEventListener('keydown', e => { if (e.key === 'Enter') decodeUrl(); });
+</script>
+<style>@keyframes spin { to { transform: rotate(360deg); } }</style>
+{% endblock %}

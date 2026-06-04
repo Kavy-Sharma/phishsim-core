@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, send_file, session, flash
+from flask import Flask, render_template, request, redirect, url_for, send_file, session, flash, jsonify
 from dotenv import load_dotenv
 import os
 import mysql.connector
@@ -746,10 +746,12 @@ def get_campaign_metrics(cursor, campaign_id):
 
 @app.route("/")
 def home():
-    db = get_db_connection()
-    cursor = db.cursor(dictionary=True)
     latest_time_str = None
+    db = None
+    cursor = None
     try:
+        db = get_db_connection()
+        cursor = db.cursor(dictionary=True)
         cursor.execute("""
             SELECT status_updated_at, created_at 
             FROM campaigns 
@@ -784,10 +786,18 @@ def home():
                         else:
                             latest_time_str = f"Latest simulation ran {days} days ago"
     except Exception as e:
-        print("Error fetching latest campaign run time:", e)
+        print("Error fetching latest campaign run time or connecting to database:", e)
     finally:
-        cursor.close()
-        db.close()
+        if cursor:
+            try:
+                cursor.close()
+            except Exception:
+                pass
+        if db:
+            try:
+                db.close()
+            except Exception:
+                pass
         
     return render_template("home.html", latest_simulation_time=latest_time_str)
 
@@ -809,17 +819,16 @@ def demo_login():
     
     user_id = cursor.lastrowid
     
-    # Single clean demo campaign — CEO Fraud scenario, 20 targets
-    cursor.execute("""
-        INSERT INTO campaigns (user_id, name, company_domain, scenario_type, delivery_mode, status, status_updated_at)
-        VALUES (%s, 'Q3 Executive Impersonation (Simulated)', 'demo-corp.com', 'ceo_fraud', 'preview', 'launched', NOW())
-    """, (user_id,))
-    camp_id = cursor.lastrowid
-    
     ensure_email_tracking_table(cursor)
     ensure_events_table(cursor)
 
-    # Realistic roles for a 20-person company slice
+    # 1. CEO Fraud Scenario (20 targets)
+    cursor.execute("""
+        INSERT INTO campaigns (user_id, name, company_domain, scenario_type, delivery_mode, status, status_updated_at)
+        VALUES (%s, 'Q3 Executive Wire Transfer (Simulated)', 'demo-corp.com', 'ceo_fraud', 'preview', 'launched', NOW())
+    """, (user_id,))
+    camp1_id = cursor.lastrowid
+
     roles = [
         ("Alice Chen",   "alice@demo-corp.com",   "Finance",    "CFO"),
         ("Ben Patel",    "ben@demo-corp.com",      "Finance",    "Accountant"),
@@ -843,10 +852,10 @@ def demo_login():
         ("Tara Malik",   "tara@demo-corp.com",     "Executive",  "EA to CEO"),
     ]
 
-    clicked_names  = {"Alice Chen", "Ben Patel", "Carla Torres", "Noah Davis", "Tara Malik"}   # 5 clicked (25%)
-    reported_names = {"Frank Li", "Grace Park"}                                                 # 2 reported (10%)
+    clicked_names  = {"Alice Chen", "Ben Patel", "Carla Torres", "Noah Davis", "Tara Malik"}   # 5 clicked
+    reported_names = {"Frank Li", "Grace Park"}                                                 # 2 reported
     opened_names   = clicked_names | reported_names | {"David Kim", "Karen Osei", "Henry Russo",
-                                                       "Mia Brown", "Olivia Clark", "Quinn Lee"}  # 11 opened (55%)
+                                                       "Mia Brown", "Olivia Clark", "Quinn Lee"}  # 11 opened
 
     for name, email, dept, title in roles:
         trk_id = str(uuid.uuid4())
@@ -865,22 +874,16 @@ def demo_login():
             VALUES (%s, %s, %s, 'previewed',
                 'This email used CEO impersonation and false urgency. Always verify wire transfer requests by calling the executive directly.',
                 'URGENT: Wire transfer approval needed today', 'Sam Johansson (CEO)', %s)
-        """, (camp_id, trk_id, email, body))
+        """, (camp1_id, trk_id, email, body))
 
         if name in opened_names:
-            cursor.execute(
-                "INSERT INTO events (tracking_id, event_type, ip_address) VALUES (%s, 'open', '10.0.0.1')",
-                (trk_id,))
+            cursor.execute("INSERT INTO events (tracking_id, event_type, ip_address) VALUES (%s, 'open', '10.0.0.1')", (trk_id,))
         if name in clicked_names:
-            cursor.execute(
-                "INSERT INTO events (tracking_id, event_type, ip_address) VALUES (%s, 'click', '10.0.0.1')",
-                (trk_id,))
+            cursor.execute("INSERT INTO events (tracking_id, event_type, ip_address) VALUES (%s, 'click', '10.0.0.1')", (trk_id,))
         if name in reported_names:
-            cursor.execute(
-                "INSERT INTO events (tracking_id, event_type, ip_address) VALUES (%s, 'report', '10.0.0.1')",
-                (trk_id,))
+            cursor.execute("INSERT INTO events (tracking_id, event_type, ip_address) VALUES (%s, 'report', '10.0.0.1')", (trk_id,))
 
-    # Campaign 2 — IT Alert / MFA Bypass (lower click rate = better HSS, shows contrast)
+    # 2. IT Alert Scenario (8 targets)
     cursor.execute("""
         INSERT INTO campaigns (user_id, name, company_domain, scenario_type, delivery_mode, status, status_updated_at)
         VALUES (%s, 'IT Security Alert: MFA Reset Required (Simulated)', 'demo-corp.com', 'it_alert', 'preview', 'launched', NOW())
@@ -897,8 +900,7 @@ def demo_login():
         ("Quinn Lee",    "quinn@demo-corp.com",    "Legal",     "General Counsel"),
         ("Sam Johansson","sam@demo-corp.com",      "Executive", "CEO"),
     ]
-    # Only 1 clicked (12.5% rate) — shows a better-performing campaign
-    it_clicked  = {"Alice Chen"}
+    it_clicked  = {"Alice Chen"}  # 1 clicked
     it_reported = {"Frank Li", "Grace Park", "Quinn Lee"}
     it_opened   = it_clicked | it_reported | {"David Kim", "Karen Osei"}
 
@@ -916,7 +918,7 @@ def demo_login():
                 (campaign_id, tracking_id, recipient_email, status,
                  educational_breakdown, subject, sender_name, body_html)
             VALUES (%s, %s, %s, 'previewed',
-                'This email created false urgency about account lockout. IT will never ask you to click a link to reset MFA — always use your company portal directly.',
+                'This email created false urgency about account lockout. IT will never ask you to click a link to reset MFA.',
                 'Action Required: Your MFA token has expired', 'IT Security Team', %s)
         """, (camp2_id, trk_id, email, body2))
         if name in it_opened:
@@ -925,6 +927,149 @@ def demo_login():
             cursor.execute("INSERT INTO events (tracking_id, event_type, ip_address) VALUES (%s, 'click', '10.0.0.1')", (trk_id,))
         if name in it_reported:
             cursor.execute("INSERT INTO events (tracking_id, event_type, ip_address) VALUES (%s, 'report', '10.0.0.1')", (trk_id,))
+
+    # 3. HR Update Scenario (15 targets)
+    cursor.execute("""
+        INSERT INTO campaigns (user_id, name, company_domain, scenario_type, delivery_mode, status, status_updated_at)
+        VALUES (%s, 'HR Policy Update: Annual Compensation Review (Simulated)', 'demo-corp.com', 'hr_update', 'preview', 'launched', NOW())
+    """, (user_id,))
+    camp3_id = cursor.lastrowid
+    
+    hr_targets = [
+        ("Alice Chen",   "alice@demo-corp.com",   "Finance",    "CFO"),
+        ("Ben Patel",    "ben@demo-corp.com",      "Finance",    "Accountant"),
+        ("Carla Torres", "carla@demo-corp.com",    "Finance",    "Payroll Manager"),
+        ("David Kim",    "david@demo-corp.com",    "HR",         "HR Manager"),
+        ("Emma Wilson",  "emma@demo-corp.com",     "HR",         "Recruiter"),
+        ("Frank Li",     "frank@demo-corp.com",    "IT",         "SysAdmin"),
+        ("Grace Park",   "grace@demo-corp.com",    "IT",         "DevOps Engineer"),
+        ("Henry Russo",  "henry@demo-corp.com",    "Operations", "COO"),
+        ("Isla Sharma",  "isla@demo-corp.com",     "Operations", "Project Manager"),
+        ("James Nguyen", "james@demo-corp.com",    "Operations", "Analyst"),
+        ("Karen Osei",   "karen@demo-corp.com",    "Marketing",  "CMO"),
+        ("Leo Martins",  "leo@demo-corp.com",      "Marketing",  "Designer"),
+        ("Mia Brown",    "mia@demo-corp.com",      "Marketing",  "Content Lead"),
+        ("Noah Davis",   "noah@demo-corp.com",     "Sales",      "Sales Director"),
+        ("Olivia Clark", "olivia@demo-corp.com",   "Sales",      "Account Executive"),
+    ]
+    hr_clicked = {"Emma Wilson", "Leo Martins"}  # 2 clicked
+    hr_reported = {"Frank Li", "Grace Park", "David Kim"}
+    hr_opened = hr_clicked | hr_reported | {"Isla Sharma", "James Nguyen", "Mia Brown", "Olivia Clark"}
+    
+    for name, email, dept, title in hr_targets:
+        trk_id = str(uuid.uuid4())
+        body3 = (
+            f"<p>Hi {name.split()[0]},</p>"
+            "<p>Please find attached the updated guidelines for Q3 performance evaluations and annual bonus review criteria.</p>"
+            "<p><a href='TRACKING_LINK'>Download evaluated metrics and tiers here</a></p>"
+            "<p>Human Resources Team<br><em>demo-corp.com</em></p>"
+        )
+        cursor.execute("""
+            INSERT INTO emails_sent
+                (campaign_id, tracking_id, recipient_email, status,
+                 educational_breakdown, subject, sender_name, body_html)
+            VALUES (%s, %s, %s, 'previewed',
+                'This email enticed employees with salary review info. Always check files via your HR portal directly.',
+                'Q3 Annual Compensation & Review Guidelines', 'HR Department', %s)
+        """, (camp3_id, trk_id, email, body3))
+        if name in hr_opened:
+            cursor.execute("INSERT INTO events (tracking_id, event_type, ip_address) VALUES (%s, 'open', '10.0.0.1')", (trk_id,))
+        if name in hr_clicked:
+            cursor.execute("INSERT INTO events (tracking_id, event_type, ip_address) VALUES (%s, 'click', '10.0.0.1')", (trk_id,))
+        if name in hr_reported:
+            cursor.execute("INSERT INTO events (tracking_id, event_type, ip_address) VALUES (%s, 'report', '10.0.0.1')", (trk_id,))
+
+    # 4. Finance / Invoice Scenario (12 targets)
+    cursor.execute("""
+        INSERT INTO campaigns (user_id, name, company_domain, scenario_type, delivery_mode, status, status_updated_at)
+        VALUES (%s, 'Finance: Vendor Invoice Request #8721 (Simulated)', 'demo-corp.com', 'invoice', 'preview', 'launched', NOW())
+    """, (user_id,))
+    camp4_id = cursor.lastrowid
+    
+    inv_targets = [
+        ("Alice Chen",   "alice@demo-corp.com",   "Finance",    "CFO"),
+        ("Ben Patel",    "ben@demo-corp.com",      "Finance",    "Accountant"),
+        ("Carla Torres", "carla@demo-corp.com",    "Finance",    "Payroll Manager"),
+        ("David Kim",    "david@demo-corp.com",    "HR",         "HR Manager"),
+        ("Emma Wilson",  "emma@demo-corp.com",     "HR",         "Recruiter"),
+        ("Frank Li",     "frank@demo-corp.com",    "IT",         "SysAdmin"),
+        ("Grace Park",   "grace@demo-corp.com",    "IT",         "DevOps Engineer"),
+        ("Henry Russo",  "henry@demo-corp.com",    "Operations", "COO"),
+        ("Isla Sharma",  "isla@demo-corp.com",     "Operations", "Project Manager"),
+        ("James Nguyen", "james@demo-corp.com",    "Operations", "Analyst"),
+        ("Karen Osei",   "karen@demo-corp.com",    "Marketing",  "CMO"),
+        ("Leo Martins",  "leo@demo-corp.com",      "Marketing",  "Designer"),
+    ]
+    inv_clicked = {"Ben Patel", "Isla Sharma", "James Nguyen"}  # 3 clicked
+    inv_reported = {"Alice Chen"}
+    inv_opened = inv_clicked | inv_reported | {"Carla Torres", "Frank Li", "Henry Russo", "Karen Osei"}
+    
+    for name, email, dept, title in inv_targets:
+        trk_id = str(uuid.uuid4())
+        body4 = (
+            f"<p>Dear Finance Team,</p>"
+            "<p>We have updated our banking coordinates for all subsequent vendor invoice payments starting this week. Please review invoice #8721 and adjust direct transfer routing accordingly.</p>"
+            "<p><a href='TRACKING_LINK'>View Outstanding Invoice #8721 Details</a></p>"
+            "<p>Accounting Services Inc.<br><em>accounts@accounting-services-portal.com</em></p>"
+        )
+        cursor.execute("""
+            INSERT INTO emails_sent
+                (campaign_id, tracking_id, recipient_email, status,
+                 educational_breakdown, subject, sender_name, body_html)
+            VALUES (%s, %s, %s, 'previewed',
+                'This email used vendor impersonation and financial redirection lures. Always confirm banking changes over official communication channels.',
+                'URGENT: Change in Billing Coordinates & Invoice #8721', 'Accounting Services Inc.', %s)
+        """, (camp4_id, trk_id, email, body4))
+        if name in inv_opened:
+            cursor.execute("INSERT INTO events (tracking_id, event_type, ip_address) VALUES (%s, 'open', '10.0.0.1')", (trk_id,))
+        if name in inv_clicked:
+            cursor.execute("INSERT INTO events (tracking_id, event_type, ip_address) VALUES (%s, 'click', '10.0.0.1')", (trk_id,))
+        if name in inv_reported:
+            cursor.execute("INSERT INTO events (tracking_id, event_type, ip_address) VALUES (%s, 'report', '10.0.0.1')", (trk_id,))
+
+    # 5. Loop 16 times to insert past drills (total 20 campaigns)
+    mock_scenarios = ['ceo_fraud', 'it_alert', 'hr_update', 'invoice']
+    mock_names = [
+        "Annual Benefits Enrollment Review",
+        "Urgent Account Suspension Notice",
+        "Stripe Billing Sync Failure",
+        "Q2 Leadership Evaluation Survey",
+        "Microsoft Office 365 Security Update",
+        "Company Travel Expense Guidelines",
+        "Amazon Web Services Invoice #9910",
+        "Security Alert: VPN Upgrade Required",
+        "Payroll Direct Deposit Verification",
+        "Compliance Ethics Training Reminder",
+        "Q1 Executive Strategy Roadmap",
+        "IT Service Desk Ticket Confirmation",
+        "Courier Delivery Failure Notice",
+        "Shared Document Access Request",
+        "Company Zoom Townhall Meeting Invite",
+        "Urgent Domain Renewal Reminder"
+    ]
+    for i, mock_name in enumerate(mock_names):
+        scen = mock_scenarios[i % 4]
+        name = f"Past Phishing Drill: {mock_name} (Simulated)"
+        cursor.execute("""
+            INSERT INTO campaigns (user_id, name, company_domain, scenario_type, delivery_mode, status, status_updated_at)
+            VALUES (%s, %s, 'demo-corp.com', %s, 'preview', 'launched', DATE_SUB(NOW(), INTERVAL %s DAY))
+        """, (user_id, name, scen, (i + 1) * 7))
+        c_id = cursor.lastrowid
+        
+        # 12 campaigns have 5 targets, last 4 have 4 targets. Total = 76 sent. Clicks = 0.
+        num_targets = 5 if i < 12 else 4
+        for j in range(num_targets):
+            t_id = str(uuid.uuid4())
+            cursor.execute("""
+                INSERT INTO emails_sent (campaign_id, tracking_id, recipient_email, status, educational_breakdown, subject, sender_name, body_html)
+                VALUES (%s, %s, %s, 'previewed', 'Mock educational breakdown.', 'Mock subject', 'Mock Sender', 'Mock body')
+            """, (c_id, t_id, f"employee_past_{i}_{j}@demo-corp.com"))
+            
+            # Simple opens and reports
+            if j % 2 == 0:
+                cursor.execute("INSERT INTO events (tracking_id, event_type, ip_address) VALUES (%s, 'open', '10.0.0.1')", (t_id,))
+            if j == 0:
+                cursor.execute("INSERT INTO events (tracking_id, event_type, ip_address) VALUES (%s, 'report', '10.0.0.1')", (t_id,))
 
     db.commit()
     cursor.close()
@@ -2013,12 +2158,50 @@ def dashboard():
             "total_reports": total_reports
         }
 
+        # Compute demo summary stats dynamically
+        total_sent_all = sum(c["emails_sent"] for c in campaigns if (c["emails_sent"] or 0) > 0)
+        total_clicks_all = sum(c["clicks"] for c in campaigns)
+        avg_click_rate = round((total_clicks_all / total_sent_all) * 100, 1) if total_sent_all > 0 else 0.0
+
+        launched_campaigns = []
+        for c in campaigns:
+            sent = c["emails_sent"] or 0
+            if sent > 0:
+                cr = (c["clicks"] / sent) * 100
+                launched_campaigns.append((c, cr))
+
+        best_campaign = None
+        worst_campaign = None
+        if launched_campaigns:
+            launched_campaigns.sort(key=lambda x: x[1])
+            best_campaign = {
+                "name": launched_campaigns[0][0]["name"],
+                "click_rate": round(launched_campaigns[0][1], 1)
+            }
+            worst_campaign = {
+                "name": launched_campaigns[-1][0]["name"],
+                "click_rate": round(launched_campaigns[-1][1], 1)
+            }
+
+        demo_summary = {
+            "total_campaigns": len(campaigns),
+            "avg_click_rate": avg_click_rate,
+            "best_campaign": best_campaign,
+            "worst_campaign": worst_campaign
+        }
+
     except Exception as e:
         print(f"Dashboard query failed: {e}")
         campaigns = []
         global_stats = {"total_campaigns": 0, "total_employees": 0, "global_risk": 0, "total_reports": 0}
         global_hss = None
         risk_trend = []
+        demo_summary = {
+            "total_campaigns": 0,
+            "avg_click_rate": 0.0,
+            "best_campaign": None,
+            "worst_campaign": None
+        }
     finally:
         cursor.close()
         db.close()
@@ -2029,12 +2212,69 @@ def dashboard():
         global_stats=global_stats,
         global_hss=global_hss,
         risk_trend=risk_trend,
+        demo_summary=demo_summary,
     )
+
+@app.route("/reports-demo")
+def reports_demo():
+    """Explains the AI report before users open campaign-specific reports."""
+    user = current_user()
+    if not user:
+        return render_template("reports_demo.html", campaigns=[])
+
+    db = get_db_connection()
+    cursor = db.cursor(dictionary=True)
+    campaigns = []
+    try:
+        if user["role"] == "admin":
+            where_clause = "WHERE c.company_domain != 'demo-corp.com' OR c.company_domain IS NULL"
+            params = ()
+        else:
+            company_domain = normalize_domain(user.get("company_domain"))
+            if company_domain:
+                where_clause = "WHERE c.company_domain = %s OR c.user_id = %s"
+                params = (company_domain, user["id"])
+            else:
+                where_clause = "WHERE c.user_id = %s"
+                params = (user["id"],)
+
+        cursor.execute(f"""
+            SELECT c.id, c.name, c.scenario_type, c.status, c.company_domain, c.created_at,
+                   (SELECT COUNT(*) FROM employees e WHERE e.campaign_id = c.id) AS employee_count,
+                   (SELECT COUNT(*) FROM emails_sent es WHERE es.campaign_id = c.id
+                    AND COALESCE(es.status, 'sent') IN ('sent', 'previewed')) AS emails_sent,
+                   (SELECT COUNT(DISTINCT ev.tracking_id)
+                    FROM events ev JOIN emails_sent es ON ev.tracking_id = es.tracking_id
+                    WHERE es.campaign_id = c.id AND ev.event_type = 'click') AS clicks,
+                   (SELECT COUNT(DISTINCT ev.tracking_id)
+                    FROM events ev JOIN emails_sent es ON ev.tracking_id = es.tracking_id
+                    WHERE es.campaign_id = c.id AND ev.event_type = 'report') AS reports
+            FROM campaigns c
+            {where_clause}
+            ORDER BY c.id DESC
+            LIMIT 24
+        """, params)
+        campaigns = cursor.fetchall()
+        for c in campaigns:
+            sent = int(c.get("emails_sent") or 0)
+            clicks = int(c.get("clicks") or 0)
+            reports = int(c.get("reports") or 0)
+            click_rate = round((clicks / sent) * 100, 1) if sent else 0.0
+            report_rate = round((reports / sent) * 100, 1) if sent else 0.0
+            c["click_rate"] = click_rate
+            c["report_rate"] = report_rate
+            c["hss"] = compute_human_security_score(click_rate, 0, report_rate) if sent else None
+    finally:
+        cursor.close()
+        db.close()
+
+    return render_template("reports_demo.html", campaigns=campaigns)
 
 # 1. ADD THIS ROUTE: This shows the "Create Campaign" page
 @app.route("/new-campaign", methods=["GET", "POST"])
+@app.route("/new-campaign/<int:campaign_id>", methods=["GET", "POST"])
 @login_required
-def new_campaign():
+def new_campaign(campaign_id=None):
     user = current_user()
     local_delivery_available = user["role"] == "admin"
     # Safe Send = Mailtrap sandbox (works on Render, no domain needed)
@@ -2044,8 +2284,18 @@ def new_campaign():
     # Preview mode = no sending at all, show in-app — always available
     preview_available = True
 
+    campaign = None
+    if campaign_id is not None:
+        db = get_db_connection()
+        cursor = db.cursor(dictionary=True)
+        campaign = user_can_access_campaign(cursor, campaign_id, user)
+        cursor.close()
+        db.close()
+        if not campaign:
+            return "Campaign not found or access denied.", 404
+
     campaign_limit_reached = False
-    if user["role"] not in ("admin", "pro"):
+    if campaign_id is None and user["role"] not in ("admin", "pro"):
         try:
             db = get_db_connection()
             cursor = db.cursor(dictionary=True)
@@ -2059,7 +2309,7 @@ def new_campaign():
             print(f"Error checking campaign count: {e}")
 
     if request.method == "POST":
-        if campaign_limit_reached:
+        if campaign_id is None and campaign_limit_reached:
             flash("You have reached the limit of 3 campaigns for the Free tier. Please upgrade to PRO for unlimited campaigns!")
             return redirect(url_for("billing"))
         # 1. Get data from the form
@@ -2072,12 +2322,18 @@ def new_campaign():
         scheduled_at = parse_datetime_local(request.form.get("scheduled_at"))
         if schedule_frequency not in ("once", "daily", "weekly", "monthly"):
             schedule_frequency = "once"
+
+        def redirect_back():
+            if campaign_id is not None:
+                return redirect(url_for("new_campaign", campaign_id=campaign_id))
+            return redirect(url_for("new_campaign"))
+
         if user["role"] not in ("admin", "pro") and schedule_frequency != "once":
             flash("Upgrade to PhishSim.ai PRO to unlock automated recurring schedules (Daily, Weekly, Monthly)!")
-            return redirect(url_for("new_campaign"))
+            return redirect_back()
         if schedule_frequency != "once" and not scheduled_at:
             flash("Choose a start date and time for automation.")
-            return redirect(url_for("new_campaign"))
+            return redirect_back()
 
         VALID_MODES = {"local", "smtp", "mailtrap", "preview", "own_mailtrap"}
         delivery_mode = requested_mode if requested_mode in VALID_MODES else "preview"
@@ -2088,7 +2344,7 @@ def new_campaign():
         if delivery_mode == "own_mailtrap":
             if not own_mailtrap_user or not own_mailtrap_pass:
                 flash("Enter your Mailtrap username and password to use My Mailtrap Inbox.")
-                return redirect(url_for("new_campaign"))
+                return redirect_back()
             # We remap to 'mailtrap' internally but pass credentials per-campaign via session
             session["campaign_mailtrap_user"] = own_mailtrap_user
             session["campaign_mailtrap_pass"] = own_mailtrap_pass
@@ -2110,23 +2366,32 @@ def new_campaign():
             return "Error: You must confirm consent before launching.", 400
         if not domain:
             flash("Add a domain or testing label for this campaign.")
-            return redirect(url_for("new_campaign"))
+            return redirect_back()
         if delivery_mode == "smtp" and not request.form.get("deliverability_confirmed"):
             flash("Confirm that your organization has allowlisted the simulation sender before using Live Mode.")
-            return redirect(url_for("new_campaign"))
+            return redirect_back()
 
         # 3. Save to Database
         db = get_db_connection()
         cursor = db.cursor(dictionary=True)
-        sql = """
-            INSERT INTO campaigns
-                (name, company_domain, scenario_type, status, user_id, delivery_mode, schedule_frequency, scheduled_at)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-        """
-        values = (name, domain, scenario, 'draft', user["id"], delivery_mode, schedule_frequency, scheduled_at)
-        cursor.execute(sql, values)
+        if campaign_id is not None:
+            sql = """
+                UPDATE campaigns
+                SET name = %s, company_domain = %s, scenario_type = %s, delivery_mode = %s, schedule_frequency = %s, scheduled_at = %s
+                WHERE id = %s AND user_id = %s
+            """
+            values = (name, domain, scenario, delivery_mode, schedule_frequency, scheduled_at, campaign_id, user["id"])
+            cursor.execute(sql, values)
+        else:
+            sql = """
+                INSERT INTO campaigns
+                    (name, company_domain, scenario_type, status, user_id, delivery_mode, schedule_frequency, scheduled_at)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            """
+            values = (name, domain, scenario, 'draft', user["id"], delivery_mode, schedule_frequency, scheduled_at)
+            cursor.execute(sql, values)
+            campaign_id = cursor.lastrowid
         db.commit()
-        campaign_id = cursor.lastrowid
         cursor.close()
         db.close()
 
@@ -2140,6 +2405,7 @@ def new_campaign():
         safe_send_available=safe_send_available,
         preview_available=preview_available,
         campaign_limit_reached=campaign_limit_reached,
+        campaign=campaign,
     )
 
 # Wizard Step 2: Upload targets for campaign
@@ -3630,6 +3896,7 @@ def download_report(campaign_id):
 
     section_title(pdf, "Department Risk View")
     if department_rows:
+        pdf.set_x(pdf.l_margin)
         pdf.set_font("Helvetica", "B", 9)
         pdf.set_text_color(15, 23, 42)
         table_cell(pdf, 70, 7, "Department", 28)
@@ -3640,6 +3907,7 @@ def download_report(campaign_id):
         pdf.set_text_color(51, 65, 85)
         for row in department_rows:
             ensure_pdf_space(pdf, 10)
+            pdf.set_x(pdf.l_margin)
             table_cell(pdf, 70, 7, row.get("department"), 28)
             table_cell(pdf, 35, 7, str(row.get("targets") or 0), 12)
             table_cell(pdf, 35, 7, str(row.get("clicks") or 0), 12)
@@ -3665,18 +3933,20 @@ def download_report(campaign_id):
     paragraph(pdf, "Simulation emails include click tracking, open tracking where supported by the mail client, and a report button. Open tracking can be affected by image blocking, privacy proxies, and client-side security controls.")
     paragraph(pdf, "For Gmail or other live SMTP delivery, ask IT to allowlist the sender or configure a mail-flow exception. Without this, security filters may place simulations in spam.")
     if email_rows:
+        pdf.set_x(pdf.l_margin)
         pdf.set_font("Helvetica", "B", 9)
         pdf.set_text_color(15, 23, 42)
-        table_cell(pdf, 62, 7, "Recipient", 30)
-        table_cell(pdf, 25, 7, "Status", 10)
-        table_cell(pdf, 90, 7, "Subject", 45, ln=1)
+        table_cell(pdf, 58, 7, "Recipient", 26)
+        table_cell(pdf, 24, 7, "Status", 10)
+        table_cell(pdf, 96, 7, "Subject", 48, ln=1)
         pdf.set_font("Helvetica", "", 8.5)
         pdf.set_text_color(51, 65, 85)
         for row in email_rows[:8]:
             ensure_pdf_space(pdf, 10)
-            table_cell(pdf, 62, 6, row.get("recipient_email", ""), 32)
-            table_cell(pdf, 25, 6, row.get("status", ""), 10)
-            table_cell(pdf, 90, 6, row.get("subject", ""), 48, ln=1)
+            pdf.set_x(pdf.l_margin)
+            table_cell(pdf, 58, 6, row.get("recipient_email", ""), 24)
+            table_cell(pdf, 24, 6, row.get("status", ""), 10)
+            table_cell(pdf, 96, 6, row.get("subject", ""), 52, ln=1)
 
     section_title(pdf, "Audit Notes")
     paragraph(pdf, "Use this PDF for internal security-awareness review only. PhishSim AI is designed for authorized simulations where the organization has permission to test the listed recipients.")
@@ -3716,25 +3986,48 @@ def generate_remediation_pdf_bytes(campaign, report, dept_rows, emp_rows):
         if d_rate > 0:
             failed_depts.append(f"{d['department']} ({d_rate}% clicks)")
             
-    failed_depts_str = ", ".join(failed_depts[:2]) if failed_depts else "None"
+    failed_depts_str = ", ".join(failed_depts) if failed_depts else "None (Zero clicks registered)"
     
     at_risk_names = [e["name"].title() for e in emp_rows if e.get("clicked")]
-    at_risk_names_str = ", ".join(at_risk_names[:3]) if at_risk_names else "None"
+    at_risk_names_str = ", ".join(at_risk_names) if at_risk_names else "None (No compromised targets)"
     
-    pdf = FPDF()
-    pdf.set_auto_page_break(True, margin=10)
+    class GorgeousPDF(FPDF):
+        def header(self):
+            if self.page_no() == 1:
+                # Solid dark banner
+                self.set_fill_color(15, 23, 42)
+                self.rect(0, 0, 210, 36, "F")
+                
+                # Gold/Cyan highlight strip
+                self.set_fill_color(245, 158, 11)  # Gold accent
+                self.rect(0, 35, 210, 1.5, "F")
+                
+                self.set_text_color(255, 255, 255)
+                self.set_font("Helvetica", "B", 15)
+                self.set_xy(18, 10)
+                self.cell(0, 8, "PHISHSIM AI SECURITY BRIEFING", ln=1)
+                
+                self.set_font("Helvetica", "", 9)
+                self.set_xy(18, 18)
+                self.cell(0, 4, "Autonomous Attack Surface Simulation & Remediation Report", ln=1)
+            else:
+                self.set_text_color(100, 116, 139)
+                self.set_font("Helvetica", "I", 8)
+                self.set_xy(18, 8)
+                self.cell(0, 8, "PhishSim AI Security Advisory — restricted", ln=0)
+                self.set_draw_color(226, 232, 240)
+                self.line(18, 15, 192, 15)
+                
+        def footer(self):
+            self.set_y(-15)
+            self.set_font("Helvetica", "I", 8)
+            self.set_text_color(148, 163, 184)
+            self.cell(0, 10, f"Page {self.page_no()} | CONFIDENTIAL — INTERNAL USE ONLY", align="C")
+            
+    pdf = GorgeousPDF()
+    pdf.set_auto_page_break(True, margin=15)
+    pdf.set_margins(18, 18, 18)
     pdf.add_page()
-    
-    # Header block
-    pdf.set_fill_color(15, 23, 42)
-    pdf.rect(0, 0, 210, 34, "F")
-    
-    pdf.set_text_color(255, 255, 255)
-    pdf.set_font("Helvetica", "B", 16)
-    pdf.set_xy(15, 8)
-    pdf.cell(0, 8, "PHISHSIM AI SECURITY ADVISORY", ln=1)
-    pdf.set_font("Helvetica", "", 9)
-    pdf.cell(0, 4, f"Campaign Remediation Brief & Protocol", ln=1)
     
     def clean_pdf_text(value):
         text = str(value or "")
@@ -3747,85 +4040,158 @@ def generate_remediation_pdf_bytes(campaign, report, dept_rows, emp_rows):
             text = text.replace(src, dst)
         text = re.sub(r"<[^>]+>", " ", text)
         return text.encode("latin-1", "replace").decode("latin-1")
-
-    # Metadata grid
-    pdf.set_text_color(71, 85, 105)
-    pdf.set_xy(15, 38)
+        
+    # Metadata grid starting after header
+    pdf.set_xy(18, 44)
     pdf.set_font("Helvetica", "B", 8)
-    pdf.cell(25, 5, "DATE:")
+    pdf.set_text_color(71, 85, 105)
+    pdf.cell(32, 5, "DATE PREPARED:")
     pdf.set_font("Helvetica", "", 8)
-    pdf.cell(65, 5, datetime.utcnow().strftime("%B %d, %Y"))
+    pdf.cell(60, 5, datetime.utcnow().strftime("%B %d, %Y"))
+    
+    pdf.set_font("Helvetica", "B", 8)
+    pdf.cell(35, 5, "SECURITY VECTOR:")
+    pdf.set_font("Helvetica", "", 8)
+    pdf.cell(60, 5, clean_pdf_text(vector_name), ln=1)
+    
+    pdf.set_xy(18, 49)
+    pdf.set_font("Helvetica", "B", 8)
+    pdf.cell(32, 5, "COMPANY DOMAIN:")
+    pdf.set_font("Helvetica", "", 8)
+    pdf.cell(60, 5, clean_pdf_text(campaign.get("company_domain", "Your Company")))
+    
     pdf.set_font("Helvetica", "B", 8)
     pdf.cell(35, 5, "CLASSIFICATION:")
-    pdf.set_font("Helvetica", "", 8)
-    pdf.cell(65, 5, "CONFIDENTIAL / INTERNAL USE ONLY", ln=1)
-    
-    pdf.set_xy(15, 43)
     pdf.set_font("Helvetica", "B", 8)
-    pdf.cell(25, 5, "COMPANY:")
-    pdf.set_font("Helvetica", "", 8)
-    pdf.cell(65, 5, clean_pdf_text(campaign.get("company_domain", "Your Company")))
-    pdf.set_font("Helvetica", "B", 8)
-    pdf.cell(35, 5, "TARGET AUDIENCE:")
-    pdf.set_font("Helvetica", "", 8)
-    pdf.cell(65, 5, "Executive Board & Department Managers", ln=1)
+    pdf.set_text_color(239, 68, 68)  # Red warning
+    pdf.cell(60, 5, "RESTRICTED / CONFIDENTIAL", ln=1)
     
-    pdf.ln(3)
+    pdf.ln(4)
     pdf.set_draw_color(226, 232, 240)
-    pdf.line(15, pdf.get_y(), 195, pdf.get_y())
-    pdf.ln(4)
-    
-    def add_pdf_section(pdf, title, content_lines):
-        pdf.set_font("Helvetica", "B", 10)
-        pdf.set_text_color(99, 102, 241)
-        pdf.cell(0, 6, title, ln=1)
-        pdf.ln(1)
-        pdf.set_text_color(51, 65, 85)
-        pdf.set_font("Helvetica", "", 8.5)
-        for line in content_lines:
-            if line.strip() == "":
-                pdf.ln(1.5)
-            else:
-                pdf.multi_cell(0, 4.5, clean_pdf_text(line))
-                pdf.ln(1.5)
-        pdf.ln(2.5)
-        
-    add_pdf_section(pdf, "1. EXECUTIVE SUMMARY", [
-        f"This remedial brief was dynamically compiled by PhishSim AI following the completion of the "
-        f"{vector_name} simulation campaign. During the exercise, an overall compromise rate of "
-        f"{click_rate}% was recorded across {campaign.get('employee_count', 0)} test recipients.",
-        "Social-engineering tactics successfully bypassed cognitive defenses, showing that additional awareness controls are required."
-    ])
-    
-    add_pdf_section(pdf, "2. EXPOSURE DETAILS", [
-        f"- Vulnerable Departments: {failed_depts_str}",
-        f"- Top At-Risk Employees Requiring Intervention: {at_risk_names_str}",
-        "",
-        "The primary attack vector utilized compliance pressure and spoofed organizational authority, "
-        "which typically exposes training gaps in display-name verification and urgent protocol overrides."
-    ])
-    
-    add_pdf_section(pdf, "3. REMEDIATION PROTOCOL", [
-        "Based on the campaign vulnerabilities, the security team is advised to enforce the following guidelines immediately:",
-        "",
-        "1. Targeted Department Briefings: Schedule 15-minute micro-learning sessions focusing on display name spoofing and urgent transaction overrides.",
-        "",
-        "2. Active Reporting Checkpoints: Encourage users to leverage the PhishSim report button extension rather than silently deleting or ignoring suspicious emails.",
-        "",
-        "3. Multi-Channel Verification: Mandate voice or secure Slack out-of-band confirmation for all financial and sensitive operations requests."
-    ])
-    
-    # Signature block
-    pdf.ln(4)
-    pdf.set_font("Helvetica", "B", 8.5)
-    pdf.cell(90, 5, "Report Prepared By:")
-    pdf.cell(90, 5, "Action Approved By:", ln=1)
+    pdf.line(18, pdf.get_y(), 192, pdf.get_y())
     pdf.ln(5)
+    
+    # ── Executive Summary
+    pdf.set_font("Helvetica", "B", 11)
+    pdf.set_text_color(15, 23, 42)
+    pdf.cell(0, 6, "1. Executive Summary", ln=1)
+    pdf.ln(1.5)
+    pdf.set_font("Helvetica", "", 9)
+    pdf.set_text_color(51, 65, 85)
+    pdf.multi_cell(0, 5.5, clean_pdf_text(
+        f"This remedial brief was dynamically compiled by PhishSim AI following the completion of the "
+        f"{vector_name} simulation exercise. During the campaign, a total of {campaign.get('employee_count', 0)} "
+        f"target employees were scanned and monitored to measure susceptibility to social engineering pretexts. "
+        f"Overall, a compromise rate of {click_rate}% was registered. Immediate remedial action is recommended "
+        f"for departments showing high failure vectors."
+    ))
+    pdf.ln(4)
+    
+    # ── Metrics Card Table
+    pdf.set_fill_color(248, 250, 252)
+    pdf.set_draw_color(226, 232, 240)
+    # Draw boxed container
+    pdf.rect(18, pdf.get_y(), 174, 24, "FD")
+    
+    # Text inside boxed metrics card
+    y_pos = pdf.get_y() + 4
+    pdf.set_xy(22, y_pos)
+    pdf.set_font("Helvetica", "B", 8)
+    pdf.set_text_color(100, 116, 139)
+    pdf.cell(40, 4, "TOTAL RECIPIENTS")
+    pdf.cell(45, 4, "CLICKS REGISTERED")
+    pdf.cell(45, 4, "OVERALL CLICK RATE")
+    pdf.cell(44, 4, "SIMULATION STATUS", ln=1)
+    
+    pdf.set_xy(22, y_pos + 5)
+    pdf.set_font("Helvetica", "B", 14)
+    pdf.set_text_color(15, 23, 42)
+    pdf.cell(40, 7, str(campaign.get("employee_count", 0)))
+    
+    clicks_recorded = report.get("clicks", 0)
+    pdf.cell(45, 7, str(clicks_recorded))
+    
+    # Color coding the click rate
+    if click_rate >= 30:
+        pdf.set_text_color(239, 68, 68) # Red
+    elif click_rate >= 10:
+        pdf.set_text_color(245, 158, 11) # Gold
+    else:
+        pdf.set_text_color(16, 185, 129) # Green
+    pdf.cell(45, 7, f"{click_rate}%")
+    
+    pdf.set_text_color(15, 23, 42)
+    pdf.set_font("Helvetica", "B", 10)
+    pdf.cell(44, 7, str(campaign.get("status", "Completed")).upper())
+    
+    pdf.set_xy(18, y_pos + 16)
+    pdf.ln(5)
+    
+    # ── Section 2: Exposure Details
+    pdf.set_font("Helvetica", "B", 11)
+    pdf.set_text_color(15, 23, 42)
+    pdf.cell(0, 6, "2. Human Vulnerability Assessment & Exposure", ln=1)
+    pdf.ln(1.5)
+    
+    # We write structured cards for departments and employees
+    pdf.set_font("Helvetica", "", 9)
+    pdf.set_text_color(51, 65, 85)
+    pdf.multi_cell(0, 5, clean_pdf_text("The following endpoints registered active link clicks during the simulation. These departments and individuals failed the authority identity checks and require immediate out-of-band awareness training."))
+    pdf.ln(2.5)
+    
+    # Table headers
+    pdf.set_fill_color(71, 85, 105)
+    pdf.set_text_color(255, 255, 255)
+    pdf.set_font("Helvetica", "B", 8.5)
+    pdf.cell(87, 6, " EXPOSURE FACTOR / DEPARTMENT", fill=True)
+    pdf.cell(87, 6, " DETECTED SUSCEPTIBILITY DETAILS", fill=True, ln=1)
+    
+    pdf.set_font("Helvetica", "", 8.5)
+    pdf.set_text_color(51, 65, 85)
+    
+    # Zebra striping for table data
+    pdf.set_fill_color(250, 250, 250)
+    pdf.cell(87, 6, " Vulnerable Departments", border="B", fill=True)
+    pdf.cell(87, 6, " " + clean_pdf_text(failed_depts_str)[:45], border="B", fill=True, ln=1)
+    
+    pdf.cell(87, 6, " Compromised Employees (At-Risk)", border="B")
+    pdf.cell(87, 6, " " + clean_pdf_text(at_risk_names_str)[:45], border="B", ln=1)
+    
+    pdf.cell(87, 6, " Delivery Protocol Mode", border="B", fill=True)
+    pdf.cell(87, 6, " " + clean_pdf_text(campaign.get("delivery_mode", "Preview only")).upper(), border="B", fill=True, ln=1)
+    
+    pdf.ln(5)
+    
+    # ── Section 3: Mitigation Checklist
+    pdf.set_font("Helvetica", "B", 11)
+    pdf.set_text_color(15, 23, 42)
+    pdf.cell(0, 6, "3. Recommended Remediation & Training Protocol", ln=1)
+    pdf.ln(1.5)
+    
+    pdf.set_font("Helvetica", "", 9)
+    pdf.set_text_color(51, 65, 85)
+    pdf.multi_cell(0, 5.5, clean_pdf_text(
+        "To mitigate future occurrences of executive and authority spoofing attacks, please deploy the following controls immediately:\n\n"
+        "1. Out-of-Band Verification: Establish a strict protocol requiring voice or secure chat confirmation for any administrative or transaction request coming from external addresses.\n\n"
+        "2. Segmented Security Briefings: Route standard employees in vulnerable departments to simulated phishing modules within 48 hours.\n\n"
+        "3. Gateway Rules Optimization: Enforce strict SPF, DKIM, and DMARC quarantine protocols to automatically filter incoming external mail carrying corporate domain prefixes."
+    ))
+    pdf.ln(6)
+    
+    # ── Signatures
+    pdf.set_font("Helvetica", "B", 8.5)
+    pdf.set_text_color(15, 23, 42)
+    pdf.cell(87, 5, "Report Prepared By:")
+    pdf.cell(87, 5, "Action Approved By:", ln=1)
+    pdf.ln(8)
     pdf.set_font("Helvetica", "", 8)
-    pdf.cell(90, 5, "________________________")
-    pdf.cell(90, 5, "________________________", ln=1)
-    pdf.cell(90, 5, "PhishSim AI Threat Analyst")
-    pdf.cell(90, 5, "Security Administrator", ln=1)
+    pdf.set_text_color(100, 116, 139)
+    pdf.cell(87, 5, "___________________________________")
+    pdf.cell(87, 5, "___________________________________", ln=1)
+    pdf.set_font("Helvetica", "B", 8)
+    pdf.set_text_color(15, 23, 42)
+    pdf.cell(87, 5, "PhishSim AI Threat intelligence Engine")
+    pdf.cell(87, 5, "Chief Information Security Officer", ln=1)
     
     pdf_output = pdf.output()
     return pdf_output.encode("latin-1") if isinstance(pdf_output, str) else bytes(pdf_output)
@@ -4221,47 +4587,167 @@ def exit_demo():
     flash("Demo ended successfully. Your temporary data has been cleared.", "success")
     return redirect(url_for("home"))
 
-@app.route("/dark-vector")
-def dark_vector():
-    """Renders the Dark Vector AI domain scanner interface."""
-    return render_template("dark_vector.html")
+@app.route("/header-analyzer")
+def header_analyzer():
+    """Renders the Email Header Analyzer page."""
+    return render_template("header_analyzer.html")
 
-@app.route("/provenance")
-def provenance():
-    """Renders the Provenance AI software supply chain code scanner interface."""
-    return render_template("provenance.html")
+@app.route("/url-decoder")
+def url_decoder():
+    """Renders the Phishing URL Decoder page."""
+    return render_template("url_decoder.html")
+
+@app.route("/password-breach")
+def password_breach():
+    """Renders the Password Breach Checker page."""
+    return render_template("password_breach.html")
+
+@app.route("/ai-risk-advisor")
+@login_required
+def ai_risk_advisor():
+    """Renders the AI Risk Advisor page."""
+    user = current_user()
+    db = get_db_connection()
+    cursor = db.cursor(dictionary=True)
+    advisor = {
+        "campaign_count": 0,
+        "employees_tracked": 0,
+        "report_rate": 0,
+        "click_rate": 0,
+        "alert_count": 0,
+        "recommendations": [
+            "Launch at least one campaign to build a real risk baseline.",
+            "Track both clicks and reports so the advisor can separate risky behavior from healthy reporting culture.",
+            "Run varied scenarios over time to avoid overfitting users to one phishing style."
+        ]
+    }
+    try:
+        if user["role"] == "admin":
+            where_clause = "WHERE c.company_domain != 'demo-corp.com' OR c.company_domain IS NULL"
+            params = ()
+        else:
+            company_domain = normalize_domain(user.get("company_domain"))
+            if company_domain:
+                where_clause = "WHERE c.company_domain = %s OR c.user_id = %s"
+                params = (company_domain, user["id"])
+            else:
+                where_clause = "WHERE c.user_id = %s"
+                params = (user["id"],)
+
+        cursor.execute(f"""
+            SELECT COUNT(DISTINCT c.id) AS campaign_count,
+                   COUNT(DISTINCT emp.id) AS employees_tracked,
+                   COUNT(DISTINCT CASE WHEN ev.event_type = 'click' THEN ev.tracking_id END) AS clicks,
+                   COUNT(DISTINCT CASE WHEN ev.event_type = 'report' THEN ev.tracking_id END) AS reports,
+                   COUNT(DISTINCT es.tracking_id) AS sent
+            FROM campaigns c
+            LEFT JOIN employees emp ON emp.campaign_id = c.id
+            LEFT JOIN emails_sent es ON es.campaign_id = c.id
+            LEFT JOIN events ev ON ev.tracking_id = es.tracking_id
+            {where_clause}
+        """, params)
+        row = cursor.fetchone() or {}
+        sent = int(row.get("sent") or 0)
+        clicks = int(row.get("clicks") or 0)
+        reports = int(row.get("reports") or 0)
+        click_rate = round((clicks / sent) * 100, 1) if sent else 0
+        report_rate = round((reports / sent) * 100, 1) if sent else 0
+        recommendations = []
+        if click_rate >= 20:
+            recommendations.append("Prioritize targeted coaching for departments and roles with click events before the next broad campaign.")
+        if report_rate < 15 and sent:
+            recommendations.append("Make the report button more visible and reward employees who report simulated threats quickly.")
+        if click_rate < 5 and report_rate >= 20:
+            recommendations.append("Current behavior looks healthy. Increase scenario variety to test resistance against different pretexts.")
+        if not recommendations:
+            recommendations.append("Continue collecting campaign telemetry; stronger recommendations appear as more campaigns are launched.")
+        recommendations.append("Use report trends to schedule follow-up simulations 30 days after remediation.")
+        advisor = {
+            "campaign_count": int(row.get("campaign_count") or 0),
+            "employees_tracked": int(row.get("employees_tracked") or 0),
+            "report_rate": report_rate,
+            "click_rate": click_rate,
+            "alert_count": sum(1 for r in (click_rate >= 20, report_rate < 15 and sent) if r),
+            "recommendations": recommendations
+        }
+    finally:
+        cursor.close()
+        db.close()
+
+    return render_template("ai_risk_advisor.html", advisor=advisor)
 
 @app.route("/api/dark-vector/scan", methods=["POST"])
 def dark_vector_scan():
     """Performs OSINT domain footprinting and exposes dark web risks/ports."""
-    domain = request.form.get("domain", "").strip()
+    domain = request.form.get("domain", "").strip().lower().rstrip(".")
     if not domain:
         return jsonify({"success": False, "message": "Domain is required."}), 400
     
+    import subprocess
+    import socket
+    import re
+    from concurrent.futures import ThreadPoolExecutor
+
+    domain_pattern = re.compile(
+        r"^(?=.{1,253}$)(?!-)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$"
+    )
+    if not domain_pattern.match(domain):
+        return jsonify({
+            "success": False,
+            "message": "Enter a valid public domain such as example.com. Raw numbers, IPs, and local names are not scanned."
+        }), 400
+    
+    TRUSTED_DOMAINS = {
+        'gmail.com', 'googlemail.com', 'yahoo.com', 'ymail.com', 'outlook.com', 'hotmail.com',
+        'live.com', 'icloud.com', 'me.com', 'aol.com', 'proton.me', 'protonmail.com',
+        'zoho.com', 'mail.com', 'gmx.com', 'gmx.net', 'yandex.com', 'pm.me',
+        'google.com', 'microsoft.com', 'apple.com', 'github.com', 'gitlab.com', 'amazon.com',
+        'cloudflare.com', 'facebook.com', 'twitter.com', 'linkedin.com'
+    }
+
+    def is_trusted_domain(dom):
+        dom = dom.lower().strip()
+        if dom in TRUSTED_DOMAINS:
+            return True
+        for t_dom in TRUSTED_DOMAINS:
+            if dom.endswith("." + t_dom):
+                return True
+        return False
+
+    def query_nslookup(args):
+        try:
+            res = subprocess.run(args, capture_output=True, text=True, timeout=1.2)
+            return res.stdout
+        except Exception:
+            return ""
+
+    is_trusted = is_trusted_domain(domain)
+    
+    # Verify if domain resolves. If not, return a limited real report instead of fake exposure.
+    is_real_domain = False
+    resolved_ip = None
+    try:
+        resolved_ip = socket.gethostbyname(domain)
+        is_real_domain = True
+    except socket.gaierror:
+        is_real_domain = False
+
     try:
         from osint.scraper import scrape_company
-        profile = scrape_company(domain)
-        company_name = profile.get("company_name") or domain.split(".")[0].capitalize()
+        profile = {}
+        if is_real_domain:
+            try:
+                profile = scrape_company(domain)
+            except Exception as se:
+                print(f"Scraper warning: {se}")
+        company_name = profile.get("company_name") if profile else None
+        if not company_name:
+            company_name = domain.split(".")[0].capitalize()
         
-        # Get scraped emails
-        scraped_emails = profile.get("emails", [])
-        
-        # Fallback to templates if zero emails scraped
-        if not scraped_emails:
-            scraped_emails = [
-                f"admin@{domain}",
-                f"it-support@{domain}",
-                f"hr-payroll@{domain}"
-            ]
+        # Get emails
+        scraped_emails = profile.get("emails", []) if profile else []
         
         emails_list = []
-        breach_sources = [
-            "Redline Stealer Log Exposure (2025)",
-            "ComboList Ledger Leak (2024)",
-            "SocialEngineering DB Dump",
-            "Public Metadata Exposure",
-            "DarkWeb Combo Leak (2023)"
-        ]
         
         for i, email in enumerate(scraped_emails[:8]):
             prefix = email.split("@")[0]
@@ -4282,36 +4768,139 @@ def dark_vector_scan():
                 "email": email,
                 "title": title,
                 "department": dept,
-                "breach_source": breach_sources[i % len(breach_sources)]
+                "source": "Public web/source index"
             })
+
+        # DNS Records
+        dns_records = []
+        queries = {
+            "MX": ["nslookup", "-query=mx", domain],
+            "SPF": ["nslookup", "-query=txt", domain],
+            "DMARC": ["nslookup", "-query=txt", f"_dmarc.{domain}"]
+        }
+        with ThreadPoolExecutor(max_workers=3) as executor:
+            futures = {k: executor.submit(query_nslookup, v) for k, v in queries.items()}
+            dns_results = {k: f.result() for k, f in futures.items()}
         
-        # Generate subdomains
-        subdomains = [
-            {"subdomain": f"vpn.{domain}", "ip": "198.51.100.18", "ports": [{"port": 3389, "service": "MS-RDP", "severity": "Critical"}, {"port": 22, "service": "SSH", "severity": "High"}]},
-            {"subdomain": f"portal.{domain}", "ip": "198.51.100.32", "ports": [{"port": 443, "service": "HTTPS", "severity": "Low"}, {"port": 80, "service": "HTTP", "severity": "Medium"}]},
-            {"subdomain": f"mail.{domain}", "ip": "198.51.100.5", "ports": [{"port": 25, "service": "SMTP", "severity": "Low"}]}
-        ]
+        # Parse MX
+        mx_lines = []
+        for line in dns_results["MX"].splitlines():
+            if "mail exchanger" in line or "MX preference" in line:
+                mx_lines.append(line.strip())
+        if mx_lines:
+            mx_val = "; ".join(mx_lines)
+            mx_val = re.sub(rf"^{re.escape(domain)}\s+", "", mx_val)
+            dns_records.append({"record_type": "MX", "value": mx_val, "status": "Pass"})
+        else:
+            dns_records.append({"record_type": "MX", "value": "No MX record found", "status": "Fail"})
+            
+        # Parse SPF
+        spf_value = None
+        for line in dns_results["SPF"].splitlines():
+            if "v=spf1" in line:
+                match = re.search(r'text\s*=\s*"(.*?)"', line)
+                if match:
+                    spf_value = match.group(1)
+                elif "text =" in line:
+                    spf_value = line.split("text =")[1].strip().strip('"')
+                else:
+                    spf_value = line.strip()
+                break
+        if spf_value:
+            status = "Pass"
+            if "~all" in spf_value:
+                status = "Softfail"
+            elif "-all" in spf_value:
+                status = "Pass"
+            elif "?all" in spf_value or "+all" in spf_value:
+                status = "Neutral"
+            dns_records.append({"record_type": "TXT (SPF)", "value": spf_value, "status": status})
+        else:
+            dns_records.append({"record_type": "TXT (SPF)", "value": "No SPF record found", "status": "Fail"})
+            
+        # Parse DMARC
+        dmarc_value = None
+        for line in dns_results["DMARC"].splitlines():
+            if "v=DMARC1" in line:
+                match = re.search(r'text\s*=\s*"(.*?)"', line)
+                if match:
+                    dmarc_value = match.group(1)
+                elif "text =" in line:
+                    dmarc_value = line.split("text =")[1].strip().strip('"')
+                else:
+                    dmarc_value = line.strip()
+                break
+        if dmarc_value:
+            status = "Pass"
+            if "p=none" in dmarc_value.lower():
+                status = "Monitor Only"
+            elif "p=quarantine" in dmarc_value.lower() or "p=reject" in dmarc_value.lower():
+                status = "Pass"
+            dns_records.append({"record_type": "TXT (DMARC)", "value": dmarc_value, "status": status})
+        else:
+            dns_records.append({"record_type": "TXT (DMARC)", "value": "No DMARC record found", "status": "Fail"})
+
+        # Subdomains
+        subdomains = []
+        subdomain_prefixes = ["www", "mail", "vpn", "portal"]
         
-        # DNS status
-        dns_records = [
-            {"record_type": "MX", "value": "10 mail.protection.outlook.com", "status": "Pass"},
-            {"record_type": "TXT (SPF)", "value": "v=spf1 include:spf.protection.outlook.com ~all", "status": "Softfail"},
-            {"record_type": "TXT (DMARC)", "value": f"v=DMARC1; p=quarantine; pct=100; rua=mailto:dmarc-reports@{domain}", "status": "Pass"}
-        ]
+        def resolve_sub(prefix):
+            sub = f"{prefix}.{domain}"
+            try:
+                ip = socket.gethostbyname(sub)
+                return {"subdomain": sub, "ip": ip, "prefix": prefix}
+            except socket.gaierror:
+                return None
         
+        with ThreadPoolExecutor(max_workers=4) as executor:
+            sub_results = list(executor.map(resolve_sub, subdomain_prefixes))
+        
+        for res in sub_results:
+            if res:
+                prefix = res["prefix"]
+                sub = res["subdomain"]
+                ip = res["ip"]
+                ports = [{"port": 443, "service": "HTTPS", "severity": "Low"}]
+                if prefix == "mail":
+                    ports = [{"port": 25, "service": "SMTP", "severity": "Low"}]
+                elif prefix == "www":
+                    ports = [{"port": 443, "service": "HTTPS", "severity": "Low"}, {"port": 80, "service": "HTTP", "severity": "Medium"}]
+                subdomains.append({"subdomain": sub, "ip": ip, "ports": ports})
+        
+        if not subdomains and resolved_ip:
+            subdomains.append({
+                "subdomain": domain,
+                "ip": resolved_ip,
+                "ports": [{"port": 443, "service": "HTTPS", "severity": "Low"}]
+            })
+
         open_ports_count = sum(len(s["ports"]) for s in subdomains)
         
         # Exposure score calculation
-        exposure_score = 45
-        if len(emails_list) > 4:
+        exposure_score = 15 if is_trusted else 25
+        if not dns_records or any(d["status"] == "Fail" for d in dns_records):
             exposure_score += 15
-        if any(p["severity"] == "Critical" for s in subdomains for p in s["ports"]):
-            exposure_score += 20
+        if any(d["record_type"] == "TXT (SPF)" and d["status"] == "Softfail" for d in dns_records):
+            exposure_score += 8
+        if any(d["record_type"] == "TXT (DMARC)" and d["status"] == "Monitor Only" for d in dns_records):
+            exposure_score += 8
+        if len(emails_list) > 4:
+            exposure_score += 10
+        if any(p["severity"] == "Medium" for s in subdomains for p in s["ports"]):
+            exposure_score += 5
         exposure_score = min(exposure_score, 100)
-        
+            
         verdict = "CRITICAL RISK" if exposure_score >= 70 else ("HIGH RISK" if exposure_score >= 40 else "LOW EXPOSURE")
-        summary = f"Reconnaissance sweep on {domain} identified {len(subdomains)} active subdomains, {open_ports_count} open TCP ports, and {len(emails_list)} exposed credentials in dark web leak databases. DNS SPF validation returned softfail, creating high susceptibility to domain spoofing."
         
+        summary = f"Reconnaissance sweep on {domain} identified {len(subdomains)} resolving host(s), {open_ports_count} inferred service indicator(s), and {len(emails_list)} public email pattern(s)."
+        if not is_real_domain:
+            summary = f"{domain} is a valid domain format, but it did not resolve to a public A record from this environment. The report is limited to DNS query attempts and does not invent subdomains, ports, emails, or breach data."
+        if any(d["record_type"] == "TXT (SPF)" and d["status"] == "Softfail" for d in dns_records):
+            summary += " SPF uses softfail, so spoofing resistance should be reviewed."
+        elif any(d["status"] == "Fail" for d in dns_records):
+            summary += " Missing DNS authentication records can increase impersonation risk."
+        summary += " This scanner uses live DNS and public web signals only; it does not claim private dark-web breach matches unless a connected breach source is added."
+                
         results = {
             "domain": domain,
             "company_name": company_name,
@@ -4320,167 +4909,259 @@ def dark_vector_scan():
             "summary": summary,
             "subdomains": subdomains,
             "emails": emails_list,
+            "breaches": [],
             "dns": dns_records,
-            "open_ports_count": open_ports_count
+            "open_ports_count": open_ports_count,
+            "limited": not is_real_domain
         }
         
         return jsonify({"success": True, "results": results})
     except Exception as e:
         return jsonify({"success": False, "message": f"Scan execution failed: {str(e)}"}), 500
 
-@app.route("/api/provenance/scan", methods=["POST"])
-def provenance_scan():
-    """Performs static code vulnerability checks via LLM or secure local heuristics."""
-    code_content = request.form.get("code", "").strip()
-    if not code_content:
-        return jsonify({"success": False, "message": "Code content is empty."}), 400
-    
-    # Try LLM scan first
-    from ai_engine.email_gen import client
-    if client is not None:
-        try:
-            prompt = f"""You are a static code security scanner (Provenance AI). 
-Analyze the following source code or configuration files for security vulnerabilities, hardcoded secrets, database credentials, SQL injection, or supply chain dependency issues.
+# ─────────────────────────────────────────────────────────────────
+# NEW TOOL APIs
+# ─────────────────────────────────────────────────────────────────
 
-Code to scan:
-\"\"\"
-{code_content[:6000]}
-\"\"\"
+@app.route("/api/header-analyzer", methods=["POST"])
+def header_analyzer_api():
+    """Parse raw email headers and return DMARC/SPF/DKIM/routing verdict."""
+    import re
+    raw = request.form.get("headers", "").strip()
+    if not raw:
+        return jsonify({"success": False, "message": "No headers provided."}), 400
 
-Return ONLY a valid JSON object matching the following structure (no markdown, no backticks, no wrap text, just the raw JSON):
-{{
-  "exposure_score": 75,
-  "summary": "Short 2-3 sentence overview of the file posture.",
-  "secrets_count": 1,
-  "vulnerabilities": [
-    {{
-      "severity": "Critical",
-      "title": "SQL Injection Vulnerability",
-      "line": 15,
-      "code_snippet": "cursor.execute('...', user_input)",
-      "description": "Vulnerability details...",
-      "fix": "How to resolve the issue..."
-    }}
-  ],
-  "dependencies": [
-    {{
-      "name": "mysql-connector-python",
-      "version": "8.0.30",
-      "status": "Vulnerable",
-      "vulnerability": "CVE-2023-12345"
-    }}
-  ]
-}}"""
-            response = client.chat.completions.create(
-                model="openrouter/free",
-                messages=[
-                    {"role": "system", "content": "You are a code security analysis engine returning clean JSON only."},
-                    {"role": "user", "content": prompt}
-                ],
-                temperature=0.2,
-                max_tokens=600
-            )
-            raw = response.choices[0].message.content.strip()
-            
-            import re
-            raw = re.sub(r'<think>.*?</think>', '', raw, flags=re.DOTALL).strip()
-            if raw.startswith("```"):
-                match = re.search(r'```(?:json)?\s*(\{.*?\})\s*```', raw, re.DOTALL)
-                if match:
-                    raw = match.group(1)
-            
-            import json
-            results = json.loads(raw)
-            return jsonify({"success": True, "results": results})
-        except Exception as api_err:
-            print(f"Provenance AI LLM scan error: {api_err}. Falling back to heuristics...")
+    def find_header(name, text):
+        m = re.search(rf'^{re.escape(name)}:\s*(.+?)(?=\n\S|\Z)', text, re.IGNORECASE | re.MULTILINE | re.DOTALL)
+        return m.group(1).replace('\n', ' ').strip() if m else None
 
-    # Heuristics local fallback scanner
-    vulnerabilities = []
-    dependencies = []
-    secrets_count = 0
-    
-    lines = code_content.split('\n')
-    for i, line in enumerate(lines):
-        line_num = i + 1
-        line_strip = line.strip()
-        
-        # Hardcoded secrets regex
-        secret_patterns = [
-            (r'(api_key|apikey|secret_key|private_key|token|auth_token|jwt_token)\s*=\s*["\'][a-zA-Z0-9_\-]{16,}["\']', "Hardcoded API Token / Secret Key", "Critical", "Store secrets in secure environment variables (e.g. using `os.getenv()`) instead of raw strings."),
-            (r'(password|passwd|pwd|db_pass)\s*=\s*["\'][a-zA-Z0-9_@#$%\^&*]{6,}["\']', "Hardcoded Database Credentials", "Critical", "Migrate static database logons to secure environment stores or cloud keyvault vaults."),
-            (r'mysql://|postgres://|mongodb://', "Exposed Database URI String", "High", "Remove database connection strings containing inline credentials from public source code repositories.")
-        ]
-        for pattern, title, severity, fix in secret_patterns:
-            import re
-            if re.search(pattern, line_strip, re.IGNORECASE):
-                secrets_count += 1
-                vulnerabilities.append({
-                    "severity": severity,
-                    "title": title,
-                    "line": line_num,
-                    "code_snippet": line_strip[:80],
-                    "description": f"A hardcoded security parameter was detected in source line {line_num}. Storing static passwords or tokens exposes endpoints to repository scanning attacks.",
-                    "fix": fix
-                })
-        
-        # SQL Injection regex
-        sql_patterns = [
-            (r'execute\s*\(\s*["\'].*SELECT.*["\']\s*\+\s*\w+', "Raw SQL Concatenation Injection", "Critical"),
-            (r'execute\s*\(\s*f["\'].*SELECT.*\{\w+\}', "F-String SQL Concatenation Injection", "Critical"),
-            (r'execute\s*\(\s*["\'].*SELECT.*%\s*\w+', "Format String SQL Injection", "High")
-        ]
-        for pattern, title, severity in sql_patterns:
-            import re
-            if re.search(pattern, line_strip, re.IGNORECASE):
-                vulnerabilities.append({
-                    "severity": severity,
-                    "title": title,
-                    "line": line_num,
-                    "code_snippet": line_strip[:80],
-                    "description": f"An unparameterized SQL statement query was located on line {line_num}. Using raw string concatenations for database query compilation allows SQL injections.",
-                    "fix": "Use parameterized queries or prepared statement tuples (e.g., `cursor.execute('SELECT * FROM users WHERE id = %s', (user_id,))`)."
-                })
-                
-        # Package import checker (SBOM)
-        import re
-        import_match = re.match(r'^(?:import|from)\s+(\w+)', line_strip)
-        if import_match:
-            pkg_name = import_match.group(1)
-            if pkg_name not in [d["name"] for d in dependencies] and pkg_name not in ["os", "sys", "json", "re", "math", "datetime"]:
-                status = "Clean"
-                vuln = None
-                if pkg_name in ["mysql", "mysql.connector", "requests"]:
-                    status = "Outdated"
-                    vuln = "CVE-2023-44281 (Version update recommended)"
-                dependencies.append({
-                    "name": pkg_name,
-                    "version": "Latest" if pkg_name != "requests" else "2.25.0",
-                    "status": status,
-                    "vulnerability": vuln
-                })
-                
-    if not vulnerabilities:
-        exposure_score = 12
-        summary = "AST checks found no critical vulnerabilities or secrets. The script adheres to basic secure coding practices."
+    def check(val, label):
+        if val is None:
+            return {"label": label, "value": "Not found", "status": "warn"}
+        return {"label": label, "value": val, "status": "info"}
+
+    # ── SPF ──────────────────────────────────────────────────────────
+    received_spf = find_header("Received-SPF", raw) or ""
+    auth_results = find_header("Authentication-Results", raw) or ""
+    if re.search(r'spf=pass', auth_results, re.IGNORECASE) or received_spf.lower().startswith("pass"):
+        spf_status, spf_value = "pass", received_spf or "pass"
+    elif re.search(r'spf=fail', auth_results, re.IGNORECASE) or "fail" in received_spf.lower():
+        spf_status, spf_value = "fail", received_spf or "fail"
+    elif re.search(r'spf=softfail', auth_results, re.IGNORECASE) or "softfail" in received_spf.lower():
+        spf_status, spf_value = "warn", received_spf or "softfail"
     else:
-        exposure_score = min(30 + (len(vulnerabilities) * 20), 100)
-        summary = f"Code security audit flagged {len(vulnerabilities)} high-risk vulnerabilities and {secrets_count} exposed credentials. Immediate refactoring is required to secure raw inputs and API boundaries."
+        spf_status, spf_value = "warn", "Not present"
 
-    if not dependencies:
-        dependencies = [
-            {"name": "pip", "version": "23.1.2", "status": "Clean", "vulnerability": None},
-            {"name": "setuptools", "version": "65.5.1", "status": "Outdated", "vulnerability": "CVE-2022-40897 (Patch recommended)"}
-        ]
+    # ── DKIM ─────────────────────────────────────────────────────────
+    if re.search(r'dkim=pass', auth_results, re.IGNORECASE):
+        dkim_status, dkim_value = "pass", "Signature valid"
+    elif re.search(r'dkim=fail', auth_results, re.IGNORECASE):
+        dkim_status, dkim_value = "fail", "Signature invalid"
+    elif find_header("DKIM-Signature", raw):
+        dkim_status, dkim_value = "warn", "Signature present but not verified by receiving server"
+    else:
+        dkim_status, dkim_value = "warn", "No DKIM signature found"
 
-    results = {
-        "exposure_score": exposure_score,
-        "summary": summary,
-        "secrets_count": secrets_count,
-        "vulnerabilities": vulnerabilities,
-        "dependencies": dependencies
-    }
-    return jsonify({"success": True, "results": results})
+    # ── DMARC ────────────────────────────────────────────────────────
+    if re.search(r'dmarc=pass', auth_results, re.IGNORECASE):
+        dmarc_status, dmarc_value = "pass", "DMARC aligned"
+    elif re.search(r'dmarc=fail', auth_results, re.IGNORECASE):
+        dmarc_status, dmarc_value = "fail", "DMARC failed — domain likely spoofed"
+    elif re.search(r'dmarc=bestguesspass', auth_results, re.IGNORECASE):
+        dmarc_status, dmarc_value = "warn", "Best-guess pass (no strict DMARC policy)"
+    else:
+        dmarc_status, dmarc_value = "warn", "DMARC result not present"
+
+    # ── From / Reply-To mismatch ─────────────────────────────────────
+    from_hdr = find_header("From", raw) or ""
+    reply_to = find_header("Reply-To", raw) or ""
+    from_domain = re.search(r'@([\w.\-]+)', from_hdr)
+    reply_domain = re.search(r'@([\w.\-]+)', reply_to)
+    if from_domain and reply_domain and from_domain.group(1).lower() != reply_domain.group(1).lower():
+        mismatch_status = "fail"
+        mismatch_value = f"From domain ({from_domain.group(1)}) ≠ Reply-To domain ({reply_domain.group(1)}) — classic phishing indicator"
+    elif reply_to and not reply_domain:
+        mismatch_status = "warn"
+        mismatch_value = f"Reply-To present but could not parse domain: {reply_to[:60]}"
+    else:
+        mismatch_status = "pass"
+        mismatch_value = "From and Reply-To domains match (or Reply-To absent)"
+
+    # ── X-Originating-IP ─────────────────────────────────────────────
+    orig_ip = find_header("X-Originating-IP", raw) or find_header("X-Sender-IP", raw) or find_header("X-Source-IP", raw)
+    ip_status = "info" if orig_ip else "warn"
+    ip_value = orig_ip or "Not disclosed by sender"
+
+    # ── Received hops ────────────────────────────────────────────────
+    hops = re.findall(r'^Received:\s*(.+?)(?=\nReceived:|\n\S|\Z)', raw, re.IGNORECASE | re.MULTILINE | re.DOTALL)
+    hop_list = []
+    for i, h in enumerate(hops):
+        hop_clean = ' '.join(h.split())
+        from_m = re.search(r'from\s+([\w.\-\[\]]+)', hop_clean, re.IGNORECASE)
+        by_m   = re.search(r'by\s+([\w.\-]+)', hop_clean, re.IGNORECASE)
+        hop_list.append({
+            "hop": i + 1,
+            "from": from_m.group(1) if from_m else "unknown",
+            "by": by_m.group(1) if by_m else "unknown",
+            "raw": hop_clean[:120]
+        })
+
+    # ── Overall verdict ──────────────────────────────────────────────
+    statuses = [spf_status, dkim_status, dmarc_status, mismatch_status]
+    if "fail" in statuses:
+        verdict = "SUSPICIOUS"
+        verdict_color = "#ef4444"
+        verdict_icon = "ti-alert-triangle"
+    elif statuses.count("pass") >= 3:
+        verdict = "LEGITIMATE"
+        verdict_color = "#10b981"
+        verdict_icon = "ti-circle-check"
+    else:
+        verdict = "UNCERTAIN"
+        verdict_color = "#f59e0b"
+        verdict_icon = "ti-help-circle"
+
+    return jsonify({
+        "success": True,
+        "verdict": verdict,
+        "verdict_color": verdict_color,
+        "verdict_icon": verdict_icon,
+        "checks": [
+            {"label": "SPF", "value": spf_value, "status": spf_status},
+            {"label": "DKIM", "value": dkim_value, "status": dkim_status},
+            {"label": "DMARC", "value": dmarc_value, "status": dmarc_status},
+            {"label": "Reply-To / From Mismatch", "value": mismatch_value, "status": mismatch_status},
+            {"label": "X-Originating-IP", "value": ip_value, "status": ip_status},
+        ],
+        "hops": hop_list,
+        "from": from_hdr,
+        "reply_to": reply_to,
+        "auth_results": auth_results[:300] if auth_results else None
+    })
+
+
+@app.route("/api/url-decoder", methods=["POST"])
+def url_decoder_api():
+    """Follow redirect chain, check URLhaus and Google Safe Browsing."""
+    import re, requests as req_lib
+    url = request.form.get("url", "").strip()
+    if not url:
+        return jsonify({"success": False, "message": "No URL provided."}), 400
+    if not url.startswith(("http://", "https://")):
+        url = "https://" + url
+
+    chain = []
+    current_url = url
+    MAX_HOPS = 8
+    session = req_lib.Session()
+    session.max_redirects = 1
+    headers = {"User-Agent": "Mozilla/5.0 (compatible; PhishSimAI/2.0)"}
+
+    for i in range(MAX_HOPS):
+        try:
+            resp = session.get(current_url, headers=headers, allow_redirects=False, timeout=5, verify=False)
+            domain = re.sub(r'https?://', '', current_url).split('/')[0]
+            node = {
+                "hop": i,
+                "url": current_url,
+                "domain": domain,
+                "status_code": resp.status_code,
+                "is_redirect": resp.status_code in (301, 302, 303, 307, 308),
+                "is_final": False
+            }
+            chain.append(node)
+            if resp.status_code in (301, 302, 303, 307, 308):
+                next_url = resp.headers.get("Location", "")
+                if not next_url:
+                    break
+                if next_url.startswith("/"):
+                    parsed = re.match(r'(https?://[^/]+)', current_url)
+                    next_url = parsed.group(1) + next_url if parsed else next_url
+                current_url = next_url
+            else:
+                node["is_final"] = True
+                break
+        except Exception as e:
+            chain.append({"hop": i, "url": current_url, "domain": current_url, "status_code": None, "is_redirect": False, "is_final": True, "error": str(e)[:80]})
+            break
+
+    if chain and not chain[-1]["is_final"]:
+        chain[-1]["is_final"] = True
+
+    final_domain = chain[-1]["domain"] if chain else ""
+
+    # ── URLhaus check ────────────────────────────────────────────────
+    urlhaus_verdict = "clean"
+    urlhaus_detail = "Not found in URLhaus database"
+    try:
+        uh_resp = req_lib.post(
+            "https://urlhaus-api.abuse.ch/v1/url/",
+            data={"url": chain[-1]["url"] if chain else url},
+            timeout=5
+        )
+        uh_data = uh_resp.json()
+        if uh_data.get("query_status") == "is_available":
+            urlhaus_verdict = "malicious"
+            urlhaus_detail = f"Listed on URLhaus — tags: {', '.join(uh_data.get('tags', []) or ['phishing'])}"
+        elif uh_data.get("query_status") == "no_results":
+            urlhaus_verdict = "clean"
+            urlhaus_detail = "Not found in URLhaus database"
+    except Exception:
+        urlhaus_verdict = "unknown"
+        urlhaus_detail = "URLhaus check unavailable"
+
+    # ── Verdict ──────────────────────────────────────────────────────
+    suspicious_patterns = [
+        r'login|signin|verify|update|account|secure|bank|paypal|microsoft|apple|google|amazon',
+        r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}',   # raw IP
+        r'[a-z0-9]{20,}\.(xyz|top|tk|ml|ga|cf|gq)',  # suspicious TLDs with long labels
+    ]
+    domain_flags = []
+    for pat in suspicious_patterns:
+        if re.search(pat, final_domain, re.IGNORECASE):
+            domain_flags.append(pat)
+
+    redirect_count = sum(1 for n in chain if n.get("is_redirect"))
+    if urlhaus_verdict == "malicious" or len(domain_flags) >= 2:
+        verdict = "DANGEROUS"
+        verdict_color = "#ef4444"
+    elif len(chain) > 3 or domain_flags:
+        verdict = "SUSPICIOUS"
+        verdict_color = "#f59e0b"
+    else:
+        verdict = "LIKELY SAFE"
+        verdict_color = "#10b981"
+
+    return jsonify({
+        "success": True,
+        "chain": chain,
+        "redirect_count": redirect_count,
+        "final_url": chain[-1]["url"] if chain else url,
+        "final_domain": final_domain,
+        "urlhaus_verdict": urlhaus_verdict,
+        "urlhaus_detail": urlhaus_detail,
+        "verdict": verdict,
+        "verdict_color": verdict_color,
+        "domain_flags": domain_flags
+    })
+
+
+@app.route("/api/password-breach/<sha1_prefix>", methods=["GET"])
+def password_breach_api(sha1_prefix):
+    """Proxy HaveIBeenPwned k-anonymity range API."""
+    import requests as req_lib
+    if not sha1_prefix or len(sha1_prefix) != 5 or not sha1_prefix.isalnum():
+        return "Invalid prefix", 400
+    try:
+        resp = req_lib.get(
+            f"https://api.pwnedpasswords.com/range/{sha1_prefix.upper()}",
+            headers={"User-Agent": "PhishSimAI/2.0"},
+            timeout=5
+        )
+        return resp.text, resp.status_code, {"Content-Type": "text/plain"}
+    except Exception as e:
+        return f"Error: {str(e)}", 500
 
 if __name__ == "__main__":
     app.run(debug=True)
+

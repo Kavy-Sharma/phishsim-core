@@ -1,549 +1,864 @@
 {% extends "base.html" %}
-{% block title %}Provenance AI — Software Supply Chain Security{% endblock %}
+{% block title %}Provenance AI — Origin Intelligence Suite{% endblock %}
 {% block content %}
 <style>
-    .cyber-container {
-        max-width: 1200px;
-        margin: 2.5rem auto;
-        padding: 0 1.5rem;
-    }
-    
-    .scan-grid {
-        display: grid;
-        grid-template-columns: 1fr 1.2fr;
-        gap: 2rem;
-        margin-top: 1.5rem;
-    }
-    
-    @media (max-width: 968px) {
-        .scan-grid {
-            grid-template-columns: 1fr;
-        }
+    /* ── Purple accent overrides for this page ── */
+    :root {
+        --prov-purple: #a855f7;
+        --prov-purple-rgb: 168, 85, 247;
     }
 
-    .telemetry-row {
-        background: rgba(255, 255, 255, 0.02);
+    .prov-container {
+        max-width: 900px;
+        margin: 2.5rem auto;
+        padding: 80px 1.5rem 4rem;
+    }
+
+    @keyframes inputShake {
+        0%, 100% { transform: translateX(0); }
+        15%  { transform: translateX(-6px); }
+        30%  { transform: translateX(6px); }
+        45%  { transform: translateX(-5px); }
+        60%  { transform: translateX(5px); }
+        75%  { transform: translateX(-3px); }
+        90%  { transform: translateX(3px); }
+    }
+    .input-shake { animation: inputShake 0.5s ease; }
+    .prov-error-msg {
+        color: #f87171;
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
+        margin-top: 6px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        opacity: 0;
+        transition: opacity 0.2s ease;
+    }
+    .prov-error-msg.visible { opacity: 1; }
+
+    /* ── Mode chips ── */
+    .mode-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 18px;
+        border-radius: 100px;
         border: 1px solid var(--border-color);
-        padding: 14px 18px;
-        border-radius: 10px;
+        background: rgba(255,255,255,0.02);
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        font-weight: 600;
+        color: var(--text-muted);
+        cursor: pointer;
+        transition: all 0.2s ease;
+        user-select: none;
+    }
+    .mode-chip.active {
+        border-color: var(--prov-purple);
+        color: var(--prov-purple);
+        background: rgba(168,85,247,0.08);
+    }
+    body.light-theme .mode-chip { background: #fff; border-color: #e2e8f0; color: #64748b; }
+    body.light-theme .mode-chip.active { border-color: #7c3aed; color: #7c3aed; background: rgba(124,58,237,0.07); }
+
+    /* ── Trace Progress Bar ── */
+    .prov-progress-bar-wrap { height: 6px; background: rgba(255,255,255,0.05); border-radius: 99px; overflow: hidden; margin-bottom: 0; }
+    body.light-theme .prov-progress-bar-wrap { background: #e2e8f0; }
+    .prov-progress-bar-fill { height: 100%; width: 0%; background: linear-gradient(90deg, #a855f7, #c084fc); border-radius: 99px; transition: width 0.6s ease; }
+
+    /* ════ CONNECTION MAP ════ */
+    .trace-map-wrap {
+        position: relative;
+        padding: 2.5rem 1rem 1rem;
+        overflow-x: auto;
+    }
+    /* Horizontal connector line */
+    .trace-line-track {
+        position: absolute;
+        top: calc(2.5rem + 52px); /* align to node center (2.5rem padding + 14px label + 10px margin + 28px half-height of 56px circle) */
+        left: calc(12.5% + 28px);
+        right: calc(12.5% + 28px);
+        height: 4px;
+        background: rgba(255,255,255,0.05);
+        border-radius: 99px;
+        z-index: 0;
+    }
+    body.light-theme .trace-line-track { background: #e2e8f0; }
+    .trace-line-fill {
+        height: 100%;
+        width: 0%;
+        background: linear-gradient(90deg, #a855f7, #c084fc);
+        border-radius: 99px;
+        box-shadow: 0 0 10px rgba(168,85,247,0.4);
+        transition: width 0.8s ease-in-out;
+    }
+    .trace-nodes {
+        display: flex;
+        justify-content: space-between;
+        position: relative;
+        z-index: 1;
+        gap: 0;
+    }
+    .trace-node {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 25%;
+        flex-shrink: 0;
+    }
+    .trace-node-label {
+        font-family: var(--font-mono);
+        font-size: 0.65rem;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        margin-bottom: 10px;
+        text-align: center;
+        height: 14px;
+        line-height: 14px;
+    }
+    .trace-node-circle {
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        background: rgba(255,255,255,0.03);
+        border: 2px solid rgba(255,255,255,0.1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.4rem;
+        transition: all 0.5s ease;
+        position: relative;
+        z-index: 2;
+    }
+    .trace-node-circle.active {
+        animation: nodePulse 1.5s ease-out;
+    }
+    .trace-node-circle.status-clean    { border-color: #10b981; box-shadow: 0 0 16px rgba(16,185,129,0.35); background: rgba(16,185,129,0.1); }
+    .trace-node-circle.status-warn     { border-color: #f59e0b; box-shadow: 0 0 16px rgba(245,158,11,0.35); background: rgba(245,158,11,0.1); }
+    .trace-node-circle.status-danger   { border-color: #ef4444; box-shadow: 0 0 16px rgba(239,68,68,0.35);  background: rgba(239,68,68,0.1);  }
+    .trace-node-circle.status-pending  { border-color: rgba(168,85,247,0.3); box-shadow: 0 0 10px rgba(168,85,247,0.15); background: rgba(168,85,247,0.05); }
+ 
+    @keyframes nodePulse {
+        0%   { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(168,85,247,0.5); }
+        50%  { transform: scale(1.08); box-shadow: 0 0 0 12px rgba(168,85,247,0); }
+        100% { transform: scale(1); }
+    }
+    .trace-node-data {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        color: var(--text-muted);
+        text-align: center;
+        margin-top: 10px;
+        line-height: 1.5;
+        max-width: 180px;
+        word-break: break-word;
+        min-height: 48px;
+    }
+    .trace-node-data strong { display: block; font-weight: 700; }
+
+    /* ── Intelligence Report panels ── */
+    .intel-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 1.5rem;
+        margin-top: 1.5rem;
+    }
+    @media (max-width: 768px) { .intel-grid { grid-template-columns: 1fr; } }
+
+    .intel-panel {
+        background: rgba(255,255,255,0.015);
+        border: 1px solid var(--border-color);
+        border-radius: 14px;
+        padding: 1.4rem;
+        opacity: 0;
+        transform: translateY(12px);
+        transition: opacity 0.4s ease, transform 0.4s ease;
+    }
+    .intel-panel.revealed { opacity: 1; transform: translateY(0); }
+    body.light-theme .intel-panel { background: #ffffff; border-color: #e2e8f0; }
+
+    .intel-panel-title {
+        font-family: var(--font-sans);
+        font-size: 0.9rem;
+        font-weight: 700;
+        color: #fff;
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        margin: 0 0 1rem 0;
+        padding-bottom: 8px;
+        border-bottom: 1px solid var(--border-color);
+    }
+    body.light-theme .intel-panel-title { color: #0f172a; }
+
+    /* Data table inside panels */
+    .data-table { width: 100%; border-collapse: collapse; }
+    .data-table td { padding: 5px 0; font-size: 0.78rem; vertical-align: top; border-bottom: 1px solid var(--border-color); }
+    .data-table tr:last-child td { border-bottom: none; }
+    .data-table td:first-child { color: var(--text-muted); width: 45%; font-family: var(--font-mono); font-size: 0.72rem; }
+    .data-table td:last-child { color: #fff; font-weight: 500; }
+    body.light-theme .data-table td:last-child { color: #0f172a; }
+
+    /* Lookalike diff */
+    .domain-compare {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        margin-bottom: 1rem;
+    }
+    .domain-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 10px;
+        border-radius: 6px;
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+    }
+    .domain-row.legit   { background: rgba(16,185,129,0.08);  border: 1px solid rgba(16,185,129,0.2); }
+    .domain-row.suspect { background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.2); }
+    .diff-highlight { background: rgba(239,68,68,0.25); color: #ef4444; border-radius: 3px; padding: 0 3px; font-weight: 700; }
+
+    /* Rep signal rows */
+    .rep-signal-row {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        padding: 7px 0;
+        border-bottom: 1px solid var(--border-color);
+        font-size: 0.78rem;
+    }
+    .rep-signal-row:last-child { border-bottom: none; }
+    .rep-icon { width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 0.65rem; font-weight: 700; margin-top: 1px; }
+    .rep-icon.fail { background: rgba(239,68,68,0.15); color: #ef4444; border: 1px solid rgba(239,68,68,0.3); }
+    .rep-icon.pass { background: rgba(16,185,129,0.15); color: #10b981; border: 1px solid rgba(16,185,129,0.3); }
+    .rep-icon.warn { background: rgba(245,158,11,0.15); color: #f59e0b; border: 1px solid rgba(245,158,11,0.3); }
+
+    /* Mini gauge for rep score */
+    .rep-gauge-wrap { position: relative; width: 100px; height: 100px; margin: 0 auto 0.6rem; }
+    .rep-gauge-svg { transform: rotate(-90deg); width: 100%; height: 100%; }
+    .rep-gauge-bg  { fill: none; stroke: rgba(255,255,255,0.05); stroke-width: 8; }
+    body.light-theme .rep-gauge-bg { stroke: #e2e8f0; }
+    .rep-gauge-fill { fill: none; stroke-width: 8; stroke-linecap: round; transition: stroke-dashoffset 1.2s ease-out; stroke-dasharray: 251.327; stroke-dashoffset: 251.327; }
+
+    /* Verdict box */
+    .verdict-box {
+        border: 1px solid rgba(239,68,68,0.35);
+        background: rgba(239,68,68,0.04);
+        border-radius: 14px;
+        padding: 1.8rem;
+        margin-top: 1.5rem;
+        opacity: 0;
+        transform: translateY(10px);
+        transition: opacity 0.4s ease 0.5s, transform 0.4s ease 0.5s;
+    }
+    .verdict-box.revealed { opacity: 1; transform: translateY(0); }
+    .verdict-box.safe {
+        border-color: rgba(16,185,129,0.35);
+        background: rgba(16,185,129,0.04);
+    }
+
+    .cta-box-purple {
+        border: 1px solid rgba(168,85,247,0.3);
+        background: rgba(168,85,247,0.04);
+        border-radius: 14px;
+        padding: 1.6rem;
         display: flex;
         align-items: center;
         justify-content: space-between;
-        margin-bottom: 0.8rem;
-        transition: all 0.2s ease;
+        gap: 1.5rem;
+        flex-wrap: wrap;
+        margin-top: 2rem;
     }
-
-    .telemetry-row:hover {
-        background: rgba(6, 182, 212, 0.04);
-        border-color: rgba(6, 182, 212, 0.25);
-        transform: translateX(4px);
-    }
-
-    /* Gauge */
-    .gauge-wrapper {
-        position: relative;
-        width: 140px;
-        height: 140px;
-        margin: 0 auto 1rem;
-    }
-    
-    .gauge-svg {
-        transform: rotate(-90deg);
-        width: 100%;
-        height: 100%;
-    }
-    
-    .gauge-bg {
-        fill: none;
-        stroke: rgba(255, 255, 255, 0.05);
-        stroke-width: 8;
-    }
-    
-    .gauge-fill {
-        fill: none;
-        stroke-width: 8;
-        stroke-linecap: round;
-        transition: stroke-dashoffset 1s ease-out;
-        stroke-dasharray: 339.292;
-        stroke-dashoffset: 339.292;
-    }
-
-    body.light-theme .gauge-bg {
-        stroke: #e2e8f0;
-    }
-    
-    .gauge-text {
-        position: absolute;
-        inset: 0;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        font-family: var(--font-sans);
-    }
-    
-    .gauge-score {
-        font-size: 2.4rem;
-        font-weight: 800;
+    .btn-purple {
+        display: inline-block;
+        padding: 12px 24px;
+        background: linear-gradient(135deg, #a855f7, #7c3aed);
         color: #fff;
-        line-height: 1;
-    }
-    
-    .gauge-label {
-        font-size: 0.65rem;
-        font-family: var(--font-mono);
-        color: var(--text-muted);
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        margin-top: 4px;
-    }
-
-    .indicator-pill {
-        display: inline-flex;
-        align-items: center;
-        padding: 3px 8px;
-        border-radius: 100px;
-        font-size: 0.65rem;
-        font-family: var(--font-mono);
+        font-family: var(--font-sans);
+        font-size: 0.88rem;
         font-weight: 700;
-        text-transform: uppercase;
-    }
-    
-    .indicator-pill.critical { background: rgba(239,68,68,0.12); color:#ef4444; border: 1px solid rgba(239,68,68,0.2); }
-    .indicator-pill.high { background: rgba(245,158,11,0.12); color:#f59e0b; border: 1px solid rgba(245,158,11,0.2); }
-    .indicator-pill.medium { background: rgba(59,130,246,0.12); color:#3b82f6; border: 1px solid rgba(59,130,246,0.2); }
-    .indicator-pill.low { background: rgba(16,185,129,0.12); color:#10b981; border: 1px solid rgba(16,185,129,0.2); }
-
-    /* Scan animation beam */
-    .scan-overlay {
-        position: absolute;
-        inset: 0;
-        background: rgba(2, 6, 23, 0.98) !important;
-        background-image: 
-            linear-gradient(rgba(6, 182, 212, 0.04) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(6, 182, 212, 0.04) 1px, transparent 1px) !important;
-        background-size: 20px 20px !important;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        z-index: 10;
-        opacity: 0;
-        pointer-events: none;
-        transition: opacity 0.3s ease;
-    }
-
-    .scan-beam {
-        position: absolute;
-        top: 0; left: 0; right: 0;
-        height: 4px;
-        background: linear-gradient(180deg, rgba(6, 182, 212, 0) 0%, rgba(6, 182, 212, 0.8) 50%, rgba(6, 182, 212, 0) 100%);
-        box-shadow: 0 0 15px rgba(6, 182, 212, 0.5);
-        animation: beamMove 2.5s infinite linear;
-    }
-
-    @keyframes beamMove {
-        0% { top: 0%; }
-        100% { top: 100%; }
-    }
-    
-    body.light-theme .scan-overlay {
-        background: rgba(241, 245, 249, 0.98) !important;
-        background-image: 
-            linear-gradient(rgba(37, 99, 235, 0.04) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(37, 99, 235, 0.04) 1px, transparent 1px) !important;
-    }
-
-    body.light-theme .scan-beam {
-        background: linear-gradient(180deg, rgba(37, 99, 235, 0) 0%, rgba(37, 99, 235, 0.8) 50%, rgba(37, 99, 235, 0) 100%);
-        box-shadow: 0 0 15px rgba(37, 99, 235, 0.5);
-    }
-
-    .log-line {
-        font-family: var(--font-mono);
-        font-size: 0.76rem;
-        margin-bottom: 6px;
-        line-height: 1.4;
-        white-space: pre-wrap;
-    }
-
-    .code-editor-wrapper {
-        border: 1px solid var(--border-color);
-        border-radius: 8px;
-        position: relative;
-        background: rgba(0, 0, 0, 0.25);
-    }
-
-    .code-textarea {
-        min-height: 400px;
-        padding: 16px;
-        font-family: var(--font-mono), monospace;
-        font-size: 0.85rem;
-        line-height: 1.5;
-        resize: none;
         border: none;
-        width: 100%;
-        margin: 0;
-        background: transparent;
-        color: #e2e8f0;
-        outline: none;
-    }
-
-    .vuln-card {
-        background: rgba(255, 255, 255, 0.02);
-        border: 1px solid var(--border-color);
-        border-left: 4px solid #ef4444;
         border-radius: 8px;
-        padding: 16px;
-        margin-bottom: 12px;
-        text-align: left;
-        transition: transform 0.2s ease;
+        cursor: pointer;
+        text-decoration: none;
+        white-space: nowrap;
+        transition: all 0.2s ease;
+        box-shadow: 0 4px 15px rgba(168,85,247,0.25);
     }
-    .vuln-card:hover {
-        transform: translateX(4px);
-    }
+    .btn-purple:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(168,85,247,0.35); }
 
-    body.light-theme .telemetry-row,
-    body.light-theme .vuln-card {
-        background: #ffffff;
-        border-color: #e2e8f0;
-    }
-    body.light-theme .telemetry-row:hover {
-        background: rgba(37, 99, 235, 0.03);
-    }
+    #prov-trace-section  { display: none; }
+    #prov-report-section { display: none; margin-top: 4rem; }
+
+    /* Lookalike tag */
+    .lookalike-tag { display:inline-block; padding:3px 9px; border-radius:100px; border:1px solid rgba(245,158,11,0.25); background:rgba(245,158,11,0.07); font-family:var(--font-mono); font-size:0.68rem; color:#f59e0b; margin:3px 2px; }
 </style>
 
-<div class="cyber-container">
-    <!-- Header Area -->
-    <div style="padding: 1.5rem 0 1rem 0; display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 1rem;">
-        <div>
-            <span style="display:inline-block; background:rgba(6, 182, 212, 0.08); border:1px solid rgba(6, 182, 212, 0.2); border-radius:100px; padding:4px 12px; font-size:0.75rem; font-weight:600; color:var(--cyan); letter-spacing:0.05em; text-transform:uppercase; margin-bottom:8px;">Software Supply Chain Security</span>
-            <h1 class="page-title" style="font-family: var(--font-sans); font-size: 2.4rem; font-weight: 800; margin: 0 0 0.5rem 0;">Provenance AI</h1>
-            <p class="page-subtitle" style="font-size: 0.95rem; margin: 0; color: var(--text-muted);">Perform AST checks to identify hardcoded secrets, SQL injection vectors, and package dependency flaws.</p>
-        </div>
-        <div>
-            <span style="font-family: var(--font-mono); font-size: 0.8rem; color: var(--accent-purple); display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border: 1px solid rgba(168, 85, 247, 0.25); border-radius: 8px; background: rgba(168, 85, 247, 0.04);">
-                <span style="width: 6px; height: 6px; background: var(--accent-purple); border-radius: 50%; box-shadow: 0 0 5px var(--accent-purple); animation: demoPulse 1.5s infinite ease-in-out;"></span> Source Auditor Running
-            </span>
-        </div>
+<div class="prov-container">
+
+    <!-- ── Page Header ── -->
+    <div style="padding: 1.5rem 0 1.8rem 0; animation: fadeInDown 0.6s ease-out;">
+        <span style="display:inline-block; background:rgba(168,85,247,0.08); border:1px solid rgba(168,85,247,0.25); border-radius:100px; padding:4px 12px; font-size:0.75rem; font-weight:600; color:#a855f7; letter-spacing:0.06em; text-transform:uppercase; margin-bottom:10px;">ORIGIN INTELLIGENCE</span>
+        <h1 class="page-title" style="font-family: var(--font-sans); font-size: 2.6rem; font-weight: 800; margin: 0 0 0.5rem 0;">Provenance AI</h1>
+        <p class="page-subtitle" style="font-size: 1rem; margin: 0; color: var(--text-muted);">Trace the true origin of any suspicious sender. Detect spoofed domains, lookalike registrations, and impersonation attempts.</p>
     </div>
 
-    <!-- Scan Input Panel -->
-    <div class="scan-grid" id="provenance-input-view">
-        <!-- LEFT: Source Code Editor paste -->
-        <div class="glass-panel" style="padding: 2rem; display: flex; flex-direction: column; justify-content: space-between; position: relative;">
-            <div id="scanning-overlay" class="scan-overlay">
-                <div class="scan-beam"></div>
-                <div style="font-family: var(--font-mono); color: var(--cyan); font-size: 0.85rem; font-weight: 700; letter-spacing: 1.5px; display:flex; align-items:center; gap:8px;">
-                    <i class="ti ti-loader-2 ti-spin"></i> PARSING AST STRUCTURES...
-                </div>
+    <!-- ══ SECTION 1 — Input Panel ══ -->
+    <div id="prov-input-section">
+        <div class="glass-panel" style="padding: 2.4rem; animation: fadeInUp 0.5s ease-out; border-color: rgba(168,85,247,0.15);">
+            <label style="display:block; font-family:var(--font-mono); font-size:0.72rem; color:#64748b; text-transform:uppercase; letter-spacing:1.2px; margin-bottom:10px;">Sender Address or Domain</label>
+            <input
+                type="text"
+                id="prov-input"
+                class="form-input"
+                style="width:100%; font-family:var(--font-mono); font-size:1rem; padding:14px 16px; background:rgba(2,6,23,0.6); border-radius:10px; margin-bottom:0.4rem; border-color:rgba(168,85,247,0.2); transition: border-color 0.3s ease;"
+                placeholder="e.g. r.sterling@demo-corp-ceo.com or secure-logistics-finance.com"
+                autocomplete="off"
+                spellcheck="false"
+                onkeydown="if(event.key==='Enter') initiateTrace()"
+            >
+            <div class="prov-error-msg" id="prov-error-msg"><i class="ti ti-alert-circle"></i> <span id="prov-error-text">Please enter a sender address or domain.</span></div>
+            <!-- Mode toggle chips -->
+            <div style="display:flex; gap:12px; margin-bottom:2rem; margin-top:1.2rem; flex-wrap:wrap;">
+                <button class="mode-chip active" id="mode-email"  onclick="setMode('email')"><i class="ti ti-mail" style="margin-right:4px;"></i> Sender Email</button>
+                <button class="mode-chip"        id="mode-domain" onclick="setMode('domain')"><i class="ti ti-world" style="margin-right:4px;"></i> Domain Only</button>
             </div>
-            
-            <div>
-                <h3 style="font-family: var(--font-sans); color: #fff; margin-top: 0; margin-bottom: 8px;">Code Intake Console</h3>
-                <p style="color: var(--text-muted); font-size: 0.82rem; margin-bottom: 1.5rem; line-height: 1.5;">Paste python scripts, shell configuration settings, or dependencies list requirements file below to scan against threat models and OWASP rules.</p>
-                
-                <div class="code-editor-wrapper">
-                    <textarea id="code-textarea" class="code-textarea" placeholder="# Paste code or requirements file here...&#10;import os&#10;API_KEY = 'sk_live_51M0...'&#10;db_conn = 'mysql://admin:P@ssword123@db.host/db'"></textarea>
-                </div>
-            </div>
-
-            <div style="margin-top: 1.5rem; display: flex; gap: 10px;">
-                <button type="button" class="btn-primary-action cyber-glow-hover" style="flex: 1;" onclick="executeScan()">
-                    <i class="ti ti-code-sandbox" style="margin-right:6px; vertical-align:middle;"></i> Run Vulnerability Scan
-                </button>
-                <button type="button" class="preset-btn cyber-glow-hover" onclick="loadSample()" title="Load Sample script" style="padding: 12px 16px; background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); color: var(--cyan); border-radius: 8px; cursor: pointer;">
-                    <i class="ti ti-file-text"></i> Load Sample
-                </button>
-            </div>
-        </div>
-
-        <!-- RIGHT: Heuristics Scan Terminal Log -->
-        <div class="glass-panel" style="padding: 2rem; display: flex; flex-direction: column; min-height: 400px;">
-            <h3 style="font-family:var(--font-sans); color:#fff; font-size:1.1rem; margin-top:0; margin-bottom:1.5rem; text-align:left;">AST Analysis Streams</h3>
-            <div id="log-terminal" style="background:#020617 !important; border:1px solid var(--border-color); border-radius:10px; padding:1.2rem; flex: 1; overflow-y:auto; box-shadow: inset 0 0 15px rgba(0,0,0,0.5); font-family: var(--font-mono); color: #22d3ee; line-height: 1.45;">
-                <div class="log-line" style="color: #64748b;">Awaiting source script ingest for compiling analysis logs...</div>
-            </div>
-        </div>
-    </div>
-
-    <!-- SCAN RESULTS DASHBOARD (Initially Hidden) -->
-    <div id="provenance-results-view" style="display: none; animation: fadeInUp 0.5s ease-out; margin-top: 1rem;">
-        <!-- Header Controls -->
-        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 1.2rem; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
-            <button onclick="resetRecon()" class="btn-primary-action cyber-glow-hover" style="width: auto; padding: 10px 20px; font-size: 0.85rem; margin: 0; text-transform: uppercase;">
-                <i class="ti ti-arrow-left" style="margin-right:6px; font-size:1.1rem; vertical-align:middle;"></i> Scan Another File
+            <button type="button" id="prov-trace-btn" onclick="initiateTrace()" style="width:100%; padding:14px; font-size:0.95rem; font-family:var(--font-sans); font-weight:700; border:none; border-radius:10px; background:linear-gradient(135deg, #a855f7, #7c3aed); color:#fff; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 4px 20px rgba(168,85,247,0.3); transition:all 0.25s cubic-bezier(0.22,1,0.36,1);" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 6px 24px rgba(168,85,247,0.4)'" onmouseout="this.style.transform=''; this.style.boxShadow='0 4px 20px rgba(168,85,247,0.3)'">
+                <i class="ti ti-radar-2" style="font-size:1.1rem;"></i> TRACE ORIGIN
             </button>
-            <span style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;">COMPLIANCE REPORT: SOURCE LEVEL GRANTED</span>
+            <p style="text-align:center; font-family:var(--font-mono); font-size:0.72rem; color:var(--text-muted); margin:10px 0 0 0;">
+                Try: <strong style="color:#a855f7;">r.sterling@demo-corp-ceo.com</strong> for a demo trace.
+            </p>
         </div>
+    </div>
 
-        <!-- Top Overview: Score Gauge + Basic Stats -->
-        <div class="glass-panel" style="padding: 2.2rem; display: grid; grid-template-columns: 240px 1fr; gap: 2.5rem; margin-bottom: 2rem; align-items: center;">
-            <!-- Left: Circle Gauge -->
-            <div style="text-align: center;">
-                <div class="gauge-wrapper" style="width: 150px; height: 150px; margin-bottom: 12px;">
-                    <svg class="gauge-svg" viewBox="0 0 120 120">
-                        <circle class="gauge-bg" cx="60" cy="60" r="54" />
-                        <circle class="gauge-fill" id="gauge-circle-res" cx="60" cy="60" r="54" stroke="#ef4444" />
-                    </svg>
-                    <div class="gauge-text">
-                        <span class="gauge-score" id="risk-score" style="font-size: 2.6rem;">0</span>
-                        <span class="gauge-label">RISK INDEX</span>
-                    </div>
-                </div>
-                <div class="indicator-pill" id="risk-badge">VULNERABLE</div>
+    <!-- ══ SECTION 2 — Trace Visualization ══ -->
+    <div id="prov-trace-section">
+
+        <!-- Status bar -->
+        <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; background:rgba(168,85,247,0.05); border:1px solid rgba(168,85,247,0.25); border-radius:10px; padding:10px 18px; margin-bottom:1.2rem;">
+            <div style="display:flex; align-items:center; gap:10px;">
+                <i class="ti ti-radar-2" style="color:#a855f7; font-size:1.1rem;"></i>
+                <span style="font-family:var(--font-mono); font-size:0.78rem; font-weight:700; color:#fff; text-transform:uppercase; letter-spacing:0.5px;">Tracing: <span id="trace-target-display" style="color:#a855f7;">—</span></span>
             </div>
-
-            <!-- Right: Explanatory summary and core indicators -->
-            <div style="display: flex; flex-direction: column; gap: 1.2rem;">
-                <h2 style="font-family: var(--font-sans); color: #fff; margin: 0;">Code Security Summary</h2>
-                <p id="risk-summary-text" style="color: var(--text-muted); font-size: 0.88rem; line-height: 1.6; margin: 0;">AST analysis flagged critical security warnings inside your application. Hardcoded secret keys or unprotected database parameters present immediate infiltration vectors.</p>
-                
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-top: 8px;">
-                    <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; text-align: left;">
-                        <div style="font-family: var(--font-mono); font-size: 0.65rem; color:#64748b; text-transform: uppercase;">Total Vulnerabilities</div>
-                        <div style="font-size: 1.6rem; font-weight: 800; color: #ef4444; margin-top: 4px;" id="count-vulns">0</div>
-                    </div>
-                    <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; text-align: left;">
-                        <div style="font-family: var(--font-mono); font-size: 0.65rem; color:#64748b; text-transform: uppercase;">Critical / High Alerts</div>
-                        <div style="font-size: 1.6rem; font-weight: 800; color: #f59e0b; margin-top: 4px;" id="count-critical">0</div>
-                    </div>
-                    <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; text-align: left;">
-                        <div style="font-family: var(--font-mono); font-size: 0.65rem; color:#64748b; text-transform: uppercase;">Secrets Exposed</div>
-                        <div style="font-size: 1.6rem; font-weight: 800; color: #c084fc; margin-top: 4px;" id="count-secrets">0</div>
-                    </div>
-                </div>
+            <div id="trace-status-badge" style="display:inline-flex; align-items:center; gap:6px; font-family:var(--font-mono); font-size:0.72rem; font-weight:700; color:#a855f7; text-transform:uppercase; letter-spacing:1px;">
+                <span style="width:7px;height:7px;border-radius:50%;background:#a855f7;box-shadow:0 0 7px #a855f7;animation:pulseStatus 1.2s infinite alternate;display:inline-block;"></span> TRACING
             </div>
         </div>
 
-        <!-- Detail Breakdown Grid -->
-        <div style="display: grid; grid-template-columns: 1.3fr 1fr; gap: 2rem; margin-bottom: 2rem; align-items: start;">
-            <!-- Detailed Vulnerability Finding List -->
-            <div class="glass-panel" style="padding: 1.8rem; border-radius: 12px; display: flex; flex-direction: column;">
-                <h3 style="font-family: var(--font-sans); font-size: 1.15rem; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 8px; margin-top: 0; margin-bottom: 1.2rem; border-bottom: 1px solid var(--border-color); padding-bottom: 8px;">
-                    <i class="ti ti-bug" style="color: #ef4444; font-size:1.4rem;"></i> Code Vulnerability Details
-                </h3>
-                <div style="flex: 1; max-height: 420px; overflow-y: auto;" id="vulnerabilities-list-container">
-                    <!-- Inserted dynamically -->
-                </div>
+        <div class="glass-panel" style="padding:2rem; border-color:rgba(168,85,247,0.15);">
+            <!-- Progress bar -->
+            <div class="prov-progress-bar-wrap" style="margin-bottom:2rem;">
+                <div class="prov-progress-bar-fill" id="prov-progress-fill"></div>
             </div>
 
-            <!-- Software Bill of Materials (SBOM) & Packages Dependency Grid -->
-            <div class="glass-panel" style="padding: 1.8rem; border-radius: 12px; display: flex; flex-direction: column;">
-                <h3 style="font-family: var(--font-sans); font-size: 1.15rem; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 8px; margin-top: 0; margin-bottom: 1.2rem; border-bottom: 1px solid var(--border-color); padding-bottom: 8px;">
-                    <i class="ti ti-archive" style="color: var(--accent-cyan); font-size:1.4rem;"></i> Software Bill of Materials (SBOM)
-                </h3>
-                <div style="flex: 1; max-height: 420px; overflow-y: auto;" id="dependencies-list-container">
-                    <!-- Inserted dynamically -->
+            <!-- Connection Map -->
+            <div class="trace-map-wrap">
+                <!-- Track line -->
+                <div class="trace-line-track">
+                    <div class="trace-line-fill" id="trace-line-fill"></div>
+                </div>
+                <!-- Nodes row -->
+                <div class="trace-nodes">
+                    <div class="trace-node" id="node-0">
+                        <div class="trace-node-label">Claimed Sender</div>
+                        <div class="trace-node-circle status-pending" id="node-circle-0"><i class="ti ti-user"></i></div>
+                        <div class="trace-node-data" id="node-data-0"><span style="color:var(--text-muted);">—</span></div>
+                    </div>
+                    <div class="trace-node" id="node-1">
+                        <div class="trace-node-label">Registered Domain</div>
+                        <div class="trace-node-circle status-pending" id="node-circle-1"><i class="ti ti-world"></i></div>
+                        <div class="trace-node-data" id="node-data-1"><span style="color:var(--text-muted);">Querying...</span></div>
+                    </div>
+                    <div class="trace-node" id="node-2">
+                        <div class="trace-node-label">Mail Server Origin</div>
+                        <div class="trace-node-circle status-pending" id="node-circle-2"><i class="ti ti-server-2"></i></div>
+                        <div class="trace-node-data" id="node-data-2"><span style="color:var(--text-muted);">Querying...</span></div>
+                    </div>
+                    <div class="trace-node" id="node-3">
+                        <div class="trace-node-label">Verdict</div>
+                        <div class="trace-node-circle status-pending" id="node-circle-3"><i class="ti ti-shield"></i></div>
+                        <div class="trace-node-data" id="node-data-3"><span style="color:var(--text-muted);">Pending...</span></div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
+
+    <!-- ══ SECTION 3 — Intelligence Report ══ -->
+    <div id="prov-report-section">
+
+        <!-- Back button -->
+        <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem; margin-bottom:1.5rem; padding-bottom:1rem; border-bottom:1px solid var(--border-color);">
+            <button onclick="resetTracer()" class="btn-primary-action cyber-glow-hover" style="width:auto; padding:10px 20px; font-size:0.85rem; margin:0; text-transform:uppercase;">
+                <i class="ti ti-arrow-left" style="margin-right:6px; vertical-align:middle;"></i> Trace Another
+            </button>
+            <span style="font-family:var(--font-mono); font-size:0.75rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px;">Origin Intelligence Report</span>
+        </div>
+
+        <!-- 3 intelligence panels -->
+        <div class="intel-grid">
+            <!-- Panel 1: Domain Intelligence -->
+            <div class="intel-panel" id="intel-panel-1">
+                <h3 class="intel-panel-title"><i class="ti ti-building" style="color:#a855f7; font-size:1.2rem;"></i> Domain Intelligence</h3>
+                <table class="data-table" id="domain-intel-table">
+                    <tr><td>Domain</td><td id="di-domain">—</td></tr>
+                    <tr><td>Domain Age</td><td id="di-age">—</td></tr>
+                    <tr><td>Registrar</td><td id="di-registrar">—</td></tr>
+                    <tr><td>Country</td><td id="di-country">—</td></tr>
+                    <tr><td>Expiry</td><td id="di-expiry">—</td></tr>
+                    <tr><td>SSL Cert</td><td id="di-ssl">—</td></tr>
+                </table>
+            </div>
+
+            <!-- Panel 2: Lookalike Detection -->
+            <div class="intel-panel" id="intel-panel-2">
+                <h3 class="intel-panel-title"><i class="ti ti-eye" style="color:#f59e0b; font-size:1.2rem;"></i> Lookalike Detection</h3>
+                <div class="domain-compare">
+                    <div class="domain-row legit">
+                        <i class="ti ti-check" style="color:#10b981; flex-shrink:0;"></i>
+                        <span style="font-family:var(--font-mono); font-size:0.8rem; color:#10b981; font-weight:700;" id="legit-domain">—</span>
+                        <span style="font-size:0.65rem; color:#10b981; margin-left:auto;">Legitimate</span>
+                    </div>
+                    <div class="domain-row suspect">
+                        <i class="ti ti-x" style="color:#ef4444; flex-shrink:0;"></i>
+                        <span style="font-family:var(--font-mono); font-size:0.8rem; color:#ef4444;" id="suspect-domain-display">—</span>
+                        <span style="font-size:0.65rem; color:#ef4444; margin-left:auto;">Suspicious</span>
+                    </div>
+                </div>
+                <div id="lookalike-technique" style="font-size:0.75rem; font-family:var(--font-mono); color:#f59e0b; background:rgba(245,158,11,0.06); border:1px solid rgba(245,158,11,0.2); border-radius:6px; padding:6px 10px; margin-bottom:0.8rem;"></div>
+                <div style="font-size:0.72rem; color:var(--text-muted); margin-bottom:4px; font-family:var(--font-mono); text-transform:uppercase; letter-spacing:0.5px;">Other Possible Lookalikes</div>
+                <div id="lookalike-list"></div>
+            </div>
+
+            <!-- Panel 3: Sender Reputation Score -->
+            <div class="intel-panel" id="intel-panel-3">
+                <h3 class="intel-panel-title"><i class="ti ti-chart-radar" style="color:#a855f7; font-size:1.2rem;"></i> Sender Reputation</h3>
+                <div style="text-align:center; margin-bottom:0.8rem;">
+                    <div class="rep-gauge-wrap">
+                        <svg class="rep-gauge-svg" viewBox="0 0 100 100">
+                            <circle class="rep-gauge-bg" cx="50" cy="50" r="40" stroke-width="8"/>
+                            <circle class="rep-gauge-fill" id="rep-gauge-fill" cx="50" cy="50" r="40" stroke="#ef4444" stroke-width="8"/>
+                        </svg>
+                        <div style="position:absolute; inset:0; display:flex; flex-direction:column; justify-content:center; align-items:center;">
+                            <span style="font-size:1.6rem; font-weight:800; color:#fff; line-height:1;" id="rep-score">0</span>
+                            <span style="font-size:0.55rem; font-family:var(--font-mono); color:var(--text-muted); text-transform:uppercase;">/100</span>
+                        </div>
+                    </div>
+                    <div id="rep-label" style="font-family:var(--font-mono); font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:#ef4444;">UNTRUSTED</div>
+                </div>
+                <div id="rep-signals"></div>
+            </div>
+        </div>
+
+        <!-- Verdict Box -->
+        <div class="verdict-box" id="verdict-box">
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:1rem;">
+                <i id="verdict-icon" class="ti ti-shield-x" style="font-size:1.8rem; color:#ef4444;"></i>
+                <div>
+                    <div id="verdict-title" style="font-family:var(--font-sans); font-size:1.1rem; font-weight:800; color:#fff;">IMPERSONATION DETECTED</div>
+                    <div id="verdict-confidence" style="font-family:var(--font-mono); font-size:0.7rem; color:#ef4444; text-transform:uppercase; letter-spacing:0.5px; margin-top:2px;">High Confidence</div>
+                </div>
+            </div>
+            <p id="verdict-body" style="font-size:0.88rem; color:var(--text-muted); line-height:1.6; margin:0 0 1rem 0;"></p>
+            <div style="font-family:var(--font-mono); font-size:0.78rem; color:#fff; background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.2); border-radius:8px; padding:10px 14px;">
+                <strong style="color:#ef4444; text-transform:uppercase; font-size:0.7rem; letter-spacing:0.5px;">Recommended Action:</strong><br>
+                <span id="verdict-action">Do not reply. Report to IT security. Block sender domain at mail gateway level.</span>
+            </div>
+        </div>
+
+        <!-- CTA -->
+        <div class="cta-box-purple">
+            <div>
+                <div style="font-family:var(--font-sans); font-weight:700; color:#fff; font-size:1rem; margin-bottom:6px;"><i class="ti ti-target" style="color:#a855f7; margin-right:6px;"></i> Test Your Human Firewall</div>
+                <p style="font-size:0.84rem; color:var(--text-muted); margin:0; line-height:1.5; max-width:520px;">Test if your employees can detect this exact impersonation technique with a targeted phishing simulation.</p>
+            </div>
+            <a href="/new-campaign" class="btn-purple">
+                <i class="ti ti-rocket" style="margin-right:6px; vertical-align:middle;"></i> Launch Campaign
+            </a>
+        </div>
+    </div>
+
+</div><!-- end .prov-container -->
 
 <script>
-    const logTerminal = document.getElementById('log-terminal');
-    const scanningOverlay = document.getElementById('scanning-overlay');
+let traceMode = 'email';
+let scanAbort = false;
 
-    const sampleScript = `import os
-import mysql.connector
+const TRUSTED_DOMAINS = new Set([
+    'gmail.com', 'googlemail.com', 'yahoo.com', 'ymail.com', 'outlook.com', 'hotmail.com',
+    'live.com', 'icloud.com', 'me.com', 'aol.com', 'proton.me', 'protonmail.com',
+    'zoho.com', 'mail.com', 'gmx.com', 'gmx.net', 'yandex.com', 'pm.me',
+    'google.com', 'microsoft.com', 'apple.com', 'github.com', 'gitlab.com'
+]);
 
-# Credentials block
-API_KEY = "sk_live_51M0dff8849FvV4492ad01d"
-db_password = "P@ssword2026_db"
+function setMode(m) {
+    traceMode = m;
+    document.getElementById('mode-email').classList.toggle('active', m === 'email');
+    document.getElementById('mode-domain').classList.toggle('active', m === 'domain');
+    const input = document.getElementById('prov-input');
+    if (m === 'email') {
+        input.placeholder = 'e.g. r.sterling@demo-corp-ceo.com';
+    } else {
+        input.placeholder = 'e.g. secure-logistics-finance.com';
+    }
+}
 
-def handle_user_login(user_id, token):
-    # Intentional credentials leakage
-    print(f"Connecting using API credentials: {API_KEY}")
-    
-    # Unprotected SQL statement
-    conn = mysql.connector.connect(
-        host="database.secure.internal",
-        user="sysadmin",
-        password=db_password,
-        database="production_ledger"
-    )
-    cursor = conn.cursor()
-    
-    # Vulnerable injection vector
-    query = "SELECT * FROM sessions WHERE token_id = '" + token + "' AND user_id = " + str(user_id)
-    cursor.execute(query)
-    res = cursor.fetchall()
-    return res`;
+function extractDomain(value) {
+    value = value.trim();
+    if (value.includes('@')) {
+        return value.split('@')[1].toLowerCase().trim();
+    }
+    return value.replace(/^https?:\/\//,'').split('/')[0].toLowerCase().trim();
+}
 
-    function loadSample() {
-        document.getElementById('code-textarea').value = sampleScript;
+function guessTechnique(suspicious, legitimate) {
+    const s = suspicious, l = legitimate;
+    if (!l) return { technique: 'Domain Impersonation', diff: s };
+
+    // Find the diff — what's added/changed
+    if (s.includes(l.split('.')[0]) && s !== l) {
+        const base = l.split('.')[0];
+        const ext  = l.split('.').slice(1).join('.');
+        const added = s.replace(base,'').replace('.'+ext,'').replace(ext,'');
+        return { technique: 'Subdomain Impersonation', diff: added };
+    }
+    return { technique: 'Lookalike Registration', diff: s };
+}
+
+function buildLookalikes(domain) {
+    const parts = domain.split('.');
+    const name = parts[0];
+    const tld  = parts.slice(1).join('.');
+    const alts = [];
+    // Remove hyphens
+    if (name.includes('-')) alts.push(name.replace(/-/g,'') + '.' + tld);
+    // Swap o→0
+    if (name.includes('o'))  alts.push(name.replace('o','0') + '.' + tld);
+    // Change TLD
+    alts.push(name + '.co');
+    alts.push(name + '.net');
+    // Remove a word segment
+    const seg = name.split('-');
+    if (seg.length > 1) alts.push(seg.slice(0,-1).join('-') + '.' + tld);
+    return [...new Set(alts)].filter(a => a !== domain).slice(0,4);
+}
+
+/* ── Demo data for known test addresses ── */
+function getDemoData(domain) {
+    const demos = {
+        'demo-corp-ceo.com': {
+            age_days: 14,
+            registrar: 'NameCheap, Inc.',
+            country: 'US',
+            expiry: '1 year (expires 2027-05-14)',
+            ssl: 'Self-Signed — Suspicious',
+            legitimate: 'demo-corp.com',
+            rep_score: 18,
+            blacklisted: true,
+            abuse: false,
+            age_ok: false,
+            verdict: 'danger',
+            verdict_body: 'High confidence this sender is spoofing a legitimate organization identity. The domain was registered 14 days ago with a self-signed certificate and fails multiple reputation checks.',
+            action: 'Do not reply. Report to IT security. Block sender domain at mail gateway level.'
+        },
+        'secure-logistics-finance.com': {
+            age_days: 8,
+            registrar: 'GoDaddy LLC',
+            country: 'US',
+            expiry: '1 year',
+            ssl: 'Let\'s Encrypt — Free cert only',
+            legitimate: null,
+            rep_score: 11,
+            blacklisted: true,
+            abuse: false,
+            age_ok: false,
+            verdict: 'danger',
+            verdict_body: 'Domain is 8 days old, registered with a generic free SSL, and matches phishing campaign infrastructure patterns. No business presence found.',
+            action: 'Block domain at mail gateway. Do not click any links. Report to your security team immediately.'
+        }
+    };
+    return demos[domain] || null;
+}
+
+function setNode(idx, status, label, sub) {
+    const circle = document.getElementById(`node-circle-${idx}`);
+    const data   = document.getElementById(`node-data-${idx}`);
+    circle.classList.remove('status-clean','status-warn','status-danger','status-pending');
+    circle.classList.add(`status-${status}`, 'active');
+    const colors = { clean:'#10b981', warn:'#f59e0b', danger:'#ef4444', pending:'#94a3b8' };
+    const col = colors[status] || '#94a3b8';
+    data.innerHTML = `<strong style="color:${col};">${label}</strong><span style="color:var(--text-muted);">${sub || ''}</span>`;
+}
+
+function showProvError(msg) {
+    const input = document.getElementById('prov-input');
+    const errDiv = document.getElementById('prov-error-msg');
+    const errText = document.getElementById('prov-error-text');
+    input.style.borderColor = '#ef4444';
+    input.style.boxShadow = '0 0 0 3px rgba(239,68,68,0.15)';
+    input.classList.add('input-shake');
+    errText.textContent = msg;
+    errDiv.classList.add('visible');
+    setTimeout(() => {
+        input.classList.remove('input-shake');
+    }, 600);
+    setTimeout(() => {
+        input.style.borderColor = 'rgba(168,85,247,0.2)';
+        input.style.boxShadow = '';
+        errDiv.classList.remove('visible');
+    }, 3500);
+}
+
+function minDelay(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+function initiateTrace() {
+    const raw = document.getElementById('prov-input').value.trim();
+    if (!raw) { showProvError('Please enter a sender address or domain.'); return; }
+    const domain = extractDomain(raw);
+    scanAbort = false;
+
+    // Show trace section
+    document.getElementById('prov-input-section').style.display  = 'none';
+    document.getElementById('prov-trace-section').style.display  = 'block';
+    document.getElementById('prov-report-section').style.display = 'none';
+
+    document.getElementById('trace-target-display').textContent = raw;
+    document.getElementById('prov-progress-fill').style.width = '0%';
+
+    // Reset all nodes
+    for (let i = 0; i < 4; i++) {
+        const c = document.getElementById(`node-circle-${i}`);
+        c.className = 'trace-node-circle status-pending';
+        document.getElementById(`node-data-${i}`).innerHTML = '<span style="color:var(--text-muted);">Querying...</span>';
+    }
+    document.getElementById('trace-line-fill').style.width = '0%';
+
+    // Node 0 — immediate
+    setNode(0, 'clean', raw, '');
+    document.getElementById('prov-progress-fill').style.width = '8%';
+
+    // Fire network request immediately
+    const formData = new FormData();
+    formData.append('domain', domain);
+    const dataPromise = fetch('/api/provenance/trace', { method:'POST', body: formData })
+        .then(r => r.json())
+        .catch(() => ({ success: false, result: null }));
+
+    runTraceAnimation(raw, domain, dataPromise);
+}
+
+async function runTraceAnimation(raw, domain, dataPromise) {
+    // Segment 1: Node 0 → line → Node 1
+    await minDelay(600);
+    if (scanAbort) return;
+    document.getElementById('trace-line-fill').style.width = '33%';
+    await minDelay(700);
+    if (scanAbort) return;
+
+    // Wait for API or 1s minimum
+    const [data] = await Promise.all([dataPromise, minDelay(1000)]);
+    const r = (data && data.success && data.result) ? data.result : null;
+    const isTrusted = r ? r.is_trusted : TRUSTED_DOMAINS.has(domain.toLowerCase());
+
+    // Node 1 — Registered Domain
+    let ageStr = 'WHOIS not connected';
+    let ageOk = false;
+    if (r && r.age_days !== null && r.age_days !== undefined) {
+        ageStr = r.age_days < 1 ? 'Registered today' : `${r.age_days} days old`;
+        ageOk  = r.age_days > 365;
+    }
+    const node1Status = isTrusted ? 'clean' : (r && r.resolves ? (r.age_days !== null && r.age_days < 90 ? 'warn' : 'clean') : 'warn');
+    setNode(1, node1Status, domain, `— ${ageStr}`);
+    document.getElementById('prov-progress-fill').style.width = '50%';
+
+    // Segment 2: Node 1 → line → Node 2
+    await minDelay(700);
+    if (scanAbort) return;
+    document.getElementById('trace-line-fill').style.width = '66%';
+    await minDelay(700);
+    if (scanAbort) return;
+
+    // Node 2 — Mail Server
+    const mxVal = (r && r.mx_record) ? r.mx_record : (r ? `mail.${domain}` : '— DNS check failed');
+    const hasMx = Boolean(r && r.mx_record);
+    setNode(2, hasMx ? 'clean' : 'warn', hasMx ? 'Mail Route Found' : 'No MX Route Found', mxVal);
+    document.getElementById('prov-progress-fill').style.width = '75%';
+
+    // Segment 3: Node 2 → line → Node 3
+    await minDelay(700);
+    if (scanAbort) return;
+    document.getElementById('trace-line-fill').style.width = '100%';
+    await minDelay(700);
+    if (scanAbort) return;
+
+    // Node 3 — Verdict
+    const repScore   = r ? r.rep_score : 50;
+    const blacklisted = r ? r.blacklisted : false;
+    let verdictType, verdictBody, verdictAction;
+
+    if (isTrusted) {
+        verdictType   = 'clean';
+        verdictBody   = `${domain} is a well-known, trusted service provider domain. WHOIS and SSL checks passed. No impersonation signals detected.`;
+        verdictAction = 'Safe to interact. Maintain standard security awareness.';
+    } else if (repScore >= 65) {
+        verdictType   = 'clean';
+        verdictBody   = `Provenance checks for ${domain} returned low-risk signals. ${r && r.ssl_issuer ? 'SSL certificate issued by ' + r.ssl_issuer + '.' : ''} No active blacklist entries found.`;
+        verdictAction = 'Safe to interact with. Maintain standard security awareness.';
+    } else if (repScore >= 35) {
+        verdictType   = 'warn';
+        verdictBody   = `${domain} shows moderate risk signals. ${r && r.age_days !== null ? (r.age_days < 90 ? 'Domain is only ' + r.age_days + ' days old — newly registered domains are common in phishing campaigns.' : '') : 'WHOIS age could not be verified.'} ${blacklisted ? 'Domain appears on a DNSBL spam feed.' : ''}`.trim();
+        verdictAction = 'Verify sender authenticity before clicking links or opening attachments.';
+    } else {
+        verdictType   = 'danger';
+        verdictBody   = `High confidence of domain impersonation or suspicious registration. ${blacklisted ? 'Domain is listed on active DNSBL blacklist feeds. ' : ''}${r && r.age_days !== null && r.age_days < 30 ? 'Domain was registered ' + r.age_days + ' days ago. ' : ''}${r && r.ssl_valid === false ? 'SSL certificate is self-signed or invalid. ' : ''}`.trim();
+        verdictAction = 'Do not reply or click any links. Report to IT security and block sender domain at mail gateway.';
     }
 
-    function appendLog(lineText, type='info') {
-        const line = document.createElement('div');
-        line.className = 'log-line';
-        if (type === 'ok') {
-            line.innerHTML = `<span style="color:#22c55e;">[+] ${lineText}</span>`;
-        } else if (type === 'warn') {
-            line.innerHTML = `<span style="color:#ef4444;">[!] ${lineText}</span>`;
-        } else if (type === 'telemetry') {
-            line.innerHTML = `<span style="color:#a855f7;">[*] ${lineText}</span>`;
-        } else {
-            line.innerHTML = `<span style="color:#64748b;">[+] ${lineText}</span>`;
-        }
-        logTerminal.appendChild(line);
-        logTerminal.scrollTop = logTerminal.scrollHeight;
+    const verdictLabels = { danger:'IMPERSONATION', warn:'SUSPICIOUS', clean:'CLEAN' };
+    setNode(3, verdictType, verdictLabels[verdictType] || 'SUSPICIOUS', verdictType === 'clean' ? 'VERIFIED' : 'DETECTED');
+    document.getElementById('prov-progress-fill').style.width = '100%';
+    document.getElementById('trace-status-badge').innerHTML =
+        `<span style="width:7px;height:7px;border-radius:50%;background:#10b981;display:inline-block;box-shadow:0 0 6px #10b981;"></span> COMPLETE`;
+
+    await minDelay(800);
+    if (scanAbort) return;
+
+    // Build report
+    buildReport({
+        raw, domain,
+        ageStr,
+        registrar:   r && r.registrar ? r.registrar : 'WHOIS not available',
+        country:     r && r.country   ? r.country   : 'Not determined',
+        expiry:      r && r.expiry    ? r.expiry    : 'Not available',
+        sslStr:      r && r.ssl_issuer ? (r.ssl_valid ? `✓ ${r.ssl_issuer}` : `⚠ ${r.ssl_issuer}`) : 'Could not verify',
+        repScore,
+        legitimate:  r && r.legitimate_guess ? r.legitimate_guess : null,
+        verdictType, verdictBody, verdictAction,
+        blacklisted, ageOk
+    });
+}
+
+function buildReport(d) {
+    document.getElementById('prov-report-section').style.display = 'block';
+
+
+    // ── Panel 1: Domain Intelligence
+    document.getElementById('di-domain').textContent     = d.domain;
+    document.getElementById('di-age').textContent        = d.ageStr;
+    document.getElementById('di-registrar').textContent  = d.registrar;
+    document.getElementById('di-country').textContent    = d.country;
+    document.getElementById('di-expiry').textContent     = d.expiry;
+    document.getElementById('di-ssl').textContent        = d.sslStr;
+
+    // Color age cell
+    const ageTd = document.getElementById('di-age');
+    ageTd.style.color = d.ageStr.includes('days') && parseInt(d.ageStr) < 30 ? '#ef4444' : '#fff';
+
+    // ── Panel 2: Lookalike Detection
+    const tech = guessTechnique(d.domain, d.legitimate);
+    const legitEl = document.getElementById('legit-domain');
+    const suspEl  = document.getElementById('suspect-domain-display');
+    legitEl.textContent = d.legitimate || '(none detected)';
+    // Highlight the diff in suspect domain
+    if (d.legitimate && tech.diff) {
+        const base = d.legitimate.split('.')[0];
+        const highlighted = d.domain.replace(tech.diff, `<span class="diff-highlight">${tech.diff}</span>`);
+        suspEl.innerHTML = highlighted;
+    } else {
+        suspEl.textContent = d.domain;
+    }
+    document.getElementById('lookalike-technique').innerHTML = `<i class="ti ti-alert-triangle" style="color:#f59e0b;margin-right:5px;"></i> Typosquatting Technique: <strong>${tech.technique}</strong>`;
+
+    const lookalikes = buildLookalikes(d.domain);
+    const llEl = document.getElementById('lookalike-list');
+    llEl.innerHTML = lookalikes.map(l => `<span class="lookalike-tag">${l}</span>`).join('');
+
+    // ── Panel 3: Reputation Score
+    const repFill  = document.getElementById('rep-gauge-fill');
+    const repScore = Math.max(0, Math.min(100, d.repScore));
+    const REP_CIRC = 2 * Math.PI * 40; // 251.327 (r=40)
+    repFill.style.strokeDasharray  = REP_CIRC;
+    repFill.style.strokeDashoffset = REP_CIRC - (repScore / 100) * REP_CIRC;
+    repFill.setAttribute('stroke', repScore < 30 ? '#ef4444' : repScore < 60 ? '#f59e0b' : '#10b981');
+
+    const repLabel = document.getElementById('rep-label');
+    repLabel.textContent = repScore < 30 ? 'UNTRUSTED SENDER' : repScore < 60 ? 'SUSPICIOUS' : 'TRUSTED';
+    repLabel.style.color = repScore < 30 ? '#ef4444' : repScore < 60 ? '#f59e0b' : '#10b981';
+
+    // Count-up
+    const repScoreEl = document.getElementById('rep-score');
+    let cur = 0;
+    const iv = setInterval(() => { cur = Math.min(cur+2, repScore); repScoreEl.textContent = cur; if(cur>=repScore) clearInterval(iv); }, 30);
+
+    // Rep signals
+    document.getElementById('rep-signals').innerHTML = `
+        <div class="rep-signal-row">
+            <span class="rep-icon ${d.blacklisted ? 'fail' : 'pass'}">${d.blacklisted ? '✗' : '✓'}</span>
+            <div><div style="color:#fff; font-size:0.78rem; font-weight:600;">Blacklist Check</div>
+            <div style="color:var(--text-muted); font-size:0.72rem;">Threat feed API not connected</div></div>
+        </div>
+        <div class="rep-signal-row">
+            <span class="rep-icon pass">✓</span>
+            <div><div style="color:#fff; font-size:0.78rem; font-weight:600;">Abuse History</div>
+            <div style="color:var(--text-muted); font-size:0.72rem;">Abuse database not connected</div></div>
+        </div>
+        <div class="rep-signal-row">
+            <span class="rep-icon ${d.ageOk ? 'pass' : 'fail'}">${d.ageOk ? '✓' : '✗'}</span>
+            <div><div style="color:#fff; font-size:0.78rem; font-weight:600;">Age Threshold</div>
+            <div style="color:var(--text-muted); font-size:0.72rem;">WHOIS age not checked</div></div>
+        </div>`;
+
+    // ── Verdict box
+    const vbox = document.getElementById('verdict-box');
+    vbox.className = 'verdict-box';
+    if (d.verdictType === 'clean') vbox.classList.add('safe');
+
+    const vColors = { danger:'#ef4444', warn:'#f59e0b', clean:'#10b981' };
+    const vTitles = { danger:'IMPERSONATION DETECTED — High confidence this sender is spoofing a legitimate organization identity.', warn:'SUSPICIOUS SENDER — Moderate confidence of domain impersonation or lookalike registration.', clean:'SENDER APPEARS LEGITIMATE — No impersonation signals detected.' };
+    const vIcons  = { danger:'ti-shield-x', warn:'ti-shield-exclamation', clean:'ti-shield-check' };
+    const col = vColors[d.verdictType] || '#f59e0b';
+
+    document.getElementById('verdict-icon').className = `ti ${vIcons[d.verdictType] || 'ti-shield-x'}`;
+    document.getElementById('verdict-icon').style.color = col;
+    document.getElementById('verdict-title').textContent = vTitles[d.verdictType] || vTitles.warn;
+    document.getElementById('verdict-confidence').textContent = d.verdictType === 'danger' ? 'High Confidence' : d.verdictType === 'warn' ? 'Medium Confidence' : 'Clean';
+    document.getElementById('verdict-confidence').style.color = col;
+    document.getElementById('verdict-body').textContent = d.verdictBody;
+    document.getElementById('verdict-action').textContent = d.verdictAction;
+    if (d.verdictType !== 'clean') {
+        vbox.style.borderColor = `rgba(${d.verdictType === 'warn' ? '245,158,11' : '239,68,68'},0.35)`;
+        vbox.style.background  = `rgba(${d.verdictType === 'warn' ? '245,158,11' : '239,68,68'},0.04)`;
     }
 
-    function resetRecon() {
-        document.getElementById('code-textarea').value = '';
-        document.getElementById('provenance-results-view').style.display = 'none';
-        document.getElementById('provenance-input-view').style.display = 'grid';
-        logTerminal.innerHTML = '<div class="log-line" style="color: #64748b;">Awaiting source script ingest for compiling analysis logs...</div>';
-    }
+    // Animate panels in
+    setTimeout(() => document.getElementById('intel-panel-1').classList.add('revealed'), 0);
+    setTimeout(() => document.getElementById('intel-panel-2').classList.add('revealed'), 150);
+    setTimeout(() => document.getElementById('intel-panel-3').classList.add('revealed'), 300);
+    setTimeout(() => vbox.classList.add('revealed'), 500);
 
-    function executeScan() {
-        const code = document.getElementById('code-textarea').value.trim();
-        if (!code) {
-            alert("Please paste code or script instructions to scan.");
-            return;
-        }
+    document.getElementById('prov-report-section').scrollIntoView({ behavior:'smooth', block:'start' });
+}
 
-        scanningOverlay.style.opacity = '1';
-        logTerminal.innerHTML = '';
-        
-        appendLog(`Ingesting script payload segments...`, 'info');
-        
-        const logs = [
-            { text: `Bootstrapping Abstract Syntax Tree (AST) parser... [ OK ]`, delay: 600, type: 'ok' },
-            { text: `Running keyword search heuristics for exposed credential signatures...`, delay: 1200, type: 'info' },
-            { text: `Credentials alert: Hardcoded string matching API_KEY pattern found!`, delay: 1800, type: 'warn' },
-            { text: `Scanning SQL operations for non-parameterized query constructs...`, delay: 2400, type: 'info' },
-            { text: `Injection alert: Raw concatenation detected in cursor.execute() execution paths!`, delay: 3000, type: 'warn' },
-            { text: `Analyzing import package configurations for SBOM generation...`, delay: 3600, type: 'info' },
-            { text: `Discovered dependency: mysql-connector-python v8.0.30`, delay: 4000, type: 'telemetry' },
-            { text: `Re-verifying security constraints... Analysis completed.`, delay: 4600, type: 'ok' }
-        ];
+function resetTracer() {
+    scanAbort = true;
+    document.getElementById('prov-input').value = '';
+    document.getElementById('prov-input-section').style.display  = 'block';
+    document.getElementById('prov-trace-section').style.display  = 'none';
+    document.getElementById('prov-report-section').style.display = 'none';
+    document.getElementById('prov-progress-fill').style.width = '0%';
+    document.getElementById('trace-line-fill').style.width = '0%';
+    ['intel-panel-1','intel-panel-2','intel-panel-3'].forEach(id => {
+        document.getElementById(id).classList.remove('revealed');
+    });
+    document.getElementById('verdict-box').classList.remove('revealed');
+    window.scrollTo({ top:0, behavior:'smooth' });
+}
 
-        logs.forEach(l => {
-            setTimeout(() => {
-                appendLog(l.text, l.type);
-            }, l.delay);
-        });
-
-        // Trigger AJAX scan request
-        const formData = new FormData();
-        formData.append('code', code);
-
-        setTimeout(() => {
-            fetch('/api/provenance/scan', {
-                method: 'POST',
-                body: formData
-            })
-            .then(res => res.json())
-            .then(data => {
-                scanningOverlay.style.opacity = '0';
-                if (data.success) {
-                    renderDashboard(data.results);
-                } else {
-                    alert(`Scan failure: ${data.message}`);
-                }
-            })
-            .catch(err => {
-                scanningOverlay.style.opacity = '0';
-                console.error("Scan error:", err);
-                alert("Server request failed. Please check active logs.");
-            });
-        }, 4800);
-    }
-
-    function renderDashboard(results) {
-        document.getElementById('provenance-input-view').style.display = 'none';
-        document.getElementById('provenance-results-view').style.display = 'block';
-
-        // Set counters
-        document.getElementById('count-vulns').textContent = results.vulnerabilities.length;
-        document.getElementById('count-critical').textContent = results.vulnerabilities.filter(v => v.severity === 'Critical' || v.severity === 'High').length;
-        document.getElementById('count-secrets').textContent = results.secrets_count;
-
-        // Render Gauge
-        const score = results.exposure_score;
-        document.getElementById('risk-score').textContent = score;
-        const radius = 54;
-        const circ = 2 * Math.PI * radius; // 339.292
-        const offset = circ - (score / 100) * circ;
-        const fill = document.getElementById('gauge-circle-res');
-        fill.style.strokeDashoffset = offset;
-
-        // Verdict Badge
-        const badge = document.getElementById('risk-badge');
-        if (score >= 70) {
-            badge.textContent = "CRITICAL THREAT";
-            badge.className = "indicator-pill critical";
-            fill.setAttribute("stroke", "#ef4444");
-        } else if (score >= 40) {
-            badge.textContent = "HIGH RISK";
-            badge.className = "indicator-pill high";
-            fill.setAttribute("stroke", "#f59e0b");
-        } else if (score > 0) {
-            badge.textContent = "MEDIUM EXPOSURE";
-            badge.className = "indicator-pill medium";
-            fill.setAttribute("stroke", "#3b82f6");
-        } else {
-            badge.textContent = "SECURE FILE";
-            badge.className = "indicator-pill low";
-            fill.setAttribute("stroke", "#10b981");
-        }
-
-        // Summary Text
-        document.getElementById('risk-summary-text').textContent = results.summary;
-
-        // Render Vulnerabilities
-        const vulnContainer = document.getElementById('vulnerabilities-list-container');
-        vulnContainer.innerHTML = '';
-        if (results.vulnerabilities.length === 0) {
-            vulnContainer.innerHTML = '<div style="font-size:0.8rem; color:var(--text-muted); text-align:center; padding: 2rem;">No security vulnerabilities identified in AST syntax checks.</div>';
-        } else {
-            results.vulnerabilities.forEach(v => {
-                let badgeClass = 'low';
-                let borderCol = 'var(--border-color)';
-                if (v.severity === 'Critical') { badgeClass = 'critical'; borderCol = '#ef4444'; }
-                else if (v.severity === 'High') { badgeClass = 'high'; borderCol = '#f59e0b'; }
-                else if (v.severity === 'Medium') { badgeClass = 'medium'; borderCol = '#3b82f6'; }
-
-                vulnContainer.innerHTML += `
-                    <div class="vuln-card" style="border-left-color: ${borderCol};">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                            <span style="font-weight: 700; color: #fff; font-size: 0.9rem;">${v.title}</span>
-                            <span class="indicator-pill ${badgeClass}" style="font-size: 0.55rem; padding: 2px 6px;">${v.severity}</span>
-                        </div>
-                        <div style="font-size: 0.72rem; color: var(--accent-cyan); font-family: var(--font-mono); margin-bottom: 6px;">Line ${v.line}: <code>${v.code_snippet}</code></div>
-                        <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0 0 8px 0; line-height: 1.4;">${v.description}</p>
-                        <div style="font-size: 0.76rem; color: #4ade80; border-top: 1px dashed rgba(255,255,255,0.04); padding-top: 6px;"><strong style="font-size:0.65rem; font-family:var(--font-mono); text-transform:uppercase; color:#22c55e;">Fix:</strong> ${v.fix}</div>
-                    </div>
-                `;
-            });
-        }
-
-        // Render SBOM / Dependencies
-        const depContainer = document.getElementById('dependencies-list-container');
-        depContainer.innerHTML = '';
-        if (results.dependencies.length === 0) {
-            depContainer.innerHTML = '<div style="font-size:0.8rem; color:var(--text-muted); text-align:center; padding: 2rem;">No external package dependencies declared in code imports.</div>';
-        } else {
-            results.dependencies.forEach(d => {
-                let badgeClass = 'low';
-                let statusText = 'Clean';
-                if (d.status === 'Vulnerable') { badgeClass = 'critical'; statusText = 'Vulnerable'; }
-                else if (d.status === 'Outdated') { badgeClass = 'high'; statusText = 'Outdated'; }
-
-                depContainer.innerHTML += `
-                    <div class="telemetry-row">
-                        <div style="text-align: left;">
-                            <div style="font-weight: 700; color: #fff; font-size: 0.85rem;">${d.name}</div>
-                            <div style="font-size: 0.7rem; color: var(--text-muted); margin-top:2px;">Version: ${d.version} &middot; Vulnerability: ${d.vulnerability || 'None'}</div>
-                        </div>
-                        <span class="indicator-pill ${badgeClass}" style="padding: 2px 8px; font-size: 0.6rem;">${statusText}</span>
-                    </div>
-                `;
-            });
-        }
-    }
+// -- rep gauge fix: r=36 has circumference 2*PI*36=226.195
+document.querySelectorAll('.rep-gauge-bg').forEach(el => el.setAttribute('stroke-width','8'));
 </script>
 {% endblock %}

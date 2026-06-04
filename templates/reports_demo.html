@@ -1,0 +1,885 @@
+{% extends "base.html" %}
+{% block title %}AI Report Preview — PhishSim AI{% endblock %}
+{% block content %}
+<style>
+/* ═══════════════════════════════════════════════════════
+   DEMO REPORT — Full replica with explanatory overlays
+   ═══════════════════════════════════════════════════════ */
+.report-page.demo-report {
+  max-width: 1400px; width: 100%; margin: 0 auto;
+  padding: 5rem 2rem 6rem; box-sizing: border-box;
+}
+
+/* Story rail */
+.story-rail {
+  position: sticky; top: 68px; z-index: 40;
+  display: flex; gap: .5rem; flex-wrap: wrap;
+  padding: .7rem; margin-bottom: 2rem;
+  border: 1px solid rgba(56,189,248,.18);
+  background: rgba(2,6,23,.88); backdrop-filter: blur(16px);
+  border-radius: 18px;
+}
+.story-rail button {
+  border: 1px solid rgba(255,255,255,.07); background: rgba(255,255,255,.02);
+  color: #8892b0; border-radius: 999px; padding: .48rem .85rem;
+  font: 700 .73rem 'JetBrains Mono', monospace; cursor: pointer; transition: .2s;
+}
+.story-rail button.active, .story-rail button:hover {
+  color: #38bdf8; border-color: rgba(56,189,248,.38); background: rgba(56,189,248,.08);
+}
+
+/* Topbar */
+.demo-topbar { display:flex; align-items:center; justify-content:space-between; gap:1rem; margin-bottom:2rem; padding-bottom:1.5rem; border-bottom:1px solid rgba(255,255,255,.07); }
+.back-link { display:inline-flex; align-items:center; gap:8px; color:#64748b; text-decoration:none; font-size:.9rem; transition:color .2s; }
+.back-link:hover { color:#38bdf8; }
+.report-chip { display:inline-flex; color:#38bdf8; background:rgba(56,189,248,.08); border:1px solid rgba(56,189,248,.18); border-radius:999px; padding:3px 10px; font:800 .68rem 'JetBrains Mono',monospace; text-transform:uppercase; letter-spacing:.05em; }
+
+/* Hero */
+.report-hero {
+  position:relative; display:flex; gap:2.5rem; align-items:center; flex-wrap:wrap;
+  background: radial-gradient(circle at 18% 0%, rgba(56,189,248,.18), transparent 32%), linear-gradient(135deg, rgba(15,23,42,.6), rgba(30,41,59,.25));
+  border:1px solid rgba(255,255,255,.08); border-radius:24px; padding:2.5rem; margin-bottom:2rem;
+  transform-style: preserve-3d; perspective:1200px; overflow:hidden;
+}
+.report-hero::after { content:""; position:absolute; inset:-1px; background:linear-gradient(110deg, transparent 0 35%, rgba(255,255,255,.09), transparent 62%); transform:translateX(-120%); animation:demoSheen 5s infinite; pointer-events:none; }
+.report-hero-text { flex:1; min-width:260px; position:relative; z-index:1; }
+.report-eyebrow { display:inline-flex; align-items:center; gap:8px; background:rgba(56,189,248,.1); border:1px solid rgba(56,189,248,.25); border-radius:100px; padding:5px 14px; font-size:.78rem; color:#38bdf8; font-family:'JetBrains Mono',monospace; text-transform:uppercase; letter-spacing:1px; margin-bottom:1rem; }
+.report-eyebrow::before { content:""; width:6px; height:6px; border-radius:50%; background:#38bdf8; box-shadow:0 0 8px #38bdf8; animation:livePulse 2s infinite; }
+.report-title { font-size:clamp(2rem,4vw,3.2rem); font-weight:900; color:#f0f4ff; margin:0 0 .8rem; line-height:1.05; }
+.report-summary { color:#8892b0; line-height:1.75; font-size:1rem; margin:0; max-width:760px; }
+
+/* HSS Gauge */
+.hss-gauge {
+  flex-shrink:0; width:200px; text-align:center;
+  background:rgba(15,23,42,.8); border-radius:26px; padding:1.9rem 1.2rem;
+  border:1px solid #38bdf8; box-shadow:0 0 40px rgba(56,189,248,.18);
+  transform:rotateY(-10deg) rotateX(7deg);
+  animation:floatGauge 5s ease-in-out infinite;
+  position:relative; z-index:1;
+}
+.hss-label-top { font-size:.68rem; text-transform:uppercase; letter-spacing:2px; color:#8892b0; font-family:'JetBrains Mono',monospace; margin-bottom:.3rem; }
+.hss-score { font-size:4rem; font-weight:900; color:#38bdf8; line-height:1; text-shadow:0 0 24px rgba(56,189,248,.45); }
+.hss-tier-badge { display:inline-block; margin-top:.5rem; padding:4px 12px; border-radius:100px; font-size:.78rem; font-weight:700; background:rgba(56,189,248,.12); color:#38bdf8; border:1px solid rgba(56,189,248,.35); }
+/* Gauge sparkline */
+.hss-sparkline { display:flex; align-items:flex-end; justify-content:center; gap:3px; height:28px; margin:.7rem auto 0; width:80px; }
+.hss-spark-bar { flex:1; border-radius:2px 2px 0 0; background:rgba(56,189,248,.3); transition:background .3s; }
+.hss-spark-bar:last-child { background:#38bdf8; }
+.hss-delta { font-size:.72rem; font-family:'JetBrains Mono',monospace; color:#34d399; margin-top:.5rem; }
+
+/* Stat boxes */
+.report-stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:1.25rem; margin-bottom:2rem; }
+.rstat-box {
+  background:rgba(15,23,42,.3); border:1px solid rgba(255,255,255,.07);
+  border-radius:18px; padding:1.8rem 1.2rem; text-align:center;
+  position:relative; overflow:hidden;
+  opacity:0; animation:none;
+}
+.rstat-box.visible { animation: fadeInUp .55s ease forwards; }
+.rstat-box:nth-child(2).visible { animation-delay:.08s; }
+.rstat-box:nth-child(3).visible { animation-delay:.16s; }
+.rstat-box:nth-child(4).visible { animation-delay:.24s; }
+.rstat-box:hover { transform:translateY(-7px) rotateX(4deg); border-color:rgba(56,189,248,.3); }
+.rstat-box::before { content:""; position:absolute; bottom:0; left:0; right:0; height:3px; background:linear-gradient(90deg,transparent,var(--sc),transparent); }
+.rstat-box:nth-child(1){--sc:#38bdf8}.rstat-box:nth-child(2){--sc:#6366f1}.rstat-box:nth-child(3){--sc:#f59e0b}.rstat-box:nth-child(4){--sc:#22c55e}
+.rstat-num { font-size:2.5rem; font-weight:900; color:var(--sc); line-height:1; }
+.rstat-label { font-size:.73rem; color:#8892b0; text-transform:uppercase; letter-spacing:1px; margin-top:5px; }
+.rstat-comp { display:inline-block; margin-top:.5rem; font-size:.72rem; font-family:'JetBrains Mono',monospace; padding:2px 8px; border-radius:100px; }
+.rstat-comp.up { background:rgba(34,197,94,.1); color:#4ade80; border:1px solid rgba(34,197,94,.25); }
+.rstat-comp.neutral { background:rgba(100,116,139,.1); color:#94a3b8; border:1px solid rgba(100,116,139,.2); }
+.rstat-sparkline { display:flex; align-items:flex-end; justify-content:center; gap:2px; height:20px; margin:.6rem auto 0; width:60px; }
+.rsp-bar { flex:1; border-radius:1px; background:rgba(255,255,255,.12); }
+.rstat-help { color:#8892b0; line-height:1.55; font-size:.82rem; margin-top:.8rem; }
+
+/* Panels */
+.double-panel { display:grid; grid-template-columns:1fr 1fr; gap:2rem; margin-bottom:2rem; }
+.full-panel { margin-bottom:2rem; }
+.report-panel {
+  background:rgba(15,23,42,.22); border:1px solid rgba(255,255,255,.07);
+  border-radius:20px; padding:2rem; position:relative; overflow:hidden;
+  opacity:0;
+}
+.report-panel.visible { animation: fadeInUp .6s ease forwards; }
+.report-panel h2 { font-size:1.22rem; font-weight:800; color:#f0f4ff; margin:0 0 1.2rem; display:flex; align-items:center; gap:10px; }
+
+/* Explain card */
+.explain-card {
+  border:1px solid rgba(56,189,248,.18); border-radius:14px; padding:.9rem 1rem;
+  background:rgba(56,189,248,.05); color:#8892b0; line-height:1.6; font-size:.86rem; margin-top:1rem;
+  position:relative;
+}
+.explain-card::before { content:"💡 "; font-size:.8rem; }
+
+/* Agent typewriter shell */
+.agent-shell {
+  background:#05070f; border:1px solid rgba(255,255,255,.05); border-radius:12px;
+  padding:1.25rem; font-family:'JetBrains Mono',monospace; font-size:.78rem; color:#94a3b8;
+  min-height:160px; max-height:220px; overflow-y:auto;
+}
+.agent-line { margin-bottom:.6rem; line-height:1.5; }
+.agent-line .tag { color:#38bdf8; font-weight:700; }
+.agent-line .ok { color:#34d399; }
+.agent-line .warn { color:#fbbf24; }
+.agent-cursor { display:inline-block; width:7px; height:.9em; background:#38bdf8; animation:blink .9s step-end infinite; vertical-align:middle; margin-left:2px; }
+
+/* Fingerprint pills */
+.fp-tier { margin-bottom:1.2rem; }
+.fp-tier-label { font-size:.7rem; font-weight:700; text-transform:uppercase; letter-spacing:.1em; color:#8892b0; margin-bottom:.5rem; }
+.fp-pills { display:flex; flex-wrap:wrap; gap:8px; }
+.fp-pill { display:inline-flex; align-items:center; gap:7px; padding:5px 13px; border-radius:100px; font-size:.81rem; font-weight:700; }
+.fp-pill.danger { background:rgba(239,68,68,.07); border:1px solid rgba(239,68,68,.28); color:#f87171; }
+.fp-pill.warning { background:rgba(245,158,11,.07); border:1px solid rgba(245,158,11,.28); color:#fbbf24; }
+.fp-pill.secure { background:rgba(34,197,94,.07); border:1px solid rgba(34,197,94,.28); color:#4ade80; }
+
+/* Department heatmap */
+.dept-row { margin-bottom:1rem; }
+.dept-row-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
+.dept-name { font-size:.9rem; color:#f0f4ff; font-weight:700; }
+.dept-meta { font-size:.78rem; color:#8892b0; }
+.dept-bar-track { height:9px; background:rgba(255,255,255,.05); border-radius:100px; overflow:hidden; }
+.dept-bar-fill { height:100%; border-radius:100px; width:0; transition:width 1.2s cubic-bezier(.16,1,.3,1); }
+.dept-bar-high { background:linear-gradient(90deg,#ef4444,#f87171); }
+.dept-bar-mid  { background:linear-gradient(90deg,#f59e0b,#fbbf24); }
+.dept-bar-low  { background:linear-gradient(90deg,#22c55e,#4ade80); }
+
+/* Repeat offender rows */
+.offender-row { display:flex; align-items:center; gap:14px; padding:12px; border-radius:12px; background:rgba(239,68,68,.04); border:1px solid rgba(239,68,68,.12); margin-bottom:.7rem; }
+.offender-avatar { width:36px; height:36px; border-radius:50%; background:rgba(239,68,68,.15); display:flex; align-items:center; justify-content:center; font-size:.8rem; font-weight:700; color:#f87171; flex-shrink:0; }
+.offender-name { font-size:.88rem; font-weight:700; color:#e2e8f0; filter:blur(4px); user-select:none; }
+.offender-dept { font-size:.75rem; color:#8892b0; }
+.offender-badge { margin-left:auto; padding:3px 9px; border-radius:100px; font-size:.68rem; font-weight:700; background:rgba(239,68,68,.12); color:#f87171; border:1px solid rgba(239,68,68,.28); white-space:nowrap; }
+
+/* Benchmark grid */
+.benchmark-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:1rem; margin-bottom:1rem; }
+.bench-card { padding:1.1rem; border-radius:14px; border:1px solid rgba(255,255,255,.07); background:rgba(15,23,42,.35); text-align:center; }
+.bench-sector { font-size:.7rem; text-transform:uppercase; letter-spacing:.08em; color:#8892b0; margin-bottom:.4rem; }
+.bench-rate { font-size:1.8rem; font-weight:900; color:#f0f4ff; margin:.2rem 0; }
+.bench-vs { font-size:.72rem; font-family:'JetBrains Mono',monospace; padding:2px 8px; border-radius:100px; }
+.bench-beaten { background:rgba(34,197,94,.1); color:#4ade80; border:1px solid rgba(34,197,94,.2); }
+.bench-above  { background:rgba(239,68,68,.1); color:#f87171; border:1px solid rgba(239,68,68,.2); }
+
+/* Replay timeline */
+.replay-track { display:flex; flex-direction:column; gap:0; }
+.replay-node { display:flex; align-items:flex-start; gap:14px; position:relative; padding:0 0 24px 52px; }
+.replay-node:last-child { padding-bottom:0; }
+.replay-dot { position:absolute; left:12px; top:12px; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:.75rem; z-index:2; flex-shrink:0; }
+.replay-line { position:absolute; left:25px; top:40px; width:2px; height:calc(100% - 16px); background:rgba(255,255,255,.06); }
+.replay-node:last-child .replay-line { display:none; }
+.replay-body { flex:1; background:rgba(255,255,255,.02); border:1px solid rgba(255,255,255,.06); border-radius:12px; padding:.9rem 1.1rem; }
+.replay-title { font-size:.9rem; font-weight:700; color:#f0f4ff; margin-bottom:.35rem; }
+.replay-meta { font-size:.75rem; color:#8892b0; display:flex; gap:12px; flex-wrap:wrap; }
+.trust-chip { padding:2px 8px; border-radius:100px; font-size:.68rem; font-weight:700; }
+
+/* PRO locked panel */
+.pro-locked { position:relative; overflow:hidden; border-radius:14px; border:1px solid rgba(245,158,11,.25); }
+.pro-locked-content { filter:blur(4px) brightness(.6); pointer-events:none; padding:1.2rem; min-height:80px; }
+.pro-overlay { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:.5rem; background:rgba(5,7,15,.55); backdrop-filter:blur(2px); }
+.pro-overlay-badge { background:linear-gradient(135deg,rgba(245,158,11,.18),rgba(245,158,11,.08)); border:1px solid rgba(245,158,11,.4); color:#f59e0b; border-radius:100px; padding:5px 14px; font-size:.78rem; font-weight:800; font-family:'JetBrains Mono',monospace; text-transform:uppercase; }
+
+/* Recommendations checklist */
+.rec-item { display:flex; align-items:flex-start; gap:12px; padding:12px; border-radius:12px; border:1px solid rgba(255,255,255,.06); background:rgba(255,255,255,.02); margin-bottom:.7rem; cursor:pointer; transition:.2s; }
+.rec-item:hover { border-color:rgba(56,189,248,.25); }
+.rec-item.done { opacity:.55; }
+.rec-check { width:22px; height:22px; border-radius:50%; border:2px solid rgba(255,255,255,.2); display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:1px; transition:.2s; }
+.rec-item.done .rec-check { background:#34d399; border-color:#34d399; }
+.rec-text { font-size:.88rem; color:#e2e8f0; line-height:1.5; }
+.rec-item.done .rec-text { text-decoration:line-through; color:#8892b0; }
+.rec-progress-track { height:6px; background:rgba(255,255,255,.06); border-radius:3px; margin-top:.8rem; overflow:hidden; }
+.rec-progress-fill { height:100%; border-radius:3px; background:linear-gradient(90deg,#34d399,#38bdf8); transition:width .5s cubic-bezier(.16,1,.3,1); }
+
+/* Actions bar */
+.report-actions { display:flex; flex-wrap:wrap; gap:.9rem; margin-bottom:2rem; }
+.rpt-action-btn { display:inline-flex; align-items:center; gap:8px; border-radius:12px; padding:.85rem 1.2rem; font-weight:800; font-size:.9rem; cursor:not-allowed; border:none; position:relative; }
+.rpt-action-btn::after { content:attr(data-tip); position:absolute; bottom:calc(100% + 8px); left:50%; transform:translateX(-50%); background:#0d1226; border:1px solid rgba(56,189,248,.2); border-radius:8px; padding:5px 10px; font-size:.72rem; color:#94a3b8; white-space:nowrap; opacity:0; pointer-events:none; transition:opacity .2s; font-family:'JetBrains Mono',monospace; }
+.rpt-action-btn:hover::after { opacity:1; }
+
+/* Mini table */
+.mini-report-table { width:100%; border-collapse:collapse; font-size:.84rem; }
+.mini-report-table td { padding:.75rem 0; border-bottom:1px solid rgba(255,255,255,.06); color:#8892b0; }
+.mini-report-table td:last-child { text-align:right; color:#f0f4ff; font-weight:700; }
+
+/* Campaign report library */
+.campaign-grid-demo { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:1rem; }
+.campaign-report-card { display:block; text-decoration:none; color:inherit; border:1px solid rgba(255,255,255,.07); border-radius:18px; background:linear-gradient(145deg,rgba(15,23,42,.72),rgba(2,6,23,.88)); padding:1.2rem; transition:.25s; }
+.campaign-report-card:hover { transform:translateY(-6px); border-color:rgba(56,189,248,.4); }
+.campaign-report-card h3 { color:#fff; margin:.7rem 0 .3rem; font-size:1rem; }
+.empty-report-cta { text-align:center; border:1px solid rgba(56,189,248,.25); border-radius:24px; padding:2.5rem; background:radial-gradient(circle at 50% 0%, rgba(56,189,248,.16), transparent 36%), rgba(15,23,42,.38); position:relative; overflow:hidden; }
+.empty-report-cta::before { content:""; position:absolute; inset:20px; border:1px dashed rgba(56,189,248,.18); border-radius:18px; animation:emptyPulse 2.6s infinite; }
+.empty-report-cta > * { position:relative; z-index:1; }
+.pdf-btn { display:inline-flex; align-items:center; gap:8px; background:linear-gradient(135deg,#2563eb,#06b6d4); color:#fff; border:none; border-radius:12px; padding:.9rem 1.2rem; font-weight:800; text-decoration:none; cursor:pointer; }
+
+/* Section labels */
+.section-anchor { scroll-margin-top: 140px; }
+
+/* Chart containers */
+.chart-wrap { position:relative; width:100%; height:260px; }
+
+/* Keyframes */
+@keyframes livePulse  { 0%,100%{opacity:1} 50%{opacity:.18} }
+@keyframes demoSheen  { 0%,40%{transform:translateX(-120%)} 70%,100%{transform:translateX(120%)} }
+@keyframes floatGauge { 0%,100%{transform:rotateY(-10deg) rotateX(7deg) translateY(0)} 50%{transform:rotateY(-4deg) rotateX(3deg) translateY(-12px)} }
+@keyframes emptyPulse { 0%,100%{opacity:.35;transform:scale(.99)} 50%{opacity:1;transform:scale(1.01)} }
+@keyframes blink      { 0%,100%{opacity:1} 50%{opacity:0} }
+@keyframes fadeInUp   { from{opacity:0;transform:translateY(22px)} to{opacity:1;transform:translateY(0)} }
+
+@media(max-width:992px){
+  .double-panel{grid-template-columns:1fr;}
+  .hss-gauge{animation:none!important;transform:none!important;}
+  .story-rail{position:relative;top:0;}
+}
+</style>
+
+<!-- Load Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+<div class="report-page demo-report">
+  <!-- Topbar -->
+  <div class="demo-topbar">
+    <a href="/" class="back-link"><i class="ti ti-arrow-left"></i> Back to Home</a>
+    <div style="display:flex;align-items:center;gap:.7rem;flex-wrap:wrap;">
+      <span class="report-chip"><i class="ti ti-eye" style="margin-right:4px;"></i> Interactive Preview</span>
+      <span style="font-size:.75rem;color:#475569;font-family:'JetBrains Mono',monospace;">All numbers are illustrative — real data appears after your campaign</span>
+    </div>
+  </div>
+
+  <!-- Story Rail (9 buttons) -->
+  <div class="story-rail" id="story-rail" aria-label="Report walkthrough navigation">
+    <button type="button" data-target="sec-hero"     class="active">Overview</button>
+    <button type="button" data-target="sec-metrics">Metrics</button>
+    <button type="button" data-target="sec-radar">Radar</button>
+    <button type="button" data-target="sec-forecast">Forecast</button>
+    <button type="button" data-target="sec-behavior">Behavior</button>
+    <button type="button" data-target="sec-departments">Departments</button>
+    <button type="button" data-target="sec-timeline">Replay</button>
+    <button type="button" data-target="sec-actions">Actions</button>
+    <button type="button" data-target="sec-available">Your Reports</button>
+  </div>
+
+  <!-- ══ SECTION 1: HERO / OVERVIEW ══════════════════════════════════════ -->
+  <section class="section-anchor" id="sec-hero">
+    <div class="report-hero">
+      <div class="report-hero-text">
+        <div class="report-eyebrow">Agentic AI Report</div>
+        <h1 class="report-title">Your campaign report, explained before the data exists.</h1>
+        <p class="report-summary">This is a full structural replica of the real AI report. Every panel exists in the real version, but here numbers are replaced with explanations of what they mean and how they help your team act faster.</p>
+      </div>
+      <!-- HSS Gauge with sparkline -->
+      <div class="hss-gauge" id="hss-gauge-wrap">
+        <div class="hss-label-top">Human Security Score</div>
+        <div class="hss-score" id="hss-counter" data-target="82">0</div>
+        <div class="hss-tier-badge">Illustrated Score</div>
+        <!-- Mini sparkline inside gauge -->
+        <div class="hss-sparkline">
+          <div class="hss-spark-bar" style="height:40%;"></div>
+          <div class="hss-spark-bar" style="height:60%;"></div>
+          <div class="hss-spark-bar" style="height:55%;"></div>
+          <div class="hss-spark-bar" style="height:75%;"></div>
+          <div class="hss-spark-bar" style="height:100%;"></div>
+        </div>
+        <div class="hss-delta" title="In the real report, this shows how your score changed since your last campaign">↑ 8 pts vs last campaign</div>
+      </div>
+    </div>
+
+    <!-- Actions bar (example — disabled) -->
+    <div class="report-actions">
+      <button class="rpt-action-btn" style="background:linear-gradient(135deg,#1d4ed8,#06b6d4);color:#fff;opacity:.55;" data-tip="In the real report, downloads a formatted PDF for board/compliance review."><i class="ti ti-file-type-pdf"></i> PDF Report</button>
+      <button class="rpt-action-btn" style="background:linear-gradient(135deg,#15803d,#22c55e);color:#fff;opacity:.55;" data-tip="Exports full employee telemetry as CSV for SIEM ingestion."><i class="ti ti-table-export"></i> CSV Evidence</button>
+      <button class="rpt-action-btn" style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);color:#94a3b8;opacity:.55;" data-tip="Opens the original campaign emails as sent for audit purposes."><i class="ti ti-mail-opened"></i> View Emails</button>
+      <button class="rpt-action-btn" style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);color:#94a3b8;opacity:.55;" data-tip="Returns to your main campaign dashboard."><i class="ti ti-layout-dashboard"></i> Dashboard</button>
+    </div>
+    <div class="explain-card">In the real report, all four buttons are live. PDF contains your campaign's risk narrative, methodology, and recommendations formatted for non-technical stakeholders. CSV contains every tracked event per employee.</div>
+  </section>
+
+  <!-- ══ SECTION 2: METRICS ═══════════════════════════════════════════════ -->
+  <section class="section-anchor" id="sec-metrics" style="margin-bottom:2rem;">
+    <div style="display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:.5rem;margin-bottom:1rem;">
+      <h2 style="font-size:1.05rem;font-weight:800;color:#f0f4ff;"><i class="ti ti-chart-bar" style="color:#38bdf8;margin-right:6px;"></i>Campaign Metrics</h2>
+      <span style="font-size:.75rem;color:#475569;font-family:'JetBrains Mono',monospace;">Illustrative data — your campaign values appear here</span>
+    </div>
+    <div class="report-stats">
+      <!-- Delivery -->
+      <div class="rstat-box">
+        <div class="rstat-num">94%</div>
+        <div class="rstat-label">Delivery Rate</div>
+        <div class="rstat-sparkline">
+          <div class="rsp-bar" style="height:60%;background:#38bdf8;opacity:.4;"></div>
+          <div class="rsp-bar" style="height:75%;background:#38bdf8;opacity:.55;"></div>
+          <div class="rsp-bar" style="height:85%;background:#38bdf8;opacity:.7;"></div>
+          <div class="rsp-bar" style="height:94%;background:#38bdf8;"></div>
+        </div>
+        <span class="rstat-comp neutral">Illustrative</span>
+        <p class="rstat-help">Emails that reached inboxes vs. bounced. Low delivery means SMTP config issues or spam-filter blocks — fixable before results are meaningful.</p>
+      </div>
+      <!-- Open -->
+      <div class="rstat-box">
+        <div class="rstat-num">55%</div>
+        <div class="rstat-label">Open Rate</div>
+        <div class="rstat-sparkline">
+          <div class="rsp-bar" style="height:35%;background:#6366f1;opacity:.4;"></div>
+          <div class="rsp-bar" style="height:48%;background:#6366f1;opacity:.55;"></div>
+          <div class="rsp-bar" style="height:60%;background:#6366f1;opacity:.7;"></div>
+          <div class="rsp-bar" style="height:55%;background:#6366f1;"></div>
+        </div>
+        <span class="rstat-comp neutral">Illustrative</span>
+        <p class="rstat-help">A soft signal — privacy proxies and image-blocking affect accuracy. The AI weighs it alongside click and report data before drawing conclusions.</p>
+      </div>
+      <!-- Click -->
+      <div class="rstat-box">
+        <div class="rstat-num">23%</div>
+        <div class="rstat-label">Click Rate</div>
+        <div class="rstat-sparkline">
+          <div class="rsp-bar" style="height:40%;background:#f59e0b;opacity:.4;"></div>
+          <div class="rsp-bar" style="height:30%;background:#f59e0b;opacity:.55;"></div>
+          <div class="rsp-bar" style="height:35%;background:#f59e0b;opacity:.7;"></div>
+          <div class="rsp-bar" style="height:23%;background:#f59e0b;"></div>
+        </div>
+        <span class="rstat-comp neutral">Illustrative</span>
+        <p class="rstat-help">The primary behavioral exposure signal. High click rate means the pretext, urgency, or workflow bypass worked — and real attackers exploit the same pattern.</p>
+      </div>
+      <!-- Report -->
+      <div class="rstat-box">
+        <div class="rstat-num">8%</div>
+        <div class="rstat-label">Report Rate</div>
+        <div class="rstat-sparkline">
+          <div class="rsp-bar" style="height:3%;background:#22c55e;opacity:.4;"></div>
+          <div class="rsp-bar" style="height:5%;background:#22c55e;opacity:.55;"></div>
+          <div class="rsp-bar" style="height:6%;background:#22c55e;opacity:.7;"></div>
+          <div class="rsp-bar" style="height:8%;background:#22c55e;"></div>
+        </div>
+        <span class="rstat-comp up">↑ Positive signal</span>
+        <p class="rstat-help">Employees who flagged the email as suspicious. This is the only metric where higher is better — it means your team is becoming active defenders.</p>
+      </div>
+    </div>
+
+    <!-- Industry benchmark grid -->
+    <div class="report-panel" id="benchmarks-panel" style="margin-bottom:0;">
+      <h2><i class="ti ti-building" style="color:#6366f1;"></i> Industry Benchmark Comparison</h2>
+      <div class="benchmark-grid">
+        <div class="bench-card">
+          <div class="bench-sector">Finance</div>
+          <div class="bench-rate" style="color:#38bdf8;">19%</div>
+          <div style="font-size:.72rem;color:#8892b0;margin-bottom:.5rem;">avg. click rate</div>
+          <span class="bench-vs bench-beaten">Your 23% — above avg ↑</span>
+        </div>
+        <div class="bench-card">
+          <div class="bench-sector">Technology</div>
+          <div class="bench-rate" style="color:#38bdf8;">15%</div>
+          <div style="font-size:.72rem;color:#8892b0;margin-bottom:.5rem;">avg. click rate</div>
+          <span class="bench-vs bench-beaten">Your 23% — above avg ↑</span>
+        </div>
+        <div class="bench-card">
+          <div class="bench-sector">Healthcare</div>
+          <div class="bench-rate" style="color:#f59e0b;">24%</div>
+          <div style="font-size:.72rem;color:#8892b0;margin-bottom:.5rem;">avg. click rate</div>
+          <span class="bench-vs bench-beaten" style="background:rgba(34,197,94,.1);color:#4ade80;border-color:rgba(34,197,94,.2);">Your 23% — better ✓</span>
+        </div>
+        <div class="bench-card">
+          <div class="bench-sector">Public Sector</div>
+          <div class="bench-rate" style="color:#f87171;">28%</div>
+          <div style="font-size:.72rem;color:#8892b0;margin-bottom:.5rem;">avg. click rate</div>
+          <span class="bench-vs bench-beaten" style="background:rgba(34,197,94,.1);color:#4ade80;border-color:rgba(34,197,94,.2);">Your 23% — better ✓</span>
+        </div>
+      </div>
+      <div class="explain-card">In your real report, these benchmarks compare your actual click rate against industry estimates from Proofpoint State of Phish 2024 and Verizon DBIR. They contextualize whether your risk is typical or elevated for your sector.</div>
+    </div>
+  </section>
+
+  <!-- ══ SECTION 3: RADAR CHART ════════════════════════════════════════════ -->
+  <section class="section-anchor" id="sec-radar" style="margin-bottom:2rem;">
+    <div class="report-panel">
+      <h2><i class="ti ti-radar" style="color:#8b5cf6;"></i> Vulnerability Signature Radar</h2>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:2rem;align-items:center;">
+        <div class="chart-wrap" style="height:280px;">
+          <canvas id="radarChart"></canvas>
+        </div>
+        <div>
+          <p style="color:#8892b0;font-size:.9rem;line-height:1.7;margin-bottom:1rem;">The radar maps four behavioral signals from your campaign onto axes. The shaded area shows where exposure is concentrated — pointing directly to which attack vectors your team responds to most.</p>
+          <div style="display:flex;flex-direction:column;gap:.6rem;">
+            <div style="display:flex;align-items:center;gap:8px;font-size:.82rem;"><span style="width:10px;height:10px;border-radius:50%;background:#38bdf8;flex-shrink:0;"></span><span style="color:#f0f4ff;font-weight:700;">Delivery 95%</span> <span style="color:#64748b;">— emails that reached inbox</span></div>
+            <div style="display:flex;align-items:center;gap:8px;font-size:.82rem;"><span style="width:10px;height:10px;border-radius:50%;background:#6366f1;flex-shrink:0;"></span><span style="color:#f0f4ff;font-weight:700;">Open Rate 55%</span> <span style="color:#64748b;">— engagement with subject</span></div>
+            <div style="display:flex;align-items:center;gap:8px;font-size:.82rem;"><span style="width:10px;height:10px;border-radius:50%;background:#f59e0b;flex-shrink:0;"></span><span style="color:#f0f4ff;font-weight:700;">Click Rate 23%</span> <span style="color:#64748b;">— behavioral exposure</span></div>
+            <div style="display:flex;align-items:center;gap:8px;font-size:.82rem;"><span style="width:10px;height:10px;border-radius:50%;background:#22c55e;flex-shrink:0;"></span><span style="color:#f0f4ff;font-weight:700;">Report Rate 8%</span> <span style="color:#64748b;">— active defense signal</span></div>
+          </div>
+          <div class="explain-card">In your real report, this radar uses your actual campaign values. The shape of the polygon tells the story — a spike on Click with a flat Report axis means employees are falling for the lure but not reporting it.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ SECTION 4: PREDICTIVE FORECAST ═══════════════════════════════════ -->
+  <section class="section-anchor" id="sec-forecast" style="margin-bottom:2rem;">
+    <div class="report-panel">
+      <h2><i class="ti ti-chart-line" style="color:#10b981;"></i> Predictive Risk Forecast</h2>
+      <div class="chart-wrap" style="height:240px;margin-bottom:1rem;">
+        <canvas id="forecastChart"></canvas>
+      </div>
+      <div style="display:flex;gap:1.5rem;flex-wrap:wrap;margin-bottom:.5rem;">
+        <div style="display:flex;align-items:center;gap:6px;font-size:.8rem;"><span style="width:24px;height:3px;background:#ef4444;border-radius:2px;display:inline-block;"></span><span style="color:#8892b0;">Without training</span></div>
+        <div style="display:flex;align-items:center;gap:6px;font-size:.8rem;"><span style="width:24px;height:3px;background:#10b981;border-radius:2px;display:inline-block;"></span><span style="color:#8892b0;">With recommended training</span></div>
+      </div>
+      <div class="explain-card">These projections are illustrative. In the real report, the AI models expected click-rate trajectory based on your sector baseline and training effectiveness data from comparable companies. The gap between the two lines shows the value of taking the recommended actions.</div>
+    </div>
+  </section>
+
+  <!-- ══ SECTION 5: BEHAVIOR ════════════════════════════════════════════════ -->
+  <section class="section-anchor" id="sec-behavior" style="margin-bottom:2rem;">
+    <div class="double-panel">
+      <!-- AI Typewriter Shell -->
+      <div class="report-panel">
+        <h2><i class="ti ti-brain" style="color:#38bdf8;"></i> AI Behavioral Interpretation</h2>
+        <div class="agent-shell" id="agent-shell">
+          <!-- Lines will be typewritten by JS -->
+        </div>
+        <div class="explain-card">In your real report, this section streams the AI's live reasoning about your specific campaign — explaining <em>why</em> employees clicked, what psychological trigger was exploited, and what the pattern predicts about your next exposure.</div>
+      </div>
+
+      <!-- Fingerprint: 3-tier layout -->
+      <div class="report-panel">
+        <h2><i class="ti ti-fingerprint" style="color:#8b5cf6;"></i> Vulnerability Fingerprints</h2>
+        <p style="color:#8892b0;font-size:.86rem;line-height:1.65;margin-bottom:1rem;">The AI identifies the social-engineering vectors used and groups employees by how they responded. This replaces a single click-rate number with a layered picture of your exposure.</p>
+        <!-- Tier 1: Susceptible -->
+        <div class="fp-tier">
+          <div class="fp-tier-label" style="color:#f87171;">⬤ Susceptible Attack Vectors</div>
+          <div class="fp-pills">
+            <span class="fp-pill danger"><i class="ti ti-bolt"></i> Urgency Pressure</span>
+            <span class="fp-pill danger"><i class="ti ti-user-exclamation"></i> Authority Impersonation</span>
+            <span class="fp-pill danger"><i class="ti ti-cash"></i> Financial Pretext</span>
+          </div>
+        </div>
+        <!-- Tier 2: Moderate -->
+        <div class="fp-tier">
+          <div class="fp-tier-label" style="color:#fbbf24;">⬤ Moderate Susceptibility</div>
+          <div class="fp-pills">
+            <span class="fp-pill warning"><i class="ti ti-link"></i> Link Obfuscation</span>
+            <span class="fp-pill warning"><i class="ti ti-package"></i> Delivery Spoofing</span>
+          </div>
+        </div>
+        <!-- Tier 3: Resilient -->
+        <div class="fp-tier">
+          <div class="fp-tier-label" style="color:#4ade80;">⬤ Resilient Security Traits</div>
+          <div class="fp-pills">
+            <span class="fp-pill secure"><i class="ti ti-mail-check"></i> Phishing Reporting</span>
+            <span class="fp-pill secure"><i class="ti ti-eye-check"></i> Header Inspection</span>
+          </div>
+        </div>
+        <div class="explain-card">In your real report, tiers are determined from your actual click and report events. Employees who clicked on urgency lures but not authority lures reveal a specific training need — not a generic awareness course.</div>
+      </div>
+    </div>
+
+    <!-- Repeat Offenders -->
+    <div class="report-panel">
+      <h2><i class="ti ti-repeat" style="color:#f87171;"></i> Repeat Offenders</h2>
+      <p style="color:#8892b0;font-size:.86rem;margin-bottom:1rem;line-height:1.6;">Employees who have clicked across 2+ campaigns. This is the highest-priority coaching list — repeated exposure to the same pattern without behavior change indicates a deeper training gap.</p>
+      <div class="offender-row">
+        <div class="offender-avatar">JD</div>
+        <div>
+          <div class="offender-name">John D●●●●●son</div>
+          <div class="offender-dept">Finance Department</div>
+        </div>
+        <span class="offender-badge">3 campaigns clicked</span>
+      </div>
+      <div class="offender-row">
+        <div class="offender-avatar">SR</div>
+        <div>
+          <div class="offender-name">Sarah R●●●●●ez</div>
+          <div class="offender-dept">Operations</div>
+        </div>
+        <span class="offender-badge">2 campaigns clicked</span>
+      </div>
+      <div class="explain-card">In the real report, employee names are shown to administrators only. Names are blurred here as a privacy example. The goal is targeted coaching, not blame — repeat clickers often just need the right training, not disciplinary action.</div>
+    </div>
+  </section>
+
+  <!-- ══ SECTION 6: DEPARTMENTS ═════════════════════════════════════════════ -->
+  <section class="section-anchor" id="sec-departments" style="margin-bottom:2rem;">
+    <div class="double-panel">
+      <!-- Heatmap -->
+      <div class="report-panel" id="dept-panel">
+        <h2><i class="ti ti-building" style="color:#f59e0b;"></i> Department Risk Heatmap</h2>
+        <div class="dept-row">
+          <div class="dept-row-header"><span class="dept-name">Finance</span><span class="dept-meta">78% click rate — High exposure</span></div>
+          <div class="dept-bar-track"><div class="dept-bar-fill dept-bar-high" data-w="78"></div></div>
+        </div>
+        <div class="dept-row">
+          <div class="dept-row-header"><span class="dept-name">Operations</span><span class="dept-meta">44% click rate — Moderate exposure</span></div>
+          <div class="dept-bar-track"><div class="dept-bar-fill dept-bar-mid" data-w="44"></div></div>
+        </div>
+        <div class="dept-row">
+          <div class="dept-row-header"><span class="dept-name">IT Security</span><span class="dept-meta">12% click rate — Strong reporting</span></div>
+          <div class="dept-bar-track"><div class="dept-bar-fill dept-bar-low" data-w="12"></div></div>
+        </div>
+        <div class="dept-row">
+          <div class="dept-row-header"><span class="dept-name">Marketing</span><span class="dept-meta">35% click rate — Moderate</span></div>
+          <div class="dept-bar-track"><div class="dept-bar-fill dept-bar-mid" data-w="35"></div></div>
+        </div>
+        <div class="explain-card">The real report uses your actual campaign data to rank departments. Instead of sending the same generic training to everyone, the AI generates department-specific coaching recommendations based on this breakdown.</div>
+      </div>
+
+      <!-- Employee Telemetry / PRO locked -->
+      <div class="report-panel">
+        <h2><i class="ti ti-table" style="color:#38bdf8;"></i> Per-Employee Security Log</h2>
+        <p style="color:#8892b0;font-size:.86rem;margin-bottom:1rem;">Full per-employee event log: who opened, who clicked, who reported, with timestamp, IP region, and user-agent data for forensic review.</p>
+        <div class="pro-locked">
+          <div class="pro-locked-content">
+            <table class="mini-report-table">
+              <tr><td>Alice M. / Finance</td><td style="color:#ef4444;">Clicked</td></tr>
+              <tr><td>Bob K. / IT</td><td style="color:#22c55e;">Reported</td></tr>
+              <tr><td>Carol L. / Ops</td><td style="color:#f59e0b;">Opened</td></tr>
+            </table>
+          </div>
+          <div class="pro-overlay">
+            <span class="pro-overlay-badge"><i class="ti ti-crown" style="margin-right:4px;"></i>PRO — Full telemetry unlocked</span>
+            <span style="font-size:.75rem;color:#94a3b8;font-family:'JetBrains Mono',monospace;">Pro subscribers see the full per-employee log</span>
+          </div>
+        </div>
+        <div class="explain-card">In the real report, PRO users see every employee's exact behavior with timestamps. Free tier shows aggregate department-level data only.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ SECTION 7: ATTACK SIMULATION REPLAY ═══════════════════════════════ -->
+  <section class="section-anchor" id="sec-timeline" style="margin-bottom:2rem;">
+    <div class="report-panel">
+      <h2><i class="ti ti-route" style="color:#06b6d4;"></i> Attack Simulation Replay</h2>
+      <p style="color:#8892b0;font-size:.86rem;margin-bottom:1.5rem;line-height:1.6;">The AI reconstructs the attack chain step-by-step: what the attacker did, what cognitive levers were pulled, and at which node most employees failed. This timeline appears in every report automatically.</p>
+      <div class="replay-track">
+        <!-- Node 1 -->
+        <div class="replay-node">
+          <div class="replay-dot" style="background:rgba(56,189,248,.15);border:2px solid #38bdf8;color:#38bdf8;">01</div>
+          <div class="replay-line"></div>
+          <div class="replay-body">
+            <div class="replay-title">Pretext Construction <span style="font-size:.75rem;color:#64748b;font-weight:400;margin-left:6px;">AI Crafting Phase</span></div>
+            <p style="color:#8892b0;font-size:.82rem;margin:.4rem 0 .6rem;line-height:1.5;">The AI generated a personalized email using OSINT data — matching the target's role, recent company news, and management hierarchy to create a believable wire-transfer request.</p>
+            <div class="replay-meta">
+              <span class="trust-chip" style="background:rgba(245,158,11,.1);color:#fbbf24;border:1px solid rgba(245,158,11,.25);">Trust Score: 7.8/10</span>
+              <span class="trust-chip" style="background:rgba(239,68,68,.1);color:#f87171;border:1px solid rgba(239,68,68,.25);">Cognitive Load: High</span>
+              <span style="color:#64748b;">Vector: Authority + Urgency</span>
+            </div>
+          </div>
+        </div>
+        <!-- Node 2 -->
+        <div class="replay-node">
+          <div class="replay-dot" style="background:rgba(245,158,11,.15);border:2px solid #f59e0b;color:#f59e0b;">02</div>
+          <div class="replay-line"></div>
+          <div class="replay-body">
+            <div class="replay-title">Delivery &amp; Inbox Placement <span style="font-size:.75rem;color:#64748b;font-weight:400;margin-left:6px;">SMTP Phase</span></div>
+            <p style="color:#8892b0;font-size:.82rem;margin:.4rem 0 .6rem;line-height:1.5;">Email dispatched with tracking pixel and click-token. 94% inbox placement rate — spam filters did not catch it because the sending domain had valid SPF/DKIM records.</p>
+            <div class="replay-meta">
+              <span class="trust-chip" style="background:rgba(34,197,94,.1);color:#4ade80;border:1px solid rgba(34,197,94,.25);">94% Delivered</span>
+              <span style="color:#64748b;">Bypass: SPF + DKIM valid</span>
+            </div>
+          </div>
+        </div>
+        <!-- Node 3 -->
+        <div class="replay-node">
+          <div class="replay-dot" style="background:rgba(239,68,68,.15);border:2px solid #ef4444;color:#ef4444;">03</div>
+          <div class="replay-body">
+            <div class="replay-title">Compromise Event <span style="font-size:.75rem;color:#64748b;font-weight:400;margin-left:6px;">Click Recorded</span></div>
+            <p style="color:#8892b0;font-size:.82rem;margin:.4rem 0 .6rem;line-height:1.5;">23% of recipients clicked the link within 4 minutes of delivery — before IT could detect the campaign. In a real attack, credentials would have been harvested at this point.</p>
+            <div class="replay-meta">
+              <span class="trust-chip" style="background:rgba(239,68,68,.1);color:#f87171;border:1px solid rgba(239,68,68,.25);">23% Clicked</span>
+              <span class="trust-chip" style="background:rgba(34,197,94,.1);color:#4ade80;border:1px solid rgba(34,197,94,.25);">8% Reported</span>
+              <span style="color:#64748b;">Time to first click: ~4 min</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="explain-card">In your real report, node details are computed from your actual campaign — including real timestamps, the specific pretext used, and which department failed first. This gives you a forensic reconstruction without an actual breach.</div>
+    </div>
+  </section>
+
+  <!-- ══ SECTION 8: ACTIONS ══════════════════════════════════════════════════ -->
+  <section class="section-anchor" id="sec-actions" style="margin-bottom:2rem;">
+    <div class="double-panel">
+      <!-- AI Recommendations -->
+      <div class="report-panel">
+        <h2><i class="ti ti-clipboard-check" style="color:#34d399;"></i> AI Recommendations</h2>
+        <p style="color:#8892b0;font-size:.86rem;margin-bottom:1rem;line-height:1.6;">Prioritised action checklist generated by the AI from your campaign results. Click items to mark them complete — the progress bar updates in real-time.</p>
+        <div id="rec-list">
+          <div class="rec-item" onclick="toggleRec(this)">
+            <div class="rec-check"></div>
+            <div class="rec-text">Brief Finance managers on aggregate results — focus on the wire-transfer pretext pattern used and the 4-minute time-to-click statistic.</div>
+          </div>
+          <div class="rec-item" onclick="toggleRec(this)">
+            <div class="rec-check"><i class="ti ti-check" style="font-size:.7rem;color:#05070f;display:none;"></i></div>
+            <div class="rec-text">Run a 15-minute micro-training session on urgency-based authority impersonation — specifically targeting Finance and Operations departments.</div>
+          </div>
+          <div class="rec-item" onclick="toggleRec(this)">
+            <div class="rec-check"></div>
+            <div class="rec-text">Enforce a mandatory verbal confirmation policy for all wire transfers exceeding $5,000 — regardless of email urgency or sender authority.</div>
+          </div>
+          <div class="rec-item" onclick="toggleRec(this)">
+            <div class="rec-check"></div>
+            <div class="rec-text">Schedule a follow-up simulation in 30 days using a different pretext (HR policy / salary adjustment) to measure improvement.</div>
+          </div>
+        </div>
+        <!-- Progress bar -->
+        <div style="margin-top:1rem;">
+          <div style="display:flex;justify-content:space-between;font-size:.75rem;color:#64748b;font-family:'JetBrains Mono',monospace;margin-bottom:.4rem;">
+            <span>Progress</span><span id="rec-label">0 / 4 completed</span>
+          </div>
+          <div class="rec-progress-track"><div class="rec-progress-fill" id="rec-bar" style="width:0%;"></div></div>
+        </div>
+        <div class="explain-card">In the real report, recommendations are generated from your actual campaign data and prioritised by risk impact. This interactive checklist is live — your team can check items off as they action them.</div>
+      </div>
+
+      <!-- 30-Day Plan + PRO locked Training Brief -->
+      <div style="display:flex;flex-direction:column;gap:1.5rem;">
+        <div class="report-panel">
+          <h2><i class="ti ti-calendar-stats" style="color:#f59e0b;"></i> 30-Day Remediation Plan</h2>
+          <div class="agent-shell" style="min-height:130px;">
+            <div class="agent-line"><span class="tag">[Week 1]</span> Brief managers on aggregate risk — no individual naming. Focus on the urgency pattern.</div>
+            <div class="agent-line"><span class="tag">[Week 2]</span> Run micro-training on the exact lure type used. Generic awareness courses don't change behavior.</div>
+            <div class="agent-line"><span class="tag">[Week 3]</span> Fix workflow gaps — mandate verbal verification for high-value wire requests.</div>
+            <div class="agent-line"><span class="tag">[Week 4]</span> Re-simulate with a different pretext and compare click rates to measure improvement.</div>
+          </div>
+        </div>
+
+        <!-- PRO: Simulation Planner (locked example) -->
+        <div class="report-panel">
+          <h2><i class="ti ti-calendar-plus" style="color:#8b5cf6;"></i> Simulation Planner</h2>
+          <p style="color:#8892b0;font-size:.84rem;margin-bottom:.8rem;">Automatically schedule your next follow-up campaign.</p>
+          <div class="pro-locked">
+            <div class="pro-locked-content" style="padding:.8rem;">
+              <div style="font-size:.8rem;color:#64748b;">Next campaign: 45 days from today | Scenario: HR Policy | Target: Finance</div>
+            </div>
+            <div class="pro-overlay">
+              <span class="pro-overlay-badge"><i class="ti ti-crown" style="margin-right:4px;"></i>PRO Feature</span>
+            </div>
+          </div>
+          <div class="explain-card">PRO users can schedule automated follow-up simulations directly from the report. Free users see the recommendation but schedule manually.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ SECTION 9: YOUR REPORTS ════════════════════════════════════════════ -->
+  <section class="report-panel section-anchor" id="sec-available">
+    <h2><i class="ti ti-folders" style="color:#38bdf8;"></i> Your Available AI Reports</h2>
+    <p style="color:#8892b0;line-height:1.7;margin-top:-.4rem;">Once campaigns exist, this section becomes your report library. Each tile opens the real report generated from that campaign.</p>
+    {% if campaigns %}
+    <div class="campaign-grid-demo" style="margin-top:1.2rem;">
+      {% for c in campaigns %}
+      <a class="campaign-report-card" href="/campaign-report/{{ c.id }}">
+        <span class="report-chip">{{ c.status|replace('_', ' ') }}</span>
+        <h3>{{ c.name }}</h3>
+        <p style="color:#64748b;margin:0;font-size:.85rem;">{{ (c.scenario_type or 'scenario')|replace('_', ' ')|title }}{% if c.company_domain %} for {{ c.company_domain }}{% endif %}</p>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:1rem;">
+          <div class="explain-card" style="margin:0;padding:.65rem;text-align:center;"><strong style="display:block;color:#fff;">{{ c.emails_sent or 0 }}</strong>Sent</div>
+          <div class="explain-card" style="margin:0;padding:.65rem;text-align:center;"><strong style="display:block;color:#fff;">{{ c.click_rate }}%</strong>Click</div>
+          <div class="explain-card" style="margin:0;padding:.65rem;text-align:center;"><strong style="display:block;color:#fff;">{{ c.report_rate }}%</strong>Report</div>
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-report-cta" style="margin-top:1.2rem;">
+      <span class="report-chip">No generated AI reports yet</span>
+      <h2 style="color:#fff;margin:.8rem 0;">Your report library is empty right now.</h2>
+      <p style="color:#8892b0;max-width:620px;margin:0 auto 1.5rem;line-height:1.7;">Log in, create a campaign, launch or preview it, and PhishSim AI will generate your first real AI report with campaign behavior, risk analysis, and remediation guidance.</p>
+      <div class="report-actions" style="justify-content:center;">
+        <a href="/login" class="pdf-btn"><i class="ti ti-login"></i> Login</a>
+        <a href="/demo-login" class="pdf-btn" style="background:linear-gradient(135deg,#f59e0b,#f97316);"><i class="ti ti-player-play"></i> Try Demo Campaign</a>
+      </div>
+    </div>
+    {% endif %}
+  </section>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  // ── Story rail navigation ──────────────────────────────────────────────
+  const railBtns   = document.querySelectorAll(".story-rail button");
+  const sections   = document.querySelectorAll(".section-anchor");
+  const revealEls  = document.querySelectorAll(".report-panel, .rstat-box");
+
+  railBtns.forEach(btn => {
+    btn.addEventListener("click", () => {
+      const target = document.getElementById(btn.dataset.target);
+      if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  });
+
+  // Nav highlight — lower threshold for mobile compatibility
+  const navObs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (!e.isIntersecting) return;
+      railBtns.forEach(b => b.classList.toggle("active", b.dataset.target === e.target.id));
+    });
+  }, { threshold: 0.25, rootMargin: "-60px 0px -30% 0px" });
+  sections.forEach(s => navObs.observe(s));
+
+  // ── Reveal panels on scroll (animation-delay, not transition-delay) ─────
+  const revealObs = new IntersectionObserver(entries => {
+    entries.forEach((e, i) => {
+      if (!e.isIntersecting) return;
+      const delay = Math.min(i * 50, 250);
+      e.target.style.animationDelay = delay + "ms";
+      e.target.classList.add("visible");
+      revealObs.unobserve(e.target);
+    });
+  }, { threshold: 0.12 });
+  revealEls.forEach(el => revealObs.observe(el));
+
+  // ── HSS count-up — triggered on scroll, not immediately ────────────────
+  const gaugeEl = document.getElementById("hss-gauge-wrap");
+  const scoreEl = document.getElementById("hss-counter");
+  const gaugeObs = new IntersectionObserver(entries => {
+    if (!entries[0].isIntersecting) return;
+    const target = parseInt(scoreEl.dataset.target, 10) || 82;
+    let v = 0;
+    const t = setInterval(() => {
+      v = Math.min(v + 2, target);
+      scoreEl.textContent = v;
+      if (v >= target) clearInterval(t);
+    }, 24);
+    gaugeObs.disconnect();
+  }, { threshold: 0.5 });
+  if (gaugeEl) gaugeObs.observe(gaugeEl);
+
+  // ── Department heatmap bars — animate on scroll ─────────────────────────
+  const deptObs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (!e.isIntersecting) return;
+      e.target.querySelectorAll(".dept-bar-fill[data-w]").forEach(bar => {
+        setTimeout(() => { bar.style.width = bar.dataset.w + "%"; }, 100);
+      });
+      deptObs.unobserve(e.target);
+    });
+  }, { threshold: 0.2 });
+  const deptPanel = document.getElementById("dept-panel");
+  if (deptPanel) deptObs.observe(deptPanel);
+
+  // ── AI Agent typewriter stream ─────────────────────────────────────────
+  const shell = document.getElementById("agent-shell");
+  const agentLines = [
+    { tag: "[AGENT_INIT]",    cls: "tag",  text: " Analyzing campaign event log — 147 tracked events loaded." },
+    { tag: "[AGENT_RISK]",    cls: "warn", text: " Click rate 23% — above Finance sector baseline of 19%." },
+    { tag: "[AGENT_PATTERN]", cls: "tag",  text: " Primary vector: authority impersonation + time-pressure pretext." },
+    { tag: "[AGENT_WHY]",     cls: "tag",  text: " Employees in Finance responded fastest — median 4m 12s to click." },
+    { tag: "[AGENT_DEPT]",    cls: "warn", text: " Finance (78% click) flagged as critical. Operations (44%) moderate." },
+    { tag: "[AGENT_POSITIVE]",cls: "ok",   text: " 8% report rate — IT Security team detected and flagged correctly." },
+    { tag: "[AGENT_NEXT]",    cls: "tag",  text: " Recommended: targeted micro-training for Finance within 7 days." },
+    { tag: "[AGENT_DONE]",    cls: "ok",   text: " Risk analysis complete. Remediation plan generated." },
+  ];
+
+  let lineIdx = 0, charIdx = 0, cursor = null;
+
+  function appendLine() {
+    if (lineIdx >= agentLines.length) { if (cursor) cursor.remove(); return; }
+    const { tag, cls, text } = agentLines[lineIdx];
+    const div = document.createElement("div");
+    div.className = "agent-line";
+    div.innerHTML = `<span class="${cls}">${tag}</span>`;
+    if (cursor) cursor.remove();
+    cursor = document.createElement("span");
+    cursor.className = "agent-cursor";
+    div.appendChild(cursor);
+    shell.appendChild(div);
+    shell.scrollTop = shell.scrollHeight;
+
+    let i = 0;
+    const interval = setInterval(() => {
+      if (i < text.length) {
+        cursor.insertAdjacentText("beforebegin", text[i++]);
+        shell.scrollTop = shell.scrollHeight;
+      } else {
+        clearInterval(interval);
+        lineIdx++;
+        charIdx = 0;
+        setTimeout(appendLine, 320);
+      }
+    }, 22);
+  }
+
+  const shellObs = new IntersectionObserver(entries => {
+    if (!entries[0].isIntersecting) return;
+    setTimeout(appendLine, 400);
+    shellObs.disconnect();
+  }, { threshold: 0.3 });
+  if (shell) shellObs.observe(shell);
+
+  // ── Recommendations checklist progress ────────────────────────────────
+  window.toggleRec = function(el) {
+    el.classList.toggle("done");
+    el.querySelector(".rec-check i")?.style && (el.querySelector(".rec-check i").style.display = el.classList.contains("done") ? "block" : "none");
+    updateRecProgress();
+  };
+  function updateRecProgress() {
+    const all  = document.querySelectorAll(".rec-item");
+    const done = document.querySelectorAll(".rec-item.done");
+    const pct  = Math.round((done.length / all.length) * 100);
+    document.getElementById("rec-bar").style.width = pct + "%";
+    document.getElementById("rec-label").textContent = `${done.length} / ${all.length} completed`;
+  }
+
+  // ── Radar chart ────────────────────────────────────────────────────────
+  const radarCtx = document.getElementById("radarChart")?.getContext("2d");
+  if (radarCtx) {
+    new Chart(radarCtx, {
+      type: "radar",
+      data: {
+        labels: ["Delivery", "Open Rate", "Click Rate", "Report Rate"],
+        datasets: [{
+          label: "Example Campaign",
+          data: [95, 55, 23, 8],
+          backgroundColor: "rgba(56,189,248,0.12)",
+          borderColor: "#38bdf8",
+          borderWidth: 2,
+          pointBackgroundColor: "#38bdf8",
+          pointRadius: 4,
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        scales: { r: {
+          min: 0, max: 100,
+          grid: { color: "rgba(255,255,255,0.06)" },
+          ticks: { display: false },
+          pointLabels: { color: "#94a3b8", font: { size: 12, family: "'JetBrains Mono'" } },
+          angleLines: { color: "rgba(255,255,255,0.06)" },
+        }},
+        plugins: { legend: { display: false } }
+      }
+    });
+  }
+
+  // ── Forecast line chart ────────────────────────────────────────────────
+  const fcCtx = document.getElementById("forecastChart")?.getContext("2d");
+  if (fcCtx) {
+    new Chart(fcCtx, {
+      type: "line",
+      data: {
+        labels: ["Now", "Month 1", "Month 2", "Month 3", "Month 4", "Month 5", "Month 6"],
+        datasets: [
+          {
+            label: "Without training",
+            data: [23, 25, 26, 27, 28, 29, 30],
+            borderColor: "#ef4444", backgroundColor: "rgba(239,68,68,0.08)",
+            borderWidth: 2, tension: 0.4, fill: true, pointRadius: 3,
+          },
+          {
+            label: "With recommended training",
+            data: [23, 20, 17, 14, 12, 10, 8],
+            borderColor: "#10b981", backgroundColor: "rgba(16,185,129,0.08)",
+            borderWidth: 2, tension: 0.4, fill: true, pointRadius: 3,
+          }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        scales: {
+          x: { grid: { color: "rgba(255,255,255,0.04)" }, ticks: { color: "#64748b" } },
+          y: {
+            grid: { color: "rgba(255,255,255,0.04)" }, ticks: { color: "#64748b" },
+            min: 0, max: 35,
+            title: { display: true, text: "Click Rate %", color: "#64748b", font: { size: 11 } }
+          }
+        },
+        plugins: { legend: { display: false } }
+      }
+    });
+  }
+
+});
+</script>
+{% endblock %}

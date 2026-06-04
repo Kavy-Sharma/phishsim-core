@@ -200,7 +200,10 @@
     }, 80);
 
     // Dismiss loader when page is ready
+    let loaderDismissed = false;
     function dismissLoader() {
+        if (loaderDismissed) return;
+        loaderDismissed = true;
         clearInterval(pctTimer);
         let currentPct = pct;
         const finishTimer = setInterval(() => {
@@ -239,6 +242,7 @@
             loader.style.opacity = '1';
             loader.style.visibility = 'visible';
             pct = 0;
+            loaderDismissed = false;
         }
     });
 
@@ -260,6 +264,7 @@
             if (statusEl) statusEl.textContent = 'PROCESSING SECURE UPLOAD';
             loader.style.opacity = '1';
             loader.style.visibility = 'visible';
+            loaderDismissed = false;
         }
     });
 
@@ -270,238 +275,146 @@
         // Safety fallback — never block for more than 4s
         setTimeout(dismissLoader, 4000);
     }
+
+    window.addEventListener('pageshow', (event) => {
+        dismissLoader();
+    });
 })();
 </script>
 
 
     {% if current_user and current_user.company_domain == 'demo-corp.com' %}
     <!-- ═══════════════════════════════════════════════════════════
-         INTERACTIVE FLOATING CYBER HUD (SANDBOX CONTROLLER)
-         Replacing the messy top bar with a premium floating console.
+         SLIM OPERATING SYSTEM STATUS HUD BAR
+         Full-width 40px bar pinned to the bottom of the viewport.
          ═══════════════════════════════════════════════════════════ -->
-    <div class="cyber-hud-container" id="cyber-hud">
-        <!-- Compact View -->
-        <div class="hud-pill">
+    <div class="cyber-hud-bar" id="cyber-hud">
+        <!-- Left Side: System status -->
+        <div class="hud-left">
             <span class="hud-pulse-dot"></span>
-            <span class="hud-glitch-text" data-text="SANDBOX ACTIVE">SANDBOX ACTIVE</span>
-            <i class="ti ti-chevron-up hud-chevron"></i>
+            <span class="hud-label">SYSTEM:</span>
+            <span class="hud-value" style="color: #10b981;">ONLINE</span>
+            <span class="hud-separator">|</span>
+            <span class="hud-badge-amber">SANDBOX MODE</span>
         </div>
         
-        <!-- Expanded Panel -->
-        <div class="hud-panel">
-            <div class="hud-header">
-                <i class="ti ti-terminal"></i> SECURITY TELEMETRY
+        <!-- Center: UTC Clock -->
+        <div class="hud-center">
+            <span class="hud-label">UTC:</span>
+            <span class="hud-value" id="hud-clock-bar" style="color: #fbbf24;">00:00:00</span>
+        </div>
+        
+        <!-- Right Side: Metrics and Signal -->
+        <div class="hud-right">
+            <span class="hud-metric">
+                <span class="hud-label">AGENT</span> <span class="hud-value">v2.0</span>
+            </span>
+            <span class="hud-separator">|</span>
+            <span class="hud-metric">
+                <span class="hud-label">ENGINE:</span> <span class="hud-value">READY</span>
+            </span>
+            <span class="hud-separator">|</span>
+            <div class="hud-signal" title="Signal Strength">
+                <span class="signal-bar bar-1"></span>
+                <span class="signal-bar bar-2"></span>
+                <span class="signal-bar bar-3"></span>
             </div>
-            <div class="hud-divider"></div>
-            <div class="hud-grid">
-                <div class="hud-item">
-                    <span class="hud-label"><i class="ti ti-cpu"></i> OPERATING NODE:</span>
-                    <span class="hud-value">Eagle-AI v2.0</span>
-                </div>
-                <div class="hud-item">
-                    <span class="hud-label"><i class="ti ti-database"></i> STORAGE ENVIRONMENT:</span>
-                    <span class="hud-value" style="color: #c084fc;">TRANSIENT (MEM_DB)</span>
-                </div>
-                <div class="hud-item">
-                    <span class="hud-label"><i class="ti ti-clock"></i> SECURE UTC CLOCK:</span>
-                    <span class="hud-value" id="hud-clock" style="color: #fbbf24; font-family: var(--font-mono);">00:00:00</span>
-                </div>
-            </div>
-            <div class="hud-divider"></div>
-            <a href="/exit-demo" class="hud-exit-btn">
-                <i class="ti ti-shield-x"></i> WIPE SESSION & EXIT
-            </a>
         </div>
     </div>
 
     <style>
-    .cyber-hud-container {
+    .cyber-hud-bar {
         position: fixed;
-        bottom: 24px;
-        left: 50%;
-        transform: translateX(-50%);
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 40px;
         z-index: 20000;
-        font-family: var(--font-mono), monospace;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-        pointer-events: auto;
-    }
-    
-    .hud-pill {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        padding: 10px 20px;
-        background: rgba(8, 12, 26, 0.85);
-        border: 1px solid rgba(56, 189, 248, 0.45);
-        border-radius: 50px;
-        box-shadow: 0 10px 30px rgba(6, 182, 212, 0.25), inset 0 0 15px rgba(6, 182, 212, 0.1);
+        background: rgba(2, 6, 23, 0.75);
         backdrop-filter: blur(12px);
-        cursor: pointer;
-        transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-    
-    .hud-pill:hover {
-        border-color: rgba(56, 189, 248, 0.8);
-        box-shadow: 0 12px 35px rgba(6, 182, 212, 0.4);
-        transform: translateY(-2px);
-    }
-    
-    .hud-pulse-dot {
-        width: 8px;
-        height: 8px;
-        background-color: #22d3ee;
-        border-radius: 50%;
-        box-shadow: 0 0 10px #22d3ee;
-        animation: hudPulse 1.5s infinite ease-in-out;
-    }
-    
-    .hud-glitch-text {
-        font-size: 0.72rem;
-        font-weight: 800;
-        color: #22d3ee;
-        letter-spacing: 1.5px;
-        text-transform: uppercase;
-    }
-    
-    .hud-chevron {
-        font-size: 0.85rem;
-        color: rgba(255, 255, 255, 0.6);
-        transition: transform 0.3s ease;
-    }
-    
-    /* Panel styling */
-    .hud-panel {
-        max-height: 0;
-        opacity: 0;
-        overflow: hidden;
-        width: 320px;
-        background: linear-gradient(135deg, rgba(8, 12, 26, 0.98) 0%, rgba(5, 7, 15, 0.98) 100%);
-        border: 1px solid rgba(56, 189, 248, 0.3);
-        border-radius: 16px;
-        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
-        backdrop-filter: blur(16px);
-        margin-top: 12px;
-        padding: 0 20px;
-        display: flex;
-        flex-direction: column;
-        transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-        transform: scale(0.95);
-    }
-    
-    /* Expanded State */
-    .cyber-hud-container:hover .hud-panel,
-    .cyber-hud-container.expanded .hud-panel {
-        max-height: 280px;
-        opacity: 1;
-        padding: 20px;
-        transform: scale(1);
-    }
-    
-    .cyber-hud-container:hover .hud-chevron,
-    .cyber-hud-container.expanded .hud-chevron {
-        transform: rotate(180deg);
-    }
-    
-    .hud-header {
-        font-size: 0.7rem;
-        font-weight: 800;
-        color: rgba(255, 255, 255, 0.4);
-        letter-spacing: 1px;
+        -webkit-backdrop-filter: blur(12px);
+        border-top: 1px solid rgba(6, 182, 212, 0.15);
         display: flex;
         align-items: center;
-        gap: 6px;
+        justify-content: space-between;
+        padding: 0 20px;
+        font-family: var(--font-mono), monospace;
+        font-size: 11px;
+        box-sizing: border-box;
     }
-    
-    .hud-divider {
-        height: 1px;
-        background: rgba(255, 255, 255, 0.08);
-        margin: 12px 0;
-    }
-    
-    .hud-grid {
+    .cyber-hud-bar .hud-left,
+    .cyber-hud-bar .hud-center,
+    .cyber-hud-bar .hud-right {
         display: flex;
-        flex-direction: column;
-        gap: 10px;
+        align-items: center;
+        gap: 8px;
     }
-    
-    .hud-item {
-        display: flex;
-        flex-direction: column;
-        gap: 2px;
+    .cyber-hud-bar .hud-label {
+        color: #94a3b8;
     }
-    
-    .hud-label {
-        font-size: 0.62rem;
-        color: rgba(255, 255, 255, 0.45);
-        letter-spacing: 0.5px;
-    }
-    
-    .hud-value {
-        font-size: 0.78rem;
-        color: #fff;
+    .cyber-hud-bar .hud-value {
+        color: #06b6d4;
         font-weight: 600;
     }
-    
-    .hud-exit-btn {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 6px;
-        background: linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(220, 38, 38, 0.25) 100%);
-        border: 1px solid rgba(239, 68, 68, 0.4);
-        border-radius: 8px;
-        color: #fca5a5;
-        text-decoration: none;
-        padding: 8px 16px;
-        font-size: 0.72rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        transition: all 0.25s ease;
+    .cyber-hud-bar .hud-separator {
+        color: rgba(255, 255, 255, 0.15);
+        margin: 0 4px;
     }
-    
-    .hud-exit-btn:hover {
-        background: linear-gradient(135deg, #ef4444, #dc2626);
-        color: #fff;
-        border-color: #ef4444;
-        box-shadow: 0 0 15px rgba(239, 68, 68, 0.4);
-        transform: translateY(-1px);
+    .cyber-hud-bar .hud-pulse-dot {
+        width: 6px;
+        height: 6px;
+        background-color: #10b981;
+        border-radius: 50%;
+        box-shadow: 0 0 8px #10b981;
+        animation: hudPulseGreen 1.5s infinite ease-in-out;
     }
-    
-    /* Adapt for Light Theme */
-    body.light-theme .hud-pill {
-        background: rgba(255, 255, 255, 0.9);
-        border-color: rgba(37, 99, 235, 0.35);
-        box-shadow: 0 10px 25px rgba(37, 99, 235, 0.15);
-    }
-    body.light-theme .hud-panel {
-        background: linear-gradient(135deg, #ffffff 0%, #f0f4ff 100%);
-        border-color: rgba(37, 99, 235, 0.2);
-        box-shadow: 0 20px 40px rgba(37, 99, 235, 0.12);
-    }
-    body.light-theme .hud-value {
-        color: #0f172a;
-    }
-    body.light-theme .hud-label,
-    body.light-theme .hud-header {
-        color: #64748b;
-    }
-    body.light-theme .hud-divider {
-        background: rgba(37, 99, 235, 0.08);
-    }
-    
-    @keyframes hudPulse {
+    @keyframes hudPulseGreen {
         0%, 100% { opacity: 0.6; transform: scale(0.9); }
-        50% { opacity: 1; transform: scale(1.15); box-shadow: 0 0 12px #22d3ee; }
+        50% { opacity: 1; transform: scale(1.15); box-shadow: 0 0 10px #10b981; }
+    }
+    .cyber-hud-bar .hud-badge-amber {
+        background: rgba(245, 158, 11, 0.1);
+        border: 1px solid rgba(245, 158, 11, 0.3);
+        color: #f59e0b;
+        border-radius: 3px;
+        padding: 1px 6px;
+        font-size: 9px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+    }
+    .hud-signal {
+        display: flex;
+        align-items: flex-end;
+        gap: 2px;
+        height: 10px;
+        width: 14px;
+    }
+    .hud-signal .signal-bar {
+        width: 3px;
+        background: rgba(6, 182, 212, 0.2);
+        border-radius: 1px;
+    }
+    .hud-signal .signal-bar.bar-1 { height: 4px; }
+    .hud-signal .signal-bar.bar-2 { height: 7px; }
+    .hud-signal .signal-bar.bar-3 { height: 10px; }
+
+    @keyframes signalPulse {
+        0%, 100% { background: rgba(6, 182, 212, 0.2); }
+        33% { background: #06b6d4; }
+    }
+    .hud-signal .signal-bar.bar-1 { animation: signalPulse 1.5s infinite 0s; }
+    .hud-signal .signal-bar.bar-2 { animation: signalPulse 1.5s infinite 0.5s; }
+    .hud-signal .signal-bar.bar-3 { animation: signalPulse 1.5s infinite 1s; }
+    
+    /* Ensure page content has bottom padding when HUD is active */
+    body {
+        padding-bottom: 40px !important;
     }
     </style>
     <script>
         (function() {
             function updateHudClock() {
-                const clockEl = document.getElementById('hud-clock');
+                const clockEl = document.getElementById('hud-clock-bar');
                 if (clockEl) {
                     const now = new Date();
                     const hours = String(now.getUTCHours()).padStart(2, '0');
@@ -512,67 +425,495 @@
             }
             setInterval(updateHudClock, 1000);
             updateHudClock();
-            
-            // Toggle expanded on click for touch devices
-            const hud = document.getElementById('cyber-hud');
-            if (hud) {
-                hud.querySelector('.hud-pill').addEventListener('click', function(e) {
-                    hud.classList.toggle('expanded');
-                    e.stopPropagation();
-                });
-                document.addEventListener('click', function() {
-                    hud.classList.remove('expanded');
-                });
-                hud.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                });
-            }
         })();
     </script>
     {% endif %}
-    <nav class="navbar">
+
+    <!-- ═══════════════════════════════════════════════════════════
+         REDESIGNED TALL NAVBAR
+         ═══════════════════════════════════════════════════════════ -->
+    <nav class="navbar" id="navbar">
         <div class="nav-container">
             <a href="/" class="brand-logo">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="logo-icon"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
-                PhishSim<span class="highlight">.ai</span>
+                <span class="logo-indicator"></span>
+                PhishSim<span style="color: #06b6d4;">.ai</span>
+                <span class="logo-version-badge">v2.0</span>
             </a>
-            <div class="nav-links">
-                <a href="/" class="nav-link">Home</a>
-                <a href="/threat-analyzer" class="nav-link"><i class="ti ti-cpu" style="margin-right:4px;"></i>Threat Analyzer</a>
-                <a href="/dark-vector" class="nav-link"><i class="ti ti-scan" style="margin-right:4px;"></i>Dark Vector AI</a>
-                <a href="/provenance" class="nav-link"><i class="ti ti-code" style="margin-right:4px;"></i>Provenance AI</a>
-                {% if current_user %}
+            
+            <!-- Logged-in state -->
+            {% if current_user %}
+                <div class="nav-links">
                 <a href="/dashboard" class="nav-link">Dashboard</a>
-                {% if current_user.role == 'admin' %}
-                <a href="/admin" class="nav-link" style="color:#f59e0b;"><i class="ti ti-shield-lock" style="margin-right:4px;"></i>Admin</a>
-                {% endif %}
-                <a href="/profile" class="nav-link"><i class="ti ti-terminal"></i> Profile</a>
-                <a href="/billing" class="nav-link"><i class="ti ti-credit-card"></i> Billing</a>
-                <a href="/new-campaign" class="btn-primary-sm">New Campaign</a>
-                <a href="/logout" class="nav-link"><i class="ti ti-logout"></i></a>
-                {% else %}
-                <a href="/login" class="btn-primary-sm">Login</a>
-                {% endif %}
+                <a href="/new-campaign" class="nav-link">Campaigns</a>
+                <div class="nav-dropdown">
+                    <button class="nav-dropdown-trigger">Tools <i class="ti ti-chevron-down"></i></button>
+                    <div class="nav-dropdown-menu">
+                        <a href="/threat-analyzer"><i class="ti ti-heartbeat" style="color:#06b6d4;margin-right:6px;"></i>Threat Analyzer</a>
+                        <a href="/header-analyzer"><i class="ti ti-mail-search" style="color:#8b5cf6;margin-right:6px;"></i>Header Analyzer</a>
+                        <a href="/url-decoder"><i class="ti ti-link" style="color:#10b981;margin-right:6px;"></i>URL Decoder</a>
+                        <a href="/password-breach"><i class="ti ti-key" style="color:#f59e0b;margin-right:6px;"></i>Password Breach Check</a>
+                        <a href="/ai-risk-advisor" style="border-top: 1px solid rgba(255,255,255,0.05); color: #f59e0b;"><i class="ti ti-crown" style="font-size: 0.8rem; margin-right: 2px;"></i> AI Risk Advisor</a>
+                    </div>
+                </div>
             </div>
+            
+            <div class="nav-actions">
+                {% if current_user.company_domain == 'demo-corp.com' %}
+                <span style="font-family: var(--font-mono); font-size: 9px; font-weight: 700; background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); color: #f59e0b; padding: 2px 6px; border-radius: 4px; text-transform: uppercase;">SANDBOX MODE</span>
+                <a href="/exit-demo" style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.4); color: #fca5a5; font-size: 11px; font-family: var(--font-mono); font-weight: 700; padding: 6px 12px; border-radius: 4px; text-decoration: none; text-transform: uppercase; transition: all 0.25s;" onmouseover="this.style.background='#ef4444'; this.style.color='#fff';" onmouseout="this.style.background='rgba(239, 68, 68, 0.1)'; this.style.color='#fca5a5';">Exit Sandbox</a>
+                {% endif %}
+                
+                <i class="ti ti-bell" style="font-size: 1.25rem; color: #94a3b8; cursor: pointer;"></i>
+                
+                <div class="theme-toggle-pill" id="theme-toggle" role="button" aria-label="Switch theme" title="Switch theme">
+                    <div class="theme-toggle-slider"></div>
+                    <i class="ti ti-sun icon-sun"></i>
+                    <i class="ti ti-moon icon-moon"></i>
+                </div>
+                
+                {% set name_parts = current_user.name.split(' ') %}
+                <a href="/profile" class="nav-avatar">
+                    {% if name_parts|length > 1 %}{{ name_parts[0][0]|upper }}{{ name_parts[1][0]|upper }}{% else %}{{ current_user.name[:2]|upper }}{% endif %}
+                </a>
+                
+                <a href="/logout" class="nav-link nav-link-login" style="font-size: 0.85rem;">Logout</a>
+                
+                <button class="hamburger-btn" onclick="toggleMobileMenu()" aria-label="Toggle Menu">
+                    <span class="bar"></span>
+                    <span class="bar"></span>
+                    <span class="bar"></span>
+                </button>
+            </div>
+            
+            <!-- Logged-out (public) state -->
+            {% else %}
+            <div class="nav-links">
+                <div class="nav-dropdown">
+                    <button class="nav-dropdown-trigger">Platform <i class="ti ti-chevron-down"></i></button>
+                    <div class="nav-dropdown-menu">
+                        <a href="/dashboard">Dashboard</a>
+                        <a href="/new-campaign">New Campaign</a>
+                        <a href="/dashboard">Campaign Analytics</a>
+                        <a href="/reports-demo">AI Report</a>
+                    </div>
+                </div>
+                <a href="/#attack-flow" class="nav-link">How It Works</a>
+                <a href="/#pricing" class="nav-link">Pricing</a>
+                <div class="nav-dropdown">
+                    <button class="nav-dropdown-trigger">Threat Tools <i class="ti ti-chevron-down"></i></button>
+                    <div class="nav-dropdown-menu">
+                        <a href="/threat-analyzer"><i class="ti ti-heartbeat" style="color:#06b6d4;margin-right:6px;"></i>Threat Analyzer</a>
+                        <a href="/header-analyzer"><i class="ti ti-mail-search" style="color:#8b5cf6;margin-right:6px;"></i>Header Analyzer</a>
+                        <a href="/url-decoder"><i class="ti ti-link" style="color:#10b981;margin-right:6px;"></i>URL Decoder</a>
+                        <a href="/password-breach"><i class="ti ti-key" style="color:#f59e0b;margin-right:6px;"></i>Password Breach Check</a>
+                        <a href="/ai-risk-advisor" style="border-top: 1px solid rgba(255,255,255,0.05); color: #f59e0b;"><i class="ti ti-crown" style="font-size: 0.8rem; margin-right: 2px;"></i> AI Risk Advisor</a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="nav-actions">
+                <div class="theme-toggle-pill" id="theme-toggle" role="button" aria-label="Switch theme" title="Switch theme">
+                    <div class="theme-toggle-slider"></div>
+                    <i class="ti ti-sun icon-sun"></i>
+                    <i class="ti ti-moon icon-moon"></i>
+                </div>
+                <a href="/login" class="nav-link nav-link-login" style="font-size: 14px;">Login</a>
+                <a href="/demo-login" class="btn-try-demo">Try Demo <i class="ti ti-arrow-right"></i></a>
+                
+                <button class="hamburger-btn" onclick="toggleMobileMenu()" aria-label="Toggle Menu">
+                    <span class="bar"></span>
+                    <span class="bar"></span>
+                    <span class="bar"></span>
+                </button>
+            </div>
+            {% endif %}
         </div>
     </nav>
-
-    <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Switch to enterprise mode" title="Switch theme">
-        <span class="theme-toggle-icon theme-toggle-dark">DARK</span>
-        <span class="theme-toggle-icon theme-toggle-light">LIGHT</span>
-    </button>
-    <div class="theme-tooltip" id="theme-tooltip">
-        Cyber mode
+    
+    <!-- Mobile overlay menu -->
+    <div class="mobile-menu-overlay" id="mobile-menu-overlay">
+        <button class="close-menu-btn" onclick="toggleMobileMenu()">&times;</button>
+        <div class="mobile-menu-links">
+            {% if current_user %}
+            <a href="/dashboard" onclick="toggleMobileMenu()">Dashboard</a>
+            <a href="/new-campaign" onclick="toggleMobileMenu()">Campaigns</a>
+            <a href="/threat-analyzer" onclick="toggleMobileMenu()">Threat Analyzer</a>
+            <a href="/header-analyzer" onclick="toggleMobileMenu()">Header Analyzer</a>
+            <a href="/url-decoder" onclick="toggleMobileMenu()">URL Decoder</a>
+            <a href="/password-breach" onclick="toggleMobileMenu()">Password Breach Check</a>
+            <a href="/ai-risk-advisor" onclick="toggleMobileMenu()" style="color: #f59e0b;"><i class="ti ti-crown" style="font-size: 0.85rem; margin-right: 4px;"></i> AI Risk Advisor</a>
+            <a href="/reports-demo" onclick="toggleMobileMenu()">AI Report</a>
+            <a href="/profile" onclick="toggleMobileMenu()">Profile</a>
+            <a href="/billing" onclick="toggleMobileMenu()">Billing</a>
+            <a href="/logout" onclick="toggleMobileMenu()">Logout</a>
+            {% if current_user.company_domain == 'demo-corp.com' %}
+            <a href="/exit-demo" onclick="toggleMobileMenu()" style="color: #ef4444;">Exit Sandbox</a>
+            {% endif %}
+            {% else %}
+            <a href="/dashboard" onclick="toggleMobileMenu()">Dashboard</a>
+            <a href="/new-campaign" onclick="toggleMobileMenu()">New Campaign</a>
+            <a href="/#attack-flow" onclick="toggleMobileMenu()">How It Works</a>
+            <a href="/#pricing" onclick="toggleMobileMenu()">Pricing</a>
+            <a href="/threat-analyzer" onclick="toggleMobileMenu()">Threat Analyzer</a>
+            <a href="/header-analyzer" onclick="toggleMobileMenu()">Header Analyzer</a>
+            <a href="/url-decoder" onclick="toggleMobileMenu()">URL Decoder</a>
+            <a href="/password-breach" onclick="toggleMobileMenu()">Password Breach Check</a>
+            <a href="/ai-risk-advisor" onclick="toggleMobileMenu()" style="color: #f59e0b;"><i class="ti ti-crown" style="font-size: 0.85rem; margin-right: 4px;"></i> AI Risk Advisor</a>
+            <a href="/reports-demo" onclick="toggleMobileMenu()">AI Report</a>
+            <a href="/login" onclick="toggleMobileMenu()">Login</a>
+            <a href="/demo-login" onclick="toggleMobileMenu()" style="color: #06b6d4;">Try Demo</a>
+            {% endif %}
+        </div>
     </div>
 
-    <!-- Navbar Scroll Script -->
+    <!-- Keep tooltip div to prevent lower theme toggle script crashes -->
+    <div class="theme-tooltip" id="theme-tooltip" style="display:none;"></div>
+
+    <style>
+    body {
+        padding-top: 64px !important;
+    }
+    /* --- REDESIGNED NAVBAR STYLES --- */
+    .navbar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 64px;
+        background: rgba(2, 6, 23, 0.85);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border-bottom: 1px solid rgba(6, 182, 212, 0.15) !important;
+        display: flex;
+        align-items: center;
+        z-index: 10000;
+        transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+        padding: 0 5%;
+        box-sizing: border-box;
+    }
+
+    /* Scrolled State */
+    .navbar.scrolled {
+        height: 52px !important;
+        background: rgba(2, 6, 23, 0.95) !important;
+    }
+
+    .nav-container {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin: 0 auto;
+        max-width: 1200px;
+    }
+
+    /* Left side: Logo & Active indicator */
+    .brand-logo {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        text-decoration: none;
+        font-weight: 800;
+        font-size: 1.25rem;
+        color: #fff;
+        font-family: var(--font-sans), sans-serif;
+        flex-shrink: 0;
+    }
+    .logo-indicator {
+        width: 8px;
+        height: 8px;
+        background-color: #06b6d4;
+        border-radius: 2px;
+        animation: logoPulse 2s infinite;
+    }
+    @keyframes logoPulse {
+        0%, 100% { opacity: 1; box-shadow: 0 0 8px #06b6d4; }
+        50% { opacity: 0; box-shadow: none; }
+    }
+    .logo-version-badge {
+        font-family: var(--font-mono), monospace;
+        font-size: 10px;
+        background: rgba(6, 182, 212, 0.1);
+        border: 1px solid rgba(6, 182, 212, 0.3);
+        color: #06b6d4;
+        padding: 1px 6px;
+        border-radius: 50px;
+        font-weight: 600;
+    }
+
+    /* Center: Navigation Links */
+    .nav-links {
+        display: flex;
+        align-items: center;
+        gap: 24px;
+    }
+    .nav-link {
+        color: #94a3b8 !important;
+        text-decoration: none;
+        font-size: 0.9rem;
+        font-weight: 500;
+        transition: color 0.2s;
+        font-family: var(--font-sans), sans-serif;
+    }
+    .nav-link:hover {
+        color: #fff !important;
+    }
+
+    /* Dropdowns */
+    .nav-dropdown {
+        position: relative;
+    }
+    .nav-dropdown-trigger {
+        background: none;
+        border: none;
+        color: #94a3b8;
+        font-size: 0.9rem;
+        font-weight: 500;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-family: var(--font-sans), sans-serif;
+        padding: 8px 0;
+        transition: color 0.2s;
+    }
+    .nav-dropdown-trigger:hover {
+        color: #fff;
+    }
+    .nav-dropdown-menu {
+        position: absolute;
+        top: 100%;
+        left: 50%;
+        transform: translateX(-50%) translateY(10px);
+        width: 200px;
+        background: rgba(2, 6, 23, 0.95);
+        border: 1px solid rgba(6, 182, 212, 0.2);
+        border-radius: 8px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        z-index: 1000;
+        display: flex;
+        flex-direction: column;
+        padding: 8px 0;
+    }
+    .nav-dropdown:hover .nav-dropdown-menu {
+        opacity: 1;
+        visibility: visible;
+        transform: translateX(-50%) translateY(0);
+    }
+    .nav-dropdown-menu a {
+        color: #94a3b8 !important;
+        padding: 10px 16px;
+        text-decoration: none;
+        font-size: 0.85rem;
+        font-weight: 500;
+        border-left: 2px solid transparent;
+        transition: all 150ms ease;
+        text-align: left;
+    }
+    .nav-dropdown-menu a:hover {
+        color: #fff !important;
+        background: rgba(6, 182, 212, 0.05);
+        border-left-color: #06b6d4;
+    }
+
+    /* Right side actions */
+    .nav-actions {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+    }
+
+    /* Slide theme toggle */
+    .theme-toggle-pill {
+        position: relative;
+        width: 64px;
+        height: 32px;
+        border-radius: 50px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(6, 182, 212, 0.25);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 8px;
+        box-sizing: border-box;
+        z-index: 1000;
+    }
+    .theme-toggle-slider {
+        position: absolute;
+        top: 3px;
+        left: 4px;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: #06b6d4;
+        box-shadow: 0 0 10px #06b6d4;
+        transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .theme-toggle-pill .ti {
+        font-size: 14px;
+        z-index: 2;
+        color: #94a3b8;
+        transition: color 0.2s;
+    }
+    body.light-theme .theme-toggle-slider {
+        transform: translateX(30px);
+    }
+    body.light-theme .theme-toggle-pill .icon-sun {
+        color: #94a3b8;
+    }
+    body.light-theme .theme-toggle-pill .icon-moon {
+        color: #fff;
+    }
+    body:not(.light-theme) .theme-toggle-pill .icon-sun {
+        color: #fff;
+    }
+    body:not(.light-theme) .theme-toggle-pill .icon-moon {
+        color: #94a3b8;
+    }
+
+    /* Try Demo Button */
+    .btn-try-demo {
+        background: transparent;
+        border: 1px solid #06b6d4;
+        color: #06b6d4;
+        padding: 8px 20px;
+        border-radius: 6px;
+        font-size: 13px;
+        font-weight: 500;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        transition: all 0.2s ease;
+        font-family: var(--font-sans), sans-serif;
+    }
+    .btn-try-demo:hover {
+        background: rgba(6, 182, 212, 0.1);
+        box-shadow: 0 0 12px rgba(6, 182, 212, 0.3);
+    }
+    .btn-try-demo:hover i {
+        transform: translateX(3px);
+    }
+    .btn-try-demo i {
+        transition: transform 0.2s;
+    }
+
+    /* Avatar */
+    .nav-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        border: 2px solid #06b6d4;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 11px;
+        font-weight: 700;
+        color: #06b6d4;
+        background: rgba(6, 182, 212, 0.08);
+        text-decoration: none;
+        font-family: var(--font-mono), monospace;
+    }
+
+    /* Hamburger & Mobile Menu Overlay */
+    .hamburger-btn {
+        display: none;
+        flex-direction: column;
+        gap: 5px;
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 4px;
+        z-index: 10100;
+    }
+    .hamburger-btn .bar {
+        width: 22px;
+        height: 2px;
+        background: #94a3b8;
+        transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .mobile-menu-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(2, 6, 23, 0.95);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        z-index: 99999;
+        opacity: 0;
+        visibility: hidden;
+        transform: translateX(100%);
+        transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+    .mobile-menu-overlay.active {
+        opacity: 1;
+        visibility: visible;
+        transform: translateX(0);
+    }
+    .mobile-menu-links {
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+        text-align: center;
+    }
+    .mobile-menu-links a {
+        font-size: 1.6rem;
+        font-weight: 700;
+        color: #fff;
+        text-decoration: none;
+        transition: color 0.2s;
+        font-family: var(--font-sans), sans-serif;
+    }
+    .mobile-menu-links a:hover {
+        color: #06b6d4;
+    }
+    .close-menu-btn {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        background: none;
+        border: none;
+        color: #94a3b8;
+        font-size: 2.5rem;
+        cursor: pointer;
+    }
+
+    @media (max-width: 768px) {
+        .hamburger-btn {
+            display: flex;
+        }
+        .nav-links {
+            display: none !important;
+        }
+        .nav-actions .nav-link-login {
+            display: none !important;
+        }
+    }
+    </style>
+    
     <script>
+    function toggleMobileMenu() {
+        document.getElementById('mobile-menu-overlay').classList.toggle('active');
+    }
+    
+    // Scrolled state tightening
     window.addEventListener('scroll', function() {
-        const nav = document.querySelector('.navbar');
-        if(window.scrollY > 80) {
-            nav.classList.add('nav-scrolled');
-        } else {
-            nav.classList.remove('nav-scrolled');
+        const nav = document.getElementById('navbar');
+        if (nav) {
+            if (window.scrollY > 80) {
+                nav.classList.add('scrolled');
+            } else {
+                nav.classList.remove('scrolled');
+            }
         }
     });
     </script>
@@ -674,7 +1015,7 @@
             }
 
             const savedTheme = localStorage.getItem(storageKey);
-            applyTheme(savedTheme === "light" ? "light" : "dark", true);
+            applyTheme(savedTheme === "light" ? "light" : "dark", false);
 
             toggle.addEventListener("click", function() {
                 applyTheme(body.classList.contains("light-theme") ? "dark" : "light", true);
@@ -749,14 +1090,14 @@
                 View Report <i class="ti ti-chart-bar" style="vertical-align: middle; margin-left: 2px;"></i>
             </a>
             <button type="button" class="strip-close-btn" onclick="closeCampaignStrip()" aria-label="Close campaign strip">
-                <i class="fas fa-times"></i>
+                <i class="ti ti-x"></i>
             </button>
         </div>
     </div>
     
     <!-- Floating Open Trigger Icon -->
     <div class="campaign-strip-trigger" id="campaign-strip-trigger" onclick="openCampaignStrip()" title="Open Latest Campaign Strip">
-        <i class="fas fa-chart-line"></i>
+        <i class="ti ti-chart-line"></i>
     </div>
 
     <script>

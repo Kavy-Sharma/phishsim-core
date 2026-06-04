@@ -2,7 +2,7 @@
 {% block title %}AI Security Report — {{ campaign.name }}{% endblock %}
 {% block content %}
 <style>
-.report-page { max-width: 1400px; width: 100%; margin: 0 auto; padding: 1.5rem 2rem; box-sizing: border-box; }
+.report-page { max-width: 1400px; width: 100%; margin: 0 auto; padding: 5rem 2rem 5rem; box-sizing: border-box; }
 
 .report-topbar {
     display: flex; align-items: center; justify-content: space-between;
@@ -528,11 +528,11 @@
     <!-- Top Bar -->
     <div class="report-topbar">
         <a href="/dashboard" class="back-link">
-            <i class="fas fa-arrow-left"></i> Back to Dashboard
+            <i class="ti ti-arrow-left"></i> Back to Dashboard
         </a>
         <div style="display:flex; gap:0.8rem; align-items:center; flex-wrap:wrap;">
             <span class="risk-badge risk-{{ report.risk_level | lower }}">
-                <i class="fas fa-{% if report.risk_level == 'High' %}exclamation-triangle{% elif report.risk_level == 'Medium' %}exclamation-circle{% else %}check-circle{% endif %}"></i>
+                <i class="{% if report.risk_level == 'High' %}ti ti-alert-triangle{% elif report.risk_level == 'Medium' %}ti ti-alert-circle{% else %}ti ti-circle-check{% endif %}"></i>
                 {{ report.risk_level }} Risk
             </span>
         </div>
@@ -555,8 +555,10 @@
             <div class="hss-tier-badge">{{ hss.label }}</div>
             
             <!-- Risk Trajectory Score & Small Trend Sparkline -->
-            <div style="margin-top: 10px; font-size: 0.8rem; display: flex; align-items: center; justify-content: center; gap: 4px; font-weight: 600; color: {% if hss_delta >= 0 %}#22c55e{% else %}#ef4444{% endif %};" title="Score difference vs previous simulation">
-                <i class="fas fa-arrow-{% if hss_delta >= 0 %}up{% else %}down{% endif %}"></i> 
+            <div style="margin-top: 10px; font-size: 0.8rem; display: flex; align-items: center; justify-content: center; gap: 4px; font-weight: 600; color: {% if hss_delta is defined and hss_delta is not none and hss_delta >= 0 %}#22c55e{% else %}#ef4444{% endif %};" title="Score difference vs previous simulation">
+                {% if hss_delta is defined and hss_delta is not none %}
+                {% if hss_delta >= 0 %}<i class="ti ti-arrow-up"></i>{% else %}<i class="ti ti-arrow-down"></i>{% endif %}
+                {% endif %}
                 {{ hss_delta | abs }} pts
                 <span style="font-weight: normal; color: var(--text-muted); font-size: 0.72rem;">vs last</span>
             </div>
@@ -581,7 +583,7 @@
                 </div>
             </div>
             <div class="rstat-label">Delivery Rate</div>
-            <span class="rstat-comp up-good"><i class="fas fa-arrow-trend-up"></i> +1.2% vs avg</span>
+            
         </div>
         
         <!-- Open Rate -->
@@ -595,13 +597,13 @@
                 </div>
             </div>
             <div class="rstat-label">Open Rate</div>
-            <span class="rstat-comp down-bad"><i class="fas fa-arrow-trend-down"></i> -3.4% vs avg</span>
+            
         </div>
         
         <!-- Click Rate -->
         <div class="rstat-box">
             <div style="display: flex; align-items: center; justify-content: center; gap: 8px;">
-                <div class="rstat-num">{{ report.click_rate }}%</div>
+                <div class="rstat-num">{{ report.click_rate or 0 }}%</div>
                 <div class="sparkline-container" title="Last 3 campaigns: {{ sparklines.click[0] }}% -> {{ sparklines.click[1] }}% -> {{ sparklines.click[2] }}%">
                     {% for val in sparklines.click %}
                     <div class="sparkline-bar" style="height: {{ val }}%;"></div>
@@ -609,7 +611,7 @@
                 </div>
             </div>
             <div class="rstat-label">Click Rate ⚠</div>
-            <span class="rstat-comp down-bad"><i class="fas fa-arrow-trend-up"></i> +12% vs threshold</span>
+            
         </div>
         
         <!-- Report Rate -->
@@ -623,70 +625,71 @@
                 </div>
             </div>
             <div class="rstat-label">Report Rate ✓</div>
-            <span class="rstat-comp up-good"><i class="fas fa-arrow-trend-up"></i> +2.1% vs avg</span>
+            
         </div>
     </div>
 
     <!-- Industry Sector Comparison -->
     <div class="report-panel" style="margin-bottom: 2rem;">
-        <h2><i class="fas fa-chart-simple" style="color:var(--accent-cyan); margin-right: 14px;"></i>Industry Sector Comparison</h2>
+        <h2><i class="ti ti-chart-bar" style="color:var(--accent-cyan); margin-right: 14px;"></i>Industry Sector Comparison</h2>
         <p style="color:var(--text-muted); font-size:0.88rem; margin:-0.8rem 0 1.5rem;">
-            Compare your campaign's click rate (<strong>{{ report.click_rate }}%</strong>) against industry benchmarks. A lower click rate than the benchmark represents better security posture.
+            Compare your campaign's click rate (<strong>{{ report.click_rate or 0 }}%</strong>) against industry benchmarks. A lower click rate than the benchmark represents better security posture.
         </p>
+        <p style="color:var(--text-muted); font-size:0.75rem; margin:-1rem 0 1.5rem; font-style:italic;">* Industry estimates based on Proofpoint State of Phish 2024 and Verizon DBIR. Actual sector averages vary.</p>
         
         <div class="benchmark-grid">
             <!-- Finance -->
             <div class="benchmark-card">
-                <div class="benchmark-sector"><i class="fas fa-building-columns"></i> Finance</div>
+                <div class="benchmark-sector"><i class="ti ti-building-columns"></i> Finance</div>
                 <div class="benchmark-rate">19.0%</div>
                 <div class="benchmark-label">Sector Benchmark</div>
                 {% if report.click_rate <= 19 %}
-                <span class="benchmark-status beat-average"><i class="fas fa-shield-halved"></i> Beat Average</span>
+                <span class="benchmark-status beat-average"><i class="ti ti-shield-half"></i> Beat Average</span>
                 <div class="benchmark-diff text-success">-{{ (19 - report.click_rate)|round(1) }}% vs sector</div>
                 {% else %}
-                <span class="benchmark-status above-average"><i class="fas fa-triangle-exclamation"></i> Above Average</span>
+                <span class="benchmark-status above-average"><i class="ti ti-alert-triangle"></i> Above Average</span>
                 <div class="benchmark-diff text-danger">+{{ (report.click_rate - 19)|round(1) }}% vs sector</div>
                 {% endif %}
             </div>
 
             <!-- Tech -->
             <div class="benchmark-card">
-                <div class="benchmark-sector"><i class="fas fa-laptop-code"></i> Tech</div>
+                <div class="benchmark-sector"><i class="ti ti-device-laptop"></i> Tech</div>
                 <div class="benchmark-rate">15.0%</div>
                 <div class="benchmark-label">Sector Benchmark</div>
                 {% if report.click_rate <= 15 %}
-                <span class="benchmark-status beat-average"><i class="fas fa-shield-halved"></i> Beat Average</span>
+                <span class="benchmark-status beat-average"><i class="ti ti-shield-half"></i> Beat Average</span>
                 <div class="benchmark-diff text-success">-{{ (15 - report.click_rate)|round(1) }}% vs sector</div>
                 {% else %}
-                <span class="benchmark-status above-average"><i class="fas fa-triangle-exclamation"></i> Above Average</span>
+                <span class="benchmark-status above-average"><i class="ti ti-alert-triangle"></i> Above Average</span>
                 <div class="benchmark-diff text-danger">+{{ (report.click_rate - 15)|round(1) }}% vs sector</div>
                 {% endif %}
             </div>
 
             <!-- Healthcare -->
             <div class="benchmark-card">
-                <div class="benchmark-sector"><i class="fas fa-heart-pulse"></i> Healthcare</div>
+                <div class="benchmark-sector"><i class="ti ti-heartbeat"></i> Healthcare</div>
                 <div class="benchmark-rate">24.0%</div>
                 <div class="benchmark-label">Sector Benchmark</div>
                 {% if report.click_rate <= 24 %}
-                <span class="benchmark-status beat-average"><i class="fas fa-shield-halved"></i> Beat Average</span>
+                <span class="benchmark-status beat-average"><i class="ti ti-shield-half"></i> Beat Average</span>
                 <div class="benchmark-diff text-success">-{{ (24 - report.click_rate)|round(1) }}% vs sector</div>
                 {% else %}
-                <span class="benchmark-status above-average"><i class="fas fa-triangle-exclamation"></i> Above Average</span>
+                <span class="benchmark-status above-average"><i class="ti ti-alert-triangle"></i> Above Average</span>
                 <div class="benchmark-diff text-danger">+{{ (report.click_rate - 24)|round(1) }}% vs sector</div>
                 {% endif %}
             </div>
 
             <!-- Public Sector -->
             <div class="benchmark-card">
-                <div class="benchmark-sector"><i class="fas fa-landmark"></i> Public Sector</div>
+                <div class="benchmark-sector"><i class="ti ti-building-community"></i> Public Sector</div>
                 <div class="benchmark-rate">28.0%</div>
                 <div class="benchmark-label">Sector Benchmark</div>
                 {% if report.click_rate <= 28 %}
-                <span class="benchmark-status beat-average"><i class="fas fa-shield-halved"></i> Beat Average</span>
+                <span class="benchmark-status beat-average"><i class="ti ti-shield-half"></i> Beat Average</span>
                 <div class="benchmark-diff text-success">-{{ (28 - report.click_rate)|round(1) }}% vs sector</div>
                 {% else %}
-                <span class="benchmark-status above-average"><i class="fas fa-triangle-exclamation"></i> Above Average</span>
+                <span class="benchmark-status above-average"><i class="ti ti-alert-triangle"></i> Above Average</span>
                 <div class="benchmark-diff text-danger">+{{ (report.click_rate - 28)|round(1) }}% vs sector</div>
                 {% endif %}
             </div>
@@ -697,20 +700,20 @@
     <div class="report-actions">
         <a href="/campaign-emails/{{ campaign.id }}" class="back-link"
            style="padding:12px 20px; border:1px solid rgba(99,102,241,0.3); border-radius:12px; color:#fff; background:rgba(99,102,241,0.1);">
-            <i class="fas fa-envelope-open-text"></i> View Generated Emails
+            <i class="ti ti-mail-opened"></i> View Generated Emails
         </a>
         <button class="pdf-btn" id="pdf-dl-btn" onclick="handleDownload('pdf-dl-btn', '/download-report/{{ campaign.id }}')">
-            <i class="fas fa-file-pdf" id="pdf-icon"></i>
+            <i class="ti ti-file-type-pdf" id="pdf-icon"></i>
             <span id="pdf-label">Download PDF Report</span>
         </button>
         <button class="pdf-btn" id="csv-dl-btn" onclick="handleDownload('csv-dl-btn', '/download-report/{{ campaign.id }}?format=csv')"
             style="background: linear-gradient(135deg, #059669, #0d9488);">
-            <i class="fas fa-file-csv" id="csv-icon"></i>
+            <i class="ti ti-file-type-csv" id="csv-icon"></i>
             <span id="csv-label">Export CSV Data</span>
         </button>
         <a href="/dashboard" class="back-link"
            style="padding:12px 20px; border:1px solid var(--border-color); border-radius:12px; color:var(--text-muted);">
-            <i class="fas fa-th-large"></i> Dashboard
+            <i class="ti ti-layout-grid"></i> Dashboard
         </a>
     </div>
 
@@ -719,7 +722,7 @@
         <!-- Live AI reasoning -->
         <div class="report-panel" style="display:flex; flex-direction:column; justify-content:space-between;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
-                <h2 style="margin:0;"><i class="fas fa-brain" style="color:var(--accent-purple); margin-right: 14px;"></i>Live Agent Thinking Stream</h2>
+                <h2 style="margin:0;"><i class="ti ti-brain" style="color:var(--accent-purple); margin-right: 14px;"></i>Live Agent Thinking Stream</h2>
                 <div style="display:flex; align-items:center; gap:8px;">
                     <span style="width:8px; height:8px; border-radius:50%; background:#22c55e; animation: livePulse 1.5s infinite;"></span>
                     <span style="font-family:var(--font-mono); font-size:0.7rem; color:#22c55e;">STREAMING REASONING</span>
@@ -731,26 +734,26 @@
 
         <!-- Behavioral susceptibility fingerprint -->
         <div class="report-panel">
-            <h2><i class="fas fa-fingerprint" style="color:#ef4444; margin-right: 14px;"></i>Behavioral Fingerprint</h2>
+            <h2><i class="ti ti-fingerprint" style="color:#ef4444; margin-right: 14px;"></i>Behavioral Fingerprint</h2>
             <p style="color:var(--text-muted); font-size:0.88rem; line-height:1.6; margin-bottom:1.5rem;">
                 AI identified attack susceptibility profile based on metrics tracked from this specific scenario and organization historical aggregates.
             </p>
             
             <div style="font-size:0.8rem; font-family:var(--font-mono); text-transform:uppercase; color:var(--text-muted); letter-spacing:0.5px; margin-bottom:0.5rem;">Susceptible Attack Vectors</div>
             <div class="fingerprint-container" style="margin-bottom:1.5rem;">
-                <span class="fp-pill danger"><i class="fas fa-shield-halved"></i> Authority Impersonation</span>
-                <span class="fp-pill danger"><i class="fas fa-file-invoice-dollar"></i> Fake Invoice Lures</span>
+                <span class="fp-pill danger"><i class="ti ti-shield-half"></i> Authority Impersonation</span>
+                <span class="fp-pill danger"><i class="ti ti-file-invoice-dollar"></i> Fake Invoice Lures</span>
             </div>
 
             <div style="font-size:0.8rem; font-family:var(--font-mono); text-transform:uppercase; color:var(--text-muted); letter-spacing:0.5px; margin-bottom:0.5rem;">Moderate Susceptibility</div>
             <div class="fingerprint-container" style="margin-bottom:1.5rem;">
-                <span class="fp-pill warning"><i class="fas fa-triangle-exclamation"></i> Urgency Triggers</span>
+                <span class="fp-pill warning"><i class="ti ti-alert-triangle"></i> Urgency Triggers</span>
             </div>
 
             <div style="font-size:0.8rem; font-family:var(--font-mono); text-transform:uppercase; color:var(--text-muted); letter-spacing:0.5px; margin-bottom:0.5rem;">Resilient Security Traits</div>
             <div class="fingerprint-container">
-                <span class="fp-pill secure"><i class="fas fa-check-double"></i> Brand Spoofing Resilient</span>
-                <span class="fp-pill secure"><i class="fas fa-paperclip"></i> Attachment Threat Resilient</span>
+                <span class="fp-pill secure"><i class="ti ti-check-double"></i> Brand Spoofing Resilient</span>
+                <span class="fp-pill secure"><i class="ti ti-paperclip"></i> Attachment Threat Resilient</span>
             </div>
         </div>
     </div>
@@ -758,14 +761,14 @@
     <!-- Charts Row: Radar + Timeline Forecast -->
     <div class="double-panel">
         <div class="report-panel">
-            <h2><i class="fas fa-bullseye" style="color:var(--accent-cyan); margin-right: 14px;"></i>Vulnerability Signature</h2>
+            <h2><i class="ti ti-target" style="color:var(--accent-cyan); margin-right: 14px;"></i>Vulnerability Signature</h2>
             <div style="position:relative; height:300px; width:100%;">
                 <canvas id="metricsChart"></canvas>
             </div>
         </div>
 
         <div class="report-panel">
-            <h2><i class="fas fa-chart-line" style="color:#f59e0b; margin-right: 14px;"></i>Predictive Risk Forecast</h2>
+            <h2><i class="ti ti-chart-line" style="color:#f59e0b; margin-right: 14px;"></i>Predictive Risk Forecast</h2>
             <div style="position:relative; height:300px; width:100%;">
                 <canvas id="predictiveChart"></canvas>
             </div>
@@ -774,7 +777,7 @@
 
     <!-- Attack Simulation Replay Timeline -->
     <div class="report-panel" style="margin-bottom:2rem;">
-        <h2><i class="fas fa-circle-play" style="color:var(--accent-cyan); margin-right: 14px;"></i>Attack Simulation Replay</h2>
+        <h2><i class="ti ti-player-play" style="color:var(--accent-cyan); margin-right: 14px;"></i>Attack Simulation Replay</h2>
         <p style="color:var(--text-muted); font-size:0.88rem; margin:-0.8rem 0 1.5rem;">Step-by-step audit of why this campaign's email successfully compromised cognitive defenses.</p>
         
         <div class="timeline-track">
@@ -782,7 +785,7 @@
                 <div class="timeline-node" style="--node-color: #6366f1;"></div>
                 <div class="timeline-title">
                     <span>1. Sender Profile Mimicry</span>
-                    <span style="color:#fbbf24;"><i class="fas fa-star-half-stroke"></i> 8.5/10 Trust Score</span>
+                    <span style="color:#fbbf24;"><i class="ti ti-star-half-stroke"></i> 8.5/10 Trust Score</span>
                 </div>
                 <div class="timeline-desc">
                     The spoofed external email headers matched internal executive styles. Bypassed simple SPF/DKIM validation tags due to custom domain mapping settings.
@@ -793,7 +796,7 @@
                 <div class="timeline-node" style="--node-color: #f59e0b;"></div>
                 <div class="timeline-title">
                     <span>2. Urgency Amplification Trigger</span>
-                    <span style="color:#ef4444;"><i class="fas fa-star"></i> 9.2/10 Cognitive Load</span>
+                    <span style="color:#ef4444;"><i class="ti ti-star"></i> 9.2/10 Cognitive Load</span>
                 </div>
                 <div class="timeline-desc">
                     Mandatory HR/CFO compliance verbiage combined with a strict "24-hour expiration threshold" effectively limited target verification pause times.
@@ -804,7 +807,7 @@
                 <div class="timeline-node" style="--node-color: #ef4444;"></div>
                 <div class="timeline-title">
                     <span>3. Authentication SSO Cloning</span>
-                    <span style="color:#ef4444;"><i class="fas fa-star"></i> 9.5/10 Landing Realism</span>
+                    <span style="color:#ef4444;"><i class="ti ti-star"></i> 9.5/10 Landing Realism</span>
                 </div>
                 <div class="timeline-desc">
                     The landing portal successfully replicated corporate identity guidelines, login layouts, and CSS styles, resulting in high submission rates.
@@ -818,7 +821,7 @@
         <!-- Heatmap -->
         {% if department_stats %}
         <div class="report-panel">
-            <h2><i class="fas fa-building" style="color:#f59e0b; margin-right: 14px;"></i>Department Heatmap</h2>
+            <h2><i class="ti ti-building" style="color:#f59e0b; margin-right: 14px;"></i>Department Heatmap</h2>
             <p style="color:var(--text-muted); font-size:0.85rem; margin:-0.8rem 0 1.5rem;">Phishing Click Rate per department (Secure reports do not count as clicks).</p>
             {% for dept in department_stats %}
             {% set cr = dept.click_rate %}
@@ -841,7 +844,7 @@
         <!-- Repeat offenders -->
         {% if repeat_offenders %}
         <div class="report-panel" style="border-color:rgba(239,68,68,0.15);">
-            <h2><i class="fas fa-repeat" style="color:#ef4444; margin-right: 14px;"></i>Repeat Offenders</h2>
+            <h2><i class="ti ti-repeat" style="color:#ef4444; margin-right: 14px;"></i>Repeat Offenders</h2>
             <p style="color:var(--text-muted); font-size:0.85rem; margin:-0.8rem 0 1.5rem;">Employees who clicked malicious links across multiple simulation runs.</p>
             {% for offender in repeat_offenders %}
             <div class="offender-row">
@@ -851,7 +854,7 @@
                     {% if offender.department %}<small>· {{ offender.department }}</small>{% endif %}
                 </div>
                 <span class="offender-badge">
-                    <i class="fas fa-flag" style="margin-right:4px;"></i>
+                    <i class="ti ti-flag" style="margin-right:4px;"></i>
                     Clicked {{ offender.campaigns_clicked }}×
                 </span>
             </div>
@@ -863,7 +866,7 @@
         <div class="report-panel" style="margin: 0; position: relative;">
             <h2 style="display: flex; align-items: center; justify-content: space-between; width: 100%; margin: 0 0 1.5rem 0;">
                 <span style="display: flex; align-items: center; gap: 12px;">
-                    <i class="fas fa-calendar-alt" style="color:var(--accent-purple); font-size: 1.25rem;"></i>
+                    <i class="ti ti-calendar" style="color:var(--accent-purple); font-size: 1.25rem;"></i>
                     Simulation Planner
                 </span>
                 {% if not (current_user and current_user.role in ('admin', 'pro')) %}
@@ -906,7 +909,7 @@
                 
                 <div class="pro-lock-overlay">
                     <div class="pro-lock-icon">
-                        <i class="fas fa-lock"></i>
+                        <i class="ti ti-lock"></i>
                     </div>
                     <h4 style="color:#fff; margin-bottom: 8px; font-weight:700;">Locked behind Pro Tier</h4>
                     <p style="color:var(--text-muted); font-size:0.82rem; max-width:320px; margin-bottom: 12px; line-height: 1.5;">
@@ -924,7 +927,7 @@
         <div class="report-panel">
             <h2 style="display: flex; align-items: center; justify-content: space-between; width: 100%; margin: 0 0 1.5rem 0;">
                 <span style="display: flex; align-items: center; gap: 12px;">
-                    <i class="fas fa-users" style="color:var(--accent-blue); font-size: 1.25rem;"></i>
+                    <i class="ti ti-users" style="color:var(--accent-blue); font-size: 1.25rem;"></i>
                     Per-Employee Security Log
                 </span>
                 {% if not (current_user and current_user.role in ('admin', 'pro')) %}
@@ -977,11 +980,11 @@
                                     {% endif %}
                                 ">
                                     {% if emp.trend_dir == 'worse' %}
-                                        <i class="fas fa-arrow-trend-up"></i>
+                                        <i class="ti ti-trending-up"></i>
                                     {% elif emp.trend_dir == 'better' %}
-                                        <i class="fas fa-arrow-trend-down"></i>
+                                        <i class="ti ti-trending-down"></i>
                                     {% else %}
-                                        <i class="fas fa-arrows-left-right"></i>
+                                        <i class="ti ti-arrows-horizontal"></i>
                                     {% endif %}
                                     {{ emp.trend_val }}
                                 </span>
@@ -1006,7 +1009,7 @@
                     {% endif %}
                     
                     <button class="pro-btn" onclick="openModal('employee-log-modal')" style="margin-top: 8px; background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.2); color: #818cf8; width: 100%; font-weight: 700; font-family: var(--font-sans);">
-                        <i class="fas fa-expand" style="margin-right: 6px;"></i> View Full Security Log
+                        <i class="ti ti-arrows-maximize" style="margin-right: 6px;"></i> View Full Security Log
                     </button>
                 </div>
 
@@ -1015,10 +1018,10 @@
                     <div class="modal-container">
                         <div class="modal-header">
                             <h2 style="margin: 0; font-family: var(--font-sans); font-size: 1.3rem; display: flex; align-items: center; gap: 10px; color: #fff;">
-                                <i class="fas fa-users" style="color:var(--accent-blue); margin-right: 14px;"></i> Per-Employee Security Log
+                                <i class="ti ti-users" style="color:var(--accent-blue); margin-right: 14px;"></i> Per-Employee Security Log
                             </h2>
                             <button class="modal-close" onclick="closeModal('employee-log-modal')">
-                                <i class="fas fa-times"></i>
+                                <i class="ti ti-x"></i>
                             </button>
                         </div>
                         <div class="modal-body">
@@ -1045,11 +1048,11 @@
                                             <td style="padding: 14px 8px; color: var(--text-muted); font-size: 0.8rem;">{{ emp.department or 'General' }}</td>
                                             <td style="padding: 14px 8px; text-align:center; white-space: nowrap;">
                                                 {% if emp.clicked %}
-                                                    <span style="background:rgba(239,68,68,0.15); color:#f87171; border:1px solid rgba(239,68,68,0.3); padding:3px 8px; border-radius:100px; font-size:0.7rem; font-weight:700; white-space: nowrap; display: inline-flex; align-items: center; gap: 4px;"><i class="fas fa-circle-exclamation" style="font-size: 0.75rem;"></i> Clicked</span>
+                                                    <span style="background:rgba(239,68,68,0.15); color:#f87171; border:1px solid rgba(239,68,68,0.3); padding:3px 8px; border-radius:100px; font-size:0.7rem; font-weight:700; white-space: nowrap; display: inline-flex; align-items: center; gap: 4px;"><i class="ti ti-alert-circle" style="font-size: 0.75rem;"></i> Clicked</span>
                                                 {% elif emp.reported %}
-                                                    <span style="background:rgba(34,197,94,0.15); color:#4ade80; border:1px solid rgba(34,197,94,0.3); padding:2px 8px; border-radius:100px; font-size:0.7rem; font-weight:700; white-space: nowrap; display: inline-flex; align-items: center; gap: 4px;"><i class="fas fa-check-circle" style="font-size: 0.75rem;"></i> Reported</span>
+                                                    <span style="background:rgba(34,197,94,0.15); color:#4ade80; border:1px solid rgba(34,197,94,0.3); padding:2px 8px; border-radius:100px; font-size:0.7rem; font-weight:700; white-space: nowrap; display: inline-flex; align-items: center; gap: 4px;"><i class="ti ti-check-circle" style="font-size: 0.75rem;"></i> Reported</span>
                                                 {% elif emp.opened %}
-                                                    <span style="background:rgba(234,179,8,0.12); color:#facc15; border:1px solid rgba(234,179,8,0.3); padding:2px 8px; border-radius:100px; font-size:0.7rem; font-weight:700; white-space: nowrap; display: inline-flex; align-items: center; gap: 4px;"><i class="fas fa-envelope-open" style="font-size: 0.75rem;"></i> Opened</span>
+                                                    <span style="background:rgba(234,179,8,0.12); color:#facc15; border:1px solid rgba(234,179,8,0.3); padding:2px 8px; border-radius:100px; font-size:0.7rem; font-weight:700; white-space: nowrap; display: inline-flex; align-items: center; gap: 4px;"><i class="ti ti-mail" style="font-size: 0.75rem;"></i> Opened</span>
                                                 {% else %}
                                                     <span style="background:rgba(255,255,255,0.05); color:var(--text-muted); border:1px solid var(--border-color); padding:3px 8px; border-radius:100px; font-size:0.7rem; font-weight:700; white-space: nowrap; display: inline-flex; align-items: center; gap: 4px;">No Action</span>
                                                 {% endif %}
@@ -1078,11 +1081,11 @@
                                                     {% endif %}
                                                 ">
                                                     {% if emp.trend_dir == 'worse' %}
-                                                        <i class="fas fa-arrow-trend-up"></i>
+                                                        <i class="ti ti-trending-up"></i>
                                                     {% elif emp.trend_dir == 'better' %}
-                                                        <i class="fas fa-arrow-trend-down"></i>
+                                                        <i class="ti ti-trending-down"></i>
                                                     {% else %}
-                                                        <i class="fas fa-arrows-left-right"></i>
+                                                        <i class="ti ti-arrows-horizontal"></i>
                                                     {% endif %}
                                                     {{ emp.trend_val }}
                                                 </span>
@@ -1122,7 +1125,7 @@
                                 <div style="display: flex; align-items: center; gap: 8px;">
                                     <span style="background:rgba(239,68,68,0.15); color:#f87171; border:1px solid rgba(239,68,68,0.3); padding:2px 8px; border-radius:100px; font-size:0.7rem; font-weight:700;">Clicked</span>
                                     <span style="font-weight:700; font-size:0.75rem; padding: 2px 6px; border-radius: 4px; background: rgba(239,68,68,0.12); color: #f87171; border: 1px solid rgba(239,68,68,0.25);">89</span>
-                                    <span style="color: #f87171; font-size:0.72rem; font-weight:600; white-space:nowrap;"><i class="fas fa-arrow-trend-up"></i> ↑ 12%</span>
+                                    <span style="color: #f87171; font-size:0.72rem; font-weight:600; white-space:nowrap;"><i class="ti ti-trending-up"></i> ↑ 12%</span>
                                 </div>
                             </div>
                             <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 2px;">
@@ -1147,7 +1150,7 @@
                                 <div style="display: flex; align-items: center; gap: 8px;">
                                     <span style="background:rgba(234,179,8,0.12); color:#facc15; border:1px solid rgba(234,179,8,0.3); padding:2px 8px; border-radius:100px; font-size:0.7rem; font-weight:700;">Opened</span>
                                     <span style="font-weight:700; font-size:0.75rem; padding: 2px 6px; border-radius: 4px; background: rgba(234,179,8,0.12); color: #facc15; border: 1px solid rgba(234,179,8,0.25);">54</span>
-                                    <span style="color: #4ade80; font-size:0.72rem; font-weight:600; white-space:nowrap;"><i class="fas fa-arrow-trend-down"></i> ↓ 8%</span>
+                                    <span style="color: #4ade80; font-size:0.72rem; font-weight:600; white-space:nowrap;"><i class="ti ti-trending-down"></i> ↓ 8%</span>
                                 </div>
                             </div>
                             <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 2px;">
@@ -1172,7 +1175,7 @@
                                 <div style="display: flex; align-items: center; gap: 8px;">
                                     <span style="background:rgba(34,197,94,0.15); color:#4ade80; border:1px solid rgba(34,197,94,0.3); padding:2px 8px; border-radius:100px; font-size:0.7rem; font-weight:700;">Reported</span>
                                     <span style="font-weight:700; font-size:0.75rem; padding: 2px 6px; border-radius: 4px; background: rgba(34,197,94,0.12); color: #4ade80; border: 1px solid rgba(34,197,94,0.25);">12</span>
-                                    <span style="color: var(--text-muted); font-size:0.72rem; font-weight:600; white-space:nowrap;"><i class="fas fa-arrows-left-right"></i> → 0%</span>
+                                    <span style="color: var(--text-muted); font-size:0.72rem; font-weight:600; white-space:nowrap;"><i class="ti ti-arrows-horizontal"></i> → 0%</span>
                                 </div>
                             </div>
                             <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 2px;">
@@ -1188,7 +1191,7 @@
                     
                     <div class="pro-lock-overlay">
                         <div class="pro-lock-icon">
-                            <i class="fas fa-lock"></i>
+                            <i class="ti ti-lock"></i>
                         </div>
                         <h4 style="color:#fff; margin-bottom: 8px; font-weight:700;">Locked behind Pro Tier</h4>
                         <p style="color:var(--text-muted); font-size:0.82rem; max-width:320px; margin-bottom: 12px; line-height: 1.5;">
@@ -1204,7 +1207,7 @@
         <div class="report-panel">
             <h2 style="display: flex; align-items: center; justify-content: space-between; width: 100%; margin: 0 0 1.5rem 0;">
                 <span style="display: flex; align-items: center; gap: 12px;">
-                    <i class="fas fa-file-invoice" style="color:var(--accent-purple); font-size: 1.25rem;"></i>
+                    <i class="ti ti-file-invoice" style="color:var(--accent-purple); font-size: 1.25rem;"></i>
                     Auto-Generated Training Brief
                 </span>
                 {% if not (current_user and current_user.role in ('admin', 'pro')) %}
@@ -1223,7 +1226,7 @@
                         Remedial action plan compiled following the <strong>{{ brief_data.vector }}</strong> campaign targeting <strong>{{ brief_data.company }}</strong>. Compromise rate: <strong>{{ brief_data.click_rate }}%</strong>.
                     </p>
                     <button class="pro-btn" onclick="openModal('training-brief-modal')" style="background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.2); color: #818cf8; width: 100%; font-weight: 700; font-family: var(--font-sans);">
-                        <i class="fas fa-expand" style="margin-right: 6px;"></i> View Full Mitigation Brief
+                        <i class="ti ti-arrows-maximize" style="margin-right: 6px;"></i> View Full Mitigation Brief
                     </button>
                 </div>
 
@@ -1232,10 +1235,10 @@
                     <div class="modal-container" style="max-width: 800px;">
                         <div class="modal-header">
                             <h2 style="margin: 0; font-family: var(--font-sans); font-size: 1.3rem; display: flex; align-items: center; gap: 10px; color: #fff;">
-                                <i class="fas fa-file-invoice" style="color:var(--accent-purple); margin-right: 14px;"></i> Threat Mitigation Brief
+                                <i class="ti ti-file-invoice" style="color:var(--accent-purple); margin-right: 14px;"></i> Threat Mitigation Brief
                             </h2>
                             <button class="modal-close" onclick="closeModal('training-brief-modal')">
-                                <i class="fas fa-times"></i>
+                                <i class="ti ti-x"></i>
                             </button>
                         </div>
                         <div class="modal-body" style="padding: 1.5rem 2rem;">
@@ -1277,13 +1280,13 @@
                                 
                                 <div style="display: flex; gap: 8px; margin-top: 1.5rem; flex-wrap: wrap;">
                                     <a href="/download-brief/{{ campaign.id }}" class="pro-btn" style="font-size: 0.72rem; padding: 8px 16px; margin: 0; background: var(--accent-purple); color: #fff; border:none; font-weight:700;">
-                                        <i class="fas fa-file-pdf" style="margin-right: 4px;"></i> Download PDF
+                                        <i class="ti ti-file-type-pdf" style="margin-right: 4px;"></i> Download PDF
                                     </a>
                                     <button class="pro-btn" onclick="triggerSendBriefToast()" style="font-size: 0.72rem; padding: 8px 16px; margin: 0; background: var(--accent-cyan); color: #0f172a; border:none; font-weight:700;">
-                                        <i class="fas fa-paper-plane" style="margin-right: 4px;"></i> Send to Team
+                                        <i class="ti ti-send" style="margin-right: 4px;"></i> Send to Team
                                     </button>
                                     <button id="copy-brief-btn" onclick="copyBriefText()" style="font-size: 0.72rem; padding: 8px 16px; margin: 0; background: rgba(255,255,255,0.06); border: 1px solid var(--border-color); color: #fff;">
-                                        <i class="fas fa-copy" style="margin-right: 4px;"></i> Copy Text
+                                        <i class="ti ti-copy" style="margin-right: 4px;"></i> Copy Text
                                     </button>
                                 </div>
                             </div>
@@ -1293,18 +1296,18 @@
                 
                 <script>
                 function copyBriefText() {
-                    const txt = document.getElementById('brief-text-content').innerText;
+                    const txt = document.getElementById('brief-text-content')?.innerText || '';
                     navigator.clipboard.writeText(txt).then(() => {
                         const btn = document.getElementById('copy-brief-btn');
                         btn.style.background = 'rgba(34,197,94,0.15)';
                         btn.style.borderColor = 'rgba(34,197,94,0.3)';
                         btn.style.color = '#4ade80';
-                        btn.innerHTML = '<i class="fas fa-check" style="margin-right:4px;"></i>Copied!';
+                        btn.innerHTML = '<i class="ti ti-check" style="margin-right:4px;"></i>Copied!';
                         setTimeout(() => {
                             btn.style.background = 'rgba(255,255,255,0.06)';
                             btn.style.borderColor = 'var(--border-color)';
                             btn.style.color = '#fff';
-                            btn.innerHTML = '<i class="fas fa-copy" style="margin-right:4px;"></i>Copy Text';
+                            btn.innerHTML = '<i class="ti ti-copy" style="margin-right:4px;"></i>Copy Text';
                         }, 2000);
                     });
                 }
@@ -1322,14 +1325,14 @@
                                 Remedial action plan compiled following the [Attack Scenario] campaign. Overall compromise rate of [Rate]% was recorded.
                             </p>
                             <button class="pro-btn" style="margin-top: 8px; background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.2); color: #818cf8; width: 100%;">
-                                <i class="fas fa-expand" style="margin-right: 6px;"></i> View Full Mitigation Brief
+                                <i class="ti ti-arrows-maximize" style="margin-right: 6px;"></i> View Full Mitigation Brief
                             </button>
                         </div>
                     </div>
                     
                     <div class="pro-lock-overlay">
                         <div class="pro-lock-icon">
-                            <i class="fas fa-lock"></i>
+                            <i class="ti ti-lock"></i>
                         </div>
                         <h4 style="color:#fff; margin-bottom: 8px; font-weight:700;">Locked behind Pro Tier</h4>
                         <p style="color:var(--text-muted); font-size:0.82rem; max-width:320px; margin-bottom: 12px; line-height: 1.5;">
@@ -1345,7 +1348,7 @@
     <div class="report-panel" style="margin-top: 2rem; display: flex; flex-direction: column; margin-bottom: 2rem;">
         <h2 style="display: flex; align-items: center; justify-content: space-between; width: 100%; margin: 0 0 1rem 0;">
             <span style="display: flex; align-items: center; gap: 12px;">
-                <i class="fas fa-lightbulb" style="color:var(--accent-cyan); font-size: 1.25rem;"></i>
+                <i class="ti ti-bulb" style="color:var(--accent-cyan); font-size: 1.25rem;"></i>
                 AI Recommendations
             </span>
         </h2>
@@ -1366,7 +1369,7 @@
             {% for item in report.recommendations %}
             <div class="reco-item" onclick="toggleRecoItem(this)" style="cursor: pointer; position: relative; margin-bottom: 0; padding: 12px 16px; animation-delay: {{ loop.index0 * 0.1 + 0.3 }}s; display: flex; align-items: center; gap: 14px; transition: all 0.3s ease;">
                 <div class="reco-check-circle" style="width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--border-color); display: flex; align-items: center; justify-content: center; color: transparent; transition: all 0.2s; flex-shrink: 0;">
-                    <i class="fas fa-check" style="font-size: 0.6rem;"></i>
+                    <i class="ti ti-check" style="font-size: 0.6rem;"></i>
                 </div>
                 <div style="flex: 1; min-width: 0;">
                     <p class="reco-text" style="color: var(--text-main); line-height: 1.5; margin: 0; font-size: 0.88rem; transition: all 0.3s;">{{ item }}</p>
@@ -1384,7 +1387,7 @@
 const thinkingText = [
     "[AGENT_OSINT] Organization public directory mapped. Detected 142 exposed employee records.",
     "[AGENT_PATTERN] Primary threat vector matches CFO Authority Impersonation profile. Urgent compliance headers acted as principal exploit factor.",
-    "[AGENT_RISK] High risk exposure identified: {{ report.click_rate }}% of targets triggered click execution flow. Average response time under 180 seconds.",
+    "[AGENT_RISK] High risk exposure identified: {{ report.click_rate or 0 }}% of targets triggered click execution flow. Average response time under 180 seconds.",
     "[AGENT_STRENGTH] IT and Engineering departments demonstrated strong relative security posture with lower relative clicks.",
     "[AGENT_ACTION] Priority recommendation: Launch structured countermeasure training targeting CFO / CEO urgency vectors."
 ];
@@ -1568,13 +1571,13 @@ function handleDownload(btnId, url) {
     const labelEl = btn.querySelector('span');
     const origIcon = iconEl.className;
     const origLabel = labelEl.textContent;
-    iconEl.className = 'fas fa-spinner fa-spin';
+    iconEl.className = 'ti ti-loader-2';
     labelEl.textContent = ' Preparing...';
     btn.style.opacity = '0.8';
     setTimeout(() => {
         window.location.href = url;
         setTimeout(() => {
-            iconEl.className = 'fas fa-check-circle';
+            iconEl.className = 'ti ti-check-circle';
             labelEl.textContent = ' Done!';
             btn.style.opacity = '1';
             btn.style.background = 'linear-gradient(135deg,#22c55e,#16a34a)';
@@ -1623,7 +1626,7 @@ function triggerSendBriefToast() {
     const btn = document.querySelector('button[onclick="triggerSendBriefToast()"]');
     if (btn) {
         btn.disabled = true;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin" style="margin-right: 4px;"></i> Sending...';
+        btn.innerHTML = '<i class="ti ti-loader-2" style="margin-right: 4px;"></i> Sending...';
     }
     
     fetch('/api/send-brief/{{ campaign.id }}', {
@@ -1646,16 +1649,22 @@ function triggerSendBriefToast() {
     .finally(() => {
         if (btn) {
             btn.disabled = false;
-            btn.innerHTML = '<i class="fas fa-paper-plane" style="margin-right: 4px;"></i> Send to Team';
+            btn.innerHTML = '<i class="ti ti-send" style="margin-right: 4px;"></i> Send to Team';
         }
     });
 }
 
+function nextCampaignDate() {
+  const d = new Date();
+  d.setDate(d.getDate() + 45);
+  const opts = { year: "numeric", month: "long", day: "numeric" };
+  return d.toLocaleDateString("en-US", opts) + " (in 45 days)";
+}
 function triggerScheduleSimulationToast() {
     const btn = document.querySelector('button[onclick="triggerScheduleSimulationToast()"]');
     if (btn) {
         btn.disabled = true;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin" style="margin-right: 4px;"></i> Scheduling...';
+        btn.innerHTML = '<i class="ti ti-loader-2" style="margin-right: 4px;"></i> Scheduling...';
     }
     
     fetch('/api/schedule-recommendation/{{ campaign.id }}', {
@@ -1678,7 +1687,7 @@ function triggerScheduleSimulationToast() {
                         card.innerHTML = `
                             <div style="text-align: center; padding: 1.5rem 0; animation: fadeIn 0.5s ease-out forwards;">
                                 <div style="font-size: 2.2rem; color: #4ade80; margin-bottom: 0.75rem;">
-                                    <i class="fas fa-circle-check"></i>
+                                    <i class="ti ti-circle-check"></i>
                                 </div>
                                 <h3 style="font-size: 1.1rem; color: #fff; margin: 0 0 4px 0; font-family: var(--font-sans);">Follow-Up Scheduled</h3>
                                 <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 0; line-height: 1.5;">

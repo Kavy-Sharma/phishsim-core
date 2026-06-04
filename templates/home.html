@@ -27,11 +27,20 @@
   --blue2: #818cf8;
   --white: #f0f4ff;
   --muted: #8892b0;
+  --text-main: var(--white);
+  --text-muted: var(--muted);
   --danger: #f87171;
   --success: #34d399;
   --mono: 'JetBrains Mono', monospace;
   --sans: 'Space Grotesk', sans-serif;
+  --gauge-bg: rgba(255, 255, 255, 0.06);
 }
+/* ── Scrollbar ── */
+html::-webkit-scrollbar { width: 8px; }
+html::-webkit-scrollbar-track { background: #05070f; }
+html::-webkit-scrollbar-thumb { background: rgba(6,182,212,0.55); border-radius: 4px; border: 2px solid #05070f; }
+html::-webkit-scrollbar-thumb:hover { background: rgba(6,182,212,0.88); }
+html { scrollbar-width: thin; scrollbar-color: rgba(6,182,212,0.55) #05070f; }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -59,8 +68,11 @@ body.light-theme {
   --blue2: #2563eb;
   --white: #0f172a;
   --muted: #526173;
+  --text-main: var(--white);
+  --text-muted: var(--muted);
   --danger: #dc2626;
   --success: #059669;
+  --gauge-bg: rgba(0, 0, 0, 0.06);
   background:
     radial-gradient(circle at 14% 12%, rgba(37,99,235,0.12), transparent 28%),
     radial-gradient(circle at 88% 18%, rgba(20,184,166,0.1), transparent 24%),
@@ -113,78 +125,915 @@ body::before {
   text-align: center;
 }
 
-/* ── NAVBAR ── */
-nav {
+/* --- REDESIGNED NAVBAR STYLES --- */
+.navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 64px;
+    background: rgba(2, 6, 23, 0.85);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid rgba(6, 182, 212, 0.15) !important;
+    display: flex;
+    align-items: center;
+    z-index: 10000;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    padding: 0 5%;
+    box-sizing: border-box;
+}
+
+/* Scrolled State */
+.navbar.scrolled {
+    height: 52px !important;
+    background: rgba(2, 6, 23, 0.95) !important;
+}
+
+.nav-container {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 0 auto;
+    max-width: 1200px;
+}
+
+.brand-logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    font-weight: 800;
+    font-size: 1.25rem;
+    color: #fff;
+    font-family: var(--sans), sans-serif;
+    flex-shrink: 0;
+}
+.logo-indicator {
+    width: 8px;
+    height: 8px;
+    background-color: #06b6d4;
+    border-radius: 2px;
+    animation: logoPulse 2s infinite;
+}
+@keyframes logoPulse {
+    0%, 100% { opacity: 1; box-shadow: 0 0 8px #06b6d4; }
+    50% { opacity: 0; box-shadow: none; }
+}
+.logo-version-badge {
+    font-family: var(--mono), monospace;
+    font-size: 10px;
+    background: rgba(6, 182, 212, 0.1);
+    border: 1px solid rgba(6, 182, 212, 0.3);
+    color: #06b6d4;
+    padding: 1px 6px;
+    border-radius: 50px;
+    font-weight: 600;
+}
+
+.nav-links {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+}
+.nav-link {
+    color: #94a3b8 !important;
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: color 0.2s;
+    font-family: var(--sans), sans-serif;
+}
+.nav-link:hover {
+    color: #fff !important;
+}
+
+/* Dropdowns */
+.nav-dropdown {
+    position: relative;
+}
+.nav-dropdown-trigger {
+    background: none;
+    border: none;
+    color: #94a3b8;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-family: var(--sans), sans-serif;
+    padding: 8px 0;
+    transition: color 0.2s;
+}
+.nav-dropdown-trigger:hover {
+    color: #fff;
+}
+.nav-dropdown-menu {
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%) translateY(10px);
+    width: 200px;
+    background: rgba(2, 6, 23, 0.95);
+    border: 1px solid rgba(6, 182, 212, 0.2);
+    border-radius: 8px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    padding: 8px 0;
+}
+.nav-dropdown:hover .nav-dropdown-menu {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(0);
+}
+.nav-dropdown-menu a {
+    color: #94a3b8 !important;
+    padding: 10px 16px;
+    text-decoration: none;
+    font-size: 0.85rem;
+    font-weight: 500;
+    border-left: 2px solid transparent;
+    transition: all 150ms ease;
+    text-align: left;
+}
+.nav-dropdown-menu a:hover {
+    color: #fff !important;
+    background: rgba(6, 182, 212, 0.05);
+    border-left-color: #06b6d4;
+}
+
+.nav-actions {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+/* Slide theme toggle */
+.theme-toggle-pill {
+    position: relative;
+    width: 64px;
+    height: 32px;
+    border-radius: 50px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(6, 182, 212, 0.25);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 8px;
+    box-sizing: border-box;
+    z-index: 1000;
+}
+.theme-toggle-slider {
+    position: absolute;
+    top: 3px;
+    left: 4px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #06b6d4;
+    box-shadow: 0 0 10px #06b6d4;
+    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.theme-toggle-pill .ti {
+    font-size: 14px;
+    z-index: 2;
+    color: #94a3b8;
+    transition: color 0.2s;
+}
+body.light-theme .theme-toggle-slider {
+    transform: translateX(30px);
+}
+body.light-theme .theme-toggle-pill .icon-sun {
+    color: #94a3b8;
+}
+body.light-theme .theme-toggle-pill .icon-moon {
+    color: #fff;
+}
+body:not(.light-theme) .theme-toggle-pill .icon-sun {
+    color: #fff;
+}
+body:not(.light-theme) .theme-toggle-pill .icon-moon {
+    color: #94a3b8;
+}
+
+.btn-try-demo {
+    background: transparent;
+    border: 1px solid #06b6d4;
+    color: #06b6d4;
+    padding: 8px 20px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+    font-family: var(--sans), sans-serif;
+}
+.btn-try-demo:hover {
+    background: rgba(6, 182, 212, 0.1);
+    box-shadow: 0 0 12px rgba(6, 182, 212, 0.3);
+}
+.btn-try-demo:hover i {
+    transform: translateX(3px);
+}
+.btn-try-demo i {
+    transition: transform 0.2s;
+}
+
+.nav-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 2px solid #06b6d4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    color: #06b6d4;
+    background: rgba(6, 182, 212, 0.08);
+    text-decoration: none;
+    font-family: var(--mono), monospace;
+}
+
+.hamburger-btn {
+    display: none;
+    flex-direction: column;
+    gap: 5px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    z-index: 10100;
+}
+.hamburger-btn .bar {
+    width: 22px;
+    height: 2px;
+    background: #94a3b8;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.mobile-menu-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(2, 6, 23, 0.95);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    z-index: 99999;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateX(100%);
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+.mobile-menu-overlay.active {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(0);
+}
+.mobile-menu-links {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    text-align: center;
+}
+.mobile-menu-links a {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #fff;
+    text-decoration: none;
+    transition: color 0.2s;
+    font-family: var(--sans), sans-serif;
+}
+.mobile-menu-links a:hover {
+    color: #06b6d4;
+}
+.close-menu-btn {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: none;
+    border: none;
+    color: #94a3b8;
+    font-size: 2.5rem;
+    cursor: pointer;
+}
+
+@media (max-width: 768px) {
+    .hamburger-btn {
+        display: flex;
+    }
+    .nav-links {
+        display: none !important;
+    }
+    .nav-actions .nav-link-login {
+        display: none !important;
+    }
+}
+
+/* Light Theme overrides for Navbar */
+body.light-theme .navbar {
+    background: rgba(248, 250, 252, 0.85) !important;
+    border-bottom: 1px solid rgba(37, 99, 235, 0.15) !important;
+}
+body.light-theme .brand-logo {
+    color: #0f172a !important;
+}
+body.light-theme .nav-link,
+body.light-theme .nav-dropdown-trigger {
+    color: #475569 !important;
+}
+body.light-theme .nav-link:hover,
+body.light-theme .nav-dropdown-trigger:hover {
+    color: #0f172a !important;
+}
+body.light-theme .nav-dropdown-menu {
+    background: rgba(255, 255, 255, 0.98) !important;
+    border-color: rgba(37, 99, 235, 0.2) !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08) !important;
+}
+body.light-theme .nav-dropdown-menu a {
+    color: #475569 !important;
+}
+body.light-theme .nav-dropdown-menu a:hover {
+    color: #0f172a !important;
+    background: rgba(37, 99, 235, 0.05) !important;
+}
+body.light-theme .theme-toggle-pill {
+    background: rgba(0, 0, 0, 0.05) !important;
+    border-color: rgba(37, 99, 235, 0.25) !important;
+}
+body.light-theme .theme-toggle-slider {
+    background: #2563eb !important;
+    box-shadow: 0 0 10px rgba(37, 99, 235, 0.5) !important;
+}
+body.light-theme .btn-try-demo {
+    border-color: #2563eb !important;
+    color: #2563eb !important;
+}
+body.light-theme .btn-try-demo:hover {
+    background: rgba(37, 99, 235, 0.05) !important;
+    box-shadow: 0 0 12px rgba(37, 99, 235, 0.2) !important;
+}
+body.light-theme .hamburger-btn .bar {
+    background: #475569 !important;
+}
+
+/* ── TIMELINE SECTION ── */
+#attack-flow {
+  position: relative;
+  background: #020617;
+  padding: 0 0 100px 0;
+}
+
+.timeline-track-container {
+  position: relative;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding-left: 80px;
+}
+
+.timeline-progress-line-container {
+  position: absolute;
+  left: 30px;
+  top: 50px;
+  bottom: 50px;
+  width: 4px;
+  background: rgba(6, 182, 212, 0.1);
+  border-radius: 2px;
+  z-index: 10;
+}
+
+.timeline-progress-line-fill {
+  width: 100%;
+  height: 0%;
+  background: #06b6d4;
+  box-shadow: 0 0 10px #06b6d4, 0 0 20px #06b6d4;
+  border-radius: 2px;
+  transition: height 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.timeline-counter {
   position: fixed;
-  top: 0; left: 0; right: 0;
-  z-index: 100;
-  padding: 20px 5%;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  transition: background 0.3s, backdrop-filter 0.3s, border-bottom 0.3s;
-}
-nav.scrolled {
-  background: rgba(5,7,15,0.85);
-  backdrop-filter: blur(20px);
-  border-bottom: 1px solid var(--border);
-}
-.nav-logo {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  text-decoration: none;
+  top: 100px;
+  right: 40px;
+  z-index: 999;
+  font-family: var(--mono), monospace;
+  font-size: 0.85rem;
   font-weight: 700;
-  font-size: 1.1rem;
-  color: var(--white);
+  color: #06b6d4;
+  background: rgba(2, 6, 23, 0.8);
+  border: 1px solid rgba(6, 182, 212, 0.3);
+  padding: 8px 16px;
+  border-radius: 50px;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  transform: translateY(-10px);
 }
-.nav-logo svg { color: var(--cyan); }
-.nav-logo span { color: var(--cyan); }
-.nav-links { display: flex; align-items: center; gap: 32px; }
-.nav-links a {
-  color: var(--muted);
-  text-decoration: none;
+
+.timeline-counter.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.timeline-panel {
+  min-height: 80vh;
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 40px;
+  align-items: center;
+  scroll-snap-align: start;
+  position: relative;
+  padding: 80px 0;
+  box-sizing: border-box;
+  opacity: 0.3;
+  transition: opacity 0.6s ease;
+}
+
+.timeline-panel.active {
+  opacity: 1;
+}
+
+.timeline-left {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transform: translateX(-40px);
+  opacity: 0;
+  transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.8s ease;
+}
+
+.timeline-panel.active .timeline-left {
+  transform: translateX(0);
+  opacity: 1;
+}
+
+.timeline-step-num {
+  font-family: var(--mono), monospace;
+  font-size: 3.5rem;
+  font-weight: 900;
+  color: rgba(6, 182, 212, 0.2);
+  transition: color 0.4s ease;
+  line-height: 1;
+  margin-bottom: 10px;
+}
+
+.timeline-panel.active .timeline-step-num {
+  color: #06b6d4;
+  text-shadow: 0 0 20px rgba(6, 182, 212, 0.6);
+  animation: cyanPulse 2s infinite alternate;
+}
+
+@keyframes cyanPulse {
+  from { text-shadow: 0 0 10px rgba(6, 182, 212, 0.4); }
+  to { text-shadow: 0 0 25px rgba(6, 182, 212, 0.8), 0 0 10px rgba(6, 182, 212, 0.5); }
+}
+
+@keyframes bluePulse {
+  from { text-shadow: 0 0 10px rgba(37, 99, 235, 0.2); }
+  to { text-shadow: 0 0 25px rgba(37, 99, 235, 0.6), 0 0 10px rgba(37, 99, 235, 0.4); }
+}
+
+.timeline-icon-box {
+  width: 100px;
+  height: 100px;
+  border-radius: 20px;
+  background: rgba(6, 182, 212, 0.05);
+  border: 1px solid rgba(6, 182, 212, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3rem;
+  color: #06b6d4;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+  transition: all 0.3s ease;
+}
+
+.timeline-panel.active .timeline-icon-box {
+  background: rgba(6, 182, 212, 0.1);
+  border-color: #06b6d4;
+  box-shadow: 0 12px 40px rgba(6, 182, 212, 0.2);
+}
+
+.timeline-right {
+  transform: translateX(40px);
+  opacity: 0;
+  transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.2s, opacity 0.8s ease 0.2s;
+  padding-right: 5%;
+}
+
+.timeline-panel.active .timeline-right {
+  transform: translateX(0);
+  opacity: 1;
+}
+
+.timeline-title {
+  font-family: var(--sans), sans-serif;
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: var(--text-main) !important;
+  margin-bottom: 16px;
+  text-transform: uppercase;
+  letter-spacing: -0.02em;
+}
+
+.timeline-desc {
+  font-family: var(--sans), sans-serif;
+  font-size: 1.15rem;
+  color: #94a3b8;
+  line-height: 1.7;
+}
+
+@media (max-width: 768px) {
+  .timeline-track-container {
+    padding-left: 40px;
+  }
+  .timeline-progress-line-container {
+    left: 20px;
+  }
+  .timeline-panel {
+    grid-template-columns: 1fr;
+    gap: 20px;
+    text-align: center;
+    padding: 60px 0;
+  }
+  .timeline-left {
+    transform: translateY(-20px);
+  }
+  .timeline-right {
+    transform: translateY(20px);
+    padding-right: 0;
+  }
+  .timeline-panel.active .timeline-left,
+  .timeline-panel.active .timeline-right {
+    transform: translateY(0);
+  }
+  .timeline-step-num {
+    font-size: 2.5rem;
+  }
+  .timeline-icon-box {
+    width: 70px;
+    height: 70px;
+    font-size: 2rem;
+  }
+  .timeline-title {
+    font-size: 1.6rem;
+  }
+  .timeline-desc {
+    font-size: 1rem;
+  }
+}
+
+/* ── GLOBAL THREAT INTELLIGENCE ── */
+#global-threat-intel {
+  padding: 100px 5% 80px;
+  background: var(--bg2);
+  border-top: 1px solid var(--border);
+  position: relative;
+  z-index: 2;
+}
+
+.intel-layout {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  gap: 40px;
+  max-width: 1200px;
+  margin: 0 auto;
+  align-items: center;
+}
+
+.intel-feed-window {
+  background: #020617;
+  border: 1px solid rgba(6, 182, 212, 0.2);
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+  position: relative;
+  overflow: hidden;
+  height: 380px;
+  box-sizing: border-box;
+}
+
+.intel-feed-title-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba(6, 182, 212, 0.15);
+  padding-bottom: 12px;
+  margin-bottom: 16px;
+}
+
+.intel-feed-content {
+  height: calc(100% - 40px);
+  overflow: hidden;
+  position: relative;
+}
+
+.intel-scroll-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  animation: verticalScrollIntel 25s linear infinite;
+}
+
+.intel-scroll-container:hover {
+  animation-play-state: paused;
+}
+
+@keyframes verticalScrollIntel {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-50%); }
+}
+
+.intel-log-card {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-left: 3px solid #06b6d4;
+  border-radius: 6px;
+  padding: 12px 16px;
+  font-family: var(--mono), monospace;
+  font-size: 0.8rem;
+  color: #94a3b8;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  transition: all 0.2s ease;
+}
+
+.intel-log-card:hover {
+  background: rgba(6, 182, 212, 0.05);
+  border-left-color: #ff007f;
+}
+
+.intel-stat-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.intel-stat-card {
+  background: rgba(13, 18, 38, 0.4);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 24px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.intel-stat-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 16px;
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(6, 182, 212, 0.2), transparent);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+.intel-stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 15px 35px rgba(6, 182, 212, 0.15);
+  border-color: rgba(6, 182, 212, 0.3);
+}
+
+.intel-stat-card-title {
+  font-family: var(--sans), sans-serif;
   font-size: 0.9rem;
-  font-weight: 500;
-  transition: color 0.2s;
-  letter-spacing: 0.02em;
+  font-weight: 600;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 8px;
 }
-.nav-links a:hover { color: var(--white); }
-.btn-nav {
-  background:
-    linear-gradient(135deg, rgba(56,189,248,0.94), rgba(79,70,229,0.92));
-  color: white;
-  border: 1px solid rgba(148,220,255,0.28);
-  padding: 9px 22px;
-  border-radius: 8px;
-  font-family: var(--sans);
+
+.intel-stat-card-value {
+  font-family: var(--sans), sans-serif;
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: #fff;
+  line-height: 1.1;
+  margin-bottom: 4px;
+}
+
+.intel-stat-card-desc {
+  font-family: var(--sans), sans-serif;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+body.light-theme #global-threat-intel {
+  background: #f1f5f9;
+}
+body.light-theme .intel-feed-window {
+  background: #ffffff;
+  border-color: rgba(37, 99, 235, 0.15);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+}
+body.light-theme .intel-log-card {
+  background: rgba(0,0,0,0.02);
+  border-color: rgba(0,0,0,0.05);
+  color: #475569;
+}
+body.light-theme .intel-log-card:hover {
+  background: rgba(37,99,235,0.05);
+}
+body.light-theme .intel-stat-card {
+  background: #ffffff;
+}
+body.light-theme .intel-stat-card-value {
+  color: var(--text-main) !important;
+}
+body.light-theme .intel-stat-card-title {
+  color: var(--text-muted) !important;
+}
+body.light-theme .intel-stat-card-desc {
+  color: var(--text-muted);
+}
+body.light-theme .timeline-desc {
+  color: var(--text-muted);
+}
+
+/* ── THREAT INTELLIGENCE SUITE ── */
+#threat-intel-suite {
+  padding: 100px 5% 80px;
+  background: var(--bg);
+  border-top: 1px solid var(--border);
+  position: relative;
+  z-index: 2;
+}
+
+.suite-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.suite-card {
+  background: rgba(13, 18, 38, 0.4);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 20px;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  text-decoration: none;
+  position: relative;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.suite-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 16px;
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(6, 182, 212, 0.15), transparent);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+.suite-card:not(.disabled):hover {
+  transform: translateY(-4px);
+  border-color: #06b6d4;
+  box-shadow: 0 15px 35px rgba(6, 182, 212, 0.15);
+}
+
+.suite-card.disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  border-style: dashed;
+}
+
+.suite-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.suite-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 10px;
+  background: rgba(6, 182, 212, 0.08);
+  border: 1px solid rgba(6, 182, 212, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  color: #06b6d4;
+  transition: all 0.3s ease;
+}
+
+.suite-card:not(.disabled):hover .suite-icon {
+  background: rgba(6, 182, 212, 0.15);
+  border-color: #06b6d4;
+  box-shadow: 0 0 15px rgba(6, 182, 212, 0.2);
+}
+
+.suite-badge-pro {
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  color: #f59e0b;
+  font-family: var(--mono), monospace;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 50px;
+  letter-spacing: 0.05em;
+}
+
+.suite-title {
+  font-family: var(--sans), sans-serif;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 8px;
+}
+
+.suite-desc {
+  font-family: var(--sans), sans-serif;
+  font-size: 0.95rem;
+  color: #94a3b8;
+  line-height: 1.6;
+}
+
+.suite-link-text {
+  font-family: var(--sans), sans-serif;
   font-size: 0.85rem;
   font-weight: 600;
-  cursor: pointer;
-  text-decoration: none;
-  transition: background 0.2s, transform 0.15s;
-  letter-spacing: 0.03em;
-  box-shadow: 0 10px 28px rgba(14,165,233,0.22), inset 0 0 0 1px rgba(255,255,255,0.08);
+  color: #06b6d4;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: gap 0.2s ease;
 }
-.btn-nav:hover {
+
+.suite-card:not(.disabled):hover .suite-link-text {
+  gap: 10px;
   color: #fff;
-  background: linear-gradient(135deg, rgba(125,211,252,1), rgba(99,102,241,0.96));
-  transform: translateY(-1px);
 }
 
-body.light-theme nav {
-  background: rgba(248,251,255,0.74);
-  border-bottom-color: rgba(37,99,235,0.12);
-  backdrop-filter: blur(18px);
+body.light-theme #threat-intel-suite {
+  background: #f8fafc;
 }
-
-body.light-theme .nav-logo,
-body.light-theme .nav-links a {
+body.light-theme .suite-card {
+  background: #ffffff;
+}
+body.light-theme .suite-title {
   color: #0f172a;
 }
+body.light-theme .suite-icon {
+  background: rgba(37,99,235,0.08);
+  border-color: rgba(37,99,235,0.2);
+  color: #2563eb;
+}
+body.light-theme .suite-card:not(.disabled):hover .suite-icon {
+  background: rgba(37,99,235,0.15);
+  border-color: #2563eb;
+}
 
-body.light-theme .nav-links a:hover {
-  color: #1d4ed8;
+@media (max-width: 768px) {
+  .intel-layout, .suite-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 992px) {
+  .sandbox-main-grid {
+    grid-template-columns: 1fr !important;
+  }
 }
 
 /* ── HERO ── */
@@ -1156,6 +2005,39 @@ body.light-theme .attack-node {
   border-color: rgba(37,99,235,0.18);
 }
 
+body.light-theme .timeline-step-num {
+  color: rgba(37, 99, 235, 0.15);
+}
+body.light-theme .timeline-panel.active .timeline-step-num {
+  color: #2563eb;
+  text-shadow: 0 0 20px rgba(37, 99, 235, 0.3);
+  animation: bluePulse 2s infinite alternate;
+}
+body.light-theme .timeline-icon-box {
+  background: rgba(37, 99, 235, 0.05);
+  border-color: rgba(37, 99, 235, 0.2);
+  color: #2563eb;
+  box-shadow: 0 12px 40px rgba(37, 99, 235, 0.08);
+}
+body.light-theme .timeline-panel.active .timeline-icon-box {
+  background: rgba(37, 99, 235, 0.1);
+  border-color: #2563eb;
+  box-shadow: 0 12px 40px rgba(37, 99, 235, 0.15);
+}
+body.light-theme .timeline-progress-line-container {
+  background: rgba(37, 99, 235, 0.08);
+}
+body.light-theme .timeline-progress-line-fill {
+  background: #2563eb;
+  box-shadow: 0 0 10px #2563eb, 0 0 20px rgba(37, 99, 235, 0.4);
+}
+body.light-theme .timeline-counter {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(37, 99, 235, 0.25);
+  color: #2563eb;
+  box-shadow: 0 8px 32px rgba(37, 99, 235, 0.12);
+}
+
 @media (max-width: 900px) {
   .scrolly-container { flex-direction: column; }
   .scrolly-left { position: relative; height: auto; width: 100%; padding: 80px 5% 40px; text-align: center; }
@@ -1244,7 +2126,10 @@ body.light-theme .attack-node {
   margin-bottom: 20px;
 }
 .cap-card:hover .cap-icon {
-  transform: translateZ(40px) scale(1.05);
+  transform: translateZ(40px) translateY(-10px) scale(1.15) rotate(10deg);
+  background: rgba(6, 182, 212, 0.2);
+  border-color: rgba(6, 182, 212, 0.4);
+  box-shadow: 0 5px 15px rgba(6, 182, 212, 0.25);
 }
 
 .cap-title {
@@ -1748,7 +2633,10 @@ body.light-theme .mobile-nav-toggle span {
     }, 80);
 
     // Dismiss loader when page is ready
+    let loaderDismissed = false;
     function dismissLoader() {
+        if (loaderDismissed) return;
+        loaderDismissed = true;
         clearInterval(pctTimer);
         let currentPct = pct;
         const finishTimer = setInterval(() => {
@@ -1773,6 +2661,10 @@ body.light-theme .mobile-nav-toggle span {
         setTimeout(dismissLoader, 4000);
     }
 
+    window.addEventListener('pageshow', (event) => {
+        dismissLoader();
+    });
+
     // Intercept clicks on all local anchors and form submissions to show loader instantly
     document.addEventListener("click", (e) => {
         const anchor = e.target.closest("a");
@@ -1795,6 +2687,7 @@ body.light-theme .mobile-nav-toggle span {
             loader.style.opacity = '1';
             loader.style.visibility = 'visible';
             pct = 0;
+            loaderDismissed = false;
         }
     });
 
@@ -1816,6 +2709,7 @@ body.light-theme .mobile-nav-toggle span {
             if (statusEl) statusEl.textContent = 'PROCESSING SECURE UPLOAD';
             loader.style.opacity = '1';
             loader.style.visibility = 'visible';
+            loaderDismissed = false;
         }
     });
 })();
@@ -1824,11 +2718,7 @@ body.light-theme .mobile-nav-toggle span {
 <canvas id="network-canvas" aria-hidden="true"></canvas>
 <div class="grid-bg"></div>
 
-<button class="theme-toggle" id="theme-toggle" type="button" aria-label="Switch to enterprise mode" title="Switch theme">
-  <span class="theme-toggle-icon theme-toggle-dark">DARK</span>
-  <span class="theme-toggle-icon theme-toggle-light">LIGHT</span>
-</button>
-<div class="theme-tooltip" id="theme-tooltip">Cyber mode</div>
+<div class="theme-tooltip" id="theme-tooltip" style="display:none;"></div>
 
 <!-- Floating Terminal Icon -->
 <button id="floating-terminal-icon" class="floating-terminal-icon" type="button" aria-label="Restore terminal" title="Restore terminal">
@@ -1850,31 +2740,142 @@ body.light-theme .mobile-nav-toggle span {
 
 
 
-<!-- NAVBAR -->
-<nav id="navbar">
-  <a href="/" class="nav-logo">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-    PhishSim<span>.ai</span>
-  </a>
-  <button id="mobile-nav-toggle" class="mobile-nav-toggle" aria-label="Toggle navigation">
-    <span></span>
-    <span></span>
-    <span></span>
-  </button>
-  <div class="nav-links">
-    <a href="/">Home</a>
-    <a href="/threat-analyzer">Threat Analyzer</a>
-    <a href="#solutions">Solutions</a>
-    <a href="#attack-flow">How It Works</a>
-    <a href="#capabilities">Features</a>
-    <a href="#pricing">Pricing</a>
-    {% if current_user %}
-        <a href="/dashboard" class="btn-nav">Dashboard</a>
-    {% else %}
-        <a href="/login" class="btn-nav">Login</a>
-    {% endif %}
-  </div>
+<!-- ═══════════════════════════════════════════════════════════
+     REDESIGNED TALL NAVBAR
+     ═══════════════════════════════════════════════════════════ -->
+<nav class="navbar" id="navbar">
+    <div class="nav-container">
+        <a href="/" class="brand-logo">
+            <span class="logo-indicator"></span>
+            PhishSim<span style="color: #06b6d4;">.ai</span>
+            <span class="logo-version-badge">v2.0</span>
+        </a>
+        
+        <!-- Logged-in state -->
+        {% if current_user %}
+        <div class="nav-links">
+            <a href="/dashboard" class="nav-link">Dashboard</a>
+            <a href="/new-campaign" class="nav-link">Campaigns</a>
+            <div class="nav-dropdown">
+                <button class="nav-dropdown-trigger">Tools <i class="ti ti-chevron-down"></i></button>
+                <div class="nav-dropdown-menu">
+                    <a href="/threat-analyzer"><i class="ti ti-heartbeat" style="color:#06b6d4;margin-right:6px;"></i>Threat Analyzer</a>
+                    <a href="/header-analyzer"><i class="ti ti-mail-search" style="color:#8b5cf6;margin-right:6px;"></i>Header Analyzer</a>
+                    <a href="/url-decoder"><i class="ti ti-link" style="color:#10b981;margin-right:6px;"></i>URL Decoder</a>
+                    <a href="/password-breach"><i class="ti ti-key" style="color:#f59e0b;margin-right:6px;"></i>Password Breach Check</a>
+                    <a href="/ai-risk-advisor" style="border-top: 1px solid rgba(255,255,255,0.05); color:#f59e0b;"><i class="ti ti-crown" style="font-size:0.8rem;margin-right:2px;"></i> AI Risk Advisor</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="nav-actions">
+            {% if current_user.company_domain == 'demo-corp.com' %}
+            <span style="font-family: var(--mono); font-size: 9px; font-weight: 700; background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); color: #f59e0b; padding: 2px 6px; border-radius: 4px; text-transform: uppercase;">SANDBOX MODE</span>
+            <a href="/exit-demo" style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.4); color: #fca5a5; font-size: 11px; font-family: var(--font-mono); font-weight: 700; padding: 6px 12px; border-radius: 4px; text-decoration: none; text-transform: uppercase; transition: all 0.25s;" onmouseover="this.style.background='#ef4444'; this.style.color='#fff';" onmouseout="this.style.background='rgba(239, 68, 68, 0.1)'; this.style.color='#fca5a5';">Exit Sandbox</a>
+            {% endif %}
+            
+            <i class="ti ti-bell" style="font-size: 1.25rem; color: #94a3b8; cursor: pointer;"></i>
+            
+            <div class="theme-toggle-pill" id="theme-toggle" role="button" aria-label="Switch theme" title="Switch theme">
+                <div class="theme-toggle-slider"></div>
+                <i class="ti ti-sun icon-sun"></i>
+                <i class="ti ti-moon icon-moon"></i>
+            </div>
+            
+            {% set name_parts = current_user.name.split(' ') %}
+            <a href="/profile" class="nav-avatar">
+                {% if name_parts|length > 1 %}{{ name_parts[0][0]|upper }}{{ name_parts[1][0]|upper }}{% else %}{{ current_user.name[:2]|upper }}{% endif %}
+            </a>
+            
+            <a href="/logout" class="nav-link nav-link-login" style="font-size: 0.85rem;">Logout</a>
+            
+            <button class="hamburger-btn" onclick="toggleMobileMenu()" aria-label="Toggle Menu">
+                <span class="bar"></span>
+                <span class="bar"></span>
+                <span class="bar"></span>
+            </button>
+        </div>
+        
+        <!-- Logged-out (public) state -->
+        {% else %}
+        <div class="nav-links">
+            <div class="nav-dropdown">
+                <button class="nav-dropdown-trigger">Platform <i class="ti ti-chevron-down"></i></button>
+                <div class="nav-dropdown-menu">
+                    <a href="/dashboard">Dashboard</a>
+                    <a href="/new-campaign">New Campaign</a>
+                    <a href="/dashboard">Campaign Analytics</a>
+                    <a href="/reports-demo">AI Report</a>
+                </div>
+            </div>
+            <a href="/#attack-flow" class="nav-link">How It Works</a>
+            <a href="/#pricing" class="nav-link">Pricing</a>
+            <div class="nav-dropdown">
+                <button class="nav-dropdown-trigger">Threat Tools <i class="ti ti-chevron-down"></i></button>
+                <div class="nav-dropdown-menu">
+                    <a href="/threat-analyzer"><i class="ti ti-heartbeat" style="color:#06b6d4;margin-right:6px;"></i>Threat Analyzer</a>
+                    <a href="/header-analyzer"><i class="ti ti-mail-search" style="color:#8b5cf6;margin-right:6px;"></i>Header Analyzer</a>
+                    <a href="/url-decoder"><i class="ti ti-link" style="color:#10b981;margin-right:6px;"></i>URL Decoder</a>
+                    <a href="/password-breach"><i class="ti ti-key" style="color:#f59e0b;margin-right:6px;"></i>Password Breach Check</a>
+                    <a href="/ai-risk-advisor" style="border-top: 1px solid rgba(255,255,255,0.05); color:#f59e0b;"><i class="ti ti-crown" style="font-size:0.8rem;margin-right:2px;"></i> AI Risk Advisor</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="nav-actions">
+            <div class="theme-toggle-pill" id="theme-toggle" role="button" aria-label="Switch theme" title="Switch theme">
+                <div class="theme-toggle-slider"></div>
+                <i class="ti ti-sun icon-sun"></i>
+                <i class="ti ti-moon icon-moon"></i>
+            </div>
+            <a href="/login" class="nav-link nav-link-login" style="font-size: 14px;">Login</a>
+            <a href="/demo-login" class="btn-try-demo">Try Demo <i class="ti ti-arrow-right"></i></a>
+            
+            <button class="hamburger-btn" onclick="toggleMobileMenu()" aria-label="Toggle Menu">
+                <span class="bar"></span>
+                <span class="bar"></span>
+                <span class="bar"></span>
+            </button>
+        </div>
+        {% endif %}
+    </div>
 </nav>
+
+<!-- Mobile overlay menu -->
+<div class="mobile-menu-overlay" id="mobile-menu-overlay">
+    <button class="close-menu-btn" onclick="toggleMobileMenu()">&times;</button>
+<div class="mobile-menu-links">
+        {% if current_user %}
+        <a href="/dashboard" onclick="toggleMobileMenu()">Dashboard</a>
+        <a href="/new-campaign" onclick="toggleMobileMenu()">Campaigns</a>
+        <a href="/threat-analyzer" onclick="toggleMobileMenu()">Threat Analyzer</a>
+        <a href="/header-analyzer" onclick="toggleMobileMenu()">Header Analyzer</a>
+        <a href="/url-decoder" onclick="toggleMobileMenu()">URL Decoder</a>
+        <a href="/password-breach" onclick="toggleMobileMenu()">Password Breach Check</a>
+        <a href="/ai-risk-advisor" onclick="toggleMobileMenu()" style="color:#f59e0b;"><i class="ti ti-crown" style="font-size:0.85rem;margin-right:4px;"></i> AI Risk Advisor</a>
+        <a href="/reports-demo" onclick="toggleMobileMenu()">AI Report</a>
+        <a href="/profile" onclick="toggleMobileMenu()">Profile</a>
+        <a href="/billing" onclick="toggleMobileMenu()">Billing</a>
+        <a href="/logout" onclick="toggleMobileMenu()">Logout</a>
+        {% if current_user.company_domain == 'demo-corp.com' %}
+        <a href="/exit-demo" onclick="toggleMobileMenu()" style="color: #ef4444;">Exit Sandbox</a>
+        {% endif %}
+        {% else %}
+        <a href="/dashboard" onclick="toggleMobileMenu()">Dashboard</a>
+        <a href="/new-campaign" onclick="toggleMobileMenu()">New Campaign</a>
+        <a href="/#attack-flow" onclick="toggleMobileMenu()">How It Works</a>
+        <a href="/#pricing" onclick="toggleMobileMenu()">Pricing</a>
+        <a href="/threat-analyzer" onclick="toggleMobileMenu()">Threat Analyzer</a>
+        <a href="/header-analyzer" onclick="toggleMobileMenu()">Header Analyzer</a>
+        <a href="/url-decoder" onclick="toggleMobileMenu()">URL Decoder</a>
+        <a href="/password-breach" onclick="toggleMobileMenu()">Password Breach Check</a>
+        <a href="/ai-risk-advisor" onclick="toggleMobileMenu()" style="color:#f59e0b;"><i class="ti ti-crown" style="font-size:0.85rem;margin-right:4px;"></i> AI Risk Advisor</a>
+        <a href="/reports-demo" onclick="toggleMobileMenu()">AI Report</a>
+        <a href="/login" onclick="toggleMobileMenu()">Login</a>
+        <a href="/demo-login" onclick="toggleMobileMenu()" style="color: #06b6d4;">Try Demo</a>
+        {% endif %}
+    </div>
+</div>
 
 <!-- HERO -->
 <section id="hero">
@@ -1975,7 +2976,7 @@ body.light-theme .mobile-nav-toggle span {
   <div class="hero-stat" style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 14px 20px;">
     <div class="gauge-container" style="position: relative; width: 64px; height: 64px; margin-bottom: 8px;">
       <svg width="64" height="64" viewBox="0 0 64 64" style="transform: rotate(-90deg);">
-        <circle cx="32" cy="32" r="28" stroke="rgba(255,255,255,0.06)" stroke-width="5" fill="transparent" />
+        <circle cx="32" cy="32" r="28" stroke="var(--gauge-bg, rgba(255,255,255,0.06))" stroke-width="5" fill="transparent" />
         <circle cx="32" cy="32" r="28" stroke="url(#cyan-grad)" stroke-width="5" fill="transparent" 
                 stroke-dasharray="175.929" stroke-dashoffset="175.929" id="hss-gauge-circle" 
                 stroke-linecap="round" style="transition: stroke-dashoffset 1.5s cubic-bezier(0.16, 1, 0.3, 1);" />
@@ -1986,14 +2987,14 @@ body.light-theme .mobile-nav-toggle span {
           </linearGradient>
         </defs>
       </svg>
-      <div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: 0.95rem; font-weight: 700; color: #fff;">
+      <div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: 0.95rem; font-weight: 700; color: var(--text-main);">
         <span id="hss-gauge-value">0</span>
       </div>
     </div>
     <div class="hero-stat-label" style="font-size: 0.72rem; color: var(--muted); font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em;">Human Security Score</div>
   </div>
   <div class="hero-stat">
-    <div class="hero-stat-number" data-target="62" data-suffix="%">0%</div>
+    <div class="hero-stat-number" data-target="71" data-suffix="%">0%</div>
     <div class="hero-stat-label">of simulated emails are opened</div>
   </div>
   <div class="hero-stat">
@@ -2001,99 +3002,123 @@ body.light-theme .mobile-nav-toggle span {
     <div class="hero-stat-label">of targets click the phishing link</div>
   </div>
   <div class="hero-stat">
-    <div class="hero-stat-number" data-target="5" data-prefix="<" data-suffix=" min">0 min</div>
+    <div class="hero-stat-number" data-target="4" data-prefix="<" data-suffix="m">0m</div>
     <div class="hero-stat-label">from CSV upload to first email sent</div>
   </div>
 </div>
 
 
-<!-- ATTACK FLOW (STICKY SCROLL) -->
+<!-- ATTACK FLOW (VERTICAL SNAPPING TIMELINE) -->
 <section id="attack-flow">
-  <div class="scrolly-container">
-    <div class="scrolly-left">
-      <div class="section-eyebrow">The Attack Chain</div>
-      <h2 class="section-title" style="font-size: clamp(2.5rem, 4vw, 4rem);">Anatomy of an<br>Autonomous Attack</h2>
-      <p class="section-sub">Scroll to watch the Agentic AI orchestrate a full-scale social engineering campaign. Each step is fully autonomous, dynamically reacting to targets.</p>
-
-      <button id="run-simulation-btn" class="btn-nav" style="margin-top: 30px; display: inline-flex; align-items: center; gap: 8px; width: fit-content; padding: 14px 28px; font-size: 1rem;" onclick="startAutoScroll()">
-        <span aria-hidden="true">AI</span>
-        <span class="run-simulation-label">Watch the attack chain</span>
+  <!-- Floating Counter -->
+  <div id="timeline-counter" class="timeline-counter">STEP 1 OF 6</div>
+  
+  <div style="max-width: 1200px; margin: 0 auto; padding: 100px 5% 40px; text-align: center;">
+    <div class="section-eyebrow" style="background: rgba(6, 182, 212, 0.08); border: 1px solid rgba(6, 182, 212, 0.2); border-radius: 100px; padding: 6px 14px; font-size: 0.75rem; font-weight: 600; color: var(--cyan); letter-spacing: 0.08em; text-transform: uppercase; display: inline-block;">The Attack Chain</div>
+    <h2 class="section-title" style="font-size: clamp(2.5rem, 4vw, 4rem); font-weight: 700; margin: 16px 0; line-height: 1.2;">Anatomy of an<br>Autonomous Attack</h2>
+    <p class="section-sub" style="font-size: 1.05rem; color: var(--muted); max-width: 600px; margin: 0 auto; line-height: 1.6;">Scroll down to watch the Agentic AI orchestrate a full-scale social engineering campaign. Each step is fully autonomous, dynamically reacting to targets.</p>
+    <!-- Walk-through button -->
+    <div style="margin-top: 1.5rem;">
+      <button id="walkthrough-btn" onclick="startAttackChainWalkthrough()" style="display:inline-flex;align-items:center;gap:8px;background:rgba(6,182,212,0.08);border:1px solid rgba(6,182,212,0.35);color:#06b6d4;border-radius:999px;padding:0.65rem 1.5rem;font-family:var(--font-mono);font-size:0.82rem;font-weight:700;cursor:pointer;letter-spacing:0.06em;text-transform:uppercase;transition:all 0.25s;animation:walkBtnPulse 3s ease-in-out infinite;" onmouseover="this.style.background='rgba(6,182,212,0.18)';this.style.borderColor='rgba(6,182,212,0.65)';" onmouseout="this.style.background='rgba(6,182,212,0.08)';this.style.borderColor='rgba(6,182,212,0.35)';">
+        <i class="ti ti-player-play" id="walkthrough-icon"></i>
+        <span id="walkthrough-label">Walk Me Through</span>
       </button>
+    </div>
+    <style>
+    @keyframes walkBtnPulse { 0%,100%{box-shadow:0 0 0 0 rgba(6,182,212,0.3)} 50%{box-shadow:0 0 0 8px rgba(6,182,212,0)} }
+    </style>
 
-      <div class="attack-visual" id="attack-visual" data-active="0" aria-hidden="true">
-        <div class="attack-core">AI</div>
-        <div class="attack-node" title="OSINT Gather">
-          <i class="ti ti-search" style="font-size: clamp(0.8rem, 2.2cqw, 1.25rem); color: var(--cyan); margin-bottom: 2px;"></i>
-          <span style="font-size: clamp(0.4rem, 1.2cqw, 0.55rem); font-weight: 700; opacity: 0.85;">OSINT</span>
-        </div>
-        <div class="attack-node" title="AI Payload Crafting">
-          <i class="ti ti-cpu" style="font-size: clamp(0.8rem, 2.2cqw, 1.25rem); color: var(--cyan); margin-bottom: 2px;"></i>
-          <span style="font-size: clamp(0.4rem, 1.2cqw, 0.55rem); font-weight: 700; opacity: 0.85;">CRAFT</span>
-        </div>
-        <div class="attack-node" title="SMTP Delivery">
-          <i class="ti ti-send" style="font-size: clamp(0.8rem, 2.2cqw, 1.25rem); color: var(--cyan); margin-bottom: 2px;"></i>
-          <span style="font-size: clamp(0.4rem, 1.2cqw, 0.55rem); font-weight: 700; opacity: 0.85;">SEND</span>
-        </div>
-        <div class="attack-node" title="Real-Time Tracking">
-          <i class="ti ti-presentation-analytics" style="font-size: clamp(0.8rem, 2.2cqw, 1.25rem); color: var(--cyan); margin-bottom: 2px;"></i>
-          <span style="font-size: clamp(0.4rem, 1.2cqw, 0.55rem); font-weight: 700; opacity: 0.85;">TRACK</span>
-        </div>
-        <div class="attack-node" title="AI Risk Report">
-          <i class="ti ti-file-type-pdf" style="font-size: clamp(0.8rem, 2.2cqw, 1.25rem); color: var(--cyan); margin-bottom: 2px;"></i>
-          <span style="font-size: clamp(0.4rem, 1.2cqw, 0.55rem); font-weight: 700; opacity: 0.85;">REPORT</span>
-        </div>
-        <div class="attack-node" title="Risk Remediation">
-          <i class="ti ti-shield-check" style="font-size: clamp(0.8rem, 2.2cqw, 1.25rem); color: var(--cyan); margin-bottom: 2px;"></i>
-          <span style="font-size: clamp(0.4rem, 1.2cqw, 0.55rem); font-weight: 700; opacity: 0.85;">SHIELD</span>
-        </div>
-      </div>
-      <div class="attack-progress" aria-hidden="true"><span id="attack-progress-bar"></span></div>
+
+  <div class="timeline-track-container">
+    <!-- Progress Line -->
+    <div class="timeline-progress-line-container">
+      <div id="timeline-progress-fill" class="timeline-progress-line-fill"></div>
     </div>
 
-    <div class="scrolly-right">
-      <div class="scrolly-card scrolly-step">
-        <div class="scrolly-num">STEP 01</div>
-        <div class="scrolly-icon"><i class="ti ti-search" style="color: var(--cyan);"></i></div>
-        <h3 style="font-size: 1.8rem; font-weight: 700; margin-bottom: 16px;">OSINT Gather</h3>
-        <p style="font-size: 1.05rem; color: var(--muted); line-height: 1.6;">The agent scrapes your company domain, LinkedIn data, and public records to build a complete target profile — identifying departments, executives, and hierarchy.</p>
+    <!-- Step 1: OSINT -->
+    <div class="timeline-panel" data-step="1">
+      <div class="timeline-left">
+        <div class="timeline-step-num">01</div>
+        <div class="timeline-icon-box">
+          <i class="ti ti-search"></i>
+        </div>
       </div>
-
-      <div class="scrolly-card scrolly-step">
-        <div class="scrolly-num">STEP 02</div>
-        <div class="scrolly-icon"><i class="ti ti-cpu" style="color: var(--cyan);"></i></div>
-        <h3 style="font-size: 1.8rem; font-weight: 700; margin-bottom: 16px;">AI Crafting</h3>
-        <p style="font-size: 1.05rem; color: var(--muted); line-height: 1.6;">Using the OSINT data, the LLM generates a unique, personalized phishing email per employee. A junior dev gets a Jira ticket alert, while Finance gets an urgent wire request.</p>
+      <div class="timeline-right">
+        <h3 class="timeline-title">OSINT Gather</h3>
+        <p class="timeline-desc">The agent scrapes your company domain, LinkedIn data, and public records to build a complete target profile — identifying departments, executives, and hierarchy.</p>
       </div>
-
-      <div class="scrolly-card scrolly-step">
-        <div class="scrolly-num">STEP 03</div>
-        <div class="scrolly-icon"><i class="ti ti-send" style="color: var(--cyan);"></i></div>
-        <h3 style="font-size: 1.8rem; font-weight: 700; margin-bottom: 16px;">Delivery</h3>
-        <p style="font-size: 1.05rem; color: var(--muted); line-height: 1.6;">Emails are dispatched via SMTP directly to real employee inboxes. Each email carries a unique tracking pixel and click-tracking token to monitor engagement.</p>
-      </div>
-
-      <div class="scrolly-card scrolly-step">
-        <div class="scrolly-num">STEP 04</div>
-        <div class="scrolly-icon"><i class="ti ti-presentation-analytics" style="color: var(--cyan);"></i></div>
-        <h3 style="font-size: 1.8rem; font-weight: 700; margin-bottom: 16px;">Real-Time Tracking</h3>
-        <p style="font-size: 1.05rem; color: var(--muted); line-height: 1.6;">Every open, click, and report event is logged in real-time to your dashboard. You see exactly who is vulnerable — as it happens, not days later.</p>
-      </div>
-
-      <div class="scrolly-card scrolly-step">
-        <div class="scrolly-num">STEP 05</div>
-        <div class="scrolly-icon"><i class="ti ti-file-type-pdf" style="color: var(--cyan);"></i></div>
-        <h3 style="font-size: 1.8rem; font-weight: 700; margin-bottom: 16px;">AI Risk Report</h3>
-        <p style="font-size: 1.05rem; color: var(--muted); line-height: 1.6;">The AI analyzes campaign data, identifies the most exposed departments, and generates a formatted PDF risk report ready for compliance and board reviews.</p>
-      </div>
-
-      <div class="scrolly-card scrolly-step">
-        <div class="scrolly-num">STEP 06</div>
-        <div class="scrolly-icon"><i class="ti ti-shield-check" style="color: var(--cyan);"></i></div>
-        <h3 style="font-size: 1.8rem; font-weight: 700; margin-bottom: 16px;">Risk Remediation</h3>
-        <p style="font-size: 1.05rem; color: var(--muted); line-height: 1.6;">The final layer converts raw click and report data into prioritized next actions: follow-up simulations, department coaching, and policy fixes for the highest-risk workflows.</p>
-      </div>
-
     </div>
+
+    <!-- Step 2: Crafting -->
+    <div class="timeline-panel" data-step="2">
+      <div class="timeline-left">
+        <div class="timeline-step-num">02</div>
+        <div class="timeline-icon-box">
+          <i class="ti ti-cpu"></i>
+        </div>
+      </div>
+      <div class="timeline-right">
+        <h3 class="timeline-title">AI Crafting</h3>
+        <p class="timeline-desc">Using the OSINT data, the LLM generates a unique, personalized phishing email per employee. A junior dev gets a Jira ticket alert, while Finance gets an urgent wire request.</p>
+      </div>
+    </div>
+
+    <!-- Step 3: Delivery -->
+    <div class="timeline-panel" data-step="3">
+      <div class="timeline-left">
+        <div class="timeline-step-num">03</div>
+        <div class="timeline-icon-box">
+          <i class="ti ti-send"></i>
+        </div>
+      </div>
+      <div class="timeline-right">
+        <h3 class="timeline-title">Delivery</h3>
+        <p class="timeline-desc">Emails are dispatched via SMTP directly to real employee inboxes. Each email carries a unique tracking pixel and click-tracking token to monitor engagement.</p>
+      </div>
+    </div>
+
+    <!-- Step 4: Real-Time Tracking -->
+    <div class="timeline-panel" data-step="4">
+      <div class="timeline-left">
+        <div class="timeline-step-num">04</div>
+        <div class="timeline-icon-box">
+          <i class="ti ti-presentation-analytics"></i>
+        </div>
+      </div>
+      <div class="timeline-right">
+        <h3 class="timeline-title">Real-Time Tracking</h3>
+        <p class="timeline-desc">Every open, click, and report event is logged in real-time to your dashboard. You see exactly who is vulnerable — as it happens, not days later.</p>
+      </div>
+    </div>
+
+    <!-- Step 5: AI Risk Report -->
+    <div class="timeline-panel" data-step="5">
+      <div class="timeline-left">
+        <div class="timeline-step-num">05</div>
+        <div class="timeline-icon-box">
+          <i class="ti ti-file-type-pdf"></i>
+        </div>
+      </div>
+      <div class="timeline-right">
+        <h3 class="timeline-title">AI Risk Report</h3>
+        <p class="timeline-desc">The AI analyzes campaign data, identifies the most exposed departments, and generates a formatted PDF risk report ready for compliance and board reviews.</p>
+      </div>
+    </div>
+
+    <!-- Step 6: Risk Remediation -->
+    <div class="timeline-panel" data-step="6">
+      <div class="timeline-left">
+        <div class="timeline-step-num">06</div>
+        <div class="timeline-icon-box">
+          <i class="ti ti-shield-check"></i>
+        </div>
+      </div>
+      <div class="timeline-right">
+        <h3 class="timeline-title">Risk Remediation</h3>
+        <p class="timeline-desc">The final layer converts raw click and report data into prioritized next actions: follow-up simulations, department coaching, and policy fixes for the highest-risk workflows.</p>
+      </div>
+    </div>
+
   </div>
 </section>
 
@@ -2146,31 +3171,48 @@ body.light-theme .mobile-nav-toggle span {
       <!-- Right: Interactive Live Simulation Sandbox -->
       <div class="reveal" style="background: rgba(13,18,38,0.4); border: 1px solid var(--border); border-radius: 16px; padding: 1.5rem; display: flex; flex-direction: column; gap: 1.5rem;">
         
-        <!-- Mock Email Client Window -->
-        <div style="background: #020617; border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.3);">
-          <!-- Mail Client Bar -->
-          <div style="background: rgba(255,255,255,0.02); border-bottom: 1px solid rgba(255,255,255,0.06); padding: 12px 16px; display: flex; align-items: center; justify-content: space-between;">
-            <div style="display: flex; gap: 6px;">
-              <span style="width:10px; height:10px; border-radius:50%; background:#ef4444; display:inline-block;"></span>
-              <span style="width:10px; height:10px; border-radius:50%; background:#f59e0b; display:inline-block;"></span>
-              <span style="width:10px; height:10px; border-radius:50%; background:#10b981; display:inline-block;"></span>
+        <div class="sandbox-main-grid" style="display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 20px;">
+          <!-- Mock Email Client Window -->
+          <div style="background: #020617; border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.3); display: flex; flex-direction: column; justify-content: space-between;">
+            <!-- Mail Client Bar -->
+            <div style="background: rgba(255,255,255,0.02); border-bottom: 1px solid rgba(255,255,255,0.06); padding: 12px 16px; display: flex; align-items: center; justify-content: space-between;">
+              <div style="display: flex; gap: 6px;">
+                <span style="width:10px; height:10px; border-radius:50%; background:#ef4444; display:inline-block;"></span>
+                <span style="width:10px; height:10px; border-radius:50%; background:#f59e0b; display:inline-block;"></span>
+                <span style="width:10px; height:10px; border-radius:50%; background:#10b981; display:inline-block;"></span>
+              </div>
+              <div style="font-family: var(--mono); font-size: 0.72rem; color: var(--muted); display: flex; align-items: center; gap: 6px;">
+                <i class="ti ti-shield-lock" style="color:var(--cyan)"></i> Simulated Sandbox Inbox
+              </div>
+              <div style="width: 40px;"></div>
             </div>
-            <div style="font-family: var(--mono); font-size: 0.72rem; color: var(--muted); display: flex; align-items: center; gap: 6px;">
-              <i class="ti ti-shield-lock" style="color:var(--cyan)"></i> Simulated Sandbox Inbox
+
+            <!-- Mail Header Info -->
+            <div style="padding: 16px 20px; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 0.85rem; display: flex; flex-direction: column; gap: 6px; background: rgba(0,0,0,0.15);">
+              <div><span style="color:var(--muted); font-weight:600; width:60px; display:inline-block;">From:</span> <span id="mail-from" style="color:#fff;"></span></div>
+              <div><span style="color:var(--muted); font-weight:600; width:60px; display:inline-block;">Subject:</span> <span id="mail-subject" style="color: #38bdf8; font-weight: 600;"></span></div>
+              <div><span style="color:var(--muted); font-weight:600; width:60px; display:inline-block;">To:</span> <span style="color:var(--muted);">recipient-team@your-corp.com</span></div>
             </div>
-            <div style="width: 40px;"></div>
+
+            <!-- Mail HTML Body -->
+            <div style="padding: 24px 30px; min-height: 200px; background: #fff; color: #1e293b; font-family: sans-serif; font-size: 0.95rem; line-height: 1.6;" id="mail-body">
+              <!-- Loaded dynamically -->
+            </div>
           </div>
 
-          <!-- Mail Header Info -->
-          <div style="padding: 16px 20px; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 0.85rem; display: flex; flex-direction: column; gap: 6px; background: rgba(0,0,0,0.15);">
-            <div><span style="color:var(--muted); font-weight:600; width:60px; display:inline-block;">From:</span> <span id="mail-from" style="color:#fff;"></span></div>
-            <div><span style="color:var(--muted); font-weight:600; width:60px; display:inline-block;">Subject:</span> <span id="mail-subject" style="color: #38bdf8; font-weight: 600;"></span></div>
-            <div><span style="color:var(--muted); font-weight:600; width:60px; display:inline-block;">To:</span> <span style="color:var(--muted);">recipient-team@your-corp.com</span></div>
-          </div>
+          <!-- Live Telemetry Panel -->
+          <div style="background: #020617; border: 1px solid rgba(6, 182, 212, 0.2); border-radius: 12px; padding: 1.5rem; display: flex; flex-direction: column; font-family: var(--mono), monospace; font-size: 0.78rem; min-height: 320px; box-sizing: border-box;">
+            <div style="color: var(--cyan); font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(6,182,212,0.15); padding-bottom: 8px; flex-shrink: 0;">
+              <span>LIVE TELEMETRY STREAM</span>
+              <span class="telemetry-pulse-dot" style="width: 8px; height: 8px; background: #10b981; border-radius: 50%; display: inline-block; box-shadow: 0 0 8px #10b981;"></span>
+            </div>
+            <div id="live-telemetry-container" style="display: flex; flex-direction: column; gap: 8px; color: #94a3b8; overflow-y: auto; flex: 1; max-height: 300px; min-height: 220px; scroll-behavior: smooth;">
 
-          <!-- Mail HTML Body -->
-          <div style="padding: 24px 30px; min-height: 200px; background: #fff; color: #1e293b; font-family: sans-serif; font-size: 0.95rem; line-height: 1.6;" id="mail-body">
-            <!-- Loaded dynamically -->
+              <!-- Logs are typewritten here -->
+            </div>
+            <div style="border-top: 1px solid rgba(255,255,255,0.05); padding-top: 8px; margin-top: 8px; color: #475569; font-size: 0.7rem; text-align: right; text-transform: uppercase; letter-spacing: 0.5px; flex-shrink: 0;">
+              Status: <span style="color: #10b981; font-weight: bold;">Monitoring</span>
+            </div>
           </div>
         </div>
 
@@ -2187,18 +3229,9 @@ body.light-theme .mobile-nav-toggle span {
             </ul>
           </div>
 
-          <!-- Live Telemetry Stream -->
-          <div style="background: #020617; border: 1px solid rgba(6, 182, 212, 0.25); border-radius: 12px; padding: 1.5rem; font-family: var(--mono); font-size: 0.78rem;">
-            <div style="color: var(--cyan); font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(6,182,212,0.15); padding-bottom: 6px;">
-              <span>LIVE ADMIN TELEMETRY</span>
-              <span style="width: 8px; height: 8px; background: #ef4444; border-radius: 50%; display: inline-block; animation: pulseStatus 1s infinite;"></span>
-            </div>
-            <div style="display:flex; flex-direction:column; gap:6px; color:#94a3b8; max-height:160px; overflow-y:auto;" id="telemetry-logs">
-              <!-- Loaded dynamically -->
-            </div>
-          </div>
-
         </div>
+
+      </div>
 
       </div>
 
@@ -2222,7 +3255,7 @@ body.light-theme .mobile-nav-toggle span {
   }
   .outcome-panel-layout.show-panel {
     display: grid !important;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr;
   }
   @media (max-width: 768px) {
     .outcome-panel-layout.show-panel {
@@ -2404,6 +3437,84 @@ body.light-theme .mobile-nav-toggle span {
     }
   };
 
+  const telemetryLoopLogs = {
+    ceo: [
+      { text: "[SYS] Spawning simulated target mailbox (recipient: david@demo-corp.com)..." },
+      { text: "[SMTP] Dispatching email envelope matching CEO Fraud template..." },
+      { text: "[SMTP] Email successfully delivered to recipient inbox." },
+      { text: "[IMAP] Email status: UNREAD." },
+      { text: "[IMAP] Email opened by target (david@demo-corp.com)." },
+      { text: "[IMAP] Target is reading the message details..." },
+      { text: "[IMAP] Target hovered over 'Authorize Wire Transfer' link..." }
+    ],
+    it: [
+      { text: "[SYS] Spawning simulated target mailbox (recipient: carol@demo-corp.com)..." },
+      { text: "[SMTP] Dispatching email envelope matching IT Credential template..." },
+      { text: "[SMTP] Email successfully delivered to recipient inbox." },
+      { text: "[IMAP] Email status: UNREAD." },
+      { text: "[IMAP] Email opened by target (carol@demo-corp.com)." },
+      { text: "[IMAP] Target is reading security credentials warning..." },
+      { text: "[IMAP] Target hovered over 'Update Credentials Now' button..." }
+    ],
+    hr: [
+      { text: "[SYS] Spawning simulated target mailbox (recipient: bob@demo-corp.com)..." },
+      { text: "[SMTP] Dispatching email envelope matching HR Compensation template..." },
+      { text: "[SMTP] Email successfully delivered to recipient inbox." },
+      { text: "[IMAP] Email status: UNREAD." },
+      { text: "[IMAP] Email opened by target (bob@demo-corp.com)." },
+      { text: "[IMAP] Target is reading compensation adjustment structure..." },
+      { text: "[IMAP] Target hovered over 'View Compensation Document' link..." }
+    ],
+    invoice: [
+      { text: "[SYS] Spawning simulated target mailbox (recipient: alice@demo-corp.com)..." },
+      { text: "[SMTP] Dispatching email envelope matching Vendor Invoice template..." },
+      { text: "[SMTP] Email successfully delivered to recipient inbox." },
+      { text: "[IMAP] Email status: UNREAD." },
+      { text: "[IMAP] Email opened by target (alice@demo-corp.com)." },
+      { text: "[IMAP] Target is reading overdue billing terms..." },
+      { text: "[IMAP] Target hovered over 'Download Overdue Invoice' button..." }
+    ]
+  };
+
+  let activeTelemetryTimeout = null;
+
+  function runTelemetryLoop(key) {
+    if (activeTelemetryTimeout) clearTimeout(activeTelemetryTimeout);
+
+    const container = document.getElementById('live-telemetry-container');
+    if (!container) return;
+    container.innerHTML = '';
+
+    const logs = telemetryLoopLogs[key] || telemetryLoopLogs.ceo;
+    let logIdx = 0;
+
+    function printNextLog() {
+      if (logIdx >= logs.length) {
+        activeTelemetryTimeout = setTimeout(() => {
+          container.innerHTML = '';
+          logIdx = 0;
+          printNextLog();
+        }, 4000);
+        return;
+      }
+
+      const log = logs[logIdx];
+      const div = document.createElement('div');
+      div.style.marginBottom = '6px';
+      div.style.animation = 'fadeInUp 0.25s ease-out';
+      
+      const timeStr = new Date().toLocaleTimeString();
+      div.innerHTML = `<span style="color: #475569;">[${timeStr}]</span> ${log.text}`;
+      container.appendChild(div);
+      container.scrollTop = container.scrollHeight;
+
+      logIdx++;
+      activeTelemetryTimeout = setTimeout(printNextLog, 1500 + Math.random() * 1000);
+    }
+
+    printNextLog();
+  }
+
   function selectSandboxScenario(key) {
     // Update active tab styling
     document.querySelectorAll('.sandbox-tab').forEach(t => t.classList.remove('active'));
@@ -2417,6 +3528,9 @@ body.light-theme .mobile-nav-toggle span {
 
     // Reset outcome panel
     document.getElementById('sandbox-compromise-panel').classList.remove('show-panel');
+
+    // Restart typewriter log loop
+    runTelemetryLoop(key);
   }
 
   function triggerSandboxCompromise(e, key) {
@@ -2435,24 +3549,35 @@ body.light-theme .mobile-nav-toggle span {
       `;
     });
 
-    // Fill telemetry logs with sequential delay
-    const telemetryLogs = document.getElementById('telemetry-logs');
-    telemetryLogs.innerHTML = '';
-    
     // Support layout on mobile vs desktop
     const panel = document.getElementById('sandbox-compromise-panel');
     panel.classList.add('show-panel');
 
-    data.logs.forEach((log, index) => {
-      setTimeout(() => {
-        telemetryLogs.innerHTML += `
-          <div style="animation:fadeInUp 0.2s ease-out; margin-bottom:4px;">
-            <span style="color:#64748b;">[${new Date().toLocaleTimeString()}]</span> ${log.text}
-          </div>
-        `;
-        telemetryLogs.scrollTop = telemetryLogs.scrollHeight;
-      }, index * 400);
-    });
+    // Also inject compromise logs into the live telemetry stream
+    const container = document.getElementById('live-telemetry-container');
+    if (container) {
+      if (activeTelemetryTimeout) clearTimeout(activeTelemetryTimeout);
+      
+      const warnDiv = document.createElement('div');
+      warnDiv.style.color = '#ef4444';
+      warnDiv.style.fontWeight = 'bold';
+      warnDiv.style.margin = '8px 0';
+      warnDiv.style.animation = 'pulseWarning 1s infinite alternate';
+      warnDiv.innerHTML = `[!!!] VULNERABILITY ALERT: TARGET COMPROMISED`;
+      container.appendChild(warnDiv);
+      
+      data.logs.forEach((log, index) => {
+        setTimeout(() => {
+          const div = document.createElement('div');
+          div.style.marginBottom = '6px';
+          div.style.color = '#ef4444';
+          div.style.animation = 'fadeInUp 0.2s ease-out';
+          div.innerHTML = `<span style="color: #64748b;">[${new Date().toLocaleTimeString()}]</span> ${log.text}`;
+          container.appendChild(div);
+          container.scrollTop = container.scrollHeight;
+        }, index * 400 + 500);
+      });
+    }
   }
 
   // Load CEO scenario by default on document ready
@@ -2505,6 +3630,129 @@ body.light-theme .mobile-nav-toggle span {
       <div class="cap-icon"><i class="ti ti-file-type-pdf" style="color: var(--cyan); font-size: 2.2rem;"></i></div>
       <div class="cap-title">PDF Export</div>
       <div class="cap-desc">Download a professionally formatted PDF report in one click — audit-ready for compliance reviews, board meetings, or your security team.</div>
+    </div>
+  </div>
+</section>
+
+<!-- GLOBAL THREAT INTELLIGENCE -->
+<section id="global-threat-intel">
+  <div class="text-center reveal" style="margin-bottom: 50px; text-align: center;">
+    <div class="section-eyebrow" style="display: inline-flex; align-items: center; gap: 8px; background: rgba(6, 182, 212, 0.08); border: 1px solid rgba(6, 182, 212, 0.2); border-radius: 100px; padding: 6px 14px; font-size: 0.75rem; font-weight: 600; color: var(--cyan); letter-spacing: 0.08em; text-transform: uppercase;">Threat Intel</div>
+    <h2 class="section-title" style="font-size: clamp(2rem, 3.5vw, 2.8rem); font-weight: 700; margin: 16px 0; line-height: 1.25;">Global Threat Intelligence</h2>
+    <p class="section-sub" style="font-size: 1.05rem; color: var(--muted); max-width: 600px; margin: 0 auto; line-height: 1.6;">Live telemetry captured from simulated nodes across our global decoy network.</p>
+  </div>
+
+  <div class="intel-layout">
+    <!-- Left: Log scrolling feed -->
+    <div class="intel-feed-window">
+      <div class="intel-feed-title-bar">
+        <span style="font-family: var(--font-sans); font-size: 0.95rem; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 8px;">
+          <i class="ti ti-activity-heartbeat" style="color: #06b6d4; font-size: 1.2rem;"></i> Global Threat Intelligence Stream
+        </span>
+        <span style="font-family: var(--font-mono); font-size: 0.68rem; color: #10b981; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); padding: 2px 8px; border-radius: 4px; font-weight: bold; letter-spacing: 0.5px; text-transform: uppercase;">
+          LIVE FEED
+        </span>
+      </div>
+      <div class="intel-feed-content">
+        <div class="intel-scroll-container">
+          <!-- Item 1 -->
+          <div class="intel-log-card">
+            <span>[OSINT] Discovered exposed subdomain <code>mail-staging.demo-corp.com</code></span>
+            <span style="color: #475569; font-size: 0.72rem;">0.8s ago</span>
+          </div>
+          <!-- Item 2 -->
+          <div class="intel-log-card" style="border-left-color: #f59e0b;">
+            <span>[LLM] Payload compilation complete: Invoice bait targeted at CFO</span>
+            <span style="color: #475569; font-size: 0.72rem;">4s ago</span>
+          </div>
+          <!-- Item 3 -->
+          <div class="intel-log-card">
+            <span>[SMTP] Simulated dispatch successful: 42 target vectors</span>
+            <span style="color: #475569; font-size: 0.72rem;">12s ago</span>
+          </div>
+          <!-- Item 4 -->
+          <div class="intel-log-card" style="border-left-color: #ef4444;">
+            <span>[VULN] Click token captured from <code>j.doe@demo-corp.com</code></span>
+            <span style="color: #475569; font-size: 0.72rem;">19s ago</span>
+          </div>
+          <!-- Item 5 -->
+          <div class="intel-log-card">
+            <span>[OSINT] LinkedIn scan mapped 14 executive profiles</span>
+            <span style="color: #475569; font-size: 0.72rem;">24s ago</span>
+          </div>
+          <!-- Item 6 -->
+          <div class="intel-log-card" style="border-left-color: #f59e0b;">
+            <span>[LLM] HR policy email synthesized using corporate brand guide</span>
+            <span style="color: #475569; font-size: 0.72rem;">31s ago</span>
+          </div>
+          <!-- Item 7 -->
+          <div class="intel-log-card">
+            <span>[LMS] Automatic enrollment triggered: 4 targets assigned MFA modules</span>
+            <span style="color: #475569; font-size: 0.72rem;">45s ago</span>
+          </div>
+          <!-- Item 8 -->
+          <div class="intel-log-card" style="border-left-color: #ef4444;">
+            <span>[VULN] Credential harvest simulation flagged in Finance department</span>
+            <span style="color: #475569; font-size: 0.72rem;">1m ago</span>
+          </div>
+          
+          <!-- Repeat items for infinite seamless scroll -->
+          <div class="intel-log-card">
+            <span>[OSINT] Discovered exposed subdomain <code>mail-staging.demo-corp.com</code></span>
+            <span style="color: #475569; font-size: 0.72rem;">0.8s ago</span>
+          </div>
+          <div class="intel-log-card" style="border-left-color: #f59e0b;">
+            <span>[LLM] Payload compilation complete: Invoice bait targeted at CFO</span>
+            <span style="color: #475569; font-size: 0.72rem;">4s ago</span>
+          </div>
+          <div class="intel-log-card">
+            <span>[SMTP] Simulated dispatch successful: 42 target vectors</span>
+            <span style="color: #475569; font-size: 0.72rem;">12s ago</span>
+          </div>
+          <div class="intel-log-card" style="border-left-color: #ef4444;">
+            <span>[VULN] Click token captured from <code>j.doe@demo-corp.com</code></span>
+            <span style="color: #475569; font-size: 0.72rem;">19s ago</span>
+          </div>
+          <div class="intel-log-card">
+            <span>[OSINT] LinkedIn scan mapped 14 executive profiles</span>
+            <span style="color: #475569; font-size: 0.72rem;">24s ago</span>
+          </div>
+          <div class="intel-log-card" style="border-left-color: #f59e0b;">
+            <span>[LLM] HR policy email synthesized using corporate brand guide</span>
+            <span style="color: #475569; font-size: 0.72rem;">31s ago</span>
+          </div>
+          <div class="intel-log-card">
+            <span>[LMS] Automatic enrollment triggered: 4 targets assigned MFA modules</span>
+            <span style="color: #475569; font-size: 0.72rem;">45s ago</span>
+          </div>
+          <div class="intel-log-card" style="border-left-color: #ef4444;">
+            <span>[VULN] Credential harvest simulation flagged in Finance department</span>
+            <span style="color: #475569; font-size: 0.72rem;">1m ago</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Right: Stats Cards -->
+    <div class="intel-stat-cards">
+      <!-- Card 1 -->
+      <div class="intel-stat-card">
+        <div class="intel-stat-card-title">SIMULATIONS EXECUTED</div>
+        <div class="intel-stat-card-value">1,482,904</div>
+        <div class="intel-stat-card-desc">AI-generated threat scenarios successfully deployed.</div>
+      </div>
+      <!-- Card 2 -->
+      <div class="intel-stat-card">
+        <div class="intel-stat-card-title" style="color: #06b6d4;">AVERAGE CLICK RATE</div>
+        <div class="intel-stat-card-value" style="background: linear-gradient(90deg, var(--text-main), #ff007f); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">8.4%</div>
+        <div class="intel-stat-card-desc">Simulated compromise rate for active tenant organizations.</div>
+      </div>
+      <!-- Card 3 -->
+      <div class="intel-stat-card">
+        <div class="intel-stat-card-title" style="color: #10b981;">REMEDIATION SPEED</div>
+        <div class="intel-stat-card-value" style="background: linear-gradient(90deg, var(--text-main), #10b981); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">&lt; 2hr</div>
+        <div class="intel-stat-card-desc">Average time to assign micro-learning briefs post-failure.</div>
+      </div>
     </div>
   </div>
 </section>
@@ -2581,18 +3829,122 @@ body.light-theme .mobile-nav-toggle span {
       <div style="text-decoration: none;">
         <span style="font-size: 0.72rem; font-weight: 700; color: #f59e0b; text-transform: uppercase; letter-spacing: 0.05em; display: inline-flex; align-items: center; gap: 4px; margin-top: 1rem; cursor: pointer; border-bottom: 1px dashed rgba(245,158,11,0.4); padding-bottom: 2px; transition: all 0.2s;" onmouseover="this.style.color='#fff'; this.style.borderBottomColor='#fff';" onmouseout="this.style.color='#f59e0b'; this.style.borderBottomColor='rgba(245,158,11,0.4)';">Active Defense <i class="ti ti-focus-2"></i></span>
       </div>
-    </div>
+    </div><!-- /cap-card-4 -->
+  </div><!-- /solutions-grid -->
+</section><!-- /solutions -->
 
+<!-- THREAT INTELLIGENCE SUITE -->
+<section id="threat-intel-suite">
+  <div style="max-width: 1200px; margin: 0 auto 50px; text-align: center;">
+    <div class="section-eyebrow" style="background: rgba(6, 182, 212, 0.08); border: 1px solid rgba(6, 182, 212, 0.2); border-radius: 100px; padding: 6px 14px; font-size: 0.75rem; font-weight: 600; color: var(--cyan); letter-spacing: 0.08em; text-transform: uppercase; display: inline-block;">Threat Suite</div>
+    <h2 class="section-title" style="font-size: clamp(2rem, 3.5vw, 2.8rem); font-weight: 700; color: #fff; margin: 16px 0; line-height: 1.25;">Advanced Defensive Infrastructure</h2>
+    <p class="section-sub" style="font-size: 1.05rem; color: var(--muted); max-width: 600px; margin: 0 auto; line-height: 1.6;">Proactive security analytics and intelligence tools for modern enterprise environments.</p>
   </div>
 
-  <!-- SOLUTIONS INTEL EXPANDABLE DRAWER -->
-  <div id="solutions-drawer" style="max-width: 1200px; margin: 32px auto 0; height: 0; opacity: 0; overflow: hidden; transition: height 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.35s ease; border-left: 4px solid transparent; background: rgba(8, 12, 26, 0.7); border-radius: 0 16px 16px 16px; box-shadow: 0 20px 50px rgba(0,0,0,0.5), inset 0 0 12px rgba(255,255,255,0.02); backdrop-filter: blur(20px); border: 1px solid var(--border-color); border-left-width: 4px;">
-    <div id="solutions-drawer-content" style="padding: 2.2rem; font-family: var(--sans);">
-      <!-- Loaded dynamically via typewriter animation -->
-    </div>
+  <div class="suite-grid">
+    <!-- Card 1: Threat Analyzer -->
+    <a href="/threat-analyzer" class="suite-card">
+      <div class="suite-card-top">
+        <div class="suite-icon"><i class="ti ti-heartbeat"></i></div>
+        <span class="suite-badge-pro" style="background:rgba(6,182,212,0.1); border-color:rgba(6,182,212,0.3); color:#06b6d4;">CORE</span>
+      </div>
+      <div>
+        <h3 class="suite-title">Threat Analyzer</h3>
+        <p class="suite-desc">Analyze email headers, lexical structures, and hyperlinks instantly to calculate threat level scoring parameters.</p>
+      </div>
+      <div class="suite-link-text">Open Threat Analyzer <i class="ti ti-arrow-right"></i></div>
+    </a>
+    
+    <!-- Card 2: Email Header Analyzer -->
+    <a href="/header-analyzer" class="suite-card">
+      <div class="suite-card-top">
+        <div class="suite-icon" style="color:#8b5cf6; background:rgba(139,92,246,0.08); border-color:rgba(139,92,246,0.2);"><i class="ti ti-mail-search"></i></div>
+        <span class="suite-badge-pro" style="background:rgba(139,92,246,0.1); border-color:rgba(139,92,246,0.3); color:#8b5cf6;">DECODER</span>
+      </div>
+      <div>
+        <h3 class="suite-title">Header Analyzer</h3>
+        <p class="suite-desc">Paste raw email headers and get a full DMARC / SPF / DKIM verdict with routing hop map and Reply-To mismatch detection.</p>
+      </div>
+      <div class="suite-link-text" style="color:#8b5cf6;">Analyze Headers <i class="ti ti-arrow-right"></i></div>
+    </a>
+
+    <!-- Card 3: URL Decoder -->
+    <a href="/url-decoder" class="suite-card">
+      <div class="suite-card-top">
+        <div class="suite-icon" style="color:#10b981; background:rgba(16,185,129,0.08); border-color:rgba(16,185,129,0.2);"><i class="ti ti-link"></i></div>
+        <span class="suite-badge-pro" style="background:rgba(16,185,129,0.1); border-color:rgba(16,185,129,0.3); color:#10b981;">TRACER</span>
+      </div>
+      <div>
+        <h3 class="suite-title">Phishing URL Decoder</h3>
+        <p class="suite-desc">Follow live redirect chains, decode obfuscation, and check the final destination against URLhaus malware feeds in real time.</p>
+      </div>
+      <div class="suite-link-text" style="color:#10b981;">Decode URL <i class="ti ti-arrow-right"></i></div>
+    </a>
+
+    <!-- Card 4: Password Breach Check -->
+    <a href="/password-breach" class="suite-card">
+      <div class="suite-card-top">
+        <div class="suite-icon" style="color:#f59e0b; background:rgba(245,158,11,0.08); border-color:rgba(245,158,11,0.2);"><i class="ti ti-key"></i></div>
+        <span class="suite-badge-pro" style="background:rgba(245,158,11,0.1); border-color:rgba(245,158,11,0.3); color:#f59e0b;">BREACH</span>
+      </div>
+      <div>
+        <h3 class="suite-title">Password Breach Check</h3>
+        <p class="suite-desc">Instantly check if a password appears in any known data breach using the HaveIBeenPwned k-anonymity API — password never leaves your browser in full.</p>
+      </div>
+      <div class="suite-link-text" style="color:#f59e0b;">Check Password <i class="ti ti-arrow-right"></i></div>
+    </a>
   </div>
 
+  <!-- Row 2: AI Risk Advisor centred solo — PRO, eye-catching pulse -->
+  <div style="max-width: 1200px; margin: 28px auto 0; display: flex; justify-content: center;">
+    <a href="/ai-risk-advisor" class="suite-card suite-card-advisor {% if not current_user or current_user.role not in ('admin', 'pro') %}disabled{% endif %}" style="max-width: 560px; width: 100%; position: relative; overflow: visible;">
+      <span class="advisor-pulse-ring"></span>
+      <div class="suite-card-top">
+        <div class="suite-icon" style="color:#f59e0b; background:rgba(245,158,11,0.1); border-color:rgba(245,158,11,0.3);"><i class="ti ti-brain"></i></div>
+        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+          <span class="suite-badge-pro" style="background:rgba(245,158,11,0.15); border-color:rgba(245,158,11,0.5); color:#f59e0b;">
+            <i class="ti ti-crown" style="margin-right:3px; font-size:0.75rem;"></i>
+            {% if current_user and current_user.role in ('admin', 'pro') %}UNLOCKED{% else %}PRO EXCLUSIVE{% endif %}
+          </span>
+          <span style="font-family:var(--font-mono); font-size:0.65rem; color:#f59e0b; opacity:0.7; text-transform:uppercase; letter-spacing:0.08em;">Agentic AI</span>
+        </div>
+      </div>
+      <div>
+        <h3 class="suite-title" style="font-size:1.2rem; {% if not current_user or current_user.role not in ('admin', 'pro') %}color: #64748b;{% endif %}">AI Risk Advisor</h3>
+        <p class="suite-desc" style="{% if not current_user or current_user.role not in ('admin', 'pro') %}color: #475569;{% endif %}">Continuous, agentic risk modeling from your campaign behavior, employee click patterns, reporting culture, and industry benchmarks. Generates personalised remediation roadmaps and predicts your next breach vector before it happens.</p>
+      </div>
+      <div class="suite-link-text" style="{% if not current_user or current_user.role not in ('admin', 'pro') %}color: #475569;{% endif %}">
+        {% if current_user and current_user.role in ('admin', 'pro') %}Open AI Risk Advisor <i class="ti ti-arrow-right"></i>{% else %}Upgrade to unlock <i class="ti ti-lock"></i>{% endif %}
+      </div>
+    </a>
+  </div>
+
+  <style>
+  .suite-card-advisor {
+    border: 1px solid rgba(245,158,11,0.35) !important;
+    animation: advisorPulse 2.8s ease-in-out infinite;
+  }
+  .suite-card-advisor:hover {
+    animation-play-state: paused;
+    box-shadow: 0 0 0 6px rgba(245,158,11,0.18), 0 16px 48px rgba(245,158,11,0.22) !important;
+    transform: translateY(-4px) scale(1.012);
+  }
+  @keyframes advisorPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(245,158,11,0.4), 0 8px 32px rgba(245,158,11,0.08); }
+    50%       { box-shadow: 0 0 0 8px rgba(245,158,11,0), 0 12px 40px rgba(245,158,11,0.18); }
+  }
+  .advisor-pulse-ring {
+    position: absolute; inset: -3px; border-radius: inherit; pointer-events: none;
+    border: 2px solid rgba(245,158,11,0.5);
+    animation: advisorRing 2.8s ease-in-out infinite;
+  }
+  @keyframes advisorRing {
+    0%, 100% { opacity: 0.5; transform: scale(1); }
+    50%       { opacity: 1;   transform: scale(1.005); }
+  }
+  </style>
 </section>
+
 
 <!-- STATS + COMPARE -->
 <section id="stats">
@@ -3172,7 +4524,7 @@ function closeIntelModal() {
 
 /* ── THEME TOGGLE ── */
 (function() {
-  const storageKey = 'phishsim-home-theme';
+  const storageKey = 'phishsim-theme';
   const toggle = document.getElementById('theme-toggle');
   const tooltip = document.getElementById('theme-tooltip');
   let tipTimer;
@@ -3651,8 +5003,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (!e.isIntersecting) return;
                 hssObs.unobserve(e.target);
                 
-                // Target HSS value: 78
-                const targetVal = 78;
+                // Target HSS value: 82
+                const targetVal = 82;
                 const radius = 28;
                 const circumference = 2 * Math.PI * radius; // 175.929
                 const offset = circumference - (targetVal / 100) * circumference;
@@ -3670,7 +5022,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 }, 1800 / targetVal);
             });
-        }, { threshold: 0.15 });
+        }, { threshold: 0.3 });
         const container = document.querySelector('.gauge-container');
         if (container) hssObs.observe(container);
     }
@@ -4153,64 +5505,51 @@ ${body}
 
 
 
-/* ── SCROLLYTELLING LOGIC ── */
-function startAutoScroll() {
-    const btn = document.getElementById('run-simulation-btn');
-    if (!btn) return;
-    const label = btn.querySelector('.run-simulation-label');
-    if (label) label.innerText = 'Initializing AI...';
-    btn.style.opacity = '0.7';
-    btn.style.pointerEvents = 'none';
-    
-    const steps = document.querySelectorAll('.scrolly-step');
-    let delay = 0;
-    steps.forEach((step, index) => {
-        setTimeout(() => {
-            step.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }, delay);
-        delay += 2500; // Scroll to next step every 2.5s
-    });
+/* ── SCROLLYTELLING LOGIC & SNAPPING TIMELINE ── */
+// IntersectionObserver for Snapping Timeline
+const timelinePanels = document.querySelectorAll('.timeline-panel');
+const timelineCounter = document.getElementById('timeline-counter');
+const timelineProgressFill = document.getElementById('timeline-progress-fill');
+const attackFlowSection = document.getElementById('attack-flow');
 
-    setTimeout(() => {
-        if (label) label.innerText = 'Execute Attack Simulation';
-        btn.style.opacity = '1';
-        btn.style.pointerEvents = 'auto';
-    }, delay);
-}
-
-const scrollyCards = document.querySelectorAll('.scrolly-step');
-const attackVisual = document.getElementById('attack-visual');
-const attackProgressBar = document.getElementById('attack-progress-bar');
-let attackAutoScroll = false;
-const scrollyObs = new IntersectionObserver(entries => {
-  entries.forEach(e => {
-    if (e.isIntersecting) {
-        const index = [...scrollyCards].indexOf(e.target);
-        e.target.classList.add('focus');
-        if (attackVisual) attackVisual.dataset.active = String(Math.max(0, index));
-        if (attackProgressBar) attackProgressBar.parentElement.style.setProperty('--attack-step', String(index + 1));
+if (timelinePanels.length && timelineCounter && timelineProgressFill && attackFlowSection) {
+  const timelineObs = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        const stepNum = parseInt(e.target.dataset.step);
+        
+        // Mark active panel
+        timelinePanels.forEach(p => p.classList.remove('active'));
+        e.target.classList.add('active');
+        
+        // Update counter
+        timelineCounter.textContent = `STEP ${stepNum} OF 6`;
+        
+        // Update fill height
+        const percent = ((stepNum) / 6) * 100;
+        timelineProgressFill.style.height = `${percent}%`;
+        
+        // Print scrolly step log (terminal heartbeat integration)
         if (typeof printScrollyStepLog === 'function') {
-            printScrollyStepLog(index);
+          printScrollyStepLog(stepNum - 1);
         }
-    } else {
-        e.target.classList.remove('focus');
-    }
-  });
-}, { threshold: 0.5, rootMargin: "-10% 0px -40% 0px" });
+      }
+    });
+  }, { threshold: 0.45 });
 
-scrollyCards.forEach(card => scrollyObs.observe(card));
+  timelinePanels.forEach(p => timelineObs.observe(p));
 
-if (attackVisual && scrollyCards.length) {
-  attackVisual.querySelector('.attack-core')?.addEventListener('click', async () => {
-    if (attackAutoScroll) return;
-    attackAutoScroll = true;
-    for (const card of scrollyCards) {
-      const top = card.getBoundingClientRect().top + window.scrollY - (window.innerHeight * 0.34);
-      window.scrollTo({ top, behavior: 'smooth' });
-      await new Promise(resolve => setTimeout(resolve, 950));
-    }
-    attackAutoScroll = false;
-  });
+  // Show/Hide floating counter
+  const flowSectionObs = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        timelineCounter.classList.add('visible');
+      } else {
+        timelineCounter.classList.remove('visible');
+      }
+    });
+  }, { threshold: 0.1 });
+  flowSectionObs.observe(attackFlowSection);
 }
 
 /* ── INTERSECTION OBSERVER (REVEAL) ── */
@@ -4273,7 +5612,7 @@ const heroStatObs = new IntersectionObserver(entries => {
     requestAnimationFrame(tick);
     heroStatObs.unobserve(el);
   });
-}, { threshold: 0.5 });
+}, { threshold: 0.3 });
 heroStats.forEach(el => heroStatObs.observe(el));
 
 
@@ -4454,10 +5793,61 @@ const solutionsIntel = {
   }
 };
 
+// ── Attack Chain Walk-Through ──────────────────────────────────────────
+let _walkTimer = null;
+function startAttackChainWalkthrough() {
+  const btn   = document.getElementById('walkthrough-btn');
+  const label = document.getElementById('walkthrough-label');
+  const icon  = document.getElementById('walkthrough-icon');
+  const panels = Array.from(document.querySelectorAll('.timeline-panel'));
+  if (!panels.length) return;
+
+  // Stop if already running
+  if (_walkTimer !== null) {
+    clearTimeout(_walkTimer);
+    _walkTimer = null;
+    label.textContent = 'Walk Me Through';
+    icon.className = 'ti ti-player-play';
+    btn.style.animation = 'walkBtnPulse 3s ease-in-out infinite';
+    return;
+  }
+
+  label.textContent = 'Stop';
+  icon.className = 'ti ti-player-stop';
+  btn.style.animation = 'none';
+
+  // Scroll to attack-flow section first
+  document.getElementById('attack-flow')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  let step = 0;
+  const totalSteps = panels.length;
+  const counter = document.getElementById('timeline-counter');
+
+  function walkStep() {
+    if (step >= totalSteps) {
+      // Done
+      _walkTimer = null;
+      label.textContent = 'Walk Me Through';
+      icon.className = 'ti ti-player-play';
+      btn.style.animation = 'walkBtnPulse 3s ease-in-out infinite';
+      return;
+    }
+    panels[step].scrollIntoView({ behavior: 'smooth', block: 'center' });
+    if (counter) counter.textContent = `STEP ${step + 1} OF ${totalSteps}`;
+    step++;
+    _walkTimer = setTimeout(walkStep, 1400);
+  }
+
+  // Small delay so the section scroll settles first
+  _walkTimer = setTimeout(walkStep, 600);
+}
+// ────────────────────────────────────────────────────────────────────────
+
 let currentOpenSolutionKey = null;
 let solutionsTypewriterTimeout = null;
 
 function toggleSolutionsDrawer(event, key, accentColor) {
+
   event.preventDefault();
   event.stopPropagation();
   const drawer = document.getElementById('solutions-drawer');
@@ -4713,10 +6103,18 @@ document.addEventListener("DOMContentLoaded", () => {
     let dotX = mouseX;
     let dotY = mouseY;
     const speed = 0.15;
+    let hasMoved = false;
+    dot.style.opacity = "0";
 
     document.addEventListener("mousemove", (e) => {
         mouseX = e.clientX;
         mouseY = e.clientY;
+        if (!hasMoved) {
+            dotX = mouseX;
+            dotY = mouseY;
+            dot.style.opacity = "1";
+            hasMoved = true;
+        }
     });
 
     function animateDot() {

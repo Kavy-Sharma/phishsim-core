@@ -4,7 +4,7 @@
 <style>
 /* Removed hardcoded body background */
 
-.dash-page { padding: clamp(1.5rem, 3vw, 3rem); width: min(100%, 1500px); margin: 0 auto; box-sizing: border-box; }
+.dash-page { padding: 4.5rem clamp(1.5rem, 3vw, 3rem) clamp(1.5rem, 3vw, 3rem); width: min(100%, 1500px); margin: 0 auto; box-sizing: border-box; }
 
 /* Animated header */
 .dash-hero {
@@ -12,13 +12,12 @@
     padding: 2.5rem 0 2rem 0;
     border-bottom: 1px solid rgba(255,255,255,0.05);
     margin-bottom: 2.5rem;
-    animation: fadeInDown 0.6s ease-out forwards;
+    animation: fadeInDown 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 .dash-hero h1 {
     font-family: var(--font-sans); font-size: 2.5rem;
     font-weight: 800; margin: 0;
-    background: linear-gradient(135deg, var(--text-main) 40%, #06b6d4);
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    color: var(--text-main);
 }
 .dash-hero p { color: #64748b; margin: 0.4rem 0 0; font-size: 1rem; }
 
@@ -31,15 +30,15 @@
     background: var(--surface);
     border: 1px solid var(--border-color, rgba(255,255,255,0.05));
     border-radius: 16px; padding: 1.5rem;
-    text-align: center; transition: all 0.3s ease;
-    animation: fadeInUp 0.6s ease-out forwards;
+    text-align: center; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     opacity: 0;
     position: relative; overflow: visible;
 }
 .summary-stat::before {
     content: ''; position: absolute; inset: 0;
     background: radial-gradient(circle at top left, rgba(6,182,212,0.08), transparent 70%);
-    opacity: 0; transition: opacity 0.4s;
+    opacity: 0; transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .summary-stat:hover { transform: translateY(-4px); border-color: rgba(6,182,212,0.3); }
 .summary-stat:hover::before { opacity: 1; }
@@ -57,7 +56,7 @@
     background: var(--surface);
     border: 1px dashed var(--border-color, rgba(255,255,255,0.1));
     border-radius: 24px;
-    animation: fadeInUp 0.7s ease-out forwards;
+    animation: fadeInUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 .dash-empty i { font-size: 4rem; color: #334155; margin-bottom: 1.5rem; }
 .dash-empty h3 { font-family: var(--font-sans); font-size: 1.8rem; color: var(--text-main); margin-bottom: 0.8rem; }
@@ -70,8 +69,8 @@
     background: var(--surface);
     border: 1px solid var(--border-color, rgba(255,255,255,0.07));
     border-radius: 20px; padding: 1.8rem;
-    transition: all 0.4s cubic-bezier(0.25,1,0.5,1);
-    animation: fadeInUp 0.6s ease-out forwards; opacity: 0;
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0;
     position: relative; overflow: hidden;
 }
 .camp-card:hover { transform: translateY(-6px); border-color: rgba(6,182,212,0.3); box-shadow: 0 20px 50px rgba(0,0,0,0.5), 0 0 30px rgba(6,182,212,0.08); }
@@ -79,7 +78,7 @@
     content: ''; position: absolute; top: 0; left: 0; right: 0;
     height: 2px;
     background: linear-gradient(90deg, transparent, #06b6d4, transparent);
-    opacity: 0; transition: opacity 0.3s;
+    opacity: 0; transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .camp-card:hover::after { opacity: 1; }
 
@@ -128,14 +127,14 @@
     padding: 12px; border-radius: 10px;
     font-family: var(--font-sans); font-weight: 700;
     font-size: 0.95rem; text-align: center; cursor: pointer;
-    border: none; transition: all 0.3s ease;
+    border: none; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     text-decoration: none; margin-bottom: 8px;
     position: relative; overflow: hidden;
 }
 .camp-action-btn::before {
     content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
     background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
-    transition: left 0.4s ease;
+    transition: left 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .camp-action-btn:hover::before { left: 100%; }
 .btn-launch { background: linear-gradient(135deg, #06b6d4, #3b82f6); color: #fff; }
@@ -226,12 +225,12 @@
     background: linear-gradient(135deg, #06b6d4, #3b82f6);
     color: #fff; font-family: var(--font-sans);
     font-weight: 700; font-size: 0.95rem; text-decoration: none;
-    transition: all 0.3s ease; position: relative; overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); position: relative; overflow: hidden;
 }
 .hero-new-btn::before {
     content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
     background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
-    transition: left 0.5s;
+    transition: left 0.5s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .hero-new-btn:hover::before { left: 100%; }
 .hero-new-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(6,182,212,0.4); }
@@ -248,7 +247,7 @@
     display: flex; align-items: center; gap: 10px;
     padding: 12px 16px; border: 1px dashed rgba(6,182,212,0.3);
     border-radius: 10px; cursor: pointer; color: #94a3b8;
-    font-size: 0.9rem; transition: all 0.3s;
+    font-size: 0.9rem; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     background: rgba(6,182,212,0.03);
 }
 .file-upload-label:hover { border-color: rgba(6,182,212,0.6); color: #06b6d4; background: rgba(6,182,212,0.06); }
@@ -303,7 +302,7 @@
     padding: 10px 20px; border-radius: 10px;
     background: #0f172a; color: #fff;
     font-family: var(--font-sans); font-weight: 700; font-size: 0.9rem;
-    border: none; cursor: pointer; transition: all 0.2s;
+    border: none; cursor: pointer; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .board-exit-btn:hover { background: #1e293b; }
 
@@ -384,7 +383,7 @@
     border: none !important;
     padding: 0 !important;
     margin-top: 2rem;
-    animation: fadeInUp 0.6s ease-out 0.4s forwards; opacity: 0;
+    animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.4s forwards; opacity: 0;
 }
 .risk-trend-card h2 {
     font-family: var(--font-sans); font-size: 1.3rem; color: var(--text-main);
@@ -406,7 +405,7 @@
     border: 1px solid rgba(6,182,212,0.2);
     border-radius: 16px;
     overflow: hidden;
-    animation: fadeInUp 0.7s ease-out 0.3s forwards;
+    animation: fadeInUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.3s forwards;
     opacity: 0;
 }
 .ai-stream-header {
@@ -441,7 +440,7 @@
     background: rgba(255,255,255,0.02);
     border-left: 2px solid transparent;
     font-size: 0.75rem; line-height: 1.5;
-    animation: slideInRight 0.3s ease-out;
+    animation: slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 @keyframes slideInRight { from { opacity:0; transform:translateX(10px); } to { opacity:1; transform:translateX(0); } }
 .ai-log-entry.type-ai   { border-color: #06b6d4; }
@@ -450,6 +449,22 @@
 .ai-log-time { color: #475569; font-family: var(--font-mono); flex-shrink: 0; font-size: 0.68rem; margin-top: 1px; }
 .ai-log-text { color: #94a3b8; }
 .ai-log-text strong { color: var(--text-main); }
+.btn-show-all {
+    background: rgba(6, 182, 212, 0.08);
+    border: 1px solid rgba(6, 182, 212, 0.3);
+    color: #06b6d4;
+    padding: 10px 24px;
+    border-radius: 8px;
+    font-family: var(--font-sans);
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.btn-show-all:hover {
+    background: rgba(6, 182, 212, 0.15);
+    box-shadow: 0 0 10px rgba(6, 182, 212, 0.2);
+}
 </style>
 
 <div class="dash-page">
@@ -461,7 +476,7 @@
         </div>
         <div style="display:flex; gap:0.8rem; align-items:center; flex-wrap:wrap;">
             <a href="/new-campaign" class="hero-new-btn">
-                <i class="fas fa-plus"></i> New Campaign
+                <i class="ti ti-plus"></i> New Campaign
             </a>
         </div>
     </div>
@@ -479,7 +494,7 @@
                     stroke-width="12" stroke-linecap="round"
                     stroke-dasharray="364.4"
                     stroke-dashoffset="{{ 364.4 - (364.4 * global_hss.score / 100) | round(1) }}"
-                    style="transition: stroke-dashoffset 1.2s cubic-bezier(0.25,1,0.5,1);"/>
+                    style="transition: stroke-dashoffset 1.2s cubic-bezier(0.16, 1, 0.3, 1);"/>
             </svg>
             <div>
                 <div class="ring-num" style="color:{% if global_hss.tier == 'green' %}#22c55e{% elif global_hss.tier == 'amber' %}#f59e0b{% else %}#ef4444{% endif %};">{{ global_hss.score }}</div>
@@ -498,7 +513,7 @@
             </h2>
             <p>Your organisation's overall phishing resistance score based on click rate, open rate, reporting behaviour, and repeat offenders across all campaigns.</p>
             <div class="board-hss-badge board-badge-{{ global_hss.tier }}">
-                <i class="fas fa-{% if global_hss.tier == 'green' %}check-circle{% elif global_hss.tier == 'amber' %}exclamation-circle{% else %}exclamation-triangle{% endif %}"></i>
+                <i class="ti ti-{% if global_hss.tier == 'green' %}circle-check{% elif global_hss.tier == 'amber' %}alert-circle{% else %}alert-triangle{% endif %}"></i>
                 {{ global_hss.label }} &mdash; {{ global_hss.score }}/100
             </div>
         </div>
@@ -507,7 +522,7 @@
 
     <div class="dash-summary" style="margin-bottom: 2.2rem;">
         <div class="summary-stat">
-            <div class="s-icon" style="color: #3b82f6;"><i class="fas fa-layer-group"></i></div>
+            <div class="s-icon" style="color: #3b82f6;"><i class="ti ti-layers"></i></div>
             <div class="s-num">{{ global_stats.total_campaigns }}</div>
             <div class="s-label" style="display:flex; align-items:center; justify-content:center; gap:6px;">
                 Active Campaigns
@@ -520,7 +535,7 @@
             </div>
         </div>
         <div class="summary-stat">
-            <div class="s-icon" style="color: #a855f7;"><i class="fas fa-users"></i></div>
+            <div class="s-icon" style="color: #a855f7;"><i class="ti ti-users"></i></div>
             <div class="s-num">{{ global_stats.total_employees }}</div>
             <div class="s-label" style="display:flex; align-items:center; justify-content:center; gap:6px;">
                 Total Targets
@@ -533,7 +548,7 @@
             </div>
         </div>
         <div class="summary-stat" style="border-color: rgba(239, 68, 68, 0.4); box-shadow: inset 0 0 20px rgba(239, 68, 68, 0.05);">
-            <div class="s-icon" style="color: #ef4444;"><i class="fas fa-exclamation-triangle"></i></div>
+            <div class="s-icon" style="color: #ef4444;"><i class="ti ti-alert-triangle"></i></div>
             <div class="s-num" style="color: #fca5a5;">{{ global_stats.global_risk }}%</div>
             <div class="s-label" style="color: #fca5a5; display:flex; align-items:center; justify-content:center; gap:6px;">
                 Global Risk Score
@@ -546,7 +561,7 @@
             </div>
         </div>
         <div class="summary-stat">
-            <div class="s-icon" style="color: #22c55e;"><i class="fas fa-shield-alt"></i></div>
+            <div class="s-icon" style="color: #22c55e;"><i class="ti ti-shield"></i></div>
             <div class="s-num">{{ global_stats.total_reports }}</div>
             <div class="s-label" style="display:flex; align-items:center; justify-content:center; gap:6px;">
                 Security Reports
@@ -600,25 +615,60 @@
         <!-- Left: campaigns -->
         <div>
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-                <h2 style="color: var(--text-main); font-family: var(--font-sans); font-size: 1.5rem; margin: 0;">Your Campaigns</h2>
+                <h2 style="color: var(--text-main); font-family: var(--font-sans); font-size: 1.5rem; margin: 0; display: flex; align-items: center; gap: 8px;">
+                    Your Campaigns
+                    {% if current_user.company_domain == 'demo-corp.com' %}
+                    <span style="font-family: var(--font-mono); font-size: 9px; font-weight: 700; background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); color: #f59e0b; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.5px;">DEMO DATA</span>
+                    {% endif %}
+                </h2>
                 <div style="display: flex; gap: 0.8rem; align-items: center;">
                     <button type="button" id="manage-toggle" onclick="toggleManageMode()"
                         style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;
                                border-radius:8px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);
                                color:#94a3b8;font-size:0.85rem;cursor:pointer;font-family:var(--font-sans);
-                               transition:all 0.2s;">
-                        <i class="fas fa-sliders"></i> Manage
+                               transition:all 0.2s cubic-bezier(0.16, 1, 0.3, 1);">
+                        <i class="ti ti-settings"></i> Manage
                     </button>
                     <button type="button" id="delete-selected"
                         onclick="confirmBulkDelete()"
                         style="display:none;padding:8px 16px;border-radius:8px;
                                background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);
                                color:#f87171;font-size:0.85rem;cursor:pointer;font-family:var(--font-sans);
-                               transition:all 0.2s;">
-                        <i class="fas fa-trash-alt"></i> Delete Selected (<span id="selected-count">0</span>)
+                               transition:all 0.2s cubic-bezier(0.16, 1, 0.3, 1);">
+                        <i class="ti ti-trash"></i> Delete Selected (<span id="selected-count">0</span>)
                     </button>
                 </div>
             </div>
+
+            {% if current_user.company_domain == 'demo-corp.com' %}
+            <!-- Sticky Summary Bar -->
+            <div class="demo-summary-bar" style="position: sticky; top: 80px; z-index: 100; background: rgba(8, 12, 26, 0.95); border: 1px solid rgba(6, 182, 212, 0.25); border-radius: 12px; padding: 16px; margin-bottom: 24px; backdrop-filter: blur(12px); box-shadow: 0 10px 30px rgba(0,0,0,0.5); display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; text-align: center;">
+                <div style="padding: 4px;">
+                    <div style="font-size: 0.65rem; color: #94a3b8; font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Total Campaigns</div>
+                    <div style="font-size: 1.35rem; font-weight: 700; color: #fff; font-family: var(--font-sans);">{{ demo_summary.total_campaigns }}</div>
+                </div>
+                <div style="border-left: 1px solid rgba(255,255,255,0.08); padding: 4px;">
+                    <div style="font-size: 0.65rem; color: #94a3b8; font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Avg Click Rate</div>
+                    <div style="font-size: 1.35rem; font-weight: 700; color: #ef4444; font-family: var(--font-sans);">{{ demo_summary.avg_click_rate }}%</div>
+                </div>
+                <div style="border-left: 1px solid rgba(255,255,255,0.08); padding: 4px; min-width: 0;">
+                    <div style="font-size: 0.65rem; color: #94a3b8; font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Best Performing</div>
+                    {% if demo_summary.best_campaign %}
+                    <div style="font-size: 0.85rem; font-weight: 700; color: #10b981; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: var(--font-sans); margin-top: 4px;" title="{{ demo_summary.best_campaign.name }} ({{ demo_summary.best_campaign.click_rate }}% Clicks)">{{ demo_summary.best_campaign.name }} ({{ demo_summary.best_campaign.click_rate }}%)</div>
+                    {% else %}
+                    <div style="font-size: 0.85rem; font-weight: 700; color: #64748b; font-family: var(--font-sans); margin-top: 4px;">N/A</div>
+                    {% endif %}
+                </div>
+                <div style="border-left: 1px solid rgba(255,255,255,0.08); padding: 4px; min-width: 0;">
+                    <div style="font-size: 0.65rem; color: #94a3b8; font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Worst Performing</div>
+                    {% if demo_summary.worst_campaign %}
+                    <div style="font-size: 0.85rem; font-weight: 700; color: #ef4444; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: var(--font-sans); margin-top: 4px;" title="{{ demo_summary.worst_campaign.name }} ({{ demo_summary.worst_campaign.click_rate }}% Clicks)">{{ demo_summary.worst_campaign.name }} ({{ demo_summary.worst_campaign.click_rate }}%)</div>
+                    {% else %}
+                    <div style="font-size: 0.85rem; font-weight: 700; color: #64748b; font-family: var(--font-sans); margin-top: 4px;">N/A</div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
 
             <form id="bulk-delete-form" action="/delete-campaigns" method="POST" style="display: none;">
                 <input type="hidden" name="campaign_ids" id="selected-ids">
@@ -626,7 +676,8 @@
 
             <div class="camp-grid">
                 {% for camp in campaigns %}
-                <div class="camp-card" style="animation-delay: {{ loop.index0 * 0.1 }}s;"
+                <div class="camp-card {% if current_user.company_domain == 'demo-corp.com' and loop.index > 4 %}demo-hidden-camp{% endif %}" 
+                     style="animation-delay: {{ loop.index0 * 0.05 }}s; {% if current_user.company_domain == 'demo-corp.com' and loop.index > 4 %}display: none;{% endif %}"
                      data-status="{{ camp.status }}">
                     <!-- Card Top: Name + Badges -->
                     <div class="camp-card-top">
@@ -636,22 +687,22 @@
                             <div style="flex:1; min-width:0;">
                                 <h3 class="camp-name" style="margin-top: 0;">{{ camp.name }}</h3>
                                 {% if current_user.role == 'admin' %}
-                                <div class="camp-owner"><i class="fas fa-user"></i> {{ camp.owner_name or 'Unknown user' }} · {{ camp.owner_email or 'no email' }}</div>
+                                <div class="camp-owner"><i class="ti ti-user"></i> {{ camp.owner_name or 'Unknown user' }} · {{ camp.owner_email or 'no email' }}</div>
                                 {% endif %}
                                 <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:6px;">
                                     <span class="badge-cyber badge-{% if camp.status == 'launched' %}launched{% elif camp.status == 'launched_with_errors' %}warning{% elif camp.status == 'failed' %}failed{% elif camp.status == 'launching' %}launching{% elif camp.status == 'scheduled' %}scheduled{% else %}draft{% endif %}">
-                                        <i class="fas fa-{% if camp.status == 'launched' %}check-circle{% elif camp.status == 'failed' %}times-circle{% elif camp.status == 'launching' %}spinner fa-spin{% elif camp.status == 'scheduled' %}clock{% else %}circle{% endif %}"></i>
+                                        <i class="ti ti-{% if camp.status == 'launched' %}circle-check{% elif camp.status == 'failed' %}circle-x{% elif camp.status == 'launching' %}loader animate-spin{% elif camp.status == 'scheduled' %}clock{% else %}circle{% endif %}"></i>
                                         {{ camp.status.replace('_', ' ') }}
                                     </span>
                                     {% set mode = camp.delivery_mode or 'local' %}
                                     {% if mode == 'smtp' %}
-                                        <span class="badge-cyber" style="background:rgba(59,130,246,0.1); color:#60a5fa; border:1px solid rgba(59,130,246,0.25);"><i class="fas fa-paper-plane"></i> Live Send</span>
+                                        <span class="badge-cyber" style="background:rgba(59,130,246,0.1); color:#60a5fa; border:1px solid rgba(59,130,246,0.25);"><i class="ti ti-send"></i> Live Send</span>
                                     {% elif mode == 'mailtrap' %}
-                                        <span class="badge-cyber" style="background:rgba(16,185,129,0.1); color:#34d399; border:1px solid rgba(16,185,129,0.25);"><i class="fas fa-shield-halved"></i> Safe Send</span>
+                                        <span class="badge-cyber" style="background:rgba(16,185,129,0.1); color:#34d399; border:1px solid rgba(16,185,129,0.25);"><i class="ti ti-shield-check"></i> Safe Send</span>
                                     {% elif mode == 'preview' %}
-                                        <span class="badge-cyber" style="background:rgba(168,85,247,0.1); color:#c084fc; border:1px solid rgba(168,85,247,0.25);"><i class="fas fa-eye"></i> Preview</span>
+                                        <span class="badge-cyber" style="background:rgba(168,85,247,0.1); color:#c084fc; border:1px solid rgba(168,85,247,0.25);"><i class="ti ti-eye"></i> Preview</span>
                                     {% else %}
-                                        <span class="badge-cyber" style="background:rgba(6,182,212,0.1); color:#22d3ee; border:1px solid rgba(6,182,212,0.25);"><i class="fas fa-flask"></i> Sandbox</span>
+                                        <span class="badge-cyber" style="background:rgba(6,182,212,0.1); color:#22d3ee; border:1px solid rgba(6,182,212,0.25);"><i class="ti ti-flask"></i> Sandbox</span>
                                     {% endif %}
                                 </div>
                             </div>
@@ -670,30 +721,30 @@
                         <p class="step-label">Step 1 — Upload Targets</p>
                         <p class="step-desc">Upload a CSV of employee email addresses to prepare the simulation.</p>
                         <a href="/new-campaign/upload/{{ camp.id }}" class="camp-action-btn btn-upload" style="display:flex; align-items:center; justify-content:center; gap:8px; text-decoration:none;">
-                            <i class="fas fa-upload"></i> Add / Harvest Targets
+                            <i class="ti ti-upload"></i> Add / Harvest Targets
                         </a>
                         {% else %}
                         <p class="step-label">Step 2 — Launch Simulation</p>
                         <p class="step-desc">Ready to test {{ camp.employee_count }} target employees. AI agents are primed.</p>
                         <form action="/launch-campaign/{{ camp.id }}" method="POST">
-                            <button type="submit" class="camp-action-btn btn-launch"><i class="fas fa-rocket"></i> Launch Campaign</button>
+                            <button type="submit" class="camp-action-btn btn-launch"><i class="ti ti-rocket"></i> Launch Campaign</button>
                         </form>
                         {% endif %}
 
                     {% elif camp.status == 'failed' %}
                     <div style="background: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 12px; padding: 1.2rem; margin-top: 1rem;">
-                        <p style="color:#fca5a5; font-weight:700; margin-bottom:6px!important;"><i class="fas fa-exclamation-circle"></i> Launch Failed</p>
+                        <p style="color:#fca5a5; font-weight:700; margin-bottom:6px!important;"><i class="ti ti-alert-circle"></i> Launch Failed</p>
                         <p style="color:#cbd5e1; font-size:0.9rem; margin-bottom:0;">
                             {{ camp.error_message or 'An unknown error occurred during AI generation or delivery setup.' }}
                         </p>
                     </div>
                     <form action="/launch-campaign/{{ camp.id }}" method="POST" style="margin-top:0.8rem;">
-                        <button type="submit" class="camp-action-btn btn-launch"><i class="fas fa-redo"></i> Retry Launch</button>
+                        <button type="submit" class="camp-action-btn btn-launch"><i class="ti ti-refresh"></i> Retry Launch</button>
                     </form>
 
                     {% elif camp.status == 'launching' %}
                     <div style="background: rgba(168, 85, 247, 0.05); border: 1px solid rgba(168, 85, 247, 0.2); border-radius: 12px; padding: 1.2rem; margin-top: 1rem;">
-                        <p style="color:#c084fc; font-weight:700; margin-bottom:6px!important;"><i class="fas fa-spinner fa-spin"></i> Generating Campaign</p>
+                        <p style="color:#c084fc; font-weight:700; margin-bottom:6px!important;"><i class="ti ti-loader animate-spin"></i> Generating Campaign</p>
                         <p style="color:#cbd5e1; font-size:0.9rem; margin-bottom:0;">
                             AI agents are synthesizing target profiles and crafting custom phishing templates...
                         </p>
@@ -701,14 +752,14 @@
 
                     {% elif camp.status == 'scheduled' %}
                     <div style="background: rgba(234, 179, 8, 0.05); border: 1px solid rgba(234, 179, 8, 0.2); border-radius: 12px; padding: 1.2rem; margin-top: 1rem;">
-                        <p style="color:#facc15; font-weight:700; margin-bottom:6px!important;"><i class="fas fa-calendar-alt"></i> Scheduled Automation</p>
+                        <p style="color:#facc15; font-weight:700; margin-bottom:6px!important;"><i class="ti ti-calendar"></i> Scheduled Automation</p>
                         <p style="color:#cbd5e1; font-size:0.9rem;">
                             <strong>Frequency:</strong> {{ camp.schedule_frequency.title() }}<br>
                             <strong>Next Run:</strong> {{ camp.scheduled_at.strftime('%Y-%m-%d %H:%M') if camp.scheduled_at else 'Pending' }}
                         </p>
                     </div>
                     <form action="/launch-campaign/{{ camp.id }}" method="POST" style="margin-top:0.8rem;">
-                        <button type="submit" class="camp-action-btn btn-launch"><i class="fas fa-rocket"></i> Launch Now (Override)</button>
+                        <button type="submit" class="camp-action-btn btn-launch"><i class="ti ti-rocket"></i> Launch Now (Override)</button>
                     </form>
 
                     {% elif camp.status in ['launched', 'launched_with_errors'] %}
@@ -731,30 +782,47 @@
                     <!-- Preview: show inbox button prominently -->
                     <a href="/campaign-emails/{{ camp.id }}" class="camp-action-btn"
                        style="background:linear-gradient(135deg,rgba(168,85,247,0.2),rgba(168,85,247,0.1));color:#c084fc;border:1px solid rgba(168,85,247,0.35);margin-bottom:8px;">
-                        <i class="fas fa-inbox"></i> View Generated Inbox
+                        <i class="ti ti-inbox"></i> View Generated Inbox
                     </a>
                     {% else %}
-                    <a href="/campaign-emails/{{ camp.id }}" class="camp-action-btn" style="background: rgba(59,130,246,0.1); color: #60a5fa; border: 1px solid rgba(59,130,246,0.3); margin-bottom: 8px;"><i class="fas fa-envelope-open-text"></i> View AI Emails</a>
+                    <a href="/campaign-emails/{{ camp.id }}" class="camp-action-btn" style="background: rgba(59,130,246,0.1); color: #60a5fa; border: 1px solid rgba(59,130,246,0.3); margin-bottom: 8px;"><i class="ti ti-mail-opened"></i> View AI Emails</a>
                     {% endif %}
-                    <a href="/campaign-report/{{ camp.id }}" class="camp-action-btn btn-report"><i class="fas fa-file-alt"></i> View AI Report</a>
+                    <a href="/campaign-report/{{ camp.id }}" class="camp-action-btn btn-report"><i class="ti ti-file-text"></i> View AI Report</a>
                     {% endif %}
 
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 1.2rem;">
                         <form action="/clone-campaign/{{ camp.id }}" method="POST">
-                            <button type="submit" class="camp-action-btn btn-retry" style="margin-bottom:0;"><i class="fas fa-copy"></i> Clone</button>
+                            <button type="submit" class="camp-action-btn btn-retry" style="margin-bottom:0;"><i class="ti ti-copy"></i> Clone</button>
                         </form>
                         <form action="/delete-campaign/{{ camp.id }}" method="POST" data-confirm-title="Delete campaign?" data-confirm-message="This will permanently delete this campaign, its targets, generated emails, and events.">
-                            <button type="submit" class="camp-action-btn btn-delete" style="margin-bottom:0;"><i class="fas fa-trash-alt"></i> Delete</button>
+                            <button type="submit" class="camp-action-btn btn-delete" style="margin-bottom:0;"><i class="ti ti-trash"></i> Delete</button>
                         </form>
                     </div>
                 </div><!-- end camp-card -->
                 {% endfor %}
             </div><!-- end camp-grid -->
 
+            {% if current_user.company_domain == 'demo-corp.com' and campaigns | length > 4 %}
+            <div style="text-align: center; margin-top: 24px; margin-bottom: 12px;" id="show-all-btn-container">
+                <button type="button" class="btn-show-all" onclick="showAllCampaigns()">
+                    Show all campaigns ({{ campaigns | length }})
+                </button>
+            </div>
+            <script>
+            function showAllCampaigns() {
+                document.querySelectorAll('.demo-hidden-camp').forEach(el => {
+                    el.style.display = 'block';
+                    el.style.animationDelay = '0s';
+                });
+                document.getElementById('show-all-btn-container').style.display = 'none';
+            }
+            </script>
+            {% endif %}
+
             <!-- Risk Trend chart -->
             {% if risk_trend | length >= 2 %}
             <div class="risk-trend-card" style="margin-top: 2rem; padding: 2rem;">
-                <h2><i class="fas fa-chart-line" style="color:#06b6d4;"></i> Security Score™ Trend</h2>
+                <h2><i class="ti ti-chart-line" style="color:#06b6d4;"></i> Security Score™ Trend</h2>
                 <p style="color:#64748b; font-size:0.88rem; margin:-1rem 0 1.2rem;">
                     How your organisation's Human Security Score™ changes across campaigns.
                 </p>
@@ -765,13 +833,41 @@
             {% endif %}
         </div><!-- end left col -->
 
-        <!-- Right: AI Simulation Stream -->
-        <div class="ai-stream-panel">
-            <div class="ai-stream-header">
-                <div class="live-dot"></div>
-                <span>AI Simulation Stream</span>
+        <!-- Right: AI Simulation Stream & Upgrade Nudge -->
+        <div style="display: flex; flex-direction: column; gap: 24px;">
+            {% if current_user.role not in ('admin', 'pro') %}
+            <!-- PRO UPGRADE NUDGE CARD -->
+            <div class="nc-card" style="padding: 1.5rem; background: linear-gradient(135deg, rgba(6, 182, 212, 0.08) 0%, rgba(59, 130, 246, 0.05) 100%); border: 1px dashed rgba(6, 182, 212, 0.3); border-radius: 16px; position: relative; overflow: hidden; animation: cardEntrance 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;">
+                <div style="position: absolute; top: -20px; right: -20px; width: 80px; height: 80px; background: radial-gradient(circle, rgba(6,182,212,0.15) 0%, transparent 70%); border-radius: 50%;"></div>
+                
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+                    <div style="background: rgba(6, 182, 212, 0.15); width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #06b6d4;">
+                        <i class="ti ti-crown" style="font-size: 1.25rem;"></i>
+                    </div>
+                    <span style="font-size: 0.72rem; font-weight: 800; color: #06b6d4; text-transform: uppercase; letter-spacing: 0.05em; font-family: var(--font-mono);">Upgrade to PRO</span>
+                </div>
+                
+                <h3 style="font-family: var(--font-sans); font-size: 1.15rem; font-weight: 700; color: var(--text-main); margin: 0 0 6px 0; line-height: 1.3;">Unlock Full Capabilities</h3>
+                <p style="color: #64748b; font-size: 0.82rem; margin: 0 0 16px 0; line-height: 1.45;">
+                    Unlock automated recurring scheduling, live SMTP dispatch, PDF report downloads, and advanced telemetry analytics for up to 50 target employees.
+                </p>
+                
+                <a href="/billing" style="display: flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; padding: 12px 18px; font-size: 0.85rem; border-radius: 8px; background: linear-gradient(135deg, #3b82f6, #06b6d4); color: #fff; border: none; font-family: var(--font-sans); font-weight: 800; cursor: pointer; transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1); text-transform: uppercase; box-shadow: 0 4px 12px rgba(6,182,212,0.25);">
+                    Get PhishSim.ai PRO <i class="ti ti-arrow-right" style="font-size: 0.95rem;"></i>
+                </a>
             </div>
-            <div class="ai-stream-body" id="ai-stream-body"></div>
+            {% endif %}
+
+            <div class="ai-stream-panel">
+                <div class="ai-stream-header" style="flex-direction: column; align-items: flex-start; gap: 4px;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <div class="live-dot"></div>
+                        <span>AI Simulation Stream</span>
+                    </div>
+                    <div style="font-size: 0.65rem; color: #64748b; font-family: var(--font-sans); text-transform: none; letter-spacing: 0;">Illustrative simulation telemetry example logs</div>
+                </div>
+                <div class="ai-stream-body" id="ai-stream-body"></div>
+            </div>
         </div>
 
     </div><!-- end dash-main-row -->
@@ -834,12 +930,12 @@
         });
 
         if (manageActive) {
-            btn.innerHTML = '<i class="fas fa-check"></i> Done';
+            btn.innerHTML = '<i class="ti ti-check"></i> Done';
             btn.style.background = "rgba(6,182,212,0.12)";
             btn.style.borderColor = "rgba(6,182,212,0.4)";
             btn.style.color = "#22d3ee";
         } else {
-            btn.innerHTML = '<i class="fas fa-sliders"></i> Manage';
+            btn.innerHTML = '<i class="ti ti-settings"></i> Manage';
             btn.style.background = "rgba(255,255,255,0.05)";
             btn.style.borderColor = "rgba(255,255,255,0.1)";
             btn.style.color = "#94a3b8";

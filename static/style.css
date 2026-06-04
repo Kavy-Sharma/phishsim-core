@@ -31,6 +31,21 @@
     box-sizing: border-box;
 }
 
+/* ── Global fancy scrollbar — dark track, teal thumb ── */
+/* Applied at html level so it catches the page scrollbar in all Chromium browsers */
+html::-webkit-scrollbar { width: 8px; height: 8px; }
+html::-webkit-scrollbar-track { background: #05070f; border-radius: 0; }
+html::-webkit-scrollbar-thumb { background: rgba(6,182,212,0.5); border-radius: 4px; border: 2px solid #05070f; background-clip: padding-box; }
+html::-webkit-scrollbar-thumb:hover { background: rgba(6,182,212,0.85); border: 2px solid #05070f; background-clip: padding-box; }
+/* Inner scrollable containers */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: rgba(2,6,23,0.6); border-radius: 3px; }
+::-webkit-scrollbar-thumb { background: rgba(6,182,212,0.4); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(6,182,212,0.75); }
+::-webkit-scrollbar-corner { background: transparent; }
+/* Firefox — set on html to affect the main viewport scrollbar */
+html { scrollbar-width: thin; scrollbar-color: rgba(6,182,212,0.5) #05070f; }
+
 html {
     background-color: #05070f;
     transition: background-color 0.35s ease;
@@ -2039,6 +2054,7 @@ body.light-theme h1, body.light-theme h2, body.light-theme .cyber-spotlight-text
     -webkit-background-clip: border-box !important;
     background-clip: border-box !important;
     color: initial !important;
+    pointer-events: none;
 }
 
 .tooltip-icon {
@@ -2057,6 +2073,7 @@ body.light-theme h1, body.light-theme h2, body.light-theme .cyber-spotlight-text
     cursor: help;
     transition: all 0.2s;
     vertical-align: middle;
+    pointer-events: auto;
 }
 
 .cyber-tooltip-content {
@@ -2303,10 +2320,10 @@ body.light-theme .floating-campaign-strip .strip-action-btn:hover {
 
 .history-drawer {
     position: fixed;
-    top: 0;
+    top: 64px;
     left: -340px;
     width: 340px;
-    height: 100vh;
+    height: calc(100vh - 64px);
     background: rgba(8, 12, 26, 0.95);
     border-right: 1px solid var(--border-color);
     box-shadow: 10px 0 30px rgba(0, 0, 0, 0.5);

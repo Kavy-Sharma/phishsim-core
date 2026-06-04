@@ -106,7 +106,7 @@
     .nc-page {
         max-width: 1200px;
         margin: 0 auto;
-        padding: 2rem;
+        padding: 80px 2rem 2rem;
     }
 
     .nc-back {
@@ -683,6 +683,15 @@
             border-right-color: rgba(37, 99, 235, 0.15);
         }
     }
+    @media (max-width: 991px) {
+        .nc-grid { grid-template-columns: 1fr !important; }
+    }
+    .diff-bar-wrap { display:flex; gap:3px; align-items:center; margin-top:6px; }
+    .diff-bar-seg { height:5px; width:18px; border-radius:3px; background:rgba(255,255,255,0.08); }
+    .diff-bar-seg.filled-red  { background:#ef4444; }
+    .diff-bar-seg.filled-blue { background:#3b82f6; }
+    .diff-bar-seg.filled-green{ background:#10b981; }
+    .diff-bar-seg.filled-amber{ background:#f59e0b; }
 
     /* ── Weekday Button Selection ── */
     .weekday-selector-row {
@@ -871,7 +880,7 @@
 
 <div class="nc-page">
     <a href="/dashboard" class="nc-back">
-        <i class="fas fa-arrow-left"></i> Back to Dashboard
+        <i class="ti ti-arrow-left"></i> Back to Dashboard
     </a>
 
     <div class="nc-card" style="padding: 2.5rem;">
@@ -882,19 +891,19 @@
         <!-- Step Tracker -->
         <div id="step-tracker" style="display:flex;align-items:center;gap:0;margin:1.8rem 0 2rem;">
             <!-- Step 1 -->
-            <div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex:1;">
+            <div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex:1; cursor: {% if campaign %}pointer{% else %}default{% endif %};" {% if campaign %}onclick="window.location.href='/new-campaign/{{ campaign.id }}';"{% endif %}>
                 <div id="step-1-circle" style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#06b6d4,#3b82f6);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:0.85rem;box-shadow:0 0 14px rgba(6,182,212,0.4);transition:all 0.4s;">1</div>
                 <span style="font-size:0.72rem;color:#06b6d4;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;text-align:center;">Campaign Setup</span>
             </div>
             <div id="step-connector-1" style="flex:1;height:2px;background:rgba(255,255,255,0.05);margin-bottom:22px;transition:background 0.5s;"></div>
             <!-- Step 2 -->
-            <div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex:1;">
+            <div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex:1; cursor: {% if campaign %}pointer{% else %}default{% endif %};" {% if campaign %}onclick="window.location.href='/new-campaign/upload/{{ campaign.id }}';"{% endif %}>
                 <div id="step-2-circle" style="width:36px;height:36px;border-radius:50%;background:rgba(59,130,246,0.15);border:2px solid rgba(59,130,246,0.3);display:flex;align-items:center;justify-content:center;color:#60a5fa;font-weight:800;font-size:0.85rem;transition:all 0.4s;">2</div>
                 <span id="step-2-label" style="font-size:0.72rem;color:#475569;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;text-align:center;">Target Upload</span>
             </div>
             <div id="step-connector-2" style="flex:1;height:2px;background:rgba(255,255,255,0.05);margin-bottom:22px;transition:background 0.5s;"></div>
             <!-- Step 3 -->
-            <div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex:1;">
+            <div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex:1; cursor: {% if campaign %}pointer{% else %}default{% endif %};" {% if campaign %}onclick="window.location.href='/new-campaign/launch/{{ campaign.id }}';"{% endif %}>
                 <div id="step-3-circle" style="width:36px;height:36px;border-radius:50%;background:rgba(34,197,94,0.1);border:2px solid rgba(34,197,94,0.2);display:flex;align-items:center;justify-content:center;color:#4ade80;font-weight:800;font-size:0.85rem;transition:all 0.4s;">3</div>
                 <span style="font-size:0.72rem;color:#475569;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;text-align:center;">Live Monitoring</span>
             </div>
@@ -913,18 +922,18 @@
         </div>
         {% endif %}
 
-        <form action="/new-campaign" method="POST" id="campaign-form" novalidate>
-            <div class="nc-grid-container">
+        <form action="{% if campaign %}/new-campaign/{{ campaign.id }}{% else %}/new-campaign{% endif %}" method="POST" id="campaign-form" novalidate>
+            <div style="display:grid; grid-template-columns:1.2fr 0.8fr; gap:40px; align-items:start;" class="nc-grid">
                 
-                <!-- Left Column: Campaign Settings -->
+                <!-- Left Column: Setup Parameters -->
                 <div class="nc-col-left">
                     <!-- Campaign Name -->
                     <div class="nc-group">
                         <label for="campaign_name">Campaign Name</label>
                         <div class="nc-input-wrap">
                             <input class="nc-input" type="text" id="campaign_name" name="campaign_name"
-                                placeholder="e.g. Q3 Security Audit" required>
-                            <i class="fas fa-tag"></i>
+                                placeholder="e.g. Q3 Security Audit" value="{% if campaign %}{{ campaign.name }}{% endif %}" required>
+                            <i class="ti ti-tag"></i>
                         </div>
                     </div>
 
@@ -933,8 +942,8 @@
                         <label for="company_domain">Company Domain</label>
                         <div class="nc-input-wrap">
                             <input class="nc-input" type="text" id="company_domain" name="company_domain"
-                                placeholder="{{ current_user.company_domain or 'example.com' }}" value="{{ current_user.company_domain or '' }}">
-                            <i class="fas fa-globe"></i>
+                                placeholder="{{ current_user.company_domain or 'example.com' }}" value="{% if campaign %}{{ campaign.company_domain }}{% else %}{{ current_user.company_domain or '' }}{% endif %}">
+                            <i class="ti ti-world"></i>
                         </div>
                         <p style="color:#64748b; font-size:0.82rem; margin:8px 0 0;">For testing, this can be any domain or label. It is used for AI context only.</p>
                     </div>
@@ -947,72 +956,72 @@
                         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;">
 
                             <div class="scenario-option" style="position:relative;">
-                                <input type="radio" name="scenario" id="s1" value="ceo_fraud" checked style="position:absolute;opacity:0;">
+                                <input type="radio" name="scenario" id="s1" value="ceo_fraud" {% if not campaign or campaign.scenario_type == 'ceo_fraud' %}checked{% endif %} style="position:absolute;opacity:0;">
                                 <label for="s1" style="display:flex;flex-direction:column;gap:10px;padding:1.2rem;border-radius:12px;border:1px solid rgba(239,68,68,0.2);background:rgba(239,68,68,0.04);cursor:pointer;transition:all 0.2s;" class="scenario-card-label">
                                     <div style="display:flex;justify-content:space-between;align-items:flex-start;">
-                                        <span style="font-size:1.8rem;">👑</span>
+                                        <i class="ti ti-crown" style="font-size:1.8rem; color:#ef4444;"></i>
                                         <span style="font-size:0.65rem;font-weight:800;padding:2px 8px;border-radius:100px;background:rgba(239,68,68,0.15);color:#f87171;border:1px solid rgba(239,68,68,0.3);text-transform:uppercase;letter-spacing:0.05em;">HIGH RISK</span>
                                     </div>
                                     <div>
                                         <strong style="color:var(--text-main);font-size:0.9rem;display:block;margin-bottom:4px;">CEO Fraud</strong>
                                         <span style="color:#64748b;font-size:0.78rem;line-height:1.4;display:block;">Urgent wire transfer request impersonating the executive team.</span>
                                     </div>
-                                    <div style="display:flex;gap:2px;">
-                                        <i class="fas fa-star" style="color:#f59e0b;font-size:0.65rem;"></i><i class="fas fa-star" style="color:#f59e0b;font-size:0.65rem;"></i><i class="fas fa-star" style="color:#f59e0b;font-size:0.65rem;"></i><i class="fas fa-star" style="color:#f59e0b;font-size:0.65rem;"></i><i class="fas fa-star" style="color:#334155;font-size:0.65rem;"></i>
+                                    <div class="diff-bar-wrap">
+                                        <div class="diff-bar-seg filled-red"></div><div class="diff-bar-seg filled-red"></div><div class="diff-bar-seg filled-red"></div><div class="diff-bar-seg filled-red"></div><div class="diff-bar-seg"></div>
                                         <span style="font-size:0.65rem;color:#64748b;margin-left:4px;">Difficulty</span>
                                     </div>
                                 </label>
                             </div>
 
                             <div class="scenario-option" style="position:relative;">
-                                <input type="radio" name="scenario" id="s2" value="it_alert" style="position:absolute;opacity:0;">
+                                <input type="radio" name="scenario" id="s2" value="it_alert" {% if campaign and campaign.scenario_type == 'it_alert' %}checked{% endif %} style="position:absolute;opacity:0;">
                                 <label for="s2" style="display:flex;flex-direction:column;gap:10px;padding:1.2rem;border-radius:12px;border:1px solid rgba(59,130,246,0.2);background:rgba(59,130,246,0.04);cursor:pointer;transition:all 0.2s;" class="scenario-card-label">
                                     <div style="display:flex;justify-content:space-between;align-items:flex-start;">
-                                        <span style="font-size:1.8rem;">💻</span>
+                                        <i class="ti ti-cpu" style="font-size:1.8rem; color:#3b82f6;"></i>
                                         <span style="font-size:0.65rem;font-weight:800;padding:2px 8px;border-radius:100px;background:rgba(234,179,8,0.15);color:#facc15;border:1px solid rgba(234,179,8,0.3);text-transform:uppercase;letter-spacing:0.05em;">MEDIUM</span>
                                     </div>
                                     <div>
                                         <strong style="color:var(--text-main);font-size:0.9rem;display:block;margin-bottom:4px;">IT Alert</strong>
                                         <span style="color:#64748b;font-size:0.78rem;line-height:1.4;display:block;">System password reset or account lockout requiring immediate action.</span>
                                     </div>
-                                    <div style="display:flex;gap:2px;">
-                                        <i class="fas fa-star" style="color:#f59e0b;font-size:0.65rem;"></i><i class="fas fa-star" style="color:#f59e0b;font-size:0.65rem;"></i><i class="fas fa-star" style="color:#f59e0b;font-size:0.65rem;"></i><i class="fas fa-star" style="color:#334155;font-size:0.65rem;"></i><i class="fas fa-star" style="color:#334155;font-size:0.65rem;"></i>
+                                    <div class="diff-bar-wrap">
+                                        <div class="diff-bar-seg filled-blue"></div><div class="diff-bar-seg filled-blue"></div><div class="diff-bar-seg filled-blue"></div><div class="diff-bar-seg"></div><div class="diff-bar-seg"></div>
                                         <span style="font-size:0.65rem;color:#64748b;margin-left:4px;">Difficulty</span>
                                     </div>
                                 </label>
                             </div>
 
                             <div class="scenario-option" style="position:relative;">
-                                <input type="radio" name="scenario" id="s3" value="hr_update" style="position:absolute;opacity:0;">
+                                <input type="radio" name="scenario" id="s3" value="hr_update" {% if campaign and campaign.scenario_type == 'hr_update' %}checked{% endif %} style="position:absolute;opacity:0;">
                                 <label for="s3" style="display:flex;flex-direction:column;gap:10px;padding:1.2rem;border-radius:12px;border:1px solid rgba(16,185,129,0.2);background:rgba(16,185,129,0.04);cursor:pointer;transition:all 0.2s;" class="scenario-card-label">
                                     <div style="display:flex;justify-content:space-between;align-items:flex-start;">
-                                        <span style="font-size:1.8rem;">📄</span>
+                                        <i class="ti ti-file-text" style="font-size:1.8rem; color:#10b981;"></i>
                                         <span style="font-size:0.65rem;font-weight:800;padding:2px 8px;border-radius:100px;background:rgba(34,197,94,0.12);color:#4ade80;border:1px solid rgba(34,197,94,0.3);text-transform:uppercase;letter-spacing:0.05em;">LOW RISK</span>
                                     </div>
                                     <div>
                                         <strong style="color:var(--text-main);font-size:0.9rem;display:block;margin-bottom:4px;">HR Update</strong>
                                         <span style="color:#64748b;font-size:0.78rem;line-height:1.4;display:block;">Benefits portal or company policy change requiring employee login.</span>
                                     </div>
-                                    <div style="display:flex;gap:2px;">
-                                        <i class="fas fa-star" style="color:#f59e0b;font-size:0.65rem;"></i><i class="fas fa-star" style="color:#f59e0b;font-size:0.65rem;"></i><i class="fas fa-star" style="color:#334155;font-size:0.65rem;"></i><i class="fas fa-star" style="color:#334155;font-size:0.65rem;"></i><i class="fas fa-star" style="color:#334155;font-size:0.65rem;"></i>
+                                    <div class="diff-bar-wrap">
+                                        <div class="diff-bar-seg filled-green"></div><div class="diff-bar-seg filled-green"></div><div class="diff-bar-seg"></div><div class="diff-bar-seg"></div><div class="diff-bar-seg"></div>
                                         <span style="font-size:0.65rem;color:#64748b;margin-left:4px;">Difficulty</span>
                                     </div>
                                 </label>
                             </div>
 
                             <div class="scenario-option" style="position:relative;">
-                                <input type="radio" name="scenario" id="s4" value="invoice" style="position:absolute;opacity:0;">
+                                <input type="radio" name="scenario" id="s4" value="invoice" {% if campaign and campaign.scenario_type == 'invoice' %}checked{% endif %} style="position:absolute;opacity:0;">
                                 <label for="s4" style="display:flex;flex-direction:column;gap:10px;padding:1.2rem;border-radius:12px;border:1px solid rgba(245,158,11,0.2);background:rgba(245,158,11,0.04);cursor:pointer;transition:all 0.2s;" class="scenario-card-label">
                                     <div style="display:flex;justify-content:space-between;align-items:flex-start;">
-                                        <span style="font-size:1.8rem;">💰</span>
+                                        <i class="ti ti-receipt" style="font-size:1.8rem; color:#f59e0b;"></i>
                                         <span style="font-size:0.65rem;font-weight:800;padding:2px 8px;border-radius:100px;background:rgba(239,68,68,0.15);color:#f87171;border:1px solid rgba(239,68,68,0.3);text-transform:uppercase;letter-spacing:0.05em;">HIGH RISK</span>
                                     </div>
                                     <div>
                                         <strong style="color:var(--text-main);font-size:0.9rem;display:block;margin-bottom:4px;">Urgent Invoice</strong>
                                         <span style="color:#64748b;font-size:0.78rem;line-height:1.4;display:block;">Fake vendor invoice sent directly to finance — urgent approval requested.</span>
                                     </div>
-                                    <div style="display:flex;gap:2px;">
-                                        <i class="fas fa-star" style="color:#f59e0b;font-size:0.65rem;"></i><i class="fas fa-star" style="color:#f59e0b;font-size:0.65rem;"></i><i class="fas fa-star" style="color:#f59e0b;font-size:0.65rem;"></i><i class="fas fa-star" style="color:#f59e0b;font-size:0.65rem;"></i><i class="fas fa-star" style="color:#f59e0b;font-size:0.65rem;"></i>
+                                    <div class="diff-bar-wrap">
+                                        <div class="diff-bar-seg filled-amber"></div><div class="diff-bar-seg filled-amber"></div><div class="diff-bar-seg filled-amber"></div><div class="diff-bar-seg filled-amber"></div><div class="diff-bar-seg filled-amber"></div>
                                         <span style="font-size:0.65rem;color:#64748b;margin-left:4px;">Difficulty</span>
                                     </div>
                                 </label>
@@ -1033,12 +1042,13 @@
                             {%- else %} two-col
                             {%- endif %}">
 
-                            <!-- Local / Sandbox — localhost admin only -->
+                             <!-- Local / Sandbox — localhost admin only -->
                             {% if local_delivery_available %}
                             <div class="delivery-option">
-                                <input type="radio" name="delivery_mode" id="d_local" value="local" checked>
+                                <input type="radio" name="delivery_mode" id="d_local" value="local"
+                                    {% if campaign and campaign.delivery_mode == 'local' %}checked{% elif not campaign and local_delivery_available %}checked{% endif %}>
                                 <label class="delivery-label" for="d_local">
-                                    <i class="fas fa-flask" style="color:#06b6d4;"></i>
+                                    <i class="ti ti-flask" style="color:#06b6d4;"></i>
                                     <strong>Sandbox Test</strong>
                                     <small>Captured locally</small>
                                 </label>
@@ -1048,9 +1058,9 @@
                             <!-- Live Mode — real Gmail / SMTP -->
                             <div class="delivery-option">
                                 <input type="radio" name="delivery_mode" id="d_smtp" value="smtp"
-                                    {% if safe_send_available and not local_delivery_available %}checked{% endif %}>
+                                    {% if campaign and campaign.delivery_mode == 'smtp' %}checked{% elif not campaign and safe_send_available and not local_delivery_available %}checked{% endif %}>
                                 <label class="delivery-label" for="d_smtp">
-                                    <i class="fas fa-paper-plane" style="color:#3b82f6;"></i>
+                                    <i class="ti ti-send" style="color:#3b82f6;"></i>
                                     <strong>Live Send</strong>
                                     <small>SMTP Inboxes</small>
                                 </label>
@@ -1059,9 +1069,9 @@
                             <!-- Safe Send (Mailtrap Sandbox) -->
                             <div class="delivery-option">
                                 <input type="radio" name="delivery_mode" id="d_safe" value="{% if current_user.role == 'admin' and safe_send_available %}mailtrap{% else %}own_mailtrap{% endif %}"
-                                    {% if not local_delivery_available %}checked{% endif %}>
+                                    {% if campaign and campaign.delivery_mode == 'mailtrap' %}checked{% elif not campaign and not local_delivery_available and safe_send_available %}checked{% endif %}>
                                 <label class="delivery-label" for="d_safe">
-                                    <i class="fas fa-shield-halved" style="color:#10b981;"></i>
+                                    <i class="ti ti-shield-check" style="color:#10b981;"></i>
                                     <strong>Safe Send</strong>
                                     <small>Mailtrap Sandbox</small>
                                 </label>
@@ -1071,9 +1081,9 @@
                             {% if preview_available %}
                             <div class="delivery-option">
                                 <input type="radio" name="delivery_mode" id="d_preview" value="preview"
-                                    {% if not local_delivery_available and not safe_send_available %}checked{% endif %}>
+                                    {% if campaign and campaign.delivery_mode == 'preview' %}checked{% elif not campaign and not local_delivery_available and not safe_send_available %}checked{% endif %}>
                                 <label class="delivery-label" for="d_preview">
-                                    <i class="fas fa-eye" style="color:#a855f7;"></i>
+                                    <i class="ti ti-eye" style="color:#a855f7;"></i>
                                     <strong>Preview Only</strong>
                                     <small>In-App Viewer</small>
                                 </label>
@@ -1087,7 +1097,7 @@
                     <!-- Own Mailtrap credentials box -->
                     <div id="own-mailtrap-box" style="display:none; margin-top:1rem; padding:1.2rem; border:1px solid rgba(6,182,212,0.28); background:rgba(6,182,212,0.05); border-radius:14px;">
                         <p style="color:#06b6d4; font-size:0.88rem; font-weight:700; margin-bottom:0.8rem;">
-                            <i class="fas fa-info-circle" style="margin-right:6px;"></i>
+                            <i class="ti ti-info-circle" style="margin-right:6px;"></i>
                             Get free credentials at <a href="https://mailtrap.io" target="_blank" style="color:#06b6d4;text-decoration:underline;">mailtrap.io</a>
                         </p>
                         <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.8rem;">
@@ -1095,14 +1105,14 @@
                                 <label style="font-size:0.75rem; color:#475569; display:block; margin-bottom:6px;">Mailtrap Username</label>
                                 <div class="nc-input-wrap">
                                     <input class="nc-input" type="text" name="own_mailtrap_user" id="own_mailtrap_user" placeholder="e.g. af358bdaff3116" autocomplete="off">
-                                    <i class="fas fa-user"></i>
+                                    <i class="ti ti-user"></i>
                                 </div>
                             </div>
                             <div class="nc-group" style="margin:0;">
                                 <label style="font-size:0.75rem; color:#475569; display:block; margin-bottom:6px;">Mailtrap Password</label>
                                 <div class="nc-input-wrap">
                                     <input class="nc-input" type="password" name="own_mailtrap_pass" id="own_mailtrap_pass" placeholder="••••••••••••••" autocomplete="new-password">
-                                    <i class="fas fa-lock"></i>
+                                    <i class="ti ti-lock"></i>
                                 </div>
                             </div>
                         </div>
@@ -1120,13 +1130,13 @@
 
                     <!-- Safe Send info box -->
                     <div id="safe-send-box" style="display:none; margin-top:1rem; padding:1rem; border:1px solid rgba(16,185,129,0.25); background:rgba(16,185,129,0.06); border-radius:14px; color:#94a3b8; font-size:0.85rem;">
-                        <strong style="color:#10b981;"><i class="fas fa-circle-check" style="margin-right:6px;"></i>Safe Send Active</strong><br>
+                        <strong style="color:#10b981;"><i class="ti ti-circle-check" style="margin-right:6px;"></i>Safe Send Active</strong><br>
                         Emails are captured securely in a sandbox environment — they will never reach a real inbox.
                     </div>
 
                     <!-- Preview info box -->
                     <div id="preview-box" style="display:none; margin-top:1rem; padding:1rem; border:1px solid rgba(168,85,247,0.25); background:rgba(168,85,247,0.06); border-radius:14px; color:#94a3b8; font-size:0.85rem;">
-                        <strong style="color:#a855f7;"><i class="fas fa-eye" style="margin-right:6px;"></i>Preview Only</strong><br>
+                        <strong style="color:#a855f7;"><i class="ti ti-eye" style="margin-right:6px;"></i>Preview Only</strong><br>
                         The AI will generate emails shown in-app. Nothing is sent.
                     </div>
 
@@ -1135,45 +1145,45 @@
                     <!-- Schedule / Automation -->
                     <div class="nc-group" style="position: relative; background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.06); padding: 1.5rem; border-radius: 12px; margin-bottom: 1.5rem;">
                         <label style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem; font-weight: 700;">
-                            <span><i class="fas fa-clock" style="color: #06b6d4; margin-right: 8px;"></i>Automation Schedule</span>
+                            <span><i class="ti ti-clock" style="color: #06b6d4; margin-right: 8px;"></i>Automation Schedule</span>
                         </label>
                         
                         <!-- Custom animated dropdown -->
                         <div class="nc-select-wrap" style="margin-bottom: 1rem;">
                             <div class="custom-select-container" id="custom-schedule-select">
-                                <input type="hidden" name="schedule_frequency" id="schedule_frequency" value="once">
+                                <input type="hidden" name="schedule_frequency" id="schedule_frequency" value="{% if campaign %}{{ campaign.schedule_frequency }}{% else %}once{% endif %}">
                                 
                                 <div class="custom-select-trigger" id="custom-select-trigger">
-                                    <span id="custom-select-text"><i class="fas fa-play" style="color:#06b6d4; margin-right:8px;"></i> Run Once (One-Time Simulation)</span>
-                                    <i class="fas fa-chevron-down" style="color:#64748b; font-size:0.8rem; transition:transform 0.3s;"></i>
+                                    <span id="custom-select-text"><i class="ti ti-player-play" style="color:#06b6d4; margin-right:8px;"></i> Run Once (One-Time Simulation)</span>
+                                    <i class="ti ti-chevron-down" style="color:#64748b; font-size:0.8rem; transition:transform 0.3s;"></i>
                                 </div>
                                 
                                 <div class="custom-options-container" id="custom-options-container">
                                     <div class="custom-option active" data-value="once">
-                                        <i class="fas fa-play" style="color:#06b6d4; width:16px;"></i> Run Once (One-Time Simulation)
+                                        <i class="ti ti-player-play" style="color:#06b6d4; width:16px;"></i> Run Once (One-Time Simulation)
                                     </div>
                                     <div class="custom-option" data-value="daily" style="justify-content:space-between; display:flex; align-items:center; width:100%;">
                                         <div style="display:flex; align-items:center; gap:8px;">
-                                            <i class="fas fa-calendar-day" style="color:#3b82f6; width:16px;"></i> Daily Automated Drip
+                                            <i class="ti ti-calendar-event" style="color:#3b82f6; width:16px;"></i> Daily Automated Drip
                                         </div>
                                         {% if current_user.role not in ('admin', 'pro') %}
-                                        <span style="font-size:0.65rem;font-weight:800;padding:2px 8px;border-radius:100px;background:rgba(234,179,8,0.15);color:#facc15;border:1px solid rgba(234,179,8,0.3);text-transform:uppercase;letter-spacing:0.05em;display:flex;align-items:center;gap:4px;"><i class="fas fa-lock"></i> PRO</span>
+                                        <span style="font-size:0.65rem;font-weight:800;padding:2px 8px;border-radius:100px;background:rgba(234,179,8,0.15);color:#facc15;border:1px solid rgba(234,179,8,0.3);text-transform:uppercase;letter-spacing:0.05em;display:flex;align-items:center;gap:4px;"><i class="ti ti-lock"></i> PRO</span>
                                         {% endif %}
                                     </div>
                                     <div class="custom-option" data-value="weekly" style="justify-content:space-between; display:flex; align-items:center; width:100%;">
                                         <div style="display:flex; align-items:center; gap:8px;">
-                                            <i class="fas fa-calendar-week" style="color:#a855f7; width:16px;"></i> Weekly Random Interval
+                                            <i class="ti ti-calendar-week" style="color:#a855f7; width:16px;"></i> Weekly Random Interval
                                         </div>
                                         {% if current_user.role not in ('admin', 'pro') %}
-                                        <span style="font-size:0.65rem;font-weight:800;padding:2px 8px;border-radius:100px;background:rgba(234,179,8,0.15);color:#facc15;border:1px solid rgba(234,179,8,0.3);text-transform:uppercase;letter-spacing:0.05em;display:flex;align-items:center;gap:4px;"><i class="fas fa-lock"></i> PRO</span>
+                                        <span style="font-size:0.65rem;font-weight:800;padding:2px 8px;border-radius:100px;background:rgba(234,179,8,0.15);color:#facc15;border:1px solid rgba(234,179,8,0.3);text-transform:uppercase;letter-spacing:0.05em;display:flex;align-items:center;gap:4px;"><i class="ti ti-lock"></i> PRO</span>
                                         {% endif %}
                                     </div>
                                     <div class="custom-option" data-value="monthly" style="justify-content:space-between; display:flex; align-items:center; width:100%;">
                                         <div style="display:flex; align-items:center; gap:8px;">
-                                            <i class="fas fa-calendar-alt" style="color:#ec4899; width:16px;"></i> Monthly Compliance Cycle
+                                            <i class="ti ti-calendar" style="color:#ec4899; width:16px;"></i> Monthly Compliance Cycle
                                         </div>
                                         {% if current_user.role not in ('admin', 'pro') %}
-                                        <span style="font-size:0.65rem;font-weight:800;padding:2px 8px;border-radius:100px;background:rgba(234,179,8,0.15);color:#facc15;border:1px solid rgba(234,179,8,0.3);text-transform:uppercase;letter-spacing:0.05em;display:flex;align-items:center;gap:4px;"><i class="fas fa-lock"></i> PRO</span>
+                                        <span style="font-size:0.65rem;font-weight:800;padding:2px 8px;border-radius:100px;background:rgba(234,179,8,0.15);color:#facc15;border:1px solid rgba(234,179,8,0.3);text-transform:uppercase;letter-spacing:0.05em;display:flex;align-items:center;gap:4px;"><i class="ti ti-lock"></i> PRO</span>
                                         {% endif %}
                                     </div>
                                 </div>
@@ -1191,6 +1201,7 @@
                         <input type="hidden" id="schedule_time_weekly" value="09:00">
                         <input type="hidden" id="schedule_day_monthly" value="1">
                         <input type="hidden" id="schedule_time_monthly" value="09:00">
+                        <input type="hidden" name="user_timezone" id="user_timezone">
         
                         <!-- Frequency dependent scheduler inputs -->
                         <div id="dynamic_scheduler_inputs" style="margin-top: 0.8rem; display: none;">
@@ -1200,7 +1211,7 @@
                                 <div class="custom-time-picker" id="time-picker-daily">
                                     <div class="time-trigger">
                                         <span class="time-display">09:00</span>
-                                        <i class="fas fa-clock"></i>
+                                        <i class="ti ti-clock"></i>
                                     </div>
                                     <div class="time-popover">
                                         <div class="time-col hours-list"></div>
@@ -1246,7 +1257,7 @@
                                 <div class="custom-time-picker" id="time-picker-monthly">
                                     <div class="time-trigger">
                                         <span class="time-display">09:00</span>
-                                        <i class="fas fa-clock"></i>
+                                        <i class="ti ti-clock"></i>
                                     </div>
                                     <div class="time-popover">
                                         <div class="time-col hours-list"></div>
@@ -1260,7 +1271,7 @@
                     <!-- Consent -->
                     <div class="consent-box" style="margin-top: 0;">
                         <label>
-                            <input type="checkbox" id="consent_confirmed" name="consent_confirmed" value="yes" required>
+                            <input type="checkbox" id="consent_confirmed" name="consent_confirmed" value="yes" {% if campaign %}checked{% endif %} required>
                             <div class="consent-text">
                                 <strong>Authorization Required</strong>
                                 <span>I confirm that I have explicit written permission to perform a phishing simulation against this domain.</span>
@@ -1338,6 +1349,35 @@
         const schedulePreview = document.getElementById("schedule-preview-box");
         const scheduledAtInput = document.getElementById("scheduled_at");
         const isUserAdmin = {% if current_user.role in ('admin', 'pro') %}true{% else %}false{% endif %};
+        
+        // Prefill custom dropdown frequency and schedule settings
+        {% if campaign %}
+        const prefilledFreq = "{{ campaign.schedule_frequency }}";
+        if (prefilledFreq && customOptions) {
+            const matchingOption = customOptions.querySelector(`.custom-option[data-value="${prefilledFreq}"]`);
+            if (matchingOption) {
+                // Set active class on load
+                customOptions.querySelectorAll(".custom-option").forEach(opt => opt.classList.remove("active"));
+                matchingOption.classList.add("active");
+                scheduleFreqInput.value = prefilledFreq;
+                const triggerText = document.getElementById("custom-select-text");
+                if (triggerText) {
+                    triggerText.innerHTML = matchingOption.innerHTML.split('<span')[0].trim();
+                }
+                if (schedulePreview) {
+                    schedulePreview.innerHTML = `<i class="fas fa-info-circle"></i> <strong>${prefilledFreq.charAt(0).toUpperCase() + prefilledFreq.slice(1)}:</strong> ${previews[prefilledFreq]}`;
+                }
+                const dynamicSchedulerInputs = document.getElementById("dynamic_scheduler_inputs");
+                document.querySelectorAll(".schedule-sub-panel").forEach(p => p.style.display = "none");
+                
+                if (prefilledFreq !== "once") {
+                    if (dynamicSchedulerInputs) dynamicSchedulerInputs.style.display = "block";
+                    const subPanel = document.getElementById(`schedule_inputs_${prefilledFreq}`);
+                    if (subPanel) subPanel.style.display = "block";
+                }
+            }
+        }
+        {% endif %}
         
         const previews = {
             once: "One-Time Simulation: Runs once immediately after you upload employee targets.",
@@ -1696,7 +1736,7 @@
                 });
                 document.body.appendChild(alertBox);
             }
-            alertBox.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${message}`;
+            alertBox.innerHTML = `<i class="ti ti-alert-circle"></i> ${message}`;
             
             setTimeout(() => {
                 alertBox.style.transform = 'translateX(-50%) translateY(0)';
@@ -1707,7 +1747,11 @@
                 alertBox.style.transform = 'translateX(-50%) translateY(-20px)';
                 alertBox.style.opacity = '0';
             }, 4000);
+            setTimeout(() => { alertBox.remove(); }, 4600);
         }
+        // Populate timezone
+        const tzInput = document.getElementById('user_timezone');
+        if (tzInput) tzInput.value = Intl.DateTimeFormat().resolvedOptions().timeZone;
     })();
 </script>
 {% endblock %}

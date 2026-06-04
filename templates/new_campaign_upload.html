@@ -5,7 +5,7 @@
     .nc-page {
         max-width: 1200px;
         margin: 0 auto;
-        padding: 2rem;
+        padding: 80px 2rem 2rem;
     }
     .nc-back {
         display: inline-flex;
@@ -113,8 +113,8 @@
 </style>
 
 <div class="nc-page">
-    <a href="/dashboard" class="nc-back">
-        <i class="fas fa-arrow-left"></i> Cancel & Back to Dashboard
+    <a href="/new-campaign/{{ campaign.id }}" class="nc-back">
+        <i class="ti ti-arrow-left"></i> Back to Campaign Setup
     </a>
 
     <div class="nc-card" style="padding: 2.5rem;">
@@ -124,17 +124,17 @@
 
                 <!-- Step Tracker -->
                 <div style="display:flex;align-items:center;gap:0;margin:1.8rem 0 2rem;">
-                    <div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex:1;">
+                    <div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex:1;cursor:pointer;" onclick="window.location.href='/new-campaign/{{ campaign.id }}';">
                         <div style="width:36px;height:36px;border-radius:50%;background:rgba(34,197,94,0.15);border:2px solid rgba(34,197,94,0.3);display:flex;align-items:center;justify-content:center;color:#4ade80;font-weight:800;font-size:0.85rem;"><i class="fas fa-check"></i></div>
                         <span style="font-size:0.72rem;color:#4ade80;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;text-align:center;">Campaign Setup</span>
                     </div>
                     <div style="flex:1;height:2px;background:linear-gradient(90deg,#4ade80,#06b6d4);margin-bottom:22px;"></div>
-                    <div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex:1;">
+                    <div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex:1;cursor:pointer;" onclick="window.location.href='/new-campaign/upload/{{ campaign.id }}';">
                         <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#06b6d4,#3b82f6);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:0.85rem;box-shadow:0 0 14px rgba(6,182,212,0.4);border:none;">2</div>
                         <span style="font-size:0.72rem;color:#06b6d4;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;text-align:center;">Target Upload</span>
                     </div>
                     <div style="flex:1;height:2px;background:rgba(255,255,255,0.05);margin-bottom:22px;"></div>
-                    <div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex:1;">
+                    <div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex:1;cursor:pointer;" onclick="window.location.href='/new-campaign/launch/{{ campaign.id }}';">
                         <div style="width:36px;height:36px;border-radius:50%;background:rgba(59,130,246,0.1);border:2px solid rgba(59,130,246,0.2);display:flex;align-items:center;justify-content:center;color:#60a5fa;font-weight:800;font-size:0.85rem;">3</div>
                         <span style="font-size:0.72rem;color:#475569;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;text-align:center;">Live Monitoring</span>
                     </div>
@@ -156,23 +156,24 @@
                     <!-- CSV section -->
                     <div id="section-csv">
                         <div style="background: rgba(6,182,212,0.04); border: 1px solid rgba(6,182,212,0.15); border-radius: 12px; padding: 1.2rem; margin-bottom: 1.5rem;">
-                            <p style="color:var(--text-main); font-weight:700; margin-bottom:6px; font-size: 0.92rem;"><i class="fas fa-info-circle" style="color:#06b6d4;"></i> CSV Formatting Hint</p>
+                            <p style="color:var(--text-main); font-weight:700; margin-bottom:6px; font-size: 0.92rem;"><i class="ti ti-info-circle" style="color:#06b6d4;"></i> CSV Formatting Hint</p>
                             <p style="color:var(--text-muted); font-size:0.82rem; margin-bottom:0; line-height:1.5;">
                                 Your CSV file must have at least one column for <strong>emails</strong> (headed 'email', 'Email Address', or similar). Other columns like 'name', 'department', and 'title' are optional but help the AI personalize the simulation.
                             </p>
                         </div>
 
                         <div class="file-upload-wrapper" style="margin-bottom: 1.8rem;">
-                            <input type="file" name="employee_csv" id="file-{{ campaign.id }}" class="file-upload-input" accept=".csv" required onchange="document.getElementById('fl-{{ campaign.id }}').innerHTML='<i class=\'fas fa-file-csv\' style=\'color:#06b6d4\'></i> ' + this.files[0].name" style="display: none;">
+                            <input type="file" name="employee_csv" id="file-{{ campaign.id }}" class="file-upload-input" accept=".csv" style="display: none;" onchange="handleFileSelect(event)">
                             <label for="file-{{ campaign.id }}" class="file-upload-label" id="fl-{{ campaign.id }}" style="
                                 display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
                                 padding: 2.5rem 1.5rem; border: 2px dashed rgba(6,182,212,0.3); border-radius: 12px;
                                 cursor: pointer; background: rgba(255,255,255,0.01); transition: all 0.3s ease;
                             ">
-                                <i class="fas fa-folder-open" style="color: #06b6d4; font-size: 2rem;"></i>
+                                <i class="ti ti-folder-open" style="color: #06b6d4; font-size: 2rem;"></i>
                                 <span style="font-size: 1rem; color: var(--text-main); font-weight: 600;">Choose CSV File</span>
                                 <span style="font-size: 0.8rem; color: var(--text-muted);">drag and drop or click to browse</span>
                             </label>
+                            <div id="csv-preview" style="display:none; margin-top:1rem; overflow-x:auto;"></div>
                         </div>
                     </div>
 
@@ -193,7 +194,7 @@
                         </div>
                     </div>
 
-                    <button type="submit" class="nc-submit" id="submit-btn"><i class="fas fa-upload"></i> Upload CSV & Next Step</button>
+                    <button type="submit" class="nc-submit" id="submit-btn"><i class="ti ti-upload"></i> Upload CSV &amp; Next Step</button>
                 </form>
 
                 <style>
@@ -204,29 +205,76 @@
                 .target-tab:hover {
                     color: #fff !important;
                 }
-                </style>
+                </style>                <script>
+                const fileInput = document.getElementById('file-{{ campaign.id }}');
+                const labelEl  = document.getElementById('fl-{{ campaign.id }}');
+                const csvPreview = document.getElementById('csv-preview');
 
-                <script>
+                function handleFileSelect(event) {
+                    const file = event.target.files[0];
+                    if (!file) return;
+                    labelEl.innerHTML = `<i class="ti ti-file-spreadsheet" style="color:#06b6d4; font-size:1.4rem;"></i>
+                        <span style="font-size:0.9rem; color:var(--text-main); font-weight:600;">${file.name}</span>
+                        <span style="font-size:0.75rem; color:#10b981;"><i class="ti ti-check" style="margin-right:3px;"></i>File selected</span>`;
+                    labelEl.style.borderColor = 'rgba(16,185,129,0.4)';
+                    previewCsv(file);
+                }
+
+                function previewCsv(file) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const lines = e.target.result.split('\n').filter(l => l.trim()).slice(0, 4);
+                        if (lines.length < 2) return;
+                        const headers = lines[0].split(',').map(h => h.trim().replace(/"/g,''));
+                        const rows    = lines.slice(1, 4);
+                        let html = `<table style="width:100%;border-collapse:collapse;font-size:0.78rem;font-family:var(--font-mono);">`;
+                        html += `<tr>${headers.map(h => `<th style="padding:4px 8px;text-align:left;color:#06b6d4;border-bottom:1px solid rgba(6,182,212,0.25);">${h}</th>`).join('')}</tr>`;
+                        rows.forEach(row => {
+                            const cells = row.split(',').map(c => c.trim().replace(/"/g,''));
+                            html += `<tr>${cells.map(c => `<td style="padding:4px 8px;color:var(--text-muted);border-bottom:1px solid rgba(255,255,255,0.04);">${c}</td>`).join('')}</tr>`;
+                        });
+                        html += '</table><p style="font-size:0.7rem;color:#475569;margin-top:4px;">Showing first 3 rows</p>';
+                        csvPreview.innerHTML = html;
+                        csvPreview.style.display = 'block';
+                    };
+                    reader.readAsText(file);
+                }
+
+                // Drag-and-drop
+                labelEl.addEventListener('dragover',  e => { e.preventDefault(); labelEl.style.borderColor='rgba(6,182,212,0.7)'; labelEl.style.background='rgba(6,182,212,0.06)'; });
+                labelEl.addEventListener('dragleave', e => { labelEl.style.borderColor='rgba(6,182,212,0.3)'; labelEl.style.background='rgba(255,255,255,0.01)'; });
+                labelEl.addEventListener('drop', e => {
+                    e.preventDefault();
+                    labelEl.style.borderColor='rgba(6,182,212,0.3)';
+                    labelEl.style.background='rgba(255,255,255,0.01)';
+                    const f = e.dataTransfer.files[0];
+                    if (f && f.name.endsWith('.csv')) {
+                        const dt = new DataTransfer();
+                        dt.items.add(f);
+                        fileInput.files = dt.files;
+                        handleFileSelect({ target: { files: [f] } });
+                    }
+                });
+
                 document.addEventListener('DOMContentLoaded', () => {
                     const tabCsv = document.getElementById('tab-csv');
                     const tabOsint = document.getElementById('tab-osint');
                     const sectionCsv = document.getElementById('section-csv');
                     const sectionOsint = document.getElementById('section-osint');
-                    const fileInput = document.getElementById('file-{{ campaign.id }}');
                     const useOsintInput = document.getElementById('use_osint');
                     const submitBtn = document.getElementById('submit-btn');
+                    const form = document.getElementById('target-form');
 
                     tabCsv.addEventListener('click', () => {
                         tabCsv.style.borderBottomColor = '#06b6d4';
                         tabCsv.style.color = '#fff';
                         tabOsint.style.borderBottomColor = 'transparent';
                         tabOsint.style.color = '#64748b';
-
                         sectionCsv.style.display = 'block';
                         sectionOsint.style.display = 'none';
                         fileInput.required = true;
                         useOsintInput.value = 'false';
-                        submitBtn.innerHTML = '<i class="fas fa-upload"></i> Upload CSV & Next Step';
+                        submitBtn.innerHTML = '<i class="ti ti-upload"></i> Upload CSV &amp; Next Step';
                     });
 
                     tabOsint.addEventListener('click', () => {
@@ -234,15 +282,22 @@
                         tabOsint.style.color = '#fff';
                         tabCsv.style.borderBottomColor = 'transparent';
                         tabCsv.style.color = '#64748b';
-
                         sectionOsint.style.display = 'block';
                         sectionCsv.style.display = 'none';
                         fileInput.required = false;
                         useOsintInput.value = 'true';
-                        submitBtn.innerHTML = '<i class="fas fa-radar"></i> Run OSINT Scan & Next Step';
+                        submitBtn.innerHTML = '<i class="ti ti-radar-2"></i> Run OSINT Scan &amp; Next Step';
+                    });
+
+                    form.addEventListener('submit', (e) => {
+                        if (useOsintInput.value === 'true') {
+                            submitBtn.disabled = true;
+                            submitBtn.innerHTML = '<i class="ti ti-loader-2" style="animation:spin 1s linear infinite;"></i> AI agent scanning…';
+                        }
                     });
                 });
                 </script>
+                <style>@keyframes spin { to { transform:rotate(360deg); } }</style>
 
                 <div style="text-align: center; margin-top: 1.5rem;">
                     <a href="/dashboard" style="color: var(--text-muted); font-size: 0.88rem; text-decoration: none; transition: color 0.2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='var(--text-muted)'">Skip upload and go to Dashboard</a>
