@@ -29,9 +29,24 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/countup.js/2.8.0/countUp.umd.js"></script>
 
     <!-- Main Stylesheet -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css', v='1.0.1') }}">
 </head>
 <body class="{% block body_class %}{% endblock %}">
+
+<!-- SVG Liquid/Watery text hover effect filter -->
+<svg style="position: absolute; width: 0; height: 0;" width="0" height="0" version="1.1" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <filter id="liquid-filter">
+      <feTurbulence type="fractalNoise" baseFrequency="0.015 0.04" numOctaves="3" result="noise">
+        <animate attributeName="baseFrequency" dur="10s" values="0.015 0.04; 0.035 0.07; 0.015 0.04" repeatCount="indefinite" />
+      </feTurbulence>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="6" xChannelSelector="R" yChannelSelector="G" />
+    </filter>
+    <filter id="noise">
+      <feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" stitchTiles="stitch" />
+    </filter>
+  </defs>
+</svg>
 
 <!-- ═══════════════════════════════════════════════════════════
      INTERACTIVE PAGE LOADER — Cyberpunk hex-grid style
@@ -63,10 +78,10 @@
             <svg viewBox="0 0 100 100" style="width:100%;height:100%;">
                 <polygon points="50,5 90,27.5 90,72.5 50,95 10,72.5 10,27.5"
                     fill="none" stroke="rgba(6,182,212,0.2)" stroke-width="4"/>
-                <polygon points="50,5 90,27.5 90,72.5 50,95 10,72.5 10,27.5"
+                <polygon id="loader-hex-fill" points="50,5 90,27.5 90,72.5 50,95 10,72.5 10,27.5"
                     fill="none" stroke="#06b6d4" stroke-width="4"
                     stroke-dasharray="265" stroke-dashoffset="265"
-                    style="animation:hexSpin 1.4s ease-in-out infinite;">
+                    style="transform-origin: center; animation: hexRotate 10s linear infinite; transition: stroke-dashoffset 0.15s ease;">
                 </polygon>
                 <text x="50" y="58" text-anchor="middle" font-family="var(--font-sans)" font-size="22" font-weight="900" fill="#06b6d4" id="loader-pct">0</text>
             </svg>
@@ -94,10 +109,9 @@
 </div>
 
 <style>
-@keyframes hexSpin {
-    0%   { stroke-dashoffset: 265; }
-    60%  { stroke-dashoffset: 0; }
-    100% { stroke-dashoffset: -265; }
+@keyframes hexRotate {
+    0%   { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }
 @keyframes scanBottom {
     0%,100% { opacity: 0.3; transform: scaleX(0.3); }
@@ -193,22 +207,47 @@
 
     // Animate progress counter 0→100
     let pct = 0;
-    const pctTimer = setInterval(() => {
-        pct = Math.min(pct + Math.random() * 12 + 4, 99);
-        if (pctEl) pctEl.textContent = Math.round(pct);
-        if (statusEl) statusEl.textContent = statuses[Math.floor(pct / 25)] || statuses[3];
-    }, 80);
-
-    // Dismiss loader when page is ready
+    let pctTimer = null;
     let loaderDismissed = false;
+    const fillPolygon = document.getElementById('loader-hex-fill');
+
+    function updateProgress(value) {
+        pct = value;
+        if (pctEl) pctEl.textContent = Math.round(pct);
+        if (statusEl && !loaderDismissed && pct < 100) {
+            statusEl.textContent = statuses[Math.floor(pct / 25)] || statuses[3];
+        }
+        if (fillPolygon) {
+            const offset = 265 - (265 * (pct / 100));
+            fillPolygon.style.strokeDashoffset = offset;
+        }
+    }
+
+    function startLoader(initialPct, statusText) {
+        if (pctTimer) clearInterval(pctTimer);
+        pct = initialPct || 0;
+        loaderDismissed = false;
+        if (loader) {
+            loader.style.opacity = '1';
+            loader.style.visibility = 'visible';
+        }
+        if (statusText && statusEl) statusEl.textContent = statusText;
+        updateProgress(pct);
+
+        pctTimer = setInterval(() => {
+            pct = Math.min(pct + Math.random() * 8 + 2, 99);
+            updateProgress(pct);
+        }, 120);
+    }
+
     function dismissLoader() {
         if (loaderDismissed) return;
         loaderDismissed = true;
-        clearInterval(pctTimer);
+        if (pctTimer) clearInterval(pctTimer);
         let currentPct = pct;
         const finishTimer = setInterval(() => {
             currentPct = Math.min(currentPct + 10, 100);
-            if (pctEl) pctEl.textContent = Math.round(currentPct);
+            updateProgress(currentPct);
             if (currentPct >= 100) {
                 clearInterval(finishTimer);
                 if (statusEl) statusEl.textContent = 'READY';
@@ -237,12 +276,7 @@
         }
 
         if (loader) {
-            if (pctEl) pctEl.textContent = '0';
-            if (statusEl) statusEl.textContent = 'CONNECTING';
-            loader.style.opacity = '1';
-            loader.style.visibility = 'visible';
-            pct = 0;
-            loaderDismissed = false;
+            startLoader(0, 'CONNECTING');
         }
     });
 
@@ -260,13 +294,12 @@
         }
         
         if (loader) {
-            if (pctEl) pctEl.textContent = '0';
-            if (statusEl) statusEl.textContent = 'PROCESSING SECURE UPLOAD';
-            loader.style.opacity = '1';
-            loader.style.visibility = 'visible';
-            loaderDismissed = false;
+            startLoader(0, 'PROCESSING SECURE UPLOAD');
         }
     });
+
+    // Start loader immediately on load
+    startLoader(0, 'INITIALIZING ENGINE');
 
     if (document.readyState === 'complete') {
         dismissLoader();
@@ -445,6 +478,10 @@
                 <div class="nav-links">
                 <a href="/dashboard" class="nav-link">Dashboard</a>
                 <a href="/new-campaign" class="nav-link">Campaigns</a>
+                <a href="/reports-demo" class="nav-link">Reports</a>
+                {% if current_user.role == 'admin' %}
+                <a href="/admin" class="nav-link" style="color: #f59e0b !important; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;"><i class="ti ti-shield-lock" style="color: #ef4444; font-size: 1.1rem; vertical-align: middle;"></i>Admin</a>
+                {% endif %}
                 <div class="nav-dropdown">
                     <button class="nav-dropdown-trigger">Tools <i class="ti ti-chevron-down"></i></button>
                     <div class="nav-dropdown-menu">
@@ -452,7 +489,13 @@
                         <a href="/header-analyzer"><i class="ti ti-mail-search" style="color:#8b5cf6;margin-right:6px;"></i>Header Analyzer</a>
                         <a href="/url-decoder"><i class="ti ti-link" style="color:#10b981;margin-right:6px;"></i>URL Decoder</a>
                         <a href="/password-breach"><i class="ti ti-key" style="color:#f59e0b;margin-right:6px;"></i>Password Breach Check</a>
-                        <a href="/ai-risk-advisor" style="border-top: 1px solid rgba(255,255,255,0.05); color: #f59e0b;"><i class="ti ti-crown" style="font-size: 0.8rem; margin-right: 2px;"></i> AI Risk Advisor</a>
+                        <a href="/ai-risk-advisor" class="dropdown-advisor-item" style="border-top: 1px solid rgba(255,255,255,0.05); color: #fbbf24 !important; font-weight: 700; background: linear-gradient(90deg, rgba(245,158,11,0.06), transparent); display: flex !important; align-items: center; justify-content: space-between; gap: 8px;">
+                            <span style="display: inline-flex; align-items: center; gap: 6px;">
+                                <i class="ti ti-crown" style="font-size: 0.95rem; color: #fbbf24; filter: drop-shadow(0 0 5px rgba(251,191,36,0.6));"></i> 
+                                AI Risk Advisor
+                            </span>
+                            <span style="font-family: var(--font-mono); font-size: 0.55rem; font-weight: 900; background: linear-gradient(135deg, #fbbf24, #d97706); color: #000; padding: 1px 4px; border-radius: 3px; letter-spacing: 0.5px; line-height: 1.1;">PRO</span>
+                        </a>
                     </div>
                 </div>
             </div>
@@ -471,10 +514,27 @@
                     <i class="ti ti-moon icon-moon"></i>
                 </div>
                 
+                <!-- Billing icon-only button -->
+                <a href="/billing" class="nav-billing-btn" title="Billing & Plan" style="font-size: 1.25rem; color: #94a3b8; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; transition: color 0.2s;" onmouseover="this.style.color='#fff';" onmouseout="this.style.color='#94a3b8';">
+                    <i class="ti ti-credit-card"></i>
+                </a>
+                
+                <!-- Upgrade Chip for non-admin/non-pro -->
+                {% if current_user.role not in ('admin', 'pro') %}
+                <a href="/billing" class="upgrade-chip" style="background: linear-gradient(135deg, #f59e0b, #ea580c); color: #fff; font-family: var(--font-sans), sans-serif; font-size: 10px; font-weight: 800; padding: 5px 12px; border-radius: 6px; text-decoration: none; text-transform: uppercase; transition: all 0.25s; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 0 15px rgba(245, 158, 11, 0.3);" onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 0 20px rgba(245,158,11,0.5)';" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 0 15px rgba(245,158,11,0.3)';">
+                    <i class="ti ti-crown"></i> UPGRADE
+                </a>
+                {% endif %}
+                
                 {% set name_parts = current_user.name.split(' ') %}
                 <a href="/profile" class="nav-avatar">
                     {% if name_parts|length > 1 %}{{ name_parts[0][0]|upper }}{{ name_parts[1][0]|upper }}{% else %}{{ current_user.name[:2]|upper }}{% endif %}
                 </a>
+                
+                <!-- PRO Badge beside Avatar -->
+                {% if current_user.role == 'pro' %}
+                <span class="pro-badge" style="background: linear-gradient(135deg, #38bdf8, #6366f1); color: #fff; font-size: 0.6rem; font-weight: 800; padding: 2px 6px; border-radius: 4px; margin-left: -6px; margin-right: 6px; display: inline-block; vertical-align: middle; pointer-events: none;">PRO</span>
+                {% endif %}
                 
                 <a href="/logout" class="nav-link nav-link-login" style="font-size: 0.85rem;">Logout</a>
                 
@@ -489,16 +549,24 @@
             {% else %}
             <div class="nav-links">
                 <div class="nav-dropdown">
-                    <button class="nav-dropdown-trigger">Platform <i class="ti ti-chevron-down"></i></button>
+                    <button class="nav-dropdown-trigger">Solutions <i class="ti ti-chevron-down"></i></button>
                     <div class="nav-dropdown-menu">
-                        <a href="/dashboard">Dashboard</a>
-                        <a href="/new-campaign">New Campaign</a>
-                        <a href="/dashboard">Campaign Analytics</a>
-                        <a href="/reports-demo">AI Report</a>
+                        <a href="/solutions/phishing"><i class="ti ti-target" style="color:#38bdf8;margin-right:6px;"></i>Spear Phishing Sim</a>
+                        <a href="/solutions/osint"><i class="ti ti-search" style="color:#a855f7;margin-right:6px;"></i>OSINT Exposure Scan</a>
+                        <a href="/solutions/lms"><i class="ti ti-school" style="color:#10b981;margin-right:6px;"></i>Just-In-Time Training</a>
+                        <a href="/solutions/plugin"><i class="ti ti-alert-triangle" style="color:#f59e0b;margin-right:6px;"></i>Threat Report Plugin</a>
                     </div>
                 </div>
                 <a href="/#attack-flow" class="nav-link">How It Works</a>
                 <a href="/#pricing" class="nav-link">Pricing</a>
+                <div class="nav-dropdown">
+                    <button class="nav-dropdown-trigger">Resources <i class="ti ti-chevron-down"></i></button>
+                    <div class="nav-dropdown-menu">
+                        <a href="/reports-demo"><i class="ti ti-file-text" style="color:#06b6d4;margin-right:6px;"></i>AI Report Preview</a>
+                        <a href="/provenance"><i class="ti ti-shield-check" style="color:#8b5cf6;margin-right:6px;"></i>Security Provenance</a>
+                        <a href="/data-handling-policy"><i class="ti ti-lock" style="color:#10b981;margin-right:6px;"></i>Data Handling Policy</a>
+                    </div>
+                </div>
                 <div class="nav-dropdown">
                     <button class="nav-dropdown-trigger">Threat Tools <i class="ti ti-chevron-down"></i></button>
                     <div class="nav-dropdown-menu">
@@ -506,7 +574,13 @@
                         <a href="/header-analyzer"><i class="ti ti-mail-search" style="color:#8b5cf6;margin-right:6px;"></i>Header Analyzer</a>
                         <a href="/url-decoder"><i class="ti ti-link" style="color:#10b981;margin-right:6px;"></i>URL Decoder</a>
                         <a href="/password-breach"><i class="ti ti-key" style="color:#f59e0b;margin-right:6px;"></i>Password Breach Check</a>
-                        <a href="/ai-risk-advisor" style="border-top: 1px solid rgba(255,255,255,0.05); color: #f59e0b;"><i class="ti ti-crown" style="font-size: 0.8rem; margin-right: 2px;"></i> AI Risk Advisor</a>
+                        <a href="/ai-risk-advisor" class="dropdown-advisor-item" style="border-top: 1px solid rgba(255,255,255,0.05); color: #fbbf24 !important; font-weight: 700; background: linear-gradient(90deg, rgba(245,158,11,0.06), transparent); display: flex !important; align-items: center; justify-content: space-between; gap: 8px;">
+                            <span style="display: inline-flex; align-items: center; gap: 6px;">
+                                <i class="ti ti-crown" style="font-size: 0.95rem; color: #fbbf24; filter: drop-shadow(0 0 5px rgba(251,191,36,0.6));"></i> 
+                                AI Risk Advisor
+                            </span>
+                            <span style="font-family: var(--font-mono); font-size: 0.55rem; font-weight: 900; background: linear-gradient(135deg, #fbbf24, #d97706); color: #000; padding: 1px 4px; border-radius: 3px; letter-spacing: 0.5px; line-height: 1.1;">PRO</span>
+                        </a>
                     </div>
                 </div>
             </div>
@@ -530,21 +604,38 @@
         </div>
     </nav>
     
+    {% if request.path != '/' %}
+    <!-- Global Decorative Atmosphere Blobs -->
+    <div class="atmosphere-blob blob-1"></div>
+    <div class="atmosphere-blob blob-2"></div>
+    {% endif %}
+    
     <!-- Mobile overlay menu -->
     <div class="mobile-menu-overlay" id="mobile-menu-overlay">
-        <button class="close-menu-btn" onclick="toggleMobileMenu()">&times;</button>
+        <button class="close-menu-btn" onclick="toggleMobileMenu()"><i class="ti ti-x"></i></button>
         <div class="mobile-menu-links">
             {% if current_user %}
             <a href="/dashboard" onclick="toggleMobileMenu()">Dashboard</a>
             <a href="/new-campaign" onclick="toggleMobileMenu()">Campaigns</a>
+            {% if current_user.role == 'admin' %}
+            <a href="/admin" onclick="toggleMobileMenu()" style="color: #ef4444;"><i class="ti ti-shield-lock" style="margin-right: 4px;"></i>Admin Panel</a>
+            {% endif %}
             <a href="/threat-analyzer" onclick="toggleMobileMenu()">Threat Analyzer</a>
             <a href="/header-analyzer" onclick="toggleMobileMenu()">Header Analyzer</a>
             <a href="/url-decoder" onclick="toggleMobileMenu()">URL Decoder</a>
             <a href="/password-breach" onclick="toggleMobileMenu()">Password Breach Check</a>
             <a href="/ai-risk-advisor" onclick="toggleMobileMenu()" style="color: #f59e0b;"><i class="ti ti-crown" style="font-size: 0.85rem; margin-right: 4px;"></i> AI Risk Advisor</a>
             <a href="/reports-demo" onclick="toggleMobileMenu()">AI Report</a>
-            <a href="/profile" onclick="toggleMobileMenu()">Profile</a>
-            <a href="/billing" onclick="toggleMobileMenu()">Billing</a>
+            <a href="/profile" onclick="toggleMobileMenu()">
+                Profile
+                {% if current_user.role == 'pro' %}
+                <span class="pro-badge" style="background: linear-gradient(135deg, #38bdf8, #6366f1); color: #fff; font-size: 0.6rem; font-weight: 800; padding: 2px 6px; border-radius: 4px; margin-left: 6px; display: inline-block; vertical-align: middle;">PRO</span>
+                {% endif %}
+            </a>
+            <a href="/billing" onclick="toggleMobileMenu()"><i class="ti ti-credit-card"></i> Billing & Plan</a>
+            {% if current_user.role not in ('admin', 'pro') %}
+            <a href="/billing" onclick="toggleMobileMenu()" style="color: #fbbf24;"><i class="ti ti-crown"></i> Upgrade to PRO</a>
+            {% endif %}
             <a href="/logout" onclick="toggleMobileMenu()">Logout</a>
             {% if current_user.company_domain == 'demo-corp.com' %}
             <a href="/exit-demo" onclick="toggleMobileMenu()" style="color: #ef4444;">Exit Sandbox</a>
@@ -596,6 +687,8 @@
     .navbar.scrolled {
         height: 52px !important;
         background: rgba(2, 6, 23, 0.95) !important;
+        border-bottom: 1px solid rgba(56,189,248,0.2) !important;
+        box-shadow: 0 4px 30px rgba(0,0,0,0.4) !important;
     }
 
     .nav-container {
@@ -880,11 +973,23 @@
         position: absolute;
         top: 20px;
         right: 20px;
-        background: none;
-        border: none;
+        background: rgba(255,255,255,0.03);
+        border: 1px solid rgba(255,255,255,0.1);
         color: #94a3b8;
-        font-size: 2.5rem;
+        font-size: 1.3rem;
         cursor: pointer;
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease;
+    }
+    .close-menu-btn:hover {
+        background: rgba(255,255,255,0.08);
+        color: #fff;
+        border-color: rgba(255,255,255,0.2);
     }
 
     @media (max-width: 768px) {
@@ -1046,10 +1151,10 @@
         })();
     </script>
     <script>
-        // Global mouse spotlight effect for h1, h2 and cyber-spotlight-text elements
+        // Global mouse spotlight and magnetic button interactions
         document.addEventListener('DOMContentLoaded', () => {
             const updateSpotlight = (e) => {
-                const target = e.target.closest('h1, h2, .cyber-spotlight-text');
+                const target = e.target.closest('h1, h2, .cyber-spotlight-text, .camp-card, .summary-stat, .report-panel, .intel-panel');
                 if (target) {
                     const rect = target.getBoundingClientRect();
                     const x = e.clientX - rect.left;
@@ -1061,7 +1166,7 @@
             document.addEventListener('mousemove', updateSpotlight, { passive: true });
             document.addEventListener('touchmove', (e) => {
                 if (e.touches[0]) {
-                    const target = e.target.closest('h1, h2, .cyber-spotlight-text');
+                    const target = e.target.closest('h1, h2, .cyber-spotlight-text, .camp-card, .summary-stat, .report-panel, .intel-panel');
                     if (target) {
                         const rect = target.getBoundingClientRect();
                         const x = e.touches[0].clientX - rect.left;
@@ -1070,6 +1175,67 @@
                         target.style.setProperty('--mouse-y', `${y}px`);
                     }
                 }
+            }, { passive: true });
+
+            // Magnetic Button Pull logic
+            const btnSelectors = '.hero-new-btn, .btn-launch, .nc-submit, .pdf-btn, .upgrade-chip, .btn-upgrade, .btn-purple, .btn-primary, .checkout-btn, .btn-try-demo';
+            let magneticButtons = [];
+            
+            const updateMagneticButtons = () => {
+                magneticButtons = [];
+                document.querySelectorAll(btnSelectors).forEach(btn => {
+                    let inner = btn.querySelector('.magnetic-inner');
+                    if (!inner) {
+                        inner = document.createElement('span');
+                        inner.className = 'magnetic-inner';
+                        inner.style.display = 'inline-flex';
+                        inner.style.alignItems = 'center';
+                        inner.style.justifyContent = 'center';
+                        inner.style.gap = 'inherit';
+                        inner.style.width = '100%';
+                        inner.style.height = '100%';
+                        inner.style.pointerEvents = 'none';
+                        inner.style.transition = 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)';
+                        while (btn.firstChild) {
+                            inner.appendChild(btn.firstChild);
+                        }
+                        btn.appendChild(inner);
+                    }
+                    magneticButtons.push({ element: btn, inner: inner });
+                });
+            };
+            
+            updateMagneticButtons();
+            setInterval(updateMagneticButtons, 2000);
+            
+            document.addEventListener('mousemove', (e) => {
+                const mouseX = e.clientX;
+                const mouseY = e.clientY;
+                
+                magneticButtons.forEach(item => {
+                    const rect = item.element.getBoundingClientRect();
+                    const btnX = rect.left + rect.width / 2;
+                    const btnY = rect.top + rect.height / 2;
+                    
+                    const dx = mouseX - btnX;
+                    const dy = mouseY - btnY;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (distance < 60) {
+                        const strength = 6;
+                        const factor = (1 - distance / 60) * strength;
+                        const pullX = (dx / (distance || 1)) * factor;
+                        const pullY = (dy / (distance || 1)) * factor;
+                        
+                        item.inner.style.transition = 'none';
+                        item.inner.style.transform = `translate(${pullX}px, ${pullY}px)`;
+                    } else {
+                        if (item.inner.style.transform && item.inner.style.transform !== 'translate(0px, 0px)') {
+                            item.inner.style.transition = 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)';
+                            item.inner.style.transform = 'translate(0px, 0px)';
+                        }
+                    }
+                });
             }, { passive: true });
         });
     </script>
@@ -1197,6 +1363,96 @@
             attachHoverEvents();
             setInterval(attachHoverEvents, 2000);
         });
+    </script>
+    
+    <!-- Liquid Heading Effect Script -->
+    <script>
+    (function() {
+        const DARK_COLORS  = ['#06b6d4', '#00d2ff', '#3b82f6', '#00f0ff', '#8b5cf6', '#38bdf8', '#06b6d4'];
+        const LIGHT_COLORS = ['#1d4ed8', '#2563eb', '#3b82f6', '#0284c7', '#4f46e5', '#2563eb', '#1d4ed8'];
+        const RADIUS = 120; // px — spread of the liquid spotlight
+
+        function isLiquidTarget(el) {
+            const tag = el.tagName;
+            if (el.classList.contains('hero-h1')) return false;
+            if (tag === 'H1' || tag === 'H2' || tag === 'H3') return true;
+            if (el.classList.contains('liquid-text')) return true;
+            return false;
+        }
+
+        function isExcluded(el) {
+            return el.closest('.nav-links, .nav-link, .brand-logo, button, .btn, .terminal-wrapper, code, pre');
+        }
+
+        function applyLiquid(el, relX, relW) {
+            const isLight = document.body.classList.contains('light-theme');
+            const colors  = isLight ? LIGHT_COLORS : DARK_COLORS;
+
+            const frac = Math.max(0, Math.min(1, relX / relW));
+            const pct = Math.round(frac * 100);
+            const activeRadius = Math.min(120, Math.max(30, relW * 0.35));
+            const r   = Math.round((activeRadius / relW) * 100);
+
+            const colorStop1 = colors[0];
+            const colorStop2 = colors[Math.floor(colors.length / 2)];
+            const colorStop3 = colors[colors.length - 1];
+
+            const bg = `radial-gradient(ellipse ${r * 2}% 200% at ${pct}% 50%,
+                ${colorStop2} 0%,
+                ${colorStop1} 30%,
+                ${colorStop3} 60%,
+                transparent 100%)`;
+
+            el.classList.add('liquid-active');
+            el.style.setProperty('background-image', bg, 'important');
+            el.style.setProperty('background-size', '100% 100%', 'important');
+        }
+
+        function removeLiquid(el) {
+            el.classList.remove('liquid-active');
+            el.style.removeProperty('background-image');
+            el.style.removeProperty('background-size');
+        }
+
+        document.addEventListener('mousemove', function(e) {
+            const target = e.target;
+            let el = target;
+            for (let i = 0; i < 4; i++) {
+                if (!el || el === document.body) break;
+                if (isLiquidTarget(el) && !isExcluded(el)) {
+                    const rect = el.getBoundingClientRect();
+                    const relX = e.clientX - rect.left;
+                    applyLiquid(el, relX, rect.width);
+                    return;
+                }
+                el = el.parentElement;
+            }
+        }, { passive: true });
+
+        document.addEventListener('mouseleave', function(e) {
+            const activeEls = document.querySelectorAll('.liquid-active');
+            activeEls.forEach(function(el) {
+                if (!el.contains(e.relatedTarget)) {
+                    removeLiquid(el);
+                }
+            });
+        }, { passive: true, capture: true });
+
+        document.addEventListener('mouseout', function(e) {
+            const target = e.target;
+            let el = target;
+            for (let i = 0; i < 4; i++) {
+                if (!el || el === document.body) break;
+                if (isLiquidTarget(el) && el.classList.contains('liquid-active')) {
+                    if (!el.contains(e.relatedTarget)) {
+                        removeLiquid(el);
+                    }
+                    return;
+                }
+                el = el.parentElement;
+            }
+        }, { passive: true });
+    })();
     </script>
 </body>
 </html>

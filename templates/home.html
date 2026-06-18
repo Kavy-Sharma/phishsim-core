@@ -148,6 +148,8 @@ body::before {
 .navbar.scrolled {
     height: 52px !important;
     background: rgba(2, 6, 23, 0.95) !important;
+    border-bottom: 1px solid rgba(56,189,248,0.2) !important;
+    box-shadow: 0 4px 30px rgba(0,0,0,0.4) !important;
 }
 
 .nav-container {
@@ -426,11 +428,23 @@ body:not(.light-theme) .theme-toggle-pill .icon-moon {
     position: absolute;
     top: 20px;
     right: 20px;
-    background: none;
-    border: none;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.1);
     color: #94a3b8;
-    font-size: 2.5rem;
+    font-size: 1.3rem;
     cursor: pointer;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+.close-menu-btn:hover {
+    background: rgba(255,255,255,0.08);
+    color: #fff;
+    border-color: rgba(255,255,255,0.2);
 }
 
 @media (max-width: 768px) {
@@ -577,9 +591,9 @@ body.light-theme .hamburger-btn .bar {
   align-items: center;
   justify-content: center;
   position: relative;
-  transform: translateX(-40px);
-  opacity: 0;
-  transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.8s ease;
+  transform: translateX(-20px);
+  opacity: 0.15;
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.35s ease;
 }
 
 .timeline-panel.active .timeline-left {
@@ -635,9 +649,9 @@ body.light-theme .hamburger-btn .bar {
 }
 
 .timeline-right {
-  transform: translateX(40px);
-  opacity: 0;
-  transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.2s, opacity 0.8s ease 0.2s;
+  transform: translateX(20px);
+  opacity: 0.15;
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.35s ease;
   padding-right: 5%;
 }
 
@@ -1161,10 +1175,43 @@ body.light-theme .hero-h1 {
 }
 .btn-ghost:hover { color: var(--white); border-color: rgba(255,255,255,0.2); transform: translateY(-2px); }
 
-body.light-theme .btn-primary,
-body.light-theme .btn-nav {
+.btn-nav {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  color: #fff !important;
+  transition: all 0.25s ease;
+}
+.btn-nav:hover {
+  background: rgba(255,255,255,0.08);
+  border-color: rgba(255,255,255,0.2);
+  transform: translateY(-1px);
+}
+.btn-nav-pro {
+  background: linear-gradient(135deg, #06b6d4, #3b82f6);
+  color: #fff !important;
+  border-color: transparent !important;
+  box-shadow: 0 0 20px rgba(6, 182, 212, 0.3);
+  transition: all 0.25s ease;
+}
+.btn-nav-pro:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 25px rgba(6, 182, 212, 0.5);
+}
+
+body.light-theme .btn-primary {
   background: linear-gradient(135deg, #2563eb, #4f46e5);
   box-shadow: 0 12px 28px rgba(37,99,235,0.18);
+}
+body.light-theme .btn-nav {
+  background: linear-gradient(135deg, #2563eb, #4f46e5) !important;
+  color: #fff !important;
+  border-color: transparent !important;
+  box-shadow: 0 12px 28px rgba(37,99,235,0.18) !important;
+}
+body.light-theme .btn-nav-pro {
+  background: linear-gradient(135deg, #2563eb, #4f46e5) !important;
+  color: #fff !important;
+  box-shadow: 0 12px 28px rgba(37,99,235,0.18) !important;
 }
 
 body.light-theme .btn-ghost {
@@ -1674,20 +1721,25 @@ section { position: relative; z-index: 2; }
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
+  background: rgba(6, 182, 212, 0.08);
+  border: 1px solid rgba(6, 182, 212, 0.2);
+  border-radius: 100px;
+  padding: 6px 14px;
+  font-size: 0.72rem;
+  font-weight: 600;
   color: var(--cyan);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   margin-bottom: 16px;
+  font-family: var(--font-mono), monospace;
+}
+body.light-theme .section-eyebrow {
+  background: rgba(37, 99, 235, 0.06);
+  border-color: rgba(37, 99, 235, 0.15);
+  color: #2563eb;
 }
 .section-eyebrow::before, .section-eyebrow::after {
-  content: '';
-  display: block;
-  height: 1px;
-  width: 30px;
-  background: var(--cyan);
-  opacity: 0.4;
+  display: none !important;
 }
 .section-title {
   font-size: clamp(1.8rem, 3vw, 2.8rem);
@@ -2492,9 +2544,101 @@ body.light-theme .mobile-nav-toggle span {
   color: #fff !important;
   box-shadow: 0 0 10px rgba(56, 189, 248, 0.15);
 }
+
+/* --- WATERLY LIQUID WAVE EFFECT (cursor-local spotlight) --- */
+h1:not(.hero-h1),
+h2:not(.hero-h1),
+h3:not(.hero-h1),
+.liquid-text {
+    background: linear-gradient(90deg, var(--white) 0%, var(--white) 100%);
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    background-clip: text !important;
+    color: transparent !important;
+    transition: filter 0.3s ease;
+    position: relative;
+}
+
+body.light-theme h1:not(.hero-h1),
+body.light-theme h2:not(.hero-h1),
+body.light-theme h3:not(.hero-h1),
+body.light-theme .liquid-text {
+    background: linear-gradient(90deg, #0f172a 0%, #0f172a 100%);
+}
+
+/* liquid-active class is added by JS when mouse is inside the heading */
+h1.liquid-active:not(.hero-h1),
+h2.liquid-active:not(.hero-h1),
+h3.liquid-active:not(.hero-h1),
+.liquid-text.liquid-active {
+    /* background-image is set dynamically via JS inline style */
+    background-size: 300% 100% !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    background-clip: text !important;
+    color: transparent !important;
+    filter: url(#liquid-filter) !important;
+    text-shadow: none !important;
+}
+
+body.light-theme h1.liquid-active:not(.hero-h1),
+body.light-theme h2.liquid-active:not(.hero-h1),
+body.light-theme h3.liquid-active:not(.hero-h1),
+body.light-theme .liquid-text.liquid-active {
+    filter: url(#liquid-filter) !important;
+}
+
+/* Exclude navigation links, buttons, text smaller than 1.2rem, and monospace terminal elements from liquid chrome */
+.nav-links a, .nav-link, .brand-logo,
+.btn, button, .camp-action-btn, .step-action-btn,
+.terminal-wrapper *, .terminal-body *, .terminal *,
+.monospace, .font-mono, .t-cmd, .t-prompt,
+code, pre,
+[style*="font-family: var(--mono)"], [style*="font-family:var(--mono)"] {
+    background-image: none !important;
+    background-clip: initial !important;
+    -webkit-background-clip: initial !important;
+    -webkit-text-fill-color: initial !important;
+    filter: none !important;
+}
+
+.btn-primary, .btn-try-demo, .btn-ghost {
+    position: relative;
+    overflow: hidden;
+}
+.magnetic-inner {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: inherit;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes hexRotate {
+    0%   { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+@keyframes scanBottom {
+    0%,100% { opacity: 0.3; transform: scaleX(0.3); }
+    50%      { opacity: 1;   transform: scaleX(1); }
+}
 </style>
 </head>
 <body>
+
+<!-- SVG Liquid/Watery text hover effect filter -->
+<svg style="position: absolute; width: 0; height: 0;" width="0" height="0" version="1.1" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <filter id="liquid-filter">
+      <feTurbulence type="fractalNoise" baseFrequency="0.015 0.04" numOctaves="3" result="noise">
+        <animate attributeName="baseFrequency" dur="10s" values="0.015 0.04; 0.035 0.07; 0.015 0.04" repeatCount="indefinite" />
+      </feTurbulence>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="6" xChannelSelector="R" yChannelSelector="G" />
+    </filter>
+  </defs>
+</svg>
 
 <!-- ═══════════════════════════════════════════════════════════
      INTERACTIVE PAGE LOADER — Cyberpunk hex-grid style
@@ -2526,10 +2670,10 @@ body.light-theme .mobile-nav-toggle span {
             <svg viewBox="0 0 100 100" style="width:100%;height:100%;">
                 <polygon points="50,5 90,27.5 90,72.5 50,95 10,72.5 10,27.5"
                     fill="none" stroke="rgba(6,182,212,0.2)" stroke-width="4"/>
-                <polygon points="50,5 90,27.5 90,72.5 50,95 10,72.5 10,27.5"
+                <polygon id="loader-hex-fill" points="50,5 90,27.5 90,72.5 50,95 10,72.5 10,27.5"
                     fill="none" stroke="#06b6d4" stroke-width="4"
                     stroke-dasharray="265" stroke-dashoffset="265"
-                    style="animation:hexSpin 1.4s ease-in-out infinite;">
+                    style="transform-origin: center; animation: hexRotate 10s linear infinite; transition: stroke-dashoffset 0.15s ease;">
                 </polygon>
                 <text x="50" y="58" text-anchor="middle" font-family="var(--font-sans)" font-size="22" font-weight="900" fill="#06b6d4" id="loader-pct">0</text>
             </svg>
@@ -2626,22 +2770,47 @@ body.light-theme .mobile-nav-toggle span {
 
     // Animate progress counter 0→100
     let pct = 0;
-    const pctTimer = setInterval(() => {
-        pct = Math.min(pct + Math.random() * 12 + 4, 99);
-        if (pctEl) pctEl.textContent = Math.round(pct);
-        if (statusEl) statusEl.textContent = statuses[Math.floor(pct / 25)] || statuses[3];
-    }, 80);
-
-    // Dismiss loader when page is ready
+    let pctTimer = null;
     let loaderDismissed = false;
+    const fillPolygon = document.getElementById('loader-hex-fill');
+
+    function updateProgress(value) {
+        pct = value;
+        if (pctEl) pctEl.textContent = Math.round(pct);
+        if (statusEl && !loaderDismissed && pct < 100) {
+            statusEl.textContent = statuses[Math.floor(pct / 25)] || statuses[3];
+        }
+        if (fillPolygon) {
+            const offset = 265 - (265 * (pct / 100));
+            fillPolygon.style.strokeDashoffset = offset;
+        }
+    }
+
+    function startLoader(initialPct, statusText) {
+        if (pctTimer) clearInterval(pctTimer);
+        pct = initialPct || 0;
+        loaderDismissed = false;
+        if (loader) {
+            loader.style.opacity = '1';
+            loader.style.visibility = 'visible';
+        }
+        if (statusText && statusEl) statusEl.textContent = statusText;
+        updateProgress(pct);
+
+        pctTimer = setInterval(() => {
+            pct = Math.min(pct + Math.random() * 8 + 2, 99);
+            updateProgress(pct);
+        }, 120);
+    }
+
     function dismissLoader() {
         if (loaderDismissed) return;
         loaderDismissed = true;
-        clearInterval(pctTimer);
+        if (pctTimer) clearInterval(pctTimer);
         let currentPct = pct;
         const finishTimer = setInterval(() => {
             currentPct = Math.min(currentPct + 10, 100);
-            if (pctEl) pctEl.textContent = Math.round(currentPct);
+            updateProgress(currentPct);
             if (currentPct >= 100) {
                 clearInterval(finishTimer);
                 if (statusEl) statusEl.textContent = 'READY';
@@ -2652,18 +2821,6 @@ body.light-theme .mobile-nav-toggle span {
             }
         }, 30);
     }
-
-    if (document.readyState === 'complete') {
-        dismissLoader();
-    } else {
-        window.addEventListener('load', dismissLoader);
-        // Safety fallback — never block for more than 4s
-        setTimeout(dismissLoader, 4000);
-    }
-
-    window.addEventListener('pageshow', (event) => {
-        dismissLoader();
-    });
 
     // Intercept clicks on all local anchors and form submissions to show loader instantly
     document.addEventListener("click", (e) => {
@@ -2682,12 +2839,7 @@ body.light-theme .mobile-nav-toggle span {
         }
 
         if (loader) {
-            if (pctEl) pctEl.textContent = '0';
-            if (statusEl) statusEl.textContent = 'CONNECTING';
-            loader.style.opacity = '1';
-            loader.style.visibility = 'visible';
-            pct = 0;
-            loaderDismissed = false;
+            startLoader(0, 'CONNECTING');
         }
     });
 
@@ -2699,18 +2851,29 @@ body.light-theme .mobile-nav-toggle span {
             return;
         }
 
-        // Only show loader if form is valid
+        // Only show loader if the form is valid to prevent freezing the UI on browser-validation failure
         if (typeof form.checkValidity === 'function' && !form.checkValidity()) {
             return;
         }
         
         if (loader) {
-            if (pctEl) pctEl.textContent = '0';
-            if (statusEl) statusEl.textContent = 'PROCESSING SECURE UPLOAD';
-            loader.style.opacity = '1';
-            loader.style.visibility = 'visible';
-            loaderDismissed = false;
+            startLoader(0, 'PROCESSING SECURE UPLOAD');
         }
+    });
+
+    // Start loader immediately on load
+    startLoader(0, 'INITIALIZING ENGINE');
+
+    if (document.readyState === 'complete') {
+        dismissLoader();
+    } else {
+        window.addEventListener('load', dismissLoader);
+        // Safety fallback — never block for more than 4s
+        setTimeout(dismissLoader, 4000);
+    }
+
+    window.addEventListener('pageshow', (event) => {
+        dismissLoader();
     });
 })();
 </script>
@@ -2753,9 +2916,13 @@ body.light-theme .mobile-nav-toggle span {
         
         <!-- Logged-in state -->
         {% if current_user %}
-        <div class="nav-links">
+            <div class="nav-links">
             <a href="/dashboard" class="nav-link">Dashboard</a>
             <a href="/new-campaign" class="nav-link">Campaigns</a>
+            <a href="/reports-demo" class="nav-link">Reports</a>
+            {% if current_user.role == 'admin' %}
+            <a href="/admin" class="nav-link" style="color: #f59e0b !important; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;"><i class="ti ti-shield-lock" style="color: #ef4444; font-size: 1.1rem; vertical-align: middle;"></i>Admin</a>
+            {% endif %}
             <div class="nav-dropdown">
                 <button class="nav-dropdown-trigger">Tools <i class="ti ti-chevron-down"></i></button>
                 <div class="nav-dropdown-menu">
@@ -2763,14 +2930,20 @@ body.light-theme .mobile-nav-toggle span {
                     <a href="/header-analyzer"><i class="ti ti-mail-search" style="color:#8b5cf6;margin-right:6px;"></i>Header Analyzer</a>
                     <a href="/url-decoder"><i class="ti ti-link" style="color:#10b981;margin-right:6px;"></i>URL Decoder</a>
                     <a href="/password-breach"><i class="ti ti-key" style="color:#f59e0b;margin-right:6px;"></i>Password Breach Check</a>
-                    <a href="/ai-risk-advisor" style="border-top: 1px solid rgba(255,255,255,0.05); color:#f59e0b;"><i class="ti ti-crown" style="font-size:0.8rem;margin-right:2px;"></i> AI Risk Advisor</a>
+                    <a href="/ai-risk-advisor" class="dropdown-advisor-item" style="border-top: 1px solid rgba(255,255,255,0.05); color: #fbbf24 !important; font-weight: 700; background: linear-gradient(90deg, rgba(245,158,11,0.06), transparent); display: flex !important; align-items: center; justify-content: space-between; gap: 8px;">
+                        <span style="display: inline-flex; align-items: center; gap: 6px;">
+                            <i class="ti ti-crown" style="font-size: 0.95rem; color: #fbbf24; filter: drop-shadow(0 0 5px rgba(251,191,36,0.6));"></i> 
+                            AI Risk Advisor
+                        </span>
+                        <span style="font-family: var(--font-mono); font-size: 0.55rem; font-weight: 900; background: linear-gradient(135deg, #fbbf24, #d97706); color: #000; padding: 1px 4px; border-radius: 3px; letter-spacing: 0.5px; line-height: 1.1;">PRO</span>
+                    </a>
                 </div>
             </div>
         </div>
         
         <div class="nav-actions">
             {% if current_user.company_domain == 'demo-corp.com' %}
-            <span style="font-family: var(--mono); font-size: 9px; font-weight: 700; background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); color: #f59e0b; padding: 2px 6px; border-radius: 4px; text-transform: uppercase;">SANDBOX MODE</span>
+            <span style="font-family: var(--font-mono); font-size: 9px; font-weight: 700; background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); color: #f59e0b; padding: 2px 6px; border-radius: 4px; text-transform: uppercase;">SANDBOX MODE</span>
             <a href="/exit-demo" style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.4); color: #fca5a5; font-size: 11px; font-family: var(--font-mono); font-weight: 700; padding: 6px 12px; border-radius: 4px; text-decoration: none; text-transform: uppercase; transition: all 0.25s;" onmouseover="this.style.background='#ef4444'; this.style.color='#fff';" onmouseout="this.style.background='rgba(239, 68, 68, 0.1)'; this.style.color='#fca5a5';">Exit Sandbox</a>
             {% endif %}
             
@@ -2782,10 +2955,27 @@ body.light-theme .mobile-nav-toggle span {
                 <i class="ti ti-moon icon-moon"></i>
             </div>
             
+            <!-- Billing icon-only button -->
+            <a href="/billing" class="nav-billing-btn" title="Billing & Plan" style="font-size: 1.25rem; color: #94a3b8; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; transition: color 0.2s;" onmouseover="this.style.color='#fff';" onmouseout="this.style.color='#94a3b8';">
+                <i class="ti ti-credit-card"></i>
+            </a>
+            
+            <!-- Upgrade Chip for non-admin/non-pro -->
+            {% if current_user.role not in ('admin', 'pro') %}
+            <a href="/billing" class="upgrade-chip" style="background: linear-gradient(135deg, #f59e0b, #ea580c); color: #fff; font-family: var(--font-sans), sans-serif; font-size: 10px; font-weight: 800; padding: 5px 12px; border-radius: 6px; text-decoration: none; text-transform: uppercase; transition: all 0.25s; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 0 15px rgba(245, 158, 11, 0.3);" onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 0 20px rgba(245,158,11,0.5)';" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 0 15px rgba(245, 158, 11, 0.3)';">
+                <i class="ti ti-crown"></i> UPGRADE
+            </a>
+            {% endif %}
+            
             {% set name_parts = current_user.name.split(' ') %}
             <a href="/profile" class="nav-avatar">
                 {% if name_parts|length > 1 %}{{ name_parts[0][0]|upper }}{{ name_parts[1][0]|upper }}{% else %}{{ current_user.name[:2]|upper }}{% endif %}
             </a>
+            
+            <!-- PRO Badge beside Avatar -->
+            {% if current_user.role == 'pro' %}
+            <span class="pro-badge" style="background: linear-gradient(135deg, #38bdf8, #6366f1); color: #fff; font-size: 0.6rem; font-weight: 800; padding: 2px 6px; border-radius: 4px; margin-left: -6px; margin-right: 6px; display: inline-block; vertical-align: middle; pointer-events: none;">PRO</span>
+            {% endif %}
             
             <a href="/logout" class="nav-link nav-link-login" style="font-size: 0.85rem;">Logout</a>
             
@@ -2800,16 +2990,24 @@ body.light-theme .mobile-nav-toggle span {
         {% else %}
         <div class="nav-links">
             <div class="nav-dropdown">
-                <button class="nav-dropdown-trigger">Platform <i class="ti ti-chevron-down"></i></button>
+                <button class="nav-dropdown-trigger">Solutions <i class="ti ti-chevron-down"></i></button>
                 <div class="nav-dropdown-menu">
-                    <a href="/dashboard">Dashboard</a>
-                    <a href="/new-campaign">New Campaign</a>
-                    <a href="/dashboard">Campaign Analytics</a>
-                    <a href="/reports-demo">AI Report</a>
+                    <a href="/solutions/phishing"><i class="ti ti-target" style="color:#38bdf8;margin-right:6px;"></i>Spear Phishing Sim</a>
+                    <a href="/solutions/osint"><i class="ti ti-search" style="color:#a855f7;margin-right:6px;"></i>OSINT Exposure Scan</a>
+                    <a href="/solutions/lms"><i class="ti ti-school" style="color:#10b981;margin-right:6px;"></i>Just-In-Time Training</a>
+                    <a href="/solutions/plugin"><i class="ti ti-alert-triangle" style="color:#f59e0b;margin-right:6px;"></i>Threat Report Plugin</a>
                 </div>
             </div>
             <a href="/#attack-flow" class="nav-link">How It Works</a>
             <a href="/#pricing" class="nav-link">Pricing</a>
+            <div class="nav-dropdown">
+                <button class="nav-dropdown-trigger">Resources <i class="ti ti-chevron-down"></i></button>
+                <div class="nav-dropdown-menu">
+                    <a href="/reports-demo"><i class="ti ti-file-text" style="color:#06b6d4;margin-right:6px;"></i>AI Report Preview</a>
+                    <a href="/provenance"><i class="ti ti-shield-check" style="color:#8b5cf6;margin-right:6px;"></i>Security Provenance</a>
+                    <a href="/data-handling-policy"><i class="ti ti-lock" style="color:#10b981;margin-right:6px;"></i>Data Handling Policy</a>
+                </div>
+            </div>
             <div class="nav-dropdown">
                 <button class="nav-dropdown-trigger">Threat Tools <i class="ti ti-chevron-down"></i></button>
                 <div class="nav-dropdown-menu">
@@ -2817,7 +3015,13 @@ body.light-theme .mobile-nav-toggle span {
                     <a href="/header-analyzer"><i class="ti ti-mail-search" style="color:#8b5cf6;margin-right:6px;"></i>Header Analyzer</a>
                     <a href="/url-decoder"><i class="ti ti-link" style="color:#10b981;margin-right:6px;"></i>URL Decoder</a>
                     <a href="/password-breach"><i class="ti ti-key" style="color:#f59e0b;margin-right:6px;"></i>Password Breach Check</a>
-                    <a href="/ai-risk-advisor" style="border-top: 1px solid rgba(255,255,255,0.05); color:#f59e0b;"><i class="ti ti-crown" style="font-size:0.8rem;margin-right:2px;"></i> AI Risk Advisor</a>
+                    <a href="/ai-risk-advisor" class="dropdown-advisor-item" style="border-top: 1px solid rgba(255,255,255,0.05); color: #fbbf24 !important; font-weight: 700; background: linear-gradient(90deg, rgba(245,158,11,0.06), transparent); display: flex !important; align-items: center; justify-content: space-between; gap: 8px;">
+                        <span style="display: inline-flex; align-items: center; gap: 6px;">
+                            <i class="ti ti-crown" style="font-size: 0.95rem; color: #fbbf24; filter: drop-shadow(0 0 5px rgba(251,191,36,0.6));"></i> 
+                            AI Risk Advisor
+                        </span>
+                        <span style="font-family: var(--font-mono); font-size: 0.55rem; font-weight: 900; background: linear-gradient(135deg, #fbbf24, #d97706); color: #000; padding: 1px 4px; border-radius: 3px; letter-spacing: 0.5px; line-height: 1.1;">PRO</span>
+                    </a>
                 </div>
             </div>
         </div>
@@ -2843,26 +3047,37 @@ body.light-theme .mobile-nav-toggle span {
 
 <!-- Mobile overlay menu -->
 <div class="mobile-menu-overlay" id="mobile-menu-overlay">
-    <button class="close-menu-btn" onclick="toggleMobileMenu()">&times;</button>
-<div class="mobile-menu-links">
+    <button class="close-menu-btn" onclick="toggleMobileMenu()"><i class="ti ti-x"></i></button>
+    <div class="mobile-menu-links">
         {% if current_user %}
         <a href="/dashboard" onclick="toggleMobileMenu()">Dashboard</a>
         <a href="/new-campaign" onclick="toggleMobileMenu()">Campaigns</a>
+        {% if current_user.role == 'admin' %}
+        <a href="/admin" onclick="toggleMobileMenu()" style="color: #ef4444;"><i class="ti ti-shield-lock" style="margin-right: 4px;"></i>Admin Panel</a>
+        {% endif %}
         <a href="/threat-analyzer" onclick="toggleMobileMenu()">Threat Analyzer</a>
         <a href="/header-analyzer" onclick="toggleMobileMenu()">Header Analyzer</a>
         <a href="/url-decoder" onclick="toggleMobileMenu()">URL Decoder</a>
         <a href="/password-breach" onclick="toggleMobileMenu()">Password Breach Check</a>
         <a href="/ai-risk-advisor" onclick="toggleMobileMenu()" style="color:#f59e0b;"><i class="ti ti-crown" style="font-size:0.85rem;margin-right:4px;"></i> AI Risk Advisor</a>
         <a href="/reports-demo" onclick="toggleMobileMenu()">AI Report</a>
-        <a href="/profile" onclick="toggleMobileMenu()">Profile</a>
-        <a href="/billing" onclick="toggleMobileMenu()">Billing</a>
+        <a href="/profile" onclick="toggleMobileMenu()">
+            Profile
+            {% if current_user.role == 'pro' %}
+            <span class="pro-badge" style="background: linear-gradient(135deg, #38bdf8, #6366f1); color: #fff; font-size: 0.6rem; font-weight: 800; padding: 2px 6px; border-radius: 4px; margin-left: 6px; display: inline-block; vertical-align: middle;">PRO</span>
+            {% endif %}
+        </a>
+        <a href="/billing" onclick="toggleMobileMenu()"><i class="ti ti-credit-card"></i> Billing & Plan</a>
+        {% if current_user.role not in ('admin', 'pro') %}
+        <a href="/billing" onclick="toggleMobileMenu()" style="color: #fbbf24;"><i class="ti ti-crown"></i> Upgrade to PRO</a>
+        {% endif %}
         <a href="/logout" onclick="toggleMobileMenu()">Logout</a>
         {% if current_user.company_domain == 'demo-corp.com' %}
         <a href="/exit-demo" onclick="toggleMobileMenu()" style="color: #ef4444;">Exit Sandbox</a>
         {% endif %}
         {% else %}
         <a href="/dashboard" onclick="toggleMobileMenu()">Dashboard</a>
-        <a href="/new-campaign" onclick="toggleMobileMenu()">New Campaign</a>
+        <a href="/new-campaign" onclick="toggleMobileMenu()">Campaigns</a>
         <a href="/#attack-flow" onclick="toggleMobileMenu()">How It Works</a>
         <a href="/#pricing" onclick="toggleMobileMenu()">Pricing</a>
         <a href="/threat-analyzer" onclick="toggleMobileMenu()">Threat Analyzer</a>
@@ -3014,7 +3229,7 @@ body.light-theme .mobile-nav-toggle span {
   <div id="timeline-counter" class="timeline-counter">STEP 1 OF 6</div>
   
   <div style="max-width: 1200px; margin: 0 auto; padding: 100px 5% 40px; text-align: center;">
-    <div class="section-eyebrow" style="background: rgba(6, 182, 212, 0.08); border: 1px solid rgba(6, 182, 212, 0.2); border-radius: 100px; padding: 6px 14px; font-size: 0.75rem; font-weight: 600; color: var(--cyan); letter-spacing: 0.08em; text-transform: uppercase; display: inline-block;">The Attack Chain</div>
+    <div class="section-eyebrow">The Attack Chain</div>
     <h2 class="section-title" style="font-size: clamp(2.5rem, 4vw, 4rem); font-weight: 700; margin: 16px 0; line-height: 1.2;">Anatomy of an<br>Autonomous Attack</h2>
     <p class="section-sub" style="font-size: 1.05rem; color: var(--muted); max-width: 600px; margin: 0 auto; line-height: 1.6;">Scroll down to watch the Agentic AI orchestrate a full-scale social engineering campaign. Each step is fully autonomous, dynamically reacting to targets.</p>
     <!-- Walk-through button -->
@@ -3126,7 +3341,7 @@ body.light-theme .mobile-nav-toggle span {
 <section id="threat-sandbox" style="padding: 100px 5% 80px; background: var(--bg2); position: relative; z-index: 2; border-top: 1px solid var(--border);">
   <div style="max-width: 1200px; margin: 0 auto;">
     <div style="text-align: center; margin-bottom: 50px;">
-      <div class="section-eyebrow reveal" style="display: inline-flex; align-items: center; gap: 8px; background: rgba(6, 182, 212, 0.08); border: 1px solid rgba(6, 182, 212, 0.2); border-radius: 100px; padding: 6px 14px; font-size: 0.75rem; font-weight: 600; color: var(--cyan); letter-spacing: 0.08em; text-transform: uppercase;">Threat Sandbox</div>
+      <div class="section-eyebrow reveal">Threat Sandbox</div>
       <h2 class="section-title reveal" style="font-size: clamp(2rem, 3.5vw, 2.8rem); font-weight: 700; color: var(--white); margin: 16px 0; line-height: 1.25;">Interactive Threat Lab</h2>
       <p class="section-sub reveal" style="font-size: 1.05rem; color: var(--muted); max-width: 600px; margin: 0 auto; line-height: 1.6;">Select a scenario to load a live simulation email. Click the action links to witness the simulated compromise and live telemetry capture.</p>
     </div>
@@ -3637,7 +3852,7 @@ body.light-theme .mobile-nav-toggle span {
 <!-- GLOBAL THREAT INTELLIGENCE -->
 <section id="global-threat-intel">
   <div class="text-center reveal" style="margin-bottom: 50px; text-align: center;">
-    <div class="section-eyebrow" style="display: inline-flex; align-items: center; gap: 8px; background: rgba(6, 182, 212, 0.08); border: 1px solid rgba(6, 182, 212, 0.2); border-radius: 100px; padding: 6px 14px; font-size: 0.75rem; font-weight: 600; color: var(--cyan); letter-spacing: 0.08em; text-transform: uppercase;">Threat Intel</div>
+    <div class="section-eyebrow">Threat Intel</div>
     <h2 class="section-title" style="font-size: clamp(2rem, 3.5vw, 2.8rem); font-weight: 700; margin: 16px 0; line-height: 1.25;">Global Threat Intelligence</h2>
     <p class="section-sub" style="font-size: 1.05rem; color: var(--muted); max-width: 600px; margin: 0 auto; line-height: 1.6;">Live telemetry captured from simulated nodes across our global decoy network.</p>
   </div>
@@ -3760,7 +3975,7 @@ body.light-theme .mobile-nav-toggle span {
 <!-- SOLUTIONS SECTION (Enterprise Solutions Suite) -->
 <section id="solutions" style="padding: 100px 5% 80px; background: var(--bg); position: relative; z-index: 2; border-top: 1px solid var(--border);">
   <div style="max-width: 1200px; margin: 0 auto; text-align: center; margin-bottom: 60px;">
-    <div class="section-eyebrow reveal" style="display: inline-flex; align-items: center; gap: 8px; background: rgba(6, 182, 212, 0.08); border: 1px solid rgba(6, 182, 212, 0.2); border-radius: 100px; padding: 6px 14px; font-size: 0.75rem; font-weight: 600; color: var(--cyan); letter-spacing: 0.08em; text-transform: uppercase;">Solutions Suite</div>
+    <div class="section-eyebrow reveal">Solutions Suite</div>
     <h2 class="section-title reveal" style="font-size: clamp(2rem, 3.5vw, 2.8rem); font-weight: 700; color: var(--white); margin: 16px 0; line-height: 1.25;">Automated Human Risk Management</h2>
     <p class="section-sub reveal" style="font-size: 1.05rem; color: var(--muted); max-width: 600px; margin: 0 auto; line-height: 1.6;">Beyond simulations. PhishSim.ai coordinates passive exposure scans, active tests, micro-learning courses, and telemetry feeds into a single dashboard.</p>
   </div>
@@ -3831,13 +4046,26 @@ body.light-theme .mobile-nav-toggle span {
       </div>
     </div><!-- /cap-card-4 -->
   </div><!-- /solutions-grid -->
+
+  <!-- Solutions Briefing Terminal Drawer -->
+  <div id="solutions-drawer" style="
+      max-width: 1200px;
+      margin: 30px auto 0;
+      height: 0px;
+      opacity: 0;
+      overflow: hidden;
+      transition: height 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease;
+      border-left: 4px solid var(--accent-cyan);
+  " class="window-mockup">
+    <div id="solutions-drawer-content" style="padding: 24px;"></div>
+  </div>
 </section><!-- /solutions -->
 
 <!-- THREAT INTELLIGENCE SUITE -->
 <section id="threat-intel-suite">
   <div style="max-width: 1200px; margin: 0 auto 50px; text-align: center;">
-    <div class="section-eyebrow" style="background: rgba(6, 182, 212, 0.08); border: 1px solid rgba(6, 182, 212, 0.2); border-radius: 100px; padding: 6px 14px; font-size: 0.75rem; font-weight: 600; color: var(--cyan); letter-spacing: 0.08em; text-transform: uppercase; display: inline-block;">Threat Suite</div>
-    <h2 class="section-title" style="font-size: clamp(2rem, 3.5vw, 2.8rem); font-weight: 700; color: #fff; margin: 16px 0; line-height: 1.25;">Advanced Defensive Infrastructure</h2>
+    <div class="section-eyebrow">Threat Suite</div>
+    <h2 class="section-title" style="font-size: clamp(2rem, 3.5vw, 2.8rem); font-weight: 700; color: var(--text-main); margin: 16px 0; line-height: 1.25;">Advanced Defensive Infrastructure</h2>
     <p class="section-sub" style="font-size: 1.05rem; color: var(--muted); max-width: 600px; margin: 0 auto; line-height: 1.6;">Proactive security analytics and intelligence tools for modern enterprise environments.</p>
   </div>
 
@@ -3900,13 +4128,13 @@ body.light-theme .mobile-nav-toggle span {
     <a href="/ai-risk-advisor" class="suite-card suite-card-advisor {% if not current_user or current_user.role not in ('admin', 'pro') %}disabled{% endif %}" style="max-width: 560px; width: 100%; position: relative; overflow: visible;">
       <span class="advisor-pulse-ring"></span>
       <div class="suite-card-top">
-        <div class="suite-icon" style="color:#f59e0b; background:rgba(245,158,11,0.1); border-color:rgba(245,158,11,0.3);"><i class="ti ti-brain"></i></div>
+        <div class="suite-icon" style="color:#fbbf24; background:linear-gradient(135deg, rgba(251,191,36,0.2), rgba(217,119,6,0.1)); border-color:rgba(251,191,36,0.45); box-shadow: 0 0 10px rgba(251,191,36,0.25);"><i class="ti ti-crown"></i></div>
         <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-          <span class="suite-badge-pro" style="background:rgba(245,158,11,0.15); border-color:rgba(245,158,11,0.5); color:#f59e0b;">
+          <span class="suite-badge-pro" style="background:rgba(251,191,36,0.15); border-color:rgba(251,191,36,0.5); color:#fbbf24;">
             <i class="ti ti-crown" style="margin-right:3px; font-size:0.75rem;"></i>
             {% if current_user and current_user.role in ('admin', 'pro') %}UNLOCKED{% else %}PRO EXCLUSIVE{% endif %}
           </span>
-          <span style="font-family:var(--font-mono); font-size:0.65rem; color:#f59e0b; opacity:0.7; text-transform:uppercase; letter-spacing:0.08em;">Agentic AI</span>
+          <span style="font-family:var(--font-mono); font-size:0.65rem; color:#fbbf24; opacity:0.7; text-transform:uppercase; letter-spacing:0.08em;">Agentic AI</span>
         </div>
       </div>
       <div>
@@ -3921,21 +4149,21 @@ body.light-theme .mobile-nav-toggle span {
 
   <style>
   .suite-card-advisor {
-    border: 1px solid rgba(245,158,11,0.35) !important;
+    border: 1px solid rgba(251,191,36,0.35) !important;
     animation: advisorPulse 2.8s ease-in-out infinite;
   }
   .suite-card-advisor:hover {
     animation-play-state: paused;
-    box-shadow: 0 0 0 6px rgba(245,158,11,0.18), 0 16px 48px rgba(245,158,11,0.22) !important;
+    box-shadow: 0 0 0 6px rgba(251,191,36,0.18), 0 16px 48px rgba(251,191,36,0.22) !important;
     transform: translateY(-4px) scale(1.012);
   }
   @keyframes advisorPulse {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(245,158,11,0.4), 0 8px 32px rgba(245,158,11,0.08); }
-    50%       { box-shadow: 0 0 0 8px rgba(245,158,11,0), 0 12px 40px rgba(245,158,11,0.18); }
+    0%, 100% { box-shadow: 0 0 0 0 rgba(251,191,36,0.4), 0 8px 32px rgba(251,191,36,0.08); }
+    50%       { box-shadow: 0 0 0 8px rgba(251,191,36,0), 0 12px 40px rgba(251,191,36,0.18); }
   }
   .advisor-pulse-ring {
     position: absolute; inset: -3px; border-radius: inherit; pointer-events: none;
-    border: 2px solid rgba(245,158,11,0.5);
+    border: 2px solid rgba(251,191,36,0.5);
     animation: advisorRing 2.8s ease-in-out infinite;
   }
   @keyframes advisorRing {
@@ -4003,7 +4231,7 @@ body.light-theme .mobile-nav-toggle span {
 <!-- TESTIMONIALS SECTION -->
 <section id="testimonials" style="padding: 100px 5% 80px; background: var(--bg); position: relative; z-index: 2; border-top: 1px solid var(--border);">
   <div style="max-width: 1200px; margin: 0 auto; text-align: center; margin-bottom: 60px;">
-    <div class="section-eyebrow reveal" style="display: inline-flex; align-items: center; gap: 8px; background: rgba(34, 211, 238, 0.08); border: 1px solid rgba(34, 211, 238, 0.2); border-radius: 100px; padding: 6px 14px; font-size: 0.75rem; font-weight: 600; color: var(--cyan); letter-spacing: 0.08em; text-transform: uppercase;">Social Proof</div>
+    <div class="section-eyebrow reveal">Social Proof</div>
     <h2 class="section-title reveal" style="font-size: clamp(2rem, 3.5vw, 2.8rem); font-weight: 700; color: var(--white); margin: 16px 0; line-height: 1.25;">Trusted by Security Operators</h2>
     <p class="section-sub reveal" style="font-size: 1.05rem; color: var(--muted); max-width: 600px; margin: 0 auto; line-height: 1.6;">Here is how security leads are improving their Human Security Score with PhishSim AI.</p>
     <p class="reveal" style="font-size: 0.8rem; color: var(--muted); font-style: italic; margin-top: 8px; margin-bottom: 0; opacity: 0.8;">Illustrative feedback from security professionals during beta testing.</p>
@@ -4083,7 +4311,7 @@ body.light-theme .mobile-nav-toggle span {
 <!-- PRICING SECTION -->
 <section id="pricing" style="padding: 100px 5% 80px; background: var(--bg2); position: relative; z-index: 2; border-top: 1px solid var(--border);">
   <div style="max-width: 1200px; margin: 0 auto; text-align: center; margin-bottom: 60px;">
-    <div class="section-eyebrow reveal" style="display: inline-flex; align-items: center; gap: 8px; background: rgba(59, 130, 246, 0.08); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 100px; padding: 6px 14px; font-size: 0.75rem; font-weight: 600; color: #60a5fa; letter-spacing: 0.08em; text-transform: uppercase;">Flexible Plans</div>
+    <div class="section-eyebrow reveal" style="background: rgba(59, 130, 246, 0.08); border-color: rgba(59, 130, 246, 0.2); color: #60a5fa;">Flexible Plans</div>
     <h2 class="section-title reveal" style="font-size: clamp(2rem, 3.5vw, 2.8rem); font-weight: 700; color: var(--white); margin: 16px 0; line-height: 1.25;">Deploy Human Risk Mitigation</h2>
     <p class="section-sub reveal" style="font-size: 1.05rem; color: var(--muted); max-width: 600px; margin: 0 auto; line-height: 1.6;">Start simulating for free, then upgrade to full continuous automation when you are ready to scale.</p>
   </div>
@@ -4116,7 +4344,7 @@ body.light-theme .mobile-nav-toggle span {
       </div>
 
       <div style="margin-top: 3rem;">
-        <a href="/signup" class="btn-nav" style="display: block; text-align: center; padding: 12px; font-size: 0.9rem; font-weight: 700; border-radius: 8px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); color: #fff; text-shadow: none; box-shadow: none;">Create Free Account</a>
+        <a href="/signup" class="btn-nav" style="display: block; text-align: center; padding: 12px; font-size: 0.9rem; font-weight: 700; border-radius: 8px;">Create Free Account</a>
       </div>
     </div>
 
@@ -4147,7 +4375,7 @@ body.light-theme .mobile-nav-toggle span {
       </div>
 
       <div style="margin-top: 3rem;">
-        <a href="/billing" class="btn-nav" style="display: block; text-align: center; padding: 12px; font-size: 0.9rem; font-weight: 700; border-radius: 8px;">Upgrade to PRO</a>
+        <a href="/billing" class="btn-nav btn-nav-pro" style="display: block; text-align: center; padding: 12px; font-size: 0.9rem; font-weight: 700; border-radius: 8px;">Upgrade to PRO</a>
       </div>
     </div>
 
@@ -5287,7 +5515,7 @@ IT Compliance Dept</pre>`), 2200);
             setTimeout(() => appendTerminalHTML(`<div class="t-output">192.168.1.104   70:3E:AC:8D:1E:FF  cfo-laptop.local</div>`), 1200);
             setTimeout(() => appendTerminalHTML(`<div class="t-ok" style="margin-top:6px;">[+] Scan complete. 3 active hosts detected.</div>`), 1600);
         } else if (cmd === 'theme') {
-            const toggleBtn = document.getElementById('theme-toggle-btn') || document.querySelector('.theme-toggle');
+            const toggleBtn = document.getElementById('theme-toggle') || document.getElementById('theme-toggle-btn') || document.querySelector('.theme-toggle') || document.querySelector('.theme-toggle-pill');
             if (toggleBtn) {
                 toggleBtn.click();
                 outputHTML = `<div class="t-ok">[+] Interface style recalculated and repainted successfully.</div>`;
@@ -5535,7 +5763,7 @@ if (timelinePanels.length && timelineCounter && timelineProgressFill && attackFl
         }
       }
     });
-  }, { threshold: 0.45 });
+  }, { threshold: 0.2 });
 
   timelinePanels.forEach(p => timelineObs.observe(p));
 
@@ -5877,76 +6105,81 @@ function toggleSolutionsDrawer(event, key, accentColor) {
   let specsHTML = "";
   intel.specs.forEach(spec => {
     specsHTML += `
-      <div style="display: grid; grid-template-columns: 180px 1fr; border-bottom: 1px solid var(--border-color); padding: 12px 0; font-size: 0.85rem;">
-        <span style="color: ${accentColor}; font-weight: 600; font-family: var(--font-mono); text-transform: uppercase;">[${spec.name}]</span>
-        <span style="color: #cbd5e1;">${spec.detail}</span>
+      <div style="display: grid; grid-template-columns: 180px 1fr; border-bottom: 1px solid var(--border); padding: 12px 0; font-size: 0.85rem;">
+        <span style="color: ${accentColor}; font-weight: 600; font-family: var(--mono); text-transform: uppercase;">[${spec.name}]</span>
+        <span style="color: var(--text-muted);">${spec.detail}</span>
       </div>
     `;
   });
 
   const fullHTML = `
-    <div style="font-family: var(--font-mono); color: #22c55e; font-size: 0.75rem; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.05em; display:flex; align-items:center; gap:8px;">
+    <div style="font-family: var(--mono); color: #22c55e; font-size: 0.75rem; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.05em; display:flex; align-items:center; gap:8px;">
       <span style="width:6px; height:6px; border-radius:50%; background:#22c55e; display:inline-block; box-shadow:0 0 5px #22c55e; animation: pulseStatus 1.8s infinite;"></span>
       <span>[SYSTEM] Secure terminal briefing decryptor connected... [OK]</span>
     </div>
-    <h3 style="font-size: 1.5rem; color: #fff; margin-bottom: 16px; font-weight: 700; font-family: var(--font-sans);">
-      ${intel.title} <span style="font-size: 0.82rem; font-family: var(--font-mono); color: ${accentColor}; font-weight: normal; margin-left: 8px;">// ${intel.tagline}</span>
+    <h3 style="font-size: 1.5rem; color: var(--text-main); margin-bottom: 16px; font-weight: 700; font-family: var(--sans);">
+      ${intel.title} <span style="font-size: 0.82rem; font-family: var(--mono); color: ${accentColor}; font-weight: normal; margin-left: 8px;">// ${intel.tagline}</span>
     </h3>
-    <div style="border-top: 1px solid var(--border-color); margin-bottom: 20px;">
+    <div style="border-top: 1px solid var(--border); margin-bottom: 20px;">
       ${specsHTML}
     </div>
     <div style="margin-top: 20px;">
-      <h4 style="color: #fff; font-size: 0.95rem; margin-bottom: 6px; font-weight: 600;">Strategic Value Impact:</h4>
+      <h4 style="color: var(--text-main); font-size: 0.95rem; margin-bottom: 6px; font-weight: 600;">Strategic Value Impact:</h4>
       <p style="font-size: 0.88rem; color: var(--text-muted); line-height: 1.5; margin: 0;">${intel.whyMatters}</p>
     </div>
     <div style="margin-top: 28px;">
-      <a href="${intel.ctaLink}" class="btn-primary-action" style="padding: 10px 24px; font-size: 0.85rem; text-decoration: none; display: inline-block; width: auto; font-family: var(--font-sans);">
+      <a href="${intel.ctaLink}" class="btn-primary-action" style="padding: 10px 24px; font-size: 0.85rem; text-decoration: none; display: inline-block; width: auto; font-family: var(--sans);">
         ${intel.ctaText} &rarr;
       </a>
     </div>
   `;
   
-  // Set opacity and height transition prep
-  content.innerHTML = "";
-  drawer.style.opacity = '1';
-  
-  // Measure layout height dynamically
+  // Render HTML structure instantly so layouts, colors, borders, and CTA buttons are styled immediately
   content.innerHTML = fullHTML;
-  const targetHeight = content.scrollHeight;
-  content.innerHTML = "";
-  drawer.style.height = targetHeight + 'px';
+  drawer.style.opacity = '1';
+  drawer.style.height = content.scrollHeight + 'px';
   
-  // Run Typewriter
-  let index = 0;
-  function step() {
-    if (currentOpenSolutionKey !== key) return; // Terminate if user clicked away
-    if (index >= fullHTML.length) {
-      content.innerHTML = fullHTML; // Ensure pristine rendering at completion
-      drawer.style.height = content.scrollHeight + 'px';
-      return;
-    }
-    
-    let char = fullHTML[index];
-    if (char === '<') {
-      let tagEnd = fullHTML.indexOf('>', index);
-      if (tagEnd !== -1) {
-        content.innerHTML += fullHTML.substring(index, tagEnd + 1);
-        index = tagEnd + 1;
-      } else {
-        content.innerHTML += char;
-        index++;
+  // Traverse and gather all text nodes for typing sequence
+  const typingSteps = [];
+  function collectTextNodes(node) {
+    if (node.nodeType === Node.TEXT_NODE) {
+      const text = node.nodeValue;
+      if (text.trim().length > 0) {
+        node.nodeValue = ""; // Clear initial text
+        for (let i = 0; i < text.length; i++) {
+          typingSteps.push({ node, char: text[i] });
+        }
       }
     } else {
-      content.innerHTML += char;
-      index++;
+      for (let i = 0; i < node.childNodes.length; i++) {
+        collectTextNodes(node.childNodes[i]);
+      }
+    }
+  }
+  collectTextNodes(content);
+
+  // Sequentially type characters into target text nodes
+  let stepIndex = 0;
+  function runTypewriterStep() {
+    if (currentOpenSolutionKey !== key) return; // Terminate if user clicked away
+    
+    const charsPerStep = 4; // snappier typing speed
+    for (let count = 0; count < charsPerStep; count++) {
+      if (stepIndex >= typingSteps.length) {
+        content.innerHTML = fullHTML; // Pristine final state
+        drawer.style.height = content.scrollHeight + 'px';
+        return;
+      }
+      const stepData = typingSteps[stepIndex];
+      stepData.node.nodeValue += stepData.char;
+      stepIndex++;
     }
     
-    // Adjust height on the fly
     drawer.style.height = content.scrollHeight + 'px';
-    solutionsTypewriterTimeout = setTimeout(step, 8);
+    solutionsTypewriterTimeout = setTimeout(runTypewriterStep, 12);
   }
   
-  solutionsTypewriterTimeout = setTimeout(step, 100);
+  solutionsTypewriterTimeout = setTimeout(runTypewriterStep, 80);
 }
 
 // Spotlight text tracking
@@ -6147,7 +6380,171 @@ document.addEventListener("DOMContentLoaded", () => {
     };
     attachHoverEvents();
     setInterval(attachHoverEvents, 2000);
+
+    // Magnetic Button Pull logic
+    const btnSelectors = '.btn-primary, .btn-try-demo, .btn-ghost';
+    let magneticButtons = [];
+    
+    const updateMagneticButtons = () => {
+        magneticButtons = [];
+        document.querySelectorAll(btnSelectors).forEach(btn => {
+            let inner = btn.querySelector('.magnetic-inner');
+            if (!inner) {
+                inner = document.createElement('span');
+                inner.className = 'magnetic-inner';
+                inner.style.display = 'inline-flex';
+                inner.style.alignItems = 'center';
+                inner.style.justifyContent = 'center';
+                inner.style.gap = 'inherit';
+                inner.style.width = '100%';
+                inner.style.height = '100%';
+                inner.style.pointerEvents = 'none';
+                inner.style.transition = 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)';
+                while (btn.firstChild) {
+                    inner.appendChild(btn.firstChild);
+                }
+                btn.appendChild(inner);
+            }
+            magneticButtons.push({ element: btn, inner: inner });
+        });
+    };
+    
+    updateMagneticButtons();
+    setInterval(updateMagneticButtons, 2000);
+    
+    document.addEventListener('mousemove', (e) => {
+        const mouseX = e.clientX;
+        const mouseY = e.clientY;
+        
+        magneticButtons.forEach(item => {
+            const rect = item.element.getBoundingClientRect();
+            const btnX = rect.left + rect.width / 2;
+            const btnY = rect.top + rect.height / 2;
+            
+            const dx = mouseX - btnX;
+            const dy = mouseY - btnY;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            
+            if (distance < 60) {
+                const strength = 6;
+                const factor = (1 - distance / 60) * strength;
+                const pullX = (dx / (distance || 1)) * factor;
+                const pullY = (dy / (distance || 1)) * factor;
+                
+                item.inner.style.transition = 'none';
+                item.inner.style.transform = `translate(${pullX}px, ${pullY}px)`;
+            } else {
+                if (item.inner.style.transform && item.inner.style.transform !== 'translate(0px, 0px)') {
+                    item.inner.style.transition = 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)';
+                    item.inner.style.transform = 'translate(0px, 0px)';
+                }
+            }
+        });
+    }, { passive: true });
 });
+
+// ── CURSOR-LOCAL LIQUID HEADING EFFECT ──────────────────────────────────────
+// Instead of animating the whole heading, a liquid spotlight flows only where
+// the mouse cursor is hovering inside the heading.
+(function() {
+    const DARK_COLORS  = ['#06b6d4', '#00d2ff', '#3b82f6', '#00f0ff', '#8b5cf6', '#38bdf8', '#06b6d4'];
+    const LIGHT_COLORS = ['#1d4ed8', '#2563eb', '#3b82f6', '#0284c7', '#4f46e5', '#2563eb', '#1d4ed8'];
+    const RADIUS = 120; // px — spread of the liquid spotlight
+
+    function isLiquidTarget(el) {
+        // Only apply to h1/h2/h3 (not .hero-h1) and .liquid-text
+        const tag = el.tagName;
+        if (el.classList.contains('hero-h1')) return false;
+        if (tag === 'H1' || tag === 'H2' || tag === 'H3') return true;
+        if (el.classList.contains('liquid-text')) return true;
+        return false;
+    }
+
+    function isExcluded(el) {
+        // Exclude nav, buttons, mono elements
+        return el.closest('.nav-links, .nav-link, .brand-logo, button, .btn, .terminal-wrapper, code, pre');
+    }
+
+    function applyLiquid(el, relX, relW) {
+        const isLight = document.body.classList.contains('light-theme');
+        const colors  = isLight ? LIGHT_COLORS : DARK_COLORS;
+
+        // Cursor position as fraction (0–1) across the element width
+        const frac = Math.max(0, Math.min(1, relX / relW));
+
+        // Build radial highlight: transparent outside RADIUS, liquid color in centre
+        // We overlay this on a base transparent gradient
+        const pct = Math.round(frac * 100);
+        const activeRadius = Math.min(120, Math.max(30, relW * 0.35));
+        const r   = Math.round((activeRadius / relW) * 100); // radius as % of element width
+
+        // Create a gradient that is centred on the cursor position
+        const colorStop1 = colors[0];
+        const colorStop2 = colors[Math.floor(colors.length / 2)];
+        const colorStop3 = colors[colors.length - 1];
+
+        // Radial liquid mask: bright at cursor, fades out over RADIUS
+        const bg = `radial-gradient(ellipse ${r * 2}% 200% at ${pct}% 50%,
+            ${colorStop2} 0%,
+            ${colorStop1} 30%,
+            ${colorStop3} 60%,
+            transparent 100%)`;
+
+        el.classList.add('liquid-active');
+        el.style.setProperty('background-image', bg, 'important');
+        el.style.setProperty('background-size', '100% 100%', 'important');
+    }
+
+    function removeLiquid(el) {
+        el.classList.remove('liquid-active');
+        el.style.removeProperty('background-image');
+        el.style.removeProperty('background-size');
+    }
+
+    document.addEventListener('mousemove', function(e) {
+        const target = e.target;
+        // Walk up a few levels to find the heading
+        let el = target;
+        for (let i = 0; i < 4; i++) {
+            if (!el || el === document.body) break;
+            if (isLiquidTarget(el) && !isExcluded(el)) {
+                const rect = el.getBoundingClientRect();
+                const relX = e.clientX - rect.left;
+                applyLiquid(el, relX, rect.width);
+                return;
+            }
+            el = el.parentElement;
+        }
+    }, { passive: true });
+
+    document.addEventListener('mouseleave', function(e) {
+        // Clean up any lingering active headings when mouse leaves a heading
+        const activeEls = document.querySelectorAll('.liquid-active');
+        activeEls.forEach(function(el) {
+            // Check if the relatedTarget is still inside this element
+            if (!el.contains(e.relatedTarget)) {
+                removeLiquid(el);
+            }
+        });
+    }, { passive: true, capture: true });
+
+    // Use event delegation for mouseleave on headings
+    document.addEventListener('mouseout', function(e) {
+        const target = e.target;
+        let el = target;
+        for (let i = 0; i < 4; i++) {
+            if (!el || el === document.body) break;
+            if (isLiquidTarget(el) && el.classList.contains('liquid-active')) {
+                // Only remove if we actually left the heading (not just moved to a child)
+                if (!el.contains(e.relatedTarget)) {
+                    removeLiquid(el);
+                }
+                return;
+            }
+            el = el.parentElement;
+        }
+    }, { passive: true });
+})();
 </script>
 </body>
 </html>

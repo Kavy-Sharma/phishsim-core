@@ -4,7 +4,14 @@
 <style>
 /* Removed hardcoded body background */
 
-.dash-page { padding: 4.5rem clamp(1.5rem, 3vw, 3rem) clamp(1.5rem, 3vw, 3rem); width: min(100%, 1500px); margin: 0 auto; box-sizing: border-box; }
+.dash-page {
+    padding: 4.5rem clamp(1.5rem, 3vw, 3rem) clamp(1.5rem, 3vw, 3rem);
+    width: min(100%, 1500px);
+    margin: 0 auto;
+    box-sizing: border-box;
+    background-image: linear-gradient(rgba(56,189,248,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(56,189,248,0.03) 1px, transparent 1px);
+    background-size: 60px 60px;
+}
 
 /* Animated header */
 .dash-hero {
@@ -27,21 +34,20 @@
     margin-bottom: 2.5rem;
 }
 .summary-stat {
-    background: var(--surface);
+    background: rgba(255, 255, 255, 0.018) !important;
+    backdrop-filter: blur(10px) !important;
     border: 1px solid var(--border-color, rgba(255,255,255,0.05));
     border-radius: 16px; padding: 1.5rem;
     text-align: center; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     opacity: 0;
-    position: relative; overflow: visible;
+    position: relative; overflow: hidden;
 }
-.summary-stat::before {
-    content: ''; position: absolute; inset: 0;
-    background: radial-gradient(circle at top left, rgba(6,182,212,0.08), transparent 70%);
-    opacity: 0; transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+.summary-stat:hover {
+    transform: translateY(-4px);
+    border-color: rgba(56,189,248,0.2) !important;
+    box-shadow: 0 0 0 1px rgba(56,189,248,0.2), 0 20px 40px rgba(0,0,0,0.4), 0 0 30px rgba(56,189,248,0.05) !important;
 }
-.summary-stat:hover { transform: translateY(-4px); border-color: rgba(6,182,212,0.3); }
-.summary-stat:hover::before { opacity: 1; }
 .summary-stat .s-icon { font-size: 1.8rem; margin-bottom: 0.8rem; }
 .summary-stat .s-num { font-family: var(--font-sans); font-size: 2rem; font-weight: 800; color: var(--text-main); line-height: 1; }
 .summary-stat .s-label { font-size: 0.8rem; color: #64748b; margin-top: 4px; letter-spacing: 1px; text-transform: uppercase; }
@@ -63,7 +69,13 @@
 .dash-empty p { color: #64748b; max-width: 400px; margin: 0 auto 2rem; }
 
 /* Campaign grid */
-.camp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 1.5rem; }
+.camp-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+    gap: 1.5rem;
+    transform-style: preserve-3d;
+    perspective: 1000px;
+}
 
 .camp-card {
     background: var(--surface);
@@ -175,6 +187,23 @@
     box-shadow: 0 20px 40px rgba(0,0,0,0.4), inset 0 0 20px rgba(6, 182, 212, 0.05);
     margin-top: 2rem;
     animation: fadeInUp 0.6s ease-out;
+}
+.empty-terminal::after {
+    content: '' !important;
+    position: absolute !important;
+    left: 0 !important;
+    top: -2px !important;
+    width: 100% !important;
+    height: 2px !important;
+    background: linear-gradient(90deg, transparent, rgba(6, 182, 212, 0.4), transparent) !important;
+    box-shadow: 0 0 8px rgba(6, 182, 212, 0.6) !important;
+    animation: radarSweep 4s linear infinite !important;
+    pointer-events: none !important;
+    z-index: 10 !important;
+}
+@keyframes radarSweep {
+    0% { top: -2px; }
+    100% { top: 100%; }
 }
 .empty-terminal::before {
     content: '';
@@ -308,16 +337,55 @@
 
 .board-hss-hero {
     display: flex; align-items: center; gap: 2.5rem;
-    background: var(--bg-card); border-radius: 20px; padding: 2.5rem;
-    box-shadow: 0 4px 24px rgba(0,0,0,0.06);
-    border: 1px solid var(--border-color);
+    background: radial-gradient(circle at 20% 0%, rgba(56,189,248,0.10) 0%, transparent 55%), radial-gradient(circle at 80% 100%, rgba(99,102,241,0.07) 0%, transparent 55%), rgba(15,23,42,0.6) !important;
+    border-radius: 16px !important; padding: 2.5rem;
+    box-shadow: 0 0 60px rgba(56,189,248,0.06) !important;
+    border: 1px solid rgba(255, 255, 255, 0.07) !important;
     margin-bottom: 2rem; flex-wrap: wrap;
+    backdrop-filter: blur(20px);
+    position: relative;
+    overflow: hidden;
+}
+.board-hss-hero::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(56,189,248,0.4), transparent);
+    box-shadow: 0 0 8px rgba(56, 189, 248, 0.6);
+    pointer-events: none;
+    z-index: 1;
+    animation: hssCardScan 8s linear infinite;
+}
+@keyframes hssCardScan {
+    0% { top: 0%; opacity: 0.6; }
+    100% { top: 100%; opacity: 0; }
 }
 .board-score-ring {
     width: 140px; height: 140px; flex-shrink: 0;
     position: relative; display: flex; align-items: center; justify-content: center;
 }
-.board-score-ring svg { position: absolute; top:0; left:0; transform: rotate(-90deg); }
+.conic-breathing-ring {
+    position: absolute;
+    inset: -6px;
+    border-radius: 50%;
+    background: conic-gradient(from 0deg, rgba(56, 189, 248, 0.15), transparent 40%, rgba(56, 189, 248, 0.03) 70%, rgba(56, 189, 248, 0.15));
+    mask: radial-gradient(circle, transparent 63%, black 64%);
+    -webkit-mask: radial-gradient(circle, transparent 63%, black 64%);
+    animation: spin-conic 12s linear infinite, breathe-conic 4s ease-in-out infinite alternate;
+    pointer-events: none;
+    z-index: 0;
+}
+@keyframes spin-conic {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+@keyframes breathe-conic {
+    from { opacity: 0.3; transform: scale(0.97); }
+    to { opacity: 0.7; transform: scale(1.03); }
+}
+.board-score-ring svg { position: absolute; top:0; left:0; transform: rotate(-90deg); z-index: 2; }
 .board-score-ring .ring-num {
     font-family: var(--font-sans); font-size: 2.8rem; font-weight: 900;
     line-height: 1; text-align: center;
@@ -401,12 +469,74 @@
 .ai-stream-panel {
     position: sticky;
     top: 72px;
-    background: var(--surface);
-    border: 1px solid rgba(6,182,212,0.2);
+    background: rgba(255, 255, 255, 0.025);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(56, 189, 248, 0.25) !important;
+    box-shadow: 0 0 30px rgba(56, 189, 248, 0.05);
     border-radius: 16px;
     overflow: hidden;
     animation: fadeInUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.3s forwards;
     opacity: 0;
+}
+.ai-stream-panel::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+    opacity: 0.02;
+    pointer-events: none;
+    z-index: 1;
+}
+.ai-stream-panel::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(56,189,248,0.15), transparent);
+    pointer-events: none;
+    z-index: 2;
+    animation: streamScan 3s linear infinite;
+}
+@keyframes streamScan {
+    0% { top: 0%; }
+    100% { top: 100%; }
+}
+
+/* Empty step grid 3D layout overrides */
+.empty-step-grid {
+    transform-style: preserve-3d;
+    perspective: 800px;
+}
+.empty-step-card {
+    transform-style: preserve-3d;
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+/* Liquid chrome sheen effect on step number */
+.empty-step-card .step-num {
+    background-image: linear-gradient(110deg, #fff 0%, #fff 30%, #38bdf8 45%, #e0f2fe 50%, #6366f1 55%, #fff 70%, #fff 100%) !important;
+    background-size: 250% 100% !important;
+    background-position: 100% 0 !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    background-clip: text !important;
+    transition: all 0.3s ease !important;
+}
+.empty-step-card:hover .step-num {
+    background-image: linear-gradient(90deg, #06b6d4, #00d2ff, #3b82f6, #00f0ff, #8b5cf6, #00d2ff, #06b6d4) !important;
+    background-size: 200% auto !important;
+    background-position: 0% center !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    background-clip: text !important;
+    color: transparent !important;
+    animation: liquidFlow 4s linear infinite !important;
+}
+body.light-theme .empty-step-card .step-num {
+    background-image: linear-gradient(110deg, #0f172a 0%, #0f172a 30%, #2563eb 45%, #3b82f6 50%, #4f46e5 55%, #0f172a 70%, #0f172a 100%) !important;
+}
+body.light-theme .empty-step-card:hover .step-num {
+    background-image: linear-gradient(90deg, #1d4ed8, #2563eb, #3b82f6, #0284c7, #4f46e5, #2563eb, #1d4ed8) !important;
 }
 .ai-stream-header {
     display: flex; align-items: center; gap: 8px;
@@ -465,6 +595,28 @@
     background: rgba(6, 182, 212, 0.15);
     box-shadow: 0 0 10px rgba(6, 182, 212, 0.2);
 }
+.demo-summary-bar {
+    position: sticky;
+    top: 80px;
+    z-index: 100;
+    background: rgba(8, 12, 26, 0.95);
+    border: 1px solid rgba(6, 182, 212, 0.25);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 24px;
+    backdrop-filter: blur(12px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    text-align: center;
+    transition: background 0.3s, border-color 0.3s, box-shadow 0.3s;
+}
+body.light-theme .demo-summary-bar {
+    background: rgba(255, 255, 255, 0.95);
+    border-color: rgba(37, 99, 235, 0.18);
+    box-shadow: 0 10px 30px rgba(37, 99, 235, 0.06);
+}
 </style>
 
 <div class="dash-page">
@@ -488,7 +640,6 @@
     <div class="board-hss-hero" style="display: flex; align-items: center; gap: 2.5rem; flex-wrap: wrap; padding: 2.5rem; width: 100%; box-sizing: border-box; margin-bottom: 2rem;">
         <div class="board-score-ring">
             <svg width="140" height="140" viewBox="0 0 140 140">
-                <circle cx="70" cy="70" r="58" fill="none" stroke="var(--border-color)" stroke-width="12"/>
                 <circle cx="70" cy="70" r="58" fill="none"
                     stroke="{% if global_hss.tier == 'green' %}#22c55e{% elif global_hss.tier == 'amber' %}#f59e0b{% else %}#ef4444{% endif %}"
                     stroke-width="12" stroke-linecap="round"
@@ -502,15 +653,17 @@
             </div>
         </div>
         <div class="board-hss-text">
-            <h2>
-                Human Security Score™
+            <div style="display: flex; align-items: center; gap: 8px; margin: 0 0 0.5rem 0;">
+                <h2 style="margin: 0; padding: 0; border: none;">
+                    Human Security Score™
+                </h2>
                 <span class="cyber-tooltip-wrap">
                     <span class="tooltip-icon" style="width:16px; height:16px; font-size:0.6rem; margin-left: 4px;">?</span>
                     <span class="cyber-tooltip-content" style="font-weight:normal; text-transform:none; font-size:0.75rem; letter-spacing:0; line-height:1.4; top: calc(100% + 8px); right: auto; left: 0; width: 260px;">
                         The global security index of your workforce. Higher scores represent better phishing recognition rates and higher reporting ratios.
                     </span>
                 </span>
-            </h2>
+            </div>
             <p>Your organisation's overall phishing resistance score based on click rate, open rate, reporting behaviour, and repeat offenders across all campaigns.</p>
             <div class="board-hss-badge board-badge-{{ global_hss.tier }}">
                 <i class="ti ti-{% if global_hss.tier == 'green' %}circle-check{% elif global_hss.tier == 'amber' %}alert-circle{% else %}alert-triangle{% endif %}"></i>
@@ -522,7 +675,7 @@
 
     <div class="dash-summary" style="margin-bottom: 2.2rem;">
         <div class="summary-stat">
-            <div class="s-icon" style="color: #3b82f6;"><i class="ti ti-layers"></i></div>
+            <div class="s-icon" style="color: #3b82f6;"><i class="ti ti-stack-2"></i></div>
             <div class="s-num">{{ global_stats.total_campaigns }}</div>
             <div class="s-label" style="display:flex; align-items:center; justify-content:center; gap:6px;">
                 Active Campaigns
@@ -579,6 +732,9 @@
     {% if not campaigns %}
     <div class="empty-onboarding-container" style="margin-top: 2rem; margin-bottom: 3rem;">
         <div style="text-align: center; margin-bottom: 2.5rem;">
+            <div style="display: flex; justify-content: center; margin-bottom: 1rem;">
+                <canvas id="particle-sphere-canvas" width="200" height="200" style="cursor: pointer; display: block;" title="Click to launch a new campaign!"></canvas>
+            </div>
             <h3 style="font-family: var(--font-sans); font-size: 1.8rem; color: var(--text-main); font-weight: 700; margin-bottom: 0.5rem;">Launch Your First Simulation</h3>
             <p style="color: var(--text-muted); font-size: 0.95rem; max-width: 500px; margin: 0 auto;">Follow these three steps to begin testing your organization's resilience against modern phishing threats.</p>
         </div>
@@ -609,6 +765,111 @@
             </div>
         </div>
     </div>
+    
+    <script>
+    (function() {
+        const canvas = document.getElementById("particle-sphere-canvas");
+        if (!canvas) return;
+        const ctx = canvas.getContext("2d");
+        const count = 150;
+        const particles = [];
+        
+        for (let i = 0; i < count; i++) {
+            const phi = Math.acos(-1 + (2 * i) / count);
+            const theta = Math.sqrt(count * Math.PI) * phi;
+            particles.push({
+                x0: Math.sin(phi) * Math.cos(theta),
+                y0: Math.sin(phi) * Math.sin(theta),
+                z0: Math.cos(phi),
+                size: Math.random() * 2 + 1.5
+            });
+        }
+
+        let rotX = 0;
+        let rotY = 0;
+        let currentSpeed = 0.005;
+        let currentRadius = 65;
+        let opacityMultiplier = 1.0;
+        let exploding = false;
+        let hoverActive = false;
+
+        canvas.addEventListener("mouseenter", () => { hoverActive = true; });
+        canvas.addEventListener("mouseleave", () => { hoverActive = false; });
+        canvas.addEventListener("click", () => {
+            exploding = true;
+            setTimeout(() => {
+                window.location.href = "/new-campaign";
+            }, 600);
+        });
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            if (exploding) {
+                currentSpeed += (0.08 - currentSpeed) * 0.1;
+                currentRadius += (300 - currentRadius) * 0.1;
+                opacityMultiplier += (0 - opacityMultiplier) * 0.1;
+            } else if (hoverActive) {
+                currentSpeed += (0.025 - currentSpeed) * 0.1;
+                currentRadius += (85 - currentRadius) * 0.1;
+            } else {
+                currentSpeed += (0.005 - currentSpeed) * 0.1;
+                currentRadius += (65 - currentRadius) * 0.1;
+            }
+
+            rotY += currentSpeed;
+            rotX += currentSpeed * 0.5;
+
+            const cosY = Math.cos(rotY);
+            const sinY = Math.sin(rotY);
+            const cosX = Math.cos(rotX);
+            const sinX = Math.sin(rotX);
+
+            const projected = [];
+            for (let i = 0; i < count; i++) {
+                const p = particles[i];
+                const x1 = p.x0 * cosY - p.z0 * sinY;
+                const z1 = p.x0 * sinY + p.z0 * cosY;
+                const y2 = p.y0 * cosX - z1 * sinX;
+                const z2 = p.y0 * sinX + z1 * cosX;
+                
+                projected.push({ x: x1, y: y2, z: z2, size: p.size });
+            }
+            
+            projected.sort((a, b) => b.z - a.z);
+
+            const fov = 150;
+            for (let i = 0; i < count; i++) {
+                const p = projected[i];
+                const scale = fov / (fov + p.z * currentRadius);
+                const px = 100 + p.x * currentRadius * scale;
+                const py = 100 + p.y * currentRadius * scale;
+                
+                const t = (p.z + 1) / 2; 
+                const isLight = document.body.classList.contains("light-theme");
+                const rStart = isLight ? 37 : 56;
+                const gStart = isLight ? 99 : 189;
+                const bStart = isLight ? 235 : 248;
+                const rEnd = isLight ? 124 : 99;
+                const gEnd = isLight ? 58 : 102;
+                const bEnd = isLight ? 237 : 241;
+                
+                const r = Math.round(rStart + (rEnd - rStart) * t);
+                const g = Math.round(gStart + (gEnd - gStart) * t);
+                const b = Math.round(bStart + (bEnd - bStart) * t);
+                const alpha = (isLight ? (0.4 + 0.6 * (1 - t)) : (0.25 + 0.75 * (1 - t))) * opacityMultiplier;
+                
+                ctx.beginPath();
+                ctx.arc(px, py, p.size * scale, 0, 2 * Math.PI);
+                ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
+                ctx.fill();
+            }
+            
+            requestAnimationFrame(draw);
+        }
+        draw();
+    })();
+    </script>
     {% else %}
 
     <div class="dash-main-row">
@@ -642,25 +903,25 @@
 
             {% if current_user.company_domain == 'demo-corp.com' %}
             <!-- Sticky Summary Bar -->
-            <div class="demo-summary-bar" style="position: sticky; top: 80px; z-index: 100; background: rgba(8, 12, 26, 0.95); border: 1px solid rgba(6, 182, 212, 0.25); border-radius: 12px; padding: 16px; margin-bottom: 24px; backdrop-filter: blur(12px); box-shadow: 0 10px 30px rgba(0,0,0,0.5); display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; text-align: center;">
+            <div class="demo-summary-bar">
                 <div style="padding: 4px;">
-                    <div style="font-size: 0.65rem; color: #94a3b8; font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Total Campaigns</div>
-                    <div style="font-size: 1.35rem; font-weight: 700; color: #fff; font-family: var(--font-sans);">{{ demo_summary.total_campaigns }}</div>
+                    <div style="font-size: 0.65rem; color: var(--text-muted); font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Total Campaigns</div>
+                    <div style="font-size: 1.35rem; font-weight: 700; color: var(--text-main); font-family: var(--font-sans);">{{ demo_summary.total_campaigns }}</div>
                 </div>
-                <div style="border-left: 1px solid rgba(255,255,255,0.08); padding: 4px;">
-                    <div style="font-size: 0.65rem; color: #94a3b8; font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Avg Click Rate</div>
+                <div style="border-left: 1px solid var(--border-color); padding: 4px;">
+                    <div style="font-size: 0.65rem; color: var(--text-muted); font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Avg Click Rate</div>
                     <div style="font-size: 1.35rem; font-weight: 700; color: #ef4444; font-family: var(--font-sans);">{{ demo_summary.avg_click_rate }}%</div>
                 </div>
-                <div style="border-left: 1px solid rgba(255,255,255,0.08); padding: 4px; min-width: 0;">
-                    <div style="font-size: 0.65rem; color: #94a3b8; font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Best Performing</div>
+                <div style="border-left: 1px solid var(--border-color); padding: 4px; min-width: 0;">
+                    <div style="font-size: 0.65rem; color: var(--text-muted); font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Best Performing</div>
                     {% if demo_summary.best_campaign %}
                     <div style="font-size: 0.85rem; font-weight: 700; color: #10b981; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: var(--font-sans); margin-top: 4px;" title="{{ demo_summary.best_campaign.name }} ({{ demo_summary.best_campaign.click_rate }}% Clicks)">{{ demo_summary.best_campaign.name }} ({{ demo_summary.best_campaign.click_rate }}%)</div>
                     {% else %}
                     <div style="font-size: 0.85rem; font-weight: 700; color: #64748b; font-family: var(--font-sans); margin-top: 4px;">N/A</div>
                     {% endif %}
                 </div>
-                <div style="border-left: 1px solid rgba(255,255,255,0.08); padding: 4px; min-width: 0;">
-                    <div style="font-size: 0.65rem; color: #94a3b8; font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Worst Performing</div>
+                <div style="border-left: 1px solid var(--border-color); padding: 4px; min-width: 0;">
+                    <div style="font-size: 0.65rem; color: var(--text-muted); font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Worst Performing</div>
                     {% if demo_summary.worst_campaign %}
                     <div style="font-size: 0.85rem; font-weight: 700; color: #ef4444; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: var(--font-sans); margin-top: 4px;" title="{{ demo_summary.worst_campaign.name }} ({{ demo_summary.worst_campaign.click_rate }}% Clicks)">{{ demo_summary.worst_campaign.name }} ({{ demo_summary.worst_campaign.click_rate }}%)</div>
                     {% else %}
@@ -1056,9 +1317,66 @@
         }
     }
 
-    // Render charts on page load
+    // Render charts, count-ups, and 3D tilts on page load
     document.addEventListener('DOMContentLoaded', () => {
         renderTrendCharts();
+        
+        // Counter animation for statistics using setInterval
+        document.querySelectorAll('.summary-stat .s-num').forEach(el => {
+            const text = el.textContent.trim();
+            const hasPercent = text.includes('%');
+            const endVal = parseFloat(text.replace(/[^0-9.]/g, ''));
+            if (isNaN(endVal)) return;
+
+            el.textContent = '0' + (hasPercent ? '%' : '');
+            let currentVal = 0;
+            const duration = 1200; // 1.2s
+            const steps = 40; // number of increments
+            const increment = endVal / steps;
+            const intervalTime = duration / steps;
+            let currentStep = 0;
+
+            const timer = setInterval(() => {
+                currentStep++;
+                currentVal += increment;
+                if (currentStep >= steps) {
+                    clearInterval(timer);
+                    el.textContent = text;
+                } else {
+                    el.textContent = Math.round(currentVal) + (hasPercent ? '%' : '');
+                }
+            }, intervalTime);
+        });
+
+        // Campaign Card 3D tilt
+        document.querySelectorAll('.camp-card').forEach(card => {
+            card.addEventListener('mousemove', e => {
+                const rect = card.getBoundingClientRect();
+                const x = (e.clientX - rect.left) / rect.width - 0.5;
+                const y = (e.clientY - rect.top) / rect.height - 0.5;
+                card.style.transform = `translateY(-6px) rotateX(${-y * 8}deg) rotateY(${x * 8}deg)`;
+                card.style.boxShadow = `${-x * 20}px ${-y * 20}px 40px rgba(0,0,0,0.3), 0 0 30px rgba(6,182,212,0.08)`;
+            });
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = 'translateY(0) rotateX(0) rotateY(0)';
+                card.style.boxShadow = '';
+            });
+        });
+
+        // Empty Step Card 3D tilt
+        document.querySelectorAll('.empty-step-card').forEach(card => {
+            card.addEventListener('mousemove', e => {
+                const rect = card.getBoundingClientRect();
+                const x = (e.clientX - rect.left) / rect.width - 0.5;
+                const y = (e.clientY - rect.top) / rect.height - 0.5;
+                card.style.transform = `translateY(-6px) rotateX(${-y * 8}deg) rotateY(${x * 8}deg)`;
+                card.style.boxShadow = `${-x * 20}px ${-y * 20}px 40px rgba(0,0,0,0.3), 0 0 30px rgba(6,182,212,0.08)`;
+            });
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = 'translateY(0) rotateX(0) rotateY(0)';
+                card.style.boxShadow = '';
+            });
+        });
     });
 
     // Fix Chart.js resizing when switching tabs/themes
@@ -1110,8 +1428,8 @@
 
         // Seed with 5 initial entries
         for (let i = 0; i < 5; i++) addLog();
-        // Add new entry every 3.5 seconds
-        setInterval(addLog, 3500);
+        // Add new entry every 3.0 seconds (synced with the 3s scanline animation)
+        setInterval(addLog, 3000);
     })();
 </script>
 {% endblock %}

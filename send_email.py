@@ -107,7 +107,7 @@ def send_phishing_email(to_email, subject, sender_name, body_html, tracking_id, 
                         mailtrap_user=None, mailtrap_pass=None):
     """Sends one phishing simulation email."""
 
-    base_url = _clean(os.getenv("APP_BASE_URL", "http://127.0.0.1:5000"), "/")
+    base_url = _clean(os.getenv("APP_BASE_URL", "http://127.0.0.1:5050"), "/")
     tracking_url = f"{base_url}/click/{tracking_id}"
     pixel_url    = f"{base_url}/pixel/{tracking_id}.png"
     report_url   = f"{base_url}/report/{tracking_id}"

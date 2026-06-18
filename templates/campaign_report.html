@@ -27,6 +27,8 @@
     border-radius: 20px;
     padding: 2.5rem;
     margin-bottom: 2rem;
+    transform-style: preserve-3d;
+    perspective: 1200px;
 }
 .report-hero-text { flex: 1; min-width: 200px; }
 .report-eyebrow {
@@ -50,6 +52,7 @@
     border: 1px solid var(--hss-color);
     box-shadow: 0 0 30px color-mix(in srgb, var(--hss-color) 15%, transparent);
     position: relative;
+    z-index: 2;
 }
 .hss-score {
     font-family: var(--font-sans); font-size: 4rem; font-weight: 900;
@@ -166,7 +169,7 @@
 /* Pro features */
 .pro-badge {
     background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
-    color: #fff; font-size: 0.65rem; font-weight: 800; text-transform: uppercase;
+    color: var(--text-main); font-size: 0.65rem; font-weight: 800; text-transform: uppercase;
     padding: 2px 6px; border-radius: 4px; letter-spacing: 0.5px;
 }
 .pro-lock-overlay {
@@ -186,12 +189,37 @@
 }
 .pro-btn {
     background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
-    color: #fff !important; font-family: var(--font-sans); font-weight: 700;
+    color: var(--text-main) !important; font-family: var(--font-sans); font-weight: 700;
     padding: 8px 24px; border-radius: 8px; text-decoration: none;
     font-size: 0.85rem; margin-top: 1rem; transition: transform 0.2s;
     border: none; cursor: pointer;
 }
 .pro-btn:hover { transform: translateY(-2px); }
+body.light-theme .pro-btn {
+    color: #fff !important;
+}
+
+.secondary-btn {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--border-color);
+    color: var(--text-main);
+    transition: all 0.2s ease;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+.secondary-btn:hover {
+    background: rgba(255, 255, 255, 0.12);
+}
+body.light-theme .secondary-btn {
+    background: rgba(0, 0, 0, 0.04);
+    border-color: rgba(0, 0, 0, 0.12);
+    color: var(--text-main);
+}
+body.light-theme .secondary-btn:hover {
+    background: rgba(0, 0, 0, 0.08);
+}
 
 /* Department Heatmap */
 .dept-row { margin-bottom: 1rem; }
@@ -408,7 +436,7 @@
 .brief-content h3 {
     font-size: 1rem;
     font-weight: 700;
-    color: #fff;
+    color: var(--text-main);
     margin-top: 1.2rem;
     margin-bottom: 0.5rem;
     text-transform: uppercase;
@@ -521,6 +549,25 @@
     padding: 2rem;
     overflow-y: auto;
     flex: 1;
+}
+
+body.light-theme .modal-container {
+    background: #ffffff;
+    border-color: rgba(37, 99, 235, 0.16);
+    box-shadow: 0 25px 50px -12px rgba(37, 99, 235, 0.1);
+}
+body.light-theme .modal-header {
+    border-bottom-color: rgba(37, 99, 235, 0.12);
+}
+body.light-theme .modal-close {
+    background: rgba(37, 99, 235, 0.05);
+    border-color: rgba(37, 99, 235, 0.12);
+    color: var(--text-muted);
+}
+body.light-theme .modal-close:hover {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    border-color: rgba(239, 68, 68, 0.25);
 }
 </style>
 
@@ -699,7 +746,7 @@
     <!-- Actions Bar -->
     <div class="report-actions">
         <a href="/campaign-emails/{{ campaign.id }}" class="back-link"
-           style="padding:12px 20px; border:1px solid rgba(99,102,241,0.3); border-radius:12px; color:#fff; background:rgba(99,102,241,0.1);">
+           style="padding:12px 20px; border:1px solid rgba(99,102,241,0.3); border-radius:12px; color:var(--text-main); background:rgba(99,102,241,0.1);">
             <i class="ti ti-mail-opened"></i> View Generated Emails
         </a>
         <button class="pdf-btn" id="pdf-dl-btn" onclick="handleDownload('pdf-dl-btn', '/download-report/{{ campaign.id }}')">
@@ -879,7 +926,7 @@
                 <!-- Unlocked View -->
                 <div style="background: rgba(15, 23, 42, 0.4); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.25rem; margin-top: 0.5rem;">
                     <div style="font-family: var(--font-mono); font-size: 0.72rem; color: var(--accent-purple); font-weight: bold; text-transform: uppercase; margin-bottom: 6px;">Next Recommended Attack Vector</div>
-                    <h3 style="font-size: 1.1rem; color: #fff; margin: 0 0 6px 0; font-family: var(--font-sans);">Authority Impersonation (Finance Focus)</h3>
+                    <h3 style="font-size: 1.1rem; color: var(--text-main); margin: 0 0 6px 0; font-family: var(--font-sans);">Authority Impersonation (Finance Focus)</h3>
                     <div style="font-size: 0.82rem; color: var(--text-muted); display: flex; align-items: center; gap: 6px; margin-bottom: 1rem;">
                         <i class="far fa-calendar-check" style="color: var(--accent-cyan);"></i> Suggested Date: <strong>July 07, 2026</strong> (in 45 days)
                     </div>
@@ -890,7 +937,7 @@
                         <button class="pro-btn" onclick="triggerScheduleSimulationToast()" style="font-size:0.75rem; padding:6px 12px; margin:0; background: var(--accent-blue); border:none; color:#0f172a; font-weight:700;">
                             Approve & Schedule
                         </button>
-                        <button class="pro-btn" onclick="triggerCustomizePlannerToast('Authority Impersonation (Finance Focus)', '{{ campaign.company_domain }}', 'invoice')" style="font-size:0.75rem; padding:6px 12px; margin:0; background: transparent; border: 1px solid var(--border-color); color: #fff;">
+                        <button class="pro-btn" onclick="triggerCustomizePlannerToast('Authority Impersonation (Finance Focus)', '{{ campaign.company_domain }}', 'invoice')" style="font-size:0.75rem; padding:6px 12px; margin:0; background: transparent; border: 1px solid var(--border); color: var(--text-main);">
                             Customize Vector
                         </button>
                     </div>
@@ -1017,7 +1064,7 @@
                 <div id="employee-log-modal" class="modal-overlay">
                     <div class="modal-container">
                         <div class="modal-header">
-                            <h2 style="margin: 0; font-family: var(--font-sans); font-size: 1.3rem; display: flex; align-items: center; gap: 10px; color: #fff;">
+                            <h2 style="margin: 0; font-family: var(--font-sans); font-size: 1.3rem; display: flex; align-items: center; gap: 10px; color: var(--text-main);">
                                 <i class="ti ti-users" style="color:var(--accent-blue); margin-right: 14px;"></i> Per-Employee Security Log
                             </h2>
                             <button class="modal-close" onclick="closeModal('employee-log-modal')">
@@ -1234,7 +1281,7 @@
                 <div id="training-brief-modal" class="modal-overlay">
                     <div class="modal-container" style="max-width: 800px;">
                         <div class="modal-header">
-                            <h2 style="margin: 0; font-family: var(--font-sans); font-size: 1.3rem; display: flex; align-items: center; gap: 10px; color: #fff;">
+                            <h2 style="margin: 0; font-family: var(--font-sans); font-size: 1.3rem; display: flex; align-items: center; gap: 10px; color: var(--text-main);">
                                 <i class="ti ti-file-invoice" style="color:var(--accent-purple); margin-right: 14px;"></i> Threat Mitigation Brief
                             </h2>
                             <button class="modal-close" onclick="closeModal('training-brief-modal')">
@@ -1246,7 +1293,7 @@
                                 <div class="brief-header" style="margin-top: 0; padding-top: 0;">
                                     <div>
                                         <div class="brief-title">PHISHSIM AI • Threat Mitigation Brief</div>
-                                        <h2 style="font-size: 1.2rem; font-weight: 700; color: #fff; margin: 4px 0 0 0; font-family: var(--font-sans);">Remediation Action Plan</h2>
+                                        <h2 style="font-size: 1.2rem; font-weight: 700; color: var(--text-main); margin: 4px 0 0 0; font-family: var(--font-sans);">Remediation Action Plan</h2>
                                     </div>
                                     <div class="brief-meta-grid">
                                         <span class="brief-meta-label">DATE:</span>
@@ -1285,8 +1332,8 @@
                                     <button class="pro-btn" onclick="triggerSendBriefToast()" style="font-size: 0.72rem; padding: 8px 16px; margin: 0; background: var(--accent-cyan); color: #0f172a; border:none; font-weight:700;">
                                         <i class="ti ti-send" style="margin-right: 4px;"></i> Send to Team
                                     </button>
-                                    <button id="copy-brief-btn" onclick="copyBriefText()" style="font-size: 0.72rem; padding: 8px 16px; margin: 0; background: rgba(255,255,255,0.06); border: 1px solid var(--border-color); color: #fff;">
-                                        <i class="ti ti-copy" style="margin-right: 4px;"></i> Copy Text
+                                    <button id="copy-brief-btn" onclick="copyBriefText()" class="secondary-btn" style="font-size: 0.72rem; padding: 8px 16px; margin: 0; border-radius: 8px;">
+                                        <i class="ti ti-copy" style="margin-right: 6px;"></i> Copy Brief Text
                                     </button>
                                 </div>
                             </div>
@@ -1689,7 +1736,7 @@ function triggerScheduleSimulationToast() {
                                 <div style="font-size: 2.2rem; color: #4ade80; margin-bottom: 0.75rem;">
                                     <i class="ti ti-circle-check"></i>
                                 </div>
-                                <h3 style="font-size: 1.1rem; color: #fff; margin: 0 0 4px 0; font-family: var(--font-sans);">Follow-Up Scheduled</h3>
+                                <h3 style="font-size: 1.1rem; color: var(--text-main); margin: 0 0 4px 0; font-family: var(--font-sans);">Follow-Up Scheduled</h3>
                                 <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 0; line-height: 1.5;">
                                     'Authority Impersonation (Finance Focus)' is set to auto-deploy in 45 days.
                                 </p>
@@ -1807,6 +1854,45 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     });
+
+    // Report Hero 3D Perspective Parallax tilt on mouse hover
+    const heroCard = document.querySelector('.report-hero');
+    if (heroCard) {
+        const gauge = heroCard.querySelector('.hss-gauge');
+        heroCard.style.transformStyle = 'preserve-3d';
+        heroCard.style.perspective = '1200px';
+        heroCard.style.transition = 'transform 0.15s ease-out, box-shadow 0.3s ease';
+        
+        if (gauge) {
+            gauge.style.transition = 'transform 0.15s ease-out';
+        }
+        
+        heroCard.addEventListener('mousemove', (e) => {
+            const rect = heroCard.getBoundingClientRect();
+            // Normalized coordinates from -0.5 to 0.5
+            const x = (e.clientX - rect.left) / rect.width - 0.5;
+            const y = (e.clientY - rect.top) / rect.height - 0.5;
+            
+            // rotateX(${-y * 8}deg) rotateY(${x * 8}deg) -> Max 4 degrees
+            const rx = -y * 8;
+            const ry = x * 8;
+            
+            heroCard.style.transform = `perspective(1200px) rotateX(${rx}deg) rotateY(${ry}deg)`;
+            heroCard.style.boxShadow = `${-x * 30}px ${-y * 30}px 30px rgba(0, 0, 0, 0.35), 0 10px 40px rgba(56, 189, 248, 0.08)`;
+            
+            if (gauge) {
+                gauge.style.transform = 'translateZ(30px)';
+            }
+        });
+        
+        heroCard.addEventListener('mouseleave', () => {
+            heroCard.style.transform = 'perspective(1200px) rotateX(0deg) rotateY(0deg)';
+            heroCard.style.boxShadow = '';
+            if (gauge) {
+                gauge.style.transform = 'translateZ(0px)';
+            }
+        });
+    }
 });
 </script>
 {% endblock %}

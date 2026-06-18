@@ -59,8 +59,63 @@
         padding: 12px;
         border-radius: 12px;
         cursor: pointer;
-        transition: all 0.25s;
         min-width: 0;
+        position: relative;
+        border-left: 0px solid transparent;
+        transition: all 0.25s ease, border-left-width 0.2s ease-in-out;
+    }
+    
+    .inbox-preset-row::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        width: 0;
+        border-top-left-radius: 12px;
+        border-bottom-left-radius: 12px;
+        transition: width 0.2s ease-in-out;
+    }
+
+    #preset-ceo:hover::before, #preset-ceo_headers:hover::before {
+        width: 3px;
+        background: #ef4444;
+    }
+    #preset-it:hover::before, #preset-it_headers:hover::before,
+    #preset-hr:hover::before {
+        width: 3px;
+        background: #f59e0b;
+    }
+    #preset-safe:hover::before, #preset-safe_headers:hover::before {
+        width: 3px;
+        background: #10b981;
+    }
+
+    @keyframes borderPulseRed {
+        0%, 100% { background-color: rgba(239, 68, 68, 0.4); box-shadow: 0 0 4px #ef4444; }
+        50% { background-color: rgba(239, 68, 68, 1); box-shadow: 0 0 12px #ef4444; }
+    }
+    @keyframes borderPulseAmber {
+        0%, 100% { background-color: rgba(245, 158, 11, 0.4); box-shadow: 0 0 4px #f59e0b; }
+        50% { background-color: rgba(245, 158, 11, 1); box-shadow: 0 0 12px #f59e0b; }
+    }
+    @keyframes borderPulseGreen {
+        0%, 100% { background-color: rgba(16, 185, 129, 0.4); box-shadow: 0 0 4px #10b981; }
+        50% { background-color: rgba(16, 185, 129, 1); box-shadow: 0 0 12px #10b981; }
+    }
+
+    #preset-ceo.active::before, #preset-ceo_headers.active::before {
+        width: 3px;
+        animation: borderPulseRed 1.5s infinite ease-in-out;
+    }
+    #preset-it.active::before, #preset-it_headers.active::before,
+    #preset-hr.active::before {
+        width: 3px;
+        animation: borderPulseAmber 1.5s infinite ease-in-out;
+    }
+    #preset-safe.active::before, #preset-safe_headers.active::before {
+        width: 3px;
+        animation: borderPulseGreen 1.5s infinite ease-in-out;
     }
     
     .inbox-preset-row:hover {
@@ -72,6 +127,23 @@
         background: rgba(6, 182, 212, 0.08);
         border-color: var(--accent-cyan);
         box-shadow: 0 0 15px rgba(6, 182, 212, 0.1);
+    }
+
+    .btn-primary-action.scanning {
+        animation: scanPulse 1s ease-in-out infinite;
+    }
+    @keyframes scanPulse {
+        0%, 100% { box-shadow: 0 0 0 0 rgba(56,189,248,0.4); }
+        50% { box-shadow: 0 0 0 8px rgba(56,189,248,0); }
+    }
+
+    .history-drawer {
+        right: 0px !important;
+        transform: translateX(100%);
+        transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    }
+    .history-drawer.open {
+        transform: translateX(0) !important;
     }
 
     .avatar-circle {
@@ -92,6 +164,7 @@
         width: 140px;
         height: 140px;
         margin: 0 auto 1rem;
+        border-radius: 50%;
     }
     
     .gauge-svg {
@@ -128,7 +201,7 @@
     .gauge-score {
         font-size: 2.4rem;
         font-weight: 800;
-        color: #fff;
+        color: var(--text-main);
         line-height: 1;
     }
     
@@ -387,6 +460,106 @@
             grid-template-columns: 1fr;
         }
     }
+
+    /* --- PREMIUM CYBERPUNK TERMINAL & PRESET BUTTONS --- */
+    .preset-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 48px;
+        height: 48px;
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        color: var(--text-muted);
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .preset-btn:hover {
+        background: rgba(6, 182, 212, 0.08);
+        border-color: rgba(6, 182, 212, 0.35);
+        color: var(--cyan);
+        transform: translateY(-2px) scale(1.05);
+        box-shadow: 0 6px 20px rgba(6, 182, 212, 0.15);
+    }
+    .preset-btn:active {
+        transform: translateY(0) scale(0.98);
+    }
+    body.light-theme .preset-btn {
+        background: rgba(0, 0, 0, 0.02);
+        border-color: rgba(30, 64, 175, 0.12);
+        color: var(--text-muted);
+    }
+    body.light-theme .preset-btn:hover {
+        background: rgba(37, 99, 235, 0.06);
+        border-color: rgba(37, 99, 235, 0.3);
+        color: var(--blue);
+        box-shadow: 0 6px 16px rgba(37, 99, 235, 0.1);
+    }
+
+    .scan-beam-container.terminal-style {
+        background: rgba(5, 8, 20, 0.75) !important;
+        backdrop-filter: blur(12px);
+        border: 1px solid var(--border-color) !important;
+        border-radius: 12px;
+        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5), 0 0 15px rgba(6, 182, 212, 0.05);
+        transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+    .scan-beam-container.terminal-style:focus-within {
+        border-color: rgba(6, 182, 212, 0.45) !important;
+        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6), 0 0 25px rgba(6, 182, 212, 0.15);
+    }
+    body.light-theme .scan-beam-container.terminal-style {
+        background: rgba(255, 255, 255, 0.8) !important;
+        border-color: rgba(37, 99, 235, 0.15) !important;
+        box-shadow: 0 12px 32px rgba(37, 99, 235, 0.05) !important;
+    }
+    body.light-theme .scan-beam-container.terminal-style:focus-within {
+        border-color: rgba(37, 99, 235, 0.45) !important;
+        box-shadow: 0 12px 32px rgba(37, 99, 235, 0.1) !important;
+    }
+    
+    .terminal-header-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: rgba(255, 255, 255, 0.02);
+        border-bottom: 1px solid var(--border-color);
+        padding: 10px 16px;
+        user-select: none;
+    }
+    body.light-theme .terminal-header-bar {
+        background: rgba(0, 0, 0, 0.02) !important;
+        border-bottom-color: rgba(37, 99, 235, 0.12) !important;
+    }
+    
+    .form-input {
+        color: var(--text-main) !important;
+        caret-color: var(--cyan);
+    }
+    body.light-theme .form-input {
+        caret-color: var(--blue);
+    }
+
+    .form-input::-webkit-scrollbar {
+        width: 6px;
+    }
+    .form-input::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    .form-input::-webkit-scrollbar-thumb {
+        background: rgba(6, 182, 212, 0.3);
+        border-radius: 4px;
+    }
+    .form-input::-webkit-scrollbar-thumb:hover {
+        background: rgba(6, 182, 212, 0.6);
+    }
+    body.light-theme .form-input::-webkit-scrollbar-thumb {
+        background: rgba(37, 99, 235, 0.3);
+    }
+    body.light-theme .form-input::-webkit-scrollbar-thumb:hover {
+        background: rgba(37, 99, 235, 0.6);
+    }
 </style>
 
 <!-- Floating Session History Drawer Overlay -->
@@ -395,7 +568,7 @@
 <!-- Floating Session History Drawer -->
 <div id="history-drawer" class="history-drawer">
     <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-color); padding-bottom:12px; margin-bottom: 20px;">
-        <h4 style="font-family:var(--font-mono); font-size:0.85rem; color:#fff; text-transform:uppercase; letter-spacing:1px; margin:0; display:flex; align-items:center; gap:6px;">
+        <h4 style="font-family:var(--font-mono); font-size:0.85rem; color:var(--text-main); text-transform:uppercase; letter-spacing:1px; margin:0; display:flex; align-items:center; gap:6px;">
             <i class="ti ti-history"></i> Scan History
         </h4>
         <button onclick="toggleHistoryDrawer()" class="history-drawer-close" style="padding:4px 8px; font-size:0.8rem; margin:0;"><i class="ti ti-x"></i></button>
@@ -412,7 +585,7 @@
 </button>
 
 <div class="analyzer-container">
-    <div style="padding: 1.5rem 0 1rem 0; animation: fadeInDown 0.6s ease-out; display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 1rem;">
+    <div class="tool-hero-header" style="padding: 1.5rem 0 1rem 0; animation: fadeInDown 0.6s ease-out; display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 1rem;">
         <div>
             <span style="display:inline-block; background:rgba(6, 182, 212, 0.08); border:1px solid rgba(6, 182, 212, 0.2); border-radius:100px; padding:4px 12px; font-size:0.75rem; font-weight:600; color:var(--cyan); letter-spacing:0.05em; text-transform:uppercase; margin-bottom:8px;">Public Cyber Suite</span>
             <h1 class="page-title" style="font-family: var(--font-sans); font-size: 2.4rem; font-weight: 800; margin: 0 0 0.5rem 0;">AI Email Threat Analyzer</h1>
@@ -466,7 +639,7 @@
                         <div class="avatar-circle" style="background: linear-gradient(135deg, #ef4444, #f59e0b);">RS</div>
                         <div style="flex: 1; min-width: 0;">
                             <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 2px;">
-                                <span style="font-weight: 700; color: #fff; font-size: 0.82rem;">R. Sterling (CEO)</span>
+                                <span style="font-weight: 700; color: var(--text-main); font-size: 0.82rem;">R. Sterling (CEO)</span>
                                 <span class="indicator-pill critical" style="font-size: 0.55rem; padding: 1px 5px; scale: 0.9;">Wire</span>
                             </div>
                             <div style="font-weight: 600; color: var(--cyan); font-size: 0.8rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">URGENT: Wire Transfer Authorization</div>
@@ -478,7 +651,7 @@
                         <div class="avatar-circle" style="background: linear-gradient(135deg, #3b82f6, #06b6d4);">IT</div>
                         <div style="flex: 1; min-width: 0;">
                             <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 2px;">
-                                <span style="font-weight: 700; color: #fff; font-size: 0.82rem;">IT Support</span>
+                                <span style="font-weight: 700; color: var(--text-main); font-size: 0.82rem;">IT Support</span>
                                 <span class="indicator-pill high" style="font-size: 0.55rem; padding: 1px 5px; scale: 0.9;">SSO</span>
                             </div>
                             <div style="font-weight: 600; color: var(--cyan); font-size: 0.8rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">ACTION REQUIRED: Password Expiry</div>
@@ -490,7 +663,7 @@
                         <div class="avatar-circle" style="background: linear-gradient(135deg, #10b981, #059669);">HR</div>
                         <div style="flex: 1; min-width: 0;">
                             <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 2px;">
-                                <span style="font-weight: 700; color: #fff; font-size: 0.82rem;">HR Operations</span>
+                                <span style="font-weight: 700; color: var(--text-main); font-size: 0.82rem;">HR Operations</span>
                                 <span class="indicator-pill high" style="font-size: 0.55rem; padding: 1px 5px; scale: 0.9;">Salary</span>
                             </div>
                             <div style="font-weight: 600; color: var(--cyan); font-size: 0.8rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">Q3 Salary Adjustment guidelines</div>
@@ -502,7 +675,7 @@
                         <div class="avatar-circle" style="background: #475569;">SV</div>
                         <div style="flex: 1; min-width: 0;">
                             <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 2px;">
-                                <span style="font-weight: 700; color: #fff; font-size: 0.82rem;">Sarah Vance</span>
+                                <span style="font-weight: 700; color: var(--text-main); font-size: 0.82rem;">Sarah Vance</span>
                                 <span class="indicator-pill medium" style="font-size: 0.55rem; padding: 1px 5px; scale: 0.9; background:rgba(255,255,255,0.06); color:#94a3b8; border-color:rgba(255,255,255,0.1)">Safe</span>
                             </div>
                             <div style="font-weight: 600; color: var(--cyan); font-size: 0.8rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">Project status update: Phase 2</div>
@@ -517,7 +690,7 @@
                         <div class="avatar-circle" style="background: linear-gradient(135deg, #ef4444, #f59e0b);">RS</div>
                         <div style="flex: 1; min-width: 0;">
                             <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 2px;">
-                                <span style="font-weight: 700; color: #fff; font-size: 0.82rem;">R. Sterling (CEO)</span>
+                                <span style="font-weight: 700; color: var(--text-main); font-size: 0.82rem;">R. Sterling (CEO)</span>
                                 <span class="indicator-pill critical" style="font-size: 0.55rem; padding: 1px 5px; scale: 0.9;">SPF-Fail</span>
                             </div>
                             <div style="font-weight: 600; color: var(--cyan); font-size: 0.8rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">From: r.sterling@demo-corp-ceo.com</div>
@@ -529,7 +702,7 @@
                         <div class="avatar-circle" style="background: linear-gradient(135deg, #3b82f6, #06b6d4);">IT</div>
                         <div style="flex: 1; min-width: 0;">
                             <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 2px;">
-                                <span style="font-weight: 700; color: #fff; font-size: 0.82rem;">IT Identity</span>
+                                <span style="font-weight: 700; color: var(--text-main); font-size: 0.82rem;">IT Identity</span>
                                 <span class="indicator-pill high" style="font-size: 0.55rem; padding: 1px 5px; scale: 0.9;">Relays</span>
                             </div>
                             <div style="font-weight: 600; color: var(--cyan); font-size: 0.8rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">From: admin@support-demo-corp.com</div>
@@ -541,7 +714,7 @@
                         <div class="avatar-circle" style="background: #475569;">SV</div>
                         <div style="flex: 1; min-width: 0;">
                             <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 2px;">
-                                <span style="font-weight: 700; color: #fff; font-size: 0.82rem;">Sarah Vance</span>
+                                <span style="font-weight: 700; color: var(--text-main); font-size: 0.82rem;">Sarah Vance</span>
                                 <span class="indicator-pill medium" style="font-size: 0.55rem; padding: 1px 5px; scale: 0.9; background:rgba(255,255,255,0.06); color:#94a3b8; border-color:rgba(255,255,255,0.1)">Passed</span>
                             </div>
                             <div style="font-weight: 600; color: var(--cyan); font-size: 0.8rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">From: s.vance@demo-corp.com</div>
@@ -557,30 +730,41 @@
             <div>
                 <label style="display:block; font-family:var(--font-mono); font-size:0.75rem; color:#64748b; text-transform:uppercase; letter-spacing:1px; margin-bottom:8px;">Email Ingestion Terminal</label>
                 
-                <!-- Textarea relative wrapper with scanning overlay -->
-                <div class="scan-beam-container" style="border: 1px solid var(--border-color); border-radius: 8px; position: relative;">
-                    <div id="scanning-overlay" class="scan-overlay">
-                        <div class="scan-beam"></div>
-                        <div style="font-family: var(--font-mono); color: var(--cyan); font-size: 0.85rem; font-weight: 700; letter-spacing: 1.5px; display:flex; align-items:center; gap:8px;">
-                            <i class="ti ti-loader-2 ti-spin"></i> INGESTING PAYLOAD...
+                <!-- Upgraded Ingestion Terminal Mockup -->
+                <div class="scan-beam-container terminal-style" style="position: relative; overflow: hidden; display: flex; flex-direction: column;">
+                    <div class="terminal-header-bar">
+                        <div style="display: flex; gap: 6px;">
+                            <span style="width: 8px; height: 8px; border-radius: 50%; background: #ef4444; display: inline-block;"></span>
+                            <span style="width: 8px; height: 8px; border-radius: 50%; background: #f59e0b; display: inline-block;"></span>
+                            <span style="width: 8px; height: 8px; border-radius: 50%; background: #10b981; display: inline-block;"></span>
                         </div>
+                        <div style="font-family: var(--font-mono); font-size: 0.65rem; color: var(--text-muted); letter-spacing: 1px; text-transform: uppercase;">[INGESTION_DECRYPTOR_TERMINAL.SH]</div>
+                        <div style="width: 36px;"></div>
                     </div>
-                    <textarea id="email-textarea" class="form-input" style="min-height: 450px; padding: 16px 16px 36px 16px; font-family:var(--font-mono); font-size:0.85rem; line-height:1.5; resize:none; border:none; width:100%; margin:0; background:transparent;" placeholder="Paste email content here..."></textarea>
-                    
-                    <!-- Live lines / character counter -->
-                    <div id="textarea-counter" style="position: absolute; bottom: 10px; right: 12px; font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-muted); pointer-events: none; z-index: 5;">0 lines &middot; 0 chars</div>
+                    <div style="position: relative; flex: 1;">
+                        <div id="scanning-overlay" class="scan-overlay">
+                            <div class="scan-beam"></div>
+                            <div style="font-family: var(--font-mono); color: var(--cyan); font-size: 0.85rem; font-weight: 700; letter-spacing: 1.5px; display:flex; align-items:center; gap:8px;">
+                                <i class="ti ti-loader-2 ti-spin"></i> INGESTING PAYLOAD...
+                            </div>
+                        </div>
+                        <textarea id="email-textarea" class="form-input" style="min-height: 400px; padding: 16px 16px 42px 16px; font-family:var(--font-mono); font-size:0.85rem; line-height:1.6; resize:none; border:none; width:100%; margin:0; background:transparent;" placeholder="Paste email content here..."></textarea>
+                        
+                        <!-- Live lines / character counter styled as terminal status -->
+                        <div id="textarea-counter" style="position: absolute; bottom: 12px; right: 16px; font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-muted); pointer-events: none; z-index: 5; background: rgba(0,0,0,0.2); padding: 2px 8px; border-radius: 4px; border: 1px solid var(--border-color);">[Lines: 0 | Chars: 0 | Status: READY]</div>
+                    </div>
                 </div>
             </div>
             
-            <div style="margin-top: 1.5rem; display: flex; gap: 10px;">
-                <button type="button" class="btn-primary-action cyber-glow-hover" style="flex:1;" onclick="runAnalysis()">
-                    <i class="ti ti-cpu" style="margin-right:6px; vertical-align:middle;"></i> Scan Payload
+            <div style="margin-top: 1.5rem; display: flex; gap: 12px; align-items: center;">
+                <button type="button" class="btn-primary-action cyber-glow-hover" style="flex:1; display: inline-flex; align-items: center; justify-content: center; gap: 8px;" onclick="runAnalysis()" id="scan-payload-btn">
+                    <i class="ti ti-cpu" style="font-size:1.1rem;"></i> Scan Payload
                 </button>
                 <button type="button" id="reset-payload-btn" class="preset-btn cyber-glow-hover" onclick="resetAnalysis()" title="Reset scanner">
-                    <i class="ti ti-refresh" style="font-size:1rem;"></i>
+                    <i class="ti ti-refresh" style="font-size:1.1rem;"></i>
                 </button>
                 <button type="button" class="preset-btn cyber-glow-hover" onclick="toggleHistoryDrawer()" title="Scan History">
-                    <i class="ti ti-history" style="font-size:1rem;"></i>
+                    <i class="ti ti-history" style="font-size:1.1rem;"></i>
                 </button>
             </div>
         </div>
@@ -592,13 +776,13 @@
                 <div style="width:72px; height:72px; border-radius:50%; background:rgba(255,255,255,0.02); border:1px dashed var(--border-color); display:flex; align-items:center; justify-content:center; margin:0 auto 1.5rem;">
                     <i class="ti ti-scan" style="font-size:2rem; color:var(--text-muted); opacity:0.5;"></i>
                 </div>
-                <h3 style="color:#fff; font-size:1.15rem; margin-bottom:8px; font-family:var(--font-sans);">Awaiting Payload Scan</h3>
+                <h3 style="color:var(--text-main); font-size:1.15rem; margin-bottom:8px; font-family:var(--font-sans);">Awaiting Payload Scan</h3>
                 <p style="color:var(--text-muted); font-size:0.82rem; max-width:240px; margin:0 auto; line-height:1.5;">Input custom content or trigger a preset scenario to perform dynamic structural analysis.</p>
             </div>
 
             <!-- Scanning log state -->
             <div id="result-loading" style="display: none; width: 100%;">
-                <h3 style="font-family:var(--font-sans); color:#fff; font-size:1.1rem; margin-top:0; margin-bottom:1.5rem; text-align:center;">Threat Heuristics Engine</h3>
+                <h3 style="font-family:var(--font-sans); color:var(--text-main); font-size:1.1rem; margin-top:0; margin-bottom:1.5rem; text-align:center;">Threat Heuristics Engine</h3>
                 <!-- Console log panel -->
                 <div id="log-terminal" style="background:#020617 !important; border:1px solid var(--border-color); border-radius:10px; padding:1.2rem; height:420px; overflow-y:auto; margin-bottom:1.5rem; box-shadow: inset 0 0 15px rgba(0,0,0,0.5);"></div>
                 <div style="color:var(--text-muted); font-size:0.75rem; text-align:center; font-family:var(--font-mono); letter-spacing:0.5px;">RUNNING THREAT DECRYPTION CYCLES...</div>
@@ -626,7 +810,7 @@
         </div>
 
         <!-- Row 1: Gauge Left, Metrics & Recommendation Center-Right -->
-        <div class="glass-panel" style="padding: 2.2rem; display: grid; grid-template-columns: 240px 1fr; gap: 2.5rem; margin-bottom: 2rem; align-items: center;">
+        <div id="gauge-results-card" class="glass-panel" style="padding: 2.2rem; display: grid; grid-template-columns: 240px 1fr; gap: 2.5rem; margin-bottom: 2rem; align-items: center;">
             <!-- Left Part: Gauge -->
             <div style="text-align: center;">
                 <div class="gauge-wrapper" style="width: 160px; height: 160px; margin-bottom: 12px;">
@@ -687,7 +871,7 @@
                 <div id="teachable-cta-card-res" style="display:none; background: rgba(6, 182, 212, 0.05); border: 1px solid rgba(6, 182, 212, 0.25); border-radius: 10px; padding: 1.2rem; margin-top: 4px; text-align: left;">
                     <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 4px;">
                         <i class="ti ti-bulb" style="color:var(--accent-cyan); font-size: 1.2rem;"></i>
-                        <span style="font-size: 0.88rem; font-weight: 700; color: #fff;">Teachable Action Plan</span>
+                        <span style="font-size: 0.88rem; font-weight: 700; color: var(--text-main);">Teachable Action Plan</span>
                     </div>
                     <p style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.45; margin-bottom: 12px; margin-top: 4px;">This threat scenario represents a high-conversion security risk. Execute a test simulation template targeting your employees now.</p>
                     <a href="/new-campaign?scenario=ceo_fraud" class="btn-primary-action cyber-glow-hover" style="display: inline-block; width: auto; padding: 8px 16px; font-size: 0.78rem; border-radius: 6px; font-family: var(--font-sans);">Train Your Team</a>
@@ -699,16 +883,18 @@
         <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 2rem; align-items: start;">
             <!-- Left: Behavioral briefing (open by default) -->
             <div class="glass-panel" style="padding: 1.8rem; border-radius: 12px;">
-                <h3 style="font-family: var(--font-sans); font-size: 1.15rem; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 8px; margin-top: 0; margin-bottom: 1.2rem; border-bottom: 1px solid var(--border-color); padding-bottom: 8px;">
-                    <i class="ti ti-brain" style="color:var(--accent-purple); font-size:1.4rem;"></i>
-                    Behavioral Risk Briefing
+                <div style="display: flex; align-items: center; gap: 8px; border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-bottom: 1.2rem;">
+                    <h3 style="font-family: var(--font-sans); font-size: 1.15rem; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 8px; margin: 0; border: none; padding: 0;">
+                        <i class="ti ti-brain" style="color:var(--accent-purple); font-size:1.4rem;"></i>
+                        Behavioral Risk Briefing
+                    </h3>
                     <span class="cyber-tooltip-wrap">
                         <span class="tooltip-icon" style="width:14px; height:14px; font-size:0.55rem;">?</span>
                         <span class="cyber-tooltip-content" style="bottom: calc(100% + 8px); top: auto; left: 10px; font-weight:normal; text-transform:none; letter-spacing:0; font-size:0.75rem; width:240px;">
                             Analyzes the psychological pretexting methods such as authority coercion, extreme urgency, or fear vectors that attackers use.
                         </span>
                     </span>
-                </h3>
+                </div>
                 <div id="psych-brief-text-res" style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.6;">
                     <!-- Loaded dynamically -->
                 </div>
@@ -716,16 +902,18 @@
 
             <!-- Right: Detected Risk Vectors (indicator cards) -->
             <div class="glass-panel" style="padding: 1.8rem; border-radius: 12px;">
-                <h3 style="font-family: var(--font-sans); font-size: 1.15rem; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 8px; margin-top: 0; margin-bottom: 1.2rem; border-bottom: 1px solid var(--border-color); padding-bottom: 8px;">
-                    <i class="ti ti-alert-triangle" style="color:var(--accent-cyan); font-size:1.4rem;"></i>
-                    Detected Risk Vectors
+                <div style="display: flex; align-items: center; gap: 8px; border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-bottom: 1.2rem;">
+                    <h3 style="font-family: var(--font-sans); font-size: 1.15rem; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 8px; margin: 0; border: none; padding: 0;">
+                        <i class="ti ti-alert-triangle" style="color:var(--accent-cyan); font-size:1.4rem;"></i>
+                        Detected Risk Vectors
+                    </h3>
                     <span class="cyber-tooltip-wrap">
                         <span class="tooltip-icon" style="width:14px; height:14px; font-size:0.55rem;">?</span>
                         <span class="cyber-tooltip-content" style="bottom: calc(100% + 8px); top: auto; right: 0; font-weight:normal; text-transform:none; letter-spacing:0; font-size:0.75rem; width:240px;">
                             Lists specific technical anomalies and phishing markers detected inside the email body or headers.
                         </span>
                     </span>
-                </h3>
+                </div>
                 <div id="indicators-list-res" style="max-height: 380px; overflow-y: auto; padding-right: 4px;">
                     <!-- Inserted dynamically -->
                 </div>
@@ -738,7 +926,7 @@
             <div>
                 <div style="display:flex; align-items:center; gap:10px; margin-bottom:4px;">
                     <i class="ti ti-dna" style="font-size:1.6rem; color:var(--accent-cyan);"></i>
-                    <h3 style="font-family:var(--font-sans); font-size:1.15rem; font-weight:700; color:#fff; margin:0;">Threat DNA Fingerprint</h3>
+                    <h3 style="font-family:var(--font-sans); font-size:1.15rem; font-weight:700; color:var(--text-main); margin:0;">Threat DNA Fingerprint</h3>
                 </div>
                 <p style="font-size:0.8rem; color:var(--text-muted); margin:0 0 1rem 0; line-height:1.5;">Multi-axis behavioral signature derived from AI analysis. Each axis represents a distinct manipulation vector scored 0–100.</p>
                 <div class="dna-axis-list" id="dna-axis-list">
@@ -939,6 +1127,9 @@ Date: Mon, 25 May 2026 09:28:00 -0400`
         document.querySelectorAll('.inbox-preset-row').forEach(row => row.classList.remove('active'));
         updateCounter();
         if (window._dnaChart) { window._dnaChart.destroy(); window._dnaChart = null; }
+        
+        const scanBtn = document.querySelector('.btn-primary-action');
+        if (scanBtn) scanBtn.classList.remove('scanning');
     }
 
     function goBackToInput() {
@@ -947,6 +1138,9 @@ Date: Mon, 25 May 2026 09:28:00 -0400`
         resultsView.style.display = 'none';
         document.getElementById('analyzer-input-view').style.display = 'grid';
         if (window._dnaChart) { window._dnaChart.destroy(); window._dnaChart = null; }
+        
+        const scanBtn = document.querySelector('.btn-primary-action');
+        if (scanBtn) scanBtn.classList.remove('scanning');
     }
 
     // History Panel Logic
@@ -1010,6 +1204,10 @@ Date: Mon, 25 May 2026 09:28:00 -0400`
         // Activate textarea scan overlay
         overlay.classList.add('active');
         document.getElementById('email-textarea').readOnly = true;
+        
+        // Activate scanning button pulse
+        const scanBtn = document.querySelector('.btn-primary-action');
+        if (scanBtn) scanBtn.classList.add('scanning');
 
         // Structured console steps
         const steps = [
@@ -1074,6 +1272,10 @@ Date: Mon, 25 May 2026 09:28:00 -0400`
         .then(res => res.json())
         .then(data => {
             if (data.success) {
+                // Reset scan button pulse
+                const scanBtn = document.querySelector('.btn-primary-action');
+                if (scanBtn) scanBtn.classList.remove('scanning');
+
                 // Hide input view & logs, display wide results view
                 document.getElementById('result-loading').style.display = 'none';
                 document.getElementById('analyzer-input-view').style.display = 'none';
@@ -1098,16 +1300,45 @@ Date: Mon, 25 May 2026 09:28:00 -0400`
                 if (tokensChip) tokensChip.innerHTML = `<i class="ti ti-hash"></i> ${data.word_count || 0} tokens`;
 
                 const score = data.score;
-                document.getElementById('risk-score-res').textContent = score;
-                
-                // Update Risk Index Gauge
-                const circle = document.getElementById('gauge-circle-res');
-                const offset = GAUGE_CIRCUMFERENCE - (score / 100) * GAUGE_CIRCUMFERENCE;
-                circle.style.strokeDasharray = GAUGE_CIRCUMFERENCE;
-                circle.style.strokeDashoffset = offset;
-                
                 const riskLevel = getRiskLevel(score);
+                const circle = document.getElementById('gauge-circle-res');
+                circle.style.strokeDasharray = GAUGE_CIRCUMFERENCE;
                 circle.style.stroke = riskLevel.color;
+                
+                // Animate count-up and gauge SVG offset simultaneously over 1.2s (easeOutQuad)
+                const duration = 1200; // 1.2s
+                const startTime = performance.now();
+                const targetOffset = GAUGE_CIRCUMFERENCE - (score / 100) * GAUGE_CIRCUMFERENCE;
+                
+                function animateGauge(time) {
+                    const elapsed = time - startTime;
+                    const progress = Math.min(elapsed / duration, 1);
+                    const ease = progress * (2 - progress); // easeOutQuad
+                    
+                    const currentScore = Math.round(ease * score);
+                    document.getElementById('risk-score-res').textContent = currentScore;
+                    
+                    const currentOffset = GAUGE_CIRCUMFERENCE - (ease * (score / 100)) * GAUGE_CIRCUMFERENCE;
+                    circle.style.strokeDashoffset = currentOffset;
+                    
+                    if (progress < 1) {
+                        requestAnimationFrame(animateGauge);
+                    } else {
+                        document.getElementById('risk-score-res').textContent = score;
+                        circle.style.strokeDashoffset = targetOffset;
+                    }
+                }
+                requestAnimationFrame(animateGauge);
+                
+                // Dynamically add box-shadow matching the verdict color to .gauge-wrapper and gauge results card
+                const gaugeWrapper = document.querySelector('.gauge-wrapper');
+                if (gaugeWrapper) {
+                    gaugeWrapper.style.boxShadow = `0 0 40px rgba(${riskLevel.rgb}, 0.25)`;
+                }
+                const gaugeCard = document.getElementById('gauge-results-card');
+                if (gaugeCard) {
+                    gaugeCard.style.boxShadow = `0 0 40px rgba(${riskLevel.rgb}, 0.2)`;
+                }
                 
                 // Update Risk pointer scale position
                 document.getElementById('risk-scale-pointer-res').style.left = `${score}%`;
@@ -1171,7 +1402,7 @@ Date: Mon, 25 May 2026 09:28:00 -0400`
                         list.innerHTML += `
                             <div class="indicator-card ${classSeverity}">
                                 <div>
-                                    <h5 style="color:#fff; margin:0 0 4px 0; font-size:0.82rem; font-family:var(--font-sans); font-weight:600;">${ind.title}</h5>
+                                    <h5 style="color:var(--text-main); margin:0 0 4px 0; font-size:0.82rem; font-family:var(--font-sans); font-weight:600;">${ind.title}</h5>
                                     <p style="color:var(--text-muted); font-size:0.75rem; margin:0; line-height:1.45;">${ind.desc}</p>
                                 </div>
                                 <span class="indicator-pill ${ind.severity || 'medium'}">${labelSeverity}</span>
@@ -1368,7 +1599,7 @@ Date: Mon, 25 May 2026 09:28:00 -0400`
             historyContainer.innerHTML += `
                 <div class="history-item" onclick="loadHistoryItem(${idx})">
                     <div style="min-width:0; flex:1; padding-right:8px;">
-                        <div style="font-weight:700; color:#fff; font-size:0.78rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${hist.preview}</div>
+                        <div style="font-weight:700; color:var(--text-main); font-size:0.78rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${hist.preview}</div>
                         <span style="font-size:0.65rem; color:var(--text-muted);">${hist.timestamp} · Index: ${hist.score}</span>
                     </div>
                     <span class="indicator-pill" style="background:rgba(${riskLevel.rgb}, 0.08); color:${riskLevel.color}; border: 1px solid rgba(${riskLevel.rgb}, 0.15); font-size:0.55rem; padding:1px 5px; flex-shrink:0;">${hist.score}</span>
@@ -1435,6 +1666,16 @@ Date: Mon, 25 May 2026 09:28:00 -0400`
             
             const riskLevel = getRiskLevel(score);
             circle.style.stroke = riskLevel.color;
+            
+            // Add box-shadow matching verdict color to .gauge-wrapper and gauge results card
+            const gaugeWrapper = document.querySelector('.gauge-wrapper');
+            if (gaugeWrapper) {
+                gaugeWrapper.style.boxShadow = `0 0 40px rgba(${riskLevel.rgb}, 0.25)`;
+            }
+            const gaugeCard = document.getElementById('gauge-results-card');
+            if (gaugeCard) {
+                gaugeCard.style.boxShadow = `0 0 40px rgba(${riskLevel.rgb}, 0.2)`;
+            }
             
             document.getElementById('risk-scale-pointer-res').style.left = `${score}%`;
             
@@ -1511,7 +1752,7 @@ Date: Mon, 25 May 2026 09:28:00 -0400`
                     list.innerHTML += `
                         <div class="indicator-card ${classSeverity}">
                             <div>
-                                <h5 style="color:#fff; margin:0 0 4px 0; font-size:0.82rem; font-family:var(--font-sans); font-weight:600;">${ind.title}</h5>
+                                <h5 style="color:var(--text-main); margin:0 0 4px 0; font-size:0.82rem; font-family:var(--font-sans); font-weight:600;">${ind.title}</h5>
                                 <p style="color:var(--text-muted); font-size:0.75rem; margin:0; line-height:1.45;">${ind.desc}</p>
                             </div>
                             <span class="indicator-pill ${ind.severity.toLowerCase()}">${labelSeverity}</span>

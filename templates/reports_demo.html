@@ -55,7 +55,7 @@
   border:1px solid #38bdf8; box-shadow:0 0 40px rgba(56,189,248,.18);
   transform:rotateY(-10deg) rotateX(7deg);
   animation:floatGauge 5s ease-in-out infinite;
-  position:relative; z-index:1;
+  position:relative; z-index: 2;
 }
 .hss-label-top { font-size:.68rem; text-transform:uppercase; letter-spacing:2px; color:#8892b0; font-family:'JetBrains Mono',monospace; margin-bottom:.3rem; }
 .hss-score { font-size:4rem; font-weight:900; color:#38bdf8; line-height:1; text-shadow:0 0 24px rgba(56,189,248,.45); }
@@ -878,6 +878,47 @@ document.addEventListener("DOMContentLoaded", () => {
         plugins: { legend: { display: false } }
       }
     });
+  }
+
+  // ── Report Hero 3D Perspective Parallax tilt ──────────────────────────
+  const heroCard = document.querySelector('.report-hero');
+  if (heroCard) {
+      const gauge = heroCard.querySelector('.hss-gauge');
+      heroCard.style.transformStyle = 'preserve-3d';
+      heroCard.style.perspective = '1200px';
+      heroCard.style.transition = 'transform 0.15s ease-out, box-shadow 0.3s ease';
+      
+      if (gauge) {
+          gauge.style.transition = 'transform 0.15s ease-out';
+      }
+      
+      heroCard.addEventListener('mousemove', (e) => {
+          const rect = heroCard.getBoundingClientRect();
+          // Normalized coordinates from -0.5 to 0.5
+          const x = (e.clientX - rect.left) / rect.width - 0.5;
+          const y = (e.clientY - rect.top) / rect.height - 0.5;
+          
+          // rotateX(${-y * 8}deg) rotateY(${x * 8}deg) -> Max 4 degrees
+          const rx = -y * 8;
+          const ry = x * 8;
+          
+          heroCard.style.transform = `perspective(1200px) rotateX(${rx}deg) rotateY(${ry}deg)`;
+          heroCard.style.boxShadow = `${-x * 30}px ${-y * 30}px 30px rgba(0, 0, 0, 0.35), 0 10px 40px rgba(56, 189, 248, 0.08)`;
+          
+          if (gauge) {
+              gauge.style.animation = 'none';
+              gauge.style.transform = 'translateZ(30px)';
+          }
+      });
+      
+      heroCard.addEventListener('mouseleave', () => {
+          heroCard.style.transform = 'perspective(1200px) rotateX(0deg) rotateY(0deg)';
+          heroCard.style.boxShadow = '';
+          if (gauge) {
+              gauge.style.animation = 'floatGauge 5s ease-in-out infinite';
+              gauge.style.transform = 'rotateY(-10deg) rotateX(7deg)';
+          }
+      });
   }
 
 });
