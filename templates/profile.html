@@ -49,6 +49,12 @@ body.light-theme .glass-panel {
     font-size: 2.5rem; color: #fff;
     box-shadow: 0 0 20px rgba(6, 182, 212, 0.3);
 }
+.profile-avatar.pro-avatar {
+    background: linear-gradient(135deg, #fbbf24, #d97706) !important;
+    border: 3px solid #fbbf24 !important;
+    box-shadow: 0 0 25px rgba(251, 191, 36, 0.45) !important;
+    color: #000 !important;
+}
 .profile-info h1 { margin: 0; font-size: 1.8rem; color: #fff; font-family: var(--font-sans); }
 .profile-info p { margin: 5px 0 0; color: #94a3b8; font-family: var(--font-mono); font-size: 0.9rem;}
 body.light-theme .profile-info h1 { color: #0f172a; }
@@ -123,14 +129,23 @@ body.light-theme .audit-table td { color: #334155; border-color: #f1f5f9; }
                 </div>
                 <div class="window-body" style="padding: 2rem;">
                     <div class="profile-header">
-                        <div class="profile-avatar">
-                            <i class="fas fa-user-circle"></i>
+                        <div style="position: relative; display: inline-flex;">
+                            <div class="profile-avatar {% if user.role in ('admin', 'pro') %}pro-avatar{% endif %}">
+                                <i class="fas fa-user-circle" style="{% if user.role in ('admin', 'pro') %}color: #000 !important;{% endif %}"></i>
+                            </div>
+                            {% if user.role in ('admin', 'pro') %}
+                            <span style="position: absolute; top: -2px; right: -2px; background: #fbbf24; color: #000; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; box-shadow: 0 0 8px rgba(0,0,0,0.5); z-index: 2;" title="PRO User">
+                                <i class="ti ti-crown"></i>
+                            </span>
+                            {% endif %}
                         </div>
                         <div class="profile-info">
-                            <h1>{{ user.name }}</h1>
+                            <h1 style="display: inline-flex; align-items: center; gap: 8px;">
+                                {{ user.name }}
+                            </h1>
                             <p><i class="fas fa-id-badge"></i> Account ID: {{ "%04d" | format(user.id) }}</p>
-                            <span class="badge" style="background:rgba(59,130,246,0.15); color:#3b82f6; padding:4px 10px; margin-top:8px; display:inline-block; border-radius:100px;">
-                                {{ user.role.title() }}
+                            <span class="badge" style="background:{% if user.role in ('admin', 'pro') %}rgba(251,191,36,0.15){% else %}rgba(59,130,246,0.15){% endif %}; color:{% if user.role in ('admin', 'pro') %}#fbbf24{% else %}#3b82f6{% endif %}; padding:4px 10px; margin-top:8px; display:inline-block; border-radius:100px; font-weight: 700;">
+                                {{ user.role.upper() }}
                             </span>
                         </div>
                     </div>

@@ -2,614 +2,683 @@
 {% block title %}Phishing URL Decoder — PhishSim AI{% endblock %}
 {% block content %}
 <style>
-.ud-container { max-width: 800px; margin: 0 auto; padding: 90px 1.5rem 4rem; }
+    .ud-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 90px 1.5rem 4rem;
+    }
 
-/* Input Zone terminal style */
-.terminal-input-card {
-    background: rgba(15, 23, 42, 0.45);
-    border: 1px solid rgba(56, 189, 248, 0.2);
-    border-radius: 16px;
-    padding: 2.5rem;
-    box-shadow: 0 0 30px rgba(56, 189, 248, 0.05);
-    position: relative;
-    backdrop-filter: blur(12px);
-    transition: all 0.3s ease;
-}
-.terminal-input-card:hover {
-    border-color: rgba(56, 189, 248, 0.4);
-    box-shadow: 0 0 40px rgba(56, 189, 248, 0.1);
-}
-.terminal-input-container {
-    position: relative;
-    display: flex;
-    align-items: center;
-    background: rgba(0, 0, 0, 0.45);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 12px;
-    padding: 14px 18px;
-    transition: all 0.25s ease;
-}
-.terminal-input-container:focus-within {
-    border-color: #06b6d4;
-    box-shadow: 0 0 15px rgba(6, 182, 212, 0.25);
-    background: rgba(0, 0, 0, 0.6);
-}
-.terminal-prompt {
-    font-family: var(--font-mono), monospace;
-    color: var(--accent-cyan);
-    font-weight: 700;
-    margin-right: 10px;
-    user-select: none;
-}
-.terminal-input-field {
-    flex: 1;
-    background: transparent;
-    border: none;
-    outline: none;
-    color: #f8fafc;
-    font-family: var(--font-mono), monospace;
-    font-size: 0.95rem;
-}
-.terminal-input-field::placeholder {
-    color: rgba(255, 255, 255, 0.25);
-}
+    /* Input Zone terminal style */
+    .terminal-input-card {
+        background: rgba(15, 23, 42, 0.45);
+        border: 1px solid rgba(56, 189, 248, 0.2);
+        border-radius: 16px;
+        padding: 2.5rem;
+        box-shadow: 0 0 30px rgba(56, 189, 248, 0.05);
+        position: relative;
+        backdrop-filter: blur(12px);
+        transition: all 0.3s ease;
+    }
 
-/* Preset Chips */
-.preset-chips-container {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-    margin-bottom: 1.5rem;
-}
-.preset-chip {
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 8px;
-    color: var(--text-muted);
-    font-family: var(--font-mono), monospace;
-    font-size: 0.75rem;
-    padding: 8px 16px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-.preset-chip:hover {
-    background: rgba(56, 189, 248, 0.08);
-    border-color: rgba(56, 189, 248, 0.3);
-    color: var(--accent-cyan);
-}
+    .terminal-input-card:hover {
+        border-color: rgba(56, 189, 248, 0.4);
+        box-shadow: 0 0 40px rgba(56, 189, 248, 0.1);
+    }
 
-/* Trace Node Animation Row */
-.trace-animation-container {
-    display: none;
-    background: rgba(15, 23, 42, 0.3);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    border-radius: 16px;
-    padding: 2.5rem;
-    margin-top: 2rem;
-    margin-bottom: 2rem;
-    text-align: center;
-    backdrop-filter: blur(8px);
-}
-.trace-nodes-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    position: relative;
-    max-width: 650px;
-    margin: 2rem auto;
-}
-.trace-line-bg {
-    position: absolute;
-    left: 28px;
-    right: 28px;
-    height: 4px;
-    background: rgba(255, 255, 255, 0.04);
-    z-index: 1;
-}
-.trace-line-fill {
-    position: absolute;
-    left: 28px;
-    height: 4px;
-    background: linear-gradient(90deg, var(--accent-cyan), var(--accent-blue));
-    width: 0%;
-    z-index: 2;
-    transition: width 0.6s ease-in-out;
-}
-.trace-node {
-    position: relative;
-    z-index: 3;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-.trace-circle {
-    width: 56px;
-    height: 56px;
-    border-radius: 50%;
-    background: #080c1a;
-    border: 2px solid rgba(255, 255, 255, 0.08);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--text-muted);
-    font-size: 1.1rem;
-    font-weight: 800;
-    transition: all 0.35s ease;
-}
-.trace-node.pending .trace-circle {
-    border-color: rgba(99, 102, 241, 0.15);
-    color: rgba(99, 102, 241, 0.3);
-}
-.trace-node.resolving .trace-circle {
-    border-color: var(--accent-cyan);
-    color: var(--accent-cyan);
-    box-shadow: 0 0 20px rgba(6, 182, 212, 0.4);
-    animation: pulseCircle 1s infinite alternate ease-in-out;
-}
-.trace-node.resolved-clean .trace-circle {
-    border-color: #10b981;
-    background: rgba(16, 185, 129, 0.08);
-    color: #10b981;
-    box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
-}
-.trace-node.resolved-malicious .trace-circle {
-    border-color: #ef4444;
-    background: rgba(239, 68, 68, 0.08);
-    color: #ef4444;
-    box-shadow: 0 0 25px rgba(239, 68, 68, 0.4);
-}
-.trace-node-label {
-    font-family: var(--font-mono), monospace;
-    font-size: 0.68rem;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-top: 10px;
-}
-@keyframes pulseCircle {
-    0% { transform: scale(1); }
-    100% { transform: scale(1.06); }
-}
+    .terminal-input-container {
+        position: relative;
+        display: flex;
+        align-items: center;
+        background: rgba(0, 0, 0, 0.45);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 12px;
+        padding: 14px 18px;
+        transition: all 0.25s ease;
+    }
 
-/* Results grid layout */
-.results-grid-container {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 1.5rem;
-    margin-top: 2.5rem;
-}
-@media (max-width: 900px) {
+    .terminal-input-container:focus-within {
+        border-color: #06b6d4;
+        box-shadow: 0 0 15px rgba(6, 182, 212, 0.25);
+        background: rgba(0, 0, 0, 0.6);
+    }
+
+    .terminal-prompt {
+        font-family: var(--font-mono), monospace;
+        color: var(--accent-cyan);
+        font-weight: 700;
+        margin-right: 10px;
+        user-select: none;
+    }
+
+    .terminal-input-field {
+        flex: 1;
+        background: transparent;
+        border: none;
+        outline: none;
+        color: #f8fafc;
+        font-family: var(--font-mono), monospace;
+        font-size: 0.95rem;
+    }
+
+    .terminal-input-field::placeholder {
+        color: rgba(255, 255, 255, 0.25);
+    }
+
+    /* Preset Chips */
+    .preset-chips-container {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-bottom: 1.5rem;
+    }
+
+    .preset-chip {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 8px;
+        color: var(--text-muted);
+        font-family: var(--font-mono), monospace;
+        font-size: 0.75rem;
+        padding: 8px 16px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .preset-chip:hover {
+        background: rgba(56, 189, 248, 0.08);
+        border-color: rgba(56, 189, 248, 0.3);
+        color: var(--accent-cyan);
+    }
+
+    /* Trace Node Animation Row */
+    .trace-animation-container {
+        display: none;
+        background: rgba(15, 23, 42, 0.3);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 16px;
+        padding: 2.5rem;
+        margin-top: 2rem;
+        margin-bottom: 2rem;
+        text-align: center;
+        backdrop-filter: blur(8px);
+    }
+
+    .trace-nodes-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        position: relative;
+        max-width: 650px;
+        margin: 2rem auto;
+    }
+
+    .trace-line-bg {
+        position: absolute;
+        left: 28px;
+        right: 28px;
+        height: 4px;
+        background: rgba(255, 255, 255, 0.04);
+        z-index: 1;
+    }
+
+    .trace-line-fill {
+        position: absolute;
+        left: 28px;
+        height: 4px;
+        background: linear-gradient(90deg, var(--accent-cyan), var(--accent-blue));
+        width: 0%;
+        z-index: 2;
+        transition: width 0.6s ease-in-out;
+    }
+
+    .trace-node {
+        position: relative;
+        z-index: 3;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .trace-circle {
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        background: #080c1a;
+        border: 2px solid rgba(255, 255, 255, 0.08);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--text-muted);
+        font-size: 1.1rem;
+        font-weight: 800;
+        transition: all 0.35s ease;
+    }
+
+    .trace-node.pending .trace-circle {
+        border-color: rgba(99, 102, 241, 0.15);
+        color: rgba(99, 102, 241, 0.3);
+    }
+
+    .trace-node.resolving .trace-circle {
+        border-color: var(--accent-cyan);
+        color: var(--accent-cyan);
+        box-shadow: 0 0 20px rgba(6, 182, 212, 0.4);
+        animation: pulseCircle 1s infinite alternate ease-in-out;
+    }
+
+    .trace-node.resolved-clean .trace-circle {
+        border-color: #10b981;
+        background: rgba(16, 185, 129, 0.08);
+        color: #10b981;
+        box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+    }
+
+    .trace-node.resolved-malicious .trace-circle {
+        border-color: #ef4444;
+        background: rgba(239, 68, 68, 0.08);
+        color: #ef4444;
+        box-shadow: 0 0 25px rgba(239, 68, 68, 0.4);
+    }
+
+    .trace-node-label {
+        font-family: var(--font-mono), monospace;
+        font-size: 0.68rem;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-top: 10px;
+    }
+
+    @keyframes pulseCircle {
+        0% {
+            transform: scale(1);
+        }
+
+        100% {
+            transform: scale(1.06);
+        }
+    }
+
+    /* Results grid layout */
     .results-grid-container {
-        grid-template-columns: 1fr;
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 1.5rem;
+        margin-top: 2.5rem;
     }
-}
-.results-panel {
-    background: rgba(15, 23, 42, 0.4);
-    border: 1px solid rgba(255, 255, 255, 0.07);
-    border-radius: 16px;
-    padding: 1.8rem;
-    backdrop-filter: blur(12px);
-    display: flex;
-    flex-direction: column;
-    opacity: 0; /* Animated in via JS */
-}
 
-/* fadeInUp staggered animations */
-@keyframes fadeInUp {
-    from {
+    @media (max-width: 900px) {
+        .results-grid-container {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .results-panel {
+        background: rgba(15, 23, 42, 0.4);
+        border: 1px solid rgba(255, 255, 255, 0.07);
+        border-radius: 16px;
+        padding: 1.8rem;
+        backdrop-filter: blur(12px);
+        display: flex;
+        flex-direction: column;
         opacity: 0;
-        transform: translateY(20px);
+        /* Animated in via JS */
     }
-    to {
-        opacity: 1;
-        transform: translateY(0);
+
+    /* fadeInUp staggered animations */
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
-}
-.results-panel.animated {
-    animation: fadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
-}
 
-.vertical-chain {
-    display: flex;
-    flex-direction: column;
-    gap: 1.2rem;
-    position: relative;
-    padding-left: 10px;
-}
-.vertical-chain::before {
-    content: '';
-    position: absolute;
-    left: 20px;
-    top: 10px;
-    bottom: 10px;
-    width: 1.5px;
-    background: rgba(255, 255, 255, 0.06);
-}
-.chain-step {
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
-    position: relative;
-}
-.chain-step-num {
-    width: 22px;
-    height: 22px;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: var(--text-muted);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: var(--font-mono), monospace;
-    font-size: 0.65rem;
-    font-weight: 700;
-    flex-shrink: 0;
-    z-index: 2;
-}
-.chain-step-body {
-    flex: 1;
-    min-width: 0;
-}
-.chain-step-title {
-    font-family: var(--font-mono), monospace;
-    font-size: 0.7rem;
-    color: var(--text-muted);
-    margin-bottom: 2px;
-}
-.chain-step-url {
-    font-family: var(--font-mono), monospace;
-    font-size: 0.72rem;
-    color: #e2e8f0;
-    word-break: break-all;
-    line-height: 1.4;
-}
+    .results-panel.animated {
+        animation: fadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
 
-/* Big Verdict Card inside Panel 2 */
-.verdict-large-card {
-    text-align: center;
-    padding: 2rem 1rem;
-    border-radius: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    background: rgba(0, 0, 0, 0.2);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    flex: 1;
-    margin-top: 1rem;
-}
-.verdict-large-card.clean {
-    border-color: rgba(16, 185, 129, 0.2);
-    background: rgba(16, 185, 129, 0.03);
-    box-shadow: inset 0 0 15px rgba(16, 185, 129, 0.05);
-}
-.verdict-large-card.listed {
-    border-color: rgba(239, 68, 68, 0.2);
-    background: rgba(239, 68, 68, 0.03);
-    box-shadow: inset 0 0 15px rgba(239, 68, 68, 0.05);
-}
-.verdict-large-card.unknown {
-    border-color: rgba(245, 158, 11, 0.2);
-    background: rgba(245, 158, 11, 0.03);
-    box-shadow: inset 0 0 15px rgba(245, 158, 11, 0.05);
-}
+    .vertical-chain {
+        display: flex;
+        flex-direction: column;
+        gap: 1.2rem;
+        position: relative;
+        padding-left: 10px;
+    }
 
-.verdict-banner {
-    text-align: center;
-    padding: 1.25rem;
-    border-radius: 12px;
-    margin-bottom: 1.5rem;
-    font-family: var(--font-mono), monospace;
-    font-size: 1.1rem;
-    font-weight: 800;
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 6px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-}
+    .vertical-chain::before {
+        content: '';
+        position: absolute;
+        left: 20px;
+        top: 10px;
+        bottom: 10px;
+        width: 1.5px;
+        background: rgba(255, 255, 255, 0.06);
+    }
+
+    .chain-step {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        position: relative;
+    }
+
+    .chain-step-num {
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: var(--text-muted);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: var(--font-mono), monospace;
+        font-size: 0.65rem;
+        font-weight: 700;
+        flex-shrink: 0;
+        z-index: 2;
+    }
+
+    .chain-step-body {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .chain-step-title {
+        font-family: var(--font-mono), monospace;
+        font-size: 0.7rem;
+        color: var(--text-muted);
+        margin-bottom: 2px;
+    }
+
+    .chain-step-url {
+        font-family: var(--font-mono), monospace;
+        font-size: 0.72rem;
+        color: #e2e8f0;
+        word-break: break-all;
+        line-height: 1.4;
+    }
+
+    /* Big Verdict Card inside Panel 2 */
+    .verdict-large-card {
+        text-align: center;
+        padding: 2rem 1rem;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        background: rgba(0, 0, 0, 0.2);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        flex: 1;
+        margin-top: 1rem;
+    }
+
+    .verdict-large-card.clean {
+        border-color: rgba(16, 185, 129, 0.2);
+        background: rgba(16, 185, 129, 0.03);
+        box-shadow: inset 0 0 15px rgba(16, 185, 129, 0.05);
+    }
+
+    .verdict-large-card.listed {
+        border-color: rgba(239, 68, 68, 0.2);
+        background: rgba(239, 68, 68, 0.03);
+        box-shadow: inset 0 0 15px rgba(239, 68, 68, 0.05);
+    }
+
+    .verdict-large-card.unknown {
+        border-color: rgba(245, 158, 11, 0.2);
+        background: rgba(245, 158, 11, 0.03);
+        box-shadow: inset 0 0 15px rgba(245, 158, 11, 0.05);
+    }
+
+    .verdict-banner {
+        text-align: center;
+        padding: 1.25rem;
+        border-radius: 12px;
+        margin-bottom: 1.5rem;
+        font-family: var(--font-mono), monospace;
+        font-size: 1.1rem;
+        font-weight: 800;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    }
 </style>
 
 <div class="ud-container">
-  <!-- Back link -->
-  <a href="javascript:history.back()" style="display:inline-flex;align-items:center;gap:6px;color:#64748b;font-size:0.85rem;text-decoration:none;margin-bottom:2rem;transition:color 0.2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#64748b'">
-    <i class="ti ti-arrow-left"></i> Back to Suite
-  </a>
+    <!-- Back link -->
+    <a href="javascript:history.back()"
+        style="display:inline-flex;align-items:center;gap:6px;color:#64748b;font-size:0.85rem;text-decoration:none;margin-bottom:2rem;transition:color 0.2s;"
+        onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#64748b'">
+        <i class="ti ti-arrow-left"></i> Back to Suite
+    </a>
 
-  <!-- Header -->
-  <div class="tool-hero-header" style="text-align:center; margin-bottom:2.5rem;">
-    <span class="section-eyebrow"><i class="ti ti-link"></i> URL Inspection Suite</span>
-    <h1 style="font-size:clamp(1.8rem,3vw,2.4rem);font-weight:900;color:var(--text-main);margin-bottom:0.5rem; margin-top: 0.5rem;">Phishing URL Decoder</h1>
-    <p style="color:#64748b;font-size:0.95rem;max-width:550px;margin:0 auto;">Audit redirect chains, analyze destination metadata, and check reputation against global cyber databases.</p>
-  </div>
-
-  <!-- Clickable Preset Chips -->
-  <div class="preset-chips-container">
-    <div class="preset-chip" onclick="applyPreset('bit.ly/example', 'https://bit.ly/3KxXn2E')">bit.ly/example</div>
-    <div class="preset-chip" onclick="applyPreset('Safe Google Link', 'https://www.google.com')">Safe Google Link</div>
-    <div class="preset-chip" onclick="applyPreset('URLhaus Listed', 'http://195.133.19.141/')">URLhaus Listed</div>
-    <div class="preset-chip" onclick="applyPreset('Multi-hop Chain', 'https://httpbin.org/redirect-to?url=https%3A%2F%2Fhttpbin.org%2Fredirect-to%3Furl%3Dhttps%253A%252F%252Fwww.google.com%26status_code%3D302&status_code=302')">Multi-hop Chain</div>
-  </div>
-
-  <!-- Input Terminal Card (Zone 1) -->
-  <div class="terminal-input-card">
-    <label style="color:#94a3b8;font-size:0.8rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:10px;font-family:var(--font-mono), monospace;">
-      PASTE TARGET URL &rarr;
-    </label>
-    <div class="terminal-input-container">
-      <span class="terminal-prompt">audit_usr@phishsim:~$</span>
-      <input id="url-input" class="terminal-input-field" type="text" placeholder="enter suspicious URL here...">
+    <!-- Header -->
+    <div class="tool-hero-header" style="text-align:center; margin-bottom:2.5rem;">
+        <span class="section-eyebrow"><i class="ti ti-link"></i> URL Inspection Suite</span>
+        <h1
+            style="font-size:clamp(1.8rem,3vw,2.4rem);font-weight:900;color:var(--text-main);margin-bottom:0.5rem; margin-top: 0.5rem;">
+            Phishing URL Decoder</h1>
+        <p style="color:#64748b;font-size:0.95rem;max-width:550px;margin:0 auto;">Audit redirect chains, analyze
+            destination metadata, and check reputation against global cyber databases.</p>
     </div>
-    
-    <div id="ud-error" style="color:#f87171;font-size:0.78rem;margin-top:8px;display:none;font-family:var(--font-mono), monospace;"><i class="ti ti-alert-circle" style="margin-right:4px;"></i><span></span></div>
-    
-    <button class="btn-primary-action cyber-glow-hover" id="decode-btn" onclick="decodeUrl()" style="margin-top: 1.5rem; width: 100%;">
-      <i class="ti ti-radar-2"></i> TRACE REDIRECT CHAIN
-    </button>
-  </div>
 
-  <!-- Trace Animation Centerpiece (Zone 2) -->
-  <div class="trace-animation-container" id="trace-anim-container">
-    <div style="font-family:var(--font-mono), monospace; font-size:0.75rem; color:var(--accent-cyan); text-transform:uppercase; letter-spacing:1px; margin-bottom:1rem;">ACTIVE TRACER CYCLES RUNNING</div>
-    <div class="trace-nodes-row" id="trace-nodes-row">
-      <div class="trace-line-bg"></div>
-      <div class="trace-line-fill" id="trace-line-fill"></div>
-      
-      <div class="trace-node" id="node-0">
-        <div class="trace-circle">0</div>
-        <span class="trace-node-label">Input URL</span>
-      </div>
-      <div class="trace-node pending" id="node-1">
-        <div class="trace-circle">1</div>
-        <span class="trace-node-label">Hop 1</span>
-      </div>
-      <div class="trace-node pending" id="node-2">
-        <div class="trace-circle">2</div>
-        <span class="trace-node-label">Hop 2</span>
-      </div>
-      <div class="trace-node pending" id="node-3">
-        <div class="trace-circle">3</div>
-        <span class="trace-node-label">Final Destination</span>
-      </div>
+    <!-- Clickable Preset Chips -->
+    <div class="preset-chips-container">
+        <div class="preset-chip" onclick="applyPreset('bit.ly/example', 'https://bit.ly/3KxXn2E')">bit.ly/example</div>
+        <div class="preset-chip" onclick="applyPreset('Safe Google Link', 'https://www.google.com')">Safe Google Link
+        </div>
+        <div class="preset-chip" onclick="applyPreset('URLhaus Listed', 'http://195.133.19.141/')">URLhaus Listed</div>
+        <div class="preset-chip"
+            onclick="applyPreset('Multi-hop Chain', 'https://httpbin.org/redirect-to?url=https%3A%2F%2Fhttpbin.org%2Fredirect-to%3Furl%3Dhttps%253A%252F%252Fwww.google.com%26status_code%3D302&status_code=302')">
+            Multi-hop Chain</div>
     </div>
-    <div id="trace-status-text" style="font-family:var(--font-mono), monospace; font-size:0.72rem; color:var(--text-muted); margin-top:1rem;">INGESTING RESOLUTION SEQUENCE...</div>
-  </div>
 
-  <!-- Results Zone (Zone 3) -->
-  <div id="results-area" style="display:none;">
-    <div id="verdict-banner" class="verdict-banner"></div>
-
-    <div class="results-grid-container" id="results-grid">
-      <!-- Panel 1: Redirect Chain -->
-      <div class="results-panel" id="panel-1">
-        <h3 style="color:var(--text-main);font-size:0.95rem;font-weight:700;margin-bottom:1.2rem;font-family:var(--font-mono), monospace;text-transform:uppercase;"><i class="ti ti-route" style="color:#06b6d4;margin-right:6px;"></i>Redirect Chain</h3>
-        <div class="vertical-chain" id="chain-wrap"></div>
-      </div>
-
-      <!-- Panel 2: URLhaus Verdict -->
-      <div class="results-panel" id="panel-2">
-        <h3 style="color:var(--text-main);font-size:0.95rem;font-weight:700;margin-bottom:1.2rem;font-family:var(--font-mono), monospace;text-transform:uppercase;"><i class="ti ti-shield" style="color:#f59e0b;margin-right:6px;"></i>URLhaus Verdict</h3>
-        <div class="verdict-large-card" id="urlhaus-card">
-          <i id="urlhaus-icon" class="ti" style="font-size:2.8rem; margin-bottom:10px;"></i>
-          <h4 id="urlhaus-title" style="font-family:var(--font-mono), monospace; font-weight:800; font-size:1.15rem; margin-bottom:6px; text-transform:uppercase;">UNKNOWN</h4>
-          <p id="urlhaus-details" style="font-size:0.76rem; color:var(--text-muted); line-height:1.45; font-family:var(--font-mono), monospace; text-align:center;">—</p>
+    <!-- Input Terminal Card (Zone 1) -->
+    <div class="terminal-input-card">
+        <label
+            style="color:#94a3b8;font-size:0.8rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:10px;font-family:var(--font-mono), monospace;">
+            PASTE TARGET URL &rarr;
+        </label>
+        <div class="terminal-input-container">
+            <span class="terminal-prompt">audit_usr@phishsim:~$</span>
+            <input id="url-input" class="terminal-input-field" type="text" placeholder="enter suspicious URL here...">
         </div>
-        <div style="font-size:0.68rem; color:var(--text-muted); border-top:1px solid rgba(255,255,255,0.05); padding-top:0.8rem; margin-top:1rem; font-family:var(--font-mono), monospace; line-height:1.4;">
-          * Abuse.ch URLhaus lists active malware payloads and command & control endpoints.
-        </div>
-      </div>
 
-      <!-- Panel 3: Final Domain Intel -->
-      <div class="results-panel" id="panel-3">
-        <h3 style="color:var(--text-main);font-size:0.95rem;font-weight:700;margin-bottom:1.2rem;font-family:var(--font-mono), monospace;text-transform:uppercase;"><i class="ti ti-cpu" style="color:#ef4444;margin-right:6px;"></i>Final Domain</h3>
-        <div id="intel-details" style="display:flex; flex-direction:column; gap:12px; flex:1;">
-          <!-- Loaded dynamically -->
-        </div>
-      </div>
+        <div id="ud-error"
+            style="color:#f87171;font-size:0.78rem;margin-top:8px;display:none;font-family:var(--font-mono), monospace;">
+            <i class="ti ti-alert-circle" style="margin-right:4px;"></i><span></span></div>
+
+        <button class="btn-primary-action cyber-glow-hover" id="decode-btn" onclick="decodeUrl()"
+            style="margin-top: 1.5rem; width: 100%;">
+            <i class="ti ti-radar-2"></i> TRACE REDIRECT CHAIN
+        </button>
     </div>
-  </div>
+
+    <!-- Trace Animation Centerpiece (Zone 2) -->
+    <div class="trace-animation-container" id="trace-anim-container">
+        <div
+            style="font-family:var(--font-mono), monospace; font-size:0.75rem; color:var(--accent-cyan); text-transform:uppercase; letter-spacing:1px; margin-bottom:1rem;">
+            ACTIVE TRACER CYCLES RUNNING</div>
+        <div class="trace-nodes-row" id="trace-nodes-row">
+            <div class="trace-line-bg"></div>
+            <div class="trace-line-fill" id="trace-line-fill"></div>
+
+            <div class="trace-node" id="node-0">
+                <div class="trace-circle">0</div>
+                <span class="trace-node-label">Input URL</span>
+            </div>
+            <div class="trace-node pending" id="node-1">
+                <div class="trace-circle">1</div>
+                <span class="trace-node-label">Hop 1</span>
+            </div>
+            <div class="trace-node pending" id="node-2">
+                <div class="trace-circle">2</div>
+                <span class="trace-node-label">Hop 2</span>
+            </div>
+            <div class="trace-node pending" id="node-3">
+                <div class="trace-circle">3</div>
+                <span class="trace-node-label">Final Destination</span>
+            </div>
+        </div>
+        <div id="trace-status-text"
+            style="font-family:var(--font-mono), monospace; font-size:0.72rem; color:var(--text-muted); margin-top:1rem;">
+            PROCESSING RESOLUTION SEQUENCE...</div>
+    </div>
+
+    <!-- Results Zone (Zone 3) -->
+    <div id="results-area" style="display:none;">
+        <div id="verdict-banner" class="verdict-banner"></div>
+
+        <div class="results-grid-container" id="results-grid">
+            <!-- Panel 1: Redirect Chain -->
+            <div class="results-panel" id="panel-1">
+                <h3
+                    style="color:var(--text-main);font-size:0.95rem;font-weight:700;margin-bottom:1.2rem;font-family:var(--font-mono), monospace;text-transform:uppercase;">
+                    <i class="ti ti-route" style="color:#06b6d4;margin-right:6px;"></i>Redirect Chain</h3>
+                <div class="vertical-chain" id="chain-wrap"></div>
+            </div>
+
+            <!-- Panel 2: URLhaus Verdict -->
+            <div class="results-panel" id="panel-2">
+                <h3
+                    style="color:var(--text-main);font-size:0.95rem;font-weight:700;margin-bottom:1.2rem;font-family:var(--font-mono), monospace;text-transform:uppercase;">
+                    <i class="ti ti-shield" style="color:#f59e0b;margin-right:6px;"></i>URLhaus Verdict</h3>
+                <div class="verdict-large-card" id="urlhaus-card">
+                    <i id="urlhaus-icon" class="ti" style="font-size:2.8rem; margin-bottom:10px;"></i>
+                    <h4 id="urlhaus-title"
+                        style="font-family:var(--font-mono), monospace; font-weight:800; font-size:1.15rem; margin-bottom:6px; text-transform:uppercase;">
+                        UNKNOWN</h4>
+                    <p id="urlhaus-details"
+                        style="font-size:0.76rem; color:var(--text-muted); line-height:1.45; font-family:var(--font-mono), monospace; text-align:center;">
+                        —</p>
+                </div>
+                <div
+                    style="font-size:0.68rem; color:var(--text-muted); border-top:1px solid rgba(255,255,255,0.05); padding-top:0.8rem; margin-top:1rem; font-family:var(--font-mono), monospace; line-height:1.4;">
+                    * Abuse.ch URLhaus lists active malware payloads and command & control endpoints.
+                </div>
+            </div>
+
+            <!-- Panel 3: Final Domain Intel -->
+            <div class="results-panel" id="panel-3">
+                <h3
+                    style="color:var(--text-main);font-size:0.95rem;font-weight:700;margin-bottom:1.2rem;font-family:var(--font-mono), monospace;text-transform:uppercase;">
+                    <i class="ti ti-cpu" style="color:#ef4444;margin-right:6px;"></i>Final Domain</h3>
+                <div id="intel-details" style="display:flex; flex-direction:column; gap:12px; flex:1;">
+                    <!-- Loaded dynamically -->
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>
-function applyPreset(label, url) {
-    document.getElementById('url-input').value = url;
-    decodeUrl();
-}
+    function applyPreset(label, url) {
+        document.getElementById('url-input').value = url;
+        decodeUrl();
+    }
 
-function showErr(msg) {
-    const el = document.getElementById('ud-error');
-    const inp = document.getElementById('url-input');
-    el.querySelector('span').textContent = msg;
-    el.style.display = 'flex';
-    inp.parentElement.classList.remove('shake');
-    void inp.parentElement.offsetWidth;
-    inp.parentElement.classList.add('shake');
-    inp.parentElement.style.borderColor = '#ef4444';
-    setTimeout(() => { inp.parentElement.style.borderColor = ''; el.style.display = 'none'; }, 3500);
-}
+    function showErr(msg) {
+        const el = document.getElementById('ud-error');
+        const inp = document.getElementById('url-input');
+        el.querySelector('span').textContent = msg;
+        el.style.display = 'flex';
+        inp.parentElement.classList.remove('shake');
+        void inp.parentElement.offsetWidth;
+        inp.parentElement.classList.add('shake');
+        inp.parentElement.style.borderColor = '#ef4444';
+        setTimeout(() => { inp.parentElement.style.borderColor = ''; el.style.display = 'none'; }, 3500);
+    }
 
-let isDecoding = false;
+    let isDecoding = false;
 
-async function decodeUrl() {
-    const url = document.getElementById('url-input').value.trim();
-    if (!url) { showErr('Enter a URL to trace.'); return; }
-    
-    if (isDecoding) return;
-    
-    const btn = document.getElementById('decode-btn');
-    const animContainer = document.getElementById('trace-anim-container');
-    const resultsArea = document.getElementById('results-area');
-    
-    isDecoding = true;
-    btn.innerHTML = '<i class="ti ti-loader-2" style="animation:spin 1s linear infinite;"></i> INGESTING TRACER...';
-    resultsArea.style.display = 'none';
-    
-    // Hide old animation class ticks
-    document.getElementById('panel-1').classList.remove('animated');
-    document.getElementById('panel-2').classList.remove('animated');
-    document.getElementById('panel-3').classList.remove('animated');
-    
-    // Reset nodes animation and setup dynamic container
-    animContainer.style.display = 'block';
-    
-    const row = document.getElementById('trace-nodes-row');
-    const bg = row.querySelector('.trace-line-bg') || document.createElement('div');
-    bg.className = 'trace-line-bg';
-    const fill = row.querySelector('.trace-line-fill') || document.createElement('div');
-    fill.className = 'trace-line-fill';
-    fill.id = 'trace-line-fill';
-    fill.style.width = '0%';
-    
-    row.innerHTML = '';
-    row.appendChild(bg);
-    row.appendChild(fill);
-    
-    // Add dynamic placeholder hop for initial probe
-    const node0 = document.createElement('div');
-    node0.className = 'trace-node resolving';
-    node0.id = 'node-0';
-    node0.innerHTML = `<div class="trace-circle">0</div><span class="trace-node-label">Input URL</span>`;
-    row.appendChild(node0);
+    async function decodeUrl() {
+        const url = document.getElementById('url-input').value.trim();
+        if (!url) { showErr('Enter a URL to trace.'); return; }
 
-    const node1 = document.createElement('div');
-    node1.className = 'trace-node pending';
-    node1.id = 'node-1';
-    node1.innerHTML = `<div class="trace-circle">1</div><span class="trace-node-label">Probing...</span>`;
-    row.appendChild(node1);
-    
-    document.getElementById('trace-status-text').textContent = 'CONTACTING INITIAL GATEWAY...';
-    
-    const fd = new FormData();
-    fd.append('url', url);
-    
-    try {
-        const res = await fetch('/api/url-decoder', { method: 'POST', body: fd });
-        const data = await res.json();
-        
-        if (!data.success) {
-            animContainer.style.display = 'none';
-            showErr(data.message || 'Failed to decode URL.');
-            return;
-        }
-        
-        const hops = data.chain || [];
-        if (hops.length === 0) {
-            let fallbackDomain = 'Gateway';
-            try { fallbackDomain = new URL(url).hostname; } catch(e){}
-            hops.push({ domain: fallbackDomain, url: url, is_final: true });
-        }
-        
-        // Rebuild dynamic nodes matching the actual response chain
+        if (isDecoding) return;
+
+        const btn = document.getElementById('decode-btn');
+        const animContainer = document.getElementById('trace-anim-container');
+        const resultsArea = document.getElementById('results-area');
+
+        isDecoding = true;
+        btn.innerHTML = '<i class="ti ti-loader-2" style="animation:spin 1s linear infinite;"></i> RUNNING TRACER...';
+        resultsArea.style.display = 'none';
+
+        // Hide old animation class ticks
+        document.getElementById('panel-1').classList.remove('animated');
+        document.getElementById('panel-2').classList.remove('animated');
+        document.getElementById('panel-3').classList.remove('animated');
+
+        // Reset nodes animation and setup dynamic container
+        animContainer.style.display = 'block';
+
+        const row = document.getElementById('trace-nodes-row');
+        const bg = row.querySelector('.trace-line-bg') || document.createElement('div');
+        bg.className = 'trace-line-bg';
+        const fill = row.querySelector('.trace-line-fill') || document.createElement('div');
+        fill.className = 'trace-line-fill';
+        fill.id = 'trace-line-fill';
+        fill.style.width = '0%';
+
         row.innerHTML = '';
         row.appendChild(bg);
         row.appendChild(fill);
-        fill.style.width = '0%';
-        
-        hops.forEach((hop, i) => {
-            const node = document.createElement('div');
-            node.className = 'trace-node pending';
-            node.id = `node-${i}`;
-            
-            let label = `Hop ${i}`;
-            if (i === 0) label = 'Input URL';
-            else if (i === hops.length - 1) label = 'Final Dest';
-            else {
-                label = hop.domain || `Hop ${i}`;
-                if (label.length > 12) label = label.slice(0, 10) + '..';
+
+        // Add dynamic placeholder hop for initial probe
+        const node0 = document.createElement('div');
+        node0.className = 'trace-node resolving';
+        node0.id = 'node-0';
+        node0.innerHTML = `<div class="trace-circle">0</div><span class="trace-node-label">Input URL</span>`;
+        row.appendChild(node0);
+
+        const node1 = document.createElement('div');
+        node1.className = 'trace-node pending';
+        node1.id = 'node-1';
+        node1.innerHTML = `<div class="trace-circle">1</div><span class="trace-node-label">Probing...</span>`;
+        row.appendChild(node1);
+
+        document.getElementById('trace-status-text').textContent = 'CONTACTING INITIAL GATEWAY...';
+
+        const fd = new FormData();
+        fd.append('url', url);
+
+        try {
+            const res = await fetch('/api/url-decoder', { method: 'POST', body: fd });
+            const data = await res.json();
+
+            if (!data.success) {
+                animContainer.style.display = 'none';
+                showErr(data.message || 'Failed to decode URL.');
+                return;
             }
-            
-            node.innerHTML = `
+
+            const hops = data.chain || [];
+            if (hops.length === 0) {
+                let fallbackDomain = 'Gateway';
+                try { fallbackDomain = new URL(url).hostname; } catch (e) { }
+                hops.push({ domain: fallbackDomain, url: url, is_final: true });
+            }
+
+            // Rebuild dynamic nodes matching the actual response chain
+            row.innerHTML = '';
+            row.appendChild(bg);
+            row.appendChild(fill);
+            fill.style.width = '0%';
+
+            hops.forEach((hop, i) => {
+                const node = document.createElement('div');
+                node.className = 'trace-node pending';
+                node.id = `node-${i}`;
+
+                let label = `Hop ${i}`;
+                if (i === 0) label = 'Input URL';
+                else if (i === hops.length - 1) label = 'Final Dest';
+                else {
+                    label = hop.domain || `Hop ${i}`;
+                    if (label.length > 12) label = label.slice(0, 10) + '..';
+                }
+
+                node.innerHTML = `
                 <div class="trace-circle">${i}</div>
                 <span class="trace-node-label" title="${hop.domain || ''}">${label}</span>
             `;
-            row.appendChild(node);
-        });
-        
-        // Sequential animation sequences
-        const totalSteps = hops.length;
-        const delayPerHop = Math.min(400, Math.max(150, 1100 / totalSteps));
-        
-        for (let i = 0; i < totalSteps; i++) {
-            const node = document.getElementById(`node-${i}`);
-            node.className = 'trace-node resolving';
-            
-            const hopData = hops[i];
-            const isLast = (i === totalSteps - 1);
-            
-            if (isLast) {
-                document.getElementById('trace-status-text').textContent = 'ANALYZING FINAL ENDPOINT VERDICT...';
-            } else {
-                document.getElementById('trace-status-text').textContent = `HOP ${i}: RESOLVING ${hopData.domain || 'Gateway'}...`;
-            }
-            
-            await new Promise(r => setTimeout(r, delayPerHop));
-            
-            if (isLast) {
-                if (data.verdict === 'DANGEROUS') {
-                    node.className = 'trace-node resolved-malicious';
+                row.appendChild(node);
+            });
+
+            // Sequential animation sequences
+            const totalSteps = hops.length;
+            const delayPerHop = Math.min(400, Math.max(150, 1100 / totalSteps));
+
+            for (let i = 0; i < totalSteps; i++) {
+                const node = document.getElementById(`node-${i}`);
+                node.className = 'trace-node resolving';
+
+                const hopData = hops[i];
+                const isLast = (i === totalSteps - 1);
+
+                if (isLast) {
+                    document.getElementById('trace-status-text').textContent = 'ANALYZING FINAL ENDPOINT VERDICT...';
+                } else {
+                    document.getElementById('trace-status-text').textContent = `HOP ${i}: RESOLVING ${hopData.domain || 'Gateway'}...`;
+                }
+
+                await new Promise(r => setTimeout(r, delayPerHop));
+
+                if (isLast) {
+                    if (data.verdict === 'DANGEROUS') {
+                        node.className = 'trace-node resolved-malicious';
+                    } else {
+                        node.className = 'trace-node resolved-clean';
+                    }
                 } else {
                     node.className = 'trace-node resolved-clean';
                 }
-            } else {
-                node.className = 'trace-node resolved-clean';
+
+                const percent = totalSteps > 1 ? (i / (totalSteps - 1)) * 100 : 100;
+                fill.style.width = `${percent}%`;
             }
-            
-            const percent = totalSteps > 1 ? (i / (totalSteps - 1)) * 100 : 100;
-            fill.style.width = `${percent}%`;
+
+            document.getElementById('trace-status-text').textContent = 'INTELLIGENCE RECORD RECEIVED.';
+            await new Promise(r => setTimeout(r, 350));
+            animContainer.style.display = 'none';
+
+            renderResults(data);
+        } catch (e) {
+            animContainer.style.display = 'none';
+            showErr('Network error: ' + e.message);
+        } finally {
+            isDecoding = false;
+            btn.innerHTML = '<i class="ti ti-radar-2"></i> TRACE REDIRECT CHAIN';
         }
-        
-        document.getElementById('trace-status-text').textContent = 'INTELLIGENCE RECORD RECEIVED.';
-        await new Promise(r => setTimeout(r, 350));
-        animContainer.style.display = 'none';
-        
-        renderResults(data);
-    } catch(e) {
-        animContainer.style.display = 'none';
-        showErr('Network error: ' + e.message);
-    } finally {
-        isDecoding = false;
-        btn.innerHTML = '<i class="ti ti-radar-2"></i> TRACE REDIRECT CHAIN';
     }
-}
 
-function renderResults(d) {
-    const resultsArea = document.getElementById('results-area');
-    const colors = { 'DANGEROUS': '#ef4444', 'SUSPICIOUS': '#f59e0b', 'LIKELY SAFE': '#10b981' };
-    const bgMap  = { 'DANGEROUS': 'rgba(239,68,68,0.08)', 'SUSPICIOUS': 'rgba(245,158,11,0.08)', 'LIKELY SAFE': 'rgba(16,185,129,0.08)' };
-    const borderMap = { 'DANGEROUS': 'rgba(239,68,68,0.3)', 'SUSPICIOUS': 'rgba(245,158,11,0.3)', 'LIKELY SAFE': 'rgba(16,185,129,0.3)' };
-    
-    const vb = document.getElementById('verdict-banner');
-    vb.style.background = bgMap[d.verdict];
-    vb.style.border = `1px solid ${borderMap[d.verdict]}`;
-    vb.style.color = colors[d.verdict];
-    vb.innerHTML = `<i class="ti ti-${d.verdict === 'LIKELY SAFE' ? 'circle-check' : 'alert-triangle'}" style="font-size:1.8rem;display:block;margin-bottom:8px;"></i>${d.verdict}`;
+    function renderResults(d) {
+        const resultsArea = document.getElementById('results-area');
+        const colors = { 'DANGEROUS': '#ef4444', 'SUSPICIOUS': '#f59e0b', 'LIKELY SAFE': '#10b981' };
+        const bgMap = { 'DANGEROUS': 'rgba(239,68,68,0.08)', 'SUSPICIOUS': 'rgba(245,158,11,0.08)', 'LIKELY SAFE': 'rgba(16,185,129,0.08)' };
+        const borderMap = { 'DANGEROUS': 'rgba(239,68,68,0.3)', 'SUSPICIOUS': 'rgba(245,158,11,0.3)', 'LIKELY SAFE': 'rgba(16,185,129,0.3)' };
 
-    // Panel 1: Redirect hops rendering
-    const cw = document.getElementById('chain-wrap');
-    cw.innerHTML = '';
-    
-    d.chain.forEach((node, i) => {
-        const isFinal = node.is_final;
-        const dotColor = isFinal ? (d.verdict === 'LIKELY SAFE' ? '#10b981' : d.verdict === 'SUSPICIOUS' ? '#f59e0b' : '#ef4444') : (node.is_redirect ? '#f59e0b' : '#06b6d4');
-        
-        // Check if TLD changed
-        let tldChangedBadge = '';
-        if (i > 0) {
-            const prevDom = d.chain[i - 1].domain || '';
-            const currDom = node.domain || '';
-            const prevTld = prevDom.split('.').pop() || '';
-            const currTld = currDom.split('.').pop() || '';
-            if (prevTld && currTld && prevTld !== currTld) {
-                tldChangedBadge = `<span style="display:inline-block; font-size: 0.58rem; background:rgba(239, 68, 68, 0.15); border:1px solid rgba(239,68,68,0.3); color:#fca5a5; padding:1px 5px; border-radius:3px; margin-left:6px; font-weight:700;">⚠ TLD Changed</span>`;
+        const vb = document.getElementById('verdict-banner');
+        vb.style.background = bgMap[d.verdict];
+        vb.style.border = `1px solid ${borderMap[d.verdict]}`;
+        vb.style.color = colors[d.verdict];
+        vb.innerHTML = `<i class="ti ti-${d.verdict === 'LIKELY SAFE' ? 'circle-check' : 'alert-triangle'}" style="font-size:1.8rem;display:block;margin-bottom:8px;"></i>${d.verdict}`;
+
+        // Panel 1: Redirect hops rendering
+        const cw = document.getElementById('chain-wrap');
+        cw.innerHTML = '';
+
+        d.chain.forEach((node, i) => {
+            const isFinal = node.is_final;
+            const dotColor = isFinal ? (d.verdict === 'LIKELY SAFE' ? '#10b981' : d.verdict === 'SUSPICIOUS' ? '#f59e0b' : '#ef4444') : (node.is_redirect ? '#f59e0b' : '#06b6d4');
+
+            // Check if TLD changed
+            let tldChangedBadge = '';
+            if (i > 0) {
+                const prevDom = d.chain[i - 1].domain || '';
+                const currDom = node.domain || '';
+                const prevTld = prevDom.split('.').pop() || '';
+                const currTld = currDom.split('.').pop() || '';
+                if (prevTld && currTld && prevTld !== currTld) {
+                    tldChangedBadge = `<span style="display:inline-block; font-size: 0.58rem; background:rgba(239, 68, 68, 0.15); border:1px solid rgba(239,68,68,0.3); color:#fca5a5; padding:1px 5px; border-radius:3px; margin-left:6px; font-weight:700;">⚠ TLD Changed</span>`;
+                }
             }
-        }
-        
-        const nodeEl = document.createElement('div');
-        nodeEl.className = 'chain-step';
-        nodeEl.innerHTML = `
+
+            const nodeEl = document.createElement('div');
+            nodeEl.className = 'chain-step';
+            nodeEl.innerHTML = `
             <div class="chain-step-num" style="border-color:${dotColor}; color:${dotColor}; background:rgba(${dotColor === '#10b981' ? '16,185,129' : dotColor === '#ef4444' ? '239,68,68' : dotColor === '#f59e0b' ? '245,158,11' : '6,182,212'},0.1);">
                 ${i}
             </div>
@@ -622,42 +691,42 @@ function renderResults(d) {
                 ${node.error ? `<div style="color:#f87171;font-size:0.72rem;margin-top:4px;"><i class="ti ti-alert-circle"></i> ${node.error}</div>` : ''}
             </div>
         `;
-        cw.appendChild(nodeEl);
-    });
+            cw.appendChild(nodeEl);
+        });
 
-    // Panel 2: URLhaus card verdict mapping
-    const uCard = document.getElementById('urlhaus-card');
-    const uIcon = document.getElementById('urlhaus-icon');
-    const uTitle = document.getElementById('urlhaus-title');
-    const uDetails = document.getElementById('urlhaus-details');
-    
-    uCard.className = 'verdict-large-card';
-    if (d.urlhaus_verdict === 'malicious') {
-        uCard.classList.add('listed');
-        uIcon.className = 'ti ti-shield-x';
-        uIcon.style.color = '#ef4444';
-        uTitle.textContent = 'LISTED';
-        uTitle.style.color = '#ef4444';
-    } else if (d.urlhaus_verdict === 'clean') {
-        uCard.classList.add('clean');
-        uIcon.className = 'ti ti-shield-check';
-        uIcon.style.color = '#10b981';
-        uTitle.textContent = 'CLEAN';
-        uTitle.style.color = '#10b981';
-    } else {
-        uCard.classList.add('unknown');
-        uIcon.className = 'ti ti-shield-question';
-        uIcon.style.color = '#f59e0b';
-        uTitle.textContent = 'UNKNOWN';
-        uTitle.style.color = '#f59e0b';
-    }
-    uDetails.textContent = d.urlhaus_detail;
+        // Panel 2: URLhaus card verdict mapping
+        const uCard = document.getElementById('urlhaus-card');
+        const uIcon = document.getElementById('urlhaus-icon');
+        const uTitle = document.getElementById('urlhaus-title');
+        const uDetails = document.getElementById('urlhaus-details');
 
-    // Panel 3: Domain Intel
-    const intel = document.getElementById('intel-details');
-    const matchesPhishingKit = d.domain_flags && d.domain_flags.length > 0;
-    
-    intel.innerHTML = `
+        uCard.className = 'verdict-large-card';
+        if (d.urlhaus_verdict === 'malicious') {
+            uCard.classList.add('listed');
+            uIcon.className = 'ti ti-shield-x';
+            uIcon.style.color = '#ef4444';
+            uTitle.textContent = 'LISTED';
+            uTitle.style.color = '#ef4444';
+        } else if (d.urlhaus_verdict === 'clean') {
+            uCard.classList.add('clean');
+            uIcon.className = 'ti ti-shield-check';
+            uIcon.style.color = '#10b981';
+            uTitle.textContent = 'CLEAN';
+            uTitle.style.color = '#10b981';
+        } else {
+            uCard.classList.add('unknown');
+            uIcon.className = 'ti ti-shield-question';
+            uIcon.style.color = '#f59e0b';
+            uTitle.textContent = 'UNKNOWN';
+            uTitle.style.color = '#f59e0b';
+        }
+        uDetails.textContent = d.urlhaus_detail;
+
+        // Panel 3: Domain Intel
+        const intel = document.getElementById('intel-details');
+        const matchesPhishingKit = d.domain_flags && d.domain_flags.length > 0;
+
+        intel.innerHTML = `
         <div style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom:10px;">
             <div style="font-size:0.7rem; color:var(--text-muted); font-family:var(--font-mono), monospace; text-transform:uppercase;">Host Domain</div>
             <div style="font-size:0.85rem; color:var(--text-main); font-family:var(--font-mono), monospace; word-break:break-all; margin-top:2px;">${d.final_domain || 'Unknown'}</div>
@@ -670,45 +739,51 @@ function renderResults(d) {
             <div style="font-size:0.7rem; color:var(--text-muted); font-family:var(--font-mono), monospace; text-transform:uppercase;">URLScan.io Verdict</div>
             <div style="font-size:0.82rem; color:var(--text-main); font-family:var(--font-mono), monospace; margin-top:4px;">
                 ${d.urlscan_verdict === 'malicious'
-                  ? `<span style="color:#ef4444; font-weight:700;"><i class="ti ti-shield-x"></i> MALICIOUS (Score: ${d.urlscan_score}/100)</span>`
-                  : (d.urlscan_verdict === 'clean'
+                ? `<span style="color:#ef4444; font-weight:700;"><i class="ti ti-shield-x"></i> MALICIOUS (Score: ${d.urlscan_score}/100)</span>`
+                : (d.urlscan_verdict === 'clean'
                     ? '<span style="color:#10b981; font-weight:700;"><i class="ti ti-shield-check"></i> CLEAN (Prior scan found)</span>'
                     : '<span style="color:#f59e0b; font-weight:700;"><i class="ti ti-shield-question"></i> NO PREVIOUS SCANS</span>')
-                }
-                ${d.urlscan_link 
-                  ? `<div style="margin-top:6px;"><a href="${d.urlscan_link}" target="_blank" style="color:var(--accent-cyan); font-size:0.72rem; text-decoration:none;"><i class="ti ti-external-link"></i> View urlscan.io report</a></div>`
-                  : ''
-                }
+            }
+                ${d.urlscan_link
+                ? `<div style="margin-top:6px;"><a href="${d.urlscan_link}" target="_blank" style="color:var(--accent-cyan); font-size:0.72rem; text-decoration:none;"><i class="ti ti-external-link"></i> View urlscan.io report</a></div>`
+                : ''
+            }
             </div>
         </div>
         <div>
             <div style="font-size:0.7rem; color:var(--text-muted); font-family:var(--font-mono), monospace; text-transform:uppercase;">Phishing Kit Pattern Match</div>
             <div style="font-size:0.8rem; color:#cbd5e1; font-family:var(--font-mono), monospace; margin-top:6px;">
-                ${matchesPhishingKit 
-                  ? `<div style="display:inline-flex; align-items:center; gap:6px; background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.25); color:#fca5a5; font-size:0.7rem; padding:4px 10px; border-radius:4px;"><i class="ti ti-alert-triangle"></i> Matches Phishing Kit</div>
+                ${matchesPhishingKit
+                ? `<div style="display:inline-flex; align-items:center; gap:6px; background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.25); color:#fca5a5; font-size:0.7rem; padding:4px 10px; border-radius:4px;"><i class="ti ti-alert-triangle"></i> Matches Phishing Kit</div>
                      <div style="font-size:0.7rem; color:var(--text-muted); margin-top:6px; line-height:1.4;">Matches indicators: ${d.domain_flags.join(', ')}</div>`
-                  : '<span style="color:#10b981; font-size:0.75rem;"><i class="ti ti-circle-check"></i> No suspicious domain patterns detected</span>'
-                }
+                : '<span style="color:#10b981; font-size:0.75rem;"><i class="ti ti-circle-check"></i> No suspicious domain patterns detected</span>'
+            }
             </div>
         </div>
     `;
 
-    // Display area and stagger anims
-    resultsArea.style.display = 'block';
-    
-    // Stagger animation triggers
-    const p1 = document.getElementById('panel-1');
-    const p2 = document.getElementById('panel-2');
-    const p3 = document.getElementById('panel-3');
-    
-    setTimeout(() => { p1.classList.add('animated'); }, 0);
-    setTimeout(() => { p2.classList.add('animated'); }, 150);
-    setTimeout(() => { p3.classList.add('animated'); }, 300);
+        // Display area and stagger anims
+        resultsArea.style.display = 'block';
 
-    resultsArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
-}
+        // Stagger animation triggers
+        const p1 = document.getElementById('panel-1');
+        const p2 = document.getElementById('panel-2');
+        const p3 = document.getElementById('panel-3');
 
-document.getElementById('url-input').addEventListener('keydown', e => { if (e.key === 'Enter') decodeUrl(); });
+        setTimeout(() => { p1.classList.add('animated'); }, 0);
+        setTimeout(() => { p2.classList.add('animated'); }, 150);
+        setTimeout(() => { p3.classList.add('animated'); }, 300);
+
+        resultsArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    document.getElementById('url-input').addEventListener('keydown', e => { if (e.key === 'Enter') decodeUrl(); });
 </script>
-<style>@keyframes spin { to { transform: rotate(360deg); } }</style>
+<style>
+    @keyframes spin {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+</style>
 {% endblock %}

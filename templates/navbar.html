@@ -1,0 +1,206 @@
+<nav class="navbar" id="navbar">
+    <div class="nav-container">
+        <div class="nav-left" style="display: flex; align-items: center; gap: 24px; height: 100%;">
+            <!-- Logo -->
+            <a href="/" class="brand-logo" style="display: inline-flex; align-items: center; gap: 8px; text-decoration: none;">
+                <span class="brand-name">PhishSim</span><span class="brand-domain">.ai</span>
+                <span class="logo-version-badge">v2.0</span>
+            </a>
+
+            <!-- Desktop Links -->
+            <div class="nav-links">
+                {% if current_user %}
+                    <a href="/dashboard" class="nav-link {% if request.path == '/dashboard' %}active{% endif %}">Dashboard</a>
+                    <a href="/new-campaign" class="nav-link {% if request.path == '/new-campaign' or request.path.startswith('/campaign') or request.path.startswith('/new-campaign') %}active{% endif %}">Campaigns</a>
+                    <a href="/reports-demo" class="nav-link {% if request.path == '/reports-demo' or request.path.startswith('/campaign-report') %}active{% endif %}">Reports</a>
+                    {% if current_user.role == 'admin' %}
+                        <a href="/admin" class="nav-link {% if request.path in ['/admin', '/users'] or request.path.startswith('/admin') %}active{% endif %}">Admin</a>
+                    {% endif %}
+                    <div class="nav-dropdown">
+                        <button class="nav-dropdown-trigger {% if request.path in ['/threat-analyzer', '/header-analyzer', '/url-decoder', '/password-breach', '/ai-risk-advisor'] %}active{% endif %}">
+                            Tools <i class="ti ti-chevron-down" style="font-size: 0.8rem; vertical-align: middle;"></i>
+                        </button>
+                        <div class="nav-dropdown-menu">
+                            <a href="/threat-analyzer"><i class="ti ti-heartbeat" style="color:#06b6d4;margin-right:6px;"></i>Threat Analyzer</a>
+                            <a href="/header-analyzer"><i class="ti ti-mail-search" style="color:#8b5cf6;margin-right:6px;"></i>Header Analyzer</a>
+                            <a href="/url-decoder"><i class="ti ti-link" style="color:#10b981;margin-right:6px;"></i>URL Decoder</a>
+                            <a href="/password-breach"><i class="ti ti-key" style="color:#f59e0b;margin-right:6px;"></i>Password Breach Check</a>
+                            <a href="/ai-risk-advisor" style="border-top: 1px solid var(--border-subtle); color: #fbbf24 !important; font-weight: 700; background: linear-gradient(90deg, rgba(245,158,11,0.06), transparent); display: flex !important; align-items: center; justify-content: space-between; gap: 8px;">
+                                <span style="display: inline-flex; align-items: center; gap: 6px;">
+                                    <i class="ti ti-crown" style="font-size: 0.95rem; color: #fbbf24;"></i> 
+                                    AI Risk Advisor
+                                </span>
+                                <span style="font-family: var(--font-mono); font-size: 0.55rem; font-weight: 900; background: linear-gradient(135deg, #fbbf24, #d97706); color: #000; padding: 1px 4px; border-radius: 3px; letter-spacing: 0.5px; line-height: 1.1;">PRO</span>
+                            </a>
+                        </div>
+                    </div>
+                {% else %}
+                    <a href="{% if request.path == '/' %}#attack-chain{% else %}/#attack-chain{% endif %}" class="nav-link">How It Works</a>
+                    <div class="nav-dropdown">
+                        <button class="nav-dropdown-trigger {% if request.path in ['/threat-analyzer', '/header-analyzer', '/url-decoder', '/password-breach', '/ai-risk-advisor'] %}active{% endif %}">
+                            Tools <i class="ti ti-chevron-down" style="font-size: 0.8rem; vertical-align: middle;"></i>
+                        </button>
+                        <div class="nav-dropdown-menu">
+                            <a href="/threat-analyzer"><i class="ti ti-heartbeat" style="color:#06b6d4;margin-right:6px;"></i>Threat Analyzer</a>
+                            <a href="/header-analyzer"><i class="ti ti-mail-search" style="color:#8b5cf6;margin-right:6px;"></i>Header Analyzer</a>
+                            <a href="/url-decoder"><i class="ti ti-link" style="color:#10b981;margin-right:6px;"></i>URL Decoder</a>
+                            <a href="/password-breach"><i class="ti ti-key" style="color:#f59e0b;margin-right:6px;"></i>Password Breach Check</a>
+                            <a href="/ai-risk-advisor" style="border-top: 1px solid var(--border-subtle); color: #fbbf24 !important; font-weight: 700; background: linear-gradient(90deg, rgba(245,158,11,0.06), transparent); display: flex !important; align-items: center; justify-content: space-between; gap: 8px;">
+                                <span style="display: inline-flex; align-items: center; gap: 6px;">
+                                    <i class="ti ti-crown" style="font-size: 0.95rem; color: #fbbf24;"></i> 
+                                    AI Risk Advisor
+                                </span>
+                                <span style="font-family: var(--font-mono); font-size: 0.55rem; font-weight: 900; background: linear-gradient(135deg, #fbbf24, #d97706); color: #000; padding: 1px 4px; border-radius: 3px; letter-spacing: 0.5px; line-height: 1.1;">PRO</span>
+                            </a>
+                        </div>
+                    </div>
+                    <a href="/#pricing" class="nav-link {% if request.path == '/#pricing' %}active{% endif %}">Pricing</a>
+                {% endif %}
+            </div>
+
+
+        </div>
+
+        <div class="nav-right" style="display: flex; align-items: center; gap: 20px;">
+            <!-- Commom elements -->
+            {% if current_user %}
+                <!-- Billing Link -->
+                <a href="/billing" class="nav-billing-btn" title="Billing & Plans" style="font-size: 1.25rem; color: var(--text-secondary); text-decoration: none; display: inline-flex; align-items: center; justify-content: center; transition: color 0.2s;" onmouseover="this.style.color='var(--text-primary)';" onmouseout="this.style.color='var(--text-secondary)';">
+                    <i class="ti ti-credit-card"></i>
+                </a>
+                
+                <!-- Upgrade Chip for non-admin/non-pro -->
+                {% if current_user.role not in ('admin', 'pro') %}
+                <a href="/billing" class="upgrade-chip" style="background: rgba(245, 158, 11, 0.12); border: 1px solid rgba(245, 158, 11, 0.35); color: #fbbf24; font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: var(--radius-sm); text-decoration: none; text-transform: uppercase; transition: all 0.25s; display: inline-flex; align-items: center; gap: 4px;" onmouseover="this.style.background='#f59e0b'; this.style.color='#000';" onmouseout="this.style.background='rgba(245, 158, 11, 0.12)'; this.style.color='#fbbf24';">
+                    <i class="ti ti-crown" style="font-size: 0.85rem;"></i> Upgrade
+                </a>
+                {% endif %}
+
+                <i class="ti ti-bell" style="font-size: 1.25rem; color: var(--text-secondary); cursor: pointer;" title="Notifications"></i>
+            {% endif %}
+
+            <!-- Theme Toggle -->
+            <button type="button" class="theme-toggle-btn" id="theme-toggle" aria-label="Switch theme" title="Switch theme">
+                <svg class="sun-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+                <svg class="moon-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+            </button>
+
+            {% if current_user %}
+                <!-- Avatar -->
+                {% set name_parts = current_user.name.split(' ') %}
+                {% if current_user.role in ('admin', 'pro') %}
+                <div style="position: relative; display: inline-flex;">
+                    <a href="/profile" class="nav-avatar pro-avatar" style="width: 32px; height: 32px; border-radius: 50%; border: 2px solid #fbbf24; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: #fbbf24; background: rgba(251, 191, 36, 0.1); text-decoration: none; font-family: var(--font-mono), monospace; box-shadow: 0 0 10px rgba(251, 191, 36, 0.4); position: relative; transition: all 0.3s ease;">
+                        {% if name_parts|length > 1 %}{{ name_parts[0][0]|upper }}{{ name_parts[1][0]|upper }}{% else %}{{ current_user.name[:2]|upper }}{% endif %}
+                    </a>
+                    <span style="position: absolute; top: -6px; right: -6px; background: #fbbf24; color: #000; width: 14px; height: 14px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 8px; box-shadow: 0 0 4px rgba(0,0,0,0.5); z-index: 2;" title="PRO User">
+                        <i class="ti ti-crown"></i>
+                    </span>
+                </div>
+                {% else %}
+                <a href="/profile" class="nav-avatar" style="width: 32px; height: 32px; border-radius: 50%; border: 2px solid var(--primary); display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: var(--primary); background: var(--primary-dim); text-decoration: none; font-family: var(--font-mono), monospace;">
+                    {% if name_parts|length > 1 %}{{ name_parts[0][0]|upper }}{{ name_parts[1][0]|upper }}{% else %}{{ current_user.name[:2]|upper }}{% endif %}
+                </a>
+                {% endif %}
+                <a href="/logout" class="nav-link" style="font-size: var(--text-sm); height: auto; border: none; padding: 0;">Logout</a>
+            {% else %}
+                {% if request.path != '/login' %}
+                    <a href="/login" class="nav-link" style="font-size: var(--text-sm); height: auto; border: none; padding: 0;">Sign In</a>
+                {% endif %}
+                {% if request.path != '/signup' %}
+                    <a href="/signup" class="btn-get-started">Get Started &rarr;</a>
+                {% endif %}
+            {% endif %}
+
+            <!-- Mobile Hamburger Button -->
+            <button class="hamburger-btn" onclick="toggleMobileMenu()" aria-label="Toggle Menu">
+                <span class="bar" style="width: 22px; height: 2px; background: var(--text-secondary); transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);"></span>
+                <span class="bar" style="width: 22px; height: 2px; background: var(--text-secondary); transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);"></span>
+                <span class="bar" style="width: 22px; height: 2px; background: var(--text-secondary); transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);"></span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Mobile Slide-Down Dropdown -->
+    <div class="mobile-dropdown" id="mobile-dropdown">
+        {% if current_user %}
+            <a href="/dashboard" class="nav-link {% if request.path == '/dashboard' %}active{% endif %}" onclick="toggleMobileMenu()">Dashboard</a>
+            <a href="/new-campaign" class="nav-link {% if request.path == '/new-campaign' or request.path.startswith('/campaign') or request.path.startswith('/new-campaign') %}active{% endif %}" onclick="toggleMobileMenu()">Campaigns</a>
+            <a href="/reports-demo" class="nav-link {% if request.path == '/reports-demo' or request.path.startswith('/campaign-report') %}active{% endif %}" onclick="toggleMobileMenu()">Reports</a>
+            {% if current_user.role == 'admin' %}
+                <a href="/admin" class="nav-link {% if request.path in ['/admin', '/users'] %}active{% endif %}" onclick="toggleMobileMenu()">Admin</a>
+            {% endif %}
+            <div style="padding: 12px 24px; font-weight: 600; color: var(--text-primary); font-size: var(--text-sm); border-top: 1px solid var(--border-subtle); margin-top: 8px;">Tools</div>
+            <a href="/threat-analyzer" class="nav-link {% if request.path == '/threat-analyzer' %}active{% endif %}" onclick="toggleMobileMenu()" style="padding-left: 36px;">Threat Analyzer</a>
+            <a href="/header-analyzer" class="nav-link {% if request.path == '/header-analyzer' %}active{% endif %}" onclick="toggleMobileMenu()" style="padding-left: 36px;">Header Analyzer</a>
+            <a href="/url-decoder" class="nav-link {% if request.path == '/url-decoder' %}active{% endif %}" onclick="toggleMobileMenu()" style="padding-left: 36px;">URL Decoder</a>
+            <a href="/password-breach" class="nav-link {% if request.path == '/password-breach' %}active{% endif %}" onclick="toggleMobileMenu()" style="padding-left: 36px;">Password Breach Check</a>
+            <a href="/ai-risk-advisor" class="nav-link {% if request.path == '/ai-risk-advisor' %}active{% endif %}" onclick="toggleMobileMenu()" style="padding-left: 36px; color: #fbbf24 !important;">AI Risk Advisor</a>
+            <a href="/billing" class="nav-link" onclick="toggleMobileMenu()" style="border-top: 1px solid var(--border-subtle); margin-top: 8px;"><i class="ti ti-credit-card" style="margin-right: 6px;"></i>Billing & Plans</a>
+            {% if current_user.role not in ('admin', 'pro') %}
+                <a href="/billing" class="nav-link" onclick="toggleMobileMenu()" style="color: #fbbf24 !important; padding-left: 36px;"><i class="ti ti-crown" style="margin-right: 6px;"></i>Upgrade to PRO</a>
+            {% endif %}
+            <a href="/logout" class="nav-link" onclick="toggleMobileMenu()" style="border-top: 1px solid var(--border-subtle); margin-top: 8px;">Logout</a>
+        {% else %}
+            <a href="{% if request.path == '/' %}#attack-chain{% else %}/#attack-chain{% endif %}" class="nav-link" onclick="toggleMobileMenu()">How It Works</a>
+            <a href="/#pricing" class="nav-link" onclick="toggleMobileMenu()">Pricing</a>
+            <div style="padding: 12px 24px; font-weight: 600; color: var(--text-primary); font-size: var(--text-sm); border-top: 1px solid var(--border-subtle); margin-top: 8px;">Tools</div>
+            <a href="/threat-analyzer" class="nav-link {% if request.path == '/threat-analyzer' %}active{% endif %}" onclick="toggleMobileMenu()" style="padding-left: 36px;">Threat Analyzer</a>
+            <a href="/header-analyzer" class="nav-link {% if request.path == '/header-analyzer' %}active{% endif %}" onclick="toggleMobileMenu()" style="padding-left: 36px;">Header Analyzer</a>
+            <a href="/url-decoder" class="nav-link {% if request.path == '/url-decoder' %}active{% endif %}" onclick="toggleMobileMenu()" style="padding-left: 36px;">URL Decoder</a>
+            <a href="/password-breach" class="nav-link {% if request.path == '/password-breach' %}active{% endif %}" onclick="toggleMobileMenu()" style="padding-left: 36px;">Password Breach Check</a>
+            <a href="/ai-risk-advisor" class="nav-link {% if request.path == '/ai-risk-advisor' %}active{% endif %}" onclick="toggleMobileMenu()" style="padding-left: 36px; color: #fbbf24 !important;">AI Risk Advisor</a>
+            {% if request.path != '/login' %}
+                <a href="/login" class="nav-link" onclick="toggleMobileMenu()" style="border-top: 1px solid var(--border-subtle); margin-top: 8px;">Sign In</a>
+            {% endif %}
+            {% if request.path != '/signup' %}
+                <div style="padding: 12px 24px;">
+                    <a href="/signup" class="btn-get-started" onclick="toggleMobileMenu()" style="width: 100%; justify-content: center;">Get Started &rarr;</a>
+                </div>
+            {% endif %}
+        {% endif %}
+    </div>
+</nav>
+
+<!-- Discreet Sandbox Mode Banner below navbar -->
+{% if current_user and current_user.company_domain == 'demo-corp.com' %}
+<div id="sandbox-warning-banner" class="sandbox-banner" style="background: var(--warning-dim); border-bottom: 1px solid rgba(251, 146, 60, 0.3); color: var(--warning); font-family: 'Space Grotesk', sans-serif; font-size: var(--text-sm); font-weight: 400; height: 36px; box-sizing: border-box; padding: 0 24px; display: flex; align-items: center; justify-content: center; z-index: 999; position: relative; width: 100%;">
+    <span style="flex-grow: 1; text-align: center;">⚠️ Sandbox Mode — This is a demo environment. Data is illustrative only.</span>
+    <button onclick="dismissSandboxBanner()" style="background: none; border: none; color: var(--warning); font-size: 1.2rem; cursor: pointer; padding: 0 4px; display: flex; align-items: center; justify-content: center; line-height: 1; opacity: 0.7; font-family: sans-serif;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.7'">&times;</button>
+</div>
+<script>
+    if (sessionStorage.getItem('sandbox-banner-dismissed') === 'true') {
+        document.getElementById('sandbox-warning-banner').style.display = 'none';
+    }
+    function dismissSandboxBanner() {
+        document.getElementById('sandbox-warning-banner').style.display = 'none';
+        sessionStorage.setItem('sandbox-banner-dismissed', 'true');
+    }
+</script>
+{% endif %}
+
+<script>
+function toggleMobileMenu() {
+    const dropdown = document.getElementById('mobile-dropdown');
+    const hamburger = document.querySelector('.hamburger-btn');
+    if (dropdown) {
+        dropdown.classList.toggle('active');
+    }
+    if (hamburger) {
+        // Animate/toggle hamburger bars
+        const bars = hamburger.querySelectorAll('.bar');
+        if (bars.length === 3) {
+            hamburger.classList.toggle('active');
+            if (hamburger.classList.contains('active')) {
+                bars[0].style.transform = 'rotate(45deg) translate(5px, 5px)';
+                bars[1].style.opacity = '0';
+                bars[2].style.transform = 'rotate(-45deg) translate(5px, -5px)';
+            } else {
+                bars[0].style.transform = 'none';
+                bars[1].style.opacity = '1';
+                bars[2].style.transform = 'none';
+            }
+        }
+    }
+}
+</script>

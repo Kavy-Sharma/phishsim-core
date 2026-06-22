@@ -9,7 +9,7 @@
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@400;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600;700&family=Space+Mono&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
     
     <!-- Tabler Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
@@ -31,7 +31,7 @@
     <!-- Main Stylesheet -->
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css', v='1.0.1') }}">
 </head>
-<body class="{% block body_class %}{% endblock %}">
+<body class="{% block body_class %}{% endblock %} {% if current_user %}has-hud-bar{% endif %}">
 
 <!-- SVG Liquid/Watery text hover effect filter -->
 <svg style="position: absolute; width: 0; height: 0;" width="0" height="0" version="1.1" xmlns="http://www.w3.org/2000/svg">
@@ -76,13 +76,15 @@
             position:relative;
         ">
             <svg viewBox="0 0 100 100" style="width:100%;height:100%;">
-                <polygon points="50,5 90,27.5 90,72.5 50,95 10,72.5 10,27.5"
-                    fill="none" stroke="rgba(6,182,212,0.2)" stroke-width="4"/>
-                <polygon id="loader-hex-fill" points="50,5 90,27.5 90,72.5 50,95 10,72.5 10,27.5"
-                    fill="none" stroke="#06b6d4" stroke-width="4"
-                    stroke-dasharray="265" stroke-dashoffset="265"
-                    style="transform-origin: center; animation: hexRotate 10s linear infinite; transition: stroke-dashoffset 0.15s ease;">
-                </polygon>
+                <g style="transform-origin: center; animation: hexRotate 10s linear infinite;">
+                    <polygon points="50,5 90,27.5 90,72.5 50,95 10,72.5 10,27.5"
+                        fill="none" stroke="rgba(6,182,212,0.2)" stroke-width="4"/>
+                    <polygon id="loader-hex-fill" points="50,5 90,27.5 90,72.5 50,95 10,72.5 10,27.5"
+                        fill="none" stroke="#06b6d4" stroke-width="4"
+                        stroke-dasharray="265" stroke-dashoffset="265"
+                        style="transform-origin: center; transition: stroke-dashoffset 0.15s ease;">
+                    </polygon>
+                </g>
                 <text x="50" y="58" text-anchor="middle" font-family="var(--font-sans)" font-size="22" font-weight="900" fill="#06b6d4" id="loader-pct">0</text>
             </svg>
         </div>
@@ -275,6 +277,13 @@
             return;
         }
 
+        try {
+            const url = new URL(anchor.href, window.location.href);
+            if (url.origin === window.location.origin && url.pathname === window.location.pathname && url.hash) {
+                return;
+            }
+        } catch(err) {}
+
         if (loader) {
             startLoader(0, 'CONNECTING');
         }
@@ -316,7 +325,7 @@
 </script>
 
 
-    {% if current_user and current_user.company_domain == 'demo-corp.com' %}
+    {% if current_user %}
     <!-- ═══════════════════════════════════════════════════════════
          SLIM OPERATING SYSTEM STATUS HUD BAR
          Full-width 40px bar pinned to the bottom of the viewport.
@@ -328,14 +337,14 @@
             <span class="hud-label">SYSTEM:</span>
             <span class="hud-value" style="color: #10b981;">ONLINE</span>
             <span class="hud-separator">|</span>
+            {% if current_user.company_domain == 'demo-corp.com' %}
             <span class="hud-badge-amber">SANDBOX MODE</span>
+            {% else %}
+            <span class="hud-badge-green" style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); color: #10b981; border-radius: 3px; padding: 1px 6px; font-size: 9px; font-weight: 700; letter-spacing: 0.5px;">LIVE MODE</span>
+            {% endif %}
         </div>
         
-        <!-- Center: UTC Clock -->
-        <div class="hud-center">
-            <span class="hud-label">UTC:</span>
-            <span class="hud-value" id="hud-clock-bar" style="color: #fbbf24;">00:00:00</span>
-        </div>
+
         
         <!-- Right Side: Metrics and Signal -->
         <div class="hud-right">
@@ -356,6 +365,12 @@
     </div>
 
     <style>
+    body.has-hud-bar .floating-campaign-strip {
+        bottom: 56px !important;
+    }
+    body.has-hud-bar .campaign-strip-trigger {
+        bottom: 64px !important;
+    }
     .cyber-hud-bar {
         position: fixed;
         bottom: 0;
@@ -444,591 +459,30 @@
         padding-bottom: 40px !important;
     }
     </style>
-    <script>
-        (function() {
-            function updateHudClock() {
-                const clockEl = document.getElementById('hud-clock-bar');
-                if (clockEl) {
-                    const now = new Date();
-                    const hours = String(now.getUTCHours()).padStart(2, '0');
-                    const minutes = String(now.getUTCMinutes()).padStart(2, '0');
-                    const seconds = String(now.getUTCSeconds()).padStart(2, '0');
-                    clockEl.textContent = `${hours}:${minutes}:${seconds}`;
-                }
-            }
-            setInterval(updateHudClock, 1000);
-            updateHudClock();
-        })();
-    </script>
+
     {% endif %}
 
     <!-- ═══════════════════════════════════════════════════════════
-         REDESIGNED TALL NAVBAR
+         UNIFIED NAVBAR INCLUDE
          ═══════════════════════════════════════════════════════════ -->
-    <nav class="navbar" id="navbar">
-        <div class="nav-container">
-            <a href="/" class="brand-logo">
-                <span class="logo-indicator"></span>
-                PhishSim<span style="color: #06b6d4;">.ai</span>
-                <span class="logo-version-badge">v2.0</span>
-            </a>
-            
-            <!-- Logged-in state -->
-            {% if current_user %}
-                <div class="nav-links">
-                <a href="/dashboard" class="nav-link">Dashboard</a>
-                <a href="/new-campaign" class="nav-link">Campaigns</a>
-                <a href="/reports-demo" class="nav-link">Reports</a>
-                {% if current_user.role == 'admin' %}
-                <a href="/admin" class="nav-link" style="color: #f59e0b !important; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;"><i class="ti ti-shield-lock" style="color: #ef4444; font-size: 1.1rem; vertical-align: middle;"></i>Admin</a>
-                {% endif %}
-                <div class="nav-dropdown">
-                    <button class="nav-dropdown-trigger">Tools <i class="ti ti-chevron-down"></i></button>
-                    <div class="nav-dropdown-menu">
-                        <a href="/threat-analyzer"><i class="ti ti-heartbeat" style="color:#06b6d4;margin-right:6px;"></i>Threat Analyzer</a>
-                        <a href="/header-analyzer"><i class="ti ti-mail-search" style="color:#8b5cf6;margin-right:6px;"></i>Header Analyzer</a>
-                        <a href="/url-decoder"><i class="ti ti-link" style="color:#10b981;margin-right:6px;"></i>URL Decoder</a>
-                        <a href="/password-breach"><i class="ti ti-key" style="color:#f59e0b;margin-right:6px;"></i>Password Breach Check</a>
-                        <a href="/ai-risk-advisor" class="dropdown-advisor-item" style="border-top: 1px solid rgba(255,255,255,0.05); color: #fbbf24 !important; font-weight: 700; background: linear-gradient(90deg, rgba(245,158,11,0.06), transparent); display: flex !important; align-items: center; justify-content: space-between; gap: 8px;">
-                            <span style="display: inline-flex; align-items: center; gap: 6px;">
-                                <i class="ti ti-crown" style="font-size: 0.95rem; color: #fbbf24; filter: drop-shadow(0 0 5px rgba(251,191,36,0.6));"></i> 
-                                AI Risk Advisor
-                            </span>
-                            <span style="font-family: var(--font-mono); font-size: 0.55rem; font-weight: 900; background: linear-gradient(135deg, #fbbf24, #d97706); color: #000; padding: 1px 4px; border-radius: 3px; letter-spacing: 0.5px; line-height: 1.1;">PRO</span>
-                        </a>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="nav-actions">
-                {% if current_user.company_domain == 'demo-corp.com' %}
-                <span style="font-family: var(--font-mono); font-size: 9px; font-weight: 700; background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); color: #f59e0b; padding: 2px 6px; border-radius: 4px; text-transform: uppercase;">SANDBOX MODE</span>
-                <a href="/exit-demo" style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.4); color: #fca5a5; font-size: 11px; font-family: var(--font-mono); font-weight: 700; padding: 6px 12px; border-radius: 4px; text-decoration: none; text-transform: uppercase; transition: all 0.25s;" onmouseover="this.style.background='#ef4444'; this.style.color='#fff';" onmouseout="this.style.background='rgba(239, 68, 68, 0.1)'; this.style.color='#fca5a5';">Exit Sandbox</a>
-                {% endif %}
-                
-                <i class="ti ti-bell" style="font-size: 1.25rem; color: #94a3b8; cursor: pointer;"></i>
-                
-                <div class="theme-toggle-pill" id="theme-toggle" role="button" aria-label="Switch theme" title="Switch theme">
-                    <div class="theme-toggle-slider"></div>
-                    <i class="ti ti-sun icon-sun"></i>
-                    <i class="ti ti-moon icon-moon"></i>
-                </div>
-                
-                <!-- Billing icon-only button -->
-                <a href="/billing" class="nav-billing-btn" title="Billing & Plan" style="font-size: 1.25rem; color: #94a3b8; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; transition: color 0.2s;" onmouseover="this.style.color='#fff';" onmouseout="this.style.color='#94a3b8';">
-                    <i class="ti ti-credit-card"></i>
-                </a>
-                
-                <!-- Upgrade Chip for non-admin/non-pro -->
-                {% if current_user.role not in ('admin', 'pro') %}
-                <a href="/billing" class="upgrade-chip" style="background: linear-gradient(135deg, #f59e0b, #ea580c); color: #fff; font-family: var(--font-sans), sans-serif; font-size: 10px; font-weight: 800; padding: 5px 12px; border-radius: 6px; text-decoration: none; text-transform: uppercase; transition: all 0.25s; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 0 15px rgba(245, 158, 11, 0.3);" onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 0 20px rgba(245,158,11,0.5)';" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 0 15px rgba(245,158,11,0.3)';">
-                    <i class="ti ti-crown"></i> UPGRADE
-                </a>
-                {% endif %}
-                
-                {% set name_parts = current_user.name.split(' ') %}
-                <a href="/profile" class="nav-avatar">
-                    {% if name_parts|length > 1 %}{{ name_parts[0][0]|upper }}{{ name_parts[1][0]|upper }}{% else %}{{ current_user.name[:2]|upper }}{% endif %}
-                </a>
-                
-                <!-- PRO Badge beside Avatar -->
-                {% if current_user.role == 'pro' %}
-                <span class="pro-badge" style="background: linear-gradient(135deg, #38bdf8, #6366f1); color: #fff; font-size: 0.6rem; font-weight: 800; padding: 2px 6px; border-radius: 4px; margin-left: -6px; margin-right: 6px; display: inline-block; vertical-align: middle; pointer-events: none;">PRO</span>
-                {% endif %}
-                
-                <a href="/logout" class="nav-link nav-link-login" style="font-size: 0.85rem;">Logout</a>
-                
-                <button class="hamburger-btn" onclick="toggleMobileMenu()" aria-label="Toggle Menu">
-                    <span class="bar"></span>
-                    <span class="bar"></span>
-                    <span class="bar"></span>
-                </button>
-            </div>
-            
-            <!-- Logged-out (public) state -->
-            {% else %}
-            <div class="nav-links">
-                <div class="nav-dropdown">
-                    <button class="nav-dropdown-trigger">Solutions <i class="ti ti-chevron-down"></i></button>
-                    <div class="nav-dropdown-menu">
-                        <a href="/solutions/phishing"><i class="ti ti-target" style="color:#38bdf8;margin-right:6px;"></i>Spear Phishing Sim</a>
-                        <a href="/solutions/osint"><i class="ti ti-search" style="color:#a855f7;margin-right:6px;"></i>OSINT Exposure Scan</a>
-                        <a href="/solutions/lms"><i class="ti ti-school" style="color:#10b981;margin-right:6px;"></i>Just-In-Time Training</a>
-                        <a href="/solutions/plugin"><i class="ti ti-alert-triangle" style="color:#f59e0b;margin-right:6px;"></i>Threat Report Plugin</a>
-                    </div>
-                </div>
-                <a href="/#attack-flow" class="nav-link">How It Works</a>
-                <a href="/#pricing" class="nav-link">Pricing</a>
-                <div class="nav-dropdown">
-                    <button class="nav-dropdown-trigger">Resources <i class="ti ti-chevron-down"></i></button>
-                    <div class="nav-dropdown-menu">
-                        <a href="/reports-demo"><i class="ti ti-file-text" style="color:#06b6d4;margin-right:6px;"></i>AI Report Preview</a>
-                        <a href="/provenance"><i class="ti ti-shield-check" style="color:#8b5cf6;margin-right:6px;"></i>Security Provenance</a>
-                        <a href="/data-handling-policy"><i class="ti ti-lock" style="color:#10b981;margin-right:6px;"></i>Data Handling Policy</a>
-                    </div>
-                </div>
-                <div class="nav-dropdown">
-                    <button class="nav-dropdown-trigger">Threat Tools <i class="ti ti-chevron-down"></i></button>
-                    <div class="nav-dropdown-menu">
-                        <a href="/threat-analyzer"><i class="ti ti-heartbeat" style="color:#06b6d4;margin-right:6px;"></i>Threat Analyzer</a>
-                        <a href="/header-analyzer"><i class="ti ti-mail-search" style="color:#8b5cf6;margin-right:6px;"></i>Header Analyzer</a>
-                        <a href="/url-decoder"><i class="ti ti-link" style="color:#10b981;margin-right:6px;"></i>URL Decoder</a>
-                        <a href="/password-breach"><i class="ti ti-key" style="color:#f59e0b;margin-right:6px;"></i>Password Breach Check</a>
-                        <a href="/ai-risk-advisor" class="dropdown-advisor-item" style="border-top: 1px solid rgba(255,255,255,0.05); color: #fbbf24 !important; font-weight: 700; background: linear-gradient(90deg, rgba(245,158,11,0.06), transparent); display: flex !important; align-items: center; justify-content: space-between; gap: 8px;">
-                            <span style="display: inline-flex; align-items: center; gap: 6px;">
-                                <i class="ti ti-crown" style="font-size: 0.95rem; color: #fbbf24; filter: drop-shadow(0 0 5px rgba(251,191,36,0.6));"></i> 
-                                AI Risk Advisor
-                            </span>
-                            <span style="font-family: var(--font-mono); font-size: 0.55rem; font-weight: 900; background: linear-gradient(135deg, #fbbf24, #d97706); color: #000; padding: 1px 4px; border-radius: 3px; letter-spacing: 0.5px; line-height: 1.1;">PRO</span>
-                        </a>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="nav-actions">
-                <div class="theme-toggle-pill" id="theme-toggle" role="button" aria-label="Switch theme" title="Switch theme">
-                    <div class="theme-toggle-slider"></div>
-                    <i class="ti ti-sun icon-sun"></i>
-                    <i class="ti ti-moon icon-moon"></i>
-                </div>
-                <a href="/login" class="nav-link nav-link-login" style="font-size: 14px;">Login</a>
-                <a href="/demo-login" class="btn-try-demo">Try Demo <i class="ti ti-arrow-right"></i></a>
-                
-                <button class="hamburger-btn" onclick="toggleMobileMenu()" aria-label="Toggle Menu">
-                    <span class="bar"></span>
-                    <span class="bar"></span>
-                    <span class="bar"></span>
-                </button>
-            </div>
-            {% endif %}
-        </div>
-    </nav>
+    {% include 'navbar.html' %}
     
     {% if request.path != '/' %}
     <!-- Global Decorative Atmosphere Blobs -->
     <div class="atmosphere-blob blob-1"></div>
     <div class="atmosphere-blob blob-2"></div>
     {% endif %}
-    
-    <!-- Mobile overlay menu -->
-    <div class="mobile-menu-overlay" id="mobile-menu-overlay">
-        <button class="close-menu-btn" onclick="toggleMobileMenu()"><i class="ti ti-x"></i></button>
-        <div class="mobile-menu-links">
-            {% if current_user %}
-            <a href="/dashboard" onclick="toggleMobileMenu()">Dashboard</a>
-            <a href="/new-campaign" onclick="toggleMobileMenu()">Campaigns</a>
-            {% if current_user.role == 'admin' %}
-            <a href="/admin" onclick="toggleMobileMenu()" style="color: #ef4444;"><i class="ti ti-shield-lock" style="margin-right: 4px;"></i>Admin Panel</a>
-            {% endif %}
-            <a href="/threat-analyzer" onclick="toggleMobileMenu()">Threat Analyzer</a>
-            <a href="/header-analyzer" onclick="toggleMobileMenu()">Header Analyzer</a>
-            <a href="/url-decoder" onclick="toggleMobileMenu()">URL Decoder</a>
-            <a href="/password-breach" onclick="toggleMobileMenu()">Password Breach Check</a>
-            <a href="/ai-risk-advisor" onclick="toggleMobileMenu()" style="color: #f59e0b;"><i class="ti ti-crown" style="font-size: 0.85rem; margin-right: 4px;"></i> AI Risk Advisor</a>
-            <a href="/reports-demo" onclick="toggleMobileMenu()">AI Report</a>
-            <a href="/profile" onclick="toggleMobileMenu()">
-                Profile
-                {% if current_user.role == 'pro' %}
-                <span class="pro-badge" style="background: linear-gradient(135deg, #38bdf8, #6366f1); color: #fff; font-size: 0.6rem; font-weight: 800; padding: 2px 6px; border-radius: 4px; margin-left: 6px; display: inline-block; vertical-align: middle;">PRO</span>
-                {% endif %}
-            </a>
-            <a href="/billing" onclick="toggleMobileMenu()"><i class="ti ti-credit-card"></i> Billing & Plan</a>
-            {% if current_user.role not in ('admin', 'pro') %}
-            <a href="/billing" onclick="toggleMobileMenu()" style="color: #fbbf24;"><i class="ti ti-crown"></i> Upgrade to PRO</a>
-            {% endif %}
-            <a href="/logout" onclick="toggleMobileMenu()">Logout</a>
-            {% if current_user.company_domain == 'demo-corp.com' %}
-            <a href="/exit-demo" onclick="toggleMobileMenu()" style="color: #ef4444;">Exit Sandbox</a>
-            {% endif %}
-            {% else %}
-            <a href="/dashboard" onclick="toggleMobileMenu()">Dashboard</a>
-            <a href="/new-campaign" onclick="toggleMobileMenu()">New Campaign</a>
-            <a href="/#attack-flow" onclick="toggleMobileMenu()">How It Works</a>
-            <a href="/#pricing" onclick="toggleMobileMenu()">Pricing</a>
-            <a href="/threat-analyzer" onclick="toggleMobileMenu()">Threat Analyzer</a>
-            <a href="/header-analyzer" onclick="toggleMobileMenu()">Header Analyzer</a>
-            <a href="/url-decoder" onclick="toggleMobileMenu()">URL Decoder</a>
-            <a href="/password-breach" onclick="toggleMobileMenu()">Password Breach Check</a>
-            <a href="/ai-risk-advisor" onclick="toggleMobileMenu()" style="color: #f59e0b;"><i class="ti ti-crown" style="font-size: 0.85rem; margin-right: 4px;"></i> AI Risk Advisor</a>
-            <a href="/reports-demo" onclick="toggleMobileMenu()">AI Report</a>
-            <a href="/login" onclick="toggleMobileMenu()">Login</a>
-            <a href="/demo-login" onclick="toggleMobileMenu()" style="color: #06b6d4;">Try Demo</a>
-            {% endif %}
-        </div>
-    </div>
 
     <!-- Keep tooltip div to prevent lower theme toggle script crashes -->
     <div class="theme-tooltip" id="theme-tooltip" style="display:none;"></div>
 
-    <style>
-    body {
-        padding-top: 64px !important;
-    }
-    /* --- REDESIGNED NAVBAR STYLES --- */
-    .navbar {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 64px;
-        background: rgba(2, 6, 23, 0.85);
-        backdrop-filter: blur(16px);
-        -webkit-backdrop-filter: blur(16px);
-        border-bottom: 1px solid rgba(6, 182, 212, 0.15) !important;
-        display: flex;
-        align-items: center;
-        z-index: 10000;
-        transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
-        padding: 0 5%;
-        box-sizing: border-box;
-    }
-
-    /* Scrolled State */
-    .navbar.scrolled {
-        height: 52px !important;
-        background: rgba(2, 6, 23, 0.95) !important;
-        border-bottom: 1px solid rgba(56,189,248,0.2) !important;
-        box-shadow: 0 4px 30px rgba(0,0,0,0.4) !important;
-    }
-
-    .nav-container {
-        width: 100%;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        margin: 0 auto;
-        max-width: 1200px;
-    }
-
-    /* Left side: Logo & Active indicator */
-    .brand-logo {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        text-decoration: none;
-        font-weight: 800;
-        font-size: 1.25rem;
-        color: #fff;
-        font-family: var(--font-sans), sans-serif;
-        flex-shrink: 0;
-    }
-    .logo-indicator {
-        width: 8px;
-        height: 8px;
-        background-color: #06b6d4;
-        border-radius: 2px;
-        animation: logoPulse 2s infinite;
-    }
-    @keyframes logoPulse {
-        0%, 100% { opacity: 1; box-shadow: 0 0 8px #06b6d4; }
-        50% { opacity: 0; box-shadow: none; }
-    }
-    .logo-version-badge {
-        font-family: var(--font-mono), monospace;
-        font-size: 10px;
-        background: rgba(6, 182, 212, 0.1);
-        border: 1px solid rgba(6, 182, 212, 0.3);
-        color: #06b6d4;
-        padding: 1px 6px;
-        border-radius: 50px;
-        font-weight: 600;
-    }
-
-    /* Center: Navigation Links */
-    .nav-links {
-        display: flex;
-        align-items: center;
-        gap: 24px;
-    }
-    .nav-link {
-        color: #94a3b8 !important;
-        text-decoration: none;
-        font-size: 0.9rem;
-        font-weight: 500;
-        transition: color 0.2s;
-        font-family: var(--font-sans), sans-serif;
-    }
-    .nav-link:hover {
-        color: #fff !important;
-    }
-
-    /* Dropdowns */
-    .nav-dropdown {
-        position: relative;
-    }
-    .nav-dropdown-trigger {
-        background: none;
-        border: none;
-        color: #94a3b8;
-        font-size: 0.9rem;
-        font-weight: 500;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        gap: 4px;
-        font-family: var(--font-sans), sans-serif;
-        padding: 8px 0;
-        transition: color 0.2s;
-    }
-    .nav-dropdown-trigger:hover {
-        color: #fff;
-    }
-    .nav-dropdown-menu {
-        position: absolute;
-        top: 100%;
-        left: 50%;
-        transform: translateX(-50%) translateY(10px);
-        width: 200px;
-        background: rgba(2, 6, 23, 0.95);
-        border: 1px solid rgba(6, 182, 212, 0.2);
-        border-radius: 8px;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
-        opacity: 0;
-        visibility: hidden;
-        transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-        z-index: 1000;
-        display: flex;
-        flex-direction: column;
-        padding: 8px 0;
-    }
-    .nav-dropdown:hover .nav-dropdown-menu {
-        opacity: 1;
-        visibility: visible;
-        transform: translateX(-50%) translateY(0);
-    }
-    .nav-dropdown-menu a {
-        color: #94a3b8 !important;
-        padding: 10px 16px;
-        text-decoration: none;
-        font-size: 0.85rem;
-        font-weight: 500;
-        border-left: 2px solid transparent;
-        transition: all 150ms ease;
-        text-align: left;
-    }
-    .nav-dropdown-menu a:hover {
-        color: #fff !important;
-        background: rgba(6, 182, 212, 0.05);
-        border-left-color: #06b6d4;
-    }
-
-    /* Right side actions */
-    .nav-actions {
-        display: flex;
-        align-items: center;
-        gap: 20px;
-    }
-
-    /* Slide theme toggle */
-    .theme-toggle-pill {
-        position: relative;
-        width: 64px;
-        height: 32px;
-        border-radius: 50px;
-        background: rgba(255, 255, 255, 0.05);
-        border: 1px solid rgba(6, 182, 212, 0.25);
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 0 8px;
-        box-sizing: border-box;
-        z-index: 1000;
-    }
-    .theme-toggle-slider {
-        position: absolute;
-        top: 3px;
-        left: 4px;
-        width: 24px;
-        height: 24px;
-        border-radius: 50%;
-        background: #06b6d4;
-        box-shadow: 0 0 10px #06b6d4;
-        transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-    .theme-toggle-pill .ti {
-        font-size: 14px;
-        z-index: 2;
-        color: #94a3b8;
-        transition: color 0.2s;
-    }
-    body.light-theme .theme-toggle-slider {
-        transform: translateX(30px);
-    }
-    body.light-theme .theme-toggle-pill .icon-sun {
-        color: #94a3b8;
-    }
-    body.light-theme .theme-toggle-pill .icon-moon {
-        color: #fff;
-    }
-    body:not(.light-theme) .theme-toggle-pill .icon-sun {
-        color: #fff;
-    }
-    body:not(.light-theme) .theme-toggle-pill .icon-moon {
-        color: #94a3b8;
-    }
-
-    /* Try Demo Button */
-    .btn-try-demo {
-        background: transparent;
-        border: 1px solid #06b6d4;
-        color: #06b6d4;
-        padding: 8px 20px;
-        border-radius: 6px;
-        font-size: 13px;
-        font-weight: 500;
-        text-decoration: none;
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        transition: all 0.2s ease;
-        font-family: var(--font-sans), sans-serif;
-    }
-    .btn-try-demo:hover {
-        background: rgba(6, 182, 212, 0.1);
-        box-shadow: 0 0 12px rgba(6, 182, 212, 0.3);
-    }
-    .btn-try-demo:hover i {
-        transform: translateX(3px);
-    }
-    .btn-try-demo i {
-        transition: transform 0.2s;
-    }
-
-    /* Avatar */
-    .nav-avatar {
-        width: 32px;
-        height: 32px;
-        border-radius: 50%;
-        border: 2px solid #06b6d4;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 11px;
-        font-weight: 700;
-        color: #06b6d4;
-        background: rgba(6, 182, 212, 0.08);
-        text-decoration: none;
-        font-family: var(--font-mono), monospace;
-    }
-
-    /* Hamburger & Mobile Menu Overlay */
-    .hamburger-btn {
-        display: none;
-        flex-direction: column;
-        gap: 5px;
-        background: none;
-        border: none;
-        cursor: pointer;
-        padding: 4px;
-        z-index: 10100;
-    }
-    .hamburger-btn .bar {
-        width: 22px;
-        height: 2px;
-        background: #94a3b8;
-        transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-    .mobile-menu-overlay {
-        position: fixed;
-        inset: 0;
-        background: rgba(2, 6, 23, 0.95);
-        backdrop-filter: blur(16px);
-        -webkit-backdrop-filter: blur(16px);
-        z-index: 99999;
-        opacity: 0;
-        visibility: hidden;
-        transform: translateX(100%);
-        transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-    }
-    .mobile-menu-overlay.active {
-        opacity: 1;
-        visibility: visible;
-        transform: translateX(0);
-    }
-    .mobile-menu-links {
-        display: flex;
-        flex-direction: column;
-        gap: 24px;
-        text-align: center;
-    }
-    .mobile-menu-links a {
-        font-size: 1.6rem;
-        font-weight: 700;
-        color: #fff;
-        text-decoration: none;
-        transition: color 0.2s;
-        font-family: var(--font-sans), sans-serif;
-    }
-    .mobile-menu-links a:hover {
-        color: #06b6d4;
-    }
-    .close-menu-btn {
-        position: absolute;
-        top: 20px;
-        right: 20px;
-        background: rgba(255,255,255,0.03);
-        border: 1px solid rgba(255,255,255,0.1);
-        color: #94a3b8;
-        font-size: 1.3rem;
-        cursor: pointer;
-        width: 44px;
-        height: 44px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: all 0.2s ease;
-    }
-    .close-menu-btn:hover {
-        background: rgba(255,255,255,0.08);
-        color: #fff;
-        border-color: rgba(255,255,255,0.2);
-    }
-
-    @media (max-width: 768px) {
-        .hamburger-btn {
-            display: flex;
-        }
-        .nav-links {
-            display: none !important;
-        }
-        .nav-actions .nav-link-login {
-            display: none !important;
-        }
-    }
-    </style>
-    
-    <script>
-    function toggleMobileMenu() {
-        document.getElementById('mobile-menu-overlay').classList.toggle('active');
-    }
-    
-    // Scrolled state tightening
-    window.addEventListener('scroll', function() {
-        const nav = document.getElementById('navbar');
-        if (nav) {
-            if (window.scrollY > 80) {
-                nav.classList.add('scrolled');
-            } else {
-                nav.classList.remove('scrolled');
-            }
-        }
-    });
-    </script>
-
     {% with messages = get_flashed_messages() %}
     {% if messages %}
-    <div style="max-width: 1180px; margin: 1rem auto 0; padding: 0 1.5rem;">
+    <div style="max-width: 1180px; margin: 1rem auto 0; padding: 0 1.5rem; position: relative; z-index: 10000;">
         {% for message in messages %}
-        <div style="background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 10px; padding: 0.85rem 1rem; margin-bottom: 0.65rem; box-shadow: 0 12px 30px rgba(0,0,0,0.1);">
-            {{ message }}
+        <div class="swipeable-alert" style="background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 10px; padding: 0.85rem 1.5rem; margin-bottom: 0.65rem; box-shadow: 0 12px 30px rgba(0,0,0,0.1); position: relative; display: flex; align-items: center; justify-content: space-between; transition: all 0.3s ease; cursor: grab; user-select: none;">
+            <span>{{ message }}</span>
+            <button onclick="this.parentElement.style.opacity='0'; this.parentElement.style.transform='translateY(-20px) scaleY(0)'; setTimeout(() => this.parentElement.remove(), 300)" style="background:none; border:none; color:var(--text-secondary); cursor:pointer; font-size:1.2rem; padding:0 0 0 10px; line-height:1; display:inline-flex; align-items:center;" title="Dismiss">&times;</button>
         </div>
         {% endfor %}
     </div>
@@ -1037,6 +491,7 @@
 
     {% block content %}{% endblock %}
     
+    {% if request.path not in ['/login', '/signup'] %}
     <footer style="background: var(--bg-card); border-top: 1px solid var(--border-color); padding: 3rem 2rem 1.5rem; margin-top: auto;">
         <div style="max-width: 1200px; margin: 0 auto;">
             <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 2.5rem; margin-bottom: 2.5rem;">
@@ -1086,6 +541,7 @@
             </div>
         </div>
     </footer>
+    {% endif %}
     <script>
         (function() {
             const storageKey = "phishsim-theme";
@@ -1106,13 +562,14 @@
 
             function applyTheme(theme, showMsg = true) {
                 const isLight = theme === "light";
+                document.documentElement.setAttribute("data-theme", theme);
                 body.classList.toggle("light-theme", isLight);
-                toggle.setAttribute("aria-label", isLight ? "Switch to cyber mode" : "Switch to enterprise mode");
-                toggle.setAttribute("title", isLight ? "Switch to cyber mode" : "Switch to enterprise mode");
+                toggle.setAttribute("aria-label", isLight ? "Switch to dark mode" : "Switch to light mode");
+                toggle.setAttribute("title", isLight ? "Switch to dark mode" : "Switch to light mode");
                 localStorage.setItem(storageKey, theme);
                 
                 if (showMsg) {
-                    showTooltip(isLight ? "Enterprise mode" : "Cyber mode", isLight);
+                    showTooltip(isLight ? "Light Mode" : "Dark Mode", isLight);
                 }
 
                 // Dispatch event so other scripts (like charts) can re-render
@@ -1453,6 +910,200 @@
             }
         }, { passive: true });
     })();
+    </script>
+    
+    <script>
+    // Global swipe-to-dismiss gesture for notifications/alerts/HUDs/strips
+    window.attachDismissGesture = function(element) {
+        if (!element) return;
+        // Avoid duplicate event listener binding
+        if (element.dataset.gestureAttached === "true") return;
+        element.dataset.gestureAttached = "true";
+
+        let startY = 0;
+        let currentY = 0;
+        let isDragging = false;
+        
+        let baseTransform = '';
+        if (element.classList.contains('floating-campaign-strip')) {
+            baseTransform = 'translateX(-50%) ';
+        }
+        
+        // Touch Events
+        element.addEventListener('touchstart', (e) => {
+            startY = e.touches[0].clientY;
+            isDragging = true;
+            element.style.transition = 'none';
+            element.style.cursor = 'grabbing';
+        }, { passive: true });
+        
+        element.addEventListener('touchmove', (e) => {
+            if (!isDragging) return;
+            currentY = e.touches[0].clientY;
+            let deltaY = currentY - startY;
+            element.style.transform = baseTransform + `translateY(${deltaY}px)`;
+            element.style.opacity = 1 - (Math.abs(deltaY) / 150);
+        }, { passive: true });
+        
+        element.addEventListener('touchend', (e) => {
+            if (!isDragging) return;
+            isDragging = false;
+            element.style.transition = 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)';
+            let deltaY = currentY - startY;
+            if (Math.abs(deltaY) > 50) {
+                element.style.transform = baseTransform + `translateY(${deltaY > 0 ? 150 : -150}px)`;
+                element.style.opacity = '0';
+                element.style.height = '0';
+                element.style.padding = '0';
+                element.style.margin = '0';
+                element.style.border = 'none';
+                if (element.id === 'campaign-strip' && typeof closeCampaignStrip === 'function') {
+                    closeCampaignStrip();
+                } else {
+                    setTimeout(() => element.remove(), 300);
+                }
+            } else {
+                element.style.transform = baseTransform + 'translateY(0)';
+                element.style.opacity = '1';
+                element.style.cursor = 'grab';
+            }
+        });
+
+        // Mouse Events
+        element.addEventListener('mousedown', (e) => {
+            if (e.button !== 0) return; // Only left click
+            startY = e.clientY;
+            isDragging = true;
+            element.style.transition = 'none';
+            element.style.cursor = 'grabbing';
+            element.style.userSelect = 'none';
+
+            const onMouseMove = (moveEvent) => {
+                if (!isDragging) return;
+                currentY = moveEvent.clientY;
+                let deltaY = currentY - startY;
+                element.style.transform = baseTransform + `translateY(${deltaY}px)`;
+                element.style.opacity = 1 - (Math.abs(deltaY) / 150);
+            };
+
+            const onMouseUp = () => {
+                if (!isDragging) return;
+                isDragging = false;
+                window.removeEventListener('mousemove', onMouseMove);
+                window.removeEventListener('mouseup', onMouseUp);
+
+                element.style.transition = 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)';
+                let deltaY = currentY - startY;
+                if (Math.abs(deltaY) > 50) {
+                    element.style.transform = baseTransform + `translateY(${deltaY > 0 ? 150 : -150}px)`;
+                    element.style.opacity = '0';
+                    element.style.height = '0';
+                    element.style.padding = '0';
+                    element.style.margin = '0';
+                    element.style.border = 'none';
+                    if (element.id === 'campaign-strip' && typeof closeCampaignStrip === 'function') {
+                        closeCampaignStrip();
+                    } else {
+                        setTimeout(() => element.remove(), 300);
+                    }
+                } else {
+                    element.style.transform = baseTransform + 'translateY(0)';
+                    element.style.opacity = '1';
+                    element.style.cursor = 'grab';
+                }
+            };
+
+            window.addEventListener('mousemove', onMouseMove);
+            window.addEventListener('mouseup', onMouseUp);
+        });
+    };
+
+    document.addEventListener('DOMContentLoaded', () => {
+        // Attach gesture to existing elements
+        const selectors = ['.swipeable-alert', '.flash-message', '.sandbox-banner', '.premium-toast', '.cyber-hud-bar', '.floating-campaign-strip'];
+        selectors.forEach(selector => {
+            document.querySelectorAll(selector).forEach(el => {
+                window.attachDismissGesture(el);
+            });
+        });
+
+        // Setup MutationObserver to watch for dynamically added notifications
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                mutation.addedNodes.forEach((node) => {
+                    if (node.nodeType !== 1) return;
+                    selectors.forEach(selector => {
+                        if (node.matches(selector)) {
+                            window.attachDismissGesture(node);
+                        }
+                        node.querySelectorAll(selector).forEach(el => {
+                            window.attachDismissGesture(el);
+                        });
+                    });
+                });
+            });
+        });
+        observer.observe(document.body, { childList: true, subtree: true });
+
+        // Dynamic boundary-aware tooltip auto-alignment
+        const adjustTooltipPosition = (e) => {
+            const wrap = e.currentTarget;
+            const content = wrap.querySelector('.cyber-tooltip-content');
+            if (!content) return;
+            
+            // Reset styles to calculate natural boundaries
+            content.style.left = '';
+            content.style.right = '';
+            content.style.top = '';
+            content.style.bottom = '';
+            content.style.transform = 'scale(1) translateY(0)';
+            
+            const rect = content.getBoundingClientRect();
+            const viewportWidth = window.innerWidth;
+            const viewportHeight = window.innerHeight;
+            
+            // Horizontal bounds check
+            if (rect.left < 10) {
+                content.style.left = `${10 - wrap.getBoundingClientRect().left}px`;
+                content.style.right = 'auto';
+            } else if (rect.right > viewportWidth - 10) {
+                content.style.right = `${rect.right - viewportWidth + 10}px`;
+                content.style.left = 'auto';
+            }
+            
+            // Vertical bounds check
+            if (rect.bottom > viewportHeight - 10) {
+                content.style.bottom = 'calc(100% + 8px)';
+                content.style.top = 'auto';
+            } else {
+                content.style.top = 'calc(100% + 8px)';
+                content.style.bottom = 'auto';
+            }
+            
+            content.style.transform = '';
+        };
+
+        // Attach mouseenter to all tooltips
+        document.querySelectorAll('.cyber-tooltip-wrap').forEach(wrap => {
+            wrap.addEventListener('mouseenter', adjustTooltipPosition);
+        });
+
+        // Watch for dynamically added tooltips
+        const tooltipObserver = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                mutation.addedNodes.forEach((node) => {
+                    if (node.nodeType !== 1) return;
+                    if (node.classList.contains('cyber-tooltip-wrap')) {
+                        node.addEventListener('mouseenter', adjustTooltipPosition);
+                    }
+                    node.querySelectorAll('.cyber-tooltip-wrap').forEach(el => {
+                        el.addEventListener('mouseenter', adjustTooltipPosition);
+                    });
+                });
+            });
+        });
+        tooltipObserver.observe(document.body, { childList: true, subtree: true });
+    });
     </script>
 </body>
 </html>

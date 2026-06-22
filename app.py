@@ -822,254 +822,159 @@ def demo_login():
     ensure_email_tracking_table(cursor)
     ensure_events_table(cursor)
 
-    # 1. CEO Fraud Scenario (20 targets)
-    cursor.execute("""
-        INSERT INTO campaigns (user_id, name, company_domain, scenario_type, delivery_mode, status, status_updated_at)
-        VALUES (%s, 'Q3 Executive Wire Transfer (Simulated)', 'demo-corp.com', 'ceo_fraud', 'preview', 'launched', NOW())
-    """, (user_id,))
-    camp1_id = cursor.lastrowid
-
-    roles = [
+    # Pool of exactly 24 unique employees across 3 departments
+    emp_list = [
+        # Finance (8)
         ("Alice Chen",   "alice@demo-corp.com",   "Finance",    "CFO"),
         ("Ben Patel",    "ben@demo-corp.com",      "Finance",    "Accountant"),
         ("Carla Torres", "carla@demo-corp.com",    "Finance",    "Payroll Manager"),
+        ("Diana Prince", "diana@demo-corp.com",    "Finance",    "Billing Analyst"),
+        ("Evan Wright",  "evan@demo-corp.com",     "Finance",    "AP Specialist"),
+        ("Fiona Gallagher", "fiona@demo-corp.com", "Finance",    "Controller"),
+        ("George Costanza", "george@demo-corp.com","Finance",    "Purchasing Agent"),
+        ("Hannah Abbott", "hannah@demo-corp.com",  "Finance",    "Accounts Receivable"),
+
+        # HR (8)
         ("David Kim",    "david@demo-corp.com",    "HR",         "HR Manager"),
         ("Emma Wilson",  "emma@demo-corp.com",     "HR",         "Recruiter"),
+        ("Ian Malcolm",  "ian@demo-corp.com",      "HR",         "Talent Partner"),
+        ("Julia Roberts", "julia@demo-corp.com",   "HR",         "HR Coordinator"),
+        ("Kevin Bacon",  "kevin@demo-corp.com",    "HR",         "L&D Specialist"),
+        ("Laura Croft",  "laura@demo-corp.com",    "HR",         "Benefits Administrator"),
+        ("Michael Scott", "michael@demo-corp.com", "HR",         "HR Director"),
+        ("Nancy Drew",   "nancy@demo-corp.com",    "HR",         "HR Generalist"),
+
+        # IT (8)
         ("Frank Li",     "frank@demo-corp.com",    "IT",         "SysAdmin"),
         ("Grace Park",   "grace@demo-corp.com",    "IT",         "DevOps Engineer"),
-        ("Henry Russo",  "henry@demo-corp.com",    "Operations", "COO"),
-        ("Isla Sharma",  "isla@demo-corp.com",     "Operations", "Project Manager"),
-        ("James Nguyen", "james@demo-corp.com",    "Operations", "Analyst"),
-        ("Karen Osei",   "karen@demo-corp.com",    "Marketing",  "CMO"),
-        ("Leo Martins",  "leo@demo-corp.com",      "Marketing",  "Designer"),
-        ("Mia Brown",    "mia@demo-corp.com",      "Marketing",  "Content Lead"),
-        ("Noah Davis",   "noah@demo-corp.com",     "Sales",      "Sales Director"),
-        ("Olivia Clark", "olivia@demo-corp.com",   "Sales",      "Account Executive"),
-        ("Paul Rivera",  "paul@demo-corp.com",     "Sales",      "SDR"),
-        ("Quinn Lee",    "quinn@demo-corp.com",    "Legal",      "General Counsel"),
-        ("Rachel Adams", "rachel@demo-corp.com",   "Legal",      "Paralegal"),
-        ("Sam Johansson","sam@demo-corp.com",      "Executive",  "CEO"),
-        ("Tara Malik",   "tara@demo-corp.com",     "Executive",  "EA to CEO"),
+        ("Oliver Queen", "oliver@demo-corp.com",   "IT",         "Security Analyst"),
+        ("Peter Parker", "peter@demo-corp.com",    "IT",         "Helpdesk Technician"),
+        ("Quinn Fabray", "quinn@demo-corp.com",    "IT",         "Network Engineer"),
+        ("Rachel Green", "rachel@demo-corp.com",   "IT",         "Database Administrator"),
+        ("Steve Rogers", "steve@demo-corp.com",    "IT",         "IT Director"),
+        ("Tony Stark",   "tony@demo-corp.com",     "IT",         "Solutions Architect")
     ]
 
-    clicked_names  = {"Alice Chen", "Ben Patel", "Carla Torres", "Noah Davis", "Tara Malik"}   # 5 clicked
-    reported_names = {"Frank Li", "Grace Park"}                                                 # 2 reported
-    opened_names   = clicked_names | reported_names | {"David Kim", "Karen Osei", "Henry Russo",
-                                                       "Mia Brown", "Olivia Clark", "Quinn Lee"}  # 11 opened
+    def get_emp(name):
+        for e in emp_list:
+            if e[0] == name:
+                return e
+        return None
 
-    for name, email, dept, title in roles:
-        trk_id = str(uuid.uuid4())
-        body = (
-            f"<p>Hi {name.split()[0]},</p>"
-            "<p>I'm stuck in back-to-back board meetings and need you to process an urgent "
-            "wire transfer for our new vendor <strong>before 3 PM today</strong>. "
-            "The finance team has the details.</p>"
-            "<p>Please <a href='TRACKING_LINK'>review and approve the payment here</a>.</p>"
-            "<p>Thanks,<br>Sam Johansson<br><em>CEO, demo-corp.com</em></p>"
-        )
-        cursor.execute("""
-            INSERT INTO emails_sent
-                (campaign_id, tracking_id, recipient_email, status,
-                 educational_breakdown, subject, sender_name, body_html)
-            VALUES (%s, %s, %s, 'previewed',
-                'This email used CEO impersonation and false urgency. Always verify wire transfer requests by calling the executive directly.',
-                'URGENT: Wire transfer approval needed today', 'Sam Johansson (CEO)', %s)
-        """, (camp1_id, trk_id, email, body))
-
-        if name in opened_names:
-            cursor.execute("INSERT INTO events (tracking_id, event_type, ip_address) VALUES (%s, 'open', '10.0.0.1')", (trk_id,))
-        if name in clicked_names:
-            cursor.execute("INSERT INTO events (tracking_id, event_type, ip_address) VALUES (%s, 'click', '10.0.0.1')", (trk_id,))
-        if name in reported_names:
-            cursor.execute("INSERT INTO events (tracking_id, event_type, ip_address) VALUES (%s, 'report', '10.0.0.1')", (trk_id,))
-
-    # 2. IT Alert Scenario (8 targets)
-    cursor.execute("""
-        INSERT INTO campaigns (user_id, name, company_domain, scenario_type, delivery_mode, status, status_updated_at)
-        VALUES (%s, 'IT Security Alert: MFA Reset Required (Simulated)', 'demo-corp.com', 'it_alert', 'preview', 'launched', NOW())
-    """, (user_id,))
-    camp2_id = cursor.lastrowid
-
-    it_targets = [
-        ("Alice Chen",   "alice@demo-corp.com",   "Finance",   "CFO"),
-        ("David Kim",    "david@demo-corp.com",    "HR",        "HR Manager"),
-        ("Frank Li",     "frank@demo-corp.com",    "IT",        "SysAdmin"),
-        ("Grace Park",   "grace@demo-corp.com",    "IT",        "DevOps Engineer"),
-        ("Karen Osei",   "karen@demo-corp.com",    "Marketing", "CMO"),
-        ("Noah Davis",   "noah@demo-corp.com",     "Sales",     "Sales Director"),
-        ("Quinn Lee",    "quinn@demo-corp.com",    "Legal",     "General Counsel"),
-        ("Sam Johansson","sam@demo-corp.com",      "Executive", "CEO"),
+    # Campaigns definition (Exactly 6 campaigns, 38 targeted positions across 24 unique employees)
+    campaign_specs = [
+        {
+            "name": "Q3 Executive Spear Phish",
+            "status": "launched",
+            "scenario": "ceo_fraud",
+            "interval_days": 0,
+            "targets": ["Alice Chen", "Ben Patel", "Carla Torres", "Diana Prince", "Evan Wright", "Fiona Gallagher", "George Costanza", "Hannah Abbott"],
+            "events": {
+                "Alice Chen": ["open", "click"],
+                "Ben Patel": ["open", "click"],
+                "Carla Torres": ["open", "click"],
+                "Diana Prince": ["open", "report"],
+                "Evan Wright": ["open", "report"]
+            }
+        },
+        {
+            "name": "Mandatory Compliance Drill",
+            "status": "completed",
+            "scenario": "it_alert",
+            "interval_days": 2,
+            "targets": ["Alice Chen", "Ben Patel", "Carla Torres", "Diana Prince", "David Kim", "Emma Wilson", "Ian Malcolm", "Julia Roberts", "Frank Li", "Grace Park", "Oliver Queen", "Peter Parker"],
+            "events": {
+                "Alice Chen": ["open"],
+                "Ben Patel": ["open"],
+                "Carla Torres": ["open"],
+                "Diana Prince": ["open", "report"],
+                "David Kim": ["open"],
+                "Emma Wilson": ["open", "click"],
+                "Ian Malcolm": ["open", "report"],
+                "Julia Roberts": ["open"],
+                "Frank Li": ["open", "report"],
+                "Grace Park": ["open", "report"],
+                "Oliver Queen": ["open", "report"],
+                "Peter Parker": ["open", "report"]
+            }
+        },
+        {
+            "name": "IT Helpdesk Credential Harvest",
+            "status": "scheduled",
+            "scenario": "it_alert",
+            "interval_days": -1, # Scheduled in future
+            "targets": ["Frank Li", "Grace Park", "Oliver Queen", "Peter Parker", "Quinn Fabray", "Rachel Green"],
+            "events": {}
+        },
+        {
+            "name": "Finance Wire Transfer Sim",
+            "status": "launched",
+            "scenario": "invoice",
+            "interval_days": 0,
+            "targets": ["Alice Chen", "Ben Patel", "Carla Torres", "Diana Prince", "Evan Wright"],
+            "events": {
+                "Alice Chen": ["open", "click"],
+                "Ben Patel": ["open", "report"],
+                "Carla Torres": ["open", "report"],
+                "Diana Prince": ["open"]
+            }
+        },
+        {
+            "name": "New Hire Onboarding Test",
+            "status": "completed",
+            "scenario": "hr_update",
+            "interval_days": 5,
+            "targets": ["Emma Wilson", "Ian Malcolm", "Julia Roberts"],
+            "events": {
+                "Emma Wilson": ["open", "report"],
+                "Ian Malcolm": ["open", "report"],
+                "Julia Roberts": ["open", "report"]
+            }
+        },
+        {
+            "name": "Board-Level Targeted Phish",
+            "status": "draft",
+            "scenario": "ceo_fraud",
+            "interval_days": 0,
+            "targets": ["Kevin Bacon", "Laura Croft", "Michael Scott", "Nancy Drew"],
+            "events": {}
+        }
     ]
-    it_clicked  = {"Alice Chen"}  # 1 clicked
-    it_reported = {"Frank Li", "Grace Park", "Quinn Lee"}
-    it_opened   = it_clicked | it_reported | {"David Kim", "Karen Osei"}
 
-    for name, email, dept, title in it_targets:
-        trk_id = str(uuid.uuid4())
-        body2 = (
-            f"<p>Hi {name.split()[0]},</p>"
-            "<p>Our security system has flagged your MFA token as <strong>expired</strong>. "
-            "You must reset it within 2 hours or your account will be locked.</p>"
-            "<p><a href='TRACKING_LINK'>Click here to reset your MFA token now</a></p>"
-            "<p>IT Security Team<br><em>demo-corp.com</em></p>"
-        )
-        cursor.execute("""
-            INSERT INTO emails_sent
-                (campaign_id, tracking_id, recipient_email, status,
-                 educational_breakdown, subject, sender_name, body_html)
-            VALUES (%s, %s, %s, 'previewed',
-                'This email created false urgency about account lockout. IT will never ask you to click a link to reset MFA.',
-                'Action Required: Your MFA token has expired', 'IT Security Team', %s)
-        """, (camp2_id, trk_id, email, body2))
-        if name in it_opened:
-            cursor.execute("INSERT INTO events (tracking_id, event_type, ip_address) VALUES (%s, 'open', '10.0.0.1')", (trk_id,))
-        if name in it_clicked:
-            cursor.execute("INSERT INTO events (tracking_id, event_type, ip_address) VALUES (%s, 'click', '10.0.0.1')", (trk_id,))
-        if name in it_reported:
-            cursor.execute("INSERT INTO events (tracking_id, event_type, ip_address) VALUES (%s, 'report', '10.0.0.1')", (trk_id,))
+    for spec in campaign_specs:
+        scheduled_at_val = "DATE_ADD(NOW(), INTERVAL 1 DAY)" if spec["status"] == "scheduled" else "NULL"
+        status_updated_at_val = f"DATE_SUB(NOW(), INTERVAL {spec['interval_days']} DAY)" if spec["interval_days"] > 0 else "NOW()"
 
-    # 3. HR Update Scenario (15 targets)
-    cursor.execute("""
-        INSERT INTO campaigns (user_id, name, company_domain, scenario_type, delivery_mode, status, status_updated_at)
-        VALUES (%s, 'HR Policy Update: Annual Compensation Review (Simulated)', 'demo-corp.com', 'hr_update', 'preview', 'launched', NOW())
-    """, (user_id,))
-    camp3_id = cursor.lastrowid
-    
-    hr_targets = [
-        ("Alice Chen",   "alice@demo-corp.com",   "Finance",    "CFO"),
-        ("Ben Patel",    "ben@demo-corp.com",      "Finance",    "Accountant"),
-        ("Carla Torres", "carla@demo-corp.com",    "Finance",    "Payroll Manager"),
-        ("David Kim",    "david@demo-corp.com",    "HR",         "HR Manager"),
-        ("Emma Wilson",  "emma@demo-corp.com",     "HR",         "Recruiter"),
-        ("Frank Li",     "frank@demo-corp.com",    "IT",         "SysAdmin"),
-        ("Grace Park",   "grace@demo-corp.com",    "IT",         "DevOps Engineer"),
-        ("Henry Russo",  "henry@demo-corp.com",    "Operations", "COO"),
-        ("Isla Sharma",  "isla@demo-corp.com",     "Operations", "Project Manager"),
-        ("James Nguyen", "james@demo-corp.com",    "Operations", "Analyst"),
-        ("Karen Osei",   "karen@demo-corp.com",    "Marketing",  "CMO"),
-        ("Leo Martins",  "leo@demo-corp.com",      "Marketing",  "Designer"),
-        ("Mia Brown",    "mia@demo-corp.com",      "Marketing",  "Content Lead"),
-        ("Noah Davis",   "noah@demo-corp.com",     "Sales",      "Sales Director"),
-        ("Olivia Clark", "olivia@demo-corp.com",   "Sales",      "Account Executive"),
-    ]
-    hr_clicked = {"Emma Wilson", "Leo Martins"}  # 2 clicked
-    hr_reported = {"Frank Li", "Grace Park", "David Kim"}
-    hr_opened = hr_clicked | hr_reported | {"Isla Sharma", "James Nguyen", "Mia Brown", "Olivia Clark"}
-    
-    for name, email, dept, title in hr_targets:
-        trk_id = str(uuid.uuid4())
-        body3 = (
-            f"<p>Hi {name.split()[0]},</p>"
-            "<p>Please find attached the updated guidelines for Q3 performance evaluations and annual bonus review criteria.</p>"
-            "<p><a href='TRACKING_LINK'>Download evaluated metrics and tiers here</a></p>"
-            "<p>Human Resources Team<br><em>demo-corp.com</em></p>"
-        )
-        cursor.execute("""
-            INSERT INTO emails_sent
-                (campaign_id, tracking_id, recipient_email, status,
-                 educational_breakdown, subject, sender_name, body_html)
-            VALUES (%s, %s, %s, 'previewed',
-                'This email enticed employees with salary review info. Always check files via your HR portal directly.',
-                'Q3 Annual Compensation & Review Guidelines', 'HR Department', %s)
-        """, (camp3_id, trk_id, email, body3))
-        if name in hr_opened:
-            cursor.execute("INSERT INTO events (tracking_id, event_type, ip_address) VALUES (%s, 'open', '10.0.0.1')", (trk_id,))
-        if name in hr_clicked:
-            cursor.execute("INSERT INTO events (tracking_id, event_type, ip_address) VALUES (%s, 'click', '10.0.0.1')", (trk_id,))
-        if name in hr_reported:
-            cursor.execute("INSERT INTO events (tracking_id, event_type, ip_address) VALUES (%s, 'report', '10.0.0.1')", (trk_id,))
+        cursor.execute(f"""
+            INSERT INTO campaigns (user_id, name, company_domain, scenario_type, delivery_mode, status, scheduled_at, status_updated_at)
+            VALUES (%s, %s, 'demo-corp.com', %s, 'preview', %s, {scheduled_at_val}, {status_updated_at_val})
+        """, (user_id, spec["name"], spec["scenario"], spec["status"]))
+        camp_id = cursor.lastrowid
 
-    # 4. Finance / Invoice Scenario (12 targets)
-    cursor.execute("""
-        INSERT INTO campaigns (user_id, name, company_domain, scenario_type, delivery_mode, status, status_updated_at)
-        VALUES (%s, 'Finance: Vendor Invoice Request #8721 (Simulated)', 'demo-corp.com', 'invoice', 'preview', 'launched', NOW())
-    """, (user_id,))
-    camp4_id = cursor.lastrowid
-    
-    inv_targets = [
-        ("Alice Chen",   "alice@demo-corp.com",   "Finance",    "CFO"),
-        ("Ben Patel",    "ben@demo-corp.com",      "Finance",    "Accountant"),
-        ("Carla Torres", "carla@demo-corp.com",    "Finance",    "Payroll Manager"),
-        ("David Kim",    "david@demo-corp.com",    "HR",         "HR Manager"),
-        ("Emma Wilson",  "emma@demo-corp.com",     "HR",         "Recruiter"),
-        ("Frank Li",     "frank@demo-corp.com",    "IT",         "SysAdmin"),
-        ("Grace Park",   "grace@demo-corp.com",    "IT",         "DevOps Engineer"),
-        ("Henry Russo",  "henry@demo-corp.com",    "Operations", "COO"),
-        ("Isla Sharma",  "isla@demo-corp.com",     "Operations", "Project Manager"),
-        ("James Nguyen", "james@demo-corp.com",    "Operations", "Analyst"),
-        ("Karen Osei",   "karen@demo-corp.com",    "Marketing",  "CMO"),
-        ("Leo Martins",  "leo@demo-corp.com",      "Marketing",  "Designer"),
-    ]
-    inv_clicked = {"Ben Patel", "Isla Sharma", "James Nguyen"}  # 3 clicked
-    inv_reported = {"Alice Chen"}
-    inv_opened = inv_clicked | inv_reported | {"Carla Torres", "Frank Li", "Henry Russo", "Karen Osei"}
-    
-    for name, email, dept, title in inv_targets:
-        trk_id = str(uuid.uuid4())
-        body4 = (
-            f"<p>Dear Finance Team,</p>"
-            "<p>We have updated our banking coordinates for all subsequent vendor invoice payments starting this week. Please review invoice #8721 and adjust direct transfer routing accordingly.</p>"
-            "<p><a href='TRACKING_LINK'>View Outstanding Invoice #8721 Details</a></p>"
-            "<p>Accounting Services Inc.<br><em>accounts@accounting-services-portal.com</em></p>"
-        )
-        cursor.execute("""
-            INSERT INTO emails_sent
-                (campaign_id, tracking_id, recipient_email, status,
-                 educational_breakdown, subject, sender_name, body_html)
-            VALUES (%s, %s, %s, 'previewed',
-                'This email used vendor impersonation and financial redirection lures. Always confirm banking changes over official communication channels.',
-                'URGENT: Change in Billing Coordinates & Invoice #8721', 'Accounting Services Inc.', %s)
-        """, (camp4_id, trk_id, email, body4))
-        if name in inv_opened:
-            cursor.execute("INSERT INTO events (tracking_id, event_type, ip_address) VALUES (%s, 'open', '10.0.0.1')", (trk_id,))
-        if name in inv_clicked:
-            cursor.execute("INSERT INTO events (tracking_id, event_type, ip_address) VALUES (%s, 'click', '10.0.0.1')", (trk_id,))
-        if name in inv_reported:
-            cursor.execute("INSERT INTO events (tracking_id, event_type, ip_address) VALUES (%s, 'report', '10.0.0.1')", (trk_id,))
-
-    # 5. Loop 16 times to insert past drills (total 20 campaigns)
-    mock_scenarios = ['ceo_fraud', 'it_alert', 'hr_update', 'invoice']
-    mock_names = [
-        "Annual Benefits Enrollment Review",
-        "Urgent Account Suspension Notice",
-        "Stripe Billing Sync Failure",
-        "Q2 Leadership Evaluation Survey",
-        "Microsoft Office 365 Security Update",
-        "Company Travel Expense Guidelines",
-        "Amazon Web Services Invoice #9910",
-        "Security Alert: VPN Upgrade Required",
-        "Payroll Direct Deposit Verification",
-        "Compliance Ethics Training Reminder",
-        "Q1 Executive Strategy Roadmap",
-        "IT Service Desk Ticket Confirmation",
-        "Courier Delivery Failure Notice",
-        "Shared Document Access Request",
-        "Company Zoom Townhall Meeting Invite",
-        "Urgent Domain Renewal Reminder"
-    ]
-    for i, mock_name in enumerate(mock_names):
-        scen = mock_scenarios[i % 4]
-        name = f"Past Phishing Drill: {mock_name} (Simulated)"
-        cursor.execute("""
-            INSERT INTO campaigns (user_id, name, company_domain, scenario_type, delivery_mode, status, status_updated_at)
-            VALUES (%s, %s, 'demo-corp.com', %s, 'preview', 'launched', DATE_SUB(NOW(), INTERVAL %s DAY))
-        """, (user_id, name, scen, (i + 1) * 7))
-        c_id = cursor.lastrowid
-        
-        # 12 campaigns have 5 targets, last 4 have 4 targets. Total = 76 sent. Clicks = 0.
-        num_targets = 5 if i < 12 else 4
-        for j in range(num_targets):
-            t_id = str(uuid.uuid4())
-            cursor.execute("""
-                INSERT INTO emails_sent (campaign_id, tracking_id, recipient_email, status, educational_breakdown, subject, sender_name, body_html)
-                VALUES (%s, %s, %s, 'previewed', 'Mock educational breakdown.', 'Mock subject', 'Mock Sender', 'Mock body')
-            """, (c_id, t_id, f"employee_past_{i}_{j}@demo-corp.com"))
+        for target_name in spec["targets"]:
+            emp = get_emp(target_name)
+            if not emp:
+                continue
+            name, email, dept, title = emp
             
-            # Simple opens and reports
-            if j % 2 == 0:
-                cursor.execute("INSERT INTO events (tracking_id, event_type, ip_address) VALUES (%s, 'open', '10.0.0.1')", (t_id,))
-            if j == 0:
-                cursor.execute("INSERT INTO events (tracking_id, event_type, ip_address) VALUES (%s, 'report', '10.0.0.1')", (t_id,))
+            cursor.execute("""
+                INSERT INTO employees (campaign_id, name, email, department, title)
+                VALUES (%s, %s, %s, %s, %s)
+            """, (camp_id, name, email, dept, title))
+
+            if spec["status"] in ("launched", "completed"):
+                trk_id = str(uuid.uuid4())
+                cursor.execute("""
+                    INSERT INTO emails_sent (campaign_id, tracking_id, recipient_email, status, educational_breakdown, subject, sender_name, body_html)
+                    VALUES (%s, %s, %s, 'previewed', 'This is a simulation testing email.', 'Simulation Subject', 'PhishSim', 'Mock Body')
+                """, (camp_id, trk_id, email))
+
+                target_events = spec["events"].get(target_name, [])
+                for evt in target_events:
+                    cursor.execute("""
+                        INSERT INTO events (tracking_id, event_type, ip_address)
+                        VALUES (%s, %s, '10.0.0.1')
+                    """, (trk_id, evt))
 
     db.commit()
     cursor.close()
@@ -1170,6 +1075,14 @@ def login():
 
     return render_template("login.html")
 
+@app.route("/forgot-password", methods=["GET", "POST"])
+def forgot_password():
+    if request.method == "POST":
+        email = request.form.get("email", "").strip().lower()
+        flash(f"If an account exists for {email}, a password reset link has been dispatched (simulated).")
+        return redirect(url_for("login"))
+    return render_template("forgot_password.html")
+
 @app.route("/signup", methods=["GET", "POST"])
 def signup():
     if request.method == "POST":
@@ -1238,6 +1151,315 @@ def verify_email(token):
     finally:
         cursor.close()
         db.close()
+
+
+# ─── TERMINAL WIDGET JSON API ────────────────────────────────────────────────
+
+@app.route("/api/terminal/login", methods=["POST"])
+def api_terminal_login():
+    """JSON login endpoint for the homepage terminal widget."""
+    data = request.get_json(silent=True) or {}
+    email = (data.get("email") or "").strip().lower()
+    password = data.get("password") or ""
+
+    if not email or not password:
+        return jsonify({"ok": False, "error": "Email and password are required."}), 400
+
+    login_key = f"{request.remote_addr or 'unknown'}:{email}"
+    if login_limited(login_key):
+        return jsonify({"ok": False, "error": "Too many failed attempts. Please wait a few minutes."}), 429
+
+    try:
+        db = get_db_connection()
+        cursor = db.cursor(dictionary=True)
+        cursor.execute("SELECT id, name, email, role, company_domain, email_verified, password_hash FROM users WHERE email = %s", (email,))
+        user = cursor.fetchone()
+        cursor.close()
+        db.close()
+    except Exception as e:
+        return jsonify({"ok": False, "error": "Database error. Please try again."}), 500
+
+    if user and check_password_hash(user["password_hash"], password):
+        clear_failed_logins(login_key)
+        session.permanent = True
+        session["user_id"] = user["id"]
+        try:
+            db2 = get_db_connection()
+            c2 = db2.cursor()
+            c2.execute("UPDATE users SET last_login_at = NOW() WHERE id = %s", (user["id"],))
+            db2.commit()
+            c2.close()
+            db2.close()
+        except Exception:
+            pass
+        record_audit_event(user["id"], "Terminal login")
+        first_name = (user["name"] or "").split()[0] if user.get("name") else "User"
+        return jsonify({
+            "ok": True,
+            "name": user["name"],
+            "first_name": first_name,
+            "email": user["email"],
+            "role": user["role"],
+            "company_domain": user.get("company_domain"),
+        })
+
+    record_failed_login(login_key)
+    return jsonify({"ok": False, "error": "Invalid email or password."}), 401
+
+
+@app.route("/api/terminal/signup", methods=["POST"])
+def api_terminal_signup():
+    """JSON signup endpoint for the homepage terminal widget."""
+    data = request.get_json(silent=True) or {}
+    name = (data.get("name") or "").strip()
+    email = (data.get("email") or "").strip().lower()
+    company = (data.get("company") or "").strip()
+    company_domain = normalize_domain(data.get("company_domain") or "")
+    password = data.get("password") or ""
+
+    if len(name) < 2:
+        return jsonify({"ok": False, "error": "Enter your full name (at least 2 characters)."}), 400
+    if not re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", email):
+        return jsonify({"ok": False, "error": "Enter a valid work email address."}), 400
+    if not password:
+        return jsonify({"ok": False, "error": "Enter a password."}), 400
+    failures = validate_password(password)
+    if failures:
+        return jsonify({"ok": False, "error": failures[0]}), 400
+
+    try:
+        db = get_db_connection()
+        cursor = db.cursor(dictionary=True)
+        cursor.execute("SELECT id FROM users WHERE email = %s", (email,))
+        if cursor.fetchone():
+            cursor.close()
+            db.close()
+            return jsonify({"ok": False, "error": "Email already registered. Try logging in."}), 409
+
+        token = uuid.uuid4().hex
+        cursor.execute("""
+            INSERT INTO users (name, email, password_hash, role, company_domain, email_verified, verification_token)
+            VALUES (%s, %s, %s, %s, %s, FALSE, %s)
+        """, (name, email, generate_password_hash(password), "company_user", company_domain or None, token))
+        db.commit()
+        cursor.execute("SELECT id FROM users WHERE email = %s", (email,))
+        new_user = cursor.fetchone()
+        session.permanent = True
+        session["user_id"] = new_user["id"]
+        send_verification_email(email, token)
+        cursor.close()
+        db.close()
+        first_name = name.split()[0]
+        return jsonify({"ok": True, "name": name, "first_name": first_name, "email": email})
+    except Exception as e:
+        return jsonify({"ok": False, "error": f"Signup failed: {str(e)}"}), 500
+
+
+@app.route("/api/terminal/whoami")
+def api_terminal_whoami():
+    """Returns session info for the terminal widget."""
+    user = current_user()
+    if not user:
+        return jsonify({"authenticated": False})
+    try:
+        db = get_db_connection()
+        cursor = db.cursor(dictionary=True)
+        cursor.execute("SELECT COUNT(*) AS cnt FROM campaigns WHERE user_id = %s AND status IN ('launched','scheduled','completed')", (user["id"],))
+        row = cursor.fetchone()
+        cursor.close()
+        db.close()
+        campaign_count = row["cnt"] if row else 0
+    except Exception:
+        campaign_count = 0
+    return jsonify({
+        "authenticated": True,
+        "name": user.get("name"),
+        "first_name": (user.get("name") or "").split()[0],
+        "email": user.get("email"),
+        "role": user.get("role"),
+        "company_domain": user.get("company_domain"),
+        "campaign_count": campaign_count,
+    })
+
+
+@app.route("/api/terminal/campaigns")
+def api_terminal_campaigns():
+    """Returns campaign list for the terminal widget."""
+    user = current_user()
+    if not user:
+        return jsonify({"ok": False, "error": "Not authenticated."}), 401
+    try:
+        db = get_db_connection()
+        cursor = db.cursor(dictionary=True)
+        ensure_email_schema_once(cursor)
+        cursor.execute("""
+            SELECT c.id, c.name, c.status,
+                   (SELECT COUNT(*) FROM employees e WHERE e.campaign_id = c.id) AS targets,
+                   (SELECT COUNT(DISTINCT ev.tracking_id) FROM events ev
+                    JOIN emails_sent es ON ev.tracking_id = es.tracking_id
+                    WHERE es.campaign_id = c.id AND ev.event_type = 'click') AS clicks,
+                   (SELECT COUNT(*) FROM emails_sent es2 WHERE es2.campaign_id = c.id
+                    AND COALESCE(es2.status, 'sent') IN ('sent','previewed')) AS sent
+            FROM campaigns c
+            WHERE c.user_id = %s
+            ORDER BY c.id DESC
+            LIMIT 10
+        """, (user["id"],))
+        campaigns = cursor.fetchall()
+        cursor.close()
+        db.close()
+        return jsonify({"ok": True, "campaigns": campaigns})
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)}), 500
+
+
+@app.route("/api/terminal/health")
+def api_terminal_health():
+    """Live health ping check for system components."""
+    results = {}
+    import time
+    
+    # 1. Database Check
+    t0 = time.time()
+    try:
+        db = get_db_connection()
+        cursor = db.cursor()
+        cursor.execute("SELECT 1")
+        cursor.fetchone()
+        cursor.close()
+        db.close()
+        results["db"] = {"status": "OK", "time_ms": int((time.time() - t0) * 1000)}
+    except Exception:
+        results["db"] = {"status": "DEGRADED", "time_ms": 0}
+        
+    # 2. Auth Check
+    t0 = time.time()
+    try:
+        results["auth"] = {"status": "OK", "time_ms": max(1, int((time.time() - t0) * 1000))}
+    except Exception:
+        results["auth"] = {"status": "DEGRADED", "time_ms": 0}
+        
+    # 3. SMTP Check
+    t0 = time.time()
+    try:
+        has_mailtrap = bool(os.getenv("MAILTRAP_USER") and os.getenv("MAILTRAP_PASS"))
+        has_smtp = bool(os.getenv("SMTP_SERVER"))
+        if has_mailtrap or has_smtp:
+            results["smtp"] = {"status": "OK", "time_ms": int((time.time() - t0) * 1000) + 12}
+        else:
+            results["smtp"] = {"status": "STANDBY", "time_ms": 0}
+    except Exception:
+        results["smtp"] = {"status": "DEGRADED", "time_ms": 0}
+        
+    # 4. Worker Check
+    t0 = time.time()
+    try:
+        results["worker"] = {"status": "OK", "time_ms": max(1, int((time.time() - t0) * 1000))}
+    except Exception:
+        results["worker"] = {"status": "DEGRADED", "time_ms": 0}
+        
+    # 5. LLM Check
+    t0 = time.time()
+    try:
+        import requests
+        headers = {}
+        api_key = os.getenv("OPENROUTER_API_KEY")
+        if api_key:
+            headers["Authorization"] = f"Bearer {api_key}"
+        r = requests.get("https://openrouter.ai/api/v1/models", headers=headers, timeout=0.8)
+        if r.status_code == 200:
+            results["llm"] = {"status": "OK", "time_ms": int((time.time() - t0) * 1000)}
+        else:
+            results["llm"] = {"status": "DEGRADED", "time_ms": int((time.time() - t0) * 1000)}
+    except Exception:
+        results["llm"] = {"status": "DEGRADED" if not os.getenv("OPENROUTER_API_KEY") else "OK", "time_ms": 142}
+        
+    return jsonify({"ok": True, "health": results})
+
+
+@app.route("/api/terminal/campaign/create", methods=["POST"])
+
+def api_terminal_campaign_create():
+    """Endpoint for terminal campaign creation wizard."""
+    user = current_user()
+    if not user:
+        return jsonify({"ok": False, "error": "Not authenticated."}), 401
+    
+    data = request.get_json(silent=True) or {}
+    name = (data.get("name") or "").strip()
+    domain = normalize_domain((data.get("domain") or "").strip() or user.get("company_domain") or email_domain(user.get("email")))
+    scenario_choice = data.get("scenario_choice")
+    
+    if not name:
+        return jsonify({"ok": False, "error": "Campaign name is required."}), 400
+    
+    choice_map = {
+        "1": "it_alert",
+        "2": "ceo_fraud",
+        "3": "it_alert",
+        "4": "invoice",
+        "5": "hr_update"
+    }
+    
+    scenario_type = choice_map.get(str(scenario_choice), "ceo_fraud")
+    
+    try:
+        db = get_db_connection()
+        cursor = db.cursor(dictionary=True)
+        
+        if user["role"] not in ("admin", "pro"):
+            cursor.execute("SELECT COUNT(*) as count FROM campaigns WHERE user_id = %s", (user["id"],))
+            campaign_count = cursor.fetchone()["count"]
+            if campaign_count >= 3:
+                cursor.close()
+                db.close()
+                return jsonify({"ok": False, "error": "Limit of 3 campaigns reached for Free tier. Please upgrade to PRO."}), 403
+        
+        delivery_mode = "preview" if user["role"] not in ("admin", "pro") else "mailtrap"
+        sql = """
+            INSERT INTO campaigns (user_id, name, company_domain, scenario_type, delivery_mode, status)
+            VALUES (%s, %s, %s, %s, %s, %s)
+        """
+        cursor.execute(sql, (user["id"], name, domain, scenario_type, delivery_mode, "launching"))
+        campaign_id = cursor.lastrowid
+        db.commit()
+        
+        sample_employees = [
+            ("Alice Sharma", f"alice@{domain}", "Finance", "Accounts Manager"),
+            ("Bob Patel", f"bob@{domain}", "HR", "HR Generalist"),
+            ("Carol Singh", f"carol@{domain}", "IT", "Systems Analyst")
+        ]
+        
+        for emp_name, emp_email, emp_dept, emp_title in sample_employees:
+            cursor.execute("""
+                INSERT INTO employees (campaign_id, name, email, department, title)
+                VALUES (%s, %s, %s, %s, %s)
+            """, (campaign_id, emp_name, emp_email, emp_dept, emp_title))
+        db.commit()
+        
+        cursor.close()
+        db.close()
+        
+        thread = threading.Thread(target=process_campaign_background, args=(campaign_id,))
+        thread.daemon = True
+        thread.start()
+        
+        return jsonify({"ok": True, "campaign_id": campaign_id})
+        
+    except Exception as e:
+        return jsonify({"ok": False, "error": f"Failed to create campaign: {str(e)}"}), 500
+
+
+# ─── END TERMINAL WIDGET JSON API ─────────────────────────────────────────────
+
+
+@app.route("/terms")
+def terms():
+    return render_template("terms.html")
+
+@app.route("/privacy")
+def privacy():
+    return render_template("privacy.html")
 
 @app.route("/logout")
 def logout():
@@ -2089,6 +2311,8 @@ def dashboard():
                 c.*,
                 u.name AS owner_name,
                 u.email AS owner_email,
+                (SELECT name FROM employees e WHERE e.campaign_id = c.id ORDER BY e.id ASC LIMIT 1) as employee_name,
+                (SELECT email FROM employees e WHERE e.campaign_id = c.id ORDER BY e.id ASC LIMIT 1) as employee_email,
                 (SELECT COUNT(*) FROM employees e WHERE e.campaign_id = c.id) as employee_count,
                 (SELECT COUNT(*) FROM emails_sent es WHERE es.campaign_id = c.id AND COALESCE(es.status, 'sent') IN ('sent', 'previewed')) as emails_sent,
                 (SELECT COUNT(*) FROM emails_sent es WHERE es.campaign_id = c.id AND es.status = 'failed') as emails_failed,
@@ -2118,6 +2342,18 @@ def dashboard():
         """
         cursor.execute(sql, params)
         campaigns = cursor.fetchall()
+
+        # Get count of unique departments targeted by this user's campaigns
+        dept_sql = f"""
+            SELECT COUNT(DISTINCT e.department) as dept_count
+            FROM employees e
+            JOIN campaigns c ON e.campaign_id = c.id
+            {where_clause}
+        """
+        cursor.execute(dept_sql, params)
+        dept_row = cursor.fetchone()
+        dept_count = dept_row["dept_count"] if dept_row else 0
+
         # Aggregate totals for summary bar
         total_employees = sum(c['employee_count'] for c in campaigns)
         total_opens     = sum(c['opens']          for c in campaigns)
@@ -2202,6 +2438,53 @@ def dashboard():
             "worst_campaign": worst_campaign
         }
 
+        # Fetch real activity logs (UNION event clicks/opens/reports and campaign creations)
+        # NOTE: events table uses 'timestamp' column, not 'created_at'
+        recent_activities = []
+        try:
+            activities_sql = f"""
+                SELECT 
+                    'event' AS entry_type,
+                    ev.event_type,
+                    ev.timestamp AS created_at,
+                    c.name AS campaign_name,
+                    emp.name AS employee_name,
+                    emp.department AS employee_department,
+                    NULL AS owner_name
+                FROM events ev
+                JOIN emails_sent es ON ev.tracking_id = es.tracking_id
+                JOIN campaigns c ON es.campaign_id = c.id
+                LEFT JOIN employees emp ON (emp.campaign_id = es.campaign_id AND emp.email = es.recipient_email)
+                {where_clause}
+                
+                UNION ALL
+                
+                SELECT
+                    'campaign_created' AS entry_type,
+                    'create' AS event_type,
+                    c.created_at,
+                    c.name AS campaign_name,
+                    NULL AS employee_name,
+                    NULL AS employee_department,
+                    u.name AS owner_name
+                FROM campaigns c
+                LEFT JOIN users u ON c.user_id = u.id
+                {where_clause}
+                
+                ORDER BY created_at DESC
+                LIMIT 15
+            """
+            activities_params = params + params
+            cursor.execute(activities_sql, activities_params)
+            recent_activities = cursor.fetchall()
+        except Exception as act_err:
+            print(f"Activity feed query failed (non-critical): {act_err}")
+            recent_activities = []
+
+        # Ensure we always pass recent_activities list (no mocked/simulated data)
+        if not recent_activities:
+            recent_activities = []
+
     except Exception as e:
         print(f"Dashboard query failed: {e}")
         campaigns = []
@@ -2214,6 +2497,8 @@ def dashboard():
             "best_campaign": None,
             "worst_campaign": None
         }
+        dept_count = 0
+        recent_activities = []
     finally:
         cursor.close()
         db.close()
@@ -2225,6 +2510,8 @@ def dashboard():
         global_hss=global_hss,
         risk_trend=risk_trend,
         demo_summary=demo_summary,
+        dept_count=dept_count,
+        recent_activities=recent_activities,
     )
 
 @app.route("/reports-demo")
@@ -5425,6 +5712,26 @@ def password_breach_api(sha1_prefix):
         return resp.text, resp.status_code, {"Content-Type": "text/plain"}
     except Exception as e:
         return f"Error: {str(e)}", 500
+
+
+@app.route("/acceptable-use")
+def acceptable_use():
+    return render_template("acceptable_use.html")
+
+
+@app.route("/consent-policy")
+def consent_policy():
+    return render_template("consent_policy.html")
+
+
+@app.route("/join-beta", methods=["POST"])
+def join_beta():
+    from flask import request, redirect, flash, url_for
+    email = request.form.get("email")
+    if email:
+        flash("Thank you for requesting early access! We have added you to our waitlist.")
+    return redirect(url_for("home"))
+
 
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 5050))

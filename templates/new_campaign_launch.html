@@ -3,9 +3,11 @@
 {% block content %}
 <style>
     .nc-page {
-        max-width: 1200px;
+        max-width: 850px;
         margin: 0 auto;
         padding: 80px 2rem 2rem;
+        position: relative;
+        z-index: 1;
     }
     .nc-back {
         display: inline-flex;
@@ -95,6 +97,9 @@
     }
 </style>
 
+<!-- Interactive Liquid Canvas Background -->
+<canvas id="auth-canvas" aria-hidden="true"></canvas>
+
 <div class="nc-page">
     <a href="/new-campaign/upload/{{ campaign.id }}" class="nc-back">
         <i class="ti ti-arrow-left"></i> Back to Target Upload
@@ -180,4 +185,101 @@
                 <style>@keyframes spin { to { transform:rotate(360deg); } }</style>
     </div>
 </div>
+
+<script>
+// Interactive Liquid Wave Animation for Campaigns Page
+(function() {
+    const canvas = document.getElementById("auth-canvas");
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    let width = canvas.width = window.innerWidth;
+    let height = canvas.height = window.innerHeight;
+    const pointer = { x: -1000, y: -1000, targetX: -1000, targetY: -1000 };
+
+    function resize() {
+        width = canvas.width = window.innerWidth;
+        height = canvas.height = window.innerHeight;
+    }
+    window.addEventListener("resize", resize);
+
+    window.addEventListener("mousemove", (e) => {
+        pointer.targetX = e.clientX;
+        pointer.targetY = e.clientY;
+    });
+    
+    window.addEventListener("mouseout", () => {
+        pointer.targetX = -1000;
+        pointer.targetY = -1000;
+    });
+
+    const waves = [
+        {
+            y: height * 0.62,
+            length: 0.002,
+            amplitude: 100,
+            speed: 0.008,
+            color: "rgba(56, 189, 248, 0.08)"
+        },
+        {
+            y: height * 0.65,
+            length: 0.0015,
+            amplitude: 130,
+            speed: 0.005,
+            color: "rgba(99, 102, 241, 0.06)"
+        },
+        {
+            y: height * 0.55,
+            length: 0.0025,
+            amplitude: 80,
+            speed: 0.012,
+            color: "rgba(56, 189, 248, 0.04)"
+        }
+    ];
+
+    let time = 0;
+    function animate() {
+        ctx.clearRect(0, 0, width, height);
+        
+        pointer.x += (pointer.targetX - pointer.x) * 0.05;
+        pointer.y += (pointer.targetY - pointer.y) * 0.05;
+        
+        const isLight = document.body.classList.contains("light-theme");
+        
+        waves.forEach((w) => {
+            ctx.beginPath();
+            ctx.moveTo(0, height);
+            
+            w.y = height * 0.62;
+            
+            for (let x = 0; x <= width; x += 15) {
+                let dx = x - pointer.x;
+                let dy = w.y - pointer.y;
+                let dist = Math.hypot(dx, dy);
+                let hoverOffset = 0;
+                
+                if (dist < 320) {
+                    hoverOffset = (1 - dist / 320) * 50 * Math.sin(time * 0.06 + dist * 0.015);
+                }
+                
+                let y = w.y + hoverOffset + Math.sin(x * w.length + time * w.speed) * w.amplitude;
+                ctx.lineTo(x, y);
+            }
+            ctx.lineTo(width, height);
+            
+            if (isLight) {
+                ctx.fillStyle = w.color.replace("56, 189, 248", "37, 99, 235").replace("99, 102, 241", "79, 70, 229").replace("0.08", "0.1").replace("0.06", "0.08").replace("0.04", "0.06");
+            } else {
+                ctx.fillStyle = w.color;
+            }
+            
+            ctx.fill();
+        });
+        
+        time += 1;
+        requestAnimationFrame(animate);
+    }
+    resize();
+    animate();
+})();
+</script>
 {% endblock %}

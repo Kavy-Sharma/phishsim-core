@@ -1,252 +1,278 @@
 {% extends 'base.html' %}
 {% block title %}AI Generated Emails — {{ campaign.name }}{% endblock %}
 {% block content %}
-<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&family=Space+Mono&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;900&family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-/* Removed hardcoded body background so it respects the theme */
+.emails-page-wrapper {
+    background: var(--bg-base);
+    min-height: calc(100vh - 80px);
+    width: 100%;
+    box-sizing: border-box;
+    padding: clamp(1rem, 2vw, 2rem) clamp(1.5rem, 3vw, 3rem);
+}
 
-.emails-page { max-width: 1100px; margin: 0 auto; padding: 2rem; }
-
-/* Top bar */
 .emails-topbar {
-    display: flex; align-items: center; justify-content: space-between;
-    margin-bottom: 2.5rem; padding-bottom: 1.5rem;
-    border-bottom: 1px solid var(--border-color);
-    animation: fadeDown 0.5s ease-out;
+    margin-bottom: 1.5rem;
 }
 .back-link-styled {
-    display: inline-flex; align-items: center; gap: 8px;
-    color: #64748b; text-decoration: none; font-size: 0.9rem;
-    transition: color 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 400;
+    font-size: 0.9rem;
+    transition: color 0.2s ease;
 }
-.back-link-styled:hover { color: #06b6d4; }
+.back-link-styled:hover {
+    color: var(--primary);
+}
 
-/* Page header */
-.emails-hero {
-    background: linear-gradient(135deg, rgba(59,130,246,0.08), rgba(6,182,212,0.04));
-    border: 1px solid rgba(59,130,246,0.2);
-    border-radius: 20px; padding: 2.5rem;
-    margin-bottom: 2.5rem;
-    animation: fadeUp 0.6s ease-out;
-    position: relative; overflow: hidden;
+.emails-page-header {
+    margin-bottom: 2rem;
 }
-.emails-hero::before {
-    content: ''; position: absolute; top: -60px; right: -60px;
-    width: 250px; height: 250px; border-radius: 50%;
-    background: radial-gradient(circle, rgba(59,130,246,0.15), transparent 70%);
-    pointer-events: none;
-}
-.emails-eyebrow {
-    display: inline-flex; align-items: center; gap: 8px;
-    background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.25);
-    border-radius: 100px; padding: 5px 14px;
-    font-size: 0.78rem; color: #3b82f6;
-    font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 1px;
-    margin-bottom: 1rem;
-}
-.emails-eyebrow::before {
-    content: ''; width: 6px; height: 6px; border-radius: 50%;
-    background: #3b82f6; box-shadow: 0 0 8px #3b82f6;
-    animation: pulse 2s infinite;
-}
-@keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.2; } }
-.emails-title {
-    font-family: var(--font-sans); font-size: 2rem; font-weight: 800;
-    color: var(--text-main); margin: 0 0 0.5rem;
-}
-.emails-meta { color: var(--text-muted); font-size: 0.9rem; }
-.emails-count {
-    font-family: var(--font-mono); font-size: 2rem; font-weight: 900;
-    color: var(--accent-blue); text-align: right;
-}
-.emails-count small { display: block; font-size: 0.75rem; color: var(--text-muted); font-weight: normal; letter-spacing: 1px; text-transform: uppercase; margin-top: 4px; }
 
-/* Layout: sidebar list + viewer */
-.emails-layout {
+.emails-layout-container {
     display: grid;
     grid-template-columns: 320px 1fr;
-    gap: 1.5rem;
+    gap: 24px;
     align-items: start;
-    animation: fadeUp 0.7s ease-out 0.1s both;
 }
 
-/* Sidebar */
-.email-list {
-    background: transparent !important;
-    border: none !important;
-    border-radius: 0 !important;
-    overflow: visible !important;
-    position: sticky;
-    top: 80px;
-    max-height: calc(100vh - 120px);
+@media (max-width: 900px) {
+    .emails-layout-container {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Left panel: Inbox list */
+.email-list-panel {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: 12px;
+    overflow: hidden;
     display: flex;
     flex-direction: column;
+    height: 700px;
+    position: sticky;
+    top: 90px;
 }
 .email-list-header {
-    padding: 1rem 1.2rem;
-    border-bottom: 1px solid var(--border-color);
-    font-family: var(--font-mono);
+    padding: 16px;
+    border-bottom: 1px solid var(--border-subtle);
+    font-family: 'JetBrains Mono', monospace;
     font-size: 0.75rem;
     color: var(--text-muted);
+    letter-spacing: 0.08em;
     text-transform: uppercase;
-    letter-spacing: 1px;
-    background: rgba(0,0,0,0.05);
-    flex-shrink: 0;
+    font-weight: 600;
 }
 .email-list-body {
     overflow-y: auto;
     flex: 1;
 }
-.email-list-body::-webkit-scrollbar { width: 4px; }
-.email-list-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+.email-list-body::-webkit-scrollbar {
+    width: 6px;
+}
+.email-list-body::-webkit-scrollbar-track {
+    background: transparent;
+}
+.email-list-body::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+}
+body.light-theme .email-list-body::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.15);
+}
 
 .email-list-item {
-    padding: 1rem 1.2rem;
+    padding: 16px;
     cursor: pointer;
-    border-bottom: 1px solid var(--border-color);
-    transition: all 0.2s;
-    position: relative;
+    border-bottom: 1px solid var(--border-subtle);
+    transition: all 0.2s ease;
+    border-left: 2px solid transparent;
+    background: transparent;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    text-align: left;
 }
-.email-list-item:hover { background: rgba(59,130,246,0.06); }
+.email-list-item:hover {
+    background: var(--bg-hover, rgba(255, 255, 255, 0.04));
+}
 .email-list-item.active {
-    background: rgba(59,130,246,0.1);
-    border-left: 3px solid var(--accent-blue);
+    background: var(--primary-dim, rgba(59, 130, 246, 0.08)) !important;
+    border-left: 2px solid var(--primary) !important;
 }
-.email-list-item.active::before {
-    content: '';
-    position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
-    background: var(--accent-blue);
-}
-.eli-to { font-size: 0.8rem; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 4px; }
-.eli-subject { font-size: 0.88rem; color: var(--text-main); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 4px; }
-.eli-from { font-size: 0.75rem; color: var(--text-muted); }
 
-/* Email Viewer */
-.email-viewer {
-    background: transparent !important;
-    border: none !important;
-    border-radius: 0 !important;
-    overflow: visible !important;
-    min-height: 500px;
+.eli-to {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-family: 'JetBrains Mono', monospace;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.eli-subject {
+    font-size: 0.875rem;
+    color: var(--text-primary);
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 600;
+    line-height: 1.3;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.eli-from {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+/* Right panel: Email viewer */
+.email-viewer-panel {
+    border: 1px solid var(--border-subtle);
+    border-radius: 12px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    min-height: 700px;
+    background: var(--bg-surface);
 }
 .ev-header {
-    background: rgba(0,0,0,0.05);
-    padding: 1.5rem;
-    border-bottom: 1px solid var(--border-color);
+    background: var(--bg-surface);
+    padding: 24px;
+    border-bottom: 1px solid var(--border-subtle);
 }
 .ev-subject {
-    font-family: var(--font-sans);
-    font-size: 1.3rem; font-weight: 800; color: var(--text-main);
-    margin-bottom: 1rem;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 16px;
+    line-height: 1.3;
 }
 .ev-meta-row {
-    display: flex; align-items: center; gap: 10px;
-    margin-bottom: 8px; font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 8px;
+    font-size: 0.875rem;
 }
-.ev-meta-label { color: var(--text-muted); width: 50px; flex-shrink: 0; }
-.ev-meta-value { color: var(--text-muted); }
-.ev-meta-value strong { color: var(--text-main); }
+.ev-meta-label {
+    color: var(--text-muted);
+    width: 60px;
+    flex-shrink: 0;
+}
+.ev-meta-value {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 500;
+    color: var(--text-primary);
+}
 
-/* Email body rendered */
+/* Body container area */
 .ev-body {
-    padding: 0;
+    flex: 1;
+    padding: 24px;
+    background: var(--bg-base);
 }
+
+/* Realistic Client Inbox white background box */
 .ev-body-inner {
-    background: #fff;
-    color: #1e293b;
-    padding: 2rem;
-    font-family: Arial, Helvetica, sans-serif;
-    font-size: 0.95rem;
-    line-height: 1.7;
-    min-height: 200px;
+    background: #F8FAFF; /* Light background in dark theme */
+    color: #1A1A2E; /* Dark text in dark theme */
+    padding: 32px;
+    border-radius: var(--radius-lg, 12px);
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 400;
+    font-size: 1rem;
+    line-height: 1.6;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+    min-height: 300px;
+    word-break: break-word;
 }
+body.light-theme .ev-body-inner {
+    background: #FFFFFF; /* White background in light theme */
+    color: #0F172A; /* Dark text in light theme */
+}
+
+/* Force realistic hyperlinks to render as #0066CC and underline */
 .ev-body-inner a {
-    color: #2563eb;
+    color: #0066CC !important;
+    text-decoration: underline !important;
+    font-weight: 500 !important;
+}
+.ev-body-inner a:hover {
+    color: #0044aa !important;
 }
 
-/* AI Insight box */
-.ev-insight {
-    padding: 1.2rem 1.5rem;
-    background: rgba(6,182,212,0.06);
-    border-top: 1px solid rgba(6,182,212,0.15);
-    display: flex; gap: 12px; align-items: flex-start;
+/* Action bar below email body */
+.ev-action-bar {
+    display: flex;
+    gap: 12px;
+    padding: 16px 24px;
+    border-top: 1px solid var(--border-subtle);
+    background: var(--bg-surface);
+    flex-wrap: wrap;
 }
-.ev-insight-icon {
-    font-size: 1.2rem; color: #06b6d4; flex-shrink: 0; margin-top: 2px;
+.btn-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-default);
+    color: var(--text-primary);
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 0.2s ease;
 }
-.ev-insight-text { font-size: 0.88rem; color: #94a3b8; line-height: 1.6; }
-.ev-insight-text strong { color: #06b6d4; display: block; margin-bottom: 4px; }
-
-/* Empty state */
-.ev-empty {
-    display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
-    height: 400px; gap: 1rem;
-    color: #334155;
+.btn-action:hover {
+    background: var(--bg-hover, rgba(255, 255, 255, 0.04)) !important;
+    border-color: var(--primary) !important;
+    transform: translateY(-1px);
 }
-.ev-empty i { font-size: 3rem; }
-.ev-empty p { font-size: 0.95rem; }
-
-/* Pagination */
-.email-nav {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 1rem 1.5rem;
-    border-top: 1px solid rgba(255,255,255,0.06);
-    background: rgba(0,0,0,0.1);
-}
-.email-nav-btn {
-    display: inline-flex; align-items: center; gap: 8px;
-    padding: 8px 16px; border-radius: 8px;
-    background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.2);
-    color: #94a3b8; font-size: 0.85rem; cursor: pointer;
-    transition: all 0.2s; font-family: var(--font-sans);
-}
-.email-nav-btn:hover { background: rgba(59,130,246,0.2); color: #fff; }
-.email-nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
-.email-nav-counter {
-    font-family: var(--font-mono);
-    font-size: 0.8rem; color: #475569;
-}
-
-@keyframes fadeDown { from { opacity:0; transform: translateY(-12px); } to { opacity:1; transform: translateY(0); } }
-@keyframes fadeUp { from { opacity:0; transform: translateY(20px); } to { opacity:1; transform: translateY(0); } }
 </style>
 
-<div class="emails-page">
+<div class="emails-page-wrapper">
     <!-- Top bar -->
     <div class="emails-topbar">
         <a href="/campaign-report/{{ campaign.id }}" class="back-link-styled">
-            <i class="fas fa-arrow-left"></i> Back to Report
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+            Back to Campaign
         </a>
-        <span style="font-family: var(--font-mono); font-size: 0.78rem; color: #334155; text-transform: uppercase; letter-spacing: 1px;">
-            {{ campaign.scenario_type | replace('_', ' ') | title }} Scenario
-        </span>
     </div>
 
-    <!-- Hero -->
-    <div class="emails-hero">
-        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
-            <div>
-                {% if campaign.delivery_mode == 'preview' %}
-                <div class="emails-eyebrow" style="background:rgba(168,85,247,0.1); border-color:rgba(168,85,247,0.25); color:#a855f7;">
-                    <i class="fas fa-eye" style="margin-right:4px;"></i> Preview Mode — Emails Generated, Not Sent
-                </div>
-                {% elif campaign.delivery_mode == 'mailtrap' %}
-                <div class="emails-eyebrow" style="background:rgba(16,185,129,0.1); border-color:rgba(16,185,129,0.25); color:#10b981;">
-                    <i class="fas fa-shield-halved" style="margin-right:4px;"></i> Safe Send — Captured in Test Environment
-                </div>
-                {% else %}
-                <div class="emails-eyebrow">AI Generated Content</div>
-                {% endif %}
-                <h1 class="emails-title">{{ campaign.name }}</h1>
-                <p class="emails-meta">
-                    Browse every email the AI generated for this campaign.<br>
-                    Each one was crafted from scratch for the recipient's role and department.
-                </p>
+    <!-- Page Header (above both panels) -->
+    <div class="emails-page-header">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+            <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                <h1 style="font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 1.5rem; color: var(--text-primary); margin: 0;">{{ campaign.name }}</h1>
+                
+                <span class="preview-badge" style="
+                    display: inline-flex; align-items: center; gap: 6px; 
+                    background: var(--info-dim, rgba(6, 182, 212, 0.08)); 
+                    color: var(--info, #06b6d4); 
+                    border: 1px solid var(--info, rgba(6, 182, 212, 0.2)); 
+                    font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; font-weight: 600; 
+                    padding: 4px 10px; border-radius: 6px; text-transform: uppercase;
+                    letter-spacing: 0.08em;
+                ">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                    PREVIEW MODE — EMAILS GENERATED, NOT SENT
+                </span>
             </div>
-            <div class="emails-count">
-                {{ emails | length }}
-                <small>Emails Generated</small>
+            
+            <div style="text-align: right;">
+                <div style="font-family: 'Space Grotesk', sans-serif; font-size: 1.875rem; font-weight: 700; color: var(--primary); line-height: 1;">{{ emails | length }}</div>
+                <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: var(--text-muted); letter-spacing: 0.08em; margin-top: 4px; text-transform: uppercase; font-weight: 600;">
+                    {{ 'EMAIL' if emails|length == 1 else 'EMAILS' }} GENERATED
+                </div>
             </div>
         </div>
     </div>
@@ -256,19 +282,19 @@
     <div id="generating-banner" style="
         display:flex; align-items:center; gap:14px;
         background:rgba(168,85,247,0.08); border:1px solid rgba(168,85,247,0.25);
-        border-radius:14px; padding:1.2rem 1.5rem; margin-bottom:1.5rem;
+        border-radius:12px; padding:1.2rem 1.5rem; margin-bottom:1.5rem;
         animation: fadeUp 0.5s ease-out;">
         <div style="display:flex; gap:5px; flex-shrink:0;">
-            <span style="width:9px;height:9px;border-radius:50%;background:#a855f7;
+            <span style="width:8px;height:8px;border-radius:50%;background:#a855f7;
                 animation:pulseDot 1.4s ease-in-out infinite;"></span>
-            <span style="width:9px;height:9px;border-radius:50%;background:#a855f7;
+            <span style="width:8px;height:8px;border-radius:50%;background:#a855f7;
                 animation:pulseDot 1.4s ease-in-out 0.2s infinite;"></span>
-            <span style="width:9px;height:9px;border-radius:50%;background:#a855f7;
+            <span style="width:8px;height:8px;border-radius:50%;background:#a855f7;
                 animation:pulseDot 1.4s ease-in-out 0.4s infinite;"></span>
         </div>
         <div>
-            <strong style="color:#c084fc;">AI is generating your emails…</strong>
-            <span style="color:#94a3b8; font-size:0.88rem; margin-left:8px;">This page will update automatically.</span>
+            <strong style="color:#c084fc; font-family: 'Space Grotesk', sans-serif;">AI Phish Generator actively creating templates...</strong>
+            <span style="color:var(--text-secondary); font-size:0.88rem; margin-left:8px;">This inbox feed updates automatically.</span>
         </div>
     </div>
     <style>@keyframes pulseDot{0%,80%,100%{transform:scale(0)}40%{transform:scale(1)}}</style>
@@ -276,86 +302,63 @@
 
     {% if emails %}
     <!-- Email Client Layout -->
-    <div class="emails-layout">
-        <!-- Sidebar List -->
-        <div class="window-mockup" style="position: sticky; top: 80px; max-height: calc(100vh - 120px); display: flex; flex-direction: column; margin-bottom: 0;">
-            <div class="window-header">
-                <div class="window-dots">
-                    <span class="window-dot red"></span>
-                    <span class="window-dot yellow"></span>
-                    <span class="window-dot green"></span>
-                </div>
-                <span class="window-title">inbox_list.log</span>
+    <div class="emails-layout-container">
+        <!-- Sidebar List Panel -->
+        <div class="email-list-panel">
+            <div class="email-list-header">
+                INBOX ({{ emails | length }})
             </div>
-            <div class="window-body" style="padding: 0; flex: 1; display: flex; flex-direction: column; overflow: hidden;">
-                <div class="email-list">
-                    <div class="email-list-header">
-                        <i class="fas fa-inbox" style="color: #3b82f6; margin-right: 6px;"></i>
-                        Inbox ({{ emails | length }})
-                    </div>
-                    <div class="email-list-body">
-                        {% for email in emails %}
-                        <div class="email-list-item {% if loop.first %}active{% endif %}"
-                             onclick="showEmail({{ loop.index0 }})"
-                             id="list-item-{{ loop.index0 }}">
-                            <div class="eli-to">To: {{ email.recipient_email }}</div>
-                            <div class="eli-subject">{{ email.subject or 'No Subject' }}</div>
-                            <div class="eli-from">From: {{ email.sender_name or 'AI Engine' }}</div>
-                        </div>
-                        {% endfor %}
-                    </div>
+            <div class="email-list-body">
+                {% for email in emails %}
+                <div class="email-list-item {% if loop.first %}active{% endif %}"
+                     onclick="showEmail({{ loop.index0 }})"
+                     id="list-item-{{ loop.index0 }}">
+                    <div class="eli-to">To: {{ email.recipient_email }}</div>
+                    <div class="eli-subject">{{ email.subject or 'No Subject' }}</div>
+                    <div class="eli-from">From: {{ email.sender_name or 'AI Engine' }}</div>
                 </div>
+                {% endfor %}
             </div>
         </div>
 
-        <!-- Email Viewer -->
-        <div class="window-mockup" style="margin-bottom: 0;">
-            <div class="window-header">
-                <div class="window-dots">
-                    <span class="window-dot red"></span>
-                    <span class="window-dot yellow"></span>
-                    <span class="window-dot green"></span>
+        <!-- Email Viewer Panel -->
+        <div class="email-viewer-panel">
+            <div class="ev-header">
+                <div class="ev-subject" id="ev-subject">{{ emails[0].subject or 'No Subject' }}</div>
+                <div class="ev-meta-row">
+                    <span class="ev-meta-label">From</span>
+                    <span class="ev-meta-value" id="ev-from">{{ emails[0].sender_name or 'AI Engine' }}</span>
                 </div>
-                <span class="window-title">email_view.eml</span>
+                <div class="ev-meta-row">
+                    <span class="ev-meta-label">To</span>
+                    <span class="ev-meta-value" id="ev-to">{{ emails[0].recipient_email }}</span>
+                </div>
             </div>
-            <div class="window-body" style="padding: 0;">
-                <div class="email-viewer" id="email-viewer">
-                    <div class="ev-header" id="ev-header">
-                        <div class="ev-subject" id="ev-subject">{{ emails[0].subject or 'No Subject' }}</div>
-                        <div class="ev-meta-row">
-                            <span class="ev-meta-label">From</span>
-                            <span class="ev-meta-value"><strong id="ev-from">{{ emails[0].sender_name or 'AI Engine' }}</strong></span>
-                        </div>
-                        <div class="ev-meta-row">
-                            <span class="ev-meta-label">To</span>
-                            <span class="ev-meta-value" id="ev-to">{{ emails[0].recipient_email }}</span>
-                        </div>
-                    </div>
-                    <div class="ev-body">
-                        <div class="ev-body-inner" id="ev-body">
-                            {{ emails[0].body_html | safe if emails[0].body_html else '<em style="color:#94a3b8;">Email body not available.</em>' }}
-                        </div>
-                    </div>
-                    {% if emails[0].educational_breakdown %}
-                    <div class="ev-insight">
-                        <div class="ev-insight-icon"><i class="fas fa-lightbulb"></i></div>
-                        <div class="ev-insight-text">
-                            <strong>AI Psychological Insight</strong>
-                            <span id="ev-insight-text">{{ emails[0].educational_breakdown }}</span>
-                        </div>
-                    </div>
-                    {% endif %}
-                    <!-- Nav -->
-                    <div class="email-nav">
-                        <button class="email-nav-btn" onclick="prevEmail()" id="btn-prev" disabled>
-                            <i class="fas fa-chevron-left"></i> Previous
-                        </button>
-                        <span class="email-nav-counter" id="nav-counter">1 / {{ emails | length }}</span>
-                        <button class="email-nav-btn" onclick="nextEmail()" id="btn-next" {% if emails|length <= 1 %}disabled{% endif %}>
-                            Next <i class="fas fa-chevron-right"></i>
-                        </button>
-                    </div>
+            
+            <div class="ev-body">
+                <div class="ev-body-inner" id="ev-body">
+                    {{ emails[0].body_html | safe if emails[0].body_html else '<em style="color:var(--text-muted);">Email body not available.</em>' }}
                 </div>
+            </div>
+            
+            <!-- Action bar below email body -->
+            <div class="ev-action-bar">
+                <button onclick="copyPhishingLink()" class="btn-action">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                    Copy Phishing Link
+                </button>
+                <a id="action-preview-link" href="/simulated?id={{ emails[0].tracking_id }}" target="_blank" class="btn-action">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                    Preview Landing Page
+                </a>
+                <a href="/new-campaign/{{ campaign.id }}" class="btn-action">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                    Edit Email
+                </a>
+                <a href="/campaign-report/{{ campaign.id }}" class="btn-action">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+                    View Analytics
+                </a>
             </div>
         </div>
     </div>
@@ -372,10 +375,10 @@
         document.getElementById('ev-subject').textContent = e.subject || 'No Subject';
         document.getElementById('ev-from').textContent = e.sender_name || 'AI Engine';
         document.getElementById('ev-to').textContent = e.recipient_email;
-        document.getElementById('ev-body').innerHTML = e.body_html || '<em style="color:#94a3b8;">Body not available.</em>';
+        document.getElementById('ev-body').innerHTML = e.body_html || '<em style="color:var(--text-muted);">Body not available.</em>';
 
-        const insightEl = document.getElementById('ev-insight-text');
-        if (insightEl) insightEl.textContent = e.educational_breakdown || '';
+        // Update active preview link
+        document.getElementById('action-preview-link').href = `/simulated?id=${e.tracking_id || ''}`;
 
         // Update sidebar active
         document.querySelectorAll('.email-list-item').forEach((el, i) => {
@@ -386,22 +389,37 @@
         const listItem = document.getElementById('list-item-' + idx);
         if (listItem) listItem.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
 
-        // Update nav
+        // Update counter and nav buttons
         document.getElementById('nav-counter').textContent = (idx + 1) + ' / ' + emails.length;
-        document.getElementById('btn-prev').disabled = idx === 0;
-        document.getElementById('btn-next').disabled = idx === emails.length - 1;
     }
 
-    function prevEmail() { if (current > 0) showEmail(current - 1); }
-    function nextEmail() { if (current < emails.length - 1) showEmail(current + 1); }
+    function copyPhishingLink() {
+        const e = emails[current];
+        if (e && e.tracking_id) {
+            const baseUrl = window.location.origin;
+            const link = `${baseUrl}/click/${e.tracking_id}`;
+            navigator.clipboard.writeText(link).then(() => {
+                const btn = document.querySelector('button[onclick="copyPhishingLink()"]');
+                const originalHTML = btn.innerHTML;
+                btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;"><polyline points="20 6 9 17 4 12"></polyline></svg> Link Copied!';
+                btn.style.borderColor = 'var(--success)';
+                setTimeout(() => {
+                    btn.innerHTML = originalHTML;
+                    btn.style.borderColor = 'var(--border-default)';
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy link:', err);
+            });
+        }
+    }
     </script>
 
     {% else %}
-    <div class="email-viewer">
+    <div class="email-viewer-panel">
         <div class="ev-empty">
-            <i class="fas fa-{% if campaign.status == 'launching' %}spinner fa-spin{% else %}inbox{% endif %}"></i>
+            <i class="ti ti-{% if campaign.status == 'launching' %}loader ti-spin{% else %}inbox{% endif %}"></i>
             <p>{% if campaign.status == 'launching' %}AI is generating emails, please wait…{% else %}No emails were generated for this campaign yet.{% endif %}</p>
-            <a href="/dashboard" style="color: #3b82f6;">Return to Dashboard</a>
+            <a href="/dashboard" class="btn-primary-filled" style="text-decoration: none;"><i class="ti ti-arrow-left"></i> Return to Dashboard</a>
         </div>
     </div>
     {% endif %}

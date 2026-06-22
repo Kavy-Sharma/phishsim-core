@@ -569,6 +569,33 @@ body.light-theme .modal-close:hover {
     color: #ef4444;
     border-color: rgba(239, 68, 68, 0.25);
 }
+body.light-theme .report-hero {
+    background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(238,242,255,0.7));
+    border-color: rgba(37, 99, 235, 0.12);
+}
+body.light-theme .hss-gauge {
+    background: #ffffff;
+    box-shadow: 0 10px 30px rgba(37, 99, 235, 0.06);
+}
+body.light-theme .rstat-box,
+body.light-theme .report-panel,
+body.light-theme .benchmark-card {
+    background: #ffffff;
+    border-color: rgba(30, 41, 59, 0.08);
+    box-shadow: 0 10px 25px rgba(37, 99, 235, 0.04);
+}
+body.light-theme .rstat-box:hover {
+    border-color: rgba(37, 99, 235, 0.25);
+}
+body.light-theme .rstat-comp.neutral {
+    background: rgba(0,0,0,0.03);
+    border-color: rgba(0,0,0,0.08);
+}
+body.light-theme .brief-doc {
+    background: #ffffff;
+    border-color: rgba(30, 41, 59, 0.08);
+    box-shadow: inset 0 0 20px rgba(0,0,0,0.015);
+}
 </style>
 
 <div class="report-page">
@@ -767,7 +794,7 @@ body.light-theme .modal-close:hover {
     <!-- Live Reasoning Stream & Susceptibility Fingerprint -->
     <div class="double-panel">
         <!-- Live AI reasoning -->
-        <div class="report-panel" style="display:flex; flex-direction:column; justify-content:space-between;">
+        <div class="report-panel" style="display:flex; flex-direction:column; justify-content:flex-start; gap:1rem;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
                 <h2 style="margin:0;"><i class="ti ti-brain" style="color:var(--accent-purple); margin-right: 14px;"></i>Live Agent Thinking Stream</h2>
                 <div style="display:flex; align-items:center; gap:8px;">
@@ -776,7 +803,7 @@ body.light-theme .modal-close:hover {
                 </div>
             </div>
             
-            <div class="agent-shell" id="typing-log"></div>
+            <div class="agent-shell" id="typing-log" style="flex: 1;"></div>
         </div>
 
         <!-- Behavioral susceptibility fingerprint -->
@@ -1649,6 +1676,8 @@ function showPremiumToast(message, iconClass = 'fa-circle-check') {
     
     const toast = document.createElement('div');
     toast.className = 'premium-toast';
+    toast.style.cursor = 'grab';
+    toast.style.userSelect = 'none';
     toast.innerHTML = `
         <i class="fas ${iconClass} toast-success-icon"></i>
         <span>${message}</span>
@@ -1656,12 +1685,20 @@ function showPremiumToast(message, iconClass = 'fa-circle-check') {
     
     container.appendChild(toast);
     
+    if (window.attachDismissGesture) {
+        window.attachDismissGesture(toast);
+    }
+    
     setTimeout(() => {
-        toast.style.animation = 'none';
-        toast.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
-        toast.style.opacity = '0';
-        toast.style.transform = 'translateY(-20px)';
-        setTimeout(() => toast.remove(), 500);
+        if (toast && toast.parentElement) {
+            toast.style.animation = 'none';
+            toast.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateY(-20px)';
+            setTimeout(() => {
+                if (toast && toast.parentElement) toast.remove();
+            }, 500);
+        }
     }, 4000);
 }
 
