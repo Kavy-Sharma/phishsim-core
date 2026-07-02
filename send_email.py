@@ -180,12 +180,22 @@ def send_phishing_email(to_email, subject, sender_name, body_html, tracking_id, 
     msg["To"]      = to_email
     if reply_to:
         msg["Reply-To"] = reply_to
+        
+    # Deliverability headers
+    msg["List-Unsubscribe"] = f'<mailto:{settings["from_email"]}?subject=unsubscribe>'
+    msg["X-Mailer"] = "PhishSim AI Security Platform"
+    msg["Precedence"] = "bulk"
+    
     msg.attach(MIMEText(body_html, "html"))
 
     try:
         with smtplib.SMTP(settings["host"], settings["port"], timeout=6) as server:
             if settings.get("encryption") == "starttls":
-                server.starttls()
+                import ssl
+                context = ssl.create_default_context()
+                context.check_hostname = False
+                context.verify_mode = ssl.CERT_NONE
+                server.starttls(context=context)
             if settings["user"] and settings["password"]:
                 server.login(settings["user"], settings["password"])
             server.send_message(msg)

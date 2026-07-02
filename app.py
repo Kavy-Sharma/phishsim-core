@@ -112,10 +112,41 @@ def record_failed_login(identifier):
 def clear_failed_logins(identifier):
     LOGIN_ATTEMPTS.pop(identifier, None)
 
-# --- Database Connection Helper ---
-# use_pure=True forces the pure-Python connector path, which supports MySQL 8+'s
-# default caching_sha2_password auth without requiring SSL (unlike the C extension).
+# --- Database Connection Pooling ---
+import mysql.connector.pooling
+
+db_pool = None
+
 def get_db_connection():
+    global db_pool
+    if db_pool is None:
+        try:
+            db_pool = mysql.connector.pooling.MySQLConnectionPool(
+                pool_name="phishsim_pool",
+                pool_size=16,
+                pool_reset_session=True,
+                host=os.getenv("DB_HOST", "localhost"),
+                port=int(os.getenv("DB_PORT", 3306)),
+                user=os.getenv("DB_USER", "root"),
+                password=os.getenv("DB_PASSWORD", ""),
+                database=os.getenv("DB_NAME", "phishsim_db"),
+                charset="utf8mb4",
+                collation="utf8mb4_unicode_ci",
+                use_pure=True,
+                ssl_disabled=os.getenv("DB_SSL_DISABLED", "False").lower() == "true"
+            )
+            print("Database connection pool initialized successfully with size 16.")
+        except Exception as pool_err:
+            print(f"Failed to initialize database connection pool: {pool_err}")
+            db_pool = False # Set to False to prevent re-attempts
+
+    if db_pool:
+        try:
+            return db_pool.get_connection()
+        except Exception as conn_err:
+            print(f"Failed to get connection from pool, falling back to direct connection: {conn_err}")
+
+    # Fallback to direct connection
     return mysql.connector.connect(
         host=os.getenv("DB_HOST", "localhost"),
         port=int(os.getenv("DB_PORT", 3306)),
@@ -281,6 +312,9 @@ def add_security_headers(response):
     response.headers.setdefault("X-Frame-Options", "DENY")
     response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
     response.headers.setdefault("Permissions-Policy", "camera=(), microphone=(), geolocation=()")
+    # High-performance caching for static assets
+    if request.path.startswith('/static/'):
+        response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
     return response
 
 def send_verification_email(to_email, token):
@@ -1561,8 +1595,10 @@ def api_terminal_campaign_create():
                 cursor.close()
                 db.close()
                 return jsonify({"ok": False, "error": "Limit of 3 campaigns reached for Free tier. Please upgrade to PRO."}), 403
-        
-        delivery_mode = "preview" if user["role"] not in ("admin", "pro") else "mailtrap"
+        safe_send_available = bool(
+            os.getenv("MAILTRAP_USER", "").strip() and os.getenv("MAILTRAP_PASS", "").strip()
+        )
+        delivery_mode = "mailtrap" if safe_send_available else "smtp"
         sql = """
             INSERT INTO campaigns (user_id, name, company_domain, scenario_type, delivery_mode, status)
             VALUES (%s, %s, %s, %s, %s, %s)
@@ -2826,16 +2862,12 @@ def new_campaign(campaign_id=None):
             session["campaign_mailtrap_pass"] = own_mailtrap_pass
             delivery_mode = "mailtrap"
 
-        # PRO and Admin users can use smtp/mailtrap. Free users are forced to preview.
-        if user["role"] not in ("admin", "pro"):
+        # Local smtp4dev/sandbox mode is admin-only, including in deployed mode.
+        if delivery_mode == "local" and not local_delivery_available:
             delivery_mode = "preview"
-        else:
-            # Local smtp4dev/sandbox mode is admin-only, including in deployed mode.
-            if delivery_mode == "local" and not local_delivery_available:
-                delivery_mode = "preview"
-            # mailtrap only when credentials are present
-            if delivery_mode == "mailtrap" and not safe_send_available:
-                delivery_mode = "preview" if user["role"] != "admin" else "smtp"
+        # mailtrap only when credentials are present
+        if delivery_mode == "mailtrap" and not safe_send_available and not (session.get("campaign_mailtrap_user") and session.get("campaign_mailtrap_pass")):
+            delivery_mode = "preview"
 
         # 2. Security Check: Ensure consent was ticked
         if not consent:
@@ -3800,6 +3832,7 @@ def process_campaign_background(campaign_id):
             'executive':      f"{targetCompanyName} Executive Office",
             'finance':        'Finance Department',
             'credential':     f"{targetCompanyName} Account Security",
+            'ceo':            f"{targetCompanyName} Leadership",
             'custom':         campaign.get("custom_sender_name") or 'Security Team'
         }
         displayName = senderDisplayNames.get(campaign["scenario_type"], 'IT Security Team')
@@ -3886,7 +3919,54 @@ def process_campaign_background(campaign_id):
                 body_replaced = body_replaced.replace("<a ", "<a target='_blank' ")
                 report_button_html = report_button_html.replace('href="', 'target="_blank" href="')
                 
-            email_body_base = body_replaced + report_button_html + f'\n<img src="{pixel_url}" width="1" height="1" style="display:none;" />'
+            email_body_content = body_replaced + report_button_html
+            
+            # Wrap in corporate HTML structure to avoid spam filtering
+            email_body_base = f"""<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin:0;padding:0;background:#f5f5f5;font-family:Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f5f5;padding:20px 0;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:4px;box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #e0e0e0;">
+          
+          <!-- Header bar — matches the spoofed company style -->
+          <tr>
+            <td style="background:#1a1a2e;padding:20px 32px;border-top-left-radius:4px;border-top-right-radius:4px;">
+              <span style="color:#ffffff;font-size:16px;font-weight:bold;">{targetCompanyName}</span>
+              <span style="color:rgba(255,255,255,0.5);font-size:12px;float:right;margin-top:4px;">Security Notification</span>
+            </td>
+          </tr>
+          
+          <!-- Body -->
+          <tr>
+            <td style="padding:32px;color:#333333;font-size:14px;line-height:1.6;">
+              {email_body_content}
+            </td>
+          </tr>
+          
+          <!-- Footer -->
+          <tr>
+            <td style="padding:20px 32px;border-top:1px solid #eee;background:#fafafa;border-bottom-left-radius:4px;border-bottom-right-radius:4px;">
+              <p style="margin:0;font-size:11px;color:#999;line-height:1.4;">
+                This message was sent by {targetCompanyName} IT Systems. 
+                If you believe you received this in error, please contact your IT helpdesk.
+              </p>
+            </td>
+          </tr>
+          
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+<img src="{pixel_url}" width="1" height="1" style="display:none;" />"""
+
             email_data["body_html"] = add_tracking_pixel(email_body_base, tracking_id)
 
             if is_preview:
@@ -4126,9 +4206,132 @@ def tracking_pixel(tracking_id):
     ])
     return send_file(io.BytesIO(pixel), mimetype="image/png")
 
+def try_lock_action(tracking_token, action, recipient_email, campaign_id):
+    """Locks a token for clicked or reported action. Only first action wins."""
+    try:
+        db = get_db_connection()
+        cursor = db.cursor(dictionary=True)
+        
+        # Ensure the locks table exists
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS simulation_locks (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                tracking_token VARCHAR(255) UNIQUE NOT NULL,
+                primary_action ENUM('clicked', 'reported', 'opened') NOT NULL,
+                locked_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                recipient_email VARCHAR(255),
+                campaign_id INT
+            )
+        """)
+        db.commit()
+
+        # Try to insert lock
+        cursor.execute(
+            """INSERT INTO simulation_locks 
+               (tracking_token, primary_action, recipient_email, campaign_id) 
+               VALUES (%s, %s, %s, %s)""",
+            (tracking_token, action, recipient_email, campaign_id)
+        )
+        db.commit()
+        cursor.close()
+        db.close()
+        return {"success": True, "action": action}
+    except Exception as err:
+        try:
+            # Handle duplicate key error — find existing action
+            cursor.execute(
+                "SELECT primary_action FROM simulation_locks WHERE tracking_token = %s",
+                (tracking_token,)
+            )
+            existing = cursor.fetchone()
+            cursor.close()
+            db.close()
+            existing_action = existing["primary_action"] if existing else None
+            return {"success": False, "existingAction": existing_action}
+        except Exception:
+            return {"success": False, "existingAction": None}
+
+@app.route("/already-actioned")
+def already_actioned():
+    action_type = request.args.get("type", "clicked")
+    token = request.args.get("id", "")
+    return render_template("already_actioned.html", type=action_type, token=token)
+
+def get_certificate_data(tracking_token):
+    """Fetches details of recipient, campaign, lock date, and formatted name for certificate."""
+    try:
+        db = get_db_connection()
+        cursor = db.cursor(dictionary=True)
+        cursor.execute(
+            """SELECT es.recipient_email, c.name as campaign_name, 
+                      sl.locked_at as action_date, c.scenario_type, emp.name as recipient_name
+               FROM emails_sent es
+               JOIN campaigns c ON es.campaign_id = c.id
+               LEFT JOIN employees emp ON emp.email = es.recipient_email AND emp.campaign_id = es.campaign_id
+               LEFT JOIN simulation_locks sl ON sl.tracking_token = es.tracking_id
+               WHERE es.tracking_id = %s""",
+            (tracking_token,)
+        )
+        data = cursor.fetchone()
+        cursor.close()
+        db.close()
+        
+        if not data:
+            return None
+            
+        recipient_name = data.get("recipient_name")
+        if recipient_name:
+            recipient_name = " ".join(w.capitalize() for w in recipient_name.split())
+        else:
+            email_prefix = data["recipient_email"].split("@")[0]
+            recipient_name = " ".join(w.capitalize() for w in email_prefix.replace(".", " ").replace("_", " ").split())
+            
+        action_date = data.get("action_date") or datetime.datetime.now()
+        date_str = action_date.strftime("%B %d, %Y")
+        
+        return {
+            "name": recipient_name,
+            "date": date_str,
+            "campaignName": data["campaign_name"],
+            "verificationId": f"PSV-{tracking_token[:8].upper()}"
+        }
+    except Exception as e:
+        print(f"Error fetching certificate data: {e}")
+        return None
+
+@app.route("/certificate/<tracking_token>")
+def view_certificate(tracking_token):
+    """Renders the professional HTML certificate for a simulation token."""
+    data = get_certificate_data(tracking_token)
+    if not data:
+        return "Certificate not found or simulation data missing.", 404
+    return render_template("certificate.html", data=data)
+
 @app.route("/click/<tracking_id>")
 def track_click(tracking_id):
-    """Logs click then shows fake landing page."""
+    """Logs click then shows fake landing page if lock succeeds."""
+    try:
+        db = get_db_connection()
+        cursor = db.cursor(dictionary=True)
+        cursor.execute("SELECT campaign_id, recipient_email FROM emails_sent WHERE tracking_id = %s", (tracking_id,))
+        sim = cursor.fetchone()
+        cursor.close()
+        db.close()
+    except Exception as db_err:
+        print(f"Error querying emails_sent in track_click: {db_err}")
+        return "Database error", 500
+
+    if not sim:
+        return "Link not found", 404
+
+    lock = try_lock_action(tracking_id, 'clicked', sim['recipient_email'], sim['campaign_id'])
+
+    if not lock['success']:
+        if lock.get('existingAction') == 'reported':
+            return redirect(url_for('already_actioned', type='reported', id=tracking_id))
+        if lock.get('existingAction') == 'clicked':
+            return redirect(f"/simulated?id={tracking_id}&duplicate=true")
+
     user_agent = request.headers.get("User-Agent", "Unknown")
     log_event(tracking_id, "open", request.remote_addr, user_agent)
     log_event(tracking_id, "click", request.remote_addr, user_agent)
@@ -4433,25 +4636,48 @@ def complete_training():
 
 @app.route("/report/<tracking_id>")
 def report_email(tracking_id):
-    """Handles the user clicking 'Report this email'."""
+    """Handles the user clicking 'Report this email' with lock checking."""
+    try:
+        db = get_db_connection()
+        cursor = db.cursor(dictionary=True)
+        cursor.execute("SELECT campaign_id, recipient_email FROM emails_sent WHERE tracking_id = %s", (tracking_id,))
+        sim = cursor.fetchone()
+        cursor.close()
+        db.close()
+    except Exception as db_err:
+        print(f"Error querying emails_sent in report_email: {db_err}")
+        return "Database error", 500
+
+    if not sim:
+        return "Report link not found", 404
+
+    lock = try_lock_action(tracking_id, 'reported', sim['recipient_email'], sim['campaign_id'])
+
+    if not lock['success']:
+        if lock.get('existingAction') == 'clicked':
+            return redirect(url_for('already_actioned', type='clicked', id=tracking_id))
+        if lock.get('existingAction') == 'reported':
+            # Double report - show thank you page with duplicate flag
+            recipient_email = sim["recipient_email"]
+            recipient_name = "Security Champion"
+            if "@" in recipient_email:
+                local_part = recipient_email.split("@")[0]
+                recipient_name = local_part.replace(".", " ").replace("_", " ").title()
+            return render_template("thank_you_for_reporting.html", 
+                                   recipient_name=recipient_name, 
+                                   recipient_email=recipient_email, 
+                                   tracking_id=tracking_id,
+                                   duplicate=True)
+
     user_agent = request.headers.get("User-Agent", "Unknown")
     log_event(tracking_id, "open", request.remote_addr, user_agent)
     log_event(tracking_id, "report", request.remote_addr, user_agent)
     
+    recipient_email = sim["recipient_email"]
     recipient_name = "Security Champion"
-    recipient_email = "your-email@company.com"
-    try:
-        db = get_db_connection()
-        cursor = db.cursor(dictionary=True)
-        cursor.execute("SELECT recipient_email FROM emails_sent WHERE tracking_id = %s", (tracking_id,))
-        res = cursor.fetchone()
-        if res:
-            recipient_email = res["recipient_email"]
-            if "@" in recipient_email:
-                local_part = recipient_email.split("@")[0]
-                recipient_name = local_part.replace(".", " ").replace("_", " ").title()
-    except Exception as e:
-        print(f"Error fetching recipient for report: {e}")
+    if "@" in recipient_email:
+        local_part = recipient_email.split("@")[0]
+        recipient_name = local_part.replace(".", " ").replace("_", " ").title()
         
     return render_template("thank_you_for_reporting.html", 
                            recipient_name=recipient_name, 

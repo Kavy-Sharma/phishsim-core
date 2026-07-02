@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Certificate of Vigilance - PhishSim.ai</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* Reset & Base styling */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    /* Certificate page background */
+    .certificate-page {
+      min-height: 100vh;
+      background: #0A0F1E;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 20px;
+      font-family: 'Space Grotesk', sans-serif;
+    }
+
+    /* Wrapper with subtle glow */
+    .certificate-wrapper {
+      max-width: 780px;
+      width: 100%;
+    }
+
+    /* The certificate frame */
+    .cert-frame {
+      background: linear-gradient(145deg, #0D1626 0%, #111827 50%, #0D1626 100%);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      border-radius: 4px;
+      padding: 60px 80px;
+      position: relative;
+      box-shadow: 
+        0 0 0 6px rgba(56, 189, 248, 0.04),
+        0 0 0 7px rgba(56, 189, 248, 0.12),
+        0 32px 80px rgba(0, 0, 0, 0.6);
+    }
+
+    /* Corner decorations (pure CSS) */
+    .cert-frame::before,
+    .cert-frame::after {
+      content: '';
+      position: absolute;
+      width: 24px;
+      height: 24px;
+      border-color: rgba(56, 189, 248, 0.5);
+      border-style: solid;
+    }
+    .cert-frame::before {
+      top: 16px; left: 16px;
+      border-width: 2px 0 0 2px;
+    }
+    .cert-frame::after {
+      bottom: 16px; right: 16px;
+      border-width: 0 2px 2px 0;
+    }
+
+    /* Header */
+    .cert-header {
+      text-align: center;
+      margin-bottom: 40px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid rgba(56, 189, 248, 0.12);
+    }
+    .cert-logo-text {
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 700;
+      font-size: 1.4rem;
+      color: #F0F4FF;
+      letter-spacing: -0.01em;
+    }
+    .cert-logo-ai {
+      color: #38BDF8;
+    }
+    .cert-org-line {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.15em;
+      color: rgba(148, 163, 184, 0.6);
+      margin-top: 6px;
+    }
+
+    /* Body */
+    .cert-body {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+    .cert-title-small {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.2em;
+      color: #38BDF8;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+    .cert-title-large {
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 300;
+      font-size: 3.5rem;
+      color: #F0F4FF;
+      letter-spacing: -0.02em;
+      line-height: 1;
+      margin-bottom: 32px;
+    }
+    .cert-awarded-text {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 0.9rem;
+      color: rgba(148, 163, 184, 0.8);
+      margin-bottom: 12px;
+      letter-spacing: 0.02em;
+    }
+
+    /* THE RECIPIENT NAME — this is the most important fix */
+    .cert-recipient-name {
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 600;
+      font-size: 2.2rem;
+      color: #F0F4FF;
+      /* NOT all caps — title case only */
+      text-transform: none;
+      letter-spacing: -0.01em;
+      padding: 16px 0;
+      border-top: 1px solid rgba(56, 189, 248, 0.15);
+      border-bottom: 1px solid rgba(56, 189, 248, 0.15);
+      margin: 0 auto 24px;
+      max-width: 500px;
+    }
+    .cert-description {
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 400;
+      font-size: 0.95rem;
+      color: rgba(148, 163, 184, 0.85);
+      line-height: 1.7;
+      max-width: 520px;
+      margin: 0 auto 16px;
+    }
+    .cert-context {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      color: rgba(56, 189, 248, 0.7);
+      letter-spacing: 0.05em;
+    }
+
+    /* Footer */
+    .cert-footer {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      padding-top: 32px;
+      border-top: 1px solid rgba(56, 189, 248, 0.1);
+    }
+    .cert-footer-left,
+    .cert-footer-right {
+      flex: 1;
+    }
+    .cert-footer-right {
+      text-align: right;
+    }
+    .cert-footer-line {
+      height: 1px;
+      background: rgba(56, 189, 248, 0.3);
+      margin-bottom: 8px;
+      width: 120px;
+    }
+    .cert-footer-right .cert-footer-line {
+      margin-left: auto;
+    }
+    .cert-footer-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 0.12em;
+      color: rgba(148, 163, 184, 0.5);
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+    .cert-footer-value {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 0.85rem;
+      color: rgba(240, 244, 255, 0.8);
+    }
+    .cert-seal {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      border: 2px solid #38BDF8;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      color: #38BDF8;
+      margin: 0 auto;
+      box-shadow: 0 0 16px rgba(56, 189, 248, 0.2);
+    }
+
+    /* Print / PDF styles */
+    @media print {
+      body { background: white; }
+      .certificate-page { background: white; padding: 0; min-height: auto; }
+      .cert-frame { 
+        border-color: #333; 
+        box-shadow: none;
+        background: white;
+        padding: 40px 60px;
+      }
+      .cert-title-large, .cert-recipient-name { color: #000 !important; }
+      .cert-title-small, .cert-logo-ai, .cert-context { color: #0066CC !important; }
+      .cert-description, .cert-awarded-text { color: #444 !important; }
+      .cert-logo-text { color: #000 !important; }
+      .cert-footer-value { color: #333 !important; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="certificate-page">
+  <div class="certificate-wrapper">
+    
+    <!-- Outer border frame -->
+    <div class="cert-frame">
+      
+      <!-- Header -->
+      <div class="cert-header">
+        <div class="cert-logo">
+          <span class="cert-logo-text">PhishSim<span class="cert-logo-ai">.ai</span></span>
+        </div>
+        <div class="cert-org-line">SECURITY AWARENESS TRAINING PROGRAM</div>
+      </div>
+      
+      <!-- Main content -->
+      <div class="cert-body">
+        <div class="cert-title-small">CERTIFICATE OF</div>
+        <div class="cert-title-large">Vigilance</div>
+        
+        <div class="cert-awarded-text">This certificate is awarded to</div>
+        
+        <!-- Recipient name — elegant, not all caps -->
+        <div class="cert-recipient-name">{{ data.name }}</div>
+        
+        <div class="cert-description">
+          for successfully identifying and reporting a simulated phishing threat,
+          demonstrating active security awareness and protecting organizational integrity.
+        </div>
+        
+        <!-- Campaign context -->
+        <div class="cert-context">
+          Simulation: <strong>{{ data.campaignName }}</strong>
+        </div>
+      </div>
+      
+      <!-- Footer with date and ID -->
+      <div class="cert-footer">
+        <div class="cert-footer-left">
+          <div class="cert-footer-line"></div>
+          <div class="cert-footer-label">Date of Verification</div>
+          <div class="cert-footer-value">{{ data.date }}</div>
+        </div>
+        <div class="cert-footer-center">
+          <div class="cert-seal">✓</div>
+        </div>
+        <div class="cert-footer-right">
+          <div class="cert-footer-line"></div>
+          <div class="cert-footer-label">Certificate ID</div>
+          <div class="cert-footer-value">{{ data.verificationId }}</div>
+        </div>
+      </div>
+      
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
