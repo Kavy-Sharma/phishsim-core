@@ -104,7 +104,7 @@ def replace_all_links_with_tracking(body_html, tracking_url):
 
 
 def send_phishing_email(to_email, subject, sender_name, body_html, tracking_id, delivery_mode=None,
-                        mailtrap_user=None, mailtrap_pass=None):
+                        mailtrap_user=None, mailtrap_pass=None, reply_to=None):
     """Sends one phishing simulation email."""
 
     base_url = _clean(os.getenv("APP_BASE_URL", "http://127.0.0.1:5050"), "/")
@@ -140,11 +140,14 @@ def send_phishing_email(to_email, subject, sender_name, body_html, tracking_id, 
             return {"success": False, "error": "RESEND_API_KEY missing from environment."}
 
         payload = {
-            "from": f"{sender_name} <{settings['from_email']}>",
+            "from": f'"{sender_name}" <{settings["from_email"]}>',
             "to": [to_email],
             "subject": subject,
             "html": body_html,
         }
+        if reply_to:
+            payload["reply_to"] = reply_to
+            
         try:
             response = requests.post(
                 "https://api.resend.com/emails",
@@ -173,8 +176,10 @@ def send_phishing_email(to_email, subject, sender_name, body_html, tracking_id, 
 
     msg = MIMEMultipart("alternative")
     msg["Subject"] = subject
-    msg["From"]    = f"{sender_name} <{settings['from_email']}>"
+    msg["From"]    = f'"{sender_name}" <{settings["from_email"]}>'
     msg["To"]      = to_email
+    if reply_to:
+        msg["Reply-To"] = reply_to
     msg.attach(MIMEText(body_html, "html"))
 
     try:

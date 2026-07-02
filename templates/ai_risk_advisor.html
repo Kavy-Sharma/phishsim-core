@@ -292,6 +292,191 @@
     </div>
 
     <!-- ══ SECTION 2 — Weekly Briefing Preview (Fully Visible) ══ -->
+    <style>
+        .sev-badge.pass { background: rgba(16, 185, 129, 0.1); color: var(--success, #10b981); border: 1px solid rgba(16, 185, 129, 0.25); }
+        
+        .roadmap-section {
+            background: rgba(255, 255, 255, 0.01);
+            border: 1px solid rgba(245, 158, 11, 0.15);
+            border-radius: 16px;
+            padding: 2.5rem;
+            margin-top: 4rem;
+            position: relative;
+        }
+        body.light-theme .roadmap-section {
+            background: #ffffff;
+            border-color: rgba(245, 158, 11, 0.25);
+        }
+        .roadmap-header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+        }
+        .section-label {
+            font-family: var(--font-mono);
+            font-size: 0.72rem;
+            color: var(--pro-gold);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            font-weight: 700;
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+        .roadmap-header h2 {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--text-main);
+            margin: 0 0 0.5rem 0;
+        }
+        body.light-theme .roadmap-header h2 {
+            color: #0f172a;
+        }
+        .roadmap-header p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            margin: 0;
+        }
+        .roadmap-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+        }
+        .roadmap-card {
+            background: rgba(255, 255, 255, 0.01);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.6rem;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        body.light-theme .roadmap-card {
+            background: #f8fafc;
+            border-color: #e2e8f0;
+        }
+        .roadmap-card:hover {
+            border-color: rgba(245, 158, 11, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(245, 158, 11, 0.05);
+        }
+        .roadmap-badge {
+            position: absolute;
+            top: 1.6rem;
+            right: 1.6rem;
+            background: rgba(245, 158, 11, 0.08);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            color: var(--pro-gold);
+            font-family: var(--font-mono);
+            font-size: 0.65rem;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 4px;
+            text-transform: uppercase;
+        }
+        .roadmap-card i {
+            color: var(--pro-gold);
+            font-size: 2rem;
+            display: block;
+            margin-bottom: 1rem;
+        }
+        .roadmap-card h3 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-main);
+            margin: 0 0 8px 0;
+            padding-right: 80px;
+        }
+        body.light-theme .roadmap-card h3 {
+            color: #0f172a;
+        }
+        .roadmap-card p {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin: 0;
+            line-height: 1.5;
+        }
+        .notify-form {
+            max-width: 600px;
+            margin: 0 auto;
+            text-align: center;
+            background: rgba(245, 158, 11, 0.03);
+            border: 1px dashed rgba(245, 158, 11, 0.3);
+            border-radius: 12px;
+            padding: 2rem;
+        }
+        body.light-theme .notify-form {
+            background: rgba(245, 158, 11, 0.01);
+            border-color: rgba(245, 158, 11, 0.4);
+        }
+        .notify-form p {
+            font-weight: 700;
+            color: var(--text-main);
+            margin: 0 0 1rem 0;
+            font-size: 0.95rem;
+        }
+        body.light-theme .notify-form p {
+            color: #0f172a;
+        }
+        .notify-input-row {
+            display: flex;
+            gap: 10px;
+            max-width: 480px;
+            margin: 0 auto;
+        }
+        .notify-input-row input {
+            flex: 1;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 10px 14px;
+            color: #fff;
+            font-size: 0.88rem;
+        }
+        body.light-theme .notify-input-row input {
+            background: #fff;
+            color: #0f172a;
+            border-color: #cbd5e1;
+        }
+        .notify-input-row input:focus {
+            outline: none;
+            border-color: var(--pro-gold);
+        }
+        .notify-input-row button {
+            background: linear-gradient(135deg, var(--pro-gold), #fbbf24);
+            color: #020617;
+            font-weight: 700;
+            border: none;
+            border-radius: 6px;
+            padding: 0 20px;
+            cursor: pointer;
+            font-size: 0.88rem;
+            transition: all 0.2s;
+        }
+        .notify-input-row button:hover {
+            filter: brightness(1.05);
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);
+        }
+        
+        .type-label {
+            transition: all 0.2s ease;
+        }
+        .type-label:hover {
+            border-color: rgba(245, 158, 11, 0.4) !important;
+            background: rgba(245, 158, 11, 0.03) !important;
+        }
+        .type-label input[type="radio"]:checked + span {
+            color: var(--pro-gold);
+            font-weight: 700;
+        }
+        .type-label.active {
+            border-color: var(--pro-gold) !important;
+            background: rgba(245, 158, 11, 0.08) !important;
+            box-shadow: 0 0 10px rgba(245, 158, 11, 0.05);
+        }
+        body.light-theme .type-label.active {
+            background: rgba(245, 158, 11, 0.04) !important;
+        }
+    </style>
+
     <div style="margin-bottom: 3.5rem; animation: fadeInUp 0.5s ease-out 0.15s; animation-fill-mode: both;">
         <h2 class="section-title-gold"><i class="ti ti-report" style="color:var(--pro-gold);"></i> Weekly Security Intelligence Briefing</h2>
         
@@ -312,8 +497,8 @@
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; align-items: start;">
                 <!-- Left Side: Summary & Vulnerabilities -->
                 <div>
-                    <div style="font-size:0.88rem; line-height:1.6; color:var(--text-muted); margin-bottom:1.6rem;">
-                        The advisor reads your real simulation results and looks for patterns: high click exposure, weak reporting culture, risky departments, and follow-up training gaps. It does not pretend to know private dark-web events unless a real source is connected.
+                    <div style="font-size:0.88rem; line-height:1.6; color:var(--text-muted); margin-bottom:1.6rem; white-space: pre-wrap;" id="briefing-text">
+{{ briefing_content }}
                     </div>
                     
                     <div>
@@ -343,98 +528,24 @@
         </div>
     </div>
 
-    <!-- ══ SECTION 3 — Real-time Alert Feed (Partially Locked) ══ -->
+    <!-- ══ SECTION 3 — Real-time Alert Feed ══ -->
     <div style="margin-bottom: 3.5rem; position: relative;" id="alerts-section">
         <h2 class="section-title-gold"><i class="ti ti-bell-ringing" style="color:var(--pro-gold);"></i> Proactive Security Alerts</h2>
 
         <!-- Alert Cards Feed Container -->
         <div style="position: relative;">
-            
-            <!-- Alert 1 (Visible) -->
+            {% for alert in alerts %}
             <div class="alert-card">
                 <div style="display:flex; align-items:center; gap:12px;">
-                    <span class="sev-badge critical">Critical</span>
+                    <span class="sev-badge {{ alert.severity|lower }}">{{ alert.severity }}</span>
                     <div>
-                        <div style="font-size:0.88rem; font-weight:700; color:var(--text-main);">New spear-phishing campaign targeting Finance detected</div>
-                        <div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">Targeted lookup targeting controllers mimicking main domain billing gateways.</div>
+                        <div style="font-size:0.88rem; font-weight:700; color:var(--text-main);">{{ alert.title }}</div>
+                        <div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">{{ alert.detail }}</div>
                     </div>
                 </div>
-                <div style="font-family:var(--font-mono); font-size:0.72rem; color:var(--text-muted); white-space:nowrap;">12 mins ago</div>
+                <div style="font-family:var(--font-mono); font-size:0.72rem; color:var(--text-muted); white-space:nowrap;">{{ alert.time }}</div>
             </div>
-
-            <!-- Alert 2 (Visible) -->
-            <div class="alert-card">
-                <div style="display:flex; align-items:center; gap:12px;">
-                    <span class="sev-badge high">High</span>
-                    <div>
-                        <div style="font-size:0.88rem; font-weight:700; color:var(--text-main);">Lookalike registration found for secure-login portal</div>
-                        <div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">Domain registered using NameCheap mimicking authentication nodes.</div>
-                    </div>
-                </div>
-                <div style="font-family:var(--font-mono); font-size:0.72rem; color:var(--text-muted); white-space:nowrap;">2.4 hrs ago</div>
-            </div>
-
-            <!-- Alert 3 (Visible) -->
-            <div class="alert-card">
-                <div style="display:flex; align-items:center; gap:12px;">
-                    <span class="sev-badge medium">Medium</span>
-                    <div>
-                        <div style="font-size:0.88rem; font-weight:700; color:var(--text-main);">Employee credential exposure on public code repository</div>
-                        <div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">API endpoint hardcoded token leaked by Operations software representative.</div>
-                    </div>
-                </div>
-                <div style="font-family:var(--font-mono); font-size:0.72rem; color:var(--text-muted); white-space:nowrap;">1 day ago</div>
-            </div>
-
-            <!-- Blurred Alerts Feed (Pointer-events: none, blur filter) -->
-            <div {% if current_user.role not in ('admin', 'pro') %}style="filter: blur(4px); pointer-events: none; opacity: 0.45; user-select: none;"{% endif %}>
-                <!-- Alert 4 (Blurred) -->
-                <div class="alert-card">
-                    <div style="display:flex; align-items:center; gap:12px;">
-                        <span class="sev-badge critical">Critical</span>
-                        <div>
-                            <div style="font-size:0.88rem; font-weight:700;">Critical DMARC alignment failure detected on primary mx</div>
-                            <div style="font-size:0.75rem; margin-top:2px;">DNS record changes detected, spoofing validation failed.</div>
-                        </div>
-                    </div>
-                    <div style="font-family:var(--font-mono); font-size:0.72rem; white-space:nowrap;">2 days ago</div>
-                </div>
-                <!-- Alert 5 (Blurred) -->
-                <div class="alert-card">
-                    <div style="display:flex; align-items:center; gap:12px;">
-                        <span class="sev-badge high">High</span>
-                        <div>
-                            <div style="font-size:0.88rem; font-weight:700;">Targeted executive whaling threat detected</div>
-                            <div style="font-size:0.75rem; margin-top:2px;">Sophisticated spear-phishing vector sent from spoofed address.</div>
-                        </div>
-                    </div>
-                    <div style="font-family:var(--font-mono); font-size:0.72rem; white-space:nowrap;">3 days ago</div>
-                </div>
-                <!-- Alert 6 (Blurred) -->
-                <div class="alert-card">
-                    <div style="display:flex; align-items:center; gap:12px;">
-                        <span class="sev-badge medium">Medium</span>
-                        <div>
-                            <div style="font-size:0.88rem; font-weight:700;">Suspicious authentication session origin flagged</div>
-                            <div style="font-size:0.75rem; margin-top:2px;">Account login location anomaly on user in payroll department.</div>
-                        </div>
-                    </div>
-                    <div style="font-family:var(--font-mono); font-size:0.72rem; white-space:nowrap;">4 days ago</div>
-                </div>
-            </div>
-
-            <!-- Local Feed Lock Overlay -->
-            {% if current_user.role not in ('admin', 'pro') %}
-            <div style="position: absolute; inset: 0; top: 55%; background: rgba(2,6,23,0.7); display: flex; align-items: center; justify-content: center; flex-direction: column; z-index: 10; border-radius: 12px; padding: 1.5rem;">
-                <div style="width: 44px; height: 44px; border-radius: 50%; background: rgba(245,158,11,0.15); border: 1px solid rgba(245,158,11,0.4); display: flex; align-items: center; justify-content: center; margin-bottom: 10px;">
-                    <i class="ti ti-lock" style="color:var(--pro-gold); font-size:1.3rem;"></i>
-                </div>
-                <div style="font-family:var(--font-mono); font-size:0.7rem; font-weight:700; color:var(--pro-gold); letter-spacing:1px; text-transform:uppercase;">PRO FEATURE</div>
-                <div style="font-size:0.9rem; font-weight:700; color:var(--text-main); margin: 4px 0 10px 0; text-align:center;">Unlock Full History & Active Alerts</div>
-                <a href="/billing" class="btn-gold" style="padding: 8px 18px; font-size: 0.78rem;">Upgrade to PRO — $24/month</a>
-            </div>
-            {% endif %}
-
+            {% endfor %}
         </div>
     </div>
 
@@ -458,15 +569,12 @@
                     
                     <!-- Remediation Actions -->
                     <div style="font-family:var(--font-mono); font-size:0.72rem; color:var(--pro-gold); text-transform:uppercase; letter-spacing:0.8px; margin-bottom:1rem; font-weight:700;">Remediation Console</div>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
                         <button class="btn-remediate" id="btn-decoy" onclick="triggerRemediation('decoy')">
                             <i class="ti ti-mail-opened"></i> <span>Deploy Decoy Mailbox</span>
                         </button>
                         <button class="btn-remediate" id="btn-lockdown" onclick="triggerRemediation('lockdown')">
                             <i class="ti ti-lock"></i> <span>Domain Lockdown</span>
-                        </button>
-                        <button class="btn-remediate" id="btn-isolate" onclick="triggerRemediation('isolate')">
-                            <i class="ti ti-shield-off"></i> <span>Isolate Rogue Host</span>
                         </button>
                         <button class="btn-remediate" id="btn-train" onclick="triggerRemediation('train')">
                             <i class="ti ti-school"></i> <span>Trigger Micro-Training</span>
@@ -477,104 +585,283 @@
                 <!-- Right side: Sentinel simulated logs -->
                 <div>
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
-                        <span style="font-family:var(--font-mono); font-size:0.72rem; color:var(--pro-gold); text-transform:uppercase; letter-spacing:0.8px; font-weight:700;">Live Sentinel Threat Logs</span>
+                        <span style="font-family:var(--font-mono); font-size:0.72rem; color:var(--pro-gold); text-transform:uppercase; letter-spacing:0.8px; font-weight:700;">Live Campaign Activity Feed</span>
                         <span style="font-family:var(--font-mono); font-size:0.65rem; color:#10b981; background:rgba(16,185,129,0.08); padding:2px 8px; border-radius:4px; border:1px solid rgba(16,185,129,0.2);">Connected</span>
                     </div>
                     <div class="sentinel-log-terminal" id="sentinel-logs">
-                        <!-- Simulated logs go here -->
+                        {% if not recent_activities %}
+                        <div style="margin-bottom: 4px;">
+                            <span style="color:#64748b;">[{{ current_time_formatted }}]</span> <span style="color:var(--warning, #fbbf24); font-weight:700;">[INFO]</span> <span style="color:#e2e8f0;">No simulation events in the last 24 hours.</span>
+                        </div>
+                        <div style="margin-bottom: 4px;">
+                            <span style="color:#64748b;">[{{ current_time_formatted }}]</span> <span style="color:var(--warning, #fbbf24); font-weight:700;">[INFO]</span> <span style="color:#e2e8f0;">Launch a campaign to start tracking employee responses.</span>
+                        </div>
+                        {% else %}
+                            {% if not has_recent_activity_last_24h %}
+                            <div style="margin-bottom: 4px;">
+                                <span style="color:#64748b;">[{{ current_time_formatted }}]</span> <span style="color:var(--warning, #fbbf24); font-weight:700;">[INFO]</span> <span style="color:#e2e8f0;">No simulation events in the last 24 hours.</span>
+                            </div>
+                            <div style="margin-bottom: 4px;">
+                                <span style="color:#64748b;">[{{ current_time_formatted }}]</span> <span style="color:var(--warning, #fbbf24); font-weight:700;">[INFO]</span> <span style="color:#e2e8f0;">Launch a campaign to start tracking employee responses.</span>
+                            </div>
+                            {% endif %}
+                            {% for act in recent_activities %}
+                            <div style="margin-bottom: 4px;">
+                                <span style="color:#64748b;">[{{ act.time }}]</span> 
+                                <span style="color:{{ act.action_color }}; {{ act.action_style }}">{{ act.action_label }}</span> 
+                                <span style="color:#e2e8f0;">{{ act.recipient }} — {{ act.campaign_name }}</span>
+                            </div>
+                            {% endfor %}
+                        {% endif %}
                     </div>
                 </div>
             </div>
-
-            {% if current_user.role not in ('admin', 'pro') %}
-            <!-- Sentinel Overlay -->
-            <div style="position: absolute; inset: 0; background: rgba(2,6,23,0.7); display: flex; align-items: center; justify-content: center; flex-direction: column; z-index: 10; border-radius: 14px; padding: 1.5rem; backdrop-filter: blur(2px);">
-                <div style="width: 44px; height: 44px; border-radius: 50%; background: rgba(245,158,11,0.15); border: 1px solid rgba(245,158,11,0.4); display: flex; align-items: center; justify-content: center; margin-bottom: 10px;">
-                    <i class="ti ti-cpu" style="color:var(--pro-gold); font-size:1.3rem;"></i>
-                </div>
-                <div style="font-family:var(--font-mono); font-size:0.7rem; font-weight:700; color:var(--pro-gold); letter-spacing:1px; text-transform:uppercase;">PRO FEATURE</div>
-                <div style="font-size:0.9rem; font-weight:700; color:var(--text-main); margin: 4px 0 10px 0; text-align:center;">Unlock Agentic AI Sentinel & Active Defense</div>
-                <a href="/billing" class="btn-gold" style="padding: 8px 18px; font-size: 0.78rem;">Upgrade to PRO</a>
-            </div>
-            {% endif %}
         </div>
     </div>
 
-    <!-- ══ SECTION 4 — Feature Grid (Fully Visible) ══ -->
-    <div style="margin-bottom: 4rem;">
-        <h2 class="section-title-gold"><i class="ti ti-box" style="color:var(--pro-gold);"></i> Pro Features & Attack Surface Defense</h2>
+    <!-- ══ SECTION 4 — Roadmap section ══ -->
+    <section class="roadmap-section">
+      <div class="roadmap-header">
+        <span class="section-label">ROADMAP</span>
+        <h2>What's Coming to PhishSim PRO</h2>
+        <p>Features currently in development. Register to get early access or request a demo.</p>
+      </div>
+      
+      <div class="roadmap-grid">
+        <!-- Card 1 -->
+        <div class="roadmap-card">
+            <span class="roadmap-badge">Q3 2026</span>
+            <i class="ti ti-activity"></i>
+            <h3>Continuous Monitoring</h3>
+            <p>24/7 scanning of public registries, certificates, and IP gateways for spoofing vulnerabilities.</p>
+        </div>
+        <!-- Card 2 -->
+        <div class="roadmap-card">
+            <span class="roadmap-badge">Q3 2026</span>
+            <i class="ti ti-file-text"></i>
+            <h3>Weekly AI Briefings</h3>
+            <p>Automated executive intelligence threat briefings summarizing sector risk trends.</p>
+        </div>
+        <!-- Card 3 -->
+        <div class="roadmap-card">
+            <span class="roadmap-badge">Q4 2026</span>
+            <i class="ti ti-scan"></i>
+            <h3>Anomaly Detection</h3>
+            <p>Advanced NLP modeling flags anomalous domain registration and social engineering patterns.</p>
+        </div>
+        <!-- Card 4 -->
+        <div class="roadmap-card">
+            <span class="roadmap-badge">Q3 2026</span>
+            <i class="ti ti-brand-slack"></i>
+            <h3>Slack/Email Alerts</h3>
+            <p>Instant API notifications routed to Slack webhooks or security mail addresses.</p>
+        </div>
+        <!-- Card 5 -->
+        <div class="roadmap-card">
+            <span class="roadmap-badge">Q4 2026</span>
+            <i class="ti ti-network"></i>
+            <h3>SIEM Integration</h3>
+            <p>Standard JSON telemetry streams for direct ingestion into Splunk, Sentinel, or Datadog.</p>
+        </div>
+      </div>
+      
+      <!-- Email collector -->
+      <div class="notify-form">
+        <p>Join the PRO waitlist or request early access:</p>
         
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem;">
-            <!-- Feature 1 -->
-            <div class="feature-card">
-                <i class="ti ti-activity" style="color:var(--pro-gold); font-size:1.8rem; display:block; margin-bottom:0.8rem;"></i>
-                <h3 style="font-size:0.95rem; font-weight:700; color:var(--text-main); margin:0 0 6px 0;">Continuous Monitoring</h3>
-                <p style="font-size:0.82rem; color:var(--text-muted); margin:0; line-height:1.4;">24/7 scanning of public registries, certificates, and IP gateways for spoofing vulnerabilities.</p>
+        <div style="margin-bottom: 1.2rem; display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;">
+            <label style="display: flex; align-items: center; gap: 6px; font-size: 0.8rem; color: var(--text-main); cursor: pointer; background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); padding: 6px 12px; border-radius: 6px; transition: all 0.2s;" class="type-label active">
+                <input type="radio" name="req_type" value="notify" checked style="display: none;">
+                <span>Notify me on launch</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 6px; font-size: 0.8rem; color: var(--text-main); cursor: pointer; background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); padding: 6px 12px; border-radius: 6px; transition: all 0.2s;" class="type-label">
+                <input type="radio" name="req_type" value="early_access" style="display: none;">
+                <span>1-Month Free Access</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 6px; font-size: 0.8rem; color: var(--text-main); cursor: pointer; background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); padding: 6px 12px; border-radius: 6px; transition: all 0.2s;" class="type-label">
+                <input type="radio" name="req_type" value="demo" style="display: none;">
+                <span>Request Free Demo</span>
+            </label>
+        </div>
+        
+        <div class="notify-input-row">
+          <input type="email" id="waitlist-email" placeholder="your@company.com">
+          <button id="waitlist-submit-btn">Register</button>
+        </div>
+      </div>
+    </section>
+
+</div>
+
+<!-- Confirmation Training Modal -->
+<div id="confirm-training-modal" style="display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.7); z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(4px);">
+    <div style="background: #0f172a; border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 12px; max-width: 450px; width: 90%; padding: 2rem; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);">
+        <h3 style="font-family: var(--font-sans); font-size: 1.25rem; font-weight: 700; color: #fff; margin-top: 0; margin-bottom: 1rem; display: flex; align-items: center; gap: 8px;">
+            <i class="ti ti-school" style="color: var(--pro-gold);"></i> Confirm Micro-Training
+        </h3>
+        <p style="font-size: 0.88rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 1.5rem;">
+            Send a training reminder email to all employees who clicked in the last campaign?
+        </p>
+        <div style="display: flex; justify-content: flex-end; gap: 12px;">
+            <button id="modal-cancel-btn" style="background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border-color); border-radius: 6px; padding: 8px 16px; color: #fff; font-size: 0.8rem; cursor: pointer; transition: all 0.2s;">
+                Cancel
+            </button>
+            <button id="modal-confirm-btn" style="background: linear-gradient(135deg, var(--pro-gold), #fbbf24); border: none; border-radius: 6px; padding: 8px 18px; color: #020617; font-size: 0.8rem; font-weight: 700; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);">
+                Confirm & Send
+            </button>
+        </div>
+</div>
+
+<!-- Domain Lockdown Modal -->
+<div id="lockdown-modal" style="display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.7); z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(4px);">
+    <div style="background: #0f172a; border: 1px solid var(--pro-gold); border-radius: 12px; max-width: 600px; width: 90%; padding: 2rem; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5); overflow-y: auto; max-height: 90vh;">
+        <h3 style="font-family: var(--font-sans); font-size: 1.25rem; font-weight: 700; color: #fff; margin-top: 0; margin-bottom: 1rem; display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+            <span style="display:flex; align-items:center; gap:8px;"><i class="ti ti-lock" style="color: var(--pro-gold);"></i> Domain Lockdown Check</span>
+            <span id="lockdown-domain-badge" style="font-size:0.75rem; font-family:var(--font-mono); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:4px; color:var(--text-muted);"></span>
+        </h3>
+        
+        <div id="lockdown-loading" style="display:flex; flex-direction:column; align-items:center; justify-content:center; padding:2rem 0; gap:12px;">
+            <div style="width:28px; height:28px; border:3px solid rgba(255,255,255,0.1); border-top-color:var(--pro-gold); border-radius:50%; animation: spin 1s infinite linear;"></div>
+            <span style="font-size:0.85rem; color:var(--text-muted); font-family:var(--font-mono);">Querying DNS over HTTPS...</span>
+        </div>
+
+        <div id="lockdown-results" style="display: none; margin-bottom: 1.5rem;">
+            <!-- SPF Section -->
+            <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
+                    <span style="font-weight:700; color:#fff; font-size:0.9rem;">SPF (Sender Policy Framework)</span>
+                    <span id="spf-badge" style="font-size:0.7rem; font-weight:700; text-transform:uppercase; padding:2px 6px; border-radius:4px;"></span>
+                </div>
+                <div id="spf-record-text" style="font-family:var(--font-mono); font-size:0.75rem; background:rgba(0,0,0,0.3); padding:8px; border-radius:4px; color:#e2e8f0; word-break:break-all; margin-bottom:0.5rem;"></div>
+                <div id="spf-recommendation" style="font-size:0.8rem; color:var(--text-muted); line-height:1.4;"></div>
             </div>
-            <!-- Feature 2 -->
-            <div class="feature-card">
-                <i class="ti ti-file-text" style="color:var(--pro-gold); font-size:1.8rem; display:block; margin-bottom:0.8rem;"></i>
-                <h3 style="font-size:0.95rem; font-weight:700; color:var(--text-main); margin:0 0 6px 0;">Weekly AI Briefings</h3>
-                <p style="font-size:0.82rem; color:var(--text-muted); margin:0; line-height:1.4;">Automated executive intelligence threat briefings summarizing sector risk trends.</p>
+
+            <!-- DMARC Section -->
+            <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
+                    <span style="font-weight:700; color:#fff; font-size:0.9rem;">DMARC Record</span>
+                    <span id="dmarc-badge" style="font-size:0.7rem; font-weight:700; text-transform:uppercase; padding:2px 6px; border-radius:4px;"></span>
+                </div>
+                <div id="dmarc-record-text" style="font-family:var(--font-mono); font-size:0.75rem; background:rgba(0,0,0,0.3); padding:8px; border-radius:4px; color:#e2e8f0; word-break:break-all; margin-bottom:0.5rem;"></div>
+                <div id="dmarc-recommendation" style="font-size:0.8rem; color:var(--text-muted); line-height:1.4;"></div>
             </div>
-            <!-- Feature 3 -->
-            <div class="feature-card">
-                <i class="ti ti-scan" style="color:var(--pro-gold); font-size:1.8rem; display:block; margin-bottom:0.8rem;"></i>
-                <h3 style="font-size:0.95rem; font-weight:700; color:var(--text-main); margin:0 0 6px 0;">Anomaly Detection</h3>
-                <p style="font-size:0.82rem; color:var(--text-muted); margin:0; line-height:1.4;">Advanced NLP modeling flags anomalous domain registration and social engineering patterns.</p>
-            </div>
-            <!-- Feature 4 -->
-            <div class="feature-card">
-                <i class="ti ti-brand-slack" style="color:var(--pro-gold); font-size:1.8rem; display:block; margin-bottom:0.8rem;"></i>
-                <h3 style="font-size:0.95rem; font-weight:700; color:var(--text-main); margin:0 0 6px 0;">Slack/Email Alerts</h3>
-                <p style="font-size:0.82rem; color:var(--text-muted); margin:0; line-height:1.4;">Instant API notifications routed to Slack webhooks or security mail addresses.</p>
-            </div>
-            <!-- Feature 5 -->
-            <div class="feature-card">
-                <i class="ti ti-sliders" style="color:var(--pro-gold); font-size:1.8rem; display:block; margin-bottom:0.8rem;"></i>
-                <h3 style="font-size:0.95rem; font-weight:700; color:var(--text-main); margin:0 0 6px 0;">Custom Risk Thresholds</h3>
-                <p style="font-size:0.82rem; color:var(--text-muted); margin:0; line-height:1.4;">Tailor notification triggers and exposure filters specifically to your domain perimeter.</p>
-            </div>
-            <!-- Feature 6 -->
-            <div class="feature-card">
-                <i class="ti ti-network" style="color:var(--pro-gold); font-size:1.8rem; display:block; margin-bottom:0.8rem;"></i>
-                <h3 style="font-size:0.95rem; font-weight:700; color:var(--text-main); margin:0 0 6px 0;">SIEM Integration</h3>
-                <p style="font-size:0.82rem; color:var(--text-muted); margin:0; line-height:1.4;">Standard JSON telemetry streams for direct ingestion into Splunk, Sentinel, or Datadog.</p>
-            </div>
+            
+            <div id="dns-verdict" style="padding:10px 12px; border-radius:6px; font-size:0.82rem; line-height:1.4;"></div>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 12px;">
+            <button onclick="closeLockdownModal()" style="background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border-color); border-radius: 6px; padding: 8px 16px; color: #fff; font-size: 0.8rem; cursor: pointer; transition: all 0.2s;">
+                Close
+            </button>
         </div>
     </div>
+</div>
 
-    <!-- ══ BOTTOM CTA PANEL ══ -->
-    {% if current_user.role not in ('admin', 'pro') %}
-    <div class="glass-panel" style="padding: 2.2rem; border-color: rgba(245, 158, 11, 0.35); background: rgba(245, 158, 11, 0.03); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1.5rem; animation: fadeInUp 0.5s ease-out 0.3s; animation-fill-mode: both;">
-        <div>
-            <div style="font-size: 1.15rem; font-weight: 800; color: var(--text-main); margin-bottom: 4px;">Start your 14-day PRO trial</div>
-            <p style="font-size: 0.86rem; color: var(--text-muted); margin: 0;">No credit card required. Cancel anytime with a single click.</p>
+<!-- Decoy Mailbox Modal -->
+<div id="decoy-modal" style="display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.7); z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(4px);">
+    <div style="background: #0f172a; border: 1px solid var(--pro-gold); border-radius: 12px; max-width: 650px; width: 90%; padding: 2rem; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5); overflow-y: auto; max-height: 90vh;">
+        <h3 style="font-family: var(--font-sans); font-size: 1.25rem; font-weight: 700; color: #fff; margin-top: 0; margin-bottom: 1rem; display: flex; align-items: center; gap: 8px;">
+            <i class="ti ti-mail-opened" style="color: var(--pro-gold);"></i> Monitored Honeypot/Decoy Mailboxes
+        </h3>
+        
+        <p style="font-size: 0.82rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 1.5rem;">
+            Configure monitored mailboxes to catch unauthorized external lateral campaigns or scans. Connecting real IMAP credentials allows PhishSim to automatically poll and detect potential breaches.
+        </p>
+
+        <!-- Tabs inside Modal -->
+        <div style="display:flex; border-bottom: 1px solid rgba(255,255,255,0.06); margin-bottom: 1.2rem; gap: 10px;">
+            <button onclick="switchDecoyModalTab('list')" id="btn-decoy-tab-list" style="background:none; border:none; color:#fff; font-weight:700; cursor:pointer; padding:6px 12px; border-bottom: 2px solid var(--pro-gold); font-size:0.85rem;">Active Decoys</button>
+            <button onclick="switchDecoyModalTab('new')" id="btn-decoy-tab-new" style="background:none; border:none; color:var(--text-muted); font-weight:700; cursor:pointer; padding:6px 12px; border-bottom: 2px solid transparent; font-size:0.85rem;">Deploy New Decoy</button>
         </div>
-        <a href="/billing" class="btn-gold">Upgrade to PRO</a>
-    </div>
-    {% endif %}
 
-    <!-- ══ PAGE-WIDE FROSTED GLASS OVERLAY (BOTTOM 60%) ══ -->
-    {% if current_user.role not in ('admin', 'pro') %}
-    <div class="frosted-lock-overlay">
-        <div class="lock-box">
-            <div style="width: 56px; height: 56px; border-radius: 50%; background: rgba(245,158,11,0.1); border: 2px solid rgba(245,158,11,0.4); display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem;">
-                <i class="ti ti-lock" style="color:var(--pro-gold); font-size:1.6rem;"></i>
+        <!-- Tab Content 1: Active Decoys -->
+        <div id="decoy-content-list">
+            <div id="decoy-list-loading" style="display:flex; justify-content:center; padding:1.5rem 0;">
+                <div style="width:20px; height:20px; border:2px solid rgba(255,255,255,0.1); border-top-color:var(--pro-gold); border-radius:50%; animation: spin 1s infinite linear;"></div>
             </div>
-            <span class="pro-badge" style="margin-bottom:6px;">PRO FEATURE</span>
-            <h2 style="font-size: 1.4rem; font-weight: 800; color: var(--text-main); margin: 0 0 8px 0;">Unlock Continuous Monitoring</h2>
-            <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.5; margin: 0 0 1.6rem 0;">
-                Get real-time attack surface assessments, daily domain spoofing sweeps, automated reports, and integrations.
-            </p>
-            <a href="/billing" class="btn-gold">Unlock with PRO — $24/mo</a>
-            <div style="margin-top: 12px; font-size: 0.72rem; font-family: var(--font-mono); color: var(--text-muted);">
-                Cancel anytime. 14-day trial included.
+            
+            <div id="decoy-list-empty" style="display:none; text-align:center; padding:1.5rem 0; color:var(--text-muted); font-size:0.85rem;">
+                No active decoy mailboxes deployed.
             </div>
+
+            <div id="decoy-table-container" style="display:none; margin-bottom: 1rem; overflow-x:auto;">
+                <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem; text-align: left;">
+                    <thead>
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.08); color: var(--text-muted);">
+                            <th style="padding: 8px;">Decoy Email</th>
+                            <th style="padding: 8px;">Label</th>
+                            <th style="padding: 8px;">IMAP Monitor</th>
+                            <th style="padding: 8px;">Created</th>
+                        </tr>
+                    </thead>
+                    <tbody id="decoy-list-tbody"></tbody>
+                </table>
+            </div>
+
+            <div id="decoy-check-section" style="display:none; background:rgba(255,255,255,0.01); border:1px dashed var(--border-color); border-radius:8px; padding:12px; margin-bottom:1rem; align-items:center; justify-content:space-between;">
+                <div>
+                    <strong style="display:block; font-size:0.85rem; color:#fff; margin-bottom:2px;">Scan Active Decoy Mailboxes</strong>
+                    <span style="font-size:0.75rem; color:var(--text-muted);">Triggers a live IMAP query to scan folders for incoming lateral threats.</span>
+                </div>
+                <button onclick="runDecoyCheck()" id="btn-run-decoy-check" style="background:var(--pro-gold); border:none; padding:6px 12px; border-radius:4px; font-weight:700; color:#020617; font-size:0.75rem; cursor:pointer; display:flex; align-items:center; gap:6px;">
+                    <i class="ti ti-refresh"></i> Scan Now
+                </button>
+            </div>
+            
+            <div id="decoy-check-results" style="display:none; background:#020617; border:1px solid rgba(255,255,255,0.08); border-radius:6px; padding:10px; font-family:var(--font-mono); font-size:0.72rem; color:#10b981; max-height:150px; overflow-y:auto; margin-bottom:1rem; white-space:pre-wrap;"></div>
+        </div>
+
+        <!-- Tab Content 2: New Decoy Form -->
+        <div id="decoy-content-new" style="display:none;">
+            <form id="decoy-deploy-form" onsubmit="submitDeployDecoy(event)" style="display:flex; flex-direction:column; gap:12px; margin-bottom:1rem;">
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                    <div class="form-group" style="margin:0;">
+                        <label for="decoy-email">Decoy Email Address</label>
+                        <input type="email" id="decoy-email" name="decoy_email" class="form-input" placeholder="decoy@company.com" required>
+                    </div>
+                    <div class="form-group" style="margin:0;">
+                        <label for="decoy-label">Label / Name</label>
+                        <input type="text" id="decoy-label" name="label" class="form-input" placeholder="Finance Honeypot" required>
+                    </div>
+                </div>
+
+                <div style="border-top:1px dashed rgba(255,255,255,0.06); padding-top:10px; margin-top:4px;">
+                    <span style="font-weight:700; font-size:0.8rem; color:#fff; display:block; margin-bottom:8px;">Live IMAP Monitoring (Optional)</span>
+                    <div style="display:grid; grid-template-columns:2fr 1fr; gap:12px; margin-bottom:10px;">
+                        <div class="form-group" style="margin:0;">
+                            <label for="decoy-imap-host">IMAP Server</label>
+                            <input type="text" id="decoy-imap-host" name="imap_host" class="form-input" placeholder="imap.gmail.com">
+                        </div>
+                        <div class="form-group" style="margin:0;">
+                            <label for="decoy-imap-port">IMAP Port</label>
+                            <input type="number" id="decoy-imap-port" name="imap_port" class="form-input" placeholder="993">
+                        </div>
+                    </div>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                        <div class="form-group" style="margin:0;">
+                            <label for="decoy-imap-user">IMAP Username</label>
+                            <input type="text" id="decoy-imap-user" name="imap_user" class="form-input" placeholder="decoy@company.com">
+                        </div>
+                        <div class="form-group" style="margin:0;">
+                            <label for="decoy-imap-pass">IMAP Password</label>
+                            <input type="password" id="decoy-imap-pass" name="imap_pass" class="form-input" placeholder="••••••••">
+                        </div>
+                    </div>
+                </div>
+                
+                <button type="submit" id="btn-submit-decoy" style="background:var(--pro-gold); border:none; padding:10px; border-radius:6px; font-weight:700; color:#020617; font-size:0.8rem; cursor:pointer; margin-top:8px;">
+                    Deploy Decoy Mailbox
+                </button>
+            </form>
+            <div id="decoy-deploy-message" style="display:none; padding:10px; border-radius:6px; font-size:0.8rem; line-height:1.4; margin-bottom:1rem;"></div>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 12px; border-top:1px solid rgba(255,255,255,0.06); padding-top:1rem;">
+            <button onclick="closeDecoyModal()" style="background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border-color); border-radius: 6px; padding: 8px 16px; color: #fff; font-size: 0.8rem; cursor: pointer; transition: all 0.2s;">
+                Close
+            </button>
         </div>
     </div>
-    {% endif %}
-
 </div>
 
 <script>
@@ -602,86 +889,354 @@
         }, 16);
     }
 
-    // Live Sentinel logs simulation
-    const logContainer = document.getElementById('sentinel-logs');
-    const logTemplates = [
-        { type: 'INFO', text: 'Sentinel scanning certificate transparency records...' },
-        { type: 'PASS', text: 'No new lookalike domain registrations detected.' },
-        { type: 'INFO', text: 'Checking public OSINT breach databases for corporate email patterns...' },
-        { type: 'PASS', text: 'All monitored credentials secure. Zero leaks found in last 24h.' },
-        { type: 'WARN', text: 'Suspicious email cluster detected in spam trap (origin IP: 185.190.140.22).' },
-        { type: 'INFO', text: 'AI Agent classifying threat... Verdict: Automated Spam. Ignored.' },
-        { type: 'INFO', text: 'Validating DNS DMARC alignment checks on inbound gateway nodes...' },
-        { type: 'PASS', text: 'DNS configurations are healthy.' }
-    ];
-
-    function addLogLine(type, text) {
-        if (!logContainer) return;
-        const line = document.createElement('div');
-        line.style.marginBottom = '4px';
-        let typeColor = '#f59e0b';
-        if (type === 'PASS') typeColor = '#10b981';
-        if (type === 'WARN') typeColor = '#ef4444';
-        if (type === 'INFO') typeColor = '#3b82f6';
-        
-        const timestamp = new Date().toLocaleTimeString();
-        line.innerHTML = `<span style="color:#64748b;">[${timestamp}]</span> <span style="color:${typeColor}; font-weight:700;">[${type}]</span> <span style="color:#e2e8f0;">${text}</span>`;
-        logContainer.appendChild(line);
-        logContainer.scrollTop = logContainer.scrollHeight;
-        
-        while (logContainer.childNodes.length > 30) {
-            logContainer.removeChild(logContainer.firstChild);
+    function triggerRemediation(action) {
+        if (action === 'train') {
+            const modal = document.getElementById('confirm-training-modal');
+            modal.style.display = 'flex';
+        } else if (action === 'lockdown') {
+            openLockdownModal();
+        } else if (action === 'decoy') {
+            openDecoyModal();
         }
     }
 
-    function triggerRemediation(action) {
-        const btn = document.getElementById(`btn-${action}`);
+    // === Domain Lockdown Functions ===
+    async function openLockdownModal() {
+        const modal = document.getElementById('lockdown-modal');
+        modal.style.display = 'flex';
+        document.getElementById('lockdown-loading').style.display = 'flex';
+        document.getElementById('lockdown-results').style.display = 'none';
+        
+        try {
+            const response = await fetch('/api/remediate/domain-lockdown', {
+                method: 'POST'
+            });
+            const result = await response.json();
+            
+            document.getElementById('lockdown-loading').style.display = 'none';
+            document.getElementById('lockdown-results').style.display = 'block';
+            
+            if (result.success) {
+                document.getElementById('lockdown-domain-badge').textContent = result.domain;
+                
+                const spfBadge = document.getElementById('spf-badge');
+                const spfText = document.getElementById('spf-record-text');
+                const spfRec = document.getElementById('spf-recommendation');
+                if (result.spf_status === 'present') {
+                    spfBadge.textContent = 'SECURE';
+                    spfBadge.style.background = 'rgba(16,185,129,0.15)';
+                    spfBadge.style.color = '#10b981';
+                    spfText.textContent = result.spf_record;
+                    spfRec.innerHTML = `<span style="color:#10b981;">✓ SPF record is active.</span> Authorized servers are permitted to send emails for your domain.`;
+                } else {
+                    spfBadge.textContent = 'VULNERABLE';
+                    spfBadge.style.background = 'rgba(239,68,68,0.15)';
+                    spfBadge.style.color = '#ef4444';
+                    spfText.textContent = 'None detected';
+                    spfRec.innerHTML = `<span style="color:#ef4444;">✗ Missing SPF record!</span> Attackers can spoof emails using your exact domain name. <br><strong>Recommendation:</strong> Add this TXT record to your DNS:<br><code style="background:#020617; padding:2px 4px; border-radius:3px; color:var(--pro-gold); font-size:0.75rem;">v=spf1 include:_spf.google.com ~all</code>`;
+                }
+                
+                const dmarcBadge = document.getElementById('dmarc-badge');
+                const dmarcText = document.getElementById('dmarc-record-text');
+                const dmarcRec = document.getElementById('dmarc-recommendation');
+                if (result.dmarc_status === 'present') {
+                    dmarcBadge.textContent = 'SECURE';
+                    dmarcBadge.style.background = 'rgba(16,185,129,0.15)';
+                    dmarcBadge.style.color = '#10b981';
+                    dmarcText.textContent = result.dmarc_record;
+                    dmarcRec.innerHTML = `<span style="color:#10b981;">✓ DMARC record is active.</span> Policy status is being enforced by email receivers.`;
+                } else {
+                    dmarcBadge.textContent = 'VULNERABLE';
+                    dmarcBadge.style.background = 'rgba(239,68,68,0.15)';
+                    dmarcBadge.style.color = '#ef4444';
+                    dmarcText.textContent = 'None detected';
+                    dmarcRec.innerHTML = `<span style="color:#ef4444;">✗ Missing DMARC record!</span> Receivers cannot verify email authenticity, increasing spoofing risk. <br><strong>Recommendation:</strong> Add this TXT record at <code style="color:var(--pro-gold);">_dmarc.${result.domain}</code>:<br><code style="background:#020617; padding:2px 4px; border-radius:3px; color:var(--pro-gold); font-size:0.75rem;">v=DMARC1; p=quarantine; pct=100;</code>`;
+                }
+                
+                const verdict = document.getElementById('dns-verdict');
+                if (result.status === 'secure') {
+                    verdict.style.background = 'rgba(16,185,129,0.1)';
+                    verdict.style.color = '#10b981';
+                    verdict.style.border = '1px solid rgba(16,185,129,0.2)';
+                    verdict.textContent = 'Domain is secure. Your email sending parameters are hardened against spoofing.';
+                } else {
+                    verdict.style.background = 'rgba(239,68,68,0.1)';
+                    verdict.style.color = '#ef4444';
+                    verdict.style.border = '1px solid rgba(239,68,68,0.2)';
+                    verdict.textContent = 'Weak domain configuration. Review the recommendations above and update your DNS records to lock down your domain.';
+                }
+            } else {
+                alert('DNS check failed: ' + result.error);
+                closeLockdownModal();
+            }
+        } catch (e) {
+            alert('An error occurred during DNS check: ' + e);
+            closeLockdownModal();
+        }
+    }
+    
+    function closeLockdownModal() {
+        document.getElementById('lockdown-modal').style.display = 'none';
+    }
+
+    // === Decoy Mailbox Functions ===
+    function openDecoyModal() {
+        document.getElementById('decoy-modal').style.display = 'flex';
+        switchDecoyModalTab('list');
+    }
+    
+    function closeDecoyModal() {
+        document.getElementById('decoy-modal').style.display = 'none';
+    }
+    
+    function switchDecoyModalTab(tab) {
+        if (tab === 'list') {
+            document.getElementById('btn-decoy-tab-list').style.color = '#fff';
+            document.getElementById('btn-decoy-tab-list').style.borderBottomColor = 'var(--pro-gold)';
+            document.getElementById('btn-decoy-tab-new').style.color = 'var(--text-muted)';
+            document.getElementById('btn-decoy-tab-new').style.borderBottomColor = 'transparent';
+            document.getElementById('decoy-content-list').style.display = 'block';
+            document.getElementById('decoy-content-new').style.display = 'none';
+            fetchDecoyMailboxes();
+        } else {
+            document.getElementById('btn-decoy-tab-new').style.color = '#fff';
+            document.getElementById('btn-decoy-tab-new').style.borderBottomColor = 'var(--pro-gold)';
+            document.getElementById('btn-decoy-tab-list').style.color = 'var(--text-muted)';
+            document.getElementById('btn-decoy-tab-list').style.borderBottomColor = 'transparent';
+            document.getElementById('decoy-content-new').style.display = 'block';
+            document.getElementById('decoy-content-list').style.display = 'none';
+            document.getElementById('decoy-deploy-message').style.display = 'none';
+            document.getElementById('decoy-deploy-form').reset();
+        }
+    }
+    
+    async function fetchDecoyMailboxes() {
+        document.getElementById('decoy-list-loading').style.display = 'flex';
+        document.getElementById('decoy-table-container').style.display = 'none';
+        document.getElementById('decoy-list-empty').style.display = 'none';
+        document.getElementById('decoy-check-section').style.display = 'none';
+        
+        try {
+            const response = await fetch('/api/remediate/get-decoys');
+            const result = await response.json();
+            
+            document.getElementById('decoy-list-loading').style.display = 'none';
+            if (result.success && result.decoys.length > 0) {
+                document.getElementById('decoy-table-container').style.display = 'block';
+                document.getElementById('decoy-check-section').style.display = 'flex';
+                
+                const tbody = document.getElementById('decoy-list-tbody');
+                tbody.innerHTML = '';
+                result.decoys.forEach(d => {
+                    const tr = document.createElement('tr');
+                    tr.style.borderBottom = '1px solid rgba(255,255,255,0.04)';
+                    
+                    const monitorText = d.imap_host ? `${d.imap_host}:${d.imap_port || 993}` : 'None';
+                    tr.innerHTML = `
+                        <td style="padding:8px; font-weight:700; color:#fff;">${d.email}</td>
+                        <td style="padding:8px; color:var(--text-muted);">${d.label}</td>
+                        <td style="padding:8px; font-family:var(--font-mono); font-size:0.75rem; color:var(--pro-gold);">${monitorText}</td>
+                        <td style="padding:8px; color:var(--text-muted);">${d.created_at}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } else {
+                document.getElementById('decoy-list-empty').style.display = 'block';
+            }
+        } catch (e) {
+            console.error('Failed to fetch decoys:', e);
+        }
+    }
+    
+    async function submitDeployDecoy(event) {
+        event.preventDefault();
+        const form = document.getElementById('decoy-deploy-form');
+        const formData = new FormData(form);
+        const msgDiv = document.getElementById('decoy-deploy-message');
+        
+        msgDiv.style.display = 'none';
+        
+        try {
+            const response = await fetch('/api/remediate/deploy-decoy', {
+                method: 'POST',
+                body: formData
+            });
+            const result = await response.json();
+            msgDiv.style.display = 'block';
+            if (result.success) {
+                msgDiv.style.background = 'rgba(16,185,129,0.1)';
+                msgDiv.style.color = '#10b981';
+                msgDiv.style.border = '1px solid rgba(16,185,129,0.2)';
+                msgDiv.textContent = result.message;
+                form.reset();
+                
+                const logContainer = document.getElementById('sentinel-logs');
+                if (logContainer) {
+                    const line = document.createElement('div');
+                    line.style.marginBottom = '4px';
+                    const timestamp = new Date().toLocaleTimeString();
+                    line.innerHTML = `<span style="color:#64748b;">[${timestamp}]</span> <span style="color:#10b981; font-weight:700;">[INFO]</span> <span style="color:#e2e8f0;">Monitored decoy mailbox successfully registered: ${formData.get('decoy_email')}</span>`;
+                    logContainer.insertBefore(line, logContainer.firstChild);
+                }
+            } else {
+                msgDiv.style.background = 'rgba(239,68,68,0.1)';
+                msgDiv.style.color = '#ef4444';
+                msgDiv.style.border = '1px solid rgba(239,68,68,0.2)';
+                msgDiv.textContent = result.error;
+            }
+        } catch (e) {
+            msgDiv.style.display = 'block';
+            msgDiv.style.background = 'rgba(239,68,68,0.1)';
+            msgDiv.style.color = '#ef4444';
+            msgDiv.style.border = '1px solid rgba(239,68,68,0.2)';
+            msgDiv.textContent = 'Error occurred: ' + e;
+        }
+    }
+    
+    async function runDecoyCheck() {
+        const btn = document.getElementById('btn-run-decoy-check');
+        const resultsDiv = document.getElementById('decoy-check-results');
+        
+        btn.disabled = true;
+        btn.innerHTML = `<div style="width:12px; height:12px; border:2px solid rgba(0,0,0,0.1); border-top-color:#000; border-radius:50%; animation: spin 1s infinite linear;"></div> Scanning...`;
+        resultsDiv.style.display = 'none';
+        
+        try {
+            const response = await fetch('/api/remediate/check-decoys', {
+                method: 'POST'
+            });
+            const result = await response.json();
+            
+            btn.disabled = false;
+            btn.innerHTML = `<i class="ti ti-refresh"></i> Scan Now`;
+            resultsDiv.style.display = 'block';
+            
+            if (result.success) {
+                let report = `=== DECOY SCAN COMPLETED ===\n`;
+                result.results.forEach(r => {
+                    report += `\nMailbox: ${r.email}\n`;
+                    if (r.error) {
+                        report += `Status: FAILED - ${r.error}\n`;
+                    } else {
+                        report += `Status: SUCCESS - Scanned ${r.unread_count} new messages\n`;
+                    }
+                });
+                
+                report += `\n---------------------------\n`;
+                report += `Simulations Caught: ${result.simulations_caught}\n`;
+                report += `Rogue Phishing Intercepted: ${result.intercepted_threats}\n`;
+                
+                resultsDiv.textContent = report;
+                
+                if (result.intercepted_threats > 0 || result.simulations_caught > 0) {
+                    const logContainer = document.getElementById('sentinel-logs');
+                    if (logContainer) {
+                        const line = document.createElement('div');
+                        line.style.marginBottom = '4px';
+                        const timestamp = new Date().toLocaleTimeString();
+                        line.innerHTML = `<span style="color:#64748b;">[${timestamp}]</span> <span style="color:#ef4444; font-weight:700;">[CRITICAL]</span> <span style="color:#e2e8f0;">Decoy scanning complete: Intercepted ${result.intercepted_threats} unauthorized external threats and ${result.simulations_caught} simulations.</span>`;
+                        logContainer.insertBefore(line, logContainer.firstChild);
+                    }
+                }
+            } else {
+                resultsDiv.textContent = 'Failed to execute scan: ' + result.error;
+            }
+        } catch (e) {
+            btn.disabled = false;
+            btn.innerHTML = `<i class="ti ti-refresh"></i> Scan Now`;
+            resultsDiv.style.display = 'block';
+            resultsDiv.textContent = 'Error scanning decoys: ' + e;
+        }
+    }
+
+    // Modal controls
+    document.getElementById('modal-cancel-btn').addEventListener('click', () => {
+        document.getElementById('confirm-training-modal').style.display = 'none';
+    });
+
+    document.getElementById('modal-confirm-btn').addEventListener('click', async () => {
+        document.getElementById('confirm-training-modal').style.display = 'none';
+        
+        const btn = document.getElementById('btn-train');
         if (!btn || btn.classList.contains('running') || btn.classList.contains('success')) return;
 
         btn.classList.add('running');
-        const originalHtml = btn.innerHTML;
-        btn.innerHTML = `<i class="ti ti-loader animate-spin" style="color:var(--pro-gold);"></i> <span>Executing...</span>`;
-
-        addLogLine('WARN', `MANUAL OVERRIDE: Remediation command [${action.toUpperCase()}] received.`);
-
-        if (action === 'decoy') {
-            setTimeout(() => addLogLine('INFO', 'Connecting to Microsoft 365 Admin Center API...'), 400);
-            setTimeout(() => addLogLine('INFO', 'Creating security mailbox user: spam-honey-01@domain.com...'), 1200);
-            setTimeout(() => addLogLine('INFO', 'Registering telemetry listeners and alerts...'), 2000);
-            setTimeout(() => {
-                addLogLine('PASS', 'Remediation SUCCESS: Decoy honey-pot mailbox deployed.');
+        btn.innerHTML = `<i class="ti ti-loader animate-spin" style="color:var(--pro-gold);"></i> <span>Sending Emails...</span>`;
+        
+        try {
+            const response = await fetch('/remediate/micro-training', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+            const result = await response.json();
+            if (result.success) {
                 btn.className = 'btn-remediate success';
-                btn.innerHTML = `<i class="ti ti-check"></i> <span>Decoy Deployed</span>`;
-            }, 3000);
-        } else if (action === 'lockdown') {
-            setTimeout(() => addLogLine('INFO', 'Contacting Cloudflare registrar gateway...'), 400);
-            setTimeout(() => addLogLine('INFO', 'Applying strict registry lock configuration...'), 1200);
-            setTimeout(() => addLogLine('INFO', 'Suspending API client token authorization...'), 2000);
-            setTimeout(() => {
-                addLogLine('PASS', 'Remediation SUCCESS: Domain perimeter locked.');
-                btn.className = 'btn-remediate success';
-                btn.innerHTML = `<i class="ti ti-check"></i> <span>Domain Locked</span>`;
-            }, 3000);
-        } else if (action === 'isolate') {
-            setTimeout(() => addLogLine('INFO', 'Pinging endpoint sentinel agent (Host: LAPTOP-8F21)...'), 400);
-            setTimeout(() => addLogLine('INFO', 'Applying network isolation policy rule...'), 1200);
-            setTimeout(() => addLogLine('INFO', 'Severing all active TCP/UDP external sessions...'), 2000);
-            setTimeout(() => {
-                addLogLine('PASS', 'Remediation SUCCESS: Host isolated from network.');
-                btn.className = 'btn-remediate success';
-                btn.innerHTML = `<i class="ti ti-check"></i> <span>Host Isolated</span>`;
-            }, 3000);
-        } else if (action === 'train') {
-            setTimeout(() => addLogLine('INFO', 'Identifying vulnerable targets in marketing department...'), 400);
-            setTimeout(() => addLogLine('INFO', 'Generating custom training campaign tokens...'), 1200);
-            setTimeout(() => addLogLine('INFO', 'Dispatching interactive micro-training email prompts...'), 2000);
-            setTimeout(() => {
-                addLogLine('PASS', 'Remediation SUCCESS: Employee training dispatched.');
-                btn.className = 'btn-remediate success';
-                btn.innerHTML = `<i class="ti ti-check"></i> <span>Training Dispatched</span>`;
-            }, 3000);
+                btn.innerHTML = `<i class="ti ti-check"></i> <span>Refresher Sent</span>`;
+                
+                // Add log to feed
+                const logContainer = document.getElementById('sentinel-logs');
+                if (logContainer) {
+                    const line = document.createElement('div');
+                    line.style.marginBottom = '4px';
+                    const timestamp = new Date().toLocaleTimeString();
+                    line.innerHTML = `<span style="color:#64748b;">[${timestamp}]</span> <span style="color:#10b981; font-weight:700;">[INFO]</span> <span style="color:#e2e8f0;">Remediation SUCCESS: training reminders sent to ${result.sent_count} employees.</span>`;
+                    logContainer.insertBefore(line, logContainer.firstChild);
+                }
+            } else {
+                alert('Failed: ' + result.message);
+                btn.classList.remove('running');
+                btn.innerHTML = `<i class="ti ti-school"></i> <span>Trigger Micro-Training</span>`;
+            }
+        } catch (e) {
+            alert('An error occurred: ' + e);
+            btn.classList.remove('running');
+            btn.innerHTML = `<i class="ti ti-school"></i> <span>Trigger Micro-Training</span>`;
         }
-    }
+    });
+
+    // Roadmap Waitlist type toggles
+    document.querySelectorAll('.type-label').forEach(label => {
+        label.addEventListener('click', function() {
+            document.querySelectorAll('.type-label').forEach(l => l.classList.remove('active'));
+            this.classList.add('active');
+            const radio = this.querySelector('input[type="radio"]');
+            if (radio) radio.checked = true;
+        });
+    });
+
+    // Roadmap Waitlist submit
+    document.getElementById('waitlist-submit-btn').addEventListener('click', async (e) => {
+        e.preventDefault();
+        const input = document.getElementById('waitlist-email');
+        const email = input.value.trim();
+        if (!email) {
+            alert('Please enter an email address.');
+            return;
+        }
+        
+        const activeRadio = document.querySelector('input[name="req_type"]:checked');
+        const requestType = activeRadio ? activeRadio.value : 'notify';
+        
+        try {
+            const formData = new FormData();
+            formData.append('email', email);
+            formData.append('request_type', requestType);
+            
+            const response = await fetch('/pro-waitlist', {
+                method: 'POST',
+                body: formData
+            });
+            const result = await response.json();
+            alert(result.message);
+            if (result.success) {
+                input.value = '';
+            }
+        } catch (err) {
+            alert('Error: ' + err);
+        }
+    });
 
     // Run counters on page load
     window.addEventListener('DOMContentLoaded', () => {
@@ -689,21 +1244,6 @@
         animateCounter('stat-employees', 0, {{ advisor.employees_tracked or 0 }}, 1100, (v) => Math.round(v).toLocaleString());
         animateCounter('stat-detection', 0, {{ advisor.report_rate or 0 }}, 1000, (v) => v.toFixed(1).replace('.0', '') + '%');
         animateCounter('stat-time', 0, {{ advisor.click_rate or 0 }}, 1000, (v) => v.toFixed(1).replace('.0', '') + '%');
-        
-        // Run scrolling logs if user is pro/admin
-        const isProUser = {% if current_user.role in ('admin', 'pro') %}true{% else %}false{% endif %};
-        if (isProUser && logContainer) {
-            setTimeout(() => addLogLine('INFO', 'Autonomous AI Sentinel V2.8 loaded.'), 100);
-            setTimeout(() => addLogLine('INFO', 'Active telemetry pipeline connected to Splunk/SIEM.'), 300);
-            setTimeout(() => addLogLine('INFO', 'Scanning human attack surface risk trend...'), 600);
-            
-            let index = 0;
-            setInterval(() => {
-                const template = logTemplates[index % logTemplates.length];
-                addLogLine(template.type, template.text);
-                index++;
-            }, 6000);
-        }
 
         // ── Render Chart ──
         const ctx = document.getElementById('riskTrendChart').getContext('2d');

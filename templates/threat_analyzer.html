@@ -589,32 +589,7 @@
         <div>
             <span style="display:inline-block; background:rgba(6, 182, 212, 0.08); border:1px solid rgba(6, 182, 212, 0.2); border-radius:100px; padding:4px 12px; font-size:0.75rem; font-weight:600; color:var(--cyan); letter-spacing:0.05em; text-transform:uppercase; margin-bottom:8px;">Public Cyber Suite</span>
             <h1 class="page-title" style="font-family: var(--font-sans); font-size: 2.4rem; font-weight: 800; margin: 0 0 0.5rem 0;">AI Email Threat Analyzer</h1>
-            <p class="page-subtitle" style="font-size: 0.95rem; margin: 0; color: var(--text-muted);">Paste suspicious payloads to perform heuristics scans for social engineering models.</p>
-        </div>
-        
-        <!-- Toggle Tabs + Tooltip & Subtitle -->
-        <div style="display: flex; flex-direction: column; align-items: flex-end;">
-            <div style="display: flex; align-items: center; gap: 10px;">
-                <div style="display: flex; background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); padding: 4px; border-radius: 8px; box-shadow: inset 0 0 8px rgba(0,0,0,0.2);">
-                    <button id="tab-mode-body" class="mode-tab active" onclick="switchAnalyzerMode('body')">
-                        <i class="ti ti-mail" style="margin-right:4px;"></i> Email Body Mode
-                    </button>
-                    <button id="tab-mode-headers" class="mode-tab" onclick="switchAnalyzerMode('headers')">
-                        <i class="ti ti-file-text" style="margin-right:4px;"></i> Raw Headers Mode
-                    </button>
-                </div>
-                
-                <!-- Tooltip info icon -->
-                <div class="cyber-tooltip-wrap">
-                    <span class="tooltip-icon">?</span>
-                    <div class="cyber-tooltip-content">
-                        Raw headers are the hidden technical metadata inside every email showing where it came from, how it was routed, and whether SPF/DKIM authentication passed. Right-click any email &rarr; <strong>View Source</strong> to copy them.
-                    </div>
-                </div>
-            </div>
-            <div id="analyzer-subtitle" style="font-family: var(--font-sans); font-size: 0.8rem; color: var(--text-muted); margin-top: 8px; text-align: right; min-height: 18px; transition: opacity 0.2s;">
-                Analyzes social engineering language, urgency triggers, and manipulation patterns.
-            </div>
+            <p class="page-subtitle" style="font-size: 0.95rem; margin: 0; color: var(--text-muted);">Paste suspicious payloads to perform heuristics scans for social engineering models. <span id="analyzer-subtitle" style="opacity: 0.8; font-size: 0.85rem; display: block; margin-top: 4px; transition: opacity 0.2s;">Analyzes social engineering language, urgency triggers, and manipulation patterns.</span></p>
         </div>
     </div>
 
@@ -728,7 +703,25 @@
         <!-- MIDDLE COLUMN: Input Ingestion Terminal -->
         <div class="glass-panel reveal" style="animation: fadeInUp 0.6s ease-out; padding: 2rem; display: flex; flex-direction: column; justify-content: space-between;">
             <div>
-                <label style="display:block; font-family:var(--font-mono); font-size:0.75rem; color:#64748b; text-transform:uppercase; letter-spacing:1px; margin-bottom:8px;">Email Ingestion Terminal</label>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+                    <label style="font-family:var(--font-mono); font-size:0.75rem; color:#64748b; text-transform:uppercase; letter-spacing:1px; margin: 0;">Email Ingestion Terminal</label>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <div style="display: flex; background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); padding: 2px; border-radius: 6px; box-shadow: inset 0 0 8px rgba(0,0,0,0.2);">
+                            <button id="tab-mode-body" class="mode-tab active" onclick="switchAnalyzerMode('body')" style="font-size: 0.72rem; padding: 4px 10px; border-radius: 4px;">
+                                <i class="ti ti-mail" style="margin-right:4px;"></i> Body
+                            </button>
+                            <button id="tab-mode-headers" class="mode-tab" onclick="switchAnalyzerMode('headers')" style="font-size: 0.72rem; padding: 4px 10px; border-radius: 4px;">
+                                <i class="ti ti-file-text" style="margin-right:4px;"></i> Headers
+                            </button>
+                        </div>
+                        <div class="cyber-tooltip-wrap">
+                            <span class="tooltip-icon" style="width: 16px; height: 16px; line-height: 16px; font-size: 10px;">?</span>
+                            <div class="cyber-tooltip-content">
+                                Raw headers are the hidden technical metadata showing routing paths and authentication flags. Right-click any email &rarr; <strong>View Source</strong> to copy them.
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 
                 <!-- Upgraded Ingestion Terminal Mockup -->
                 <div class="scan-beam-container terminal-style" style="position: relative; overflow: hidden; display: flex; flex-direction: column;">

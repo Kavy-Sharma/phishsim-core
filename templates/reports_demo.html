@@ -229,7 +229,11 @@
 .pdf-btn { display:inline-flex; align-items:center; gap:8px; background:linear-gradient(135deg,#2563eb,#06b6d4); color:#fff; border:none; border-radius:12px; padding:.9rem 1.2rem; font-weight:800; text-decoration:none; cursor:pointer; }
 
 /* Section labels */
-.section-anchor { scroll-margin-top: 140px; }
+.section-anchor {
+  scroll-margin-top: 140px;
+  height: auto !important;
+  display: block !important;
+}
 
 /* Chart containers */
 .chart-wrap { position:relative; width:100%; height:260px; }
@@ -493,7 +497,7 @@
   <section class="section-anchor" id="sec-radar" style="margin-bottom:2rem;">
     <div class="report-panel">
       <h2><i class="ti ti-radar" style="color:#8b5cf6;"></i> Vulnerability Signature Radar</h2>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:2rem;align-items:center;">
+      <div class="double-panel" style="align-items:center;">
         <div class="chart-wrap" style="height:280px;">
           <canvas id="radarChart"></canvas>
         </div>
@@ -799,33 +803,38 @@ document.addEventListener("DOMContentLoaded", () => {
     { tag: "[AGENT_DONE]",    cls: "ok",   text: " Risk analysis complete. Remediation plan generated." },
   ];
 
-  let lineIdx = 0, charIdx = 0, cursor = null;
+  let lineIdx = 0, charIdx = 0;
 
   function appendLine() {
-    if (lineIdx >= agentLines.length) { if (cursor) cursor.remove(); return; }
+    if (!shell) return;
+    if (lineIdx >= agentLines.length) {
+      const cursor = document.createElement('span');
+      cursor.className = 'agent-cursor';
+      shell.appendChild(cursor);
+      return;
+    }
+    
     const { tag, cls, text } = agentLines[lineIdx];
-    const div = document.createElement("div");
-    div.className = "agent-line";
-    div.innerHTML = `<span class="${cls}">${tag}</span>`;
-    if (cursor) cursor.remove();
-    cursor = document.createElement("span");
-    cursor.className = "agent-cursor";
-    div.appendChild(cursor);
-    shell.appendChild(div);
+    
+    if (charIdx === 0) {
+      const div = document.createElement("div");
+      div.className = "agent-line";
+      shell.appendChild(div);
+    }
+    
+    const activeDiv = shell.lastChild;
+    activeDiv.textContent = tag + text.slice(0, charIdx + 1) + '█';
+    charIdx++;
+    
+    if (charIdx >= text.length) {
+      activeDiv.innerHTML = `<span class="${cls}">${tag}</span>` + text;
+      lineIdx++;
+      charIdx = 0;
+      setTimeout(appendLine, 320);
+    } else {
+      setTimeout(appendLine, 22);
+    }
     shell.scrollTop = shell.scrollHeight;
-
-    let i = 0;
-    const interval = setInterval(() => {
-      if (i < text.length) {
-        cursor.insertAdjacentText("beforebegin", text[i++]);
-        shell.scrollTop = shell.scrollHeight;
-      } else {
-        clearInterval(interval);
-        lineIdx++;
-        charIdx = 0;
-        setTimeout(appendLine, 320);
-      }
-    }, 22);
   }
 
   const shellObs = new IntersectionObserver(entries => {
@@ -868,6 +877,7 @@ document.addEventListener("DOMContentLoaded", () => {
       },
       options: {
         responsive: true, maintainAspectRatio: false,
+        layout: { padding: { top: 15, bottom: 15, left: 25, right: 25 } },
         scales: { r: {
           min: 0, max: 100,
           grid: { color: "rgba(255,255,255,0.06)" },
@@ -904,6 +914,7 @@ document.addEventListener("DOMContentLoaded", () => {
       },
       options: {
         responsive: true, maintainAspectRatio: false,
+        layout: { padding: { top: 10, bottom: 5, left: 10, right: 15 } },
         scales: {
           x: { grid: { color: "rgba(255,255,255,0.04)" }, ticks: { color: "#64748b" } },
           y: {

@@ -112,6 +112,78 @@
     body.light-theme .target-tab {
         color: #64748b;
     }
+    
+    /* CSV Upload Section Styles */
+    .csv-upload-section {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+    .template-download-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid var(--border-color, rgba(255,255,255,0.08));
+        border-radius: 12px;
+        padding: 1rem 1.4rem;
+        gap: 1.5rem;
+        transition: all 0.3s;
+    }
+    body.light-theme .template-download-bar {
+        background: #f8fafc;
+        border-color: #cbd5e1;
+    }
+    .template-download-bar:hover {
+        border-color: rgba(6, 182, 212, 0.3);
+    }
+    .template-info {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        text-align: left;
+    }
+    .template-icon {
+        font-size: 1.8rem;
+    }
+    .template-info strong {
+        color: var(--text-main);
+        font-size: 0.9rem;
+        display: block;
+        margin-bottom: 2px;
+    }
+    body.light-theme .template-info strong {
+        color: #0f172a;
+    }
+    .template-info p {
+        color: var(--text-muted);
+        font-size: 0.8rem;
+        margin: 0;
+    }
+    .template-download-btn {
+        background: rgba(6, 182, 212, 0.1);
+        border: 1px solid rgba(6, 182, 212, 0.3);
+        color: #06b6d4;
+        font-size: 0.85rem;
+        font-weight: 700;
+        padding: 8px 16px;
+        border-radius: 8px;
+        text-decoration: none;
+        transition: all 0.2s;
+        white-space: nowrap;
+    }
+    .template-download-btn:hover {
+        background: #06b6d4;
+        color: #020617;
+        box-shadow: 0 4px 12px rgba(6, 182, 212, 0.25);
+    }
+    .helper-note {
+        font-size: 0.78rem;
+        color: var(--text-muted);
+        text-align: center;
+        margin-top: 0.8rem;
+        line-height: 1.4;
+    }
 </style>
 
 <!-- Interactive Liquid Canvas Background -->
@@ -160,25 +232,99 @@
 
                     <!-- CSV section -->
                     <div id="section-csv">
-                        <div style="background: rgba(6,182,212,0.04); border: 1px solid rgba(6,182,212,0.15); border-radius: 12px; padding: 1.2rem; margin-bottom: 1.5rem;">
-                            <p style="color:var(--text-main); font-weight:700; margin-bottom:6px; font-size: 0.92rem;"><i class="ti ti-info-circle" style="color:#06b6d4;"></i> CSV Formatting Hint</p>
-                            <p style="color:var(--text-muted); font-size:0.82rem; margin-bottom:0; line-height:1.5;">
-                                Your CSV file must have at least one column for <strong>emails</strong> (headed 'email', 'Email Address', or similar). Other columns like 'name', 'department', and 'title' are optional but help the AI personalize the simulation.
-                            </p>
+                        <div class="csv-upload-section">
+                            <div class="template-download-bar">
+                                <div class="template-info">
+                                    <span class="template-icon">📄</span>
+                                    <div>
+                                        <strong>Need a template?</strong>
+                                        <p>Download our CSV template and fill in your employees' details.</p>
+                                    </div>
+                                </div>
+                                <a href="/static/phishsim-employee-template.csv" download class="template-download-btn">
+                                    ↓ Download CSV Template
+                                </a>
+                            </div>
+
+                            <div style="background: rgba(6,182,212,0.04); border: 1px solid rgba(6,182,212,0.15); border-radius: 12px; padding: 1.2rem; margin-bottom: 0.5rem; text-align: left;">
+                                <p style="color:var(--text-main); font-weight:700; margin-bottom:6px; font-size: 0.92rem;"><i class="ti ti-info-circle" style="color:#06b6d4;"></i> CSV Formatting Hint</p>
+                                <p style="color:var(--text-muted); font-size:0.82rem; margin-bottom:0; line-height:1.5;">
+                                    Your CSV file must have at least one column for <strong>emails</strong> (headed 'email', 'Email Address', or similar). Other columns like 'name', 'department', and 'title' are optional but help the AI personalize the simulation.
+                                </p>
+                            </div>
+
+                            <div class="file-upload-wrapper">
+                                <input type="file" name="employee_csv" id="file-{{ campaign.id }}" class="file-upload-input" accept=".csv" style="display: none;" onchange="handleFileSelect(event)">
+                                <label for="file-{{ campaign.id }}" class="file-upload-label" id="fl-{{ campaign.id }}" style="
+                                    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
+                                    padding: 2.5rem 1.5rem; border: 2px dashed rgba(6,182,212,0.3); border-radius: 12px;
+                                    cursor: pointer; background: rgba(255,255,255,0.01); transition: all 0.3s ease;
+                                ">
+                                    <i class="ti ti-folder-open" style="color: #06b6d4; font-size: 2rem;"></i>
+                                    <span style="font-size: 1rem; color: var(--text-main); font-weight: 600;">Choose CSV File</span>
+                                    <span style="font-size: 0.8rem; color: var(--text-muted);">drag and drop or click to browse</span>
+                                </label>
+                                <div class="helper-note">
+                                    Required columns: email (required) · first_name (optional) · last_name (optional) · department (optional) · role (optional)
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Preview Section (initially hidden) -->
+                    <div id="preview-container" style="display: none; background: rgba(255,255,255,0.01); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.8rem; margin-top: 1rem; margin-bottom: 1.8rem; text-align: left;">
+                        <!-- Success Banner -->
+                        <div id="preview-success-banner" style="display: flex; align-items: center; gap: 10px; color: #10b981; font-weight: 700; font-size: 1.1rem; margin-bottom: 1.2rem;">
+                            <span style="font-size: 1.4rem;">✓</span> <span id="preview-success-msg">24 employees imported successfully</span>
                         </div>
 
-                        <div class="file-upload-wrapper" style="margin-bottom: 1.8rem;">
-                            <input type="file" name="employee_csv" id="file-{{ campaign.id }}" class="file-upload-input" accept=".csv" style="display: none;" onchange="handleFileSelect(event)">
-                            <label for="file-{{ campaign.id }}" class="file-upload-label" id="fl-{{ campaign.id }}" style="
-                                display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
-                                padding: 2.5rem 1.5rem; border: 2px dashed rgba(6,182,212,0.3); border-radius: 12px;
-                                cursor: pointer; background: rgba(255,255,255,0.01); transition: all 0.3s ease;
-                            ">
-                                <i class="ti ti-folder-open" style="color: #06b6d4; font-size: 2rem;"></i>
-                                <span style="font-size: 1rem; color: var(--text-main); font-weight: 600;">Choose CSV File</span>
-                                <span style="font-size: 0.8rem; color: var(--text-muted);">drag and drop or click to browse</span>
-                            </label>
-                            <div id="csv-preview" style="display:none; margin-top:1rem; overflow-x:auto;"></div>
+                        <!-- Error Warning Banner (exceeds 30%) -->
+                        <div id="preview-error-banner" style="display: none; background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: #ef4444; border-radius: 8px; padding: 1rem; margin-bottom: 1.2rem; font-size: 0.88rem; line-height: 1.5;">
+                            <strong>⚠ High Error Rate Detected:</strong> More than 30% of your rows had errors. Please check your CSV format and re-upload.
+                        </div>
+
+                        <!-- Table Preview Header -->
+                        <div style="font-family: var(--font-mono); font-size: 0.72rem; color: #06b6d4; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 0.8rem; font-weight: 700;">
+                            Preview (first 5):
+                        </div>
+                        
+                        <!-- Table -->
+                        <div style="overflow-x: auto; margin-bottom: 1.5rem;">
+                            <table style="width: 100%; border-collapse: collapse; font-size: 0.82rem; text-align: left;">
+                                <thead>
+                                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.08); color: var(--text-main);">
+                                        <th style="padding: 8px; font-weight: 700;">Name</th>
+                                        <th style="padding: 8px; font-weight: 700;">Department</th>
+                                        <th style="padding: 8px; font-weight: 700;">Email</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="preview-table-body" style="color: var(--text-muted);">
+                                    <!-- Dynamic rows -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Skipped Rows Info -->
+                        <div id="preview-skipped-section" style="display: none; margin-bottom: 1.5rem;">
+                            <div style="color: #f59e0b; font-size: 0.85rem; font-weight: 700; display: flex; align-items: center; gap: 6px; margin-bottom: 0.6rem;">
+                                <span>⚠</span> <span id="preview-skipped-msg">2 rows skipped:</span>
+                            </div>
+                            <div id="preview-skipped-list" style="background: rgba(0, 0, 0, 0.2); border: 1px solid var(--border-color); border-radius: 6px; padding: 10px 14px; font-family: var(--font-mono); font-size: 0.75rem; color: #ef4444; line-height: 1.5; max-height: 150px; overflow-y: auto; text-align: left; white-space: pre-wrap;">
+                                <!-- Skipped lines details -->
+                            </div>
+                        </div>
+
+                        <!-- Hidden Input to carry the parsed targets JSON -->
+                        <input type="hidden" name="employees_json" id="employees_json">
+
+                        <!-- Action Buttons -->
+                        <div style="display: flex; gap: 12px; justify-content: flex-start; margin-top: 1rem;">
+                            <button type="submit" id="preview-confirm-btn" class="nc-submit" style="margin: 0; width: auto; padding: 10px 24px;">
+                                Use These Employees →
+                            </button>
+                            <button type="button" id="preview-reupload-btn" style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 8px; padding: 10px 20px; color: var(--text-main); font-size: 0.88rem; font-weight: 600; cursor: pointer; transition: all 0.2s;">
+                                Re-upload CSV
+                            </button>
                         </div>
                     </div>
 
@@ -213,7 +359,7 @@
                 </style>                <script>
                 const fileInput = document.getElementById('file-{{ campaign.id }}');
                 const labelEl  = document.getElementById('fl-{{ campaign.id }}');
-                const csvPreview = document.getElementById('csv-preview');
+                const submitBtn = document.getElementById('submit-btn');
 
                 function handleFileSelect(event) {
                     const file = event.target.files[0];
@@ -225,24 +371,215 @@
                     previewCsv(file);
                 }
 
+                function parseEmployeeCSV(csvText) {
+                  const lines = csvText.trim().split('\n');
+                  if (lines.length === 0 || !lines[0].trim()) {
+                    throw new Error('CSV is empty or invalid.');
+                  }
+                  const rawHeaders = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/['"]/g, ''));
+                  
+                  // Column name mapping — handles every common variation
+                  const columnMap = {
+                    email: ['email', 'email address', 'emailaddress', 'e-mail', 'e_mail', 'mail', 'work email', 'corporate email', 'emp email'],
+                    first_name: ['first_name', 'firstname', 'first name', 'given name', 'fname', 'forename', 'name'],
+                    last_name: ['last_name', 'lastname', 'last name', 'surname', 'family name', 'lname'],
+                    full_name: ['full_name', 'fullname', 'full name', 'name', 'employee name', 'emp name'],
+                    department: ['department', 'dept', 'department name', 'division', 'team', 'group', 'business unit'],
+                    role: ['role', 'job title', 'title', 'position', 'job role', 'designation', 'job', 'occupation']
+                  };
+                  
+                  // Find which column index maps to which field
+                  const fieldIndexes = {};
+                  Object.entries(columnMap).forEach(([field, aliases]) => {
+                    const idx = rawHeaders.findIndex(h => aliases.includes(h));
+                    if (idx !== -1) fieldIndexes[field] = idx;
+                  });
+                  
+                  // Require at least an email column
+                  if (fieldIndexes.email === undefined) {
+                    throw new Error('CSV must contain an email column. Accepted column names: email, email address, work email, mail');
+                  }
+                  
+                  const employees = [];
+                  const errors = [];
+                  
+                  for (let i = 1; i < lines.length; i++) {
+                    if (!lines[i].trim()) continue;
+                    
+                    // Handle quoted CSV values properly
+                    const values = parseCSVLine(lines[i]);
+                    
+                    const email = values[fieldIndexes.email]?.trim();
+                    
+                    // Skip if no email
+                    if (!email) {
+                      errors.push(`Row ${i + 1}: Missing email address — skipped`);
+                      continue;
+                    }
+                    
+                    // Basic email validation
+                    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                      errors.push(`Row ${i + 1}: Invalid email format "${email}" — skipped`);
+                      continue;
+                    }
+                    
+                    // Build name from available columns
+                    let firstName = '', lastName = '', fullName = '';
+                    
+                    if (fieldIndexes.full_name !== undefined) {
+                      fullName = values[fieldIndexes.full_name]?.trim() || '';
+                      const parts = fullName.split(' ');
+                      firstName = parts[0] || '';
+                      lastName = parts.slice(1).join(' ') || '';
+                    } else {
+                      firstName = (fieldIndexes.first_name !== undefined ? values[fieldIndexes.first_name]?.trim() : '') || '';
+                      lastName = (fieldIndexes.last_name !== undefined ? values[fieldIndexes.last_name]?.trim() : '') || '';
+                      fullName = [firstName, lastName].filter(Boolean).join(' ') || email.split('@')[0];
+                    }
+                    
+                    // If no name at all, derive from email
+                    if (!fullName) {
+                      fullName = email.split('@')[0].replace(/[._-]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                      firstName = fullName.split(' ')[0];
+                    }
+                    
+                    employees.push({
+                      email: email.toLowerCase(),
+                      first_name: firstName,
+                      last_name: lastName,
+                      full_name: fullName || `${firstName} ${lastName}`.trim(),
+                      department: (fieldIndexes.department !== undefined ? values[fieldIndexes.department]?.trim() : '') || 'General',
+                      role: (fieldIndexes.role !== undefined ? values[fieldIndexes.role]?.trim() : '') || 'Employee'
+                    });
+                  }
+                  
+                  return { employees, errors, total: employees.length };
+                }
+
+                // Handles commas inside quoted fields
+                function parseCSVLine(line) {
+                  const result = [];
+                  let current = '';
+                  let inQuotes = false;
+                  
+                  for (let i = 0; i < line.length; i++) {
+                    if (line[i] === '"') {
+                      inQuotes = !inQuotes;
+                    } else if (line[i] === ',' && !inQuotes) {
+                      result.push(current);
+                      current = '';
+                    } else {
+                      current += line[i];
+                    }
+                  }
+                  result.push(current);
+                  return result;
+                }
+
+                function escapeHtml(str) {
+                    if (!str) return '';
+                    return str
+                        .replace(/&/g, "&amp;")
+                        .replace(/</g, "&lt;")
+                        .replace(/>/g, "&gt;")
+                        .replace(/"/g, "&quot;")
+                        .replace(/'/g, "&#039;");
+                }
+
                 function previewCsv(file) {
                     const reader = new FileReader();
                     reader.onload = (e) => {
-                        const lines = e.target.result.split('\n').filter(l => l.trim()).slice(0, 4);
-                        if (lines.length < 2) return;
-                        const headers = lines[0].split(',').map(h => h.trim().replace(/"/g,''));
-                        const rows    = lines.slice(1, 4);
-                        let html = `<table style="width:100%;border-collapse:collapse;font-size:0.78rem;font-family:var(--font-mono);">`;
-                        html += `<tr>${headers.map(h => `<th style="padding:4px 8px;text-align:left;color:#06b6d4;border-bottom:1px solid rgba(6,182,212,0.25);">${h}</th>`).join('')}</tr>`;
-                        rows.forEach(row => {
-                            const cells = row.split(',').map(c => c.trim().replace(/"/g,''));
-                            html += `<tr>${cells.map(c => `<td style="padding:4px 8px;color:var(--text-muted);border-bottom:1px solid rgba(255,255,255,0.04);">${c}</td>`).join('')}</tr>`;
-                        });
-                        html += '</table><p style="font-size:0.7rem;color:#475569;margin-top:4px;">Showing first 3 rows</p>';
-                        csvPreview.innerHTML = html;
-                        csvPreview.style.display = 'block';
+                        const text = e.target.result;
+                        try {
+                            const result = parseEmployeeCSV(text);
+                            showPreview(result);
+                        } catch (err) {
+                            alert(err.message);
+                            resetUploadArea();
+                        }
                     };
                     reader.readAsText(file);
+                }
+
+                function showPreview(result) {
+                    const employees = result.employees;
+                    const errors = result.errors;
+                    const total = employees.length + errors.length;
+                    const errorRate = total > 0 ? (errors.length / total) : 0;
+                    
+                    // Hide the upload section and the default submit button
+                    document.querySelector('.csv-upload-section').style.display = 'none';
+                    submitBtn.style.display = 'none';
+                    
+                    // Show preview container
+                    const previewContainer = document.getElementById('preview-container');
+                    previewContainer.style.display = 'block';
+                    
+                    // Update success banner
+                    document.getElementById('preview-success-msg').textContent = `${employees.length} employees imported successfully`;
+                    
+                    // Render first 5 in the table
+                    const tableBody = document.getElementById('preview-table-body');
+                    tableBody.innerHTML = '';
+                    const slice = employees.slice(0, 5);
+                    slice.forEach(emp => {
+                        const row = document.createElement('tr');
+                        row.style.borderBottom = '1px solid rgba(255,255,255,0.04)';
+                        row.innerHTML = `
+                            <td style="padding: 8px;">${escapeHtml(emp.full_name)}</td>
+                            <td style="padding: 8px;">${escapeHtml(emp.department)}</td>
+                            <td style="padding: 8px; font-family: var(--font-mono);">${escapeHtml(emp.email)}</td>
+                        `;
+                        tableBody.appendChild(row);
+                    });
+                    
+                    // Render skipped errors if any
+                    const skippedSection = document.getElementById('preview-skipped-section');
+                    if (errors.length > 0) {
+                        skippedSection.style.display = 'block';
+                        document.getElementById('preview-skipped-msg').textContent = `${errors.length} rows skipped:`;
+                        document.getElementById('preview-skipped-list').textContent = errors.join('\n');
+                    } else {
+                        skippedSection.style.display = 'none';
+                    }
+                    
+                    // Handle error rate warning (30% threshold)
+                    const confirmBtn = document.getElementById('preview-confirm-btn');
+                    const errorBanner = document.getElementById('preview-error-banner');
+                    if (errorRate > 0.3) {
+                        confirmBtn.style.display = 'none';
+                        errorBanner.style.display = 'block';
+                    } else {
+                        confirmBtn.style.display = 'block';
+                        confirmBtn.innerHTML = `Use These ${employees.length} Employees →`;
+                        errorBanner.style.display = 'none';
+                    }
+                    
+                    // Set the hidden input value
+                    document.getElementById('employees_json').value = JSON.stringify(employees);
+                }
+
+                function resetUploadArea() {
+                    // Reset file input
+                    fileInput.value = '';
+                    
+                    // Restore label HTML
+                    labelEl.innerHTML = `
+                        <i class="ti ti-folder-open" style="color: #06b6d4; font-size: 2rem;"></i>
+                        <span style="font-size: 1rem; color: var(--text-main); font-weight: 600;">Choose CSV File</span>
+                        <span style="font-size: 0.8rem; color: var(--text-muted);">drag and drop or click to browse</span>
+                    `;
+                    labelEl.style.borderColor = 'rgba(6,182,212,0.3)';
+                    labelEl.style.background = 'rgba(255,255,255,0.01)';
+                    
+                    // Hide preview container, show upload section and the default submit button
+                    document.getElementById('preview-container').style.display = 'none';
+                    document.querySelector('.csv-upload-section').style.display = 'flex';
+                    
+                    const tabCsv = document.getElementById('tab-csv');
+                    if (tabCsv.classList.contains('active')) {
+                        submitBtn.style.display = 'block';
+                    }
                 }
 
                 // Drag-and-drop
@@ -267,30 +604,50 @@
                     const sectionCsv = document.getElementById('section-csv');
                     const sectionOsint = document.getElementById('section-osint');
                     const useOsintInput = document.getElementById('use_osint');
-                    const submitBtn = document.getElementById('submit-btn');
                     const form = document.getElementById('target-form');
+                    const previewReupload = document.getElementById('preview-reupload-btn');
+
+                    if (previewReupload) {
+                        previewReupload.addEventListener('click', resetUploadArea);
+                    }
 
                     tabCsv.addEventListener('click', () => {
+                        tabCsv.classList.add('active');
+                        tabOsint.classList.remove('active');
                         tabCsv.style.borderBottomColor = '#06b6d4';
                         tabCsv.style.color = '#fff';
                         tabOsint.style.borderBottomColor = 'transparent';
                         tabOsint.style.color = '#64748b';
-                        sectionCsv.style.display = 'block';
+                        
+                        const isPreviewOpen = document.getElementById('preview-container').style.display === 'block';
+                        if (isPreviewOpen) {
+                            document.getElementById('preview-container').style.display = 'block';
+                            sectionCsv.style.display = 'none';
+                            submitBtn.style.display = 'none';
+                        } else {
+                            sectionCsv.style.display = 'block';
+                            submitBtn.style.display = 'block';
+                        }
+                        
                         sectionOsint.style.display = 'none';
-                        fileInput.required = true;
+                        fileInput.required = false;
                         useOsintInput.value = 'false';
                         submitBtn.innerHTML = '<i class="ti ti-upload"></i> Upload CSV &amp; Next Step';
                     });
 
                     tabOsint.addEventListener('click', () => {
+                        tabOsint.classList.add('active');
+                        tabCsv.classList.remove('active');
                         tabOsint.style.borderBottomColor = '#06b6d4';
                         tabOsint.style.color = '#fff';
                         tabCsv.style.borderBottomColor = 'transparent';
                         tabCsv.style.color = '#64748b';
                         sectionOsint.style.display = 'block';
                         sectionCsv.style.display = 'none';
+                        document.getElementById('preview-container').style.display = 'none';
                         fileInput.required = false;
                         useOsintInput.value = 'true';
+                        submitBtn.style.display = 'block';
                         submitBtn.innerHTML = '<i class="ti ti-radar-2"></i> Run OSINT Scan &amp; Next Step';
                     });
 
@@ -298,6 +655,13 @@
                         if (useOsintInput.value === 'true') {
                             submitBtn.disabled = true;
                             submitBtn.innerHTML = '<i class="ti ti-loader-2" style="animation:spin 1s linear infinite;"></i> AI agent scanning…';
+                        } else {
+                            // If CSV is active and we have not parsed/previewed yet, prevent submission
+                            const hasJson = document.getElementById('employees_json').value;
+                            if (!hasJson) {
+                                e.preventDefault();
+                                alert('Please select and validate a CSV file first.');
+                            }
                         }
                     });
                 });

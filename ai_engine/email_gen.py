@@ -56,83 +56,63 @@ def clean_email_data(email_data):
             email_data[key] = value.strip()
 
     return email_data
-
-
-def generate_phishing_email(employee_profile, scenario):
+def generate_phishing_email(employee_profile, scenario, target_domain=None, urgency_level=None):
     """
     Takes employee profile dict + scenario string.
-    Returns dict: {subject, sender_name, body_html}
+    Returns dict: {subject, sender_name, body_html, educational_breakdown}
     """
     if client is None:
         return fallback_email(employee_profile)
 
-    prompt = f"""You are a security awareness trainer running an authorized phishing simulation.
-The company has given full written consent for this test.
+    recipient_name = employee_profile.get("name", "Employee")
+    recipient_email = employee_profile.get("email", "employee@company.com")
+    recipient_dept = employee_profile.get("department") or employee_profile.get("title") or "General Staff"
+    t_domain = target_domain or employee_profile.get("company_name") or "company.com"
+    u_level = urgency_level or "high"
 
-Scenario: {scenario}
+    system_prompt = f"""You are a phishing email generator for authorized security training simulations. 
+Generate a realistic phishing email with these exact requirements:
 
-Target:
-Name: {employee_profile["name"]}
-Title: {employee_profile["title"]}
-Department: {employee_profile["department"]}
-Seniority: {employee_profile.get("seniority", "Mid")}
+RECIPIENT: {recipient_name} ({recipient_email})
+ROLE/DEPARTMENT: {recipient_dept}
+SCENARIO: {scenario}
+TARGET COMPANY DOMAIN: {t_domain}
+URGENCY LEVEL: {u_level}
 
-Company: {employee_profile["company_name"]}
-Company context: {employee_profile.get("company_description", "")[:200]}
+OUTPUT FORMAT — respond with ONLY a JSON object, no markdown, no explanation:
+{{
+  "subject": "Email subject line here",
+  "sender_display": "Sender Name Here",
+  "body_html": "Full HTML email body here — use the recipient's actual name, reference their department, make it contextually relevant to their role",
+  "phishing_tactic": "one sentence describing the social engineering tactic used"
+}}
 
-Use exactly ONE of these psychological triggers:
-- Authority (from IT/HR/management)
-- Urgency (must act today)
-- Compliance (policy/audit requirement)
-- Internal process update
-
-Write a phishing simulation email that:
-1. Uses the employee name naturally
-2. Feels like it came from inside the company
-3. Contains exactly one link using placeholder: TRACKING_LINK
-4. Is under 120 words
-5. Use simple HTML formatting with <p> and <a> tags only
-
-6. Include an 'educational_breakdown' field that explains in 2-3 sentences exactly what psychological trick you used (e.g., false urgency) and how the user could have spotted it.
-
-CRITICAL RULES:
-- Do NOT include any disclosures, warnings, disclaimers, or metadata (like "simulated", "phishing test", "fake", "authorized test", "simulation") inside the email's subject, sender_name, or body_html. The email must look entirely realistic, authentic, and convincing to the target.
-- Do NOT hallucinate random sender names (like 'Jordan Lee' or 'John Doe').
-- Sign off using ONLY the Department name (e.g., 'Human Resources', 'IT Support Team', or 'Finance Department').
-- Make sure the tone matches the company context provided.
-- Do NOT ask the employee to enter or share a password, MFA code, bank detail, or secret.
-- The link should lead to a safe training page, not a credential collection form.
-- Avoid generic AI filler phrases like "thank you for your prompt attention".
-
-Return ONLY this JSON structure with no extra text, no markdown, no explanation:
-{{"subject": "...", "sender_name": "...", "body_html": "...", "educational_breakdown": "..."}}"""
+RULES:
+- Use the recipient's actual first name in the greeting
+- Reference their specific department or role context
+- Keep it under 200 words
+- Do NOT include any meta-commentary or explanation outside the JSON
+- Make it realistic enough to test but not harmful"""
 
     # --- API call with retry (max 2 attempts) ---
     raw = None
     for attempt in range(2):
         try:
             response = client.chat.completions.create(
-                model="openrouter/free",
+                model="meta-llama/llama-3.1-8b-instruct:free",
                 messages=[
-                    {"role": "system", "content": "You generate phishing simulation emails and return valid JSON only."},
-                    {"role": "user", "content": prompt}
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": "Generate the phishing email simulation JSON structure now."}
                 ],
-                temperature=0.5,
-                max_tokens=400
+                temperature=0.7,
+                max_tokens=500
             )
-            raw = None
-
-            try:
-                raw = response.choices[0].message.content
-            except:
-                raw = str(response)
-
+            raw = response.choices[0].message.content
             if raw and raw.strip():
                 break
             print(f"Empty response on attempt {attempt + 1}, retrying...")
         except Exception as e:
             print(f"API call failed on attempt {attempt + 1}: {e}")
-            # Fallback to a realistic generic email instead of an error string
             return fallback_email(employee_profile)
 
     # --- If both attempts returned empty ---
@@ -141,7 +121,7 @@ Return ONLY this JSON structure with no extra text, no markdown, no explanation:
         return fallback_email(employee_profile)
 
     # --- Clean and Extract JSON robustly ---
-    # 1. Remove <think>...</think> blocks used by DeepSeek-R1 and similar reasoning models
+    # 1. Remove <think>...</think> blocks
     raw = re.sub(r'<think>.*?</think>', '', raw, flags=re.DOTALL).strip()
     
     # 2. Extract markdown code blocks if present
@@ -150,7 +130,7 @@ Return ONLY this JSON structure with no extra text, no markdown, no explanation:
     if code_block_match:
         json_str = code_block_match.group(1)
 
-    # 3. Robustly parse the JSON by checking valid bracket pairs
+    # 3. Robustly parse the JSON
     parsed = None
     start_idx = json_str.find('{')
     
@@ -167,6 +147,16 @@ Return ONLY this JSON structure with no extra text, no markdown, no explanation:
         start_idx = json_str.find('{', start_idx + 1)
 
     if parsed:
+        if "sender_display" in parsed:
+            parsed["sender_name"] = parsed["sender_display"]
+        if "phishing_tactic" in parsed:
+            parsed["educational_breakdown"] = parsed["phishing_tactic"]
+            
+        if "sender_name" not in parsed:
+            parsed["sender_name"] = parsed.get("sender_display") or "IT Security Team"
+        if "educational_breakdown" not in parsed:
+            parsed["educational_breakdown"] = parsed.get("phishing_tactic") or "This is a simulated phishing email."
+            
         return clean_email_data(parsed)
     else:
         print(f"Failed to extract valid JSON. Raw output:\n{raw}")

@@ -98,6 +98,86 @@ body.light-theme #warning-card-container .divider {
 body.light-theme #warning-card-container h2 {
     color: #0f172a !important;
 }
+
+.training-cta-button {
+  background: var(--primary, #38BDF8);       /* #38BDF8 cyan */
+  color: var(--text-inverse, #060B18);       /* #060B18 dark */
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 600;
+  font-size: 1rem;
+  padding: 14px 32px;
+  border-radius: var(--radius-md, 8px);
+  border: none;
+  cursor: pointer;
+  width: 100%;
+  max-width: 400px;
+  transition: background 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-sizing: border-box;
+}
+.training-cta-button:hover {
+  background: #7DD3FC;
+}
+
+/* Styled Key Learning Card */
+.key-learning-card {
+  background: var(--bg-elevated, #121D35);
+  border: 1px solid var(--border-default, rgba(255,255,255,0.12));
+  border-radius: var(--radius-lg, 16px);
+  padding: 1.8rem;
+  text-align: left;
+}
+.learning-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 1.5rem;
+}
+.learning-icon {
+  font-size: 1.5rem;
+}
+.learning-header h3 {
+  margin: 0;
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 600;
+  font-size: 1.15rem;
+  color: var(--text-primary, #fff);
+}
+.learning-points {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+.learning-point {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+.point-number {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  color: var(--primary, #38BDF8);
+  font-size: 1.1rem;
+  line-height: 1;
+  margin-top: 2px;
+}
+.learning-point strong {
+  display: block;
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 600;
+  color: var(--text-primary, #fff);
+  font-size: 0.95rem;
+  margin-bottom: 4px;
+}
+.learning-point p {
+  margin: 0;
+  color: var(--text-secondary, #94a3b8);
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
 </style>
 
 <div style="background: var(--bg-base); min-height: 100vh; padding: 2rem; box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; align-items: center;">
@@ -157,38 +237,20 @@ body.light-theme #warning-card-container h2 {
 
             <!-- 3 Suspicious Tactics rows -->
             <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 32px;">
+                {% for flag in flags %}
                 <div class="tactic-row" style="border-left: 3px solid var(--warning); background: var(--bg-elevated); padding: 12px 16px; border-radius: 0 8px 8px 0; text-align: left;">
-                    <strong class="tactic-title" style="display: block; font-family: 'Space Grotesk', sans-serif; font-size: 0.95rem; color: var(--text-primary); margin-bottom: 2px;">Urgency Pressure</strong>
-                    <p class="tactic-desc" style="margin: 0; font-size: 0.85rem; color: var(--text-secondary); line-height: 1.4;">Phishing emails create a sense of panic or immediate necessity to bypass analytical verification.</p>
+                    <strong class="tactic-title" style="display: block; font-family: 'Space Grotesk', sans-serif; font-size: 0.95rem; color: var(--text-primary); margin-bottom: 2px;">{{ flag.title }}</strong>
+                    <p class="tactic-desc" style="margin: 0; font-size: 0.85rem; color: var(--text-secondary); line-height: 1.4;">{{ flag.desc }}</p>
                 </div>
-                <div class="tactic-row" style="border-left: 3px solid var(--warning); background: var(--bg-elevated); padding: 12px 16px; border-radius: 0 8px 8px 0; text-align: left;">
-                    <strong class="tactic-title" style="display: block; font-family: 'Space Grotesk', sans-serif; font-size: 0.95rem; color: var(--text-primary); margin-bottom: 2px;">Fake Sender Domain</strong>
-                    <p class="tactic-desc" style="margin: 0; font-size: 0.85rem; color: var(--text-secondary); line-height: 1.4;">Checking sender headers reveals mismatching domains designed to closely spoof real domains.</p>
-                </div>
-                <div class="tactic-row" style="border-left: 3px solid var(--warning); background: var(--bg-elevated); padding: 12px 16px; border-radius: 0 8px 8px 0; text-align: left;">
-                    <strong class="tactic-title" style="display: block; font-family: 'Space Grotesk', sans-serif; font-size: 0.95rem; color: var(--text-primary); margin-bottom: 2px;">Generic Salutation</strong>
-                    <p class="tactic-desc" style="margin: 0; font-size: 0.85rem; color: var(--text-secondary); line-height: 1.4;">Lack of personalized context or generic greetings indicates automated messaging.</p>
-                </div>
+                {% endfor %}
             </div>
 
             <!-- Primary button -->
-            <button onclick="startTraining()" class="btn-primary-filled" style="
-                width: 100%;
-                padding: 12px 24px;
-                font-size: 14px;
-                font-weight: 600;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                gap: 8px;
-                border-radius: 8px;
-                cursor: pointer;
-                border: none;
-                font-family: 'Space Grotesk', sans-serif;
-                margin-bottom: 16px;
-            ">
-                Complete Security Training →
-            </button>
+            <div style="display: flex; justify-content: center; width: 100%;">
+                <button onclick="startTraining()" class="training-cta-button">
+                    Complete Security Training &rarr;
+                </button>
+            </div>
         </div>
     </div>
 
@@ -301,11 +363,11 @@ body.light-theme #warning-card-container h2 {
                     <h3 style="font-family: var(--font-sans); color: var(--accent-cyan); font-size: 1.15rem; margin: 0 0 1.2rem 0; font-weight: 700; width:100%;"><i class="ti ti-trophy" style="margin-right:6px;"></i> Personal Security Index</h3>
                     
                     <!-- Circular Progress Ring -->
-                    <div style="position: relative; width: 100px; height: 100px; margin-bottom: 1rem;">
+                    <div style="position: relative; width: 100px; height: 100px; margin-bottom: 1.5rem;">
                         <svg width="100" height="100" viewBox="0 0 100 100">
                             <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="8"/>
                             <circle cx="50" cy="50" r="42" fill="none" 
-                                    stroke="{% if personal_stats.score >= 80 %}#22c55e{% elif personal_stats.score >= 50 %}#f59e0b{% else %}#ef4444{% endif %}" 
+                                    stroke="{% if personal_stats.score >= 90 %}var(--success, #22c55e){% elif personal_stats.score >= 70 %}var(--info, #6366f1){% elif personal_stats.score >= 40 %}var(--warning, #f59e0b){% else %}var(--danger, #ef4444){% endif %}" 
                                     stroke-width="8" stroke-dasharray="263.8" 
                                     stroke-dashoffset="{{ 263.8 - (263.8 * personal_stats.score / 100) }}"
                                     stroke-linecap="round" 
@@ -317,14 +379,21 @@ body.light-theme #warning-card-container h2 {
                         </div>
                     </div>
                     
-                    <div style="font-size: 0.85rem; color: #cbd5e1; line-height: 1.5;">
-                        {% if personal_stats.total_clicks == 0 %}
-                            <span style="color: #4ade80; font-weight: 700;"><i class="ti ti-circle-check"></i> Excellent Threat Resistance!</span><br>
-                            You have spotted and avoided all threats in the last {{ personal_stats.total_sent }} simulations.
-                        {% else %}
-                            <span>Fell for: <strong>{{ personal_stats.total_clicks }}</strong> / {{ personal_stats.total_sent }} simulation campaigns.</span><br>
-                            <span style="color: var(--text-muted); font-size: 0.76rem; display: block; margin-top: 6px; line-height:1.4;">Reporting emails increases this score by 15 points. Link clicks deduct 30 points. Help keep our network secure!</span>
-                        {% endif %}
+                    <div style="font-size: 0.85rem; color: #cbd5e1; line-height: 1.6; font-family: 'Space Grotesk', sans-serif; text-align: left; width: 100%; max-width: 280px; margin: 0 auto;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                            <span>Clicked:</span>
+                            <strong style="color: var(--text-main);">{{ personal_stats.clickCount }} of {{ personal_stats.totalCampaigns }} campaigns</strong>
+                            <span style="color: var(--danger, #ef4444); font-family: var(--font-mono); font-weight: 600;">[-{{ personal_stats.clickPoints }} pts]</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                            <span>Reported:</span>
+                            <strong style="color: var(--text-main);">{{ personal_stats.reportCount }} of {{ personal_stats.totalCampaigns }} campaigns</strong>
+                            <span style="color: var(--success, #22c55e); font-family: var(--font-mono); font-weight: 600;">[+{{ personal_stats.reportPoints }} pts]</span>
+                        </div>
+                        <div style="border-top: 1px dashed rgba(255,255,255,0.1); margin-top: 10px; padding-top: 10px; display: flex; justify-content: space-between; font-weight: 700; color: var(--text-main);">
+                            <span>Net score:</span>
+                            <span>{{ personal_stats.score }} / 100</span>
+                        </div>
                     </div>
                 </div>
                 {% endif %}
@@ -358,21 +427,35 @@ body.light-theme #warning-card-container h2 {
                     </div>
                 </div>
 
-                <!-- Micro-Learning Video Embed Card -->
-                {% set video_ids = {
-                    'ceo_fraud': '3R3w1tE_58E',
-                    'it_alert': '9_v0_aJ_N70',
-                    'hr_update': 'yP9_o_1u64M',
-                    'invoice': 'Z0p9vY1p6gM'
-                } %}
-                {% set video_id = video_ids.get(scenario_key, '3R3w1tE_58E') %}
-                <div class="glass-panel" style="padding: 1.8rem;">
-                    <h3 style="font-family: var(--font-sans); color: var(--accent-cyan); font-size: 1.15rem; margin: 0 0 1rem 0; font-weight: 700; display:flex; align-items:center; gap:8px;">
-                        <i class="ti ti-video" style="color: #ef4444; font-size: 1.3rem;"></i> Micro-Learning Video
-                    </h3>
-                    <div class="video-container" style="position:relative; padding-bottom:56.25%; height:0; overflow:hidden; border-radius:10px; border:1px solid rgba(255,255,255,0.08); background: #000;">
-                        <iframe src="https://www.youtube.com/embed/{{ video_id }}" style="position:absolute; top:0; left:0; width:100%; height:100%; border:none;" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                <!-- Key Learning Card -->
+                <div class="key-learning-card">
+                  <div class="learning-header">
+                    <span class="learning-icon">🎓</span>
+                    <h3>Key Learning: How to Spot Phishing</h3>
+                  </div>
+                  <div class="learning-points">
+                    <div class="learning-point">
+                      <span class="point-number">01</span>
+                      <div>
+                        <strong>Verify the sender domain</strong>
+                        <p>Hover over the sender name to reveal the actual email address. Legitimate companies use their own domain.</p>
+                      </div>
                     </div>
+                    <div class="learning-point">
+                      <span class="point-number">02</span>
+                      <div>
+                        <strong>Question urgency</strong>
+                        <p>Legitimate organizations don't demand immediate action. When in doubt, call the sender directly using a known number.</p>
+                      </div>
+                    </div>
+                    <div class="learning-point">
+                      <span class="point-number">03</span>
+                      <div>
+                        <strong>Never click — always report</strong>
+                        <p>Use your email client's "Report Phishing" button. Your report protects your entire organization.</p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
             </div>
@@ -412,12 +495,15 @@ body.light-theme #warning-card-container h2 {
             </div>
 
             <!-- Completion Success Screen -->
-            <div id="quiz-success-box" style="display: none; text-align: center; padding: 1rem 0;">
+            <div id="quiz-success-box" style="display: none; text-align: center; padding: 1.5rem 0;">
                 <div style="width: 58px; height: 58px; background: rgba(34, 197, 94, 0.15); border: 1px solid rgba(34, 197, 94, 0.35); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #22c55e; margin: 0 auto 1.5rem; font-size: 1.5rem; box-shadow: 0 0 15px rgba(34,197,94,0.25);">
-                    <i class="ti ti-shield-check" style="font-size: 26px;"></i>
+                    ✓
                 </div>
-                <h3 style="font-family: var(--font-sans); font-size: 1.5rem; color: #fff; margin: 0 0 0.5rem 0; font-weight: 800;">Training Certification Granted!</h3>
-                <p style="color: var(--text-muted); font-size: 0.95rem; margin: 0 auto 2rem; max-width: 520px; line-height: 1.6;">You have correctly identified the phishing identifiers and techniques. Your training completion logs have been compiled. A reinforcement update has been triggered.</p>
+                <h3 style="font-family: var(--font-sans); font-size: 1.5rem; color: #fff; margin: 0 0 0.5rem 0; font-weight: 800;">Training Complete</h3>
+                <p style="color: #22c55e; font-weight: 600; font-size: 1.1rem; margin-bottom: 0.5rem;">Score: 3/3 — Excellent</p>
+                <p style="color: var(--text-muted); font-size: 0.95rem; margin: 0 auto 2rem; max-width: 520px; line-height: 1.6;">
+                    Your completion has been logged to {{ company_name }}'s security training records.
+                </p>
                 
                 <div style="display:flex; justify-content:center; gap:12px;">
                     <button type="button" class="btn-primary-sm" onclick="window.close();" style="padding: 10px 24px; font-size: 0.88rem; font-weight: 700; border-radius: 8px; cursor: pointer; border: none; font-family: 'Space Grotesk', sans-serif;">
@@ -711,6 +797,8 @@ function startTraining() {
         if (trackingId) {
             const formData = new FormData();
             formData.append('tracking_id', trackingId);
+            formData.append('score', 3);
+            formData.append('total_questions', 3);
 
             fetch('/complete-training', {
                 method: 'POST',

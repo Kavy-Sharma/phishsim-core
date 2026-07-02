@@ -343,6 +343,37 @@
     white-space: normal;
 }
 
+/* Custom Header Tooltips */
+.tooltip-wrapper {
+    display: inline-block;
+    position: relative;
+    margin-left: 6px;
+    cursor: help;
+}
+.tooltip-wrapper .tooltip-content {
+    display: none;
+    position: absolute;
+    bottom: 130%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 250px;
+    background: var(--bg-elevated, #1e293b);
+    border: 1px solid var(--border-subtle, rgba(255,255,255,0.08));
+    color: var(--text-muted, #94a3b8);
+    padding: 10px 12px;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    line-height: 1.4;
+    font-weight: 500;
+    text-align: left;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+    z-index: 9999;
+    white-space: normal;
+}
+.tooltip-wrapper:hover .tooltip-content {
+    display: block;
+}
+
 /* Activity item details */
 .activity-item {
     display: flex;
@@ -707,7 +738,15 @@ body.light-theme .campaign-grid-card:hover {
                                 <th>Status</th>
                                 <th style="text-align: center;">Targets</th>
                                 <th style="text-align: center;">Sent</th>
-                                <th style="text-align: center;">Opened</th>
+                                <th style="text-align: center;">
+                                    Opened
+                                    <div class="tooltip-wrapper">
+                                        <i class="ti ti-info-circle" style="color: var(--text-muted); font-size: 0.82rem; vertical-align: middle;"></i>
+                                        <div class="tooltip-content">
+                                            Opens may be undercounted. Gmail and Apple Mail block tracking pixels for privacy-protected accounts. Click data is always accurate.
+                                        </div>
+                                    </div>
+                                </th>
                                 <th style="text-align: center;">Clicked</th>
                                 <th style="text-align: center;">Reported</th>
                                 <th>Created</th>
@@ -1159,7 +1198,7 @@ body.light-theme .campaign-grid-card:hover {
         <p id="confirm-message">This action cannot be undone.</p>
         <div class="confirm-actions">
             <button type="button" class="confirm-cancel" id="confirm-cancel">Cancel</button>
-            <button type="button" class="confirm-danger" id="confirm-danger">Delete</button>
+            <button type="button" class="confirm-danger" id="confirm-danger" style="background: linear-gradient(135deg, #ef4444, #b91c1c) !important; color: #fff !important; border: none; border-radius: 10px; padding: 12px; cursor: pointer; font-weight: 700;">Delete</button>
         </div>
     </div>
 </div>
@@ -1538,12 +1577,38 @@ body.light-theme .campaign-grid-card:hover {
             const getLineColor = () => document.body.classList.contains('light-theme') ? '#2563eb' : '#38bdf8';
             
             const isPro = {% if current_user.role in ('admin', 'pro') %}true{% else %}false{% endif %};
-            const chartLabels = isPro 
-                ? ['W1', 'W2', 'W3', 'W4', 'W5', 'W6', 'W7', 'W8', 'W9', 'W10', 'W11', 'W12']
-                : ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-            const chartData = isPro
-                ? [45, 48, 52, 58, 55, 60, 64, 62, 68, 72, 75, {{ hss_score }}]
-                : [58, 60, 55, 62, 65, 68, {{ hss_score }}];
+            const dbRiskTrend = [
+                {% for item in risk_trend %}
+                {
+                    name: "{{ item.name | replace('"', '\\"') }}",
+                    hss: {{ item.hss }}
+                },
+                {% endfor %}
+            ];
+
+            let chartLabels = [];
+            let chartData = [];
+
+            if (dbRiskTrend.length > 0) {
+                if (dbRiskTrend.length === 1) {
+                    chartLabels = ['Baseline W1', 'Baseline W2', dbRiskTrend[0].name];
+                    chartData = [55, 60, dbRiskTrend[0].hss];
+                } else if (dbRiskTrend.length === 2) {
+                    chartLabels = ['Baseline W1', dbRiskTrend[0].name, dbRiskTrend[1].name];
+                    chartData = [55, dbRiskTrend[0].hss, dbRiskTrend[1].hss];
+                } else {
+                    const sortedTrend = [...dbRiskTrend].reverse();
+                    chartLabels = sortedTrend.map(item => item.name);
+                    chartData = sortedTrend.map(item => item.hss);
+                }
+            } else {
+                chartLabels = isPro 
+                    ? ['W1', 'W2', 'W3', 'W4', 'W5', 'W6', 'W7', 'W8', 'W9', 'W10', 'W11', 'W12']
+                    : ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+                chartData = isPro
+                    ? [45, 48, 52, 58, 55, 60, 64, 62, 68, 72, 75, {{ hss_score }}]
+                    : [58, 60, 55, 62, 65, 68, {{ hss_score }}];
+            }
 
             const chart = new Chart(mainCtx, {
                 type: 'line',
@@ -1733,31 +1798,64 @@ body.light-theme .campaign-grid-card:hover {
     });
 
     // ── Cyberpunk AI Simulation Stream Terminal Simulator ──────────────────
+    const dbActivities = [
+        {% for act in recent_activities %}
+        {
+            entry_type: "{{ act.entry_type }}",
+            event_type: "{{ act.event_type }}",
+            created_at: "{{ act.created_at }}",
+            campaign_name: "{{ act.campaign_name | replace('"', '\\"') }}",
+            employee_name: "{{ act.employee_name | replace('"', '\\"') if act.employee_name else '' }}",
+            employee_department: "{{ act.employee_department | replace('"', '\\"') if act.employee_department else '' }}",
+            owner_name: "{{ act.owner_name | replace('"', '\\"') if act.owner_name else '' }}"
+        },
+        {% endfor %}
+    ];
+
     const logLines = [
         "[*] Booting PhishSim Autonomous Simulation Engine v2.0...",
         "[*] LLM Connection verified: OpenRouter active.",
         "[*] Database schema synchronized.",
-        "[*] OSINT module loaded: Ready for domain crawling.",
-        "[*] Launching AI Email Agent process...",
-        "[+] Target list parsed: 24 active employees.",
-        "[*] Generating customized pretexts...",
-        "[*] Matching scenario variables (IT Spearphish, HR Drill)...",
-        "[+] Deployed customized mailer to department: Finance.",
-        "[+] SMTP relay configured successfully.",
-        "[*] Capturing telemetry inputs from tracking ports...",
-        "[!] Email open event logged from IP 192.168.1.45.",
-        "[*] Threat index updated for department: Finance.",
-        "[*] Running background threat calculations...",
-        "[!] High-risk link click detected: alice.chen@demo-corp.com.",
-        "[*] Recalculating Human Security Score... Score: 62.",
-        "[*] Training recommendations built for affected targets."
+        "[*] OSINT module loaded: Ready for domain crawling."
     ];
+
+    if (dbActivities.length > 0) {
+        dbActivities.forEach(act => {
+            if (act.entry_type === 'event') {
+                const name = act.employee_name || 'Target';
+                const dept = act.employee_department ? ` (${act.employee_department})` : '';
+                if (act.event_type === 'click') {
+                    logLines.push(`[!] CLK_EVT: click detected from ${name}${dept} in campaign '${act.campaign_name}'`);
+                } else if (act.event_type === 'report') {
+                    logLines.push(`[+] RPT_EVT: threat reported by ${name}${dept} in campaign '${act.campaign_name}'`);
+                } else {
+                    logLines.push(`[*] OPN_EVT: email opened by ${name}${dept} in campaign '${act.campaign_name}'`);
+                }
+            } else if (act.entry_type === 'campaign_created') {
+                logLines.push(`[+] CMP_NEW: campaign '${act.campaign_name}' initialized by operator '${act.owner_name || 'System'}'`);
+            }
+        });
+    } else {
+        logLines.push("[*] Launching AI Email Agent process...");
+        logLines.push("[+] Target list parsed: 24 active employees.");
+        logLines.push("[*] Generating customized pretexts...");
+        logLines.push("[*] Matching scenario variables (IT Spearphish, HR Drill)...");
+        logLines.push("[+] Deployed customized mailer to department: Finance.");
+        logLines.push("[+] SMTP relay configured successfully.");
+        logLines.push("[*] Capturing telemetry inputs from tracking ports...");
+        logLines.push("[!] Email open event logged from IP 192.168.1.45.");
+        logLines.push("[*] Threat index updated for department: Finance.");
+        logLines.push("[*] Running background threat calculations...");
+        logLines.push("[!] High-risk link click detected: alice.chen@demo-corp.com.");
+        logLines.push("[*] Recalculating Human Security Score... Score: 62.");
+        logLines.push("[*] Training recommendations built for affected targets.");
+    }
     
     let logIndex = 0;
     const logContainer = document.getElementById("terminal-logs");
     
     function addTerminalLine() {
-        if (!logContainer) return;
+        if (!logContainer || logLines.length === 0) return;
         
         if (logContainer.children.length > 25) {
             logContainer.removeChild(logContainer.firstChild);
@@ -1767,16 +1865,17 @@ body.light-theme .campaign-grid-card:hover {
         line.className = "terminal-line";
         
         const text = logLines[logIndex];
-        if (text.startsWith("[+]")) {
-            line.style.color = "var(--success)";
-        } else if (text.startsWith("[!]")) {
-            line.style.color = "var(--danger)";
-        } else {
-            line.style.color = "var(--terminal-info)";
+        if (text) {
+            if (text.startsWith("[+]")) {
+                line.style.color = "var(--success)";
+            } else if (text.startsWith("[!]")) {
+                line.style.color = "var(--danger)";
+            } else {
+                line.style.color = "var(--terminal-info)";
+            }
+            line.textContent = `[${new Date().toLocaleTimeString()}] ${text}`;
+            logContainer.appendChild(line);
         }
-        
-        line.textContent = `[${new Date().toLocaleTimeString()}] ${text}`;
-        logContainer.appendChild(line);
         
         logContainer.scrollTop = logContainer.scrollHeight;
         logIndex = (logIndex + 1) % logLines.length;
@@ -1787,19 +1886,24 @@ body.light-theme .campaign-grid-card:hover {
     
     document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => {
-            for(let i=0; i<6; i++) {
-                const line = document.createElement("div");
-                line.className = "terminal-line";
-                const text = logLines[logIndex];
-                if (text.startsWith("[+]")) line.style.color = "var(--success)";
-                else if (text.startsWith("[!]")) line.style.color = "var(--danger)";
-                else line.style.color = "var(--terminal-info)";
-                line.textContent = `[${new Date().toLocaleTimeString()}] ${text}`;
-                if (logContainer) logContainer.appendChild(line);
-                logIndex = (logIndex + 1) % logLines.length;
+            if (logLines.length > 0) {
+                const initCount = Math.min(6, logLines.length);
+                for(let i=0; i<initCount; i++) {
+                    const line = document.createElement("div");
+                    line.className = "terminal-line";
+                    const text = logLines[logIndex];
+                    if (text) {
+                        if (text.startsWith("[+]")) line.style.color = "var(--success)";
+                        else if (text.startsWith("[!]")) line.style.color = "var(--danger)";
+                        else line.style.color = "var(--terminal-info)";
+                        line.textContent = `[${new Date().toLocaleTimeString()}] ${text}`;
+                        if (logContainer) logContainer.appendChild(line);
+                    }
+                    logIndex = (logIndex + 1) % logLines.length;
+                }
+                if (logContainer) logContainer.scrollTop = logContainer.scrollHeight;
+                addTerminalLine();
             }
-            if (logContainer) logContainer.scrollTop = logContainer.scrollHeight;
-            addTerminalLine();
         }, 500);
     });
 </script>

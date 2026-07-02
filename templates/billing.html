@@ -237,7 +237,11 @@
                         <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; font-size:0.85rem; color:#cbd5e1; margin-bottom: 12px;">
                             <div>Campaigns Run: <strong>{{ campaigns_count }}</strong></div>
                             <div>Employees Simulated: <strong>{{ targets_count }}</strong></div>
+                            {% if trial_expires %}
+                            <div>Trial Expiration: <strong style="color: var(--pro-gold);">{{ trial_expires }} ({{ trial_days_left }} days left)</strong></div>
+                            {% else %}
                             <div>Next Invoice Date: <strong style="color: #38bdf8;">{{ next_billing }}</strong></div>
+                            {% endif %}
                             <div>Seats Limit: <strong>50 Seats</strong></div>
                         </div>
                     </div>
@@ -334,6 +338,9 @@
                             <button type="button" class="upgrade-tab active" onclick="switchUpgradeTab('stripe')" id="btn-tab-stripe" style="background: none; border: none; color: var(--text-main); font-family: var(--font-sans); font-size: 0.9rem; font-weight: 700; cursor: pointer; padding: 6px 12px; border-bottom: 2px solid #06b6d4; transition: all 0.2s;">
                                 Stripe Checkout
                             </button>
+                            <button type="button" class="upgrade-tab" onclick="switchUpgradeTab('trial')" id="btn-tab-trial" style="background: none; border: none; color: var(--text-muted); font-family: var(--font-sans); font-size: 0.9rem; font-weight: 700; cursor: pointer; padding: 6px 12px; border-bottom: 2px solid transparent; transition: all 0.2s;">
+                                1-Month Free Trial
+                            </button>
                             <button type="button" class="upgrade-tab" onclick="switchUpgradeTab('sandbox')" id="btn-tab-sandbox" style="background: none; border: none; color: var(--text-muted); font-family: var(--font-sans); font-size: 0.9rem; font-weight: 700; cursor: pointer; padding: 6px 12px; border-bottom: 2px solid transparent; transition: all 0.2s;">
                                 Free Sandbox Activate
                             </button>
@@ -359,6 +366,18 @@
                             <form action="/billing/upgrade" method="POST">
                                 <button type="submit" class="checkout-btn" style="padding:15px; font-size:1rem; border-radius:10px;">
                                     <i class="ti ti-credit-card" style="font-size:1.15rem;"></i> Proceed to Stripe Checkout ($24.00/mo)
+                                </button>
+                            </form>
+                        </div>
+
+                        <!-- Tab 1.5: 1-Month Trial -->
+                        <div id="content-tab-trial" class="tab-content-panel" style="display: none;">
+                            <p style="color:var(--text-muted); font-size:0.92rem; line-height:1.6; margin-bottom:1.5rem;">
+                                Evaluate all **PRO** features for 30 days entirely free of charge. No credit card is required. During the trial period, you will have access to custom phishing templates, the full automated scheduler, API keys, and active decoy IMAP monitoring. At the end of the one-month evaluation, your account will downgrade back to the Free tier.
+                            </p>
+                            <form action="/billing/activate-trial" method="POST" id="trial-form">
+                                <button type="submit" class="checkout-btn" style="padding:15px; font-size:1rem; border-radius:10px; background: linear-gradient(135deg, var(--pro-gold), #fbbf24); color:#020617; font-weight:700;">
+                                    <i class="ti ti-gift" style="font-size:1.15rem;"></i> Activate 1-Month Free Trial
                                 </button>
                             </form>
                         </div>
@@ -547,6 +566,7 @@
             selectedTab.classList.add('active');
             selectedTab.style.color = 'var(--text-main)';
             if (tabId === 'stripe') selectedTab.style.borderBottomColor = '#06b6d4';
+            else if (tabId === 'trial') selectedTab.style.borderBottomColor = 'var(--pro-gold)';
             else if (tabId === 'sandbox') selectedTab.style.borderBottomColor = '#10b981';
             else if (tabId === 'sales') selectedTab.style.borderBottomColor = '#a855f7';
         }
