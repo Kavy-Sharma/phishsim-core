@@ -189,7 +189,15 @@ def send_phishing_email(to_email, subject, sender_name, body_html, tracking_id, 
     msg.attach(MIMEText(body_html, "html"))
 
     try:
-        with smtplib.SMTP(settings["host"], settings["port"], timeout=6) as server:
+        # connection_timeout  = time to establish the TCP socket
+        # greeting_timeout    = time to receive the SMTP banner after connect
+        # (socket timeout covers the rest of the SMTP dialogue + DATA phase)
+        with smtplib.SMTP(
+            settings["host"],
+            settings["port"],
+            timeout=10,   # connection + greeting timeout
+        ) as server:
+            server.sock.settimeout(15)  # socket read/write timeout for DATA phase
             if settings.get("encryption") == "starttls":
                 import ssl
                 context = ssl.create_default_context()
@@ -199,8 +207,9 @@ def send_phishing_email(to_email, subject, sender_name, body_html, tracking_id, 
             if settings["user"] and settings["password"]:
                 server.login(settings["user"], settings["password"])
             server.send_message(msg)
-            print(f"SMTP: sent to {to_email} using {settings['host']}:{settings['port']}")
+            print(f"[SMTP] Sent to {to_email} via {settings['host']}:{settings['port']}")
             return {"success": True, "error": None}
     except Exception as e:
-        print(f"SMTP failed for {to_email}: {e}")
+        print(f"[SMTP] Failed for {to_email}: {e}")
         return {"success": False, "error": str(e)}
+
