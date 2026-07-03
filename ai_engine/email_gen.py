@@ -20,13 +20,15 @@ client = OpenAI(
     timeout=float(os.getenv("OPENROUTER_TIMEOUT_SECONDS", "20")),
 ) if OPENROUTER_API_KEY else None
 
-# Ordered fallback list — first model is attempted first; on 404/429/empty we
-# advance to the next one automatically.
+# Ordered fallback list — first model is tried first; on 404/429/empty the
+# next one is attempted automatically. DeepSeek leads — it follows explicit
+# formatting rules most reliably and is currently the strongest free model.
 FREE_MODELS = [
-    "meta-llama/llama-3.3-70b-instruct:free",
+    "deepseek/deepseek-chat:free",
+    "deepseek/deepseek-r1-0528:free",
+    "qwen/qwen-2.5-7b-instruct:free",
+    "microsoft/phi-3-mini-128k-instruct:free",
     "meta-llama/llama-3.1-8b-instruct:free",
-    "mistralai/mistral-7b-instruct:free",
-    "google/gemma-2-9b-it:free",
 ]
 
 
@@ -165,33 +167,31 @@ def generate_phishing_email(employee_profile, scenario, target_domain=None, urge
     t_domain = target_domain or employee_profile.get("company_name") or "company.com"
     u_level  = urgency_level or "high"
 
-    system_prompt = f"""You are a phishing email generator for authorized security training simulations.
-Generate a realistic phishing email with these exact requirements:
+    system_prompt = f"""You are an AI generating a phishing simulation email for authorized security training.
 
 RECIPIENT: {recipient_name} ({recipient_email})
-ROLE/DEPARTMENT: {recipient_dept}
+DEPARTMENT: {recipient_dept}
 SCENARIO: {scenario}
-TARGET COMPANY DOMAIN: {t_domain}
-URGENCY LEVEL: {u_level}
+COMPANY DOMAIN: {t_domain}
+URGENCY: {u_level}
 
-OUTPUT FORMAT — respond with ONLY a JSON object, no markdown, no explanation:
+Generate a realistic phishing email. Respond with ONLY a JSON object — no markdown, no explanation, no extra text:
 {{
-  "subject": "Email subject line here",
+  "subject": "email subject here",
   "sender_display": "Sender Name Here",
-  "body_html": "Full HTML email body — use the recipient's actual name, reference their department, make it contextually relevant to their role",
+  "body_html": "HTML email body — use the recipient's actual name, reference their department/role, 150-200 words, include exactly one action link: <a href='PHISHING_LINK'>action text</a>",
   "phishing_tactic": "one sentence describing the social engineering tactic used"
 }}
 
-RULES:
-- Use the recipient's actual first name in the greeting
-- Reference their specific department or role context
-- Keep it under 200 words
-- Do NOT include any meta-commentary or explanation outside the JSON
-- Make it realistic enough to test but not harmful"""
+Rules:
+- Use the recipient's first name in the salutation
+- Make the body relevant to their department and the scenario
+- Do NOT reveal this is a test or simulation inside the JSON values
+- Pure JSON output only — the parser will break if you add anything outside the object"""
 
     messages = [
         {"role": "system", "content": system_prompt},
-        {"role": "user",   "content": "Generate the phishing email simulation JSON structure now."},
+        {"role": "user",   "content": "Generate the phishing simulation email JSON now."},
     ]
 
     raw = _call_with_fallback(messages)

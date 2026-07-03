@@ -32,20 +32,21 @@ app.config.update(
 )
 
 # --- Startup environment health-check ---
-# Printed on every boot — visible in Render/Heroku/local logs.
+# Printed on every boot — visible instantly in Render / Heroku / local logs.
 def _chk(key):
     return "OK" if os.getenv(key) else "MISSING"
 
-print("[STARTUP] --- Environment Check ---")
+print("[STARTUP] === PhishSim AI Environment Check ===")
+print(f"[STARTUP] BREVO_API_KEY:      {_chk('BREVO_API_KEY')}  <-- primary email delivery")
 print(f"[STARTUP] SMTP_HOST:          {_chk('SMTP_HOST')} ({os.getenv('SMTP_HOST', 'not set')})")
-print(f"[STARTUP] SMTP_PORT:          {_chk('SMTP_PORT')} ({os.getenv('SMTP_PORT', '587 (default)')})")
 print(f"[STARTUP] SMTP_USER:          {_chk('SMTP_USER')}")
 print(f"[STARTUP] SMTP_PASS:          {_chk('SMTP_PASS')}")
 print(f"[STARTUP] OPENROUTER_API_KEY: {_chk('OPENROUTER_API_KEY')}")
 print(f"[STARTUP] FLASK_SECRET_KEY:   {_chk('FLASK_SECRET_KEY')}")
 print(f"[STARTUP] DB_HOST:            {_chk('DB_HOST')} ({os.getenv('DB_HOST', 'localhost (default)')})")
 print(f"[STARTUP] APP_BASE_URL:       {_chk('APP_BASE_URL')} ({os.getenv('APP_BASE_URL', 'http://127.0.0.1:5050 (default)')})")
-print("[STARTUP] --- End Check ---")
+print("[STARTUP] =============================================")
+
 
 SCHEMA_FLAGS = {
     "auth": "AUTH_SCHEMA_READY",
