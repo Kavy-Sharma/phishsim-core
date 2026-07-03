@@ -232,7 +232,7 @@ def _call_with_fallback(messages: list) -> str | None:
                 model=model,
                 messages=messages,
                 temperature=0.7,
-                max_tokens=600,
+                max_tokens=1200,   # 600 was cutting off body_html mid-sentence → JSON parse failure
             )
             content = response.choices[0].message.content
             if content and content.strip():

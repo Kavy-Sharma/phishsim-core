@@ -75,10 +75,24 @@ def get_email_settings(delivery_mode=None, mailtrap_user_override=None, mailtrap
     """
     explicit_mode = _clean(delivery_mode or os.getenv("EMAIL_MODE", "")).lower()
 
-    # --- Brevo HTTP API (preferred for Render) ---
-    if explicit_mode == "brevo" or (
-        not explicit_mode and _clean(os.getenv("BREVO_API_KEY"))
-    ):
+    # Normalize legacy/alias mode names
+    if explicit_mode == "live":
+        explicit_mode = "smtp"   # 'live' means real sending; resolved below
+
+    # --- Brevo HTTP API (primary for Render — uses port 443, never blocked) ---
+    # Activates when:
+    #   a) explicit_mode is 'brevo', OR
+    #   b) explicit_mode is 'smtp' / '' AND BREVO_API_KEY env var is set
+    #      (Brevo is strictly better than raw SMTP on any cloud platform)
+    use_brevo = (
+        explicit_mode == "brevo"
+        or (
+            explicit_mode in ("smtp", "")
+            and _clean(os.getenv("BREVO_API_KEY"))
+        )
+    )
+    if use_brevo:
+        print(f"[email_gen] Routing '{explicit_mode}' delivery via Brevo HTTP API.")
         return {
             "provider": "brevo",
             "from_email": _clean(
