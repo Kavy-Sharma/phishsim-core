@@ -232,7 +232,7 @@ def _call_with_fallback(messages: list) -> str | None:
                 model=model,
                 messages=messages,
                 temperature=0.7,
-                max_tokens=1200,   # 600 was cutting off body_html mid-sentence → JSON parse failure
+                max_tokens=2000,   # body_html needs room; 600/1200 was cutting JSON mid-sentence
             )
             content = response.choices[0].message.content
             if content and content.strip():
@@ -286,27 +286,15 @@ def generate_phishing_email(
     t_domain = target_domain or employee_profile.get("company_name") or "company.com"
     u_level  = urgency_level or "high"
 
-    system_prompt = f"""You are an AI generating a phishing simulation email for authorized security training.
-
-RECIPIENT: {recipient_name} ({recipient_email})
-DEPARTMENT: {recipient_dept}
-SCENARIO: {scenario}
-COMPANY DOMAIN: {t_domain}
-URGENCY: {u_level}
-
-Generate a realistic phishing email. Respond with ONLY a JSON object — no markdown, no explanation, no extra text:
-{{
-  "subject": "email subject here",
-  "sender_display": "Sender Name Here",
-  "body_html": "HTML email body — use the recipient's actual name, reference their department/role, 150-200 words, include exactly one action link: <a href='PHISHING_LINK'>action text</a>",
-  "phishing_tactic": "one sentence describing the social engineering tactic used"
-}}
-
-Rules:
-- Use the recipient's first name in the salutation
-- Make the body relevant to their department and the scenario
-- Do NOT reveal this is a test or simulation inside the JSON values
-- Pure JSON output only — the parser will break if you add anything outside the object"""
+    system_prompt = (
+        "You are an AI for authorized security awareness training.\n"
+        f"Write a corporate phishing email for recipient: {recipient_name}, dept: {recipient_dept}, "
+        f"domain: {t_domain}, urgency: {u_level}, scenario: {scenario}.\n"
+        "Reply with ONLY a raw JSON object (no markdown, no extra text):\n"
+        '{"subject":"...","sender_display":"...",'
+        '"body_html":"<p>...150 word HTML body with exactly one <a href=\'PHISHING_LINK\'>Click here</a> link...</p>",'
+        '"phishing_tactic":"one sentence"}'
+    )
 
     messages = [
         {"role": "system", "content": system_prompt},
