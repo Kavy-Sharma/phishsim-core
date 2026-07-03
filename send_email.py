@@ -201,7 +201,8 @@ def send_phishing_email(
     Send one phishing simulation email.
     Delivery provider is resolved by get_email_settings().
     """
-    base_url     = _clean(os.getenv("APP_BASE_URL", "http://127.0.0.1:5050"), "/")
+    raw_base = os.getenv("APP_BASE_URL") or os.getenv("RENDER_EXTERNAL_URL") or "http://127.0.0.1:5050"
+    base_url = _clean(raw_base).rstrip("/")
     tracking_url = f"{base_url}/click/{tracking_id}"
     pixel_url    = f"{base_url}/pixel/{tracking_id}.png"
     report_url   = f"{base_url}/report/{tracking_id}"

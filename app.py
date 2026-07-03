@@ -44,7 +44,8 @@ print(f"[STARTUP] SMTP_PASS:          {_chk('SMTP_PASS')}")
 print(f"[STARTUP] OPENROUTER_API_KEY: {_chk('OPENROUTER_API_KEY')}")
 print(f"[STARTUP] FLASK_SECRET_KEY:   {_chk('FLASK_SECRET_KEY')}")
 print(f"[STARTUP] DB_HOST:            {_chk('DB_HOST')} ({os.getenv('DB_HOST', 'localhost (default)')})")
-print(f"[STARTUP] APP_BASE_URL:       {_chk('APP_BASE_URL')} ({os.getenv('APP_BASE_URL', 'http://127.0.0.1:5050 (default)')})")
+active_base = os.getenv("APP_BASE_URL") or os.getenv("RENDER_EXTERNAL_URL") or "http://127.0.0.1:5050"
+print(f"[STARTUP] APP_BASE_URL:       {_chk('APP_BASE_URL')} (Active: {active_base})")
 print("[STARTUP] =============================================")
 
 
