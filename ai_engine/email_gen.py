@@ -185,12 +185,39 @@ def clean_email_data(email_data: dict) -> dict:
     return email_data
 
 
+def _text_to_html(body_text: str) -> str:
+    """
+    Convert a plain-text email body to simple HTML.
+    Replaces the PHISHING_LINK placeholder with a styled anchor tag
+    so the tracking-link injector in send_email.py picks it up correctly.
+    """
+    lines = []
+    for para in body_text.strip().split("\n"):
+        para = para.strip()
+        if not para:
+            continue
+        # Turn inline PHISHING_LINK token into a proper anchor
+        if "PHISHING_LINK" in para:
+            para = para.replace(
+                "PHISHING_LINK",
+                "<a href='PHISHING_LINK' style='color:#1a73e8;font-weight:bold;'>Click Here</a>",
+            )
+        lines.append(f"<p style='margin:0 0 12px 0;'>{para}</p>")
+    return "\n".join(lines) or "<p>Please review the attached notice.</p>"
+
+
 def _parse_json_response(raw: str) -> dict | None:
-    """Robustly extract the first valid JSON object containing 'subject' + 'body_html'."""
-    # Strip <think>…</think> blocks from reasoning models (DeepSeek-R1 etc.)
+    """
+    Robustly extract JSON that has 'subject' AND either 'body_html' or 'body_text'.
+
+    We ask the model for body_text (plain text) to avoid JSON escaping nightmares
+    with HTML tags. If the model ignores instructions and returns body_html anyway,
+    we handle that too.
+    """
+    # Strip <think>...</think> blocks from reasoning models
     raw = re.sub(r"<think>.*?</think>", "", raw, flags=re.DOTALL).strip()
 
-    # Unwrap markdown code fences
+    # Unwrap markdown code fences if present
     json_str = raw
     code_block = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", raw, re.DOTALL)
     if code_block:
@@ -202,8 +229,9 @@ def _parse_json_response(raw: str) -> dict | None:
         if end > start:
             try:
                 candidate = json.loads(json_str[start : end + 1])
-                if isinstance(candidate, dict) and "subject" in candidate and "body_html" in candidate:
-                    return candidate
+                if isinstance(candidate, dict) and "subject" in candidate:
+                    if "body_text" in candidate or "body_html" in candidate:
+                        return candidate
             except json.JSONDecodeError:
                 pass
         start = json_str.find("{", start + 1)
@@ -286,14 +314,22 @@ def generate_phishing_email(
     t_domain = target_domain or employee_profile.get("company_name") or "company.com"
     u_level  = urgency_level or "high"
 
+    # Ask for PLAIN TEXT body — plain text inside a JSON string never has
+    # escaping issues. HTML tags in JSON strings break json.loads() because
+    # models emit unescaped < > " characters. We convert to HTML ourselves.
     system_prompt = (
-        "You are an AI for authorized security awareness training.\n"
-        f"Write a corporate phishing email for recipient: {recipient_name}, dept: {recipient_dept}, "
-        f"domain: {t_domain}, urgency: {u_level}, scenario: {scenario}.\n"
-        "Reply with ONLY a raw JSON object (no markdown, no extra text):\n"
-        '{"subject":"...","sender_display":"...",'
-        '"body_html":"<p>...150 word HTML body with exactly one <a href=\'PHISHING_LINK\'>Click here</a> link...</p>",'
-        '"phishing_tactic":"one sentence"}'
+        "You are an AI assistant for authorized corporate security training.\n"
+        f"Write a realistic phishing simulation email.\n"
+        f"Recipient: {recipient_name} | Department: {recipient_dept} | "
+        f"Domain: {t_domain} | Urgency: {u_level}\n"
+        f"Scenario: {scenario}\n\n"
+        "RESPOND WITH ONLY THIS JSON — no markdown, no explanation, no HTML tags in values:\n"
+        '{"subject": "the email subject", '
+        '"sender_display": "Sender Name", '
+        '"body_text": "Plain text body. 3-4 short paragraphs. '
+        'Use the recipient first name. Reference their department. '
+        'Include one action sentence ending with: visit PHISHING_LINK", '
+        '"phishing_tactic": "one sentence"}'
     )
 
     messages = [
@@ -307,12 +343,17 @@ def generate_phishing_email(
 
     parsed = _parse_json_response(raw)
     if parsed:
-        # Normalise field aliases
+        # Convert body_text → body_html (preferred path — no escaping issues)
+        if "body_text" in parsed and "body_html" not in parsed:
+            parsed["body_html"] = _text_to_html(parsed["body_text"])
+        elif "body_html" not in parsed:
+            parsed["body_html"] = fallback_email(employee_profile)["body_html"]
+
         parsed.setdefault("sender_name", parsed.get("sender_display", "IT Security Team"))
-        parsed.setdefault("educational_breakdown", parsed.get("phishing_tactic", "This is a simulated phishing email."))
+        parsed.setdefault("educational_breakdown", parsed.get("phishing_tactic", "Always verify unexpected requests."))
         return clean_email_data(parsed)
 
-    print(f"[email_gen] JSON parse failed. Raw:\n{raw[:300]}")
+    print(f"[email_gen] JSON parse failed. Raw snippet:\n{raw[:400]}")
     return fallback_email(employee_profile)
 
 
