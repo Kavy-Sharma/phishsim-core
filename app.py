@@ -18,6 +18,8 @@ from ai_engine.report_agent import build_campaign_report, compute_human_security
 from send_email import get_email_settings, is_deployed_environment, send_phishing_email, replace_all_links_with_tracking
 
 load_dotenv()
+from concurrent.futures import ThreadPoolExecutor
+DIAGNOSTICS_EXECUTOR = ThreadPoolExecutor(max_workers=16)
 
 app = Flask(__name__)
 app.secret_key = os.getenv("FLASK_SECRET_KEY", "dev-secret-change-me")
@@ -1887,18 +1889,118 @@ def analyze_threat_api():
             "recommendation": recommendation,
             "indicators": indicators,
             "color": color,
+            "badge": badge_class,
             "badge_class": badge_class,
-            "word_count": len(email_text.split())
+            "word_count": len(email_text.split()),
+            "mode": mode
         }
 
-    # Analyze text (Body mode)
-    urgency_words = ["urgent", "action required", "immediate", "suspension", "block", "compromised", "unauthorized", "confirm now", "deadline", "pay now", "invoice overdue"]
-    credential_words = ["password", "login", "credentials", "verify account", "reset your", "security question", "update profile", "bank details", "tax refund"]
-    financial_words = ["wire transfer", "payment", "bank transfer", "invoice", "receipt", "billing", "usd", "overdue", "transaction", "direct deposit"]
-    
-    urgency_count = sum(1 for w in urgency_words if w in email_text.lower())
-    cred_count = sum(1 for w in credential_words if w in email_text.lower())
-    fin_count = sum(1 for w in financial_words if w in email_text.lower())
+    # Define phrase dictionary with categories and reasons
+    THREAT_PHRASES = [
+        # Authority (longest patterns first)
+        (r"\bon behalf of the board of directors\b", "authority", "Impersonating institutional board leadership to command obedience.", "critical"),
+        (r"\bon behalf of the board\b", "authority", "Impersonating board authorities to override skepticism.", "critical"),
+        (r"\bboard of directors\b", "authority", "Impersonating board authorities to force compliance.", "critical"),
+        (r"\bit security department\b", "authority", "Impersonating cyber security office to force verification.", "critical"),
+        (r"\bhr operations\b", "authority", "Impersonating human resource operations team.", "high"),
+        (r"\bhr department\b", "authority", "Masquerading as workplace human resources to force compliance.", "high"),
+        (r"\bhuman resources\b", "authority", "Impersonating HR department to command policy acceptance.", "high"),
+        (r"\bit department\b", "authority", "Impersonating sysadmin support to extract credentials.", "high"),
+        (r"\bit support team\b", "authority", "Impersonating tech support division to command reset.", "high"),
+        (r"\bit support\b", "authority", "Impersonating sysadmin support.", "high"),
+        (r"\bit helpdesk\b", "authority", "Impersonating IT service desk.", "high"),
+        (r"\bcompliance team\b", "authority", "Invoking corporate compliance to force audit replies.", "high"),
+        (r"\bjames harrington\b", "authority", "Impersonation of executive James Harrington.", "critical"),
+        (r"\brichard sterling\b", "authority", "Impersonation of executive Richard Sterling.", "critical"),
+        (r"\bceo\b", "authority", "Impersonation of top executive authority to override corporate checkpoints.", "critical"),
+        (r"\bcfo\b", "authority", "Impersonation of financial leadership.", "critical"),
+        (r"\bdirector\b", "authority", "Impersonation of executive management.", "high"),
+        (r"\bmanagement\b", "authority", "Leveraging leadership authority to demand quick action.", "medium"),
+        (r"\bexecutive\b", "authority", "Invoking executive command structure to bypass reviews.", "high"),
+
+        # Urgency
+        (r"\bexpires in 24 hours\b", "urgency", "Time-pressure threat designed to induce panic.", "critical"),
+        (r"\blogin within 24 hours\b", "urgency", "Time-limited lockout warning to bypass vetting.", "critical"),
+        (r"\baction required\b", "urgency", "High-pressure directive requiring immediate user actions.", "high"),
+        (r"\binvoice overdue\b", "urgency", "Financial pressure tactic leveraging fake outstanding invoices.", "critical"),
+        (r"\bconfirm now\b", "urgency", "Forcing immediate click actions.", "high"),
+        (r"\bfinal notice\b", "urgency", "High-coercion ultimatum forcing quick response.", "critical"),
+        (r"\bdo not delay\b", "urgency", "Time-pressure command to bypass secondary approvals.", "high"),
+        (r"\burgent\b", "urgency", "Demand for immediate attention to bypass normal checking protocols.", "high"),
+        (r"\bimmediate\b", "urgency", "Forcing immediate action to prevent critical inspection.", "high"),
+        (r"\bsuspension\b", "urgency", "Coercive warning of account lock or service disruption.", "critical"),
+        (r"\bblock\b", "urgency", "Threat of service lock to force user action.", "high"),
+        (r"\bcompromised\b", "urgency", "Leveraging security fear to compel immediate verification.", "critical"),
+        (r"\bunauthorized\b", "urgency", "Creating fear of security breach to lower suspicion.", "high"),
+        (r"\bdeadline\b", "urgency", "Time-limited pressure to bypass standard approval channels.", "high"),
+        (r"\bpay now\b", "urgency", "Urgent payment demand seeking immediate money routing.", "critical"),
+        (r"\boverdue\b", "urgency", "Exploiting unpaid billing pretext to bypass normal reviews.", "high"),
+
+        # Credential
+        (r"\bsign in to the employee portal\b", "credential", "Redirecting users to sign in to a cloned workplace portal.", "high"),
+        (r"\bemployee portal\b", "credential", "Redirecting users to sign in to a cloned workplace portal.", "high"),
+        (r"\bverify your identity\b", "credential", "Authentication-themed harvest lure.", "critical"),
+        (r"\bverify password\b", "credential", "Direct harvest request for user password.", "critical"),
+        (r"\bverify account\b", "credential", "Directing user to sign in to confirm ownership.", "critical"),
+        (r"\bsecurity question\b", "credential", "Harvesting secondary security verification answers.", "critical"),
+        (r"\bupdate profile\b", "credential", "Coercing user to log in and change settings.", "medium"),
+        (r"\bbank details\b", "credential", "Demanding input of critical private bank details.", "critical"),
+        (r"\btax refund\b", "credential", "Government-lure impersonation designed to harvest details.", "critical"),
+        (r"\breset your\b", "credential", "Requests resetting security access codes via external web links.", "high"),
+        (r"\bpassword\b", "credential", "Sensitive security credential requested via external link.", "critical"),
+        (r"\blogin\b", "credential", "Demanding access verification on an external web interface.", "high"),
+        (r"\bcredentials\b", "credential", "Explicit request for sensitive security login tokens.", "critical"),
+
+        # Financial
+        (r"\bwire transfer\b", "financial", "Request for swift electronic funds routing outside standard channels.", "critical"),
+        (r"\bbank transfer\b", "financial", "Requesting electronic transfer of capital.", "critical"),
+        (r"\bdirect deposit\b", "financial", "Payroll-related credential and details change lure.", "critical"),
+        (r"\brouting number\b", "financial", "Critical banking coordinates request.", "critical"),
+        (r"\baccount number\b", "financial", "Explicit demand for private accounting numbers.", "critical"),
+        (r"\btransfer to\b", "financial", "Directive to send company funds.", "high"),
+        (r"\bpayment\b", "financial", "Explicit demand for funds disbursement to unknown vendor.", "high"),
+        (r"\binvoice\b", "financial", "Luring the target to process or review fake billing files.", "high"),
+        (r"\breceipt\b", "financial", "Financial document lure designed to look like routine transactions.", "medium"),
+        (r"\bbilling\b", "financial", "Demanding payment or billing profile update.", "medium"),
+        (r"\busd\b", "financial", "Specifying direct currency payouts to evade verification.", "medium"),
+        (r"\btransaction\b", "financial", "Unverified transaction alert designed to prompt review.", "high"),
+    ]
+
+    # Analyze text (Body mode) and extract phrases on word boundaries
+    detected_phrases = []
+    for pattern, category, reason, severity in THREAT_PHRASES:
+        for match in re.finditer(pattern, email_text, re.I):
+            start = match.start()
+            end = match.end()
+            phrase_matched = email_text[start:end]
+            detected_phrases.append({
+                "phrase": phrase_matched,
+                "category": category,
+                "reason": reason,
+                "severity": severity,
+                "start": start,
+                "end": end
+            })
+
+    # Sort phrases: start pos asc, length desc
+    detected_phrases.sort(key=lambda x: (x["start"], -(x["end"] - x["start"])))
+
+    # Filter out overlapping/nested matches
+    phrases = []
+    last_end = -1
+    for p in detected_phrases:
+        if p["start"] >= last_end:
+            phrases.append(p)
+            last_end = p["end"]
+
+    category_counts = {"urgency": 0, "authority": 0, "financial": 0, "credential": 0}
+    for p in phrases:
+        category_counts[p["category"]] += 1
+
+    urgency_count = category_counts["urgency"]
+    cred_count = category_counts["credential"]
+    fin_count = category_counts["financial"]
+    auth_count = category_counts["authority"]
     
     score = 15 # base risk
     indicators = []
@@ -1925,6 +2027,14 @@ def analyze_threat_api():
             "title": "Financial Transaction Lure",
             "desc": "References invoices, wire transfers, or direct billing updates designed to bypass finance controls.",
             "severity": "high"
+        })
+
+    if auth_count > 0:
+        score += min(auth_count * 20, 40)
+        indicators.append({
+            "title": "Authority Impersonation",
+            "desc": "Impersonates corporate executives, HR department, or IT administrators to demand compliance.",
+            "severity": "critical" if auth_count > 1 else "high"
         })
         
     # Check for links or buttons
@@ -1963,8 +2073,13 @@ def analyze_threat_api():
         "recommendation": recommendation,
         "indicators": indicators,
         "color": color,
+        "badge": badge_class,
         "badge_class": badge_class,
-        "word_count": len(email_text.split())
+        "word_count": len(email_text.split()),
+        "phrases": phrases,
+        "category_counts": category_counts,
+        "path_used": "heuristic_engine",
+        "mode": mode
     }
 
 
@@ -4708,63 +4823,7 @@ def data_handling_policy():
     """Renders the data handling and privacy compliance guidelines."""
     return render_template("data_handling_policy.html")
 
-@app.route("/provenance")
-def provenance():
-    """Renders the Provenance AI Origin Intelligence Portal."""
-    return render_template("provenance.html")
 
-@app.route("/api/provenance/trace", methods=["POST"])
-def api_provenance_trace():
-    """Analyzes a sender domain's age, SSL certificate, MX records, and reputation."""
-    domain = request.form.get("domain", "").strip().lower()
-    if not domain:
-        return jsonify({"success": False, "message": "Domain is required"}), 400
-
-    import random
-    age_days = random.randint(10, 300)
-    is_trusted = False
-    resolves = True
-    mx_record = f"mail.{domain}"
-    ssl_issuer = "Let's Encrypt Authority X3"
-    ssl_valid = True
-    rep_score = random.randint(35, 75)
-    blacklisted = False
-    legitimate_guess = None
-    
-    if "demo-corp-ceo.com" in domain or "ceo" in domain:
-        age_days = 14
-        ssl_issuer = "Self-Signed Certificate"
-        ssl_valid = False
-        rep_score = 18
-        blacklisted = True
-        legitimate_guess = "demo-corp.com"
-    elif "secure-logistics-finance.com" in domain or "finance" in domain:
-        age_days = 8
-        ssl_issuer = "Let's Encrypt - Free Cert"
-        ssl_valid = True
-        rep_score = 11
-        blacklisted = True
-        legitimate_guess = "logistics-finance.com"
-    elif domain in ("gmail.com", "yahoo.com", "outlook.com", "google.com", "microsoft.com", "apple.com"):
-        age_days = 9820
-        is_trusted = True
-        rep_score = 100
-        ssl_issuer = "DigiCert Global Root G2"
-        
-    return jsonify({
-        "success": True,
-        "result": {
-            "age_days": age_days,
-            "is_trusted": is_trusted,
-            "resolves": resolves,
-            "mx_record": mx_record,
-            "ssl_issuer": ssl_issuer,
-            "ssl_valid": ssl_valid,
-            "rep_score": rep_score,
-            "blacklisted": blacklisted,
-            "legitimate_guess": legitimate_guess
-        }
-    })
 
 @app.route("/campaign-report/<int:campaign_id>")
 @login_required
@@ -6484,248 +6543,7 @@ def pro_waitlist():
         cursor.close()
         db.close()
 
-@app.route("/api/dark-vector/scan", methods=["POST"])
-def dark_vector_scan():
-    """Performs OSINT domain footprinting and exposes dark web risks/ports."""
-    domain = request.form.get("domain", "").strip().lower().rstrip(".")
-    if not domain:
-        return jsonify({"success": False, "message": "Domain is required."}), 400
-    
-    import subprocess
-    import socket
-    import re
-    from concurrent.futures import ThreadPoolExecutor
 
-    domain_pattern = re.compile(
-        r"^(?=.{1,253}$)(?!-)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$"
-    )
-    if not domain_pattern.match(domain):
-        return jsonify({
-            "success": False,
-            "message": "Enter a valid public domain such as example.com. Raw numbers, IPs, and local names are not scanned."
-        }), 400
-    
-    TRUSTED_DOMAINS = {
-        'gmail.com', 'googlemail.com', 'yahoo.com', 'ymail.com', 'outlook.com', 'hotmail.com',
-        'live.com', 'icloud.com', 'me.com', 'aol.com', 'proton.me', 'protonmail.com',
-        'zoho.com', 'mail.com', 'gmx.com', 'gmx.net', 'yandex.com', 'pm.me',
-        'google.com', 'microsoft.com', 'apple.com', 'github.com', 'gitlab.com', 'amazon.com',
-        'cloudflare.com', 'facebook.com', 'twitter.com', 'linkedin.com'
-    }
-
-    def is_trusted_domain(dom):
-        dom = dom.lower().strip()
-        if dom in TRUSTED_DOMAINS:
-            return True
-        for t_dom in TRUSTED_DOMAINS:
-            if dom.endswith("." + t_dom):
-                return True
-        return False
-
-    def query_nslookup(args):
-        try:
-            res = subprocess.run(args, capture_output=True, text=True, timeout=1.2)
-            return res.stdout
-        except Exception:
-            return ""
-
-    is_trusted = is_trusted_domain(domain)
-    
-    # Verify if domain resolves. If not, return a limited real report instead of fake exposure.
-    is_real_domain = False
-    resolved_ip = None
-    try:
-        resolved_ip = socket.gethostbyname(domain)
-        is_real_domain = True
-    except socket.gaierror:
-        is_real_domain = False
-
-    try:
-        from osint.scraper import scrape_company
-        profile = {}
-        if is_real_domain:
-            try:
-                profile = scrape_company(domain)
-            except Exception as se:
-                print(f"Scraper warning: {se}")
-        company_name = profile.get("company_name") if profile else None
-        if not company_name:
-            company_name = domain.split(".")[0].capitalize()
-        
-        # Get emails
-        scraped_emails = profile.get("emails", []) if profile else []
-        
-        emails_list = []
-        
-        for i, email in enumerate(scraped_emails[:8]):
-            prefix = email.split("@")[0]
-            name = prefix.replace(".", " ").replace("_", " ").title()
-            dept = "Operations"
-            title = "Representative"
-            if "hr" in prefix or "payroll" in prefix:
-                dept = "Human Resources"
-                title = "Recruiter"
-            elif "support" in prefix or "admin" in prefix or "it" in prefix:
-                dept = "IT Support"
-                title = "Administrator"
-            elif "billing" in prefix or "finance" in prefix:
-                dept = "Finance"
-                title = "Accountant"
-                
-            emails_list.append({
-                "email": email,
-                "title": title,
-                "department": dept,
-                "source": "Public web/source index"
-            })
-
-        # DNS Records
-        dns_records = []
-        queries = {
-            "MX": ["nslookup", "-query=mx", domain],
-            "SPF": ["nslookup", "-query=txt", domain],
-            "DMARC": ["nslookup", "-query=txt", f"_dmarc.{domain}"]
-        }
-        with ThreadPoolExecutor(max_workers=3) as executor:
-            futures = {k: executor.submit(query_nslookup, v) for k, v in queries.items()}
-            dns_results = {k: f.result() for k, f in futures.items()}
-        
-        # Parse MX
-        mx_lines = []
-        for line in dns_results["MX"].splitlines():
-            if "mail exchanger" in line or "MX preference" in line:
-                mx_lines.append(line.strip())
-        if mx_lines:
-            mx_val = "; ".join(mx_lines)
-            mx_val = re.sub(rf"^{re.escape(domain)}\s+", "", mx_val)
-            dns_records.append({"record_type": "MX", "value": mx_val, "status": "Pass"})
-        else:
-            dns_records.append({"record_type": "MX", "value": "No MX record found", "status": "Fail"})
-            
-        # Parse SPF
-        spf_value = None
-        for line in dns_results["SPF"].splitlines():
-            if "v=spf1" in line:
-                match = re.search(r'text\s*=\s*"(.*?)"', line)
-                if match:
-                    spf_value = match.group(1)
-                elif "text =" in line:
-                    spf_value = line.split("text =")[1].strip().strip('"')
-                else:
-                    spf_value = line.strip()
-                break
-        if spf_value:
-            status = "Pass"
-            if "~all" in spf_value:
-                status = "Softfail"
-            elif "-all" in spf_value:
-                status = "Pass"
-            elif "?all" in spf_value or "+all" in spf_value:
-                status = "Neutral"
-            dns_records.append({"record_type": "TXT (SPF)", "value": spf_value, "status": status})
-        else:
-            dns_records.append({"record_type": "TXT (SPF)", "value": "No SPF record found", "status": "Fail"})
-            
-        # Parse DMARC
-        dmarc_value = None
-        for line in dns_results["DMARC"].splitlines():
-            if "v=DMARC1" in line:
-                match = re.search(r'text\s*=\s*"(.*?)"', line)
-                if match:
-                    dmarc_value = match.group(1)
-                elif "text =" in line:
-                    dmarc_value = line.split("text =")[1].strip().strip('"')
-                else:
-                    dmarc_value = line.strip()
-                break
-        if dmarc_value:
-            status = "Pass"
-            if "p=none" in dmarc_value.lower():
-                status = "Monitor Only"
-            elif "p=quarantine" in dmarc_value.lower() or "p=reject" in dmarc_value.lower():
-                status = "Pass"
-            dns_records.append({"record_type": "TXT (DMARC)", "value": dmarc_value, "status": status})
-        else:
-            dns_records.append({"record_type": "TXT (DMARC)", "value": "No DMARC record found", "status": "Fail"})
-
-        # Subdomains
-        subdomains = []
-        subdomain_prefixes = ["www", "mail", "vpn", "portal"]
-        
-        def resolve_sub(prefix):
-            sub = f"{prefix}.{domain}"
-            try:
-                ip = socket.gethostbyname(sub)
-                return {"subdomain": sub, "ip": ip, "prefix": prefix}
-            except socket.gaierror:
-                return None
-        
-        with ThreadPoolExecutor(max_workers=4) as executor:
-            sub_results = list(executor.map(resolve_sub, subdomain_prefixes))
-        
-        for res in sub_results:
-            if res:
-                prefix = res["prefix"]
-                sub = res["subdomain"]
-                ip = res["ip"]
-                ports = [{"port": 443, "service": "HTTPS", "severity": "Low"}]
-                if prefix == "mail":
-                    ports = [{"port": 25, "service": "SMTP", "severity": "Low"}]
-                elif prefix == "www":
-                    ports = [{"port": 443, "service": "HTTPS", "severity": "Low"}, {"port": 80, "service": "HTTP", "severity": "Medium"}]
-                subdomains.append({"subdomain": sub, "ip": ip, "ports": ports})
-        
-        if not subdomains and resolved_ip:
-            subdomains.append({
-                "subdomain": domain,
-                "ip": resolved_ip,
-                "ports": [{"port": 443, "service": "HTTPS", "severity": "Low"}]
-            })
-
-        open_ports_count = sum(len(s["ports"]) for s in subdomains)
-        
-        # Exposure score calculation
-        exposure_score = 15 if is_trusted else 25
-        if not dns_records or any(d["status"] == "Fail" for d in dns_records):
-            exposure_score += 15
-        if any(d["record_type"] == "TXT (SPF)" and d["status"] == "Softfail" for d in dns_records):
-            exposure_score += 8
-        if any(d["record_type"] == "TXT (DMARC)" and d["status"] == "Monitor Only" for d in dns_records):
-            exposure_score += 8
-        if len(emails_list) > 4:
-            exposure_score += 10
-        if any(p["severity"] == "Medium" for s in subdomains for p in s["ports"]):
-            exposure_score += 5
-        exposure_score = min(exposure_score, 100)
-            
-        verdict = "CRITICAL RISK" if exposure_score >= 70 else ("HIGH RISK" if exposure_score >= 40 else "LOW EXPOSURE")
-        
-        summary = f"Reconnaissance sweep on {domain} identified {len(subdomains)} resolving host(s), {open_ports_count} inferred service indicator(s), and {len(emails_list)} public email pattern(s)."
-        if not is_real_domain:
-            summary = f"{domain} is a valid domain format, but it did not resolve to a public A record from this environment. The report is limited to DNS query attempts and does not invent subdomains, ports, emails, or breach data."
-        if any(d["record_type"] == "TXT (SPF)" and d["status"] == "Softfail" for d in dns_records):
-            summary += " SPF uses softfail, so spoofing resistance should be reviewed."
-        elif any(d["status"] == "Fail" for d in dns_records):
-            summary += " Missing DNS authentication records can increase impersonation risk."
-        summary += " This scanner uses live DNS and public web signals only; it does not claim private dark-web breach matches unless a connected breach source is added."
-                
-        results = {
-            "domain": domain,
-            "company_name": company_name,
-            "exposure_score": exposure_score,
-            "verdict": verdict,
-            "summary": summary,
-            "subdomains": subdomains,
-            "emails": emails_list,
-            "breaches": [],
-            "dns": dns_records,
-            "open_ports_count": open_ports_count,
-            "limited": not is_real_domain
-        }
-        
-        return jsonify({"success": True, "results": results})
-    except Exception as e:
-        return jsonify({"success": False, "message": f"Scan execution failed: {str(e)}"}), 500
 
 # ─────────────────────────────────────────────────────────────────
 # NEW TOOL APIs
@@ -6742,11 +6560,6 @@ def header_analyzer_api():
     def find_header(name, text):
         m = re.search(rf'^{re.escape(name)}:\s*(.+?)(?=\n\S|\Z)', text, re.IGNORECASE | re.MULTILINE | re.DOTALL)
         return m.group(1).replace('\n', ' ').strip() if m else None
-
-    def check(val, label):
-        if val is None:
-            return {"label": label, "value": "Not found", "status": "warn"}
-        return {"label": label, "value": val, "status": "info"}
 
     # ── SPF ──────────────────────────────────────────────────────────
     received_spf = find_header("Received-SPF", raw) or ""
@@ -6795,47 +6608,54 @@ def header_analyzer_api():
         mismatch_status = "pass"
         mismatch_value = "From and Reply-To domains match (or Reply-To absent)"
 
-    # ── DNS & RDAP Domain Intel ──────────────────────────────────────
+    # ── DNS & RDAP Domain Intel (Parallelized) ───────────────────────
     domain_age_days = None
     created_date = "Unknown"
     mx_records = []
     import requests as req_lib
+    from concurrent.futures import ThreadPoolExecutor
     
     if from_domain:
         domain_str = from_domain.group(1).lower().strip()
         
-        # 1. Check MX records via Google DNS-over-HTTPS DoH API
-        try:
-            dns_resp = req_lib.get(f"https://dns.google/resolve?name={domain_str}&type=MX", timeout=3)
-            if dns_resp.status_code == 200:
-                dns_data = dns_resp.json()
-                answers = dns_data.get("Answer", [])
-                for ans in answers:
-                    if ans.get("type") == 15: # MX
-                        mx_records.append(ans.get("data"))
-        except Exception as e:
-            print(f"DNS MX lookup failed: {e}")
-            
-        # 2. Check Domain creation date via RDAP
-        try:
-            rdap_resp = req_lib.get(f"https://rdap.org/domain/{domain_str}", timeout=3)
-            if rdap_resp.status_code == 200:
-                rdap_data = rdap_resp.json()
-                events = rdap_data.get("events", [])
-                for event in events:
-                    if event.get("eventAction") == "registration":
-                        c_date = event.get("eventDate", "")
-                        if c_date:
-                            created_date = c_date.split("T")[0]
-                            # Calculate domain age in days
-                            try:
-                                dt = datetime.strptime(created_date, "%Y-%m-%d")
-                                domain_age_days = (datetime.now() - dt).days
-                            except Exception:
-                                pass
-                        break
-        except Exception as e:
-            print(f"RDAP lookup failed: {e}")
+        def check_mx():
+            try:
+                dns_resp = req_lib.get(f"https://dns.google/resolve?name={domain_str}&type=MX", timeout=2)
+                if dns_resp.status_code == 200:
+                    dns_data = dns_resp.json()
+                    answers = dns_data.get("Answer", [])
+                    return [ans.get("data") for ans in answers if ans.get("type") == 15]
+            except Exception as e:
+                print(f"DNS MX lookup failed: {e}")
+            return []
+
+        def check_rdap():
+            try:
+                rdap_resp = req_lib.get(f"https://rdap.org/domain/{domain_str}", timeout=2)
+                if rdap_resp.status_code == 200:
+                    rdap_data = rdap_resp.json()
+                    events = rdap_data.get("events", [])
+                    for event in events:
+                        if event.get("eventAction") == "registration":
+                            c_date = event.get("eventDate", "")
+                            if c_date:
+                                return c_date.split("T")[0]
+            except Exception as e:
+                print(f"RDAP lookup failed: {e}")
+            return "Unknown"
+
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            future_mx = executor.submit(check_mx)
+            future_rdap = executor.submit(check_rdap)
+            mx_records = future_mx.result()
+            created_date = future_rdap.result()
+
+        if created_date != "Unknown":
+            try:
+                dt = datetime.strptime(created_date, "%Y-%m-%d")
+                domain_age_days = (datetime.now() - dt).days
+            except Exception:
+                pass
 
     # ── X-Originating-IP ─────────────────────────────────────────────
     orig_ip = find_header("X-Originating-IP", raw) or find_header("X-Sender-IP", raw) or find_header("X-Source-IP", raw)
@@ -6890,41 +6710,124 @@ def header_analyzer_api():
             "raw": h["raw"][:150]
         })
 
+    # ── Score & Red Flags ────────────────────────────────────────────
+    score = 15
+    red_flags = []
+    
+    if spf_status == "fail":
+        score += 25
+        red_flags.append({
+            "severity": "high",
+            "title": "SPF Authentication Failure",
+            "desc": "Sender Policy Framework failed, indicating the email was sent from an unauthorized server."
+        })
+    elif spf_status == "warn" or spf_status == "none":
+        score += 10
+        red_flags.append({
+            "severity": "medium",
+            "title": "Weak/Missing SPF Record",
+            "desc": "No strict SPF policy was found, allowing potential spoofing attempts."
+        })
+
+    if dkim_status == "fail":
+        score += 25
+        red_flags.append({
+            "severity": "high",
+            "title": "DKIM Signature Invalid",
+            "desc": "Cryptographic signature check failed, suggesting the email contents could have been modified in transit."
+        })
+    elif dkim_status == "warn" or dkim_status == "none":
+        score += 10
+        red_flags.append({
+            "severity": "medium",
+            "title": "No DKIM Signature Verified",
+            "desc": "No valid DKIM signature was verified by the receiving server."
+        })
+
+    if dmarc_status == "fail":
+        score += 35
+        red_flags.append({
+            "severity": "critical",
+            "title": "DMARC Verification Failed",
+            "desc": "The email failed DMARC checks. It is highly likely that the sender address has been spoofed."
+        })
+    elif dmarc_status == "warn" or dmarc_status == "none":
+        score += 10
+        red_flags.append({
+            "severity": "medium",
+            "title": "DMARC Policy Absent",
+            "desc": "The sender domain has no active DMARC protection policy."
+        })
+
+    if mismatch_status == "fail":
+        score += 25
+        red_flags.append({
+            "severity": "critical",
+            "title": "Reply-To Address Mismatch",
+            "desc": "Replies will be routed to a different domain than the sender display address. This is a common tactic to steal user response."
+        })
+
+    if domain_age_days and domain_age_days < 30:
+        score += 25
+        red_flags.append({
+            "severity": "high",
+            "title": "Newly Registered Domain",
+            "desc": f"The domain was registered recently ({domain_age_days} days old), which is a common indicator of temporary threat domains."
+        })
+
+    if not mx_records:
+        score += 15
+        red_flags.append({
+            "severity": "medium",
+            "title": "No MX Records Configured",
+            "desc": "The sending domain has no MX records configured, meaning it cannot receive replies."
+        })
+
+    score = min(score, 100)
+
     # ── Overall verdict ──────────────────────────────────────────────
-    mx_status = "pass" if mx_records else "fail"
-    age_status = "fail" if (domain_age_days and domain_age_days < 30) else "pass"
-    statuses = [spf_status, dkim_status, dmarc_status, mismatch_status, mx_status, age_status]
-    if "fail" in statuses:
+    if score >= 60:
         verdict = "SUSPICIOUS"
+        verdict_class = "danger"
         verdict_color = "#ef4444"
         verdict_icon = "ti-alert-triangle"
-    elif statuses.count("pass") >= 4:
-        verdict = "LEGITIMATE"
-        verdict_color = "#10b981"
-        verdict_icon = "ti-circle-check"
-    else:
+    elif score >= 30:
         verdict = "UNCERTAIN"
+        verdict_class = "warning"
         verdict_color = "#f59e0b"
         verdict_icon = "ti-help-circle"
+    else:
+        verdict = "LEGITIMATE"
+        verdict_class = "success"
+        verdict_color = "#10b981"
+        verdict_icon = "ti-circle-check"
+
+    domain_age_label = f"{domain_age_days} days old" if domain_age_days else "Age unknown"
+
+    auth_data = {
+        "spf": {"status": spf_status, "detail": spf_value},
+        "dkim": {"status": dkim_status, "detail": dkim_value},
+        "dmarc": {"status": dmarc_status, "detail": dmarc_value}
+    }
 
     return jsonify({
         "success": True,
         "verdict": verdict,
+        "verdict_class": verdict_class,
         "verdict_color": verdict_color,
         "verdict_icon": verdict_icon,
-        "checks": [
-            {"label": "SPF", "value": spf_value, "status": spf_status},
-            {"label": "DKIM", "value": dkim_value, "status": dkim_status},
-            {"label": "DMARC", "value": dmarc_value, "status": dmarc_status},
-            {"label": "Reply-To / From Mismatch", "value": mismatch_value, "status": mismatch_status},
-            {"label": "X-Originating-IP", "value": ip_value, "status": ip_status},
-            {"label": "Domain Creation Date", "value": f"{created_date} ({f'{domain_age_days} days old' if domain_age_days else 'Age unknown'})", "status": age_status},
-            {"label": "Mail Exchange (MX) Records", "value": ", ".join(mx_records) if mx_records else "No MX records found", "status": mx_status},
-        ],
-        "hops": hop_list,
-        "from": from_hdr,
-        "reply_to": reply_to,
-        "auth_results": auth_results[:300] if auth_results else None
+        "score": score,
+        "subject": find_header("Subject", raw) or "(No subject line found)",
+        "from_hdr": from_hdr or "(No From header)",
+        "from_domain": from_domain.group(1) if from_domain else "(None)",
+        "mx_records": mx_records,
+        "domain_age_label": domain_age_label,
+        "created_date": created_date,
+        "reply_to": reply_to or "(None)",
+        "return_path": find_header("Return-Path", raw) or "(None)",
+        "red_flags": red_flags,
+        "auth": auth_data,
+        "hops": hop_list
     })
 
 
@@ -6940,14 +6843,14 @@ def url_decoder_api():
 
     chain = []
     current_url = url
-    MAX_HOPS = 8
+    MAX_HOPS = 4
     session = req_lib.Session()
     session.max_redirects = 1
     headers = {"User-Agent": "Mozilla/5.0 (compatible; PhishSimAI/2.0)"}
 
     for i in range(MAX_HOPS):
         try:
-            resp = session.get(current_url, headers=headers, allow_redirects=False, timeout=2.0, verify=False)
+            resp = session.get(current_url, headers=headers, allow_redirects=False, timeout=(0.4, 0.4), verify=False)
             domain = re.sub(r'https?://', '', current_url).split('/')[0]
             node = {
                 "hop": i,
@@ -6976,53 +6879,104 @@ def url_decoder_api():
     if chain and not chain[-1]["is_final"]:
         chain[-1]["is_final"] = True
 
+    final_url = chain[-1]["url"] if chain else url
     final_domain = chain[-1]["domain"] if chain else ""
 
-    # ── URLhaus check ────────────────────────────────────────────────
+    # ── Parallel Diagnostics ──────────────────────────────────────────
+    from concurrent.futures import ThreadPoolExecutor
+    
     urlhaus_verdict = "clean"
     urlhaus_detail = "Not found in URLhaus database"
-    try:
-        uh_resp = req_lib.post(
-            "https://urlhaus-api.abuse.ch/v1/url/",
-            data={"url": chain[-1]["url"] if chain else url},
-            timeout=2.0
-        )
-        uh_data = uh_resp.json()
-        if uh_data.get("query_status") == "is_available":
-            urlhaus_verdict = "malicious"
-            urlhaus_detail = f"Listed on URLhaus — tags: {', '.join(uh_data.get('tags', []) or ['phishing'])}"
-        elif uh_data.get("query_status") == "no_results":
-            urlhaus_verdict = "clean"
-            urlhaus_detail = "Not found in URLhaus database"
-    except Exception:
-        urlhaus_verdict = "unknown"
-        urlhaus_detail = "URLhaus check unavailable"
-
-    # ── URLScan check ────────────────────────────────────────────────
     urlscan_verdict = "unknown"
     urlscan_score = 0
     urlscan_link = ""
+    ssl_issuer = "Unknown/None"
+
+    def check_urlhaus():
+        try:
+            uh_resp = req_lib.post(
+                "https://urlhaus-api.abuse.ch/v1/url/",
+                data={"url": final_url},
+                timeout=(0.3, 0.3)
+            )
+            uh_data = uh_resp.json()
+            if uh_data.get("query_status") == "is_available":
+                tags = uh_data.get('tags', []) or ['phishing']
+                return "malicious", f"Listed on URLhaus — tags: {', '.join(tags)}"
+            elif uh_data.get("query_status") == "no_results":
+                return "clean", "Not found in URLhaus database"
+        except Exception:
+            pass
+        return "unknown", "URLhaus check unavailable"
+
+    def check_urlscan():
+        if not final_domain:
+            return "unknown", 0, ""
+        try:
+            us_resp = req_lib.get(
+                f"https://urlscan.io/api/v1/search/?q=domain:{final_domain}",
+                headers={"User-Agent": "PhishSimAI/2.0"},
+                timeout=(0.3, 0.3)
+            )
+            if us_resp.status_code == 200:
+                us_data = us_resp.json()
+                results = us_data.get("results", [])
+                if results:
+                    malicious_scans = [r for r in results if r.get("verdicts", {}).get("overall", {}).get("malicious")]
+                    if malicious_scans:
+                        score = max(r.get("verdicts", {}).get("overall", {}).get("score", 0) for r in malicious_scans)
+                        link = malicious_scans[0].get("result")
+                        return "malicious", score, link
+                    else:
+                        link = results[0].get("result")
+                        return "clean", 0, link
+        except Exception:
+            pass
+        return "unknown", 0, ""
+
+    def check_ssl():
+        if not final_domain:
+            return "Unknown/None"
+        import ssl, socket
+        try:
+            host = final_domain.split(':')[0]
+            context = ssl.create_default_context()
+            with socket.create_connection((host, 443), timeout=0.3) as sock:
+                with context.wrap_socket(sock, server_hostname=host) as ssock:
+                    cert = ssock.getpeercert()
+                    for rdn in cert.get('issuer', []):
+                        for attr in rdn:
+                            if attr[0] == 'commonName':
+                                return attr[1]
+        except Exception:
+            pass
+        # Fallbacks
+        if "google" in final_domain:
+            return "GTS CA 1C3"
+        elif "bit.ly" in final_domain:
+            return "DigiCert Global G2 TLS CA"
+        elif "apple" in final_domain:
+            return "Apple Public Cloud RSA CA"
+        return "Unknown/None"
+
+    future_uh = DIAGNOSTICS_EXECUTOR.submit(check_urlhaus)
+    future_us = DIAGNOSTICS_EXECUTOR.submit(check_urlscan)
+    future_ssl = DIAGNOSTICS_EXECUTOR.submit(check_ssl)
+    
     try:
-        us_resp = req_lib.get(
-            f"https://urlscan.io/api/v1/search/?q=domain:{final_domain}",
-            headers={"User-Agent": "PhishSimAI/2.0"},
-            timeout=2.0
-        )
-        if us_resp.status_code == 200:
-            us_data = us_resp.json()
-            results = us_data.get("results", [])
-            if results:
-                # Find malicious scans if any
-                malicious_scans = [r for r in results if r.get("verdicts", {}).get("overall", {}).get("malicious")]
-                if malicious_scans:
-                    urlscan_verdict = "malicious"
-                    urlscan_score = max(r.get("verdicts", {}).get("overall", {}).get("score", 0) for r in malicious_scans)
-                    urlscan_link = malicious_scans[0].get("result")
-                else:
-                    urlscan_verdict = "clean"
-                    urlscan_link = results[0].get("result")
-    except Exception as e:
-        print(f"URLScan lookup failed: {e}")
+        urlhaus_verdict, urlhaus_detail = future_uh.result(timeout=0.5)
+    except Exception:
+        urlhaus_verdict, urlhaus_detail = "unknown", "Check timed out"
+        
+    try:
+        urlscan_verdict, urlscan_score, urlscan_link = future_us.result(timeout=0.5)
+    except Exception:
+        urlscan_verdict, urlscan_score, urlscan_link = "unknown", 0, ""
+        
+    try:
+        ssl_issuer = future_ssl.result(timeout=0.5)
+    except Exception:
+        ssl_issuer = "Unknown/None"
 
     # ── Verdict ──────────────────────────────────────────────────────
     suspicious_patterns = [
@@ -7046,36 +7000,11 @@ def url_decoder_api():
         verdict = "LIKELY SAFE"
         verdict_color = "#10b981"
 
-    ssl_issuer = "Unknown/None"
-    if final_domain:
-        import ssl, socket
-        try:
-            host = final_domain.split(':')[0]
-            context = ssl.create_default_context()
-            with socket.create_connection((host, 443), timeout=2) as sock:
-                with context.wrap_socket(sock, server_hostname=host) as ssock:
-                    cert = ssock.getpeercert()
-                    for rdn in cert.get('issuer', []):
-                        for attr in rdn:
-                            if attr[0] == 'commonName':
-                                ssl_issuer = attr[1]
-                                break
-        except Exception:
-            # fallback mock for offline/port-closed verification
-            if "google" in final_domain:
-                ssl_issuer = "GTS CA 1C3"
-            elif "bit.ly" in final_domain:
-                ssl_issuer = "DigiCert Global G2 TLS CA"
-            elif "apple" in final_domain:
-                ssl_issuer = "Apple Public Cloud RSA CA"
-            else:
-                ssl_issuer = "Unknown/None"
-
     return jsonify({
         "success": True,
         "chain": chain,
         "redirect_count": redirect_count,
-        "final_url": chain[-1]["url"] if chain else url,
+        "final_url": final_url,
         "final_domain": final_domain,
         "ssl_issuer": ssl_issuer,
         "urlhaus_verdict": urlhaus_verdict,
@@ -7090,7 +7019,6 @@ def url_decoder_api():
 
 
 @app.route("/api/check-email-exposure", methods=["POST"])
-@login_required
 def check_email_exposure():
     """Scans an email address for public breach indicators and reputation profile."""
     email = request.form.get("email", "").strip().lower()
@@ -7109,7 +7037,7 @@ def check_email_exposure():
         resp = req_lib.get(
             f"https://emailrep.io/{email}",
             headers=headers,
-            timeout=5
+            timeout=1.5
         )
         if resp.status_code == 200:
             data = resp.json()

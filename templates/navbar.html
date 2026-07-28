@@ -1,3 +1,60 @@
+<style>
+/* Live Demo Navbar Pill styling overrides */
+.nav-live-demo-pill {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    background: rgba(52, 211, 153, 0.12) !important;
+    border: 1px solid rgba(52, 211, 153, 0.35) !important;
+    border-radius: 9999px !important;
+    padding: 4px 12px !important;
+    font-family: 'JetBrains Mono', monospace !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    color: #34D399 !important;
+    text-decoration: none !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.05em !important;
+    transition: all 0.25s ease !important;
+    line-height: 1.2 !important;
+    box-shadow: 0 0 10px rgba(52, 211, 153, 0.05) !important;
+    margin-left: 12px;
+}
+
+.nav-live-demo-pill:hover {
+    background: rgba(52, 211, 153, 0.22) !important;
+    border-color: rgba(52, 211, 153, 0.6) !important;
+    box-shadow: 0 0 15px rgba(52, 211, 153, 0.2) !important;
+    transform: translateY(-1px) !important;
+    color: #34D399 !important;
+}
+
+body.light-theme .nav-live-demo-pill {
+    background: rgba(5, 150, 105, 0.08) !important;
+    border-color: rgba(5, 150, 105, 0.3) !important;
+    color: #059669 !important;
+}
+
+body.light-theme .nav-live-demo-pill:hover {
+    background: rgba(5, 150, 105, 0.15) !important;
+    border-color: rgba(5, 150, 105, 0.5) !important;
+    box-shadow: 0 0 12px rgba(5, 150, 105, 0.15) !important;
+}
+
+.nav-live-demo-pill .t-live-dot {
+    display: inline-block !important;
+    width: 6px !important;
+    height: 6px !important;
+    border-radius: 50% !important;
+    background: #34D399 !important;
+    animation: t-live-pulse 1.4s ease-in-out infinite !important;
+}
+
+body.light-theme .nav-live-demo-pill .t-live-dot {
+    background: #059669 !important;
+}
+</style>
+
 <nav class="navbar" id="navbar">
     <div class="nav-container">
         <div class="nav-left" style="display: flex; align-items: center; gap: 24px; height: 100%;">
@@ -55,6 +112,10 @@
                         </div>
                     </div>
                     <a href="/#pricing" class="nav-link {% if request.path == '/#pricing' %}active{% endif %}">Pricing</a>
+                    <a href="/demo-login" class="nav-live-demo-pill">
+                        <span class="t-live-dot"></span>
+                        Live Demo
+                    </a>
                 {% endif %}
             </div>
 
@@ -144,6 +205,10 @@
         {% else %}
             <a href="{% if request.path == '/' %}#attack-chain{% else %}/#attack-chain{% endif %}" class="nav-link" onclick="toggleMobileMenu()">How It Works</a>
             <a href="/#pricing" class="nav-link" onclick="toggleMobileMenu()">Pricing</a>
+            <a href="/demo-login" class="nav-live-demo-pill" onclick="toggleMobileMenu()" style="margin: 8px 24px; display: inline-flex; align-self: flex-start; margin-left: 24px !important;">
+                <span class="t-live-dot"></span>
+                Live Demo
+            </a>
             <div style="padding: 12px 24px; font-weight: 600; color: var(--text-primary); font-size: var(--text-sm); border-top: 1px solid var(--border-subtle); margin-top: 8px;">Tools</div>
             <a href="/threat-analyzer" class="nav-link {% if request.path == '/threat-analyzer' %}active{% endif %}" onclick="toggleMobileMenu()" style="padding-left: 36px;">Threat Analyzer</a>
             <a href="/header-analyzer" class="nav-link {% if request.path == '/header-analyzer' %}active{% endif %}" onclick="toggleMobileMenu()" style="padding-left: 36px;">Header Analyzer</a>

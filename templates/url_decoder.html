@@ -2,788 +2,1544 @@
 {% block title %}Phishing URL Decoder — PhishSim AI{% endblock %}
 {% block content %}
 <style>
-    .ud-container {
-        max-width: 800px;
-        margin: 0 auto;
-        padding: 90px 1.5rem 4rem;
-    }
+/* ════════════════════════════════════════════════════════════════
+   PHISHING URL DECODER — PREMIUM BROWSER MOCKUP LAYOUT
+   ════════════════════════════════════════════════════════════════ */
 
-    /* Input Zone terminal style */
-    .terminal-input-card {
-        background: rgba(15, 23, 42, 0.45);
-        border: 1px solid rgba(56, 189, 248, 0.2);
-        border-radius: 16px;
-        padding: 2.5rem;
-        box-shadow: 0 0 30px rgba(56, 189, 248, 0.05);
-        position: relative;
-        backdrop-filter: blur(12px);
-        transition: all 0.3s ease;
-    }
+.ud-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1.5rem 4rem;
+    font-family: 'Space Grotesk', var(--font-sans), sans-serif;
+}
 
-    .terminal-input-card:hover {
-        border-color: rgba(56, 189, 248, 0.4);
-        box-shadow: 0 0 40px rgba(56, 189, 248, 0.1);
-    }
+/* ── Hero/Header ──────────────────────────────────────────────── */
+.ud-hero {
+    text-align: center;
+    padding: 3rem 0 2rem;
+}
+.ud-badge-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--primary);
+    background: rgba(56, 189, 248, 0.1);
+    border: 1px solid rgba(56, 189, 248, 0.25);
+    padding: 6px 14px;
+    border-radius: 100px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 1.25rem;
+}
+.ud-hero h1 {
+    font-size: clamp(2rem, 5vw, 3.2rem);
+    font-weight: 800;
+    color: var(--white, #ffffff);
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+    margin-bottom: 1rem;
+}
+.ud-hero h1 span {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--accent-purple, #8b5cf6) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+.ud-hero p {
+    font-size: 1.1rem;
+    color: var(--text-muted, #94a3b8);
+    max-width: 600px;
+    margin: 0 auto;
+    line-height: 1.6;
+}
 
-    .terminal-input-container {
-        position: relative;
-        display: flex;
-        align-items: center;
-        background: rgba(0, 0, 0, 0.45);
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        border-radius: 12px;
-        padding: 14px 18px;
-        transition: all 0.25s ease;
-    }
+/* ── Ingestion Terminal ────────────────────────────────────────── */
+.ud-term-card {
+    background: rgba(15, 23, 42, 0.65);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    margin-bottom: 2rem;
+}
+.ud-term-hdr {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 20px;
+    background: linear-gradient(180deg, rgba(20, 60, 60, 0.95) 0%, rgba(10, 30, 30, 0.88) 100%);
+    border-bottom: 1px solid rgba(34, 211, 238, 0.22);
+    border-top: 2px solid rgba(34, 211, 238, 0.55);  /* teal/sky accent seam */
+    border-radius: 16px 16px 0 0;
+}
+.ud-term-dots {
+    display: flex;
+    gap: 8px;
+}
+.ud-term-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: transform 0.12s ease, filter 0.12s ease;
+}
+.ud-term-dot:hover { transform: scale(1.25); filter: brightness(1.2); }
+.ud-term-dot.r { background: #ef4444; }
+.ud-term-dot.y { background: #f59e0b; }
+.ud-term-dot.g { background: #10b981; }
 
-    .terminal-input-container:focus-within {
-        border-color: #06b6d4;
-        box-shadow: 0 0 15px rgba(6, 182, 212, 0.25);
-        background: rgba(0, 0, 0, 0.6);
-    }
+.ud-term-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--text-muted, #64748b);
+    letter-spacing: 0.05em;
+}
+.ud-term-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
 
-    .terminal-prompt {
-        font-family: var(--font-mono), monospace;
-        color: var(--accent-cyan);
-        font-weight: 700;
-        margin-right: 10px;
-        user-select: none;
-    }
+/* ── Window Controls Functional States ──────────────────── */
+/* Minimized state: hide input row, presets, trace button */
+.ud-minimized .ud-input-row,
+.ud-minimized .ud-presets-section,
+.ud-minimized .ud-trace-btn { display: none !important; }
+.ud-minimized .ud-term-hdr { border-bottom: none; }
+/* Redirect-chain animation stage */
+.ud-chain-stage {
+    display: none;
+    padding: 1.5rem 2rem;
+    min-height: 160px;
+    cursor: pointer;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 1rem;
+    overflow: hidden;
+}
+.ud-minimized .ud-chain-stage { display: flex; }
 
-    .terminal-input-field {
-        flex: 1;
-        background: transparent;
-        border: none;
-        outline: none;
-        color: #f8fafc;
-        font-family: var(--font-mono), monospace;
-        font-size: 0.95rem;
-    }
+.ud-minimized-tracer {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    width: 100%;
+    max-width: 480px;
+}
+.ud-minimized-radar {
+    position: relative;
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: rgba(34, 211, 238, 0.05);
+    border: 1px solid rgba(34, 211, 238, 0.15);
+    overflow: hidden;
+    flex-shrink: 0;
+}
+.ud-radar-sweep {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: conic-gradient(from 0deg, transparent 50%, rgba(34, 211, 238, 0.45) 100%);
+    animation: udRadarSweep 2.5s linear infinite;
+    transform-origin: center;
+}
+@keyframes udRadarSweep {
+    to { transform: rotate(360deg); }
+}
+.ud-radar-ping {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    background: #22d3ee;
+    border-radius: 50%;
+    box-shadow: 0 0 10px #22d3ee;
+    animation: udRadarPing 1.5s ease-out infinite;
+    opacity: 0;
+}
+@keyframes udRadarPing {
+    0% { transform: scale(0.5); opacity: 0; }
+    50% { opacity: 1; }
+    100% { transform: scale(2.5); opacity: 0; }
+}
+.ud-minimized-log {
+    flex-grow: 1;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.68rem;
+    color: rgba(34, 211, 238, 0.85);
+    text-shadow: 0 0 5px rgba(34, 211, 238, 0.2);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    height: 72px;
+    overflow: hidden;
+}
+.ud-log-line {
+    opacity: 0.35;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    transform: translateY(10px);
+}
+.ud-log-line.active {
+    opacity: 1;
+    transform: translateY(0);
+    color: #22d3ee;
+}
+.ud-log-line.past {
+    opacity: 0.6;
+    transform: translateY(-5px);
+    color: rgba(34, 211, 238, 0.5);
+}
+.ud-chain-restore-hint {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.62rem;
+    color: var(--text-muted, #64748b);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    opacity: 0.5;
+}
+/* Expand overlay */
+.ud-expand-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 9000;
+    background: rgba(2, 6, 23, 0.95);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    flex-direction: column;
+    padding: 2rem;
+    box-sizing: border-box;
+}
+.ud-expand-overlay.active { display: flex; }
+.ud-expand-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+    flex-shrink: 0;
+}
+.ud-expand-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--text-muted, #64748b);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+.ud-expand-close {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.12);
+    color: var(--text-muted, #94a3b8);
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+.ud-expand-close:hover { background: rgba(255,255,255,0.15); color: #fff; }
+.ud-expand-input {
+    width: 100%;
+    padding: 1.25rem;
+    background: var(--bg-input, #0A1020);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.84rem;
+    color: var(--text-primary);
+    outline: none;
+    box-sizing: border-box;
+    flex-shrink: 0;
+}
+.ud-expand-input:focus { border-color: var(--primary); }
+body.light-theme .ud-expand-overlay { background: rgba(248, 250, 255, 0.97); }
+body.light-theme .ud-expand-input { background: #fff; border-color: rgba(0,0,0,0.12); color: #0f172a; }
+body.light-theme .ud-expand-close { background: rgba(0,0,0,0.06); border-color: rgba(0,0,0,0.1); color: #475569; }
+body.light-theme .ud-expand-close:hover { background: rgba(0,0,0,0.1); color: #0f172a; }
+.ud-term-status-text {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: var(--primary);
+}
+.ud-status-pulse {
+    width: 8px;
+    height: 8px;
+    background: var(--primary);
+    border-radius: 50%;
+    animation: ud-pulse 1.8s infinite;
+}
+@keyframes ud-pulse {
+    0% { transform: scale(0.95); opacity: 1; box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.7); }
+    70% { transform: scale(1.1); opacity: 0.5; box-shadow: 0 0 0 8px rgba(56, 189, 248, 0); }
+    100% { transform: scale(0.95); opacity: 1; box-shadow: 0 0 0 0 rgba(56, 189, 248, 0); }
+}
 
-    .terminal-input-field::placeholder {
-        color: rgba(255, 255, 255, 0.25);
-    }
+.ud-term-body {
+    padding: 2.25rem;
+}
+.ud-input-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 1.5rem;
+    transition: border-color 0.25s;
+}
+.ud-input-row:focus-within {
+    border-color: var(--primary);
+    box-shadow: 0 0 15px rgba(56, 189, 248, 0.15);
+}
+.ud-prompt-terminal {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    color: var(--primary);
+    font-weight: 700;
+    user-select: none;
+}
+.ud-input-field {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: #e2e8f0;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.88rem;
+    min-width: 0;
+}
+.ud-input-field::placeholder {
+    color: #475569;
+}
 
-    /* Preset Chips */
-    .preset-chips-container {
-        display: flex;
-        gap: 10px;
-        flex-wrap: wrap;
-        margin-bottom: 1.5rem;
-    }
+/* Preset Chips */
+.ud-presets-section {
+    margin-bottom: 1.75rem;
+}
+.ud-presets-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--text-muted, #64748b);
+    margin-bottom: 0.75rem;
+}
+.ud-presets-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 10px;
+}
+.ud-preset-btn {
+    background: rgba(30, 41, 59, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    padding: 10px 14px;
+    color: var(--text-muted, #94a3b8);
+    font-size: 0.82rem;
+    text-align: left;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.ud-preset-btn:hover {
+    background: rgba(30, 41, 59, 0.8);
+    border-color: rgba(6, 182, 212, 0.3);
+    color: #fff;
+    transform: translateY(-1px);
+}
+.ud-preset-indicator {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
 
-    .preset-chip {
-        background: rgba(255, 255, 255, 0.03);
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        border-radius: 8px;
-        color: var(--text-muted);
-        font-family: var(--font-mono), monospace;
-        font-size: 0.75rem;
-        padding: 8px 16px;
-        cursor: pointer;
-        transition: all 0.2s ease;
-    }
+/* NOTE: global style.css sets background-image:none !important on all buttons.
+   Use background-color + ::before pseudo-element gradient to bypass this. */
+.ud-trace-btn {
+    width: 100%;
+    padding: 16px 24px;
+    background-color: #22d3ee;        /* teal/sky primary accent */
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-bottom: 3.5px solid rgba(0, 0, 0, 0.45);
+    border-radius: var(--radius-lg);
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #020617;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    box-shadow: 0 4px 18px rgba(34, 211, 238, 0.35), inset 0 1px 0 rgba(255,255,255,0.2);
+    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+}
+/* Gradient: cyan → sky-blue — browser mockup technical look */
+.ud-trace-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background-image: linear-gradient(135deg, #22d3ee 0%, #38bdf8 100%);
+    z-index: -1;
+    transition: opacity 0.15s ease;
+}
+.ud-trace-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    border-bottom-width: 4.5px;
+    box-shadow: 0 8px 24px rgba(34, 211, 238, 0.5), inset 0 1px 0 rgba(255,255,255,0.3);
+    color: #020617;
+}
+.ud-trace-btn:hover:not(:disabled)::before {
+    filter: brightness(1.1);
+}
+.ud-trace-btn:active:not(:disabled) {
+    transform: translateY(1px);
+    border-bottom-width: 1px;
+    box-shadow: 0 2px 8px rgba(34, 211, 238, 0.25);
+}
+.ud-trace-btn:disabled {
+    background-color: rgba(255, 255, 255, 0.06) !important;
+    color: rgba(255, 255, 255, 0.25) !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+    box-shadow: none !important;
+    cursor: not-allowed !important;
+    transform: none !important;
+}
+.ud-trace-btn:disabled::before { opacity: 0 !important; }
+.ud-trace-btn:focus-visible {
+    outline: 2px solid #22d3ee;
+    outline-offset: 3px;
+    box-shadow: 0 0 0 4px rgba(34, 211, 238, 0.25);
+}
 
-    .preset-chip:hover {
-        background: rgba(56, 189, 248, 0.08);
-        border-color: rgba(56, 189, 248, 0.3);
-        color: var(--accent-cyan);
-    }
+/* ── Reset Button ─────────────────────────────────────────────── */
+.ha-reset-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    background: rgba(30, 41, 59, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 2.5px solid rgba(0, 0, 0, 0.35);
+    border-radius: 8px;
+    font-family: var(--font-sans);
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--text-muted, #94a3b8);
+    cursor: pointer;
+    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+.ha-reset-btn:hover {
+    transform: translateY(-1.5px);
+    border-bottom-width: 3.5px;
+    background: rgba(30, 41, 59, 0.9);
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(6, 182, 212, 0.15);
+}
+.ha-reset-btn:active {
+    transform: translateY(1px);
+    border-bottom-width: 1px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+.ha-reset-btn i {
+    transition: transform 0.3s ease;
+}
+.ha-reset-btn:hover i {
+    transform: rotate(180deg);
+}
 
-    /* Trace Node Animation Row */
-    .trace-animation-container {
-        display: none;
-        background: rgba(15, 23, 42, 0.3);
-        border: 1px solid rgba(255, 255, 255, 0.05);
-        border-radius: 16px;
-        padding: 2.5rem;
-        margin-top: 2rem;
-        margin-bottom: 2rem;
-        text-align: center;
-        backdrop-filter: blur(8px);
-    }
+/* ── Live Streaming Loader ────────────────────────────────────── */
+.ud-stream-loader {
+    padding: 2.5rem 2rem;
+    background: rgba(0, 0, 0, 0.2);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    display: none;
+}
+.ud-stream-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: var(--primary);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.ud-stream-pulse {
+    width: 6px;
+    height: 6px;
+    background: var(--primary);
+    border-radius: 50%;
+    animation: ud-pulse 1s infinite alternate;
+}
+.ud-stream-timeline {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-width: 600px;
+    margin: 0 auto;
+}
+.ud-stream-hop {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    color: var(--text-muted, #94a3b8);
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    border-radius: 8px;
+    padding: 8px 12px;
+    animation: ud-fade-in 0.3s ease forwards;
+}
+@keyframes ud-fade-in {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.ud-stream-status {
+    font-size: 0.65rem;
+    font-weight: 800;
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+.ud-stream-url {
+    flex: 1;
+    word-break: break-all;
+    color: #e2e8f0;
+}
 
-    .trace-nodes-row {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        position: relative;
-        max-width: 650px;
-        margin: 2rem auto;
-    }
+/* ── CORE UX CONCEPT: Visual Browser Mockup ───────────────────── */
+.ud-browser-mockup {
+    padding: 2.25rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+.ud-browser-frame {
+    background: rgba(15, 23, 42, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+    transition: border-color 0.4s ease;
+}
+/* Frame glow matches verdict */
+.frame-verdict-DANGEROUS { border-color: rgba(239, 68, 68, 0.4); box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), 0 0 30px rgba(239, 68, 68, 0.08); }
+.frame-verdict-SUSPICIOUS { border-color: rgba(245, 158, 11, 0.4); box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), 0 0 30px rgba(245, 158, 11, 0.08); }
+.frame-verdict-LIKELY_SAFE { border-color: rgba(16, 185, 129, 0.4); box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), 0 0 30px rgba(16, 185, 129, 0.08); }
+.frame-verdict-EXPIRED_OR_NOT_FOUND { border-color: rgba(100, 116, 139, 0.4); box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4); }
+.frame-verdict-COULD_NOT_DETERMINE { border-color: rgba(100, 116, 139, 0.4); box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4); }
 
-    .trace-line-bg {
-        position: absolute;
-        left: 28px;
-        right: 28px;
-        height: 4px;
-        background: rgba(255, 255, 255, 0.04);
-        z-index: 1;
-    }
+.ud-browser-topbar {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 10px 16px;
+    background: rgba(0, 0, 0, 0.35);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+.ud-browser-nav-dots {
+    display: flex;
+    gap: 6px;
+}
+.ud-browser-nav-dot { width: 9px; height: 9px; border-radius: 50%; background: rgba(255, 255, 255, 0.15); }
+.ud-browser-nav-btns {
+    display: flex;
+    gap: 12px;
+    color: rgba(255, 255, 255, 0.3);
+    font-size: 0.8rem;
+}
+.ud-browser-tabs {
+    display: flex;
+    margin-bottom: -11px;
+}
+.ud-browser-tab {
+    background: rgba(15, 23, 42, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-bottom: none;
+    border-radius: 6px 6px 0 0;
+    padding: 6px 16px;
+    font-size: 0.7rem;
+    font-family: 'Space Grotesk', sans-serif;
+    color: var(--text-muted, #94a3b8);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.ud-browser-address-bar {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 6px;
+    padding: 6px 12px;
+}
 
-    .trace-line-fill {
-        position: absolute;
-        left: 28px;
-        height: 4px;
-        background: linear-gradient(90deg, var(--accent-cyan), var(--accent-blue));
-        width: 0%;
-        z-index: 2;
-        transition: width 0.6s ease-in-out;
-    }
+/* Padlock styling */
+.ud-browser-padlock {
+    display: flex;
+    align-items: center;
+    font-size: 0.85rem;
+    transition: color 0.3s;
+}
+.padlock-DANGEROUS { color: #ef4444; }
+.padlock-SUSPICIOUS { color: #f59e0b; }
+.padlock-LIKELY_SAFE { color: #10b981; }
+.padlock-EXPIRED_OR_NOT_FOUND { color: #64748b; }
+.padlock-COULD_NOT_DETERMINE { color: #64748b; }
 
-    .trace-node {
-        position: relative;
-        z-index: 3;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-    }
+.ud-browser-favicon {
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 2px;
+    overflow: hidden;
+    color: var(--text-muted, #64748b);
+    font-size: 0.8rem;
+}
+.ud-browser-favicon img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+.ud-browser-url-text {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--text-muted, #64748b);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    word-break: break-all;
+}
 
-    .trace-circle {
-        width: 56px;
-        height: 56px;
-        border-radius: 50%;
-        background: #080c1a;
-        border: 2px solid rgba(255, 255, 255, 0.08);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: var(--text-muted);
-        font-size: 1.1rem;
-        font-weight: 800;
-        transition: all 0.35s ease;
-    }
+.ud-browser-body {
+    padding: 2.5rem 1.5rem;
+    text-align: center;
+    background: rgba(0, 0, 0, 0.1);
+}
+.ud-preview-verdict-title {
+    font-size: 1.4rem;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+}
+.text-verdict-DANGEROUS { color: #ef4444; }
+.text-verdict-SUSPICIOUS { color: #f59e0b; }
+.text-verdict-LIKELY_SAFE { color: #10b981; }
+.text-verdict-EXPIRED_OR_NOT_FOUND { color: #64748b; }
+.text-verdict-COULD_NOT_DETERMINE { color: #64748b; }
 
-    .trace-node.pending .trace-circle {
-        border-color: rgba(99, 102, 241, 0.15);
-        color: rgba(99, 102, 241, 0.3);
-    }
+.ud-preview-verdict-desc {
+    font-size: 0.95rem;
+    color: var(--text-muted, #94a3b8);
+    max-width: 500px;
+    margin: 0 auto;
+    line-height: 1.5;
+}
 
-    .trace-node.resolving .trace-circle {
-        border-color: var(--accent-cyan);
-        color: var(--accent-cyan);
-        box-shadow: 0 0 20px rgba(6, 182, 212, 0.4);
-        animation: pulseCircle 1s infinite alternate ease-in-out;
-    }
+/* ── Secondary Layout Grid ────────────────────────────────────── */
+.ud-grid-panels {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    padding: 2.25rem;
+}
+@media (max-width: 900px) {
+    .ud-grid-panels { grid-template-columns: 1fr; }
+}
 
-    .trace-node.resolved-clean .trace-circle {
-        border-color: #10b981;
-        background: rgba(16, 185, 129, 0.08);
-        color: #10b981;
-        box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
-    }
+.ud-side-panel {
+    background: rgba(30, 41, 59, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    overflow: hidden;
+}
+.ud-panel-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 18px;
+    background: rgba(0, 0, 0, 0.25);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--text-muted, #94a3b8);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    user-select: none;
+}
+.ud-panel-head i { color: var(--accent-cyan, #06b6d4); }
+.ud-panel-arrow { margin-left: auto; font-size: 0.65rem; transition: transform 0.2s ease; }
+.ud-panel-body { padding: 18px; }
 
-    .trace-node.resolved-malicious .trace-circle {
-        border-color: #ef4444;
-        background: rgba(239, 68, 68, 0.08);
-        color: #ef4444;
-        box-shadow: 0 0 25px rgba(239, 68, 68, 0.4);
-    }
+/* Redirect Chain layout */
+.ud-chain-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    position: relative;
+    padding-left: 6px;
+}
+.ud-chain-list::before {
+    content: '';
+    position: absolute;
+    left: 20px;
+    top: 10px;
+    bottom: 10px;
+    width: 2px;
+    background: rgba(255, 255, 255, 0.04);
+}
+.ud-chain-node {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    position: relative;
+}
+.ud-chain-idx {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1.5px solid rgba(255, 255, 255, 0.08);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--text-muted, #94a3b8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    z-index: 2;
+}
+.ud-chain-card {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.01);
+    border: 1px solid rgba(255, 255, 255, 0.03);
+    border-radius: 8px;
+    padding: 10px 14px;
+    min-width: 0;
+}
+.ud-chain-card:hover {
+    background: rgba(255, 255, 255, 0.03);
+    border-color: rgba(255, 255, 255, 0.06);
+}
+.ud-chain-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+}
+.ud-status-badge {
+    background: rgba(6, 182, 212, 0.1);
+    color: var(--accent-cyan, #06b6d4);
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-weight: 700;
+}
+.status-redirect { background: rgba(245, 158, 11, 0.1); color: #f59e0b; }
+.status-final-safe { background: rgba(16, 185, 129, 0.1); color: #10b981; }
+.status-final-danger { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
 
-    .trace-node-label {
-        font-family: var(--font-mono), monospace;
-        font-size: 0.68rem;
-        color: var(--text-muted);
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        margin-top: 10px;
-    }
+.ud-tld-badge {
+    background: rgba(239, 68, 68, 0.12);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    color: #fca5a5;
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-weight: 700;
+}
 
-    @keyframes pulseCircle {
-        0% {
-            transform: scale(1);
-        }
+.ud-chain-domain {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    color: #e2e8f0;
+    word-break: break-all;
+}
 
-        100% {
-            transform: scale(1.06);
-        }
-    }
+/* Detail Intel rows */
+.ud-intel-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    gap: 16px;
+}
+.ud-intel-row:last-child { border-bottom: none; }
+.ud-intel-key {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--text-muted, #64748b);
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    flex-shrink: 0;
+}
+.ud-intel-val {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    color: var(--text-muted, #cbd5e1);
+    text-align: right;
+    word-break: break-all;
+}
 
-    /* Results grid layout */
-    .results-grid-container {
-        display: grid;
-        grid-template-columns: 1fr 1fr 1fr;
-        gap: 1.5rem;
-        margin-top: 2.5rem;
-    }
+/* Light theme overrides */
+body.light-theme .ud-term-card {
+    background: rgba(255, 255, 255, 0.7);
+    border-color: rgba(0, 0, 0, 0.06);
+    box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.05);
+}
+body.light-theme .ud-term-hdr {
+    background: linear-gradient(180deg, rgba(224, 252, 252, 0.95) 0%, rgba(204, 244, 244, 0.88) 100%);
+    border-color: rgba(34, 211, 238, 0.15);
+    border-top: 2px solid rgba(34, 211, 238, 0.4);
+}
+body.light-theme .ud-input-row {
+    background: rgba(255, 255, 255, 0.5);
+    border-color: rgba(0, 0, 0, 0.08);
+}
+body.light-theme .ud-input-field {
+    color: #0f172a;
+}
+body.light-theme .ud-preset-btn {
+    background: rgba(0, 0, 0, 0.02);
+    border-color: rgba(0, 0, 0, 0.05);
+    color: #475569;
+}
+body.light-theme .ud-preset-btn:hover {
+    background: rgba(0, 0, 0, 0.05);
+    border-color: rgba(6, 182, 212, 0.3);
+    color: #0f172a;
+}
+body.light-theme .ud-stream-loader {
+    background: rgba(255, 255, 255, 0.4);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+}
+body.light-theme .ud-stream-hop {
+    background: #fff;
+    border-color: rgba(0, 0, 0, 0.04);
+    color: #475569;
+}
+body.light-theme .ud-stream-url {
+    color: #1e293b;
+}
+body.light-theme .ud-browser-frame {
+    background: #fff;
+    border-color: rgba(0, 0, 0, 0.08);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.06);
+}
+body.light-theme .ud-browser-topbar {
+    background: rgba(0, 0, 0, 0.02);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+}
+body.light-theme .ud-browser-tab {
+    background: #fff;
+    border-color: rgba(0, 0, 0, 0.08);
+    color: #475569;
+}
+body.light-theme .ud-browser-address-bar {
+    background: rgba(0, 0, 0, 0.03);
+    border-color: rgba(0, 0, 0, 0.05);
+}
+body.light-theme .ud-browser-body {
+    background: rgba(0, 0, 0, 0.005);
+}
+body.light-theme .ud-preview-verdict-desc {
+    color: #475569;
+}
+body.light-theme .ud-browser-url-text {
+    color: var(--text-primary);
+}
+body.light-theme .text-verdict-DANGEROUS { color: var(--danger); }
+body.light-theme .text-verdict-SUSPICIOUS { color: var(--warning); }
+body.light-theme .text-verdict-LIKELY_SAFE { color: var(--success); }
+body.light-theme .text-verdict-EXPIRED_OR_NOT_FOUND { color: var(--text-secondary); }
+body.light-theme .text-verdict-COULD_NOT_DETERMINE { color: var(--text-secondary); }
 
-    @media (max-width: 900px) {
-        .results-grid-container {
-            grid-template-columns: 1fr;
-        }
-    }
+body.light-theme .padlock-DANGEROUS { color: var(--danger); }
+body.light-theme .padlock-SUSPICIOUS { color: var(--warning); }
+body.light-theme .padlock-LIKELY_SAFE { color: var(--success); }
+body.light-theme .padlock-EXPIRED_OR_NOT_FOUND { color: var(--text-secondary); }
+body.light-theme .padlock-COULD_NOT_DETERMINE { color: var(--text-secondary); }
 
-    .results-panel {
-        background: rgba(15, 23, 42, 0.4);
-        border: 1px solid rgba(255, 255, 255, 0.07);
-        border-radius: 16px;
-        padding: 1.8rem;
-        backdrop-filter: blur(12px);
-        display: flex;
-        flex-direction: column;
-        opacity: 0;
-        /* Animated in via JS */
-    }
+body.light-theme .status-redirect { background: var(--warning-dim); color: var(--warning); }
+body.light-theme .status-final-safe { background: var(--success-dim); color: var(--success); }
+body.light-theme .status-final-danger { background: var(--danger-dim); color: var(--danger); }
+body.light-theme .ud-tld-badge { background: var(--danger-dim); color: var(--danger); border-color: rgba(220, 38, 38, 0.2); }
+body.light-theme .ud-side-panel {
+    background: rgba(255, 255, 255, 0.5);
+    border-color: rgba(0, 0, 0, 0.04);
+}
+body.light-theme .ud-panel-head {
+    background: rgba(0, 0, 0, 0.01);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.03);
+    color: #475569;
+}
+body.light-theme .ud-panel-head:hover {
+    background: rgba(0, 0, 0, 0.03);
+    color: #000;
+}
+body.light-theme .ud-chain-list::before {
+    background: rgba(0, 0, 0, 0.04);
+}
+body.light-theme .ud-chain-idx {
+    background: #fff;
+    border-color: rgba(0, 0, 0, 0.08);
+    color: var(--text-secondary);
+}
+body.light-theme .ud-chain-card {
+    background: #fff;
+    border-color: rgba(0, 0, 0, 0.03);
+}
+body.light-theme .ud-chain-card:hover {
+    background: rgba(0, 0, 0, 0.01);
+}
+body.light-theme .ud-chain-domain {
+    color: #1e293b;
+}
+body.light-theme .ud-intel-row {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.03);
+}
+body.light-theme .ud-intel-val {
+    color: #334155;
+}
+body.light-theme .ud-trace-btn {
+    background-color: #0d9488 !important;   /* teal-600 */
+    color: #ffffff !important;
+    border: 1px solid rgba(0, 0, 0, 0.12) !important;
+    border-bottom: 3.5px solid rgba(0, 0, 0, 0.28) !important;
+    box-shadow: 0 4px 14px rgba(13, 148, 136, 0.3), inset 0 1px 0 rgba(255,255,255,0.25) !important;
+}
+body.light-theme .ud-trace-btn::before {
+    background-image: linear-gradient(135deg, #0d9488 0%, #0284c7 100%);
+}
+body.light-theme .ud-trace-btn:hover:not(:disabled) {
+    border-bottom-width: 4.5px !important;
+    box-shadow: 0 8px 22px rgba(13, 148, 136, 0.42) !important;
+    color: #ffffff !important;
+}
+body.light-theme .ud-trace-btn:active:not(:disabled) {
+    border-bottom-width: 1px !important;
+    box-shadow: 0 2px 6px rgba(13, 148, 136, 0.18) !important;
+}
+body.light-theme .ud-trace-btn:disabled {
+    background-color: #e2e8f0 !important;
+    color: #94a3b8 !important;
+    border-color: #cbd5e1 !important;
+    border-bottom: 1px solid #cbd5e1 !important;
+    box-shadow: none !important;
+    cursor: not-allowed !important;
+    transform: none !important;
+}
+body.light-theme .ud-trace-btn:focus-visible {
+    outline: 2px solid #0d9488;
+    outline-offset: 3px;
+    box-shadow: 0 0 0 4px rgba(13, 148, 136, 0.2) !important;
+}
 
-    /* fadeInUp staggered animations */
-    @keyframes fadeInUp {
-        from {
-            opacity: 0;
-            transform: translateY(20px);
-        }
-
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-
-    .results-panel.animated {
-        animation: fadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
-    }
-
-    .vertical-chain {
-        display: flex;
-        flex-direction: column;
-        gap: 1.2rem;
-        position: relative;
-        padding-left: 10px;
-    }
-
-    .vertical-chain::before {
-        content: '';
-        position: absolute;
-        left: 20px;
-        top: 10px;
-        bottom: 10px;
-        width: 1.5px;
-        background: rgba(255, 255, 255, 0.06);
-    }
-
-    .chain-step {
-        display: flex;
-        align-items: flex-start;
-        gap: 12px;
-        position: relative;
-    }
-
-    .chain-step-num {
-        width: 22px;
-        height: 22px;
-        border-radius: 50%;
-        background: rgba(255, 255, 255, 0.03);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        color: var(--text-muted);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-family: var(--font-mono), monospace;
-        font-size: 0.65rem;
-        font-weight: 700;
-        flex-shrink: 0;
-        z-index: 2;
-    }
-
-    .chain-step-body {
-        flex: 1;
-        min-width: 0;
-    }
-
-    .chain-step-title {
-        font-family: var(--font-mono), monospace;
-        font-size: 0.7rem;
-        color: var(--text-muted);
-        margin-bottom: 2px;
-    }
-
-    .chain-step-url {
-        font-family: var(--font-mono), monospace;
-        font-size: 0.72rem;
-        color: #e2e8f0;
-        word-break: break-all;
-        line-height: 1.4;
-    }
-
-    /* Big Verdict Card inside Panel 2 */
-    .verdict-large-card {
-        text-align: center;
-        padding: 2rem 1rem;
-        border-radius: 12px;
-        border: 1px solid rgba(255, 255, 255, 0.05);
-        background: rgba(0, 0, 0, 0.2);
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        flex: 1;
-        margin-top: 1rem;
-    }
-
-    .verdict-large-card.clean {
-        border-color: rgba(16, 185, 129, 0.2);
-        background: rgba(16, 185, 129, 0.03);
-        box-shadow: inset 0 0 15px rgba(16, 185, 129, 0.05);
-    }
-
-    .verdict-large-card.listed {
-        border-color: rgba(239, 68, 68, 0.2);
-        background: rgba(239, 68, 68, 0.03);
-        box-shadow: inset 0 0 15px rgba(239, 68, 68, 0.05);
-    }
-
-    .verdict-large-card.unknown {
-        border-color: rgba(245, 158, 11, 0.2);
-        background: rgba(245, 158, 11, 0.03);
-        box-shadow: inset 0 0 15px rgba(245, 158, 11, 0.05);
-    }
-
-    .verdict-banner {
-        text-align: center;
-        padding: 1.25rem;
-        border-radius: 12px;
-        margin-bottom: 1.5rem;
-        font-family: var(--font-mono), monospace;
-        font-size: 1.1rem;
-        font-weight: 800;
-        letter-spacing: 1.5px;
-        text-transform: uppercase;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 6px;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-    }
+body.light-theme .ha-reset-btn {
+    background: rgba(255, 255, 255, 0.8);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-bottom: 2.5px solid rgba(0, 0, 0, 0.25);
+    color: #475569;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+body.light-theme .ha-reset-btn:hover {
+    background: #ffffff;
+    color: #0f172a;
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.15);
+}
+body.light-theme .ha-reset-btn:active {
+    border-bottom-width: 1px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+}
 </style>
 
 <div class="ud-container">
-    <!-- Back link -->
-    <a href="javascript:history.back()"
-        style="display:inline-flex;align-items:center;gap:6px;color:#64748b;font-size:0.85rem;text-decoration:none;margin-bottom:2rem;transition:color 0.2s;"
-        onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#64748b'">
-        <i class="ti ti-arrow-left"></i> Back to Suite
-    </a>
 
-    <!-- Header -->
-    <div class="tool-hero-header" style="text-align:center; margin-bottom:2.5rem;">
-        <span class="section-eyebrow"><i class="ti ti-link"></i> URL Inspection Suite</span>
-        <h1
-            style="font-size:clamp(1.8rem,3vw,2.4rem);font-weight:900;color:var(--text-main);margin-bottom:0.5rem; margin-top: 0.5rem;">
-            Phishing URL Decoder</h1>
-        <p style="color:#64748b;font-size:0.95rem;max-width:550px;margin:0 auto;">Audit redirect chains, analyze
-            destination metadata, and check reputation against global cyber databases.</p>
-    </div>
-
-    <!-- Clickable Preset Chips -->
-    <div class="preset-chips-container">
-        <div class="preset-chip" onclick="applyPreset('bit.ly/example', 'https://bit.ly/3KxXn2E')">bit.ly/example</div>
-        <div class="preset-chip" onclick="applyPreset('Safe Google Link', 'https://www.google.com')">Safe Google Link
+    <!-- Hero -->
+    <div class="ud-hero">
+        <div class="ud-badge-eyebrow">
+            <i class="ti ti-link"></i>
+            Link Resolution forensics
         </div>
-        <div class="preset-chip" onclick="applyPreset('URLhaus Listed', 'http://195.133.19.141/')">URLhaus Listed</div>
-        <div class="preset-chip"
-            onclick="applyPreset('Multi-hop Chain', 'https://httpbin.org/redirect-to?url=https%3A%2F%2Fhttpbin.org%2Fredirect-to%3Furl%3Dhttps%253A%252F%252Fwww.google.com%26status_code%3D302&status_code=302')">
-            Multi-hop Chain</div>
+        <h1>Phishing <span>URL Decoder</span></h1>
+        <p>Analyze suspicious URLs and trace their redirect hops in real-time. Peek into the final destination through our secure browser mockup sandbox.</p>
     </div>
 
-    <!-- Input Terminal Card (Zone 1) -->
-    <div class="terminal-input-card">
-        <label
-            style="color:#94a3b8;font-size:0.8rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;display:block;margin-bottom:10px;font-family:var(--font-mono), monospace;">
-            PASTE TARGET URL &rarr;
-        </label>
-        <div class="terminal-input-container">
-            <span class="terminal-prompt">audit_usr@phishsim:~$</span>
-            <input id="url-input" class="terminal-input-field" type="text" placeholder="enter suspicious URL here...">
-        </div>
-
-        <div id="ud-error"
-            style="color:#f87171;font-size:0.78rem;margin-top:8px;display:none;font-family:var(--font-mono), monospace;">
-            <i class="ti ti-alert-circle" style="margin-right:4px;"></i><span></span></div>
-
-        <button class="btn-primary-action cyber-glow-hover" id="decode-btn" onclick="decodeUrl()"
-            style="margin-top: 1.5rem; width: 100%;">
-            <i class="ti ti-radar-2"></i> TRACE REDIRECT CHAIN
-        </button>
-    </div>
-
-    <!-- Trace Animation Centerpiece (Zone 2) -->
-    <div class="trace-animation-container" id="trace-anim-container">
-        <div
-            style="font-family:var(--font-mono), monospace; font-size:0.75rem; color:var(--accent-cyan); text-transform:uppercase; letter-spacing:1px; margin-bottom:1rem;">
-            ACTIVE TRACER CYCLES RUNNING</div>
-        <div class="trace-nodes-row" id="trace-nodes-row">
-            <div class="trace-line-bg"></div>
-            <div class="trace-line-fill" id="trace-line-fill"></div>
-
-            <div class="trace-node" id="node-0">
-                <div class="trace-circle">0</div>
-                <span class="trace-node-label">Input URL</span>
-            </div>
-            <div class="trace-node pending" id="node-1">
-                <div class="trace-circle">1</div>
-                <span class="trace-node-label">Hop 1</span>
-            </div>
-            <div class="trace-node pending" id="node-2">
-                <div class="trace-circle">2</div>
-                <span class="trace-node-label">Hop 2</span>
-            </div>
-            <div class="trace-node pending" id="node-3">
-                <div class="trace-circle">3</div>
-                <span class="trace-node-label">Final Destination</span>
-            </div>
-        </div>
-        <div id="trace-status-text"
-            style="font-family:var(--font-mono), monospace; font-size:0.72rem; color:var(--text-muted); margin-top:1rem;">
-            PROCESSING RESOLUTION SEQUENCE...</div>
-    </div>
-
-    <!-- Results Zone (Zone 3) -->
-    <div id="results-area" style="display:none;">
-        <div id="verdict-banner" class="verdict-banner"></div>
-
-        <div class="results-grid-container" id="results-grid">
-            <!-- Panel 1: Redirect Chain -->
-            <div class="results-panel" id="panel-1">
-                <h3
-                    style="color:var(--text-main);font-size:0.95rem;font-weight:700;margin-bottom:1.2rem;font-family:var(--font-mono), monospace;text-transform:uppercase;">
-                    <i class="ti ti-route" style="color:#06b6d4;margin-right:6px;"></i>Redirect Chain</h3>
-                <div class="vertical-chain" id="chain-wrap"></div>
-            </div>
-
-            <!-- Panel 2: URLhaus Verdict -->
-            <div class="results-panel" id="panel-2">
-                <h3
-                    style="color:var(--text-main);font-size:0.95rem;font-weight:700;margin-bottom:1.2rem;font-family:var(--font-mono), monospace;text-transform:uppercase;">
-                    <i class="ti ti-shield" style="color:#f59e0b;margin-right:6px;"></i>URLhaus Verdict</h3>
-                <div class="verdict-large-card" id="urlhaus-card">
-                    <i id="urlhaus-icon" class="ti" style="font-size:2.8rem; margin-bottom:10px;"></i>
-                    <h4 id="urlhaus-title"
-                        style="font-family:var(--font-mono), monospace; font-weight:800; font-size:1.15rem; margin-bottom:6px; text-transform:uppercase;">
-                        UNKNOWN</h4>
-                    <p id="urlhaus-details"
-                        style="font-size:0.76rem; color:var(--text-muted); line-height:1.45; font-family:var(--font-mono), monospace; text-align:center;">
-                        —</p>
+    <!-- Main Card -->
+    <div class="ud-term-card">
+        
+        <!-- INPUT STATE -->
+        <div id="ud-input-state" class="ud-term-body">
+            <div class="ud-term-hdr" style="margin: -2.25rem -2.25rem 2rem; border-radius: 16px 16px 0 0;">
+                <div class="ud-term-dots">
+                    <div class="ud-term-dot r" id="ud-dot-red"   title="Clear input"></div>
+                    <div class="ud-term-dot y" id="ud-dot-amber" title="Minimize"></div>
+                    <div class="ud-term-dot g" id="ud-dot-green" title="Expand"></div>
                 </div>
-                <div
-                    style="font-size:0.68rem; color:var(--text-muted); border-top:1px solid rgba(255,255,255,0.05); padding-top:0.8rem; margin-top:1rem; font-family:var(--font-mono), monospace; line-height:1.4;">
-                    * Abuse.ch URLhaus lists active malware payloads and command & control endpoints.
+                <div class="ud-term-title">phishsim-terminal://url-decoder</div>
+                <div class="ud-term-status"><div class="ud-status-pulse"></div>STANDBY</div>
+            </div>
+
+            <div class="ud-input-row">
+                <span class="ud-prompt-terminal">tracer_audit@phishsim:~$</span>
+                <input id="url-input" class="ud-input-field" type="text"
+                    placeholder="Paste redirection link or suspicious URL here..." spellcheck="false">
+            </div>
+
+            <!-- Suggestion Presets -->
+            <div class="ud-presets-section">
+                <div class="ud-presets-label">Forensic Samples:</div>
+                <div class="ud-presets-grid">
+                    <button class="ud-preset-btn" onclick="applyPreset('https://www.google.com')">
+                        <span class="ud-preset-indicator" style="background:#10b981"></span>
+                        Clean: Google Landing
+                    </button>
+                    <button class="ud-preset-btn" onclick="applyPreset('https://is.gd/EuvYes')">
+                        <span class="ud-preset-indicator" style="background:#f59e0b"></span>
+                        Shortened: is.gd Redirect
+                    </button>
+                    <button class="ud-preset-btn" onclick="applyPreset('http://195.133.19.141/')">
+                        <span class="ud-preset-indicator" style="background:#ef4444"></span>
+                        Dangerous: URLhaus listed
+                    </button>
+                    <button class="ud-preset-btn" onclick="applyPreset('https://httpbin.org/redirect-to?url=https%3A%2F%2Fhttpbin.org%2Fredirect-to%3Furl%3Dhttps%253A%252F%252Fwww.google.com%26status_code%3D302&status_code=302')">
+                        <span class="ud-preset-indicator" style="background:#f59e0b"></span>
+                        Redirect: Multi-hop Chain
+                    </button>
                 </div>
             </div>
 
-            <!-- Panel 3: Final Domain Intel -->
-            <div class="results-panel" id="panel-3">
-                <h3
-                    style="color:var(--text-main);font-size:0.95rem;font-weight:700;margin-bottom:1.2rem;font-family:var(--font-mono), monospace;text-transform:uppercase;">
-                    <i class="ti ti-cpu" style="color:#ef4444;margin-right:6px;"></i>Final Domain</h3>
-                <div id="intel-details" style="display:flex; flex-direction:column; gap:12px; flex:1;">
-                    <!-- Loaded dynamically -->
+            <button class="ud-trace-btn" id="trace-btn" onclick="executeTrace()">
+                <i class="ti ti-radar"></i>
+                AUDIT ROUTING PATH
+            </button>
+
+            <!-- Amber/minimize redirect-chain animation stage -->
+            <div class="ud-chain-stage" id="ud-chain-stage" onclick="udRestoreFromMinimize()" title="Click to restore">
+                <div class="ud-minimized-tracer">
+                    <div class="ud-minimized-radar">
+                        <div class="ud-radar-sweep"></div>
+                        <div class="ud-radar-ping" style="top: 30%; left: 40%;"></div>
+                        <div class="ud-radar-ping" style="top: 70%; left: 60%; animation-delay: 0.8s;"></div>
+                    </div>
+                    <div class="ud-minimized-log" id="ud-minimized-log">
+                        <div class="ud-log-line active">&gt; INITIATING ROUTING SCAN...</div>
+                        <div class="ud-log-line">&gt; VERIFYING TARGET REPUTATION DATA...</div>
+                        <div class="ud-log-line">&gt; CHECKING CRYPTOGRAPHIC AUTH...</div>
+                    </div>
                 </div>
+                <div class="ud-chain-restore-hint">&uarr; Click anywhere to restore</div>
             </div>
         </div>
-    </div>
-</div>
+
+        <!-- PROGRESS/STREAM LOADER -->
+        <div id="ud-stream-loader" class="ud-stream-loader">
+            <div class="ud-stream-title">
+                <div class="ud-stream-pulse"></div>
+                Tracer stream: inspecting connections...
+            </div>
+            <div class="ud-stream-timeline" id="stream-timeline-container">
+                <!-- Streaming hops appear here dynamically -->
+            </div>
+        </div>
+
+        <!-- RESULT PREVIEW VIEW (CORE UX) -->
+        <div id="ud-result-preview" style="display: none;">
+            
+            <!-- Verdict strip -->
+            <div class="ha-result-strip" style="background:rgba(0,0,0,0.25); border-bottom:1px solid rgba(255,255,255,0.05); padding: 14px 24px; display:flex; align-items:center; justify-content:space-between;">
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <span style="font-family:'JetBrains Mono', monospace; font-size:0.8rem; color:var(--text-muted, #94a3b8);" id="result-hop-count"></span>
+                </div>
+                <button class="ha-reset-btn" onclick="resetToInput()"><i class="ti ti-refresh"></i> Reset</button>
+            </div>
+
+            <!-- Mock Browser Address Bar Mockup -->
+            <div class="ud-browser-mockup">
+                <div class="ud-browser-frame" id="browser-frame-verdict">
+                    <!-- Browser Chrome Header -->
+                    <div class="ud-browser-topbar">
+                        <div class="ud-browser-nav-dots">
+                            <div class="ud-browser-nav-dot"></div>
+                            <div class="ud-browser-nav-dot"></div>
+                            <div class="ud-browser-nav-dot"></div>
+                        </div>
+                        <div class="ud-browser-nav-btns">
+                            <i class="ti ti-arrow-left"></i>
+                            <i class="ti ti-arrow-right"></i>
+                            <i class="ti ti-reload"></i>
+                        </div>
+                        <div class="ud-browser-tabs">
+                            <div class="ud-browser-tab">
+                                <i class="ti ti-lock-square" style="color:var(--accent-cyan);"></i>
+                                Sandboxed Preview
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- URL Address Input Bar -->
+                    <div style="padding: 10px 16px; background: rgba(0, 0, 0, 0.15); display: flex; align-items: center;">
+                        <div class="ud-browser-address-bar">
+                            <div class="ud-browser-padlock" id="browser-padlock-icon">
+                                <i class="ti ti-lock"></i>
+                            </div>
+                            <div class="ud-browser-favicon" id="browser-favicon-container">
+                                <i class="ti ti-world"></i>
+                            </div>
+                            <div class="ud-browser-url-text" id="browser-address-url">
+                                <!-- Highlighted final URL will reside here -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sandbox Viewport Page Content -->
+                    <div class="ud-browser-body">
+                        <div class="ud-preview-verdict-title" id="preview-verdict-label">—</div>
+                        <div class="ud-preview-verdict-desc" id="preview-verdict-description"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Supporting Diagnosis Panels -->
+            <div class="ud-grid-panels">
+                
+                <!-- Redirect Hops list -->
+                <div class="ud-side-panel">
+                    <div class="ud-panel-head" onclick="togglePanelBody('chain-body')">
+                        <i class="ti ti-git-commit"></i>
+                        Connection Hops Chain
+                        <i class="ti ti-chevron-down ud-panel-arrow" id="chain-body-arrow"></i>
+                    </div>
+                    <div class="ud-panel-body" id="chain-body">
+                        <div class="ud-chain-list" id="chain-nodes-container">
+                            <!-- Hops rendered dynamically -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Threat Audits & Domain Intel -->
+                <div class="ud-side-panel">
+                    <div class="ud-panel-head" onclick="togglePanelBody('intel-body')">
+                        <i class="ti ti-list-check"></i>
+                        Forensic Intelligence
+                        <i class="ti ti-chevron-down ud-panel-arrow" id="intel-body-arrow"></i>
+                    </div>
+                    <div class="ud-panel-body" id="intel-body">
+                        <div id="intel-details-container">
+                            <!-- Technical audits list -->
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </div><!-- /results preview view -->
+
+    </div><!-- /ud-term-card -->
+
+</div><!-- /ud-container -->
 
 <script>
-    function applyPreset(label, url) {
-        document.getElementById('url-input').value = url;
-        decodeUrl();
+/* ═══════════════════════════════════════════════════════════════
+   PHISHING URL DECODER — FRONTEND LOGIC
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Apply selection preset to input field */
+function applyPreset(url) {
+    document.getElementById('url-input').value = url;
+    executeTrace();
+}
+
+function resetToInput() {
+    document.getElementById('ud-input-state').style.display = '';
+    document.getElementById('ud-stream-loader').style.display = 'none';
+    document.getElementById('ud-result-preview').style.display = 'none';
+    
+    // Reset browser mockup frame class
+    const frame = document.getElementById('browser-frame-verdict');
+    frame.className = 'ud-browser-frame';
+}
+
+function togglePanelBody(id) {
+    const body = document.getElementById(id);
+    const arrow = document.getElementById(id + '-arrow');
+    const isHidden = body.style.display === 'none';
+    body.style.display = isHidden ? '' : 'none';
+    if (arrow) {
+        arrow.style.transform = isHidden ? 'rotate(0deg)' : 'rotate(-90deg)';
+    }
+}
+
+function escapeHTML(str) {
+    return String(str || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
+/* Bold highlight the registered eTLD+1 domain */
+function highlightDomain(url, regDomain) {
+    if (!regDomain) return escapeHTML(url);
+    const protocolMatch = url.match(/^(https?:\/\/)/i);
+    const protocol = protocolMatch ? protocolMatch[1] : '';
+    const rest = url.substring(protocol.length);
+    const nextSlash = rest.indexOf('/');
+    const hostPort = nextSlash === -1 ? rest : rest.substring(0, nextSlash);
+    const pathQuery = nextSlash === -1 ? '' : rest.substring(nextSlash);
+    
+    const regDomIdx = hostPort.toLowerCase().lastIndexOf(regDomain.toLowerCase());
+    if (regDomIdx !== -1) {
+        const subdomain = hostPort.substring(0, regDomIdx);
+        const domain = hostPort.substring(regDomIdx, regDomIdx + regDomain.length);
+        const portSuffix = hostPort.substring(regDomIdx + regDomain.length);
+        
+        return `<span style="opacity: 0.4;">${escapeHTML(protocol)}</span>` +
+               `<span style="opacity: 0.5;">${escapeHTML(subdomain)}</span>` +
+               `<strong style="color: var(--text-primary); font-weight: 800;">${escapeHTML(domain)}</strong>` +
+               `<span style="opacity: 0.5;">${escapeHTML(portSuffix)}</span>` +
+               `<span style="opacity: 0.4;">${escapeHTML(pathQuery)}</span>`;
+    }
+    return escapeHTML(url);
+}
+
+/* Dynamic streaming tracer handler */
+async function executeTrace() {
+    const urlVal = document.getElementById('url-input').value.trim();
+    if (!urlVal) {
+        const inputContainer = document.querySelector('.ud-input-row');
+        inputContainer.style.borderColor = '#ef4444';
+        setTimeout(() => { inputContainer.style.borderColor = ''; }, 2000);
+        return;
     }
 
-    function showErr(msg) {
-        const el = document.getElementById('ud-error');
-        const inp = document.getElementById('url-input');
-        el.querySelector('span').textContent = msg;
-        el.style.display = 'flex';
-        inp.parentElement.classList.remove('shake');
-        void inp.parentElement.offsetWidth;
-        inp.parentElement.classList.add('shake');
-        inp.parentElement.style.borderColor = '#ef4444';
-        setTimeout(() => { inp.parentElement.style.borderColor = ''; el.style.display = 'none'; }, 3500);
-    }
+    // Toggle loader states
+    document.getElementById('ud-input-state').style.display = 'none';
+    const streamLoader = document.getElementById('ud-stream-loader');
+    streamLoader.style.display = 'block';
+    
+    const timeline = document.getElementById('stream-timeline-container');
+    timeline.innerHTML = '';
 
-    let isDecoding = false;
+    const fd = new FormData();
+    fd.append('url', urlVal);
 
-    async function decodeUrl() {
-        const url = document.getElementById('url-input').value.trim();
-        if (!url) { showErr('Enter a URL to trace.'); return; }
-
-        if (isDecoding) return;
-
-        const btn = document.getElementById('decode-btn');
-        const animContainer = document.getElementById('trace-anim-container');
-        const resultsArea = document.getElementById('results-area');
-
-        isDecoding = true;
-        btn.innerHTML = '<i class="ti ti-loader-2" style="animation:spin 1s linear infinite;"></i> RUNNING TRACER...';
-        resultsArea.style.display = 'none';
-
-        // Hide old animation class ticks
-        document.getElementById('panel-1').classList.remove('animated');
-        document.getElementById('panel-2').classList.remove('animated');
-        document.getElementById('panel-3').classList.remove('animated');
-
-        // Reset nodes animation and setup dynamic container
-        animContainer.style.display = 'block';
-
-        const row = document.getElementById('trace-nodes-row');
-        const bg = row.querySelector('.trace-line-bg') || document.createElement('div');
-        bg.className = 'trace-line-bg';
-        const fill = row.querySelector('.trace-line-fill') || document.createElement('div');
-        fill.className = 'trace-line-fill';
-        fill.id = 'trace-line-fill';
-        fill.style.width = '0%';
-
-        row.innerHTML = '';
-        row.appendChild(bg);
-        row.appendChild(fill);
-
-        // Add dynamic placeholder hop for initial probe
-        const node0 = document.createElement('div');
-        node0.className = 'trace-node resolving';
-        node0.id = 'node-0';
-        node0.innerHTML = `<div class="trace-circle">0</div><span class="trace-node-label">Input URL</span>`;
-        row.appendChild(node0);
-
-        const node1 = document.createElement('div');
-        node1.className = 'trace-node pending';
-        node1.id = 'node-1';
-        node1.innerHTML = `<div class="trace-circle">1</div><span class="trace-node-label">Probing...</span>`;
-        row.appendChild(node1);
-
-        document.getElementById('trace-status-text').textContent = 'CONTACTING INITIAL GATEWAY...';
-
-        const fd = new FormData();
-        fd.append('url', url);
-
-        try {
-            const res = await fetch('/api/url-decoder', { method: 'POST', body: fd });
-            const data = await res.json();
-
-            if (!data.success) {
-                animContainer.style.display = 'none';
-                showErr(data.message || 'Failed to decode URL.');
-                return;
-            }
-
-            const hops = data.chain || [];
-            if (hops.length === 0) {
-                let fallbackDomain = 'Gateway';
-                try { fallbackDomain = new URL(url).hostname; } catch (e) { }
-                hops.push({ domain: fallbackDomain, url: url, is_final: true });
-            }
-
-            // Rebuild dynamic nodes matching the actual response chain
-            row.innerHTML = '';
-            row.appendChild(bg);
-            row.appendChild(fill);
-            fill.style.width = '0%';
-
-            hops.forEach((hop, i) => {
-                const node = document.createElement('div');
-                node.className = 'trace-node pending';
-                node.id = `node-${i}`;
-
-                let label = `Hop ${i}`;
-                if (i === 0) label = 'Input URL';
-                else if (i === hops.length - 1) label = 'Final Dest';
-                else {
-                    label = hop.domain || `Hop ${i}`;
-                    if (label.length > 12) label = label.slice(0, 10) + '..';
-                }
-
-                node.innerHTML = `
-                <div class="trace-circle">${i}</div>
-                <span class="trace-node-label" title="${hop.domain || ''}">${label}</span>
-            `;
-                row.appendChild(node);
-            });
-
-            // Sequential animation sequences
-            const totalSteps = hops.length;
-            const delayPerHop = Math.min(400, Math.max(150, 1100 / totalSteps));
-
-            for (let i = 0; i < totalSteps; i++) {
-                const node = document.getElementById(`node-${i}`);
-                node.className = 'trace-node resolving';
-
-                const hopData = hops[i];
-                const isLast = (i === totalSteps - 1);
-
-                if (isLast) {
-                    document.getElementById('trace-status-text').textContent = 'ANALYZING FINAL ENDPOINT VERDICT...';
-                } else {
-                    document.getElementById('trace-status-text').textContent = `HOP ${i}: RESOLVING ${hopData.domain || 'Gateway'}...`;
-                }
-
-                await new Promise(r => setTimeout(r, delayPerHop));
-
-                if (isLast) {
-                    if (data.verdict === 'DANGEROUS') {
-                        node.className = 'trace-node resolved-malicious';
-                    } else {
-                        node.className = 'trace-node resolved-clean';
-                    }
-                } else {
-                    node.className = 'trace-node resolved-clean';
-                }
-
-                const percent = totalSteps > 1 ? (i / (totalSteps - 1)) * 100 : 100;
-                fill.style.width = `${percent}%`;
-            }
-
-            document.getElementById('trace-status-text').textContent = 'INTELLIGENCE RECORD RECEIVED.';
-            await new Promise(r => setTimeout(r, 350));
-            animContainer.style.display = 'none';
-
-            renderResults(data);
-        } catch (e) {
-            animContainer.style.display = 'none';
-            showErr('Network error: ' + e.message);
-        } finally {
-            isDecoding = false;
-            btn.innerHTML = '<i class="ti ti-radar-2"></i> TRACE REDIRECT CHAIN';
-        }
-    }
-
-    function renderResults(d) {
-        const resultsArea = document.getElementById('results-area');
-        const colors = { 'DANGEROUS': '#ef4444', 'SUSPICIOUS': '#f59e0b', 'LIKELY SAFE': '#10b981' };
-        const bgMap = { 'DANGEROUS': 'rgba(239,68,68,0.08)', 'SUSPICIOUS': 'rgba(245,158,11,0.08)', 'LIKELY SAFE': 'rgba(16,185,129,0.08)' };
-        const borderMap = { 'DANGEROUS': 'rgba(239,68,68,0.3)', 'SUSPICIOUS': 'rgba(245,158,11,0.3)', 'LIKELY SAFE': 'rgba(16,185,129,0.3)' };
-
-        const vb = document.getElementById('verdict-banner');
-        vb.style.background = bgMap[d.verdict];
-        vb.style.border = `1px solid ${borderMap[d.verdict]}`;
-        vb.style.color = colors[d.verdict];
-        vb.innerHTML = `<i class="ti ti-${d.verdict === 'LIKELY SAFE' ? 'circle-check' : 'alert-triangle'}" style="font-size:1.8rem;display:block;margin-bottom:8px;"></i>${d.verdict}`;
-
-        // Panel 1: Redirect hops rendering
-        const cw = document.getElementById('chain-wrap');
-        cw.innerHTML = '';
-
-        d.chain.forEach((node, i) => {
-            const isFinal = node.is_final;
-            const dotColor = isFinal ? (d.verdict === 'LIKELY SAFE' ? '#10b981' : d.verdict === 'SUSPICIOUS' ? '#f59e0b' : '#ef4444') : (node.is_redirect ? '#f59e0b' : '#06b6d4');
-
-            // Check if TLD changed
-            let tldChangedBadge = '';
-            if (i > 0) {
-                const prevDom = d.chain[i - 1].domain || '';
-                const currDom = node.domain || '';
-                const prevTld = prevDom.split('.').pop() || '';
-                const currTld = currDom.split('.').pop() || '';
-                if (prevTld && currTld && prevTld !== currTld) {
-                    tldChangedBadge = `<span style="display:inline-block; font-size: 0.58rem; background:rgba(239, 68, 68, 0.15); border:1px solid rgba(239,68,68,0.3); color:#fca5a5; padding:1px 5px; border-radius:3px; margin-left:6px; font-weight:700;">⚠ TLD Changed</span>`;
-                }
-            }
-
-            const nodeEl = document.createElement('div');
-            nodeEl.className = 'chain-step';
-            nodeEl.innerHTML = `
-            <div class="chain-step-num" style="border-color:${dotColor}; color:${dotColor}; background:rgba(${dotColor === '#10b981' ? '16,185,129' : dotColor === '#ef4444' ? '239,68,68' : dotColor === '#f59e0b' ? '245,158,11' : '6,182,212'},0.1);">
-                ${i}
-            </div>
-            <div class="chain-step-body">
-                <div class="chain-step-title">
-                    ${node.status_code ? `<span>HTTP ${node.status_code}</span>` : ''}
-                    ${tldChangedBadge}
-                </div>
-                <div class="chain-step-url">${node.domain || node.url}</div>
-                ${node.error ? `<div style="color:#f87171;font-size:0.72rem;margin-top:4px;"><i class="ti ti-alert-circle"></i> ${node.error}</div>` : ''}
-            </div>
-        `;
-            cw.appendChild(nodeEl);
+    try {
+        const response = await fetch('/api/url-decoder', {
+            method: 'POST',
+            body: fd
         });
 
-        // Panel 2: URLhaus card verdict mapping
-        const uCard = document.getElementById('urlhaus-card');
-        const uIcon = document.getElementById('urlhaus-icon');
-        const uTitle = document.getElementById('urlhaus-title');
-        const uDetails = document.getElementById('urlhaus-details');
-
-        uCard.className = 'verdict-large-card';
-        if (d.urlhaus_verdict === 'malicious') {
-            uCard.classList.add('listed');
-            uIcon.className = 'ti ti-shield-x';
-            uIcon.style.color = '#ef4444';
-            uTitle.textContent = 'LISTED';
-            uTitle.style.color = '#ef4444';
-        } else if (d.urlhaus_verdict === 'clean') {
-            uCard.classList.add('clean');
-            uIcon.className = 'ti ti-shield-check';
-            uIcon.style.color = '#10b981';
-            uTitle.textContent = 'CLEAN';
-            uTitle.style.color = '#10b981';
-        } else {
-            uCard.classList.add('unknown');
-            uIcon.className = 'ti ti-shield-question';
-            uIcon.style.color = '#f59e0b';
-            uTitle.textContent = 'UNKNOWN';
-            uTitle.style.color = '#f59e0b';
+        if (!response.ok) {
+            alert('Tracer error: Response failed.');
+            resetToInput();
+            return;
         }
-        uDetails.textContent = d.urlhaus_detail;
 
-        // Panel 3: Domain Intel
-        const intel = document.getElementById('intel-details');
-        const matchesPhishingKit = d.domain_flags && d.domain_flags.length > 0;
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder("utf-8");
+        let buffer = "";
 
-        intel.innerHTML = `
-        <div style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom:10px;">
-            <div style="font-size:0.7rem; color:var(--text-muted); font-family:var(--font-mono), monospace; text-transform:uppercase;">Host Domain</div>
-            <div style="font-size:0.85rem; color:var(--text-main); font-family:var(--font-mono), monospace; word-break:break-all; margin-top:2px;">${d.final_domain || 'Unknown'}</div>
-        </div>
-        <div style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom:10px;">
-            <div style="font-size:0.7rem; color:var(--text-muted); font-family:var(--font-mono), monospace; text-transform:uppercase;">SSL Issuer</div>
-            <div style="font-size:0.85rem; color:var(--text-main); font-family:var(--font-mono), monospace; margin-top:2px;">${d.ssl_issuer || 'Unknown/None'}</div>
-        </div>
-        <div style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom:10px;">
-            <div style="font-size:0.7rem; color:var(--text-muted); font-family:var(--font-mono), monospace; text-transform:uppercase;">URLScan.io Verdict</div>
-            <div style="font-size:0.82rem; color:var(--text-main); font-family:var(--font-mono), monospace; margin-top:4px;">
-                ${d.urlscan_verdict === 'malicious'
-                ? `<span style="color:#ef4444; font-weight:700;"><i class="ti ti-shield-x"></i> MALICIOUS (Score: ${d.urlscan_score}/100)</span>`
-                : (d.urlscan_verdict === 'clean'
-                    ? '<span style="color:#10b981; font-weight:700;"><i class="ti ti-shield-check"></i> CLEAN (Prior scan found)</span>'
-                    : '<span style="color:#f59e0b; font-weight:700;"><i class="ti ti-shield-question"></i> NO PREVIOUS SCANS</span>')
+        while (true) {
+            const { value, done } = await reader.read();
+            if (done) break;
+            
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split("\n");
+            buffer = lines.pop(); // keep last chunk in buffer
+
+            for (const line of lines) {
+                if (!line.trim()) continue;
+                try {
+                    const packet = JSON.parse(line);
+                    if (packet.type === 'hop') {
+                        renderStreamingHop(packet.hop);
+                    } else if (packet.type === 'summary') {
+                        renderDecoderResults(packet.summary);
+                    }
+                } catch(e) {
+                    console.error("Chunk parse error:", e);
+                }
             }
-                ${d.urlscan_link
-                ? `<div style="margin-top:6px;"><a href="${d.urlscan_link}" target="_blank" style="color:var(--accent-cyan); font-size:0.72rem; text-decoration:none;"><i class="ti ti-external-link"></i> View urlscan.io report</a></div>`
-                : ''
-            }
-            </div>
-        </div>
-        <div>
-            <div style="font-size:0.7rem; color:var(--text-muted); font-family:var(--font-mono), monospace; text-transform:uppercase;">Phishing Kit Pattern Match</div>
-            <div style="font-size:0.8rem; color:#cbd5e1; font-family:var(--font-mono), monospace; margin-top:6px;">
-                ${matchesPhishingKit
-                ? `<div style="display:inline-flex; align-items:center; gap:6px; background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.25); color:#fca5a5; font-size:0.7rem; padding:4px 10px; border-radius:4px;"><i class="ti ti-alert-triangle"></i> Matches Phishing Kit</div>
-                     <div style="font-size:0.7rem; color:var(--text-muted); margin-top:6px; line-height:1.4;">Matches indicators: ${d.domain_flags.join(', ')}</div>`
-                : '<span style="color:#10b981; font-size:0.75rem;"><i class="ti ti-circle-check"></i> No suspicious domain patterns detected</span>'
-            }
-            </div>
-        </div>
+        }
+    } catch(err) {
+        alert('Connection error tracing URL redirects: ' + err.message);
+        resetToInput();
+    }
+}
+
+/* Append hop row to timeline live */
+function renderStreamingHop(hop) {
+    const container = document.getElementById('stream-timeline-container');
+    const hopDiv = document.createElement('div');
+    hopDiv.className = 'ud-stream-hop';
+    
+    const isRedirect = hop.is_redirect;
+    const statusText = hop.status_code ? `HTTP ${hop.status_code}` : 'ERROR';
+    const bg = isRedirect ? 'background:rgba(245,158,11,0.1); color:#f59e0b;' : 'background:rgba(16,185,129,0.1); color:#10b981;';
+
+    hopDiv.innerHTML = `
+        <span>[Hop ${hop.hop + 1}]</span>
+        <span class="ud-stream-status" style="${bg}">${statusText}</span>
+        <span class="ud-stream-url">${escapeHTML(hop.domain)}</span>
     `;
+    container.appendChild(hopDiv);
+    
+    // Auto scroll timeline container
+    container.scrollTop = container.scrollHeight;
+}
 
-        // Display area and stagger anims
-        resultsArea.style.display = 'block';
+/* Render the final preview browser and technical panels */
+function renderDecoderResults(summary) {
+    document.getElementById('ud-stream-loader').style.display = 'none';
+    document.getElementById('ud-result-preview').style.display = 'block';
 
-        // Stagger animation triggers
-        const p1 = document.getElementById('panel-1');
-        const p2 = document.getElementById('panel-2');
-        const p3 = document.getElementById('panel-3');
+    const verdict = summary.verdict || 'COULD NOT DETERMINE';
+    const verdictKey = verdict.replace(/ /g, '_'); // LIKELY SAFE -> LIKELY_SAFE
+    
+    // 1. Browser Mockup Card Border Glow
+    const frame = document.getElementById('browser-frame-verdict');
+    frame.className = 'ud-browser-frame frame-verdict-' + verdictKey;
 
-        setTimeout(() => { p1.classList.add('animated'); }, 0);
-        setTimeout(() => { p2.classList.add('animated'); }, 150);
-        setTimeout(() => { p3.classList.add('animated'); }, 300);
+    // 2. Padlock Icon coloring
+    const padlock = document.getElementById('browser-padlock-icon');
+    padlock.className = 'ud-browser-padlock padlock-' + verdictKey;
+    
+    let padlockIconHtml = '<i class="ti ti-lock"></i>';
+    if (verdict === 'DANGEROUS') {
+        padlockIconHtml = '<i class="ti ti-lock-open" style="animation:shake 0.5s ease infinite;"></i>';
+    } else if (verdict === 'SUSPICIOUS') {
+        padlockIconHtml = '<i class="ti ti-lock-open"></i>';
+    } else if (verdict === 'COULD NOT DETERMINE') {
+        padlockIconHtml = '<i class="ti ti-lock-question"></i>';
+    }
+    padlock.innerHTML = padlockIconHtml;
 
-        resultsArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    // 3. Favicon loader
+    const faviconContainer = document.getElementById('browser-favicon-container');
+    if (summary.favicon) {
+        faviconContainer.innerHTML = `<img src="${summary.favicon}" alt="favicon">`;
+    } else {
+        faviconContainer.innerHTML = '<i class="ti ti-world"></i>';
     }
 
-    document.getElementById('url-input').addEventListener('keydown', e => { if (e.key === 'Enter') decodeUrl(); });
-</script>
-<style>
-    @keyframes spin {
-        to {
-            transform: rotate(360deg);
+    // 4. Highlight Domain in Browser address bar
+    const address = document.getElementById('browser-address-url');
+    address.innerHTML = highlightDomain(summary.final_url, summary.final_registered_domain);
+
+    // 5. Verdict Viewport banner
+    const verdictLabel = document.getElementById('preview-verdict-label');
+    verdictLabel.textContent = verdict;
+    verdictLabel.className = 'ud-preview-verdict-title text-verdict-' + verdictKey;
+
+    // Verdict description text
+    const verdictDesc = document.getElementById('preview-verdict-description');
+    if (verdict === 'DANGEROUS') {
+        verdictDesc.textContent = 'CRITICAL RISK: This URL leads to a verified malicious destination or domain matches multiple phishing heuristics. DO NOT access this address.';
+    } else if (verdict === 'SUSPICIOUS') {
+        verdictDesc.textContent = 'POTENTIAL THREAT: Suspicious redirect chains, brand impersonations, or unregistered hostnames identified. Exercise extreme caution.';
+    } else if (verdict === 'LIKELY SAFE') {
+        verdictDesc.textContent = 'NO HIGH THREATS ISOLATED: This link directly resolves to a registered trusted brand. Verify unexpected incoming prompts.';
+    } else if (verdict === 'EXPIRED OR NOT FOUND') {
+        verdictDesc.textContent = 'LINK NOT FOUND: The requested URL returned an HTTP 404 Not Found error. This link may have expired, been deleted, or never existed.';
+    } else {
+        verdictDesc.textContent = 'ANALYSIS INCOMPLETE: External diagnostics could not reach this host to determine verdict safety status.';
+    }
+    
+    document.getElementById('result-hop-count').textContent = `Total Hops: ${summary.chain.length} (${summary.redirect_count} Redirects)`;
+
+    // 7. Populating Redirect Chain list
+    const chainContainer = document.getElementById('chain-nodes-container');
+    chainContainer.innerHTML = '';
+
+    summary.chain.forEach((node, idx) => {
+        const isFinal = node.is_final;
+        const statusVal = node.status_code ? `HTTP ${node.status_code}` : 'ERROR';
+        
+        let badgeClass = 'ud-status-badge';
+        if (node.is_redirect) {
+            badgeClass += ' status-redirect';
+        } else {
+            badgeClass += (verdict === 'LIKELY SAFE') ? ' status-final-safe' : ' status-final-danger';
         }
+
+        // TLD Warning banner check
+        let tldBadgeHtml = '';
+        if (node.tld_changed) {
+            tldBadgeHtml = '<span class="ud-tld-badge"><i class="ti ti-alert-triangle"></i> TLD Mismatch</span>';
+        }
+
+        const nodeEl = document.createElement('div');
+        nodeEl.className = 'ud-chain-node';
+        nodeEl.innerHTML = `
+            <div class="ud-chain-idx">${idx + 1}</div>
+            <div class="ud-chain-card">
+                <div class="ud-chain-meta">
+                    <span class="${badgeClass}">${statusVal}</span>
+                    ${tldBadgeHtml}
+                </div>
+                <div class="ud-chain-domain">${escapeHTML(node.domain)}</div>
+                ${node.error ? `<div style="color:#ef4444; font-size:0.68rem; font-family:'JetBrains Mono', monospace; margin-top:4px;"><i class="ti ti-alert-circle"></i> ${escapeHTML(node.error)}</div>` : ''}
+            </div>
+        `;
+        chainContainer.appendChild(nodeEl);
+    });
+
+    // 8. Populating Forensic Intelligence Panel
+    const intelContainer = document.getElementById('intel-details-container');
+    intelContainer.innerHTML = '';
+
+    const flags = summary.domain_flags || [];
+    const hasFlags = flags.length > 0;
+    
+    let kitStatusHtml = '<span style="color:#10b981; font-weight:700;"><i class="ti ti-circle-check"></i> Clean</span>';
+    if (hasFlags) {
+        kitStatusHtml = `
+            <span style="color:#ef4444; font-weight:700;"><i class="ti ti-alert-triangle"></i> Matches Flags</span>
+            <div style="font-size:0.65rem; color:var(--text-muted, #64748b); margin-top:4px; text-transform:lowercase;">
+                Flags: ${escapeHTML(flags.join(', '))}
+            </div>`;
     }
-</style>
+
+    const intelRows = [
+        ['Resolved URL', summary.final_url],
+        ['Abuse.ch URLhaus', summary.urlhaus_verdict.toUpperCase() + ` (${summary.urlhaus_detail})`],
+        ['SSL Handshake CommonName', summary.ssl_issuer || 'Unknown/None'],
+        ['urlscan.io prior report', summary.urlscan_verdict === 'malicious' ? `MALICIOUS (${summary.urlscan_score}/100)` : (summary.urlscan_verdict === 'clean' ? 'CLEAN (Record found)' : 'NO SCAN HISTORIES FOUND')],
+        ['Phishing Kit indicators', kitStatusHtml]
+    ];
+
+    intelRows.forEach(([key, val]) => {
+        const row = document.createElement('div');
+        row.className = 'ud-intel-row';
+        const valHtml = (key === 'Phishing Kit indicators') ? val : escapeHTML(val);
+        row.innerHTML = `
+            <div class="ud-intel-key">${escapeHTML(key)}</div>
+            <div class="ud-intel-val">${valHtml}</div>
+        `;
+        intelContainer.appendChild(row);
+    });
+}
+
+// Bind Enter key event listener to trigger scan execution
+document.getElementById('url-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') executeTrace();
+});
+
+/* ── Window Control Button Logic ─────────────────────────────── */
+(function() {
+    // RED — clear URL input + reset results
+    document.getElementById('ud-dot-red').addEventListener('click', function() {
+        const inp = document.getElementById('url-input');
+        if (inp.value.trim().length > 0) {
+            if (!confirm('Clear current input and reset results?')) return;
+        }
+        inp.value = '';
+        inp.style.borderColor = '';
+        resetToInput();
+    });
+
+    // AMBER — minimize: hide input area, show redirect-chain animation
+    document.getElementById('ud-dot-amber').addEventListener('click', function() {
+        const inputState = document.getElementById('ud-input-state');
+        inputState.classList.toggle('ud-minimized');
+    });
+    window.udRestoreFromMinimize = function() {
+        document.getElementById('ud-input-state').classList.remove('ud-minimized');
+    };
+
+    // Minimized scanning logs cycling animation
+    (function() {
+        let logIndex = 0;
+        const logLines = [
+            "&gt; INITIATING ROUTING SCAN...",
+            "&gt; TRACING NETWORK HOPS...",
+            "&gt; DETECTING REDIRECT CHAINS...",
+            "&gt; QUERYING REPUTATION DATABASES...",
+            "&gt; VERIFYING SSL ALIGNMENT...",
+            "&gt; PARSING SENDER ALIGNMENTS...",
+            "&gt; RUNNING SANDBOX HEURISTICS..."
+        ];
+        setInterval(() => {
+            const logContainer = document.getElementById('ud-minimized-log');
+            if (!logContainer) return;
+            logIndex = (logIndex + 1) % logLines.length;
+            const line1 = logLines[logIndex];
+            const line2 = logLines[(logIndex + 1) % logLines.length];
+            const line3 = logLines[(logIndex + 2) % logLines.length];
+            logContainer.innerHTML = `
+                <div class="ud-log-line past">${line1}</div>
+                <div class="ud-log-line active">${line2}</div>
+                <div class="ud-log-line">${line3}</div>
+            `;
+        }, 1500);
+    })();
+
+    // GREEN — expand overlay with input field
+    let _udOverlay = null;
+    function buildUdOverlay() {
+        if (_udOverlay) return;
+        _udOverlay = document.createElement('div');
+        _udOverlay.className = 'ud-expand-overlay';
+        _udOverlay.innerHTML = `
+            <div class="ud-expand-header">
+                <span class="ud-expand-label"><i class="ti ti-radar" style="margin-right:6px;"></i>phishsim-terminal://url-decoder &mdash; expanded</span>
+                <button class="ud-expand-close" id="ud-expand-close">&times; Collapse</button>
+            </div>
+            <input type="text" class="ud-expand-input" id="ud-expand-input"
+                placeholder="Paste redirection link or suspicious URL here..."
+                spellcheck="false">
+            <div style="margin-top:1rem; font-family:'JetBrains Mono',monospace; font-size:0.65rem; color:var(--text-muted,#64748b); letter-spacing:0.06em;">Press Enter or click Collapse to commit &amp; return &mdash; ESC also closes</div>
+        `;
+        document.body.appendChild(_udOverlay);
+        document.getElementById('ud-expand-close').addEventListener('click', udCollapse);
+        document.getElementById('ud-expand-input').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') udCollapse();
+        });
+    }
+    function udExpand() {
+        buildUdOverlay();
+        document.getElementById('ud-expand-input').value = document.getElementById('url-input').value;
+        _udOverlay.classList.add('active');
+        document.getElementById('ud-expand-input').focus();
+    }
+    function udCollapse() {
+        if (!_udOverlay) return;
+        document.getElementById('url-input').value = document.getElementById('ud-expand-input').value;
+        _udOverlay.classList.remove('active');
+    }
+    document.getElementById('ud-dot-green').addEventListener('click', function() {
+        if (_udOverlay && _udOverlay.classList.contains('active')) udCollapse();
+        else udExpand();
+    });
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && _udOverlay && _udOverlay.classList.contains('active')) udCollapse();
+    });
+})();
+</script>
 {% endblock %}

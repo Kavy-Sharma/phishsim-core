@@ -738,7 +738,7 @@ body.light-theme .glass-section-header {
   font-family: var(--sans), sans-serif;
   font-size: 2.2rem;
   font-weight: 800;
-  color: #fff;
+  color: var(--white);
   line-height: 1.1;
   margin-bottom: 4px;
 }
@@ -985,7 +985,7 @@ body.light-theme #hero::before, body.light-theme .hero-section::before {
   letter-spacing: -0.03em !important;
   margin-bottom: 24px !important;
   color: var(--text-primary) !important;
-  background: linear-gradient(100deg, #f0f4ff 5%, #38bdf8 32%, #818cf8 58%, #34d399 78%, #f0f4ff 100%);
+  background: linear-gradient(100deg, #f0f4ff 5%, #38bdf8 35%, #818cf8 65%, #c084fc 85%, #f0f4ff 100%);
   background-size: 220% 100%;
   background-position: 0% 50%;
   -webkit-background-clip: text;
@@ -1000,7 +1000,7 @@ body.light-theme #hero::before, body.light-theme .hero-section::before {
 }
 
 body.light-theme .hero-h1 {
-  background-image: linear-gradient(100deg, #0f172a 5%, #0e74c8 34%, #4f46e5 61%, #059669 80%, #0f172a 100%);
+  background-image: linear-gradient(100deg, #0f172a 5%, #0e74c8 35%, #4f46e5 65%, #7c3aed 85%, #0f172a 100%);
 }
 
 @keyframes hero-gradient-flow {
@@ -1780,7 +1780,7 @@ body.light-theme .section-eyebrow {
 /* ── ATTACK FLOW — Sticky Scrollytelling ── */
 #attack-flow {
   background:
-    linear-gradient(180deg, rgba(8,12,26,0.98), rgba(4,8,17,0.98)),
+    linear-gradient(180deg, var(--bg-base), var(--bg-surface)),
     radial-gradient(circle at 18% 28%, rgba(56,189,248,0.12), transparent 30%);
   position: relative;
   border-top: 1px solid var(--border);
@@ -2155,8 +2155,8 @@ body.light-theme .timeline-counter {
   mix-blend-mode: screen;
 }
 .cap-card:hover {
-  border-color: rgba(56,189,248,0.38);
-  box-shadow: 0 26px 72px rgba(0,0,0,0.34), 0 0 34px rgba(56,189,248,0.13);
+  border-color: var(--cap-accent);
+  box-shadow: 0 26px 72px rgba(0,0,0,0.34), 0 0 34px var(--cap-accent);
 }
 .cap-card:hover::before { transform: translate(-12px, 12px) scale(1.1); opacity: 0.95; }
 .cap-card:hover::after { transform: translateZ(18px) scale(1.02); opacity: 0.68; }
@@ -3260,6 +3260,7 @@ body.light-theme .chain-card--right .card-connector--left {
           <button type="button" class="term-chip" onclick="runSuggestedCmd('campaign list')">campaign list</button>
           <button type="button" class="term-chip" onclick="runSuggestedCmd('status')">status</button>
           <button type="button" class="term-chip" onclick="runSuggestedCmd('login')">login</button>
+          <button type="button" class="term-chip" onclick="runSuggestedCmd('demo')">demo</button>
         </div>
       </div>
     </div>
@@ -5692,7 +5693,7 @@ function getDir(path) {
     return curr;
 }
 
-const availableCommands = ['clear', 'ls', 'cd', 'cat', 'pwd', 'whoami', 'osint', 'campaign', 'campaigns', 'status', 'run_agent', 'help', 'theme', 'matrix', 'hack', 'banner', 'reboot', 'joke', 'analyze', 'headers', 'social_engineer', 'lockdown', 'phish', 'decrypt', 'scan_network', 'login', 'signup', 'logout', 'version', 'exit'];
+const availableCommands = ['clear', 'ls', 'cd', 'cat', 'pwd', 'whoami', 'osint', 'campaign', 'campaigns', 'status', 'run_agent', 'help', 'theme', 'matrix', 'hack', 'banner', 'reboot', 'joke', 'analyze', 'headers', 'social_engineer', 'lockdown', 'phish', 'decrypt', 'scan_network', 'login', 'signup', 'logout', 'version', 'exit', 'demo'];
 
 const tInput = document.getElementById('t-input');
 const tBody = document.getElementById('terminal-body');
@@ -6136,6 +6137,11 @@ IT Compliance Dept</pre>`), 2200);
             setTimeout(() => appendTerminalHTML(`<div class="t-error">[*] Vulnerability exploited successfully...</div>`), 1700);
             setTimeout(() => appendTerminalHTML(`<div class="t-ok">[+] Access granted! Root hash retrieved: <span style="font-family:monospace; color:#22c55e;">7e0653ef8a74b12bb31de8c4a45a32b2</span></div>`), 2400);
             setTimeout(() => appendTerminalHTML(`<div class="t-passive">[+] Audit Result: Weak boundary configuration logged. Administrative alert generated in SOC.</div>`), 3100);
+        } else if (cmd === 'demo') {
+            outputHTML = `<div class="t-passive">[*] Launching sandboxed demo environment...</div>`;
+            setTimeout(() => {
+                window.location.href = '/demo-login';
+            }, 750);
         } else if (cmd === 'banner') {
             outputHTML = `<pre style="color:#0ea5e9; font-family:monospace; font-size:0.75rem; line-height:1.2; text-shadow: 0 0 5px rgba(14,165,233,0.4); margin:1rem 0;">
   _____  _     _       _      _____  _            

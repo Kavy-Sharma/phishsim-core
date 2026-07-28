@@ -2,743 +2,2042 @@
 {% block title %}Email Header Analyzer — PhishSim AI{% endblock %}
 {% block content %}
 <style>
-    .ha-container {
-        max-width: 900px;
-        margin: 0 auto;
-        padding: 90px 1.5rem 4rem;
-    }
+/* ════════════════════════════════════════════════════════════════
+    EMAIL HEADER ANALYZER — PREMIUM GLASSMORPHIC LAYOUT
+   ════════════════════════════════════════════════════════════════ */
 
-    /* Input zone */
-    .ha-textarea-card {
-        background: rgba(15, 23, 42, 0.45);
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        border-radius: 16px;
-        padding: 2.2rem;
-        position: relative;
-        box-shadow: 0 0 25px rgba(139, 92, 246, 0.05);
-        backdrop-filter: blur(12px);
-        transition: all 0.3s ease;
-    }
+.ha-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1.5rem 4rem;
+    font-family: 'Space Grotesk', var(--font-sans), sans-serif;
+}
 
-    .ha-textarea-card:hover {
-        border-color: rgba(139, 92, 246, 0.25);
-        box-shadow: 0 0 30px rgba(139, 92, 246, 0.1);
-    }
+/* ── Cyber Header/Hero ─────────────────────────────────────────── */
+.ha-hero {
+    text-align: center;
+    padding: 3rem 0 2rem;
+}
+.ha-badge-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--primary);
+    background: rgba(56, 189, 248, 0.1);
+    border: 1px solid rgba(56, 189, 248, 0.25);
+    padding: 6px 14px;
+    border-radius: 100px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 1.25rem;
+    box-shadow: 0 0 15px rgba(56, 189, 248, 0.05);
+}
+.ha-hero h1 {
+    font-size: clamp(2rem, 5vw, 3.2rem);
+    font-weight: 800;
+    color: var(--white, #ffffff);
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+    margin-bottom: 1rem;
+}
+.ha-hero h1 span {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--accent-purple, #8b5cf6) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+.ha-hero p {
+    font-size: 1.1rem;
+    color: var(--text-muted, #94a3b8);
+    max-width: 600px;
+    margin: 0 auto;
+    line-height: 1.6;
+}
 
-    .ha-textarea-label {
-        display: block;
-        font-family: var(--font-mono), monospace;
-        font-size: 0.75rem;
-        color: var(--text-muted);
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        margin-bottom: 8px;
-    }
+/* ── Cyber Terminal Card ───────────────────────────────────────── */
+.ha-main-card {
+    background: rgba(15, 23, 42, 0.65);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 40px rgba(6, 182, 212, 0.03);
+    transition: border-color 0.5s ease, box-shadow 0.5s ease;
+    margin-bottom: 2rem;
+}
 
-    .ha-textarea {
-        width: 100%;
-        min-height: 320px;
-        resize: vertical;
-        background: rgba(0, 0, 0, 0.45);
-        border: 1.5px solid rgba(255, 255, 255, 0.08);
-        border-radius: 12px;
-        color: #e2e8f0;
-        font-family: var(--font-mono), monospace;
-        font-size: 0.82rem;
-        line-height: 1.5;
-        padding: 1rem;
-        outline: none;
-        transition: border-color 0.2s;
-        box-sizing: border-box;
-    }
+/* Verdict classes for card glows */
+.card-verdict-LEGITIMATE {
+    border-color: rgba(52, 211, 153, 0.4);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 50px rgba(52, 211, 153, 0.1);
+}
+.card-verdict-UNCERTAIN {
+    border-color: rgba(251, 146, 60, 0.4);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 50px rgba(251, 146, 60, 0.1);
+}
+.card-verdict-SUSPICIOUS {
+    border-color: rgba(248, 113, 113, 0.4);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 50px rgba(248, 113, 113, 0.1);
+}
 
-    .ha-textarea:focus {
-        border-color: var(--accent-purple);
-        box-shadow: 0 0 15px rgba(139, 92, 246, 0.2);
-    }
+.ha-term-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 20px;
+    background: linear-gradient(180deg, rgba(20, 40, 80, 0.95) 0%, rgba(10, 20, 48, 0.88) 100%);
+    border-bottom: 1px solid rgba(56, 189, 248, 0.22);
+    border-top: 2px solid rgba(56, 189, 248, 0.55);  /* cyan accent seam */
+    border-radius: 12px 12px 0 0;
+}
+.ha-term-dots {
+    display: flex;
+    gap: 8px;
+}
+.ha-term-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: transform 0.12s ease, filter 0.12s ease;
+}
+.ha-term-dot:hover { transform: scale(1.25); filter: brightness(1.2); }
+.ha-term-dot.dot-r { background: #ef4444; }
+.ha-term-dot.dot-y { background: #f59e0b; }
+.ha-term-dot.dot-g { background: #10b981; }
 
-    /* Faint example header placeholder style */
-    .ha-textarea::placeholder {
-        color: rgba(226, 232, 240, 0.15);
-        font-family: var(--font-mono), monospace;
-    }
+.ha-term-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--text-muted, #64748b);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+.ha-term-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
 
-    /* Preset Chips */
-    .preset-chips-container {
-        display: flex;
-        gap: 8px;
-        flex-wrap: wrap;
-        margin-bottom: 1.25rem;
-    }
+/* ── Window Controls Functional States ──────────────────── */
+/* Minimized state */
+.ha-minimized .ha-textarea,
+.ha-minimized .ha-presets-section,
+.ha-minimized .ha-action-btn { display: none !important; }
+.ha-minimized .ha-term-header { border-bottom: none; }
+/* DNS-hop animation stage */
+.ha-hop-stage {
+    display: none;
+    padding: 1.5rem 2rem;
+    min-height: 160px;
+    cursor: pointer;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 1rem;
+    position: relative;
+    overflow: hidden;
+}
+.ha-minimized .ha-hop-stage { display: flex; }
+.ha-hop-svg { width: 280px; height: 70px; overflow: visible; }
+/* animated dots traveling path */
+.ha-hop-dot {
+    fill: #38bdf8;
+    animation: haHopTravel 2.5s ease-in-out infinite;
+}
+.ha-hop-dot:nth-child(2) { animation-delay: 0.65s; fill: #a78bfa; }
+.ha-hop-dot:nth-child(3) { animation-delay: 1.3s; fill: #34d399; }
+.ha-hop-dot:nth-child(4) { animation-delay: 1.95s; fill: #f87171; }
+@keyframes haHopTravel {
+    0%   { opacity: 0; offset-distance: 0%; }
+    8%   { opacity: 1; }
+    92%  { opacity: 1; }
+    100% { opacity: 0; offset-distance: 100%; }
+}
+.ha-hop-restore-hint {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.62rem;
+    color: var(--text-muted, #64748b);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    opacity: 0.5;
+}
+/* Expand overlay */
+.ha-expand-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 9000;
+    background: rgba(2, 6, 23, 0.95);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    flex-direction: column;
+    padding: 2rem;
+    box-sizing: border-box;
+}
+.ha-expand-overlay.active { display: flex; }
+.ha-expand-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+    flex-shrink: 0;
+}
+.ha-expand-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--text-muted, #64748b);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+.ha-expand-close {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.12);
+    color: var(--text-muted, #94a3b8);
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+.ha-expand-close:hover { background: rgba(255,255,255,0.15); color: #fff; }
+.ha-expand-textarea {
+    flex: 1;
+    width: 100%;
+    background: var(--bg-input, #0A1020);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+    padding: 1.25rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--text-primary);
+    line-height: 1.6;
+    resize: none;
+    outline: none;
+    box-sizing: border-box;
+}
+.ha-expand-textarea:focus { border-color: var(--primary); }
+body.light-theme .ha-expand-overlay { background: rgba(248, 250, 255, 0.97); }
+body.light-theme .ha-expand-textarea { background: #fff; border-color: rgba(0,0,0,0.12); color: #0f172a; }
+body.light-theme .ha-expand-close { background: rgba(0,0,0,0.06); border-color: rgba(0,0,0,0.1); color: #475569; }
+body.light-theme .ha-expand-close:hover { background: rgba(0,0,0,0.1); color: #0f172a; }
+.ha-term-status-text {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: var(--primary);
+}
+.ha-status-pulse {
+    width: 8px;
+    height: 8px;
+    background: var(--primary);
+    border-radius: 50%;
+    animation: ha-pulse 1.8s infinite;
+}
+@keyframes ha-pulse {
+    0% { transform: scale(0.95); opacity: 1; box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.7); }
+    70% { transform: scale(1.1); opacity: 0.5; box-shadow: 0 0 0 8px rgba(56, 189, 248, 0); }
+    100% { transform: scale(0.95); opacity: 1; box-shadow: 0 0 0 0 rgba(56, 189, 248, 0); }
+}
 
-    .preset-chip {
-        background: rgba(255, 255, 255, 0.03);
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        border-radius: 8px;
-        color: var(--text-muted);
-        font-family: var(--font-mono), monospace;
-        font-size: 0.72rem;
-        padding: 8px 16px;
-        cursor: pointer;
-        transition: all 0.2s ease;
-    }
+/* ── Input Stage ──────────────────────────────────────────────── */
+.ha-input-stage {
+    padding: 2.25rem;
+}
+.ha-textarea {
+    width: 100%;
+    height: 250px;
+    background: rgba(15, 23, 42, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    padding: 1.25rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    color: #e2e8f0;
+    line-height: 1.5;
+    resize: none;
+    outline: none;
+    transition: all 0.3s ease;
+    box-sizing: border-box;
+    margin-bottom: 1.5rem;
+}
+.ha-textarea:focus {
+    border-color: rgba(6, 182, 212, 0.5);
+    box-shadow: 0 0 15px rgba(6, 182, 212, 0.1);
+    background: rgba(15, 23, 42, 0.6);
+}
+.ha-textarea::placeholder {
+    color: #475569;
+}
 
-    .preset-chip:hover {
-        background: rgba(139, 92, 246, 0.08);
-        border-color: rgba(139, 92, 246, 0.3);
-        color: var(--accent-purple);
-    }
+.ha-presets-section {
+    margin-bottom: 2rem;
+}
+.ha-presets-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--text-muted, #64748b);
+    letter-spacing: 0.05em;
+    margin-bottom: 0.75rem;
+}
+.ha-preset-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 10px;
+}
+.ha-preset-btn {
+    background: rgba(30, 41, 59, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    padding: 10px 14px;
+    color: var(--text-muted, #94a3b8);
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 500;
+    text-align: left;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.ha-preset-btn:hover {
+    background: rgba(30, 41, 59, 0.8);
+    border-color: rgba(6, 182, 212, 0.3);
+    color: #fff;
+    transform: translateY(-1px);
+}
+.ha-preset-btn.active {
+    background: rgba(6, 182, 212, 0.08);
+    border-color: var(--accent-cyan, #06b6d4);
+    color: var(--accent-cyan, #06b6d4);
+}
+.ha-preset-indicator {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
 
-    /* Results layout */
-    .ha-results-grid {
-        display: none;
-        grid-template-columns: 1fr 1fr;
-        gap: 1.5rem;
-        margin-top: 2rem;
-    }
+/* NOTE: global style.css sets background-image:none !important on all buttons.
+   Use background-color + ::before pseudo-element gradient to bypass this. */
+.ha-action-btn {
+    width: 100%;
+    padding: 16px 24px;
+    background-color: #38bdf8;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-bottom: 3.5px solid rgba(0, 0, 0, 0.45);
+    border-radius: var(--radius-lg);
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #020617;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    box-shadow: 0 4px 18px rgba(99, 102, 241, 0.35), inset 0 1px 0 rgba(255,255,255,0.2);
+    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+}
+/* Gradient: cyan → indigo — technical routing path, cool-technical feel */
+.ha-action-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background-image: linear-gradient(135deg, #38bdf8 0%, #6366f1 100%);
+    z-index: -1;
+    transition: opacity 0.15s ease;
+}
+.ha-action-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    border-bottom-width: 4.5px;
+    box-shadow: 0 8px 24px rgba(99, 102, 241, 0.5), inset 0 1px 0 rgba(255,255,255,0.3);
+    color: #020617;
+}
+.ha-action-btn:hover:not(:disabled)::before {
+    filter: brightness(1.1);
+}
+.ha-action-btn:active:not(:disabled) {
+    transform: translateY(1px);
+    border-bottom-width: 1px;
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.2);
+}
+.ha-action-btn:disabled {
+    background-color: rgba(255, 255, 255, 0.06) !important;
+    color: rgba(255, 255, 255, 0.25) !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+    box-shadow: none !important;
+    cursor: not-allowed !important;
+    transform: none !important;
+    opacity: 0.6;
+}
+.ha-action-btn:focus-visible {
+    outline: 2px solid #6366f1 !important;
+    outline-offset: 2px;
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.2);
+}
 
-    @media (max-width: 900px) {
-        .ha-results-grid {
-            grid-template-columns: 1fr;
-        }
-    }
+/* ── Loading Stage ──────────────────────────────────────────── */
+.ha-loading-stage {
+    padding: 4rem 2rem;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+.ha-loading-ring {
+    width: 64px;
+    height: 64px;
+    border: 3px solid rgba(56, 189, 248, 0.1);
+    border-radius: 50%;
+    border-top-color: var(--primary);
+    border-left-color: #6366f1;
+    animation: ha-spin 1s linear infinite;
+    margin-bottom: 2rem;
+}
+@keyframes ha-spin {
+    to { transform: rotate(360deg); }
+}
+.ha-loading-text {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    color: var(--accent-cyan, #06b6d4);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+}
+.ha-loading-subtext {
+    font-size: 0.9rem;
+    color: var(--text-muted, #64748b);
+}
 
-    .full-width-panel {
-        grid-column: span 2;
-    }
+/* ── Result Stage ─────────────────────────────────────────────── */
 
-    @media (max-width: 900px) {
-        .full-width-panel {
-            grid-column: span 1;
-        }
-    }
+/* Risk Score Header Strip */
+.ha-result-strip {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 24px;
+    background: rgba(0, 0, 0, 0.3);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    flex-wrap: wrap;
+    gap: 16px;
+}
+.ha-verdict-info {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+.ha-verdict-badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    padding: 6px 18px;
+    border-radius: 100px;
+    text-transform: uppercase;
+}
+.verdict-LEGITIMATE {
+    background: rgba(52, 211, 153, 0.1);
+    color: #34d399;
+    border: 1px solid rgba(52, 211, 153, 0.2);
+}
+.verdict-UNCERTAIN {
+    background: rgba(251, 146, 60, 0.1);
+    color: #fb923c;
+    border: 1px solid rgba(251, 146, 60, 0.2);
+}
+.verdict-SUSPICIOUS {
+    background: rgba(248, 113, 113, 0.1);
+    color: #f87171;
+    border: 1px solid rgba(248, 113, 113, 0.2);
+}
 
-    .ha-panel {
-        background: rgba(15, 23, 42, 0.4);
-        border: 1px solid rgba(255, 255, 255, 0.07);
-        border-radius: 16px;
-        padding: 1.8rem;
-        backdrop-filter: blur(12px);
-        opacity: 0;
-        transition: border-color 0.3s, box-shadow 0.3s;
-    }
+.ha-score-wrapper {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+}
+.ha-score-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.8rem;
+    font-weight: 800;
+    line-height: 1;
+}
+.ha-score-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.62rem;
+    color: var(--text-muted, #64748b);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+.ha-subject-text {
+    font-size: 0.9rem;
+    color: var(--text-muted, #94a3b8);
+    font-weight: 500;
+}
+.ha-reset-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    background: rgba(30, 41, 59, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 2.5px solid rgba(0, 0, 0, 0.35);
+    border-radius: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--text-muted, #cbd5e1);
+    cursor: pointer;
+    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    text-transform: uppercase;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+.ha-reset-btn:hover {
+    transform: translateY(-1.5px);
+    border-bottom-width: 3.5px;
+    background: rgba(30, 41, 59, 0.9);
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(6, 182, 212, 0.15);
+}
+.ha-reset-btn:active {
+    transform: translateY(1px);
+    border-bottom-width: 1px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+.ha-reset-btn i {
+    transition: transform 0.3s ease;
+}
+.ha-reset-btn:hover i {
+    transform: rotate(180deg);
+}
 
-    .ha-panel.danger-glow {
-        border-color: rgba(239, 68, 68, 0.35) !important;
-        box-shadow: 0 0 25px rgba(239, 68, 68, 0.15) !important;
-    }
+/* ── Primary Visual: Routing Diagram ────────────────────────── */
+.ha-diagram-container {
+    padding: 2.5rem 2rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    background: rgba(0, 0, 0, 0.15);
+}
+.ha-diagram-heading {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: var(--text-muted, #64748b);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 2rem;
+}
+.ha-diagram-heading i {
+    color: var(--primary);
+}
 
-    /* fadeInUp animation */
-    @keyframes fadeInUp {
-        from {
-            opacity: 0;
-            transform: translateY(20px);
-        }
+.ha-diagram-viewport {
+    overflow-x: auto;
+    overflow-y: visible;
+    padding: 1.5rem 0.5rem;
+    -webkit-overflow-scrolling: touch;
+}
+.ha-diagram-viewport::-webkit-scrollbar {
+    height: 8px;
+}
+.ha-diagram-viewport::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 4px;
+}
+.ha-diagram-viewport::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 4px;
+}
+.ha-diagram-viewport::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
 
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
+.ha-node-chain {
+    display: flex;
+    align-items: center;
+    min-width: max-content;
+    padding-bottom: 1rem;
+    margin-left: auto;
+    margin-right: auto;
+}
 
-    .ha-panel.animated {
-        animation: fadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
-    }
+/* Compact mode for long chains */
+.ha-node-chain.chain-compact .ha-node-card {
+    width: 170px;
+    padding: 12px 10px 10px;
+}
+.ha-node-chain.chain-compact .ha-drawer {
+    width: 170px;
+}
+.ha-node-chain.chain-compact .ha-connector {
+    width: 45px;
+}
 
-    /* Custom left borders based on status */
-    .auth-row-fail {
-        border-left: 3px solid #ef4444 !important;
-        padding-left: 12px;
-        margin-bottom: 14px;
-    }
+/* Connectors (Datalinks) */
+.ha-connector {
+    width: 70px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.ha-connector-svg {
+    width: 100%;
+    height: 100%;
+}
+.ha-connector-line {
+    fill: none;
+    stroke-width: 2.5;
+    stroke-dasharray: 6, 4;
+    animation: ha-flow-line-anim 1s linear infinite;
+}
+.line-safe   { stroke: #10b981; }
+.line-warn   { stroke: #f59e0b; }
+.line-danger { stroke: #ef4444; }
 
-    .auth-row-pass {
-        border-left: 3px solid #10b981 !important;
-        padding-left: 12px;
-        margin-bottom: 14px;
-    }
+.head-safe   { fill: #10b981; }
+.head-warn   { fill: #f59e0b; }
+.head-danger { fill: #ef4444; }
 
-    .auth-row-warn {
-        border-left: 3px solid #f59e0b !important;
-        padding-left: 12px;
-        margin-bottom: 14px;
-    }
+@keyframes ha-flow-line-anim {
+    to { stroke-dashoffset: -20; }
+}
 
-    .auth-row-info {
-        border-left: 3px solid #06b6d4 !important;
-        padding-left: 12px;
-        margin-bottom: 14px;
-    }
+/* Nodes */
+.ha-node-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+.ha-node-card {
+    width: 200px;
+    background: rgba(15, 23, 42, 0.7);
+    border: 2px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 16px 14px 14px;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+}
+.ha-node-card:hover {
+    transform: translateY(-3px);
+}
 
-    /* Routing map vertical line elements */
-    .routing-chain {
-        display: flex;
-        flex-direction: column-reverse;
-        /* bottom is origin, top is final destination */
-        gap: 0;
-        position: relative;
-        padding-left: 10px;
-        margin-top: 1.5rem;
-    }
+/* Trust coding classes */
+.ha-node-card.trust-safe {
+    border-color: rgba(16, 185, 129, 0.3);
+}
+.ha-node-card.trust-safe:hover {
+    border-color: rgba(16, 185, 129, 0.8);
+    box-shadow: 0 15px 30px -5px rgba(16, 185, 129, 0.15);
+}
+.ha-node-card.trust-warn {
+    border-color: rgba(245, 158, 11, 0.3);
+}
+.ha-node-card.trust-warn:hover {
+    border-color: rgba(245, 158, 11, 0.8);
+    box-shadow: 0 15px 30px -5px rgba(245, 158, 11, 0.15);
+}
+.ha-node-card.trust-danger {
+    border-color: rgba(239, 68, 68, 0.3);
+}
+.ha-node-card.trust-danger:hover {
+    border-color: rgba(239, 68, 68, 0.8);
+    box-shadow: 0 15px 30px -5px rgba(239, 68, 68, 0.15);
+}
 
-    .routing-step {
-        position: relative;
-        display: flex;
-        align-items: flex-start;
-        gap: 16px;
-        padding-bottom: 2rem;
-    }
+/* Status Indicator Dot */
+.ha-node-dot {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+.ha-node-dot.trust-safe { background: #10b981; box-shadow: 0 0 10px rgba(16, 185, 129, 0.6); }
+.ha-node-dot.trust-warn { background: #f59e0b; box-shadow: 0 0 10px rgba(245, 158, 11, 0.6); }
+.ha-node-dot.trust-danger { background: #ef4444; box-shadow: 0 0 10px rgba(239, 68, 68, 0.6); }
 
-    .routing-step:last-child {
-        padding-bottom: 0.5rem;
-    }
+/* Node Contents */
+.ha-node-badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.58rem;
+    font-weight: 700;
+    color: var(--text-muted, #64748b);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+}
+.ha-node-card.node-origin .ha-node-badge {
+    color: var(--primary);
+}
+.ha-node-host {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #f1f5f9;
+    word-break: break-all;
+    line-height: 1.3;
+    margin-bottom: 8px;
+    padding-right: 15px; /* avoid overlap with dot */
+}
+.ha-node-ip {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--text-muted, #94a3b8);
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+    padding: 2px 6px;
+    display: inline-block;
+    margin-bottom: 8px;
+}
+.ha-node-time {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--text-muted, #64748b);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+.ha-node-time.slow {
+    color: #f59e0b;
+}
 
-    .routing-line-segment {
-        position: absolute;
-        left: 10px;
-        /* center of 22px circle */
-        top: 22px;
-        bottom: -10px;
-        width: 2px;
-        z-index: 1;
-    }
+/* compact badge cluster showing SPF/DKIM/DMARC at origin */
+.ha-origin-cluster {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.ha-cluster-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.6rem;
+    font-weight: 700;
+}
+.ha-cluster-label {
+    color: var(--text-muted, #64748b);
+}
+.cluster-status-pass { color: #10b981; }
+.cluster-status-fail { color: #ef4444; }
+.cluster-status-warn { color: #f59e0b; }
+.cluster-status-softfail { color: #f59e0b; }
+.cluster-status-neutral { color: #f59e0b; }
+.cluster-status-none { color: #94a3b8; }
+.cluster-status-info { color: #64748b; }
 
-    .routing-step-circle {
-        width: 22px;
-        height: 22px;
-        border-radius: 50%;
-        background: #080c1a;
-        border: 1.5px solid rgba(255, 255, 255, 0.1);
-        color: var(--text-muted);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-family: var(--font-mono), monospace;
-        font-size: 0.65rem;
-        font-weight: 700;
-        flex-shrink: 0;
-        z-index: 2;
-    }
+.ha-node-label-indicator {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.6rem;
+    font-weight: 500;
+    color: var(--text-muted, #64748b);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+.ha-node-label-indicator.status-safe { color: rgba(16, 185, 129, 0.7); }
+.ha-node-label-indicator.status-warn { color: rgba(245, 158, 11, 0.7); }
+.ha-node-label-indicator.status-danger { color: rgba(239, 68, 68, 0.7); }
 
-    .routing-step-circle.active-hop {
-        border-color: var(--accent-purple);
-        color: var(--accent-purple);
-        box-shadow: 0 0 10px rgba(139, 92, 246, 0.4);
-    }
+/* Node expand drawer details */
+.ha-drawer {
+    width: 200px;
+    background: rgba(15, 23, 42, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 8px;
+    padding: 10px 12px;
+    display: none;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 4px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+.ha-drawer.show {
+    display: flex;
+}
+.ha-drawer-raw-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.58rem;
+    font-weight: 700;
+    color: var(--primary);
+    text-transform: uppercase;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    padding-bottom: 4px;
+}
+.ha-drawer-raw {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.55rem;
+    color: #94a3b8;
+    white-space: pre-wrap;
+    word-break: break-all;
+    line-height: 1.3;
+    max-height: 120px;
+    overflow-y: auto;
+}
+.ha-drawer-warning-item {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.55rem;
+    background: rgba(245, 158, 11, 0.08);
+    border: 1px solid rgba(245, 158, 11, 0.15);
+    color: #fb923c;
+    border-radius: 4px;
+    padding: 4px 6px;
+    line-height: 1.2;
+}
 
-    .routing-step-body {
-        flex: 1;
-        min-width: 0;
-        margin-top: 2px;
-    }
+/* ── Supporting Panels (below diagram) ────────────────────────── */
+.ha-grid-panels {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+    padding: 2.25rem;
+}
 
-    .routing-step-meta {
-        font-family: var(--font-mono), monospace;
-        font-size: 0.72rem;
-        color: var(--text-muted);
-        line-height: 1.4;
-    }
+.ha-side-panel {
+    background: rgba(30, 41, 59, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    overflow: hidden;
+}
+.ha-panel-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 18px;
+    background: rgba(0, 0, 0, 0.2);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--text-muted, #94a3b8);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    user-select: none;
+}
+.ha-panel-head i {
+    color: var(--primary);
+}
+.ha-panel-head:hover {
+    background: rgba(0, 0, 0, 0.3);
+    color: #fff;
+}
+.ha-panel-arrow {
+    margin-left: auto;
+    font-size: 0.65rem;
+    transition: transform 0.2s ease;
+}
 
-    .routing-step-data {
-        font-family: var(--font-mono), monospace;
-        font-size: 0.74rem;
-        color: #94a3b8;
-        word-break: break-all;
-        margin-top: 4px;
-    }
+.ha-panel-body {
+    padding: 18px;
+    transition: all 0.3s ease;
+}
 
-    /* Red Flags summary items */
-    .red-flag-item {
-        padding: 12px 14px;
-        border-radius: 10px;
-        background: rgba(0, 0, 0, 0.15);
-        border: 1px solid rgba(255, 255, 255, 0.05);
-        margin-bottom: 10px;
-        display: flex;
-        gap: 12px;
-        align-items: flex-start;
-    }
+/* Auth table styling */
+.ha-auth-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+.ha-auth-table tr {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+}
+.ha-auth-table tr:last-child {
+    border-bottom: none;
+}
+.ha-auth-table td {
+    padding: 10px 6px;
+    font-size: 0.82rem;
+    vertical-align: top;
+}
+.ha-auth-table td.auth-header-cell {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    font-weight: 700;
+    width: 80px;
+    white-space: nowrap;
+}
+.ha-auth-status-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.6rem;
+    font-weight: 800;
+    display: inline-block;
+    padding: 2px 6px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    margin-top: 4px;
+}
+.cell-status-pass { background: rgba(16, 185, 129, 0.08); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.15); }
+.cell-status-fail { background: rgba(239, 68, 68, 0.08); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.15); }
+.cell-status-warn { background: rgba(245, 158, 11, 0.08); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.15); }
+.cell-status-info { background: rgba(56, 189, 248, 0.08); color: var(--primary); border: 1px solid rgba(56, 189, 248, 0.15); }
 
-    .red-flag-item.severity-critical {
-        border-left: 3.5px solid #ef4444;
-    }
+/* Intel row styling */
+.ha-intel-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    gap: 16px;
+}
+.ha-intel-row:last-child {
+    border-bottom: none;
+}
+.ha-intel-key {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--text-muted, #64748b);
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    flex-shrink: 0;
+}
+.ha-intel-val {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    color: var(--text-muted, #cbd5e1);
+    text-align: right;
+    word-break: break-all;
+}
 
-    .red-flag-item.severity-warn {
-        border-left: 3.5px solid #f59e0b;
-    }
+/* Red Flags list */
+.ha-flag-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+}
+.ha-flag-row:last-child {
+    border-bottom: none;
+}
+.ha-flag-severity {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.58rem;
+    font-weight: 800;
+    padding: 2px 8px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+.sev-badge-critical { background: rgba(239, 68, 68, 0.12); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2); }
+.sev-badge-high     { background: rgba(245, 158, 11, 0.12); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.2); }
+.sev-badge-medium   { background: rgba(56, 189, 248, 0.12); color: var(--primary); border: 1px solid rgba(56, 189, 248, 0.2); }
 
-    .red-flag-item.severity-info {
-        border-left: 3.5px solid #06b6d4;
-    }
+.ha-flag-title {
+    font-size: 0.85rem;
+    color: #e2e8f0;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+.ha-flag-detail {
+    font-size: 0.78rem;
+    color: var(--text-muted, #94a3b8);
+    line-height: 1.4;
+    max-width: 65ch;
+}
+.ha-clean-badge {
+    text-align: center;
+    padding: 2rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    color: #10b981;
+}
 
-    .verdict-banner {
-        text-align: center;
+/* ── Mobile Layout Adaptation ─────────────────────────────────── */
+@media (max-width: 768px) {
+    .ha-grid-panels {
+        grid-template-columns: 1fr;
         padding: 1.25rem;
-        border-radius: 12px;
-        margin-bottom: 1.5rem;
-        font-family: var(--font-mono), monospace;
-        font-size: 1.1rem;
-        font-weight: 800;
-        letter-spacing: 1.5px;
-        text-transform: uppercase;
-        display: flex;
+    }
+    .ha-input-stage {
+        padding: 1.25rem;
+    }
+    .ha-diagram-container {
+        padding: 1.5rem 1rem;
+    }
+}
+
+@media (max-width: 640px) {
+    /* Make hop chain vertical on mobile */
+    .ha-node-chain {
         flex-direction: column;
         align-items: center;
-        gap: 6px;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        min-width: unset;
     }
+    .ha-connector {
+        width: 40px;
+        height: 60px;
+        transform: rotate(90deg);
+        margin: 4px 0;
+    }
+    .ha-node-card {
+        width: 260px;
+    }
+    .ha-drawer {
+        width: 260px;
+    }
+    .ha-verdict-info {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+    .ha-result-strip {
+        padding: 14px 18px;
+    }
+}
+
+/* ── Light Theme Parity Overrides ──────────────────────────────── */
+body.light-theme .ha-main-card {
+    background: rgba(255, 255, 255, 0.7);
+    border-color: rgba(0, 0, 0, 0.06);
+    box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.05), 0 0 20px rgba(0, 0, 0, 0.01);
+}
+body.light-theme .ha-main-card.card-verdict-LEGITIMATE {
+    border-color: rgba(16, 185, 129, 0.4);
+    box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.05), 0 0 30px rgba(16, 185, 129, 0.05);
+}
+body.light-theme .ha-main-card.card-verdict-UNCERTAIN {
+    border-color: rgba(245, 158, 11, 0.4);
+    box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.05), 0 0 30px rgba(245, 158, 11, 0.05);
+}
+body.light-theme .ha-main-card.card-verdict-SUSPICIOUS {
+    border-color: rgba(239, 68, 68, 0.4);
+    box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.05), 0 0 30px rgba(239, 68, 68, 0.05);
+}
+body.light-theme .verdict-LEGITIMATE {
+    background: var(--success-dim);
+    color: var(--success);
+    border: 1px solid rgba(5, 150, 105, 0.2);
+}
+body.light-theme .verdict-UNCERTAIN {
+    background: var(--warning-dim);
+    color: var(--warning);
+    border: 1px solid rgba(234, 88, 12, 0.2);
+}
+body.light-theme .verdict-SUSPICIOUS {
+    background: var(--danger-dim);
+    color: var(--danger);
+    border: 1px solid rgba(220, 38, 38, 0.2);
+}
+body.light-theme .cell-status-pass {
+    background: var(--success-dim);
+    color: var(--success);
+    border-color: rgba(5, 150, 105, 0.2);
+}
+body.light-theme .cell-status-fail {
+    background: var(--danger-dim);
+    color: var(--danger);
+    border-color: rgba(220, 38, 38, 0.2);
+}
+body.light-theme .cell-status-warn {
+    background: var(--warning-dim);
+    color: var(--warning);
+    border-color: rgba(234, 88, 12, 0.2);
+}
+body.light-theme .cell-status-info {
+    background: var(--info-dim);
+    color: var(--info);
+    border-color: rgba(79, 70, 229, 0.2);
+}
+body.light-theme .ha-score-label {
+    color: var(--text-secondary);
+}
+body.light-theme .ha-term-header {
+    background: linear-gradient(180deg, rgba(239, 246, 255, 0.95) 0%, rgba(219, 234, 254, 0.88) 100%);
+    border-color: rgba(56, 189, 248, 0.15);
+    border-top: 2px solid rgba(56, 189, 248, 0.4);
+}
+body.light-theme .ha-textarea {
+    background: rgba(255, 255, 255, 0.5);
+    border-color: rgba(0, 0, 0, 0.08);
+    color: #1e293b;
+}
+body.light-theme .ha-textarea:focus {
+    background: #fff;
+    border-color: rgba(6, 182, 212, 0.6);
+}
+body.light-theme .ha-textarea::placeholder {
+    color: #94a3b8;
+}
+body.light-theme .ha-preset-btn {
+    background: rgba(0, 0, 0, 0.02);
+    border-color: rgba(0, 0, 0, 0.05);
+    color: #475569;
+}
+body.light-theme .ha-preset-btn:hover {
+    background: rgba(0, 0, 0, 0.05);
+    border-color: rgba(6, 182, 212, 0.3);
+    color: #0f172a;
+}
+body.light-theme .ha-preset-btn.active {
+    background: rgba(56, 189, 248, 0.05);
+    border-color: var(--primary);
+    color: var(--primary);
+}
+body.light-theme .ha-result-strip {
+    background: rgba(0, 0, 0, 0.02);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.03);
+}
+body.light-theme .ha-subject-text {
+    color: #475569;
+}
+body.light-theme .ha-reset-btn {
+    background: rgba(255, 255, 255, 0.8);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-bottom: 2.5px solid rgba(0, 0, 0, 0.25);
+    color: #475569;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+body.light-theme .ha-reset-btn:hover {
+    background: #ffffff;
+    color: #0f172a;
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.15);
+}
+body.light-theme .ha-reset-btn:active {
+    border-bottom-width: 1px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+}
+body.light-theme .ha-node-card {
+    background: rgba(255, 255, 255, 0.8);
+    border-color: rgba(0, 0, 0, 0.06);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+}
+body.light-theme .ha-node-host {
+    color: #1e293b;
+}
+body.light-theme .ha-node-ip {
+    background: rgba(0, 0, 0, 0.02);
+    border-color: rgba(0, 0, 0, 0.04);
+    color: #475569;
+}
+body.light-theme .ha-node-label-indicator {
+    color: #475569;
+}
+body.light-theme .ha-diagram-container {
+    background: rgba(255, 255, 255, 0.2);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+}
+body.light-theme .ha-drawer {
+    background: rgba(255, 255, 255, 0.95);
+    border-color: rgba(0, 0, 0, 0.08);
+}
+body.light-theme .ha-drawer-raw {
+    color: #475569;
+}
+body.light-theme .ha-side-panel {
+    background: rgba(255, 255, 255, 0.5);
+    border-color: rgba(0, 0, 0, 0.04);
+}
+body.light-theme .ha-panel-head {
+    background: rgba(0, 0, 0, 0.01);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.03);
+    color: #475569;
+}
+body.light-theme .ha-panel-head:hover {
+    background: rgba(0, 0, 0, 0.03);
+    color: #000;
+}
+body.light-theme .ha-auth-table tr {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.03);
+}
+body.light-theme .ha-intel-row {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.03);
+}
+body.light-theme .ha-intel-val {
+    color: #334155;
+}
+body.light-theme .ha-flag-row {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.03);
+}
+body.light-theme .ha-flag-title {
+    color: #1e293b;
+}
+body.light-theme .ha-action-btn {
+    background-color: #2563eb !important;   /* blue/indigo */
+    color: #ffffff !important;
+    border: 1px solid rgba(0, 0, 0, 0.12) !important;
+    border-bottom: 3.5px solid rgba(0, 0, 0, 0.28) !important;
+    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.28), inset 0 1px 0 rgba(255,255,255,0.25) !important;
+}
+body.light-theme .ha-action-btn::before {
+    background-image: linear-gradient(135deg, #3b82f6 0%, #4f46e5 100%);
+}
+body.light-theme .ha-action-btn:hover:not(:disabled) {
+    border-bottom-width: 4.5px !important;
+    box-shadow: 0 8px 22px rgba(37, 99, 235, 0.4) !important;
+    color: #ffffff !important;
+}
+body.light-theme .ha-action-btn:active:not(:disabled) {
+    border-bottom-width: 1px !important;
+    box-shadow: 0 2px 6px rgba(37, 99, 235, 0.15) !important;
+}
+body.light-theme .ha-action-btn:disabled {
+    background-color: #e2e8f0 !important;
+    color: #94a3b8 !important;
+    border-color: #cbd5e1 !important;
+    border-bottom: 1px solid #cbd5e1 !important;
+    box-shadow: none !important;
+    cursor: not-allowed !important;
+    transform: none !important;
+}
+body.light-theme .ha-action-btn:focus-visible {
+    outline: 2px solid #2563eb;
+    outline-offset: 3px;
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.2) !important;
+}
 </style>
 
 <div class="ha-container">
-    <!-- Back Link -->
-    <a href="javascript:history.back()"
-        style="display:inline-flex;align-items:center;gap:6px;color:#64748b;font-size:0.85rem;text-decoration:none;margin-bottom:2rem;transition:color 0.2s;"
-        onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#64748b'">
-        <i class="ti ti-arrow-left"></i> Back to Suite
-    </a>
 
-    <!-- Header -->
-    <div class="tool-hero-header" style="text-align:center; margin-bottom:2.5rem;">
-        <span class="section-eyebrow"><i class="ti ti-mail-search"></i> Header Decryptor</span>
-        <h1
-            style="font-size:clamp(1.8rem,3vw,2.4rem);font-weight:900;color:var(--text-main);margin-bottom:0.5rem; margin-top: 0.5rem;">
-            Email Header Analyzer</h1>
-        <p style="color:#64748b;font-size:0.95rem;max-width:550px;margin:0 auto;">Decode security headers, verify DKIM
-            cryptosignatures, and map routing jumps to spot spoof pretexts.</p>
+    <!-- Hero -->
+    <div class="ha-hero">
+        <div class="ha-badge-eyebrow">
+            <i class="ti ti-route"></i>
+            Forensic Routing Intel
+        </div>
+        <h1>Email <span>Routing Path</span> Analyzer</h1>
+        <p>Trace the cryptographic hop chain of any email from origin to recipient. Paste raw headers below to isolate relays, timestamps, and validation signals.</p>
     </div>
 
-    <!-- Presets -->
-    <div class="preset-chips-container">
-        <div class="preset-chip" onclick="applyPreset('spf')">SPF Fail Example</div>
-        <div class="preset-chip" onclick="applyPreset('dkim')">DKIM Pass Example</div>
-        <div class="preset-chip" onclick="applyPreset('replyto')">Reply-To Mismatch</div>
-        <div class="preset-chip" onclick="applyPreset('clean')">Clean Corporate</div>
-    </div>
+    <!-- Main Card -->
+    <div class="ha-main-card" id="ha-card-container">
 
-    <!-- Monospace Ingestion Textarea (Zone 1) -->
-    <div class="ha-textarea-card">
-        <label class="ha-textarea-label">PASTE RAW EMAIL HEADERS &darr;</label>
-        <textarea id="headers-input" class="ha-textarea"
-            placeholder="Delivered-To: victim@enterprise.com&#10;Received: from mail.attacker.com (mail.attacker.com [198.51.100.42])&#10;          by mx.google.com with ESMTPS id x12si983748plh&#10;          for <victim@enterprise.com>&#10;Authentication-Results: mx.google.com;&#10;          spf=fail smtp.mailfrom=support@secure-bank.com"></textarea>
+        <!-- INPUT STAGE -->
+        <div id="stage-input" class="ha-input-stage">
+            <div class="ha-term-header">
+                <div class="ha-term-dots">
+                    <div class="ha-term-dot dot-r" id="ha-dot-red"   title="Clear input"></div>
+                    <div class="ha-term-dot dot-y" id="ha-dot-amber" title="Minimize"></div>
+                    <div class="ha-term-dot dot-g" id="ha-dot-green" title="Expand"></div>
+                </div>
+                <div class="ha-term-title">phishsim-terminal://header-decoder</div>
+                <div class="ha-term-status"><div class="ha-status-pulse"></div>STANDBY</div>
+            </div>
+            
+            <textarea id="headers-input" class="ha-textarea"
+                placeholder="Paste full raw email headers here (including all Received, Authentication-Results, SPF, and DKIM lines)…"
+                spellcheck="false"></textarea>
 
-        <div id="ha-error"
-            style="color:#f87171;font-size:0.78rem;margin-top:8px;display:none;font-family:var(--font-mono), monospace;">
-            <i class="ti ti-alert-circle" style="margin-right:4px;"></i><span></span></div>
+            <!-- Amber/minimize DNS-hop animation stage -->
+            <div class="ha-hop-stage" id="ha-hop-stage" onclick="haRestoreFromMinimize()" title="Click to restore">
+                <!-- Simple SVG animated mail-hop path -->
+                <svg class="ha-hop-svg" viewBox="0 0 280 70" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Static path nodes -->
+                    <circle cx="20"  cy="35" r="10" fill="none" stroke="rgba(56,189,248,0.3)" stroke-width="1.5"/>
+                    <circle cx="90"  cy="20" r="10" fill="none" stroke="rgba(167,139,250,0.3)" stroke-width="1.5"/>
+                    <circle cx="160" cy="50" r="10" fill="none" stroke="rgba(52,211,153,0.3)" stroke-width="1.5"/>
+                    <circle cx="230" cy="25" r="10" fill="none" stroke="rgba(248,113,113,0.3)" stroke-width="1.5"/>
+                    <circle cx="265" cy="35" r="8"  fill="none" stroke="rgba(56,189,248,0.5)" stroke-width="1.5"/>
+                    <!-- Connecting dashes -->
+                    <polyline points="30,35 80,20" stroke="rgba(56,189,248,0.2)" stroke-width="1" stroke-dasharray="4 3" fill="none"/>
+                    <polyline points="100,20 150,50" stroke="rgba(167,139,250,0.2)" stroke-width="1" stroke-dasharray="4 3" fill="none"/>
+                    <polyline points="170,50 220,25" stroke="rgba(52,211,153,0.2)" stroke-width="1" stroke-dasharray="4 3" fill="none"/>
+                    <polyline points="240,25 258,33" stroke="rgba(248,113,113,0.2)" stroke-width="1" stroke-dasharray="4 3" fill="none"/>
+                    <!-- Traveling animated dots using offset-path on each circle -->
+                    <circle r="4" fill="#38bdf8" style="offset-path:path('M 20 35 L 90 20 L 160 50 L 230 25 L 265 35'); animation: haHopMove 2.8s ease-in-out infinite; opacity:0;"/>
+                    <circle r="3" fill="#a78bfa" style="offset-path:path('M 20 35 L 90 20 L 160 50 L 230 25 L 265 35'); animation: haHopMove 2.8s ease-in-out infinite; animation-delay:0.7s; opacity:0;"/>
+                    <circle r="3" fill="#34d399" style="offset-path:path('M 20 35 L 90 20 L 160 50 L 230 25 L 265 35'); animation: haHopMove 2.8s ease-in-out infinite; animation-delay:1.4s; opacity:0;"/>
+                    <circle r="2.5" fill="#f87171" style="offset-path:path('M 20 35 L 90 20 L 160 50 L 230 25 L 265 35'); animation: haHopMove 2.8s ease-in-out infinite; animation-delay:2.1s; opacity:0;"/>
+                </svg>
+                <!-- Labels -->
+                <div style="display:flex; gap:24px; font-family:'JetBrains Mono',monospace; font-size:0.6rem; color:rgba(100,116,139,0.7); letter-spacing:0.05em;">
+                    <span>SMTP-IN</span><span>RELAY-1</span><span>RELAY-2</span><span>SMTP-OUT</span><span>INBOX</span>
+                </div>
+                <div class="ha-hop-restore-hint">&uarr; Click anywhere to restore</div>
+            </div>
 
-        <div
-            style="display:flex; justify-content:space-between; align-items:center; margin-top:1.5rem; flex-wrap:wrap; gap:10px;">
-            <span style="color:#475569; font-size:0.72rem; font-family:var(--font-mono), monospace;">Find headers via:
-                Inbox &rarr; Show Original / View Source</span>
-            <button class="btn-primary-action cyber-glow-hover" id="analyze-btn" onclick="analyzeHeaders()"
-                style="width:auto; padding:10px 24px;">
-                <i class="ti ti-scan"></i> DECODE HEADERS
+            <!-- Presets Grid (6 items) -->
+            <div class="ha-presets-section">
+                <div class="ha-presets-title">Load Forensic Samples:</div>
+                <div class="ha-preset-grid">
+                    <button class="ha-preset-btn" id="btn-preset-legit" onclick="loadPreset('legit')">
+                        <span class="ha-preset-indicator" style="background:#10b981"></span>
+                        Legit Gmail → Outlook
+                    </button>
+                    <button class="ha-preset-btn" id="btn-preset-spf-fail" onclick="loadPreset('spf-fail')">
+                        <span class="ha-preset-indicator" style="background:#ef4444"></span>
+                        SPF Fail (Spoofed)
+                    </button>
+                    <button class="ha-preset-btn" id="btn-preset-no-dkim" onclick="loadPreset('no-dkim')">
+                        <span class="ha-preset-indicator" style="background:#f59e0b"></span>
+                        Missing DKIM
+                    </button>
+                    <button class="ha-preset-btn" id="btn-preset-no-dmarc" onclick="loadPreset('no-dmarc')">
+                        <span class="ha-preset-indicator" style="background:#f59e0b"></span>
+                        Missing DMARC
+                    </button>
+                    <button class="ha-preset-btn" id="btn-preset-reply-mismatch" onclick="loadPreset('reply-mismatch')">
+                        <span class="ha-preset-indicator" style="background:#ef4444"></span>
+                        Reply-To Mismatch
+                    </button>
+                    <button class="ha-preset-btn" id="btn-preset-newly-registered" onclick="loadPreset('newly-registered')">
+                        <span class="ha-preset-indicator" style="background:#ef4444"></span>
+                        Newly Registered Domain
+                    </button>
+                </div>
+            </div>
+
+            <button class="ha-action-btn" id="trace-btn" onclick="executeTrace()">
+                <i class="ti ti-binary"></i>
+                TRACE ROUTING PIPELINE
             </button>
         </div>
-    </div>
 
-    <!-- Results Zone (Zone 2) -->
-    <div id="results-area" style="display:none;">
-        <div id="verdict-banner" class="verdict-banner"></div>
+        <!-- LOADING STAGE -->
+        <div id="stage-loading" class="ha-loading-stage" style="display: none;">
+            <div class="ha-loading-ring"></div>
+            <div class="ha-loading-text" id="loading-step-msg">Initializing analyzer engine…</div>
+            <div class="ha-loading-subtext">Isolating relay structures & cryptographic tags</div>
+        </div>
 
-        <div class="ha-results-grid">
-            <!-- Panel 1: Authentication Verdicts -->
-            <div class="ha-panel" id="auth-verdicts-panel">
-                <h3
-                    style="color:var(--text-main);font-size:0.95rem;font-weight:700;margin-bottom:1.2rem;font-family:var(--font-mono), monospace;text-transform:uppercase;">
-                    <i class="ti ti-shield-check" style="color:#8b5cf6;margin-right:6px;"></i>Authentication Verdicts
-                </h3>
-                <div id="auth-verdicts-list" style="display:flex; flex-direction:column; gap:12px;">
-                    <!-- Rendered dynamically -->
+        <!-- RESULTS STAGE -->
+        <div id="stage-results" style="display: none;">
+            <!-- Verdict strip -->
+            <div class="ha-result-strip">
+                <div class="ha-verdict-info">
+                    <span class="ha-verdict-badge" id="result-verdict">—</span>
+                    <div class="ha-score-wrapper">
+                        <span class="ha-score-num" id="result-score">0</span>
+                        <span class="ha-score-label">risk index</span>
+                    </div>
+                    <span class="ha-subject-text" id="result-subject"></span>
+                </div>
+                <button class="ha-reset-btn" onclick="resetToInput()">
+                    <i class="ti ti-refresh"></i> New Scan
+                </button>
+            </div>
+
+            <!-- Decorative routing-node strip that visually extends the routing path concept -->
+            <div class="ha-route-strip">
+                <span class="ha-route-strip-label">Decoded Route Trace</span>
+                <div class="ha-route-node node-ok">ORIGIN</div>
+                <div class="ha-route-connector"></div>
+                <div class="ha-route-node">HOP 01</div>
+                <div class="ha-route-connector"></div>
+                <div class="ha-route-node">HOP 02</div>
+                <div class="ha-route-connector"></div>
+                <div class="ha-route-node node-suspicious">MX TARGET</div>
+            </div>
+
+            <!-- PRIMARY VISUAL: Real Routing Path Diagram -->
+            <div class="ha-diagram-container">
+                <div class="ha-diagram-heading">
+                    <i class="ti ti-route-2"></i>
+                    Chronological Datalink Pipeline (Click nodes to inspect headers)
+                </div>
+                <div class="ha-diagram-viewport">
+                    <div class="ha-node-chain" id="node-chain-container">
+                        <!-- Dynamic node flow gets inserted here -->
+                    </div>
                 </div>
             </div>
 
-            <!-- Panel 3: Red Flags Summary -->
-            <div class="ha-panel" id="red-flags-panel">
-                <h3
-                    style="color:var(--text-main);font-size:0.95rem;font-weight:700;margin-bottom:1.2rem;font-family:var(--font-mono), monospace;text-transform:uppercase;">
-                    <i class="ti ti-alert-triangle" style="color:#f59e0b;margin-right:6px;"></i>Red Flag Summary</h3>
-                <div id="red-flags-list" style="max-height: 320px; overflow-y: auto;">
-                    <!-- Rendered dynamically -->
+            <!-- Detailed Analysis Panels -->
+            <div class="ha-grid-panels">
+                
+                <!-- Authentication Panel -->
+                <div class="ha-side-panel">
+                    <div class="ha-panel-head" onclick="togglePanelBody('auth-body')">
+                        <i class="ti ti-shield-check"></i>
+                        Authentication Decoded
+                        <i class="ti ti-chevron-down ha-panel-arrow" id="auth-body-arrow"></i>
+                    </div>
+                    <div class="ha-panel-body" id="auth-body">
+                        <table class="ha-auth-table" id="auth-results-table">
+                            <!-- Dynamic rows -->
+                        </table>
+                    </div>
                 </div>
-            </div>
 
-            <!-- Panel 2: Routing Hop Map (Full Width) -->
-            <div class="ha-panel full-width-panel" id="hops-panel">
-                <h3
-                    style="color:var(--text-main);font-size:0.95rem;font-weight:700;margin-bottom:1.2rem;font-family:var(--font-mono), monospace;text-transform:uppercase; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
-                    <span><i class="ti ti-route" style="color:#06b6d4;margin-right:6px;"></i>Routing Hop Map</span>
-                    <span id="hops-warning-badge" style="display:none;"></span>
-                </h3>
-                <div class="routing-chain" id="hops-list">
-                    <!-- Rendered dynamically -->
+                <!-- Domain Intel Panel -->
+                <div class="ha-side-panel">
+                    <div class="ha-panel-head" onclick="togglePanelBody('intel-body')">
+                        <i class="ti ti-database"></i>
+                        Domain Intelligence
+                        <i class="ti ti-chevron-down ha-panel-arrow" id="intel-body-arrow"></i>
+                    </div>
+                    <div class="ha-panel-body" id="intel-body">
+                        <div id="domain-intel-container">
+                            <!-- Dynamic items -->
+                        </div>
+                    </div>
                 </div>
+
+                <!-- Red Flags Panel (Full Width) -->
+                <div class="ha-side-panel" style="grid-column: 1 / -1;">
+                    <div class="ha-panel-head" onclick="togglePanelBody('flags-body')">
+                        <i class="ti ti-alert-octagon"></i>
+                        Security Anomalies / Red Flags
+                        <i class="ti ti-chevron-down ha-panel-arrow" id="flags-body-arrow"></i>
+                    </div>
+                    <div class="ha-panel-body" id="flags-body">
+                        <div id="red-flags-container">
+                            <!-- Dynamic flag list -->
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div>
+
     </div>
+
 </div>
 
 <script>
-    const presets = {
-        spf: `Delivered-To: recipient@secure-company.com\nReceived: from mx.attacker-node.xyz (mx.attacker-node.xyz [185.190.140.22])\n        by mx.google.com with ESMTPS id b29si29104plh.42\n        for <recipient@secure-company.com>;\nReceived-SPF: fail (google.com: domain of billing@office-portal.com does not designate 185.190.140.22 as authorized sender) client-ip=185.190.140.22;\nAuthentication-Results: mx.google.com;\n       spf=fail (google.com: domain of billing@office-portal.com does not designate 185.190.140.22 as authorized sender) smtp.mailfrom=billing@office-portal.com;\n       dmarc=fail (p=QUARANTINE sp=NONE dis=NONE) header.from=office-portal.com;\nFrom: "Office Billing Team" <billing@office-portal.com>\nSubject: URGENT: Outstanding invoice past due`,
-        dkim: `Delivered-To: coworker@corp-domain.com\nReceived: from mail.corporate-source.com (mail.corporate-source.com [209.85.210.50])\n        by mx.google.com with ESMTPS id d11si9201948plh.22.2026.06.01.12.00.00\n        for <coworker@corp-domain.com>;\nAuthentication-Results: mx.google.com;\n       dkim=pass header.i=@corporate-source.com;\n       spf=pass designates 209.85.210.50 as authorized sender;\n       dmarc=pass (p=REJECT) header.from=corporate-source.com;\nDKIM-Signature: v=1; a=rsa-sha256; d=corporate-source.com; s=20230601;\nFrom: "CFO Advisor" <cfo@corporate-source.com>\nSubject: Updated Q3 Financial Projections`,
-        replyto: `Delivered-To: staff@local-firm.com\nReceived: from smtp.spoof-relay.net (smtp.spoof-relay.net [92.118.150.18])\n        by mx.google.com with ESMTPS id g9si293810plh.82\n        for <staff@local-firm.com>;\nAuthentication-Results: mx.google.com;\n       spf=pass (google.com: domain of ceo@local-firm.com designates 92.118.150.18 as authorized sender);\nFrom: "Local Firm CEO" <ceo@local-firm.com>\nReply-To: urgent-executive-desk@gmail.com\nSubject: Immediate wire transfer dispatch needed`,
-        clean: `Delivered-To: client@work-agency.com\nReceived: from outbound.mail.microsoft.com (mail-ch1.outbound.microsoft.com [40.107.12.34])\n        by mx.google.com with ESMTPS id b12si293810plh.82\n        for <client@work-agency.com>;\nAuthentication-Results: mx.google.com;\n       spf=pass (google.com: domain of partner-portal.com designates 40.107.12.34 as authorized sender) smtp.mailfrom=notifications@partner-portal.com;\n       dkim=pass header.i=@partner-portal.com;\n       dmarc=pass (p=REJECT sp=REJECT dis=NONE) header.from=partner-portal.com;\nDKIM-Signature: v=1; a=rsa-sha256; d=partner-portal.com; s=selector1;\nFrom: "Partner Portal" <notifications@partner-portal.com>\nReply-To: support@partner-portal.com\nSubject: Project Dashboard Verification Link`
+/* ═══════════════════════════════════════════════════════════════
+   EMAIL HEADER ANALYZER — FRONTEND SCRIPTING
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Preset raw header samples */
+const DECODER_PRESETS = {
+    'legit': `Delivered-To: coworker@enterprise.com
+Received: from mail-sender102.google.com (mail-sender102.google.com [209.85.128.102])
+	by mx.enterprise.com (Postfix) with ESMTPS id F1B2C3D4
+	for <coworker@enterprise.com>; Mon, 15 Jan 2024 10:25:44 +0000 (UTC)
+Received: by mail-sender102.google.com with SMTP id g12so1234567ywa.3
+	for <coworker@enterprise.com>; Mon, 15 Jan 2024 02:25:43 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=gmail.com; s=20210112;
+	h=from:to:subject:date:message-id:mime-version;
+	bh=abc123def456==; b=xyz789==
+Received-SPF: pass (enterprise.com: domain of colleague.sender@gmail.com designates 209.85.128.102 as permitted sender) client-ip=209.85.128.102;
+Authentication-Results: mx.enterprise.com;
+	dkim=pass header.i=@gmail.com header.s=20210112;
+	spf=pass (enterprise.com: domain of colleague.sender@gmail.com designates 209.85.128.102 as permitted sender) smtp.mailfrom=colleague.sender@gmail.com;
+	dmarc=pass (p=NONE sp=QUARANTINE dis=NONE) header.from=gmail.com
+From: Colleague Sender <colleague.sender@gmail.com>
+To: coworker@enterprise.com
+Subject: Q1 Operations Alignment Doc
+Date: Mon, 15 Jan 2024 10:25:40 +0000
+Message-ID: <CABcDef123@mail.gmail.com>
+MIME-Version: 1.0`,
+
+    'spf-fail': `Delivered-To: target@financecorp.com
+Received: from mail.financecorp.com (mail.financecorp.com [192.0.2.50])
+	by mx.financecorp.com (Postfix) with ESMTP id 7B12C4E
+	for <target@financecorp.com>; Tue, 16 Jan 2024 09:15:22 +0000 (UTC)
+Received: from pool-dynamic-187-34-22-ip.telecom.net (pool-dynamic-187-34-22-ip.telecom.net [187.34.22.109])
+	by mail.financecorp.com (Postfix) with ESMTP id 3D8F2A1
+	for <target@financecorp.com>; Tue, 16 Jan 2024 09:15:20 +0000 (UTC)
+Received: from [10.0.1.42] (unknown [187.34.22.109])
+	by pool-dynamic-187-34-22-ip.telecom.net (Postfix) with ESMTPA
+	for <target@financecorp.com>; Tue, 16 Jan 2024 06:15:18 -0300
+Received-SPF: fail (financecorp.com: 187.34.22.109 is not permitted sender for paypal.com) client-ip=187.34.22.109;
+Authentication-Results: mx.financecorp.com;
+	spf=fail (domain of service@paypal.com does not designate 187.34.22.109 as permitted sender) smtp.mailfrom=service@paypal.com;
+	dkim=none (no signature);
+	dmarc=fail (p=REJECT) header.from=paypal.com
+From: PayPal Services <service@paypal.com>
+To: target@financecorp.com
+Reply-To: verify-account@paypa1-secure.com
+Return-Path: <bounce@paypa1-secure.com>
+Subject: URGENT: Confirm suspicious PayPal transaction immediately
+Date: Tue, 16 Jan 2024 09:15:10 +0000
+Message-ID: <20240116091510.paypa1@pool-dynamic>`,
+
+    'no-dkim': `Delivered-To: executive@company.org
+Received: from company.org (company.org [203.0.113.42])
+	by mx.company.org (Postfix) with ESMTP id C4512F9
+	for <executive@company.org>; Wed, 17 Jan 2024 14:30:05 +0000 (UTC)
+Received: from mail.vendor-corp.com (mail.vendor-corp.com [198.51.100.88])
+	by company.org (Postfix) with ESMTPS id 9A2B1E3
+	for <executive@company.org>; Wed, 17 Jan 2024 14:30:03 +0000 (UTC)
+Received-SPF: pass (company.org: domain of billing@vendor-corp.com designates 198.51.100.88 as permitted sender) client-ip=198.51.100.88;
+Authentication-Results: mx.company.org;
+	spf=pass (domain of billing@vendor-corp.com designates 198.51.100.88 as permitted sender) smtp.mailfrom=billing@vendor-corp.com;
+	dkim=none (no signature present);
+	dmarc=none (no DMARC record found for vendor-corp.com)
+From: Vendor Corp Billing <billing@vendor-corp.com>
+To: executive@company.org
+Subject: Overdue Invoice #2024-8182 - Immediate settlement requested
+Date: Wed, 17 Jan 2024 14:29:58 +0000
+Message-ID: <invoice.2024@vendor-corp.com>
+Return-Path: <billing@vendor-corp.com>`,
+
+    'no-dmarc': `Delivered-To: employee@startup.io
+Received: from startup.io (startup.io [10.0.0.5])
+	by mx1.startup.io (Postfix) with ESMTP id D9A7B2C
+	for <employee@startup.io>; Thu, 18 Jan 2024 11:05:30 +0000 (UTC)
+Received: from smtp.partner-solutions.net (smtp.partner-solutions.net [93.184.216.34])
+	by startup.io (Postfix) with ESMTPS id B3C4D7E
+	for <employee@startup.io>; Thu, 18 Jan 2024 11:05:28 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=partner-solutions.net; s=mail2024;
+	h=from:to:subject:date; bh=def456ghi789==; b=uvw123==
+Received-SPF: pass (startup.io: domain of updates@partner-solutions.net designates 93.184.216.34 as permitted sender) client-ip=93.184.216.34;
+Authentication-Results: mx1.startup.io;
+	spf=pass smtp.mailfrom=updates@partner-solutions.net;
+	dkim=pass header.i=@partner-solutions.net;
+	dmarc=none (no DMARC record found)
+From: Partner Solutions <updates@partner-solutions.net>
+To: employee@startup.io
+Subject: Updated Collaboration Terms Q3
+Date: Thu, 18 Jan 2024 11:05:25 +0000
+Message-ID: <terms.jan2024@partner-solutions.net>
+Return-Path: <updates@partner-solutions.net>`,
+
+    'reply-mismatch': `Delivered-To: administrator@acmecorp.com
+Received: from acmecorp.com (acmecorp.com [10.10.0.2])
+	by mail.acmecorp.com (Postfix) with ESMTP id FF123AB
+	for <administrator@acmecorp.com>; Fri, 19 Jan 2024 08:45:12 +0000 (UTC)
+Received: from mx2.acmecorp.com (mx2.acmecorp.com [192.168.10.25])
+	by acmecorp.com (Postfix) with ESMTPS id EE890CD
+	for <administrator@acmecorp.com>; Fri, 19 Jan 2024 08:45:10 +0000 (UTC)
+Received: from smtp-relay.mailgun.org (smtp-relay.mailgun.org [69.72.43.145])
+	by mx2.acmecorp.com (Postfix) with ESMTPS id AA567EF
+	for <administrator@acmecorp.com>; Fri, 19 Jan 2024 08:45:08 +0000 (UTC)
+Received: from [10.0.1.5] (unknown [77.88.55.66])
+	by smtp-relay.mailgun.org (Mailgun) with ESMTPA id 8F12345
+	for <administrator@acmecorp.com>; Fri, 19 Jan 2024 08:45:06 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=acmecorp.com; s=mg2024;
+	h=from:reply-to:to:subject:date; bh=abc789def==; b=rst456==
+Received-SPF: pass (acmecorp.com: domain of hr-admin@acmecorp.com designates 69.72.43.145 as permitted sender) client-ip=69.72.43.145;
+Authentication-Results: mail.acmecorp.com;
+	spf=pass smtp.mailfrom=hr-admin@acmecorp.com;
+	dkim=pass header.i=@acmecorp.com;
+	dmarc=pass header.from=acmecorp.com
+From: ACMECorp HR Admin <hr-admin@acmecorp.com>
+To: administrator@acmecorp.com
+Reply-To: hr-acmecorp-support@gmail.com
+Subject: ACTION REQUESTED: Update employee payroll record info
+Date: Fri, 19 Jan 2024 08:45:00 +0000
+Message-ID: <payroll.update@acmecorp.com>
+Return-Path: <hr-admin@acmecorp.com>`,
+
+    'newly-registered': `Delivered-To: engineer@cybertech.com
+Received: from mail.cybertech.com (mail.cybertech.com [192.0.2.10])
+	by mx.cybertech.com (Postfix) with ESMTP id M123XYZ
+	for <engineer@cybertech.com>; Fri, 19 Jan 2024 12:00:00 +0000
+Received: from mail.newly-registered-phish.com (mail.newly-registered-phish.com [198.51.100.12])
+	by mail.cybertech.com (Postfix) with ESMTPS id ABC789
+	for <engineer@cybertech.com>; Fri, 19 Jan 2024 11:59:58 +0000
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=newly-registered-phish.com; s=sig2024;
+	h=from:to:subject:date; bh=abc123xyz==; b=mno456==
+Received-SPF: pass (cybertech.com: domain of security@newly-registered-phish.com designates 198.51.100.12 as permitted sender) client-ip=198.51.100.12;
+Authentication-Results: mx.cybertech.com;
+	spf=pass smtp.mailfrom=security@newly-registered-phish.com;
+	dkim=pass header.i=@newly-registered-phish.com;
+	dmarc=pass header.from=newly-registered-phish.com
+From: Cyber Security Team <security@newly-registered-phish.com>
+To: engineer@cybertech.com
+Subject: URGENT: Patch vulnerability in your domain access keys
+Date: Fri, 19 Jan 2024 11:59:50 +0000
+Message-ID: <security.patch.2024@newly-registered-phish.com>
+Return-Path: <security@newly-registered-phish.com>`
+};
+
+/* Preset loading handler */
+function loadPreset(key) {
+    document.querySelectorAll('.ha-preset-btn').forEach(btn => btn.classList.remove('active'));
+    const activeBtn = document.getElementById('btn-preset-' + key);
+    if (activeBtn) activeBtn.classList.add('active');
+    
+    document.getElementById('headers-input').value = DECODER_PRESETS[key] || '';
+    
+    // Clear validation borders on preset select
+    const textarea = document.getElementById('headers-input');
+    textarea.style.borderColor = '';
+}
+
+/* UI Stage togglers */
+function showStage(stageId) {
+    document.getElementById('stage-input').style.display = stageId === 'input' ? '' : 'none';
+    document.getElementById('stage-loading').style.display = stageId === 'loading' ? '' : 'none';
+    document.getElementById('stage-results').style.display = stageId === 'results' ? '' : 'none';
+}
+
+function resetToInput() {
+    showStage('input');
+    
+    // Clear styles from card container
+    const card = document.getElementById('ha-card-container');
+    card.className = 'ha-main-card';
+}
+
+/* Technical Panels Collapsible state */
+function togglePanelBody(id) {
+    const body = document.getElementById(id);
+    const arrow = document.getElementById(id + '-arrow');
+    const isHidden = body.style.display === 'none';
+    
+    body.style.display = isHidden ? '' : 'none';
+    if (arrow) {
+        arrow.style.transform = isHidden ? 'rotate(0deg)' : 'rotate(-90deg)';
+    }
+}
+
+function setCollapsiblePanelState(id, expand) {
+    const body = document.getElementById(id);
+    const arrow = document.getElementById(id + '-arrow');
+    if (body) {
+        body.style.display = expand ? '' : 'none';
+    }
+    if (arrow) {
+        arrow.style.transform = expand ? 'rotate(0deg)' : 'rotate(-90deg)';
+    }
+}
+
+/* Escape string for safe rendering */
+function escapeHTML(str) {
+    return String(str || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
+/* Map authentication states to semantic class keys */
+function getAuthClass(status) {
+    return {
+        pass: 'cell-status-pass',
+        fail: 'cell-status-fail',
+        softfail: 'cell-status-warn',
+        neutral: 'cell-status-warn',
+        warn: 'cell-status-warn',
+        info: 'cell-status-info',
+        none: 'cell-status-warn'
+    }[status] || 'cell-status-info';
+}
+
+/* Map authentication states to readable text tags */
+function getAuthBadgeLabel(status) {
+    return {
+        pass: 'PASS ✓',
+        fail: 'FAIL ✗',
+        softfail: 'SOFTFAIL ⚠',
+        neutral: 'NEUTRAL ·',
+        warn: 'WARNING ⚠',
+        none: 'ABSENT ⚠',
+        info: 'N/A ·'
+    }[status] || status.toUpperCase();
+}
+
+/* Trigger forensic traceback lookup */
+async function executeTrace() {
+    const headersText = document.getElementById('headers-input').value.trim();
+    if (!headersText) {
+        const textarea = document.getElementById('headers-input');
+        textarea.focus();
+        textarea.style.borderColor = 'rgba(239, 68, 68, 0.6)';
+        setTimeout(() => { textarea.style.borderColor = ''; }, 2000);
+        return;
+    }
+
+    showStage('loading');
+
+    // Cyberpunk loading steps trace
+    const loadingSteps = [
+        'Connecting decryption pipeline…',
+        'Extracting cryptographic authentication markers…',
+        'Decoding Received headers chronological path…',
+        'Querying DNS authority for MX exchange configurations…',
+        'Cross-referencing domain registration records via RDAP…',
+        'Compiling trust classification graphs…',
+        'Finalizing forensic diagnostic output…'
+    ];
+    let stepIdx = 0;
+    const stepMsgEl = document.getElementById('loading-step-msg');
+    
+    const intervalId = setInterval(() => {
+        stepIdx = (stepIdx + 1) % loadingSteps.length;
+        stepMsgEl.textContent = loadingSteps[stepIdx];
+    }, 1200);
+
+    try {
+        const fd = new FormData();
+        fd.append('headers', headersText);
+        
+        const response = await fetch('/api/header-analyzer', {
+            method: 'POST',
+            body: fd
+        });
+        
+        clearInterval(intervalId);
+        
+        if (!response.ok) {
+            const errData = await response.json();
+            alert('Analysis failed: ' + (errData.message || 'Server error occurred'));
+            showStage('input');
+            return;
+        }
+
+        const data = await response.json();
+        if (data.success) {
+            renderForensicResults(data);
+        } else {
+            alert('Analysis failed: ' + (data.message || 'Unknown parsing failure'));
+            showStage('input');
+        }
+
+    } catch (err) {
+        clearInterval(intervalId);
+        alert('Forensic connection failure: ' + err.message);
+        showStage('input');
+    }
+}
+
+/* Draw the graphical node hops pipeline */
+function drawHopsDiagram(hops, auth) {
+    const container = document.getElementById('node-chain-container');
+    container.innerHTML = '';
+    
+    // Toggle compact class for long chains
+    if (hops && hops.length > 5) {
+        container.classList.add('chain-compact');
+    } else {
+        container.classList.remove('chain-compact');
+    }
+
+    if (!hops || hops.length === 0) {
+        container.innerHTML = `
+            <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; color: var(--text-muted, #64748b); padding: 1.5rem 0;">
+                No standard 'Received' hop records isolated in email payload.
+            </div>`;
+        return;
+    }
+
+    hops.forEach((hop, i) => {
+        const isOrigin = (i === 0);
+        const isDest = (i === hops.length - 1);
+        const trustClass = hop.trust || 'safe';
+        
+        // Host label formatting
+        let hostLabel = 'Unknown Node';
+        if (hop.from && hop.from !== 'unknown') {
+            hostLabel = hop.from;
+        } else if (hop.by && hop.by !== 'unknown') {
+            hostLabel = hop.by;
+        }
+
+        // Timing delay format
+        let deltaHtml = '';
+        if (i > 0 && hop.delta !== undefined && hop.delta !== null) {
+            const absSec = Math.abs(hop.delta);
+            let timeString = absSec + 's';
+            if (absSec >= 3600) {
+                timeString = Math.round(absSec / 3600) + 'h';
+            } else if (absSec >= 60) {
+                timeString = Math.round(absSec / 60) + 'm';
+            }
+            const isSlow = absSec > 300;
+            deltaHtml = `
+                <div class="ha-node-time ${isSlow ? 'slow' : ''}">
+                    <i class="ti ti-clock"></i> +${timeString}
+                </div>`;
+        }
+
+        // IP address html
+        const ipBadgeHtml = hop.ip ? `<div class="ha-node-ip">${escapeHTML(hop.ip)}</div>` : '';
+
+        // Attachment of SPF/DKIM/DMARC badges cluster at origin
+        let clusterHtml = '';
+        if (isOrigin && auth) {
+            clusterHtml = `
+                <div class="ha-origin-cluster">
+                    <div class="ha-cluster-item">
+                        <span class="ha-cluster-label">SPF</span>
+                        <span class="cluster-status-${auth.spf?.status || 'info'}">${getAuthBadgeLabel(auth.spf?.status || 'info')}</span>
+                    </div>
+                    <div class="ha-cluster-item">
+                        <span class="ha-cluster-label">DKIM</span>
+                        <span class="cluster-status-${auth.dkim?.status || 'info'}">${getAuthBadgeLabel(auth.dkim?.status || 'info')}</span>
+                    </div>
+                    <div class="ha-cluster-item">
+                        <span class="ha-cluster-label">DMARC</span>
+                        <span class="cluster-status-${auth.dmarc?.status || 'info'}">${getAuthBadgeLabel(auth.dmarc?.status || 'info')}</span>
+                    </div>
+                </div>`;
+        }
+
+        // Trust warnings tagging
+        let reasonsTagsHtml = '';
+        if (hop.trust_reasons && hop.trust_reasons.length > 0) {
+            reasonsTagsHtml = hop.trust_reasons
+                .map(r => `<div class="ha-drawer-warning-item"><i class="ti ti-alert-triangle"></i> ${escapeHTML(r)}</div>`)
+                .join('');
+        }
+
+        // Build individual node wrapper
+        const nodeDiv = document.createElement('div');
+        nodeDiv.className = 'ha-node-wrapper';
+        
+        nodeDiv.innerHTML = `
+            <div class="ha-node-card trust-${trustClass} ${isOrigin ? 'node-origin' : ''}" onclick="toggleNodeDrawer(${i})">
+                <div class="ha-node-dot trust-${trustClass}"></div>
+                <div class="ha-node-badge">
+                    ${isOrigin ? '◉ Origin Host' : (isDest ? '🏁 Recipient MX' : `⚡ Relay Hop ${String(i).padStart(2, '0')}`)}
+                </div>
+                <div class="ha-node-host" title="${escapeHTML(hostLabel)}">
+                    ${escapeHTML(hostLabel.length > 25 ? hostLabel.substring(0, 23) + '…' : hostLabel)}
+                </div>
+                ${ipBadgeHtml}
+                ${deltaHtml}
+                ${clusterHtml}
+            </div>
+            <div class="ha-node-label-indicator status-${trustClass}">
+                ${trustClass === 'safe' ? '🟢 secure link' : (trustClass === 'warn' ? '🟡 suspect link' : '🔴 danger link')}
+            </div>
+            
+            <!-- Click inspector drawer -->
+            <div class="ha-drawer" id="node-drawer-${i}">
+                <div class="ha-drawer-raw-title">Hop Headers</div>
+                <div class="ha-drawer-raw">${escapeHTML(hop.raw || '')}</div>
+                ${reasonsTagsHtml}
+            </div>
+        `;
+
+        container.appendChild(nodeDiv);
+
+        // Add animated datalink connectors
+        if (i < hops.length - 1) {
+            const nextHop = hops[i + 1];
+            const nextTrust = nextHop.trust || 'safe';
+            
+            const connectorDiv = document.createElement('div');
+            connectorDiv.className = 'ha-connector';
+            connectorDiv.innerHTML = `
+                <svg class="ha-connector-svg" viewBox="0 0 70 40">
+                    <path class="ha-connector-line line-${nextTrust}" d="M 0,20 L 60,20" />
+                    <polygon class="ha-connector-arrow head-${nextTrust}" points="56,15 68,20 56,25" />
+                </svg>
+            `;
+            container.appendChild(connectorDiv);
+        }
+    });
+}
+
+function toggleNodeDrawer(idx) {
+    const drawer = document.getElementById('node-drawer-' + idx);
+    if (drawer) {
+        drawer.classList.toggle('show');
+    }
+}
+
+/* Populate result states in UI */
+function renderForensicResults(data) {
+    // Verdict glow mapping
+    const card = document.getElementById('ha-card-container');
+    card.className = 'ha-main-card card-verdict-' + (data.verdict_class === 'danger' ? 'SUSPICIOUS' : (data.verdict_class === 'warning' ? 'UNCERTAIN' : 'LEGITIMATE'));
+
+    // Verdict Badge
+    const verdictEl = document.getElementById('result-verdict');
+    verdictEl.textContent = data.verdict;
+    verdictEl.className = 'ha-verdict-badge verdict-' + (data.verdict_class === 'danger' ? 'SUSPICIOUS' : (data.verdict_class === 'warning' ? 'UNCERTAIN' : 'LEGITIMATE'));
+
+    // Risk Score
+    const scoreEl = document.getElementById('result-score');
+    scoreEl.textContent = data.score || 0;
+    
+    // Set score color based on verdict class using CSS variables
+    if (data.verdict_class === 'danger') {
+        scoreEl.style.color = 'var(--danger)';
+    } else if (data.verdict_class === 'warning') {
+        scoreEl.style.color = 'var(--warning)';
+    } else {
+        scoreEl.style.color = 'var(--success)';
+    }
+
+    // Subject lines
+    const subjectEl = document.getElementById('result-subject');
+    subjectEl.textContent = data.subject ? `Subject: "${data.subject}"` : 'No Subject Header Defined';
+
+    // 1. Draw Routing graph
+    drawHopsDiagram(data.hops || [], data.auth);
+
+    // 2. Populate Authentication Details Table
+    const authTable = document.getElementById('auth-results-table');
+    authTable.innerHTML = '';
+    
+    if (data.auth) {
+        const methods = [
+            { key: 'spf', label: 'SPF' },
+            { key: 'dkim', label: 'DKIM' },
+            { key: 'dmarc', label: 'DMARC' }
+        ];
+        
+        methods.forEach(m => {
+            const details = data.auth[m.key] || { status: 'info', detail: 'Verification metrics not generated.' };
+            const authClass = getAuthClass(details.status);
+            const badgeLabel = getAuthBadgeLabel(details.status);
+            
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td class="auth-header-cell">
+                    <strong>${m.label}</strong><br>
+                    <span class="ha-auth-status-label ${authClass}">${badgeLabel}</span>
+                </td>
+                <td style="color: var(--text-muted, #94a3b8); font-size: 0.8rem; line-height: 1.4;">
+                    ${escapeHTML(details.detail || '')}
+                </td>
+            `;
+            authTable.appendChild(tr);
+        });
+    }
+
+    // 3. Populate Domain Intelligence Rows
+    const intelContainer = document.getElementById('domain-intel-container');
+    intelContainer.innerHTML = '';
+
+    const intelItems = [
+        ['Sender Address', data.from_hdr || 'None'],
+        ['Envelope Domain', data.from_domain || 'None'],
+        ['MX Record Servers', data.mx_records && data.mx_records.length > 0 ? data.mx_records.join(', ') : 'No valid MX records found'],
+        ['Domain Registry Age', data.domain_age_label || 'Unable to verify'],
+        ['Registration Date', data.created_date || 'Unable to verify'],
+        ['Reply-To Address', data.reply_to || 'None'],
+        ['Return-Path Address', data.return_path || 'None']
+    ];
+
+    intelItems.forEach(([key, val]) => {
+        const row = document.createElement('div');
+        row.className = 'ha-intel-row';
+        row.innerHTML = `
+            <div class="ha-intel-key">${escapeHTML(key)}</div>
+            <div class="ha-intel-val" title="${escapeHTML(val)}">
+                ${escapeHTML(val.length > 60 ? val.substring(0, 58) + '…' : val)}
+            </div>
+        `;
+        intelContainer.appendChild(row);
+    });
+
+    // 4. Populate Red Flags List
+    const flagsContainer = document.getElementById('red-flags-container');
+    flagsContainer.innerHTML = '';
+
+    if (!data.red_flags || data.red_flags.length === 0) {
+        flagsContainer.innerHTML = `
+            <div class="ha-clean-badge">
+                <i class="ti ti-shield-check" style="font-size: 1.6rem; display: block; margin-bottom: 6px;"></i>
+                No high-threat header anomalies or validation failures identified.
+            </div>`;
+    } else {
+        data.red_flags.forEach(flag => {
+            const sev = flag.severity || 'medium';
+            const badgeClass = `sev-badge-${sev}`;
+            
+            const flagRow = document.createElement('div');
+            flagRow.className = 'ha-flag-row';
+            flagRow.innerHTML = `
+                <span class="ha-flag-severity ${badgeClass}">${escapeHTML(sev)}</span>
+                <div>
+                    <div class="ha-flag-title">${escapeHTML(flag.title)}</div>
+                    <div class="ha-flag-detail">${escapeHTML(flag.detail)}</div>
+                </div>
+            `;
+            flagsContainer.appendChild(flagRow);
+        });
+    }
+
+    // Collapsible panel defaults based on findings
+    const hasFlags = (data.red_flags && data.red_flags.length > 0);
+    setCollapsiblePanelState('auth-body', true);          // Always expand Authentication
+    setCollapsiblePanelState('flags-body', hasFlags);     // Expand flags if any exist, collapse if clean
+    setCollapsiblePanelState('intel-body', !hasFlags);    // Expand intel if clean, collapse to avoid clutter if flags exist
+
+    // Switch screen to results
+    showStage('results');
+}
+
+/* ── Window Control Button Logic ─────────────────────────────── */
+(function() {
+    // Add @keyframes for offset-path motion (CSS anim inside SVG style attr)
+    const kfStyle = document.createElement('style');
+    kfStyle.textContent = `@keyframes haHopMove {
+        0%   { offset-distance:0%;   opacity:0; }
+        8%   { opacity:1; }
+        92%  { opacity:1; }
+        100% { offset-distance:100%; opacity:0; }
+    }`;
+    document.head.appendChild(kfStyle);
+
+    // RED — clear textarea + reset to input stage
+    document.getElementById('ha-dot-red').addEventListener('click', function() {
+        const ta = document.getElementById('headers-input');
+        if (ta.value.trim().length > 0) {
+            if (!confirm('Clear current input and reset results?')) return;
+        }
+        ta.value = '';
+        ta.style.borderColor = '';
+        document.querySelectorAll('.ha-preset-btn.active').forEach(b => b.classList.remove('active'));
+        resetToInput();
+    });
+
+    // AMBER — minimize
+    document.getElementById('ha-dot-amber').addEventListener('click', function() {
+        const inputStage = document.getElementById('stage-input');
+        inputStage.classList.toggle('ha-minimized');
+    });
+    window.haRestoreFromMinimize = function() {
+        document.getElementById('stage-input').classList.remove('ha-minimized');
     };
 
-    function applyPreset(key) {
-        if (presets[key]) {
-            document.getElementById('headers-input').value = presets[key];
-            analyzeHeaders();
-        }
-    }
-
-    function showErr(msg) {
-        const el = document.getElementById('ha-error');
-        const inp = document.getElementById('headers-input');
-        el.querySelector('span').textContent = msg;
-        el.style.display = 'flex';
-        inp.classList.remove('shake');
-        void inp.offsetWidth;
-        inp.classList.add('shake');
-        inp.style.borderColor = '#ef4444';
-        setTimeout(() => { inp.style.borderColor = ''; el.style.display = 'none'; }, 3500);
-    }
-
-    let isAnalyzing = false;
-    async function analyzeHeaders() {
-        if (isAnalyzing) return;
-        const raw = document.getElementById('headers-input').value.trim();
-        if (!raw) { showErr('Paste raw email headers above before analyzing.'); return; }
-
-        const btn = document.getElementById('analyze-btn');
-        isAnalyzing = true;
-        btn.classList.add('scanning');
-        btn.innerHTML = '<i class="ti ti-loader-2" style="animation:spin 1s linear infinite;"></i> DECODING HEADERS…';
-
-        const fd = new FormData();
-        fd.append('headers', raw);
-
-        try {
-            const res = await fetch('/api/header-analyzer', { method: 'POST', body: fd });
-            const data = await res.json();
-            if (!data.success) { showErr(data.message || 'Analysis failed.'); return; }
-            renderResults(data, raw);
-        } catch (e) {
-            showErr('Network error: ' + e.message);
-        } finally {
-            isAnalyzing = false;
-            btn.classList.remove('scanning');
-            btn.innerHTML = '<i class="ti ti-scan"></i> DECODE HEADERS';
-        }
-    }
-
-    function renderResults(d, rawHeaders) {
-        const colors = { LEGITIMATE: '#10b981', SUSPICIOUS: '#ef4444', UNCERTAIN: '#f59e0b' };
-        const bgMap = { LEGITIMATE: 'rgba(16,185,129,0.08)', SUSPICIOUS: 'rgba(239,68,68,0.08)', UNCERTAIN: 'rgba(245,158,11,0.08)' };
-        const borderMap = { LEGITIMATE: 'rgba(16,185,129,0.3)', SUSPICIOUS: 'rgba(239,68,68,0.3)', UNCERTAIN: 'rgba(245,158,11,0.3)' };
-
-        // Banner
-        const vb = document.getElementById('verdict-banner');
-        vb.style.background = bgMap[d.verdict];
-        vb.style.border = `1px solid ${borderMap[d.verdict]}`;
-        vb.style.color = colors[d.verdict];
-        vb.innerHTML = `<i class="ti ${d.verdict_icon}" style="font-size:1.8rem;display:block;margin-bottom:8px;"></i>${d.verdict}`;
-
-        // Panel 1: Authentication Verdicts (SPF, DKIM, DMARC)
-        const verdictsList = document.getElementById('auth-verdicts-list');
-        verdictsList.innerHTML = '';
-
-        // Filter and show key authentication and domain check results
-        const mainChecks = d.checks.filter(c => ['SPF', 'DKIM', 'DMARC', 'Domain Creation Date', 'Mail Exchange (MX) Records', 'X-Originating-IP'].includes(c.label));
-        let anyFail = false;
-
-        mainChecks.forEach(c => {
-            let displayStatus = c.status.toUpperCase();
-            let rowClass = 'auth-row-info';
-            let badgeColor = '#94a3b8';
-            let badgeBg = 'rgba(100,116,139,0.1)';
-
-            if (c.status === 'pass') {
-                rowClass = 'auth-row-pass';
-                badgeColor = '#10b981';
-                badgeBg = 'rgba(16,185,129,0.1)';
-            } else if (c.status === 'fail') {
-                rowClass = 'auth-row-fail';
-                badgeColor = '#ef4444';
-                badgeBg = 'rgba(239,68,68,0.1)';
-                anyFail = true;
-            } else if (c.status === 'warn') {
-                rowClass = 'auth-row-warn';
-                badgeColor = '#f59e0b';
-                badgeBg = 'rgba(245,158,11,0.1)';
-                if (c.value.toLowerCase().includes('softfail')) {
-                    displayStatus = 'SOFTFAIL';
-                } else {
-                    displayStatus = 'MISSING';
-                    badgeColor = '#64748b';
-                    badgeBg = 'rgba(100,116,139,0.1)';
-                }
-            }
-
-            let tooltipText = '';
-            if (c.label === 'SPF') {
-                tooltipText = ` <span class="cyber-tooltip-wrap"><span class="tooltip-icon" style="width:13px;height:13px;font-size:0.55rem;line-height:13px;">?</span><span class="cyber-tooltip-content" style="font-weight:normal;text-transform:none;letter-spacing:0;font-size:0.7rem;width:200px;left:10px;bottom:calc(100% + 6px);top:auto;">SPF checks if the sending IP is authorized in the sender's DNS records.</span></span>`;
-            } else if (c.label === 'DKIM') {
-                tooltipText = ` <span class="cyber-tooltip-wrap"><span class="tooltip-icon" style="width:13px;height:13px;font-size:0.55rem;line-height:13px;">?</span><span class="cyber-tooltip-content" style="font-weight:normal;text-transform:none;letter-spacing:0;font-size:0.7rem;width:200px;left:10px;bottom:calc(100% + 6px);top:auto;">DKIM validates the cryptographic signature of the email body to ensure it hasn't been altered.</span></span>`;
-            } else if (c.label === 'DMARC') {
-                tooltipText = ` <span class="cyber-tooltip-wrap"><span class="tooltip-icon" style="width:13px;height:13px;font-size:0.55rem;line-height:13px;">?</span><span class="cyber-tooltip-content" style="font-weight:normal;text-transform:none;letter-spacing:0;font-size:0.7rem;width:200px;left:10px;bottom:calc(100% + 6px);top:auto;">DMARC aligns SPF & DKIM results and specifies policies (quarantine, reject) for failures.</span></span>`;
-            }
-
-            verdictsList.innerHTML += `
-            <div class="${rowClass}">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-                    <span style="font-size:0.8rem; font-weight:700; color:var(--text-main); font-family:var(--font-mono), monospace;">${c.label}${tooltipText}</span>
-                    <span class="status-badge" style="background:${badgeBg}; color:${badgeColor}; border:1px solid rgba(255,255,255,0.05); font-size: 0.65rem; font-weight: 800; padding: 1px 6px; border-radius: 4px;">${displayStatus}</span>
-                </div>
-                <div style="font-family:var(--font-mono), monospace; font-size:0.74rem; color:var(--text-muted); line-height:1.45; word-break:break-all;">${c.value}</div>
+    // GREEN — expand overlay
+    let _haOverlay = null;
+    function buildHaOverlay() {
+        if (_haOverlay) return;
+        _haOverlay = document.createElement('div');
+        _haOverlay.className = 'ha-expand-overlay';
+        _haOverlay.innerHTML = `
+            <div class="ha-expand-header">
+                <span class="ha-expand-label"><i class="ti ti-route" style="margin-right:6px;"></i>phishsim-terminal://header-decoder &mdash; expanded</span>
+                <button class="ha-expand-close" id="ha-expand-close">&times; Collapse</button>
             </div>
+            <textarea class="ha-expand-textarea" id="ha-expand-textarea" spellcheck="false"
+                placeholder="Paste full raw email headers here&hellip;"></textarea>
         `;
-        });
-
-        // Toggle Panel 1 failure glow
-        const authPanel = document.getElementById('auth-verdicts-panel');
-        if (anyFail) {
-            authPanel.classList.add('danger-glow');
-        } else {
-            authPanel.classList.remove('danger-glow');
-        }
-
-        // Panel 3: Red Flags Summary (Anomalies)
-        const flagsList = document.getElementById('red-flags-list');
-        flagsList.innerHTML = '';
-        const anomalies = [];
-
-        // 1. Reply-To Domain Mismatch
-        const replyToCheck = d.checks.find(c => c.label.includes('Reply-To'));
-        if (replyToCheck && replyToCheck.status === 'fail') {
-            anomalies.push({
-                severity: 'critical',
-                icon: 'ti-alert-circle',
-                name: 'Reply-To Domain Mismatch',
-                desc: 'The Reply-To address domain does not match the From address domain, which is a key indicator of credential phishing.'
-            });
-        }
-
-        // 2. From/Return-Path Mismatch
-        const rpMatch = rawHeaders.match(/^Return-Path:\s*<?([^>\n]+)>?/im);
-        const fMatch = rawHeaders.match(/^From:\s*(?:[^<\n]*<)?([^>\n]+)>?/im);
-        if (rpMatch && fMatch) {
-            const rpDomain = rpMatch[1].split('@')[1]?.trim().toLowerCase().replace('>', '');
-            const fDomain = fMatch[1].split('@')[1]?.trim().toLowerCase().replace('>', '');
-            if (rpDomain && fDomain && rpDomain !== fDomain) {
-                anomalies.push({
-                    severity: 'critical',
-                    icon: 'ti-alert-circle',
-                    name: 'From / Return-Path Mismatch',
-                    desc: 'The domain in the From header does not match the bounce address in Return-Path, indicating dynamic spoofing.'
-                });
-            }
-        }
-
-        // 3. Missing DKIM
-        const dkimCheck = d.checks.find(c => c.label === 'DKIM');
-        if (dkimCheck) {
-            if (dkimCheck.status === 'fail') {
-                anomalies.push({
-                    severity: 'critical',
-                    icon: 'ti-alert-circle',
-                    name: 'DKIM Cryptographic Fail',
-                    desc: 'The DKIM cryptographic signature failed verification, meaning the message body may have been modified in transit.'
-                });
-            } else if (dkimCheck.value.toLowerCase().includes('no dkim') || dkimCheck.value.toLowerCase().includes('not present')) {
-                anomalies.push({
-                    severity: 'warn',
-                    icon: 'ti-alert-triangle',
-                    name: 'Missing DKIM Signature',
-                    desc: 'No DKIM signature is present, permitting attackers to alter the message header or body without detection.'
-                });
-            }
-        }
-
-        // 4. Missing DMARC
-        const dmarcCheck = d.checks.find(c => c.label === 'DMARC');
-        if (dmarcCheck) {
-            if (dmarcCheck.status === 'fail') {
-                anomalies.push({
-                    severity: 'critical',
-                    icon: 'ti-alert-circle',
-                    name: 'DMARC Verification Fail',
-                    desc: 'The domain fails DMARC verification, indicating the sender is unauthorized and spoofing the brand.'
-                });
-            } else if (dmarcCheck.value.toLowerCase().includes('not present') || dmarcCheck.value.toLowerCase().includes('no strict')) {
-                anomalies.push({
-                    severity: 'warn',
-                    icon: 'ti-alert-triangle',
-                    name: 'Missing DMARC Policy',
-                    desc: 'No strict DMARC policy is published for this domain, making it vulnerable to phishing abuse.'
-                });
-            }
-        }
-
-        // 5. Suspicious Client Hostname
-        const dynamicPatterns = /dsl|pool|dynamic|cable|customer|dhcp|ip/i;
-        let hasSuspiciousHost = false;
-        d.hops.forEach(h => {
-            if (dynamicPatterns.test(h.from) || /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(h.from)) {
-                hasSuspiciousHost = true;
-            }
-        });
-        if (hasSuspiciousHost) {
-            anomalies.push({
-                severity: 'warn',
-                icon: 'ti-alert-triangle',
-                name: 'Suspicious Client Hostname',
-                desc: 'A relay hop matches a dynamic residential or dial-up IP pattern, indicating a non-standard sender.'
-            });
-        }
-
-        // 6. Too Many Hops
-        if (d.hops && d.hops.length > 4) {
-            anomalies.push({
-                severity: 'warn',
-                icon: 'ti-alert-triangle',
-                name: 'Too Many Routing Hops',
-                desc: 'Email traversed 5 or more relay points, which can indicate intentional relay hopping or misconfiguration.'
-            });
-        }
-
-        // 7. Missing MX Records
-        const mxCheck = d.checks.find(c => c.label.includes('MX'));
-        if (mxCheck && mxCheck.status === 'fail') {
-            anomalies.push({
-                severity: 'critical',
-                icon: 'ti-alert-circle',
-                name: 'No Mail Exchange (MX) Records',
-                desc: 'The domain does not have any MX records configured, meaning it cannot receive email. This is highly typical of domains registered solely to send spoofed phishing campaigns.'
-            });
-        }
-
-        // 8. Newly Registered Domain
-        const ageCheck = d.checks.find(c => c.label.includes('Creation'));
-        if (ageCheck && ageCheck.status === 'fail') {
-            anomalies.push({
-                severity: 'critical',
-                icon: 'ti-alert-circle',
-                name: 'Newly Registered Domain',
-                desc: 'The sending domain was registered recently (less than 30 days ago). Phishing campaigns frequently launch from fresh, disposable domains to bypass age-based reputation checks.'
-            });
-        }
-
-        // Render anomalies
-        if (anomalies.length > 0) {
-            anomalies.forEach(a => {
-                const iconColor = a.severity === 'critical' ? '#ef4444' : a.severity === 'warn' ? '#f59e0b' : '#06b6d4';
-                flagsList.innerHTML += `
-                <div class="red-flag-item severity-${a.severity}">
-                    <i class="${a.severity === 'critical' ? 'ti ti-circle-x' : (a.severity === 'warn' ? 'ti ti-alert-triangle' : 'ti ti-info-circle')}" style="color:${iconColor}; font-size:1.15rem; margin-top:2px; flex-shrink:0;"></i>
-                    <div>
-                        <div style="font-size:0.8rem; font-weight:700; color:var(--text-main); font-family:var(--font-mono), monospace;">${a.name}</div>
-                        <div style="font-size:0.75rem; color:var(--text-muted); line-height:1.45; margin-top:3px;">${a.desc}</div>
-                    </div>
-                </div>
-            `;
-            });
-        } else {
-            flagsList.innerHTML = `
-            <div style="text-align:center; padding:2.5rem 1rem; color:#10b981; font-size:0.82rem; font-family:var(--font-mono), monospace;">
-                <i class="ti ti-circle-check" style="font-size:2.4rem; display:block; margin-bottom:8px;"></i>
-                No anomalies detected
-            </div>
-        `;
-        }
-
-        // Panel 2: Routing Hop Map
-        const hl = document.getElementById('hops-list');
-        const badge = document.getElementById('hops-warning-badge');
-        hl.innerHTML = '';
-
-        if (d.hops && d.hops.length > 0) {
-            document.getElementById('hops-panel').style.display = 'block';
-
-            if (d.hops.length > 4) {
-                badge.style.display = 'inline-block';
-                badge.className = 'status-badge';
-                badge.textContent = `⚠ Unusual routing — ${d.hops.length} hops detected`;
-                badge.style.background = 'rgba(245,158,11,0.15)';
-                badge.style.color = '#f59e0b';
-                badge.style.borderColor = 'rgba(245,158,11,0.3)';
-            } else {
-                badge.style.display = 'inline-block';
-                badge.className = 'status-badge';
-                badge.textContent = `${d.hops.length} Hops - Normal`;
-                badge.style.background = 'rgba(16,185,129,0.15)';
-                badge.style.color = '#10b981';
-                badge.style.borderColor = 'rgba(16,185,129,0.3)';
-            }
-
-            d.hops.forEach((h, index) => {
-                const isLast = index === d.hops.length - 1;
-
-                // Format delta time nicely
-                let deltaText = '';
-                if (index > 0) {
-                    const diffSec = Math.round(h.delta);
-                    if (diffSec < 60) {
-                        deltaText = ` (+${diffSec}s)`;
-                    } else {
-                        const diffMin = Math.round(diffSec / 60);
-                        deltaText = ` (+${diffMin}m)`;
-                    }
-                }
-
-                // Parse hostname (from part)
-                const hostMatch = h.from.match(/^([\w.\-]+)/);
-                const hostname = hostMatch ? hostMatch[1] : h.from;
-
-                // Parse IP if present in h.raw or h.ip
-                const ipDisplay = h.ip ? ` [${h.ip}]` : '';
-
-                hl.innerHTML += `
-                <div class="routing-step">
-                    ${index > 0 ? `<div class="routing-line-segment" style="background: ${h.delta > 300 ? '#f59e0b' : '#10b981'};"></div>` : ''}
-                    <div class="routing-step-circle ${isLast ? 'active-hop' : ''}">
-                        ${h.hop}
-                    </div>
-                    <div class="routing-step-body">
-                        <div class="routing-step-meta">
-                            <span style="color:var(--text-main); font-weight:700;">Hop ${h.hop}</span>:
-                            <span style="color:var(--accent-purple); font-weight:700;">${hostname}</span>${ipDisplay}
-                            <span style="color:${h.delta > 300 ? '#f59e0b' : 'var(--text-muted)'}; font-family:var(--font-mono), monospace; font-size:0.68rem; font-weight:600;">${deltaText}</span>
-                        </div>
-                        <div class="routing-step-data">${h.raw}</div>
-                    </div>
-                </div>
-            `;
-            });
-        } else {
-            document.getElementById('hops-panel').style.display = 'none';
-        }
-
-        // Display areas and trigger staggered animations
-        document.getElementById('results-area').style.display = 'block';
-        document.getElementById('ha-results-grid').style.display = 'grid';
-
-        const p1 = document.getElementById('auth-verdicts-panel');
-        const p2 = document.getElementById('red-flags-panel');
-        const p3 = document.getElementById('hops-panel');
-
-        setTimeout(() => { p1.classList.add('animated'); }, 0);
-        setTimeout(() => { p2.classList.add('animated'); }, 150);
-        setTimeout(() => { p3.classList.add('animated'); }, 300);
-
-        document.getElementById('results-area').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        document.body.appendChild(_haOverlay);
+        document.getElementById('ha-expand-close').addEventListener('click', haCollapse);
     }
+    function haExpand() {
+        buildHaOverlay();
+        document.getElementById('ha-expand-textarea').value = document.getElementById('headers-input').value;
+        _haOverlay.classList.add('active');
+        document.getElementById('ha-expand-textarea').focus();
+    }
+    function haCollapse() {
+        if (!_haOverlay) return;
+        document.getElementById('headers-input').value = document.getElementById('ha-expand-textarea').value;
+        _haOverlay.classList.remove('active');
+    }
+    document.getElementById('ha-dot-green').addEventListener('click', function() {
+        if (_haOverlay && _haOverlay.classList.contains('active')) haCollapse();
+        else haExpand();
+    });
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && _haOverlay && _haOverlay.classList.contains('active')) haCollapse();
+    });
+})();
 </script>
-<style>
-    @keyframes spin {
-        to {
-            transform: rotate(360deg);
-        }
-    }
-</style>
 {% endblock %}
