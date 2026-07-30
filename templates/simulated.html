@@ -3,6 +3,15 @@
 {% block title %}Security Training Portal - PhishSim AI{% endblock %}
 
 {% block content %}
+<div class="skeleton-loader-overlay awareness-skeleton" aria-hidden="true" style="padding:clamp(2rem,6vw,5rem) 1.25rem;">
+    <div style="max-width:500px;margin:0 auto;">
+        <div class="skeleton-block" style="width:54px;height:54px;border-radius:50%;margin:0 auto 24px;"></div>
+        <div class="skeleton-block" style="width:72%;height:38px;margin:0 auto 14px;"></div>
+        <div class="skeleton-block" style="width:94%;height:17px;margin:0 auto 34px;"></div>
+        <div class="skeleton-block" style="height:360px;border-radius:16px;margin-bottom:28px;"></div>
+        <div class="skeleton-block" style="height:180px;border-radius:16px;"></div>
+    </div>
+</div>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;900&family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 
 <style>
@@ -14,6 +23,28 @@
 @keyframes bounceAlert {
     0%, 100% { transform: translateY(0); }
     50% { transform: translateY(-4px); }
+}
+
+/* Celebratory Confetti and Success Scale Pop styles */
+@keyframes successPop {
+    0% { transform: scale(0.85); opacity: 0; }
+    50% { transform: scale(1.04); }
+    100% { transform: scale(1); opacity: 1; }
+}
+.success-scale-pop {
+    animation: successPop 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+@keyframes confettiFall {
+    0% { transform: translateY(-50px) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(105vh) rotate(360deg); opacity: 0; }
+}
+.confetti-piece {
+    position: fixed;
+    z-index: 100000;
+    top: -20px;
+    border-radius: 2px;
+    animation: confettiFall 3s linear forwards;
+    pointer-events: none;
 }
 
 .hotspot-dot {
@@ -509,6 +540,11 @@ body.light-theme #warning-card-container h2 {
                     <button type="button" class="btn-primary-sm" onclick="window.close();" style="padding: 10px 24px; font-size: 0.88rem; font-weight: 700; border-radius: 8px; cursor: pointer; border: none; font-family: 'Space Grotesk', sans-serif;">
                         Return to Work
                     </button>
+                    {% if tracking_id %}
+                    <a href="/certificate/{{ tracking_id }}" target="_blank" class="btn-outline" style="padding: 10px 24px; font-size: 0.88rem; font-weight: 700; border-radius: 8px; cursor: pointer; border: 1px solid var(--border); font-family: 'Space Grotesk', sans-serif; text-decoration: none; color: var(--text-primary); display: inline-flex; align-items: center; gap: 6px;">
+                        <i class="ti ti-award" style="font-size:1.1rem; color:var(--primary);"></i> View Certificate
+                    </a>
+                    {% endif %}
                 </div>
             </div>
 
@@ -792,6 +828,8 @@ function startTraining() {
         introEl.style.display = 'none';
         qBoxEl.style.display = 'none';
         successEl.style.display = 'block';
+        successEl.classList.add('success-scale-pop');
+        triggerConfetti();
 
         // Submit AJAX callback to backend
         if (trackingId) {
@@ -811,6 +849,34 @@ function startTraining() {
             .catch(err => {
                 console.error("Failed to post training complete logs:", err);
             });
+        }
+    }
+
+    function triggerConfetti() {
+        const colors = ['#22c55e', '#38bdf8', '#a855f7', '#fbbf24', '#ec4899', '#34d399'];
+        for (let i = 0; i < 75; i++) {
+            const confetti = document.createElement('div');
+            confetti.className = 'confetti-piece';
+            
+            // Random styling
+            const size = Math.floor(Math.random() * 8) + 6; // 6px - 14px
+            confetti.style.width = `${size}px`;
+            confetti.style.height = `${size}px`;
+            confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+            confetti.style.left = `${Math.random() * 100}vw`;
+            
+            // Randomize fall delays & durations
+            const duration = Math.random() * 2.2 + 1.8; // 1.8s - 4s
+            const delay = Math.random() * 0.8; // 0s - 0.8s
+            confetti.style.animationDuration = `${duration}s`;
+            confetti.style.animationDelay = `${delay}s`;
+            
+            document.body.appendChild(confetti);
+            
+            // Cleanup
+            setTimeout(() => {
+                confetti.remove();
+            }, (duration + delay) * 1000);
         }
     }
 

@@ -133,6 +133,61 @@ def record_failed_login(identifier):
 def clear_failed_logins(identifier):
     LOGIN_ATTEMPTS.pop(identifier, None)
 
+
+# --- Sliding Window Rate Limiter & SSRF Helpers ---
+PUBLIC_RATE_LIMITS = {}
+
+def check_rate_limit(ip, endpoint, max_requests, period_seconds):
+    """Sliding-window IP-based rate limiter stored in memory."""
+    now = time.time()
+    key = (ip, endpoint)
+    history = [t for t in PUBLIC_RATE_LIMITS.get(key, []) if now - t < period_seconds]
+    PUBLIC_RATE_LIMITS[key] = history
+    if len(history) >= max_requests:
+        return False
+    PUBLIC_RATE_LIMITS[key].append(now)
+    return True
+
+def get_remote_ip():
+    """Extracts client IP, supporting reverse-proxy headers like X-Forwarded-For."""
+    if request.headers.get("X-Forwarded-For"):
+        return request.headers.get("X-Forwarded-For").split(",")[0].strip()
+    return request.remote_addr
+
+def is_safe_ip(ip_str):
+    """Blocks loopback, link-local, private, multicast, unspecified, and reserved IPs."""
+    import ipaddress
+    try:
+        ip = ipaddress.ip_address(ip_str)
+        if (ip.is_private or 
+            ip.is_loopback or 
+            ip.is_link_local or 
+            ip.is_multicast or 
+            ip.is_reserved or
+            ip.is_unspecified):
+            return False
+        return True
+    except ValueError:
+        return False
+
+def is_safe_url(url_str):
+    """Resolves all target hostname IPs and validates they belong to public routing spaces."""
+    import urllib.parse, socket
+    try:
+        parsed = urllib.parse.urlparse(url_str)
+        hostname = parsed.hostname
+        if not hostname:
+            return False
+        # Resolve all DNS records
+        for info in socket.getaddrinfo(hostname, None):
+            ip = info[4][0]
+            if not is_safe_ip(ip):
+                return False
+        return True
+    except Exception:
+        return False
+
+
 # --- Database Connection Pooling ---
 import mysql.connector.pooling
 
@@ -227,7 +282,8 @@ def ensure_auth_schema(cursor):
     ]:
         try:
             cursor.execute(ddl)
-        except Exception:
+        except Exception as e:
+            # Columns may already exist from previous executions, ignore duplicate column errors safely
             pass
 
     admin_email = os.getenv("ADMIN_EMAIL", "admin@phishsim.ai").strip().lower()
@@ -272,7 +328,8 @@ def ensure_core_tables(cursor):
     """)
     try:
         cursor.execute("ALTER TABLE campaigns CHANGE target_domain company_domain VARCHAR(255)")
-    except Exception:
+    except Exception as e:
+        # Table or column update may already have been applied
         pass
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS employees (
@@ -287,7 +344,8 @@ def ensure_core_tables(cursor):
     try:
         cursor.execute("ALTER TABLE employees CHANGE role department VARCHAR(255)")
         cursor.execute("ALTER TABLE employees ADD COLUMN title VARCHAR(255)")
-    except Exception:
+    except Exception as e:
+        # Table or column updates may already have been applied
         pass
 
 # Track the next time we should retry the schema bootstrap after a failure
@@ -333,6 +391,16 @@ def add_security_headers(response):
     response.headers.setdefault("X-Frame-Options", "DENY")
     response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
     response.headers.setdefault("Permissions-Policy", "camera=(), microphone=(), geolocation=()")
+    response.headers.setdefault(
+        "Content-Security-Policy",
+        "default-src 'self'; "
+        "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; "
+        "font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net; "
+        "img-src 'self' data: https://*.google.com https://*.urlscan.io; "
+        "connect-src 'self' https://api.pwnedpasswords.com https://emailrep.io https://dns.google https://rdap.org; "
+        "frame-ancestors 'none';"
+    )
     # High-performance caching for static assets
     if request.path.startswith('/static/'):
         response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
@@ -726,7 +794,8 @@ def ensure_email_tracking_table(cursor):
     ]:
         try:
             cursor.execute(ddl)
-        except Exception:
+        except Exception as e:
+            # Columns may already exist from previous executions, ignore safely
             pass
 
     for ddl in [
@@ -736,7 +805,8 @@ def ensure_email_tracking_table(cursor):
     ]:
         try:
             cursor.execute(ddl)
-        except Exception:
+        except Exception as e:
+            # Indexes may already exist from previous executions, ignore safely
             pass
 
 def ensure_events_table(cursor):
@@ -753,11 +823,13 @@ def ensure_events_table(cursor):
     """)
     try:
         cursor.execute("ALTER TABLE events ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
-    except Exception:
+    except Exception as e:
+        # Columns may already exist, ignore safely
         pass
     try:
         cursor.execute("ALTER TABLE events MODIFY COLUMN event_type VARCHAR(50)")
-    except Exception:
+    except Exception as e:
+        # Column formatting may already have been modified, ignore safely
         pass
     for ddl in [
         "CREATE INDEX idx_events_tracking_type ON events (tracking_id, event_type)",
@@ -765,7 +837,8 @@ def ensure_events_table(cursor):
     ]:
         try:
             cursor.execute(ddl)
-        except Exception:
+        except Exception as e:
+            # Indexes may already exist, ignore safely
             pass
 
 def ensure_audit_table(cursor):
@@ -984,12 +1057,14 @@ def home():
         if cursor:
             try:
                 cursor.close()
-            except Exception:
+            except Exception as e:
+                # Already closed or cleanup error, ignore safely
                 pass
         if db:
             try:
                 db.close()
-            except Exception:
+            except Exception as e:
+                # Already closed or cleanup error, ignore safely
                 pass
         
     return render_template("home.html", latest_simulation_time=latest_time_str)
@@ -1263,8 +1338,8 @@ def login():
                 db.commit()
                 cursor.close()
                 db.close()
-            except Exception:
-                pass
+            except Exception as e:
+                print(f"[Warning] Failed to update last_login_at for user {user['id']}: {e}")
             record_audit_event(user["id"], "Account login")
             return redirect(request.args.get("next") or url_for("dashboard"))
 
@@ -1288,6 +1363,11 @@ def forgot_password():
 @app.route("/signup", methods=["GET", "POST"])
 def signup():
     if request.method == "POST":
+        # Rate Limiting: max 5 signups per 15 minutes per IP
+        if not check_rate_limit(get_remote_ip(), "signup", 5, 900):
+            flash("Too many signup attempts. Please wait 15 minutes before retrying.")
+            return redirect(url_for("signup"))
+            
         name = request.form.get("name", "").strip()
         email = request.form.get("email", "").strip().lower()
         password = request.form.get("password", "")
@@ -1392,8 +1472,8 @@ def api_terminal_login():
             db2.commit()
             c2.close()
             db2.close()
-        except Exception:
-            pass
+        except Exception as e:
+            print(f"[Warning] Failed to update terminal login last_login_at for user {user['id']}: {e}")
         record_audit_event(user["id"], "Terminal login")
         first_name = (user["name"] or "").split()[0] if user.get("name") else "User"
         return jsonify({
@@ -1768,6 +1848,9 @@ def solution_detail(key):
 
 @app.route("/api/analyze-threat", methods=["POST"])
 def analyze_threat_api():
+    if not check_rate_limit(get_remote_ip(), "analyze-threat", 5, 60):
+        return jsonify({"success": False, "message": "Rate limit exceeded. Please wait 60 seconds before retrying."}), 429
+        
     email_text = request.form.get("email_text", "").strip()
     mode = request.form.get("mode", "body").strip().lower()
     
@@ -5733,8 +5816,8 @@ def delete_campaign(campaign_id):
         
         try:
             cursor.execute("DELETE FROM emails_sent WHERE campaign_id = %s", (campaign_id,))
-        except:
-            pass
+        except Exception as e:
+            print(f"[Warning] Failed to delete emails_sent for campaign {campaign_id}: {e}")
             
         cursor.execute("DELETE FROM employees WHERE campaign_id = %s", (campaign_id,))
         cursor.execute("DELETE FROM campaigns WHERE id = %s", (campaign_id,))
@@ -5771,8 +5854,8 @@ def delete_campaigns():
             if campaign:
                 try:
                     cursor.execute("DELETE FROM emails_sent WHERE campaign_id = %s", (campaign_id,))
-                except:
-                    pass
+                except Exception as e:
+                    print(f"[Warning] Failed to delete emails_sent for campaign {campaign_id} in bulk: {e}")
                 cursor.execute("DELETE FROM employees WHERE campaign_id = %s", (campaign_id,))
                 cursor.execute("DELETE FROM campaigns WHERE id = %s", (campaign_id,))
                 deleted_count += 1
@@ -6164,6 +6247,12 @@ def ai_risk_advisor():
     cursor = db.cursor(dictionary=True)
     
     try:
+        if ensure_email_schema_once(cursor):
+            db.commit()
+        recover_stuck_campaigns(cursor)
+        db.commit()
+        run_due_scheduled_campaigns(cursor)
+
         if user["role"] == "admin":
             campaign_where = "(c.company_domain != 'demo-corp.com' OR c.company_domain IS NULL)"
             params = ()
@@ -6552,6 +6641,9 @@ def pro_waitlist():
 @app.route("/api/header-analyzer", methods=["POST"])
 def header_analyzer_api():
     """Parse raw email headers and return DMARC/SPF/DKIM/routing verdict."""
+    if not check_rate_limit(get_remote_ip(), "header-analyzer", 10, 60):
+        return jsonify({"success": False, "message": "Rate limit exceeded. Please wait 60 seconds before retrying."}), 429
+        
     import re
     raw = request.form.get("headers", "").strip()
     if not raw:
@@ -6654,8 +6746,8 @@ def header_analyzer_api():
             try:
                 dt = datetime.strptime(created_date, "%Y-%m-%d")
                 domain_age_days = (datetime.now() - dt).days
-            except Exception:
-                pass
+            except Exception as e:
+                print(f"[Debug] Failed to parse domain creation date '{created_date}': {e}")
 
     # ── X-Originating-IP ─────────────────────────────────────────────
     orig_ip = find_header("X-Originating-IP", raw) or find_header("X-Sender-IP", raw) or find_header("X-Source-IP", raw)
@@ -6678,7 +6770,8 @@ def header_analyzer_api():
             try:
                 dt = email.utils.parsedate_to_datetime(date_part)
                 ts = dt.timestamp()
-            except Exception:
+            except Exception as e:
+                # Malformed date formats are common, fallback safely
                 pass
                 
         from_m = re.search(r'from\s+([\w.\-\[\]]+)', hop_clean, re.IGNORECASE)
@@ -6833,194 +6926,225 @@ def header_analyzer_api():
 
 @app.route("/api/url-decoder", methods=["POST"])
 def url_decoder_api():
-    """Follow redirect chain, check URLhaus and Google Safe Browsing."""
-    import re, requests as req_lib
+    """Follow redirect chain, check URLhaus and Google Safe Browsing and stream results."""
+    if not check_rate_limit(get_remote_ip(), "url-decoder", 10, 60):
+        return jsonify({"success": False, "message": "Rate limit exceeded. Please wait 60 seconds before retrying."}), 429
+        
+    import re, requests as req_lib, json
+    from flask import Response
+    
     url = request.form.get("url", "").strip()
     if not url:
         return jsonify({"success": False, "message": "No URL provided."}), 400
     if not url.startswith(("http://", "https://")):
         url = "https://" + url
 
-    chain = []
-    current_url = url
-    MAX_HOPS = 4
-    session = req_lib.Session()
-    session.max_redirects = 1
-    headers = {"User-Agent": "Mozilla/5.0 (compatible; PhishSimAI/2.0)"}
+    def generate():
+        chain = []
+        current_url = url
+        MAX_HOPS = 4
+        session = req_lib.Session()
+        session.max_redirects = 1
+        headers = {"User-Agent": "Mozilla/5.0 (compatible; PhishSimAI/2.0)"}
 
-    for i in range(MAX_HOPS):
-        try:
-            resp = session.get(current_url, headers=headers, allow_redirects=False, timeout=(0.4, 0.4), verify=False)
-            domain = re.sub(r'https?://', '', current_url).split('/')[0]
-            node = {
-                "hop": i,
-                "url": current_url,
-                "domain": domain,
-                "status_code": resp.status_code,
-                "is_redirect": resp.status_code in (301, 302, 303, 307, 308),
-                "is_final": False
-            }
-            chain.append(node)
-            if resp.status_code in (301, 302, 303, 307, 308):
-                next_url = resp.headers.get("Location", "")
-                if not next_url:
+        for i in range(MAX_HOPS):
+            try:
+                # SSRF Protection: validate destination resolves to public IP space before fetching
+                if not is_safe_url(current_url):
+                    raise ValueError("Access Denied: Host resolves to internal or private IP address space.")
+                resp = session.get(current_url, headers=headers, allow_redirects=False, timeout=(0.8, 0.8), verify=False)
+                domain = re.sub(r'https?://', '', current_url).split('/')[0]
+                node = {
+                    "hop": i,
+                    "url": current_url,
+                    "domain": domain,
+                    "status_code": resp.status_code,
+                    "is_redirect": resp.status_code in (301, 302, 303, 307, 308),
+                    "is_final": False
+                }
+                chain.append(node)
+                # Stream the resolved hop to client
+                yield json.dumps({"type": "hop", "hop": node}) + "\n"
+                
+                if resp.status_code in (301, 302, 303, 307, 308):
+                    next_url = resp.headers.get("Location", "")
+                    if not next_url:
+                        break
+                    if next_url.startswith("/"):
+                        parsed = re.match(r'(https?://[^/]+)', current_url)
+                        next_url = parsed.group(1) + next_url if parsed else next_url
+                    current_url = next_url
+                else:
+                    node["is_final"] = True
                     break
-                if next_url.startswith("/"):
-                    parsed = re.match(r'(https?://[^/]+)', current_url)
-                    next_url = parsed.group(1) + next_url if parsed else next_url
-                current_url = next_url
-            else:
-                node["is_final"] = True
+            except Exception as e:
+                err_node = {
+                    "hop": i,
+                    "url": current_url,
+                    "domain": current_url.split('/')[2] if '/' in current_url else current_url,
+                    "status_code": None,
+                    "is_redirect": False,
+                    "is_final": True,
+                    "error": str(e)[:80]
+                }
+                chain.append(err_node)
+                yield json.dumps({"type": "hop", "hop": err_node}) + "\n"
                 break
-        except Exception as e:
-            chain.append({"hop": i, "url": current_url, "domain": current_url, "status_code": None, "is_redirect": False, "is_final": True, "error": str(e)[:80]})
-            break
 
-    if chain and not chain[-1]["is_final"]:
-        chain[-1]["is_final"] = True
+        if chain and not chain[-1]["is_final"]:
+            chain[-1]["is_final"] = True
 
-    final_url = chain[-1]["url"] if chain else url
-    final_domain = chain[-1]["domain"] if chain else ""
+        final_url = chain[-1]["url"] if chain else url
+        final_domain = chain[-1]["domain"] if chain else ""
 
-    # ── Parallel Diagnostics ──────────────────────────────────────────
-    from concurrent.futures import ThreadPoolExecutor
-    
-    urlhaus_verdict = "clean"
-    urlhaus_detail = "Not found in URLhaus database"
-    urlscan_verdict = "unknown"
-    urlscan_score = 0
-    urlscan_link = ""
-    ssl_issuer = "Unknown/None"
-
-    def check_urlhaus():
-        try:
-            uh_resp = req_lib.post(
-                "https://urlhaus-api.abuse.ch/v1/url/",
-                data={"url": final_url},
-                timeout=(0.3, 0.3)
-            )
-            uh_data = uh_resp.json()
-            if uh_data.get("query_status") == "is_available":
-                tags = uh_data.get('tags', []) or ['phishing']
-                return "malicious", f"Listed on URLhaus — tags: {', '.join(tags)}"
-            elif uh_data.get("query_status") == "no_results":
-                return "clean", "Not found in URLhaus database"
-        except Exception:
-            pass
-        return "unknown", "URLhaus check unavailable"
-
-    def check_urlscan():
-        if not final_domain:
-            return "unknown", 0, ""
-        try:
-            us_resp = req_lib.get(
-                f"https://urlscan.io/api/v1/search/?q=domain:{final_domain}",
-                headers={"User-Agent": "PhishSimAI/2.0"},
-                timeout=(0.3, 0.3)
-            )
-            if us_resp.status_code == 200:
-                us_data = us_resp.json()
-                results = us_data.get("results", [])
-                if results:
-                    malicious_scans = [r for r in results if r.get("verdicts", {}).get("overall", {}).get("malicious")]
-                    if malicious_scans:
-                        score = max(r.get("verdicts", {}).get("overall", {}).get("score", 0) for r in malicious_scans)
-                        link = malicious_scans[0].get("result")
-                        return "malicious", score, link
-                    else:
-                        link = results[0].get("result")
-                        return "clean", 0, link
-        except Exception:
-            pass
-        return "unknown", 0, ""
-
-    def check_ssl():
-        if not final_domain:
-            return "Unknown/None"
-        import ssl, socket
-        try:
-            host = final_domain.split(':')[0]
-            context = ssl.create_default_context()
-            with socket.create_connection((host, 443), timeout=0.3) as sock:
-                with context.wrap_socket(sock, server_hostname=host) as ssock:
-                    cert = ssock.getpeercert()
-                    for rdn in cert.get('issuer', []):
-                        for attr in rdn:
-                            if attr[0] == 'commonName':
-                                return attr[1]
-        except Exception:
-            pass
-        # Fallbacks
-        if "google" in final_domain:
-            return "GTS CA 1C3"
-        elif "bit.ly" in final_domain:
-            return "DigiCert Global G2 TLS CA"
-        elif "apple" in final_domain:
-            return "Apple Public Cloud RSA CA"
-        return "Unknown/None"
-
-    future_uh = DIAGNOSTICS_EXECUTOR.submit(check_urlhaus)
-    future_us = DIAGNOSTICS_EXECUTOR.submit(check_urlscan)
-    future_ssl = DIAGNOSTICS_EXECUTOR.submit(check_ssl)
-    
-    try:
-        urlhaus_verdict, urlhaus_detail = future_uh.result(timeout=0.5)
-    except Exception:
-        urlhaus_verdict, urlhaus_detail = "unknown", "Check timed out"
-        
-    try:
-        urlscan_verdict, urlscan_score, urlscan_link = future_us.result(timeout=0.5)
-    except Exception:
-        urlscan_verdict, urlscan_score, urlscan_link = "unknown", 0, ""
-        
-    try:
-        ssl_issuer = future_ssl.result(timeout=0.5)
-    except Exception:
+        # Run parallel diagnostics using global executor pool
+        urlhaus_verdict = "clean"
+        urlhaus_detail = "Not found in URLhaus database"
+        urlscan_verdict = "unknown"
+        urlscan_score = 0
+        urlscan_link = ""
         ssl_issuer = "Unknown/None"
 
-    # ── Verdict ──────────────────────────────────────────────────────
-    suspicious_patterns = [
-        r'login|signin|verify|update|account|secure|bank|paypal|microsoft|apple|google|amazon',
-        r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}',   # raw IP
-        r'[a-z0-9]{20,}\.(xyz|top|tk|ml|ga|cf|gq)',  # suspicious TLDs with long labels
-    ]
-    domain_flags = []
-    for pat in suspicious_patterns:
-        if re.search(pat, final_domain, re.IGNORECASE):
-            domain_flags.append(pat)
+        def check_urlhaus():
+            try:
+                uh_resp = req_lib.post(
+                    "https://urlhaus-api.abuse.ch/v1/url/",
+                    data={"url": final_url},
+                    timeout=(0.5, 0.5)
+                )
+                uh_data = uh_resp.json()
+                if uh_data.get("query_status") == "is_available":
+                    tags = uh_data.get('tags', []) or ['phishing']
+                    return "malicious", f"Listed on URLhaus — tags: {', '.join(tags)}"
+                elif uh_data.get("query_status") == "no_results":
+                    return "clean", "Not found in URLhaus database"
+            except Exception as e:
+                print(f"[Warning] URLhaus check failed for {final_domain}: {e}")
+            return "unknown", "URLhaus check unavailable"
 
-    redirect_count = sum(1 for n in chain if n.get("is_redirect"))
-    if urlhaus_verdict == "malicious" or urlscan_verdict == "malicious" or len(domain_flags) >= 2:
-        verdict = "DANGEROUS"
-        verdict_color = "#ef4444"
-    elif len(chain) > 3 or domain_flags or urlscan_verdict == "suspicious":
-        verdict = "SUSPICIOUS"
-        verdict_color = "#f59e0b"
-    else:
-        verdict = "LIKELY SAFE"
-        verdict_color = "#10b981"
+        def check_urlscan():
+            if not final_domain:
+                return "unknown", 0, ""
+            try:
+                us_resp = req_lib.get(
+                    f"https://urlscan.io/api/v1/search/?q=domain:{final_domain}",
+                    headers={"User-Agent": "PhishSimAI/2.0"},
+                    timeout=(0.5, 0.5)
+                )
+                if us_resp.status_code == 200:
+                    us_data = us_resp.json()
+                    results = us_data.get("results", [])
+                    if results:
+                        malicious_scans = [r for r in results if r.get("verdicts", {}).get("overall", {}).get("malicious")]
+                        if malicious_scans:
+                            score = max(r.get("verdicts", {}).get("overall", {}).get("score", 0) for r in malicious_scans)
+                            link = malicious_scans[0].get("result")
+                            return "malicious", score, link
+                        else:
+                            link = results[0].get("result")
+                            return "clean", 0, link
+            except Exception as e:
+                print(f"[Warning] URLscan check failed for {final_domain}: {e}")
+            return "unknown", 0, ""
 
-    return jsonify({
-        "success": True,
-        "chain": chain,
-        "redirect_count": redirect_count,
-        "final_url": final_url,
-        "final_domain": final_domain,
-        "ssl_issuer": ssl_issuer,
-        "urlhaus_verdict": urlhaus_verdict,
-        "urlhaus_detail": urlhaus_detail,
-        "urlscan_verdict": urlscan_verdict,
-        "urlscan_score": urlscan_score,
-        "urlscan_link": urlscan_link,
-        "verdict": verdict,
-        "verdict_color": verdict_color,
-        "domain_flags": domain_flags
-    })
+        def check_ssl():
+            if not final_domain:
+                return "Unknown/None"
+            import ssl as _ssl, socket
+            try:
+                host = final_domain.split(':')[0]
+                context = _ssl.create_default_context()
+                with socket.create_connection((host, 443), timeout=0.5) as sock:
+                    with context.wrap_socket(sock, server_hostname=host) as ssock:
+                        cert = ssock.getpeercert()
+                        for rdn in cert.get('issuer', []):
+                            for attr in rdn:
+                                if attr[0] == 'commonName':
+                                    return attr[1]
+            except Exception as e:
+                print(f"[Warning] SSL check failed for {final_domain}: {e}")
+            if "google" in final_domain:
+                return "GTS CA 1C3"
+            elif "bit.ly" in final_domain:
+                return "DigiCert Global G2 TLS CA"
+            elif "apple" in final_domain:
+                return "Apple Public Cloud RSA CA"
+            return "Unknown/None"
+
+        future_uh = DIAGNOSTICS_EXECUTOR.submit(check_urlhaus)
+        future_us = DIAGNOSTICS_EXECUTOR.submit(check_urlscan)
+        future_ssl = DIAGNOSTICS_EXECUTOR.submit(check_ssl)
+        
+        try:
+            urlhaus_verdict, urlhaus_detail = future_uh.result(timeout=0.6)
+        except Exception:
+            urlhaus_verdict, urlhaus_detail = "unknown", "Check timed out"
+            
+        try:
+            urlscan_verdict, urlscan_score, urlscan_link = future_us.result(timeout=0.6)
+        except Exception:
+            urlscan_verdict, urlscan_score, urlscan_link = "unknown", 0, ""
+            
+        try:
+            ssl_issuer = future_ssl.result(timeout=0.6)
+        except Exception:
+            ssl_issuer = "Unknown/None"
+
+        suspicious_patterns = [
+            r'login|signin|verify|update|account|secure|bank|paypal|microsoft|apple|google|amazon',
+            r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}',
+            r'[a-z0-9]{20,}\.(xyz|top|tk|ml|ga|cf|gq)',
+        ]
+        domain_flags = []
+        for pat in suspicious_patterns:
+            if re.search(pat, final_domain, re.IGNORECASE):
+                domain_flags.append(pat)
+
+        # Prevent brand keyword matches from flagging official domains
+        WHITELIST_DOMAINS = {"google.com", "apple.com", "microsoft.com", "amazon.com", "paypal.com", "yahoo.com", "github.com"}
+        if final_domain.lower() in WHITELIST_DOMAINS or any(final_domain.lower().endswith("." + d) for d in WHITELIST_DOMAINS):
+            domain_flags = []
+
+        redirect_count = sum(1 for n in chain if n.get("is_redirect"))
+        if urlhaus_verdict == "malicious" or urlscan_verdict == "malicious" or len(domain_flags) >= 2:
+            verdict = "DANGEROUS"
+            verdict_color = "#ef4444"
+        elif len(chain) > 3 or domain_flags or urlscan_verdict == "suspicious":
+            verdict = "SUSPICIOUS"
+            verdict_color = "#f59e0b"
+        else:
+            verdict = "LIKELY SAFE"
+            verdict_color = "#10b981"
+
+        summary = {
+            "success": True,
+            "chain": chain,
+            "redirect_count": redirect_count,
+            "final_url": final_url,
+            "final_domain": final_domain,
+            "ssl_issuer": ssl_issuer,
+            "urlhaus_verdict": urlhaus_verdict,
+            "urlhaus_detail": urlhaus_detail,
+            "urlscan_verdict": urlscan_verdict,
+            "urlscan_score": urlscan_score,
+            "urlscan_link": urlscan_link,
+            "verdict": verdict,
+            "verdict_color": verdict_color,
+            "domain_flags": domain_flags
+        }
+        
+        # Stream the final results payload
+        yield json.dumps({"type": "summary", "summary": summary}) + "\n"
+
+    return Response(generate(), mimetype="application/x-json-stream")
 
 
 @app.route("/api/check-email-exposure", methods=["POST"])
 def check_email_exposure():
     """Scans an email address for public breach indicators and reputation profile."""
+    if not check_rate_limit(get_remote_ip(), "check-email-exposure", 10, 60):
+        return jsonify({"success": False, "message": "Rate limit exceeded. Please wait 60 seconds before retrying."}), 429
+        
     email = request.form.get("email", "").strip().lower()
     if not email or "@" not in email:
         return jsonify({"success": False, "message": "Invalid email address."}), 400
@@ -7079,6 +7203,9 @@ def check_email_exposure():
 @app.route("/api/password-breach/<sha1_prefix>", methods=["GET"])
 def password_breach_api(sha1_prefix):
     """Proxy HaveIBeenPwned k-anonymity range API."""
+    if not check_rate_limit(get_remote_ip(), "password-breach", 30, 60):
+        return "Rate limit exceeded. Please wait 60 seconds before retrying.", 429
+        
     import requests as req_lib
     if not sha1_prefix or len(sha1_prefix) != 5 or not sha1_prefix.isalnum():
         return "Invalid prefix", 400

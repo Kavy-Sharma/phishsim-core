@@ -502,6 +502,63 @@
         body.light-theme .type-label.active {
             background: rgba(245, 158, 11, 0.04) !important;
         }
+
+        /* Advisor Modal System Upgrades */
+        .advisor-modal {
+            position: fixed; inset: 0; z-index: 10000;
+            display: flex !important; align-items: center; justify-content: center;
+            background: rgba(2, 6, 23, 0.75);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        .advisor-modal.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .advisor-modal-box {
+            background: rgba(13, 21, 38, 0.95);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 2rem;
+            width: 90%;
+            position: relative;
+            transform: translateY(24px) scale(0.95);
+            transition: transform 0.32s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        body.light-theme .advisor-modal-box {
+            background: #ffffff;
+            border-color: rgba(0, 0, 0, 0.08);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.06);
+        }
+        .advisor-modal.active .advisor-modal-box {
+            transform: translateY(0) scale(1);
+        }
+
+        /* Cyber Spinner Upgrade */
+        .cyber-spinner {
+            width: 32px;
+            height: 32px;
+            border: 2px solid transparent;
+            border-top-color: var(--pro-gold);
+            border-bottom-color: var(--pro-gold);
+            border-radius: 50%;
+            animation: spin 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+            position: relative;
+            display: inline-block;
+        }
+        .cyber-spinner::after {
+            content: '';
+            position: absolute;
+            inset: 4px;
+            border: 2px solid transparent;
+            border-left-color: rgba(245, 158, 11, 0.4);
+            border-right-color: rgba(245, 158, 11, 0.4);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite reverse;
+        }
     </style>
 
     <div style="margin-bottom: 3.5rem; animation: fadeInUp 0.5s ease-out 0.15s; animation-fill-mode: both;">
@@ -721,8 +778,8 @@
 </div>
 
 <!-- Confirmation Training Modal -->
-<div id="confirm-training-modal" style="display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.7); z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(4px);">
-    <div style="background: #0f172a; border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 12px; max-width: 450px; width: 90%; padding: 2rem; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);">
+<div id="confirm-training-modal" class="advisor-modal">
+    <div class="advisor-modal-box" style="max-width: 450px;">
         <h3 style="font-family: var(--font-sans); font-size: 1.25rem; font-weight: 700; color: #fff; margin-top: 0; margin-bottom: 1rem; display: flex; align-items: center; gap: 8px;">
             <i class="ti ti-school" style="color: var(--pro-gold);"></i> Confirm Micro-Training
         </h3>
@@ -740,15 +797,15 @@
 </div>
 
 <!-- Domain Lockdown Modal -->
-<div id="lockdown-modal" style="display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.7); z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(4px);">
-    <div style="background: #0f172a; border: 1px solid var(--pro-gold); border-radius: 12px; max-width: 600px; width: 90%; padding: 2rem; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5); overflow-y: auto; max-height: 90vh;">
+<div id="lockdown-modal" class="advisor-modal">
+    <div class="advisor-modal-box" style="max-width: 600px; overflow-y: auto; max-height: 90vh;">
         <h3 style="font-family: var(--font-sans); font-size: 1.25rem; font-weight: 700; color: #fff; margin-top: 0; margin-bottom: 1rem; display: flex; align-items: center; justify-content: space-between; gap: 8px;">
             <span style="display:flex; align-items:center; gap:8px;"><i class="ti ti-lock" style="color: var(--pro-gold);"></i> Domain Lockdown Check</span>
             <span id="lockdown-domain-badge" style="font-size:0.75rem; font-family:var(--font-mono); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:4px; color:var(--text-muted);"></span>
         </h3>
         
         <div id="lockdown-loading" style="display:flex; flex-direction:column; align-items:center; justify-content:center; padding:2rem 0; gap:12px;">
-            <div style="width:28px; height:28px; border:3px solid rgba(255,255,255,0.1); border-top-color:var(--pro-gold); border-radius:50%; animation: spin 1s infinite linear;"></div>
+            <div class="cyber-spinner"></div>
             <span style="font-size:0.85rem; color:var(--text-muted); font-family:var(--font-mono);">Querying DNS over HTTPS...</span>
         </div>
 
@@ -785,8 +842,8 @@
 </div>
 
 <!-- Decoy Mailbox Modal -->
-<div id="decoy-modal" style="display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.7); z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(4px);">
-    <div style="background: #0f172a; border: 1px solid var(--pro-gold); border-radius: 12px; max-width: 650px; width: 90%; padding: 2rem; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5); overflow-y: auto; max-height: 90vh;">
+<div id="decoy-modal" class="advisor-modal">
+    <div class="advisor-modal-box" style="max-width: 650px; overflow-y: auto; max-height: 90vh;">
         <h3 style="font-family: var(--font-sans); font-size: 1.25rem; font-weight: 700; color: #fff; margin-top: 0; margin-bottom: 1rem; display: flex; align-items: center; gap: 8px;">
             <i class="ti ti-mail-opened" style="color: var(--pro-gold);"></i> Monitored Honeypot/Decoy Mailboxes
         </h3>
@@ -804,7 +861,7 @@
         <!-- Tab Content 1: Active Decoys -->
         <div id="decoy-content-list">
             <div id="decoy-list-loading" style="display:flex; justify-content:center; padding:1.5rem 0;">
-                <div style="width:20px; height:20px; border:2px solid rgba(255,255,255,0.1); border-top-color:var(--pro-gold); border-radius:50%; animation: spin 1s infinite linear;"></div>
+                <div class="cyber-spinner" style="width:24px; height:24px;"></div>
             </div>
             
             <div id="decoy-list-empty" style="display:none; text-align:center; padding:1.5rem 0; color:var(--text-muted); font-size:0.85rem;">
@@ -919,7 +976,7 @@
     function triggerRemediation(action) {
         if (action === 'train') {
             const modal = document.getElementById('confirm-training-modal');
-            modal.style.display = 'flex';
+            modal.classList.add('active');
         } else if (action === 'lockdown') {
             openLockdownModal();
         } else if (action === 'decoy') {
@@ -930,7 +987,7 @@
     // === Domain Lockdown Functions ===
     async function openLockdownModal() {
         const modal = document.getElementById('lockdown-modal');
-        modal.style.display = 'flex';
+        modal.classList.add('active');
         document.getElementById('lockdown-loading').style.display = 'flex';
         document.getElementById('lockdown-results').style.display = 'none';
         
@@ -1003,17 +1060,17 @@
     }
     
     function closeLockdownModal() {
-        document.getElementById('lockdown-modal').style.display = 'none';
+        document.getElementById('lockdown-modal').classList.remove('active');
     }
 
     // === Decoy Mailbox Functions ===
     function openDecoyModal() {
-        document.getElementById('decoy-modal').style.display = 'flex';
+        document.getElementById('decoy-modal').classList.add('active');
         switchDecoyModalTab('list');
     }
     
     function closeDecoyModal() {
-        document.getElementById('decoy-modal').style.display = 'none';
+        document.getElementById('decoy-modal').classList.remove('active');
     }
     
     function switchDecoyModalTab(tab) {
@@ -1178,11 +1235,11 @@
 
     // Modal controls
     document.getElementById('modal-cancel-btn').addEventListener('click', () => {
-        document.getElementById('confirm-training-modal').style.display = 'none';
+        document.getElementById('confirm-training-modal').classList.remove('active');
     });
 
     document.getElementById('modal-confirm-btn').addEventListener('click', async () => {
-        document.getElementById('confirm-training-modal').style.display = 'none';
+        document.getElementById('confirm-training-modal').classList.remove('active');
         
         const btn = document.getElementById('btn-train');
         if (!btn || btn.classList.contains('running') || btn.classList.contains('success')) return;

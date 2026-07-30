@@ -124,25 +124,48 @@
 }
 
 /* ── Window Controls Functional States ──────────────────── */
-/* Minimized state */
-.ha-minimized .ha-textarea,
-.ha-minimized .ha-presets-section,
-.ha-minimized .ha-action-btn { display: none !important; }
+/* Smooth Minimization Collapse */
+.ha-input-body {
+    max-height: 900px;
+    opacity: 1;
+    overflow: hidden;
+    transition: max-height 0.4s cubic-bezier(0.16, 1, 0.3, 1), 
+                opacity 0.3s ease, 
+                padding 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.ha-minimized .ha-input-body {
+    max-height: 0 !important;
+    opacity: 0 !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    pointer-events: none;
+}
 .ha-minimized .ha-term-header { border-bottom: none; }
 /* DNS-hop animation stage */
 .ha-hop-stage {
-    display: none;
-    padding: 1.5rem 2rem;
-    min-height: 160px;
+    display: flex !important; /* Keep display: flex always */
+    max-height: 0;
+    min-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    padding: 0 2rem;
     cursor: pointer;
     align-items: center;
     justify-content: center;
     flex-direction: column;
     gap: 1rem;
     position: relative;
-    overflow: hidden;
+    transition: max-height 0.4s cubic-bezier(0.16, 1, 0.3, 1), 
+                min-height 0.4s cubic-bezier(0.16, 1, 0.3, 1), 
+                opacity 0.3s ease, 
+                padding 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
-.ha-minimized .ha-hop-stage { display: flex; }
+.ha-minimized .ha-hop-stage {
+    max-height: 300px;
+    min-height: 160px;
+    opacity: 1;
+    padding: 1.5rem 2rem;
+}
 .ha-hop-svg { width: 280px; height: 70px; overflow: visible; }
 /* animated dots traveling path */
 .ha-hop-dot {
@@ -168,7 +191,7 @@
 }
 /* Expand overlay */
 .ha-expand-overlay {
-    display: none;
+    display: flex !important; /* Keep display: flex always */
     position: fixed;
     inset: 0;
     z-index: 9000;
@@ -178,8 +201,16 @@
     flex-direction: column;
     padding: 2rem;
     box-sizing: border-box;
+    opacity: 0;
+    pointer-events: none;
+    transform: scale(1.03);
+    transition: opacity 0.32s ease, transform 0.32s cubic-bezier(0.16, 1, 0.3, 1);
 }
-.ha-expand-overlay.active { display: flex; }
+.ha-expand-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+    transform: scale(1);
+}
 .ha-expand-header {
     display: flex;
     align-items: center;
@@ -1278,49 +1309,52 @@ body.light-theme .ha-action-btn:focus-visible {
                 <div class="ha-hop-restore-hint">&uarr; Click anywhere to restore</div>
             </div>
 
-            <!-- Presets Grid (6 items) -->
-            <div class="ha-presets-section">
-                <div class="ha-presets-title">Load Forensic Samples:</div>
-                <div class="ha-preset-grid">
-                    <button class="ha-preset-btn" id="btn-preset-legit" onclick="loadPreset('legit')">
-                        <span class="ha-preset-indicator" style="background:#10b981"></span>
-                        Legit Gmail → Outlook
-                    </button>
-                    <button class="ha-preset-btn" id="btn-preset-spf-fail" onclick="loadPreset('spf-fail')">
-                        <span class="ha-preset-indicator" style="background:#ef4444"></span>
-                        SPF Fail (Spoofed)
-                    </button>
-                    <button class="ha-preset-btn" id="btn-preset-no-dkim" onclick="loadPreset('no-dkim')">
-                        <span class="ha-preset-indicator" style="background:#f59e0b"></span>
-                        Missing DKIM
-                    </button>
-                    <button class="ha-preset-btn" id="btn-preset-no-dmarc" onclick="loadPreset('no-dmarc')">
-                        <span class="ha-preset-indicator" style="background:#f59e0b"></span>
-                        Missing DMARC
-                    </button>
-                    <button class="ha-preset-btn" id="btn-preset-reply-mismatch" onclick="loadPreset('reply-mismatch')">
-                        <span class="ha-preset-indicator" style="background:#ef4444"></span>
-                        Reply-To Mismatch
-                    </button>
-                    <button class="ha-preset-btn" id="btn-preset-newly-registered" onclick="loadPreset('newly-registered')">
-                        <span class="ha-preset-indicator" style="background:#ef4444"></span>
-                        Newly Registered Domain
-                    </button>
-                </div>
-            </div>
+            <!-- Wrapper for smooth minimization transition -->
+            <div class="ha-input-body" id="ha-input-body">
+                <textarea id="headers-input" class="ha-textarea"
+                    placeholder="Paste full raw email headers here (including all Received, Authentication-Results, SPF, and DKIM lines)…"
+                    spellcheck="false"></textarea>
 
-            <button class="ha-action-btn" id="trace-btn" onclick="executeTrace()">
-                <i class="ti ti-binary"></i>
-                TRACE ROUTING PIPELINE
-            </button>
+                <!-- Presets Grid (6 items) -->
+                <div class="ha-presets-section">
+                    <div class="ha-presets-title">Load Forensic Samples:</div>
+                    <div class="ha-preset-grid">
+                        <button class="ha-preset-btn" id="btn-preset-legit" onclick="loadPreset('legit')">
+                            <span class="ha-preset-indicator" style="background:#10b981"></span>
+                            Legit Gmail → Outlook
+                        </button>
+                        <button class="ha-preset-btn" id="btn-preset-spf-fail" onclick="loadPreset('spf-fail')">
+                            <span class="ha-preset-indicator" style="background:#ef4444"></span>
+                            SPF Fail (Spoofed)
+                        </button>
+                        <button class="ha-preset-btn" id="btn-preset-no-dkim" onclick="loadPreset('no-dkim')">
+                            <span class="ha-preset-indicator" style="background:#f59e0b"></span>
+                            Missing DKIM
+                        </button>
+                        <button class="ha-preset-btn" id="btn-preset-no-dmarc" onclick="loadPreset('no-dmarc')">
+                            <span class="ha-preset-indicator" style="background:#f59e0b"></span>
+                            Missing DMARC
+                        </button>
+                        <button class="ha-preset-btn" id="btn-preset-reply-mismatch" onclick="loadPreset('reply-mismatch')">
+                            <span class="ha-preset-indicator" style="background:#ef4444"></span>
+                            Reply-To Mismatch
+                        </button>
+                        <button class="ha-preset-btn" id="btn-preset-newly-registered" onclick="loadPreset('newly-registered')">
+                            <span class="ha-preset-indicator" style="background:#ef4444"></span>
+                            Newly Registered Domain
+                        </button>
+                    </div>
+                </div>
+
+                <button class="ha-action-btn" id="trace-btn" onclick="executeTrace()">
+                    <i class="ti ti-binary"></i>
+                    TRACE ROUTING PIPELINE
+                </button>
+            </div>
         </div>
 
         <!-- LOADING STAGE -->
-        <div id="stage-loading" class="ha-loading-stage" style="display: none;">
-            <div class="ha-loading-ring"></div>
-            <div class="ha-loading-text" id="loading-step-msg">Initializing analyzer engine…</div>
-            <div class="ha-loading-subtext">Isolating relay structures & cryptographic tags</div>
-        </div>
+        <div id="stage-loading" class="ha-loading-stage" style="display: none;"></div>
 
         <!-- RESULTS STAGE -->
         <div id="stage-results" style="display: none;">
@@ -1655,25 +1689,11 @@ async function executeTrace() {
         return;
     }
 
-    showStage('loading');
+    const loader = new ToolMiniLoader('stage-loading', 'header');
+    loader.start();
 
-    // Cyberpunk loading steps trace
-    const loadingSteps = [
-        'Connecting decryption pipeline…',
-        'Extracting cryptographic authentication markers…',
-        'Decoding Received headers chronological path…',
-        'Querying DNS authority for MX exchange configurations…',
-        'Cross-referencing domain registration records via RDAP…',
-        'Compiling trust classification graphs…',
-        'Finalizing forensic diagnostic output…'
-    ];
-    let stepIdx = 0;
-    const stepMsgEl = document.getElementById('loading-step-msg');
-    
-    const intervalId = setInterval(() => {
-        stepIdx = (stepIdx + 1) % loadingSteps.length;
-        stepMsgEl.textContent = loadingSteps[stepIdx];
-    }, 1200);
+    let isSuccess = false;
+    let parsedData = null;
 
     try {
         const fd = new FormData();
@@ -1684,27 +1704,33 @@ async function executeTrace() {
             body: fd
         });
         
-        clearInterval(intervalId);
-        
         if (!response.ok) {
             const errData = await response.json();
             alert('Analysis failed: ' + (errData.message || 'Server error occurred'));
-            showStage('input');
+            isSuccess = false;
             return;
         }
 
         const data = await response.json();
         if (data.success) {
-            renderForensicResults(data);
+            parsedData = data;
+            isSuccess = true;
         } else {
             alert('Analysis failed: ' + (data.message || 'Unknown parsing failure'));
-            showStage('input');
+            isSuccess = false;
         }
 
     } catch (err) {
-        clearInterval(intervalId);
         alert('Forensic connection failure: ' + err.message);
-        showStage('input');
+        isSuccess = false;
+    } finally {
+        loader.stop(() => {
+            if (isSuccess && parsedData) {
+                renderForensicResults(parsedData);
+            } else {
+                showStage('input');
+            }
+        });
     }
 }
 

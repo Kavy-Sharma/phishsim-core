@@ -170,23 +170,47 @@
     50% { opacity: 0.4; transform: scale(0.7); }
 }
 
-/* ── Window Controls Functional States ───────────────────────── */
-/* Minimized state: hides the input body, shows the amber animation stage */
-.ta-minimized .ta-input-body { display: none; }
+/* Smooth Minimization Collapse */
+.ta-input-body {
+    max-height: 800px;
+    opacity: 1;
+    overflow: hidden;
+    transition: max-height 0.4s cubic-bezier(0.16, 1, 0.3, 1), 
+                opacity 0.3s ease, 
+                padding 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.ta-minimized .ta-input-body {
+    max-height: 0 !important;
+    opacity: 0 !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    pointer-events: none;
+}
 .ta-minimized .ta-terminal-header { border-bottom: none; border-radius: var(--radius-lg); }
 .ta-phish-stage {
-    display: none;
-    padding: 1.5rem 2rem;
-    min-height: 200px;
+    display: flex !important; /* Keep display: flex always */
+    max-height: 0;
+    min-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    padding: 0 2rem;
     cursor: pointer;
     position: relative;
-    overflow: hidden;
     align-items: center;
     justify-content: center;
     flex-direction: column;
     gap: 1rem;
+    transition: max-height 0.4s cubic-bezier(0.16, 1, 0.3, 1), 
+                min-height 0.4s cubic-bezier(0.16, 1, 0.3, 1), 
+                opacity 0.3s ease, 
+                padding 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
-.ta-minimized .ta-phish-stage { display: flex; }
+.ta-minimized .ta-phish-stage {
+    max-height: 300px;
+    min-height: 200px;
+    opacity: 1;
+    padding: 1.5rem 2rem;
+}
 .ta-phish-feed {
     font-family: var(--font-mono);
     font-size: 0.78rem;
@@ -215,7 +239,7 @@
 }
 /* Expanded full-screen overlay */
 .ta-expand-overlay {
-    display: none;
+    display: flex !important; /* Keep display: flex always */
     position: fixed;
     inset: 0;
     z-index: 9000;
@@ -225,8 +249,16 @@
     flex-direction: column;
     padding: 2rem;
     box-sizing: border-box;
+    opacity: 0;
+    pointer-events: none;
+    transform: scale(1.03);
+    transition: opacity 0.32s ease, transform 0.32s cubic-bezier(0.16, 1, 0.3, 1);
 }
-.ta-expand-overlay.active { display: flex; }
+.ta-expand-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+    transform: scale(1);
+}
 .ta-expand-header {
     display: flex;
     align-items: center;
@@ -759,21 +791,8 @@ body.light-theme .ta-btn-sm:active {
 
         <!-- Green expand overlay (portal: appended to body in JS, defined here for clarity) -->
 
-        <div id="ta-loading-state" style="display:none;">
-            <div class="ta-terminal-header">
-                <div class="ta-dots">
-                    <div class="ta-dot red"></div>
-                    <div class="ta-dot amber"></div>
-                    <div class="ta-dot green"></div>
-                </div>
-                <span class="ta-terminal-label">agent@phishsim:~$ analyzing…</span>
-                <div class="ta-live-badge"><div class="ta-live-dot"></div>SCANNING</div>
-            </div>
-            <div class="ta-loading">
-                <div class="ta-spinner"></div>
-                <span class="ta-loading-label" id="ta-loading-msg">Querying threat intelligence…</span>
-            </div>
-        </div>
+        <!-- LOADING STATE -->
+        <div id="ta-loading-state" style="display:none;"></div>
 
         <!-- RESULT STATE — BODY -->
         <div id="ta-result-state" style="display:none;">
@@ -1121,18 +1140,14 @@ async function runAnalysis() {
     }
     _currentEmailText = emailText;
     document.getElementById('ta-input-state').style.display = 'none';
-    document.getElementById('ta-loading-state').style.display = '';
     document.getElementById('ta-result-state').style.display = 'none';
     document.getElementById('ta-headers-result').style.display = 'none';
 
-    if (window.startGlobalLoader) {
-        window.startGlobalLoader(0, 'ANALYZING EMAIL CONTENT');
-    }
+    // Show inline mini loader card
+    const loader = new ToolMiniLoader('ta-loading-state', 'threat');
+    loader.start();
 
-    const MSGS = ['Extracting phrase fingerprints…','Querying threat intelligence…','Locating suspicious patterns…','Computing deterministic score…','Building evidence annotations…'];
-    let msgIdx = 0;
-    const msgEl = document.getElementById('ta-loading-msg');
-    const msgIv = setInterval(() => { msgEl.textContent = MSGS[++msgIdx % MSGS.length]; }, 1800);
+    let isSuccess = false;
 
     try {
         const fd = new FormData();
@@ -1145,16 +1160,19 @@ async function runAnalysis() {
         }
         _currentResult = data;
         _currentResult.original_text = emailText;
-        if (data.mode === 'headers') renderHeadersResult(data);
-        else renderBodyResult(data);
+        isSuccess = true;
     } catch(e) {
         alert(e.message.startsWith('Network error') ? e.message : 'Analysis failed: ' + e.message);
-        resetToInput();
+        isSuccess = false;
     } finally {
-        clearInterval(msgIv);
-        if (window.dismissGlobalLoader) {
-            window.dismissGlobalLoader();
-        }
+        loader.stop(() => {
+            if (isSuccess && _currentResult) {
+                if (_currentResult.mode === 'headers') renderHeadersResult(_currentResult);
+                else renderBodyResult(_currentResult);
+            } else {
+                resetToInput();
+            }
+        });
     }
 }
 

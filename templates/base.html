@@ -29,239 +29,324 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/countup.js/2.8.0/countUp.umd.js"></script>
 
     <!-- Main Stylesheet -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css', v='1.0.6') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css', v='1.0.8-loading') }}">
 </head>
 <body class="{% block body_class %}{% endblock %} {% if current_user %}has-hud-bar{% endif %}">
 
-<!-- SVG Liquid/Watery text hover effect filter -->
-<svg style="position: absolute; width: 0; height: 0;" width="0" height="0" version="1.1" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <filter id="liquid-filter">
-      <feTurbulence type="fractalNoise" baseFrequency="0.015 0.04" numOctaves="3" result="noise">
-        <animate attributeName="baseFrequency" dur="10s" values="0.015 0.04; 0.035 0.07; 0.015 0.04" repeatCount="indefinite" />
-      </feTurbulence>
-      <feDisplacementMap in="SourceGraphic" in2="noise" scale="6" xChannelSelector="R" yChannelSelector="G" />
-    </filter>
-    <filter id="noise">
-      <feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" stitchTiles="stitch" />
-    </filter>
-  </defs>
-</svg>
-
-<!-- ═══════════════════════════════════════════════════════════
-     INTERACTIVE PAGE LOADER — Cyberpunk hex-grid style
-     Users can interact with particles while page loads.
+<!<!-- ═══════════════════════════════════════════════════════════
+     TOP PROGRESS BAR & GLOBAL SKELETON HANDLERS
      ═══════════════════════════════════════════════════════════ -->
-<div id="page-loader" style="
-    position: fixed; inset: 0; z-index: 99999;
-    background: #020617;
-    display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
-    transition: opacity 0.5s ease, visibility 0.5s ease;
-">
-    <!-- Interactive canvas -->
-    <canvas id="loader-canvas" style="position:absolute;inset:0;width:100%;height:100%;"></canvas>
-
-    <!-- Center content -->
-    <div style="position:relative;z-index:2;text-align:center;">
-        <!-- Logo -->
-        <div style="display:flex;align-items:center;gap:12px;justify-content:center;margin-bottom:2rem;">
-            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#06b6d4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
-            <span style="font-family:var(--font-sans);font-size:1.8rem;font-weight:900;color:#fff;">PhishSim<span style="color:#06b6d4;">.ai</span></span>
-        </div>
-
-        <!-- Animated hexagon spinner -->
-        <div id="loader-hex" style="
-            width:80px; height:80px; margin:0 auto 2rem;
-            position:relative;
-        ">
-            <svg viewBox="0 0 100 100" style="width:100%;height:100%;">
-                <g style="transform-origin: center; animation: hexRotate 10s linear infinite;">
-                    <polygon points="50,5 90,27.5 90,72.5 50,95 10,72.5 10,27.5"
-                        fill="none" stroke="rgba(6,182,212,0.2)" stroke-width="4"/>
-                    <polygon id="loader-hex-fill" points="50,5 90,27.5 90,72.5 50,95 10,72.5 10,27.5"
-                        fill="none" stroke="#06b6d4" stroke-width="4"
-                        stroke-dasharray="265" stroke-dashoffset="265"
-                        style="transform-origin: center; transition: stroke-dashoffset 0.15s ease;">
-                    </polygon>
-                </g>
-                <text x="50" y="58" text-anchor="middle" font-family="var(--font-sans)" font-size="22" font-weight="900" fill="#06b6d4" id="loader-pct">0</text>
-            </svg>
-        </div>
-
-        <!-- Status line -->
-        <div id="loader-status" style="
-            font-family:var(--font-mono); font-size:0.78rem;
-            color:#334155; letter-spacing:2px; text-transform:uppercase;
-            margin-bottom:0.8rem;
-        ">INITIALIZING ENGINE</div>
-
-        <!-- Hint -->
-        <div style="color:#1e293b;font-size:0.72rem;font-family:var(--font-mono);">
-            ↑ Move your cursor around — the particles react
-        </div>
-    </div>
-
-    <!-- Bottom scan line -->
-    <div style="
-        position:absolute; bottom:0; left:0; right:0; height:2px;
-        background: linear-gradient(90deg, transparent, #06b6d4, #3b82f6, transparent);
-        animation: scanBottom 2s ease-in-out infinite;
-    "></div>
-</div>
-
-<style>
-@keyframes hexRotate {
-    0%   { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-@keyframes scanBottom {
-    0%,100% { opacity: 0.3; transform: scaleX(0.3); }
-    50%      { opacity: 1;   transform: scaleX(1); }
-}
-@keyframes particleFade {
-    0%,100% { opacity: 0.4; }
-    50%      { opacity: 0.9; }
-}
-</style>
-
 <script>
+class TopProgressBar {
+    constructor() {
+        this.el = document.createElement('div');
+        this.el.id = 'top-progress-bar';
+        document.body.appendChild(this.el);
+        this.width = 0;
+        this.interval = null;
+    }
+
+    start() {
+        clearInterval(this.interval);
+        this.width = 0;
+        this.el.style.width = '0%';
+        this.el.style.opacity = '1';
+        this.el.style.transition = 'width 0.2s ease, opacity 0.1s ease';
+        
+        // Start quickly
+        setTimeout(() => {
+            if (this.width === 0) {
+                this.width = 30;
+                this.el.style.width = '30%';
+            }
+        }, 50);
+
+        // Slow crawl
+        this.interval = setInterval(() => {
+            if (this.width < 90) {
+                let increment = (90 - this.width) * 0.05;
+                if (increment < 0.2) increment = 0.2;
+                this.width += increment;
+                this.el.style.width = `${this.width}%`;
+            }
+        }, 150);
+    }
+
+    done() {
+        clearInterval(this.interval);
+        this.width = 100;
+        this.el.style.transition = 'width 0.2s ease, opacity 0.3s ease 0.15s';
+        this.el.style.width = '100%';
+        setTimeout(() => {
+            this.el.style.opacity = '0';
+            setTimeout(() => {
+                this.el.style.width = '0%';
+            }, 350);
+        }, 200);
+    }
+}
+
+// ── Tool Loading States HTML Generator ──
+function createMiniLoaderHTML(toolType, id) {
+    if (toolType === 'threat') {
+        return `
+            <div class="skeleton-tool-preview ta-skeleton-preview" id="${id}-card" style="width: 100%; max-width: 800px; margin: 0 auto; padding: 24px; box-sizing: border-box;">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 2rem; border-bottom: 1px solid var(--border-subtle); padding-bottom: 1.5rem;">
+                    <div style="display: flex; align-items: center; gap: 16px;">
+                        <div class="skeleton-block" style="width: 110px; height: 32px; border-radius: 6px;"></div>
+                        <div>
+                            <div class="skeleton-block" style="width: 60px; height: 32px; margin-bottom: 6px;"></div>
+                            <div class="skeleton-block" style="width: 100px; height: 12px;"></div>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <div class="skeleton-block" style="width: 80px; height: 32px; border-radius: 6px;"></div>
+                        <div class="skeleton-block" style="width: 80px; height: 32px; border-radius: 6px;"></div>
+                    </div>
+                </div>
+                
+                <div style="display: flex; gap: 16px; margin-bottom: 1.5rem;">
+                    <div class="skeleton-block" style="width: 70px; height: 16px;"></div>
+                    <div class="skeleton-block" style="width: 70px; height: 16px;"></div>
+                    <div class="skeleton-block" style="width: 70px; height: 16px;"></div>
+                </div>
+
+                <div style="border: 1px solid var(--border-subtle); border-radius: 8px; padding: 20px; background: rgba(0,0,0,0.1); margin-bottom: 2rem;">
+                    <div class="skeleton-block" style="width: 95%; height: 16px; margin-bottom: 12px;"></div>
+                    <div class="skeleton-block" style="width: 40%; height: 16px; display: inline-block; margin-right: 10px;"></div>
+                    <div class="skeleton-block" style="width: 20%; height: 16px; display: inline-block; margin-bottom: 12px; opacity: 0.75;"></div>
+                    <div class="skeleton-block" style="width: 30%; height: 16px; display: inline-block; margin-bottom: 12px;"></div>
+                    <div class="skeleton-block" style="width: 88%; height: 16px; margin-bottom: 12px;"></div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 80px 1fr 2fr; gap: 24px; background: rgba(0,0,0,0.15); padding: 20px; border-radius: 8px;">
+                    <div class="skeleton-block" style="width: 72px; height: 72px; border-radius: 50%;"></div>
+                    <div>
+                        <div class="skeleton-block" style="width: 120px; height: 16px; margin-bottom: 12px;"></div>
+                        <div style="display: flex; gap: 8px;">
+                            <div class="skeleton-block" style="width: 50px; height: 20px; border-radius: 9999px;"></div>
+                            <div class="skeleton-block" style="width: 60px; height: 20px; border-radius: 9999px;"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="skeleton-block" style="width: 100px; height: 16px; margin-bottom: 12px;"></div>
+                        <div class="skeleton-block" style="width: 90%; height: 14px; margin-bottom: 8px;"></div>
+                        <div class="skeleton-block" style="width: 70%; height: 14px;"></div>
+                    </div>
+                </div>
+            </div>
+        `;
+    } else if (toolType === 'header') {
+        return `
+            <div class="skeleton-tool-preview ha-skeleton-preview" id="${id}-card" style="width: 100%; max-width: 900px; margin: 0 auto; padding: 24px; box-sizing: border-box;">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 2rem; border-bottom: 1px solid var(--border-subtle); padding-bottom: 1.5rem;">
+                    <div style="display: flex; align-items: center; gap: 16px;">
+                        <div class="skeleton-block" style="width: 100px; height: 28px; border-radius: 6px;"></div>
+                        <div class="skeleton-block" style="width: 50px; height: 28px;"></div>
+                        <div class="skeleton-block" style="width: 250px; height: 16px;"></div>
+                    </div>
+                    <div class="skeleton-block" style="width: 100px; height: 32px; border-radius: 6px;"></div>
+                </div>
+
+                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 2rem; padding: 12px; background: rgba(0,0,0,0.15); border-radius: 8px;">
+                    <div class="skeleton-block" style="width: 110px; height: 16px; margin: 0;"></div>
+                    <div class="skeleton-block" style="width: 70px; height: 24px; border-radius: 4px; margin: 0;"></div>
+                    <div class="skeleton-block" style="width: 30px; height: 4px; margin: 0;"></div>
+                    <div class="skeleton-block" style="width: 70px; height: 24px; border-radius: 4px; margin: 0;"></div>
+                    <div class="skeleton-block" style="width: 30px; height: 4px; margin: 0;"></div>
+                    <div class="skeleton-block" style="width: 90px; height: 24px; border-radius: 4px; margin: 0;"></div>
+                </div>
+
+                <div style="border: 1px solid var(--border-subtle); border-radius: 12px; padding: 24px; background: rgba(0,0,0,0.1); margin-bottom: 2rem;">
+                    <div class="skeleton-block" style="width: 220px; height: 18px; margin-bottom: 2rem;"></div>
+                    <div style="position: relative; display: flex; align-items: center; justify-content: space-around; padding: 2rem 0; width: 100%;">
+                        <div class="skeleton-block" style="position: absolute; left: 10%; right: 10%; top: calc(2rem + 20px); height: 4px; background: var(--border-subtle); margin: 0; z-index: 1;"></div>
+                        
+                        <div style="display: flex; flex-direction: column; align-items: center; gap: 12px; z-index: 2;">
+                            <div class="skeleton-block" style="width: 44px; height: 44px; border-radius: 50%; margin: 0;"></div>
+                            <div class="skeleton-block" style="width: 60px; height: 14px; margin: 0;"></div>
+                        </div>
+                        <div style="display: flex; flex-direction: column; align-items: center; gap: 12px; z-index: 2;">
+                            <div class="skeleton-block" style="width: 44px; height: 44px; border-radius: 50%; margin: 0;"></div>
+                            <div class="skeleton-block" style="width: 60px; height: 14px; margin: 0;"></div>
+                        </div>
+                        <div style="display: flex; flex-direction: column; align-items: center; gap: 12px; z-index: 2;">
+                            <div class="skeleton-block" style="width: 44px; height: 44px; border-radius: 50%; margin: 0;"></div>
+                            <div class="skeleton-block" style="width: 60px; height: 14px; margin: 0;"></div>
+                        </div>
+                        <div style="display: flex; flex-direction: column; align-items: center; gap: 12px; z-index: 2;">
+                            <div class="skeleton-block" style="width: 44px; height: 44px; border-radius: 50%; margin: 0;"></div>
+                            <div class="skeleton-block" style="width: 70px; height: 14px; margin: 0;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    } else if (toolType === 'url') {
+        return `
+            <div class="skeleton-tool-preview ud-skeleton-preview" id="${id}-card" style="width: 100%; max-width: 800px; margin: 0 auto; padding: 24px; box-sizing: border-box;">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; padding: 12px 0;">
+                    <div class="skeleton-block" style="width: 150px; height: 20px; margin: 0;"></div>
+                    <div class="skeleton-block" style="width: 80px; height: 32px; border-radius: 6px; margin: 0;"></div>
+                </div>
+
+                <div style="border: 1px solid var(--border-subtle); border-radius: 12px; overflow: hidden; background: rgba(0,0,0,0.15); margin-bottom: 2rem;">
+                    <div style="height: 40px; background: rgba(255,255,255,0.03); display: flex; align-items: center; padding: 0 16px; gap: 16px;">
+                        <div style="display: flex; gap: 6px;">
+                            <div class="skeleton-block" style="width: 8px; height: 8px; border-radius: 50%; margin: 0;"></div>
+                            <div class="skeleton-block" style="width: 8px; height: 8px; border-radius: 50%; margin: 0;"></div>
+                            <div class="skeleton-block" style="width: 8px; height: 8px; border-radius: 50%; margin: 0;"></div>
+                        </div>
+                        <div class="skeleton-block" style="width: 120px; height: 24px; border-radius: 6px 6px 0 0; margin-top: 16px; margin-bottom: 0;"></div>
+                    </div>
+
+                    <div style="padding: 10px 16px; background: rgba(0, 0, 0, 0.15); display: flex; align-items: center;">
+                        <div style="display: flex; align-items: center; width: 100%; height: 36px; background: rgba(0,0,0,0.2); border: 1px solid var(--border-subtle); border-radius: 6px; padding: 0 12px; box-sizing: border-box; gap: 12px;">
+                            <div class="skeleton-block" style="width: 14px; height: 14px; margin: 0;"></div>
+                            <div class="skeleton-block" style="width: 14px; height: 14px; margin: 0;"></div>
+                            <div class="skeleton-block" style="width: 60%; height: 16px; margin: 0;"></div>
+                        </div>
+                    </div>
+
+                    <div style="padding: 40px 24px; text-align: center; border-top: 1px solid var(--border-subtle);">
+                        <div class="skeleton-block" style="width: 180px; height: 28px; margin: 0 auto 16px;"></div>
+                        <div class="skeleton-block" style="width: 320px; height: 16px; margin: 0 auto;"></div>
+                    </div>
+                </div>
+
+                <div style="border: 1px solid var(--border-subtle); border-radius: 8px; padding: 20px; background: rgba(0,0,0,0.1);">
+                    <div class="skeleton-block" style="width: 160px; height: 18px; margin-bottom: 1.5rem;"></div>
+                    <div style="display: flex; flex-direction: column; gap: 12px;">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <div class="skeleton-block" style="width: 20px; height: 20px; border-radius: 50%; margin: 0;"></div>
+                            <div class="skeleton-block" style="width: 80%; height: 16px; margin: 0;"></div>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 12px; padding-left: 20px; border-left: 2px dashed var(--border-subtle);">
+                            <div class="skeleton-block" style="width: 20px; height: 20px; border-radius: 50%; margin: 0;"></div>
+                            <div class="skeleton-block" style="width: 70%; height: 16px; margin: 0;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    } else if (toolType === 'password') {
+        return `
+            <div class="skeleton-tool-preview pw-skeleton-preview" id="${id}-card" style="width: 100%; max-width: 320px; margin: 0 auto; padding: 24px; box-sizing: border-box; text-align: center;">
+                <div style="display: flex; justify-content: center; margin-bottom: 2rem;">
+                    <div class="skeleton-block" style="width: 100px; height: 120px; border-radius: 12px; margin: 0;"></div>
+                </div>
+                
+                <div style="margin-bottom: 2rem; display: flex; justify-content: center; width: 100%;">
+                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; width: 100%;">
+                        <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                            <div class="skeleton-block" style="width: 100%; height: 8px; border-radius: 4px; margin: 0;"></div>
+                            <div class="skeleton-block" style="width: 40px; height: 12px; margin: 0;"></div>
+                        </div>
+                        <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                            <div class="skeleton-block" style="width: 100%; height: 8px; border-radius: 4px; margin: 0;"></div>
+                            <div class="skeleton-block" style="width: 50px; height: 12px; margin: 0;"></div>
+                        </div>
+                        <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                            <div class="skeleton-block" style="width: 100%; height: 8px; border-radius: 4px; margin: 0;"></div>
+                            <div class="skeleton-block" style="width: 45px; height: 12px; margin: 0;"></div>
+                        </div>
+                        <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                            <div class="skeleton-block" style="width: 100%; height: 8px; border-radius: 4px; margin: 0;"></div>
+                            <div class="skeleton-block" style="width: 40px; height: 12px; margin: 0;"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="skeleton-block" style="width: 100%; height: 60px; border-radius: 8px; margin: 0;"></div>
+            </div>
+        `;
+    }
+    return '';
+}
+
+// ── Shared Tool Mini-Loader Controller ──
+class ToolMiniLoader {
+    constructor(containerId, toolType) {
+        this.container = document.getElementById(containerId);
+        this.toolType = toolType;
+        this.cardId = containerId + '-loader';
+    }
+
+    start() {
+        if (!this.container) return;
+        this.startedAt = performance.now();
+        window.startGlobalLoader?.();
+        this.container.innerHTML = createMiniLoaderHTML(this.toolType, this.cardId);
+        this.container.style.display = 'block';
+        
+        const card = document.getElementById(this.cardId + '-card');
+        setTimeout(() => {
+            if (card) card.classList.add('active');
+        }, 20);
+    }
+
+    stop(onComplete) {
+        const card = document.getElementById(this.cardId + '-card');
+        if (!card) {
+            if (onComplete) onComplete();
+            return;
+        }
+
+        const finish = () => {
+            card.classList.remove('active');
+            card.classList.add('exit');
+            setTimeout(() => {
+                if (this.container) this.container.style.display = 'none';
+                window.dismissGlobalLoader?.();
+                if (onComplete) onComplete();
+            }, 200);
+        };
+        const elapsed = performance.now() - (this.startedAt || performance.now());
+        setTimeout(finish, Math.max(0, 500 - elapsed));
+    }
+}
+
+// Global top progress bar instance
+window.topProgressBar = new TopProgressBar();
+
 (function() {
-    const loader    = document.getElementById('page-loader');
-    const canvas    = document.getElementById('loader-canvas');
-    const pctEl     = document.getElementById('loader-pct');
-    const statusEl  = document.getElementById('loader-status');
-    const statuses  = ['LOADING ASSETS', 'CONNECTING', 'DECRYPTING', 'ALMOST READY'];
+    let activeRequests = 0;
+    const initialLoadStartedAt = performance.now();
+    const minimumInitialSkeletonMs = 520;
 
-    if (!loader || !canvas) return;
-
-    // If a campaign status-poll triggered this reload, skip the loader entirely
-    if (sessionStorage.getItem('skipLoader') === '1') {
-        sessionStorage.removeItem('skipLoader');
-        loader.style.opacity = '0';
-        loader.style.visibility = 'hidden';
-        return;
-    }
-    // Canvas setup
-    const ctx = canvas.getContext('2d');
-    let W = canvas.width  = window.innerWidth;
-    let H = canvas.height = window.innerHeight;
-    window.addEventListener('resize', () => { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; });
-
-    // Mouse tracking for interaction
-    let mx = -9999, my = -9999;
-    canvas.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; });
-    canvas.addEventListener('touchmove', e => {
-        if (e.touches[0]) { mx = e.touches[0].clientX; my = e.touches[0].clientY; }
-    }, { passive: true });
-
-    // Generate floating hex-grid nodes
-    const nodes = Array.from({ length: 60 }, () => ({
-        x:  Math.random() * W,
-        y:  Math.random() * H,
-        vx: (Math.random() - 0.5) * 0.4,
-        vy: (Math.random() - 0.5) * 0.4,
-        r:  Math.random() * 2 + 1,
-        alpha: Math.random() * 0.5 + 0.2
-    }));
-
-    function drawLoader() {
-        ctx.clearRect(0, 0, W, H);
-        nodes.forEach(p => {
-            // Mouse repulsion — particles run away from cursor
-            const dx = p.x - mx, dy = p.y - my;
-            const dist = Math.hypot(dx, dy);
-            if (dist < 120) {
-                const force = (120 - dist) / 120;
-                p.vx += (dx / dist) * force * 0.6;
-                p.vy += (dy / dist) * force * 0.6;
-            }
-            // Speed limit + drift back
-            const speed = Math.hypot(p.vx, p.vy);
-            if (speed > 3) { p.vx *= 0.85; p.vy *= 0.85; }
-            p.x += p.vx; p.y += p.vy;
-            if (p.x < 0) p.x = W; if (p.x > W) p.x = 0;
-            if (p.y < 0) p.y = H; if (p.y > H) p.y = 0;
-
-            // Draw node
-            ctx.beginPath();
-            ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-            ctx.fillStyle = `rgba(6,182,212,${p.alpha})`;
-            ctx.fill();
+    // A single network hook keeps the bar in sync with every fetch-based action,
+    // including actions added after this shared template was written.
+    const nativeFetch = window.fetch.bind(window);
+    window.fetch = (...args) => {
+        activeRequests += 1;
+        window.topProgressBar.start();
+        return nativeFetch(...args).finally(() => {
+            activeRequests = Math.max(0, activeRequests - 1);
+            if (activeRequests === 0) window.topProgressBar.done();
         });
-        // Draw connecting lines
-        for (let i = 0; i < nodes.length; i++) {
-            for (let j = i + 1; j < nodes.length; j++) {
-                const d = Math.hypot(nodes[i].x - nodes[j].x, nodes[i].y - nodes[j].y);
-                if (d < 100) {
-                    ctx.beginPath();
-                    ctx.moveTo(nodes[i].x, nodes[i].y);
-                    ctx.lineTo(nodes[j].x, nodes[j].y);
-                    ctx.strokeStyle = `rgba(6,182,212,${0.08 * (1 - d / 100)})`;
-                    ctx.lineWidth = 0.5;
-                    ctx.stroke();
-                }
-            }
-        }
-        requestAnimationFrame(drawLoader);
-    }
-    drawLoader();
+    };
 
-    // Animate progress counter 0→100
-    let pct = 0;
-    let pctTimer = null;
-    let loaderDismissed = false;
-    const fillPolygon = document.getElementById('loader-hex-fill');
+    // This runs while the document is still parsing, so ordinary pages have a
+    // skeleton on their first paint rather than waiting for DOMContentLoaded.
+    const genericSkeleton = document.createElement('div');
+    genericSkeleton.className = 'skeleton-loader-overlay shared-page-skeleton';
+    genericSkeleton.setAttribute('aria-hidden', 'true');
+    genericSkeleton.innerHTML = `
+                <div class="shared-page-skeleton__header">
+                    <div class="skeleton-block" style="width:190px;height:30px"></div>
+                    <div class="skeleton-block" style="width:110px;height:34px;border-radius:8px"></div>
+                </div>
+                <main class="shared-page-skeleton__main">
+                    <div class="skeleton-block" style="width:min(460px,78%);height:42px;margin-bottom:14px"></div>
+                    <div class="skeleton-block" style="width:min(620px,92%);height:18px;margin-bottom:34px"></div>
+                    <div class="shared-page-skeleton__grid">
+                        <div class="skeleton-block" style="height:280px;border-radius:14px"></div>
+                        <div class="skeleton-block" style="height:280px;border-radius:14px"></div>
+                    </div>
+                </main>`;
+    document.body.prepend(genericSkeleton);
 
-    function updateProgress(value) {
-        pct = value;
-        if (pctEl) pctEl.textContent = Math.round(pct);
-        if (statusEl && !loaderDismissed && pct < 100) {
-            statusEl.textContent = statuses[Math.floor(pct / 25)] || statuses[3];
-        }
-        if (fillPolygon) {
-            const offset = 265 - (265 * (pct / 100));
-            fillPolygon.style.strokeDashoffset = offset;
-        }
-    }
-
-    function startLoader(initialPct, statusText) {
-        if (pctTimer) clearInterval(pctTimer);
-        pct = initialPct || 0;
-        loaderDismissed = false;
-        if (loader) {
-            loader.style.opacity = '1';
-            loader.style.visibility = 'visible';
-        }
-        if (statusText && statusEl) statusEl.textContent = statusText;
-        updateProgress(pct);
-
-        pctTimer = setInterval(() => {
-            pct = Math.min(pct + Math.random() * 8 + 2, 99);
-            updateProgress(pct);
-        }, 120);
-    }
-
-    function dismissLoader() {
-        if (loaderDismissed) return;
-        loaderDismissed = true;
-        if (pctTimer) clearInterval(pctTimer);
-        let currentPct = pct;
-        const finishTimer = setInterval(() => {
-            currentPct = Math.min(currentPct + 10, 100);
-            updateProgress(currentPct);
-            if (currentPct >= 100) {
-                clearInterval(finishTimer);
-                if (statusEl) statusEl.textContent = 'READY';
-                setTimeout(() => {
-                    loader.style.opacity = '0';
-                    loader.style.visibility = 'hidden';
-                }, 300);
-            }
-        }, 30);
-    }
-
-    // Intercept clicks on all local anchors and form submissions to show loader instantly
+    // Intercept clicks on all local anchors and form submissions to show top progress bar
     document.addEventListener("click", (e) => {
         const anchor = e.target.closest("a");
         if (!anchor) return;
@@ -284,9 +369,7 @@
             }
         } catch(err) {}
 
-        if (loader) {
-            startLoader(0, 'CONNECTING');
-        }
+        window.topProgressBar.start();
     });
 
     document.addEventListener("submit", (e) => {
@@ -297,32 +380,53 @@
             return;
         }
 
-        // Only show loader if the form is valid to prevent freezing the UI on browser-validation failure
         if (typeof form.checkValidity === 'function' && !form.checkValidity()) {
             return;
         }
         
-        if (loader) {
-            startLoader(0, 'PROCESSING SECURE UPLOAD');
-        }
+        window.topProgressBar.start();
     });
 
-    // Start loader immediately on load
-    startLoader(0, 'INITIALIZING ENGINE');
+    // Start progress bar on page loading
+    window.topProgressBar.start();
 
-    if (document.readyState === 'complete') {
-        dismissLoader();
-    } else {
-        window.addEventListener('load', dismissLoader);
-        // Safety fallback — never block for more than 4s
-        setTimeout(dismissLoader, 4000);
+    function dismissSkeletonsAndProgressBar() {
+        const dismiss = () => {
+            const overlays = document.querySelectorAll('.skeleton-loader-overlay');
+            overlays.forEach(overlay => {
+                overlay.classList.add('fade-out');
+                setTimeout(() => {
+                    overlay.remove();
+                }, 250);
+            });
+            window.topProgressBar.done();
+        };
+
+        // Cached navigations can complete before a frame is painted. Keep the
+        // shape-matched shell around briefly so the transition is intentional.
+        const remaining = minimumInitialSkeletonMs - (performance.now() - initialLoadStartedAt);
+        if (remaining > 0) setTimeout(dismiss, remaining);
+        else dismiss();
     }
 
-    window.startGlobalLoader = startLoader;
-    window.dismissGlobalLoader = dismissLoader;
+    if (document.readyState === 'complete') {
+        dismissSkeletonsAndProgressBar();
+    } else {
+        window.addEventListener('load', dismissSkeletonsAndProgressBar);
+        // Safety timeout
+        setTimeout(dismissSkeletonsAndProgressBar, 3000);
+    }
+
+    window.startGlobalLoader = function() {
+        window.topProgressBar.start();
+    };
+    
+    window.dismissGlobalLoader = function() {
+        dismissSkeletonsAndProgressBar();
+    };
 
     window.addEventListener('pageshow', (event) => {
-        dismissLoader();
+        dismissSkeletonsAndProgressBar();
     });
 })();
 </script>
@@ -484,6 +588,17 @@
             linear-gradient(rgba(37, 99, 235, 0.015) 1px, transparent 1px),
             linear-gradient(90deg, rgba(37, 99, 235, 0.015) 1px, transparent 1px) !important;
         background-size: 100% 100%, 100% 100%, 32px 32px, 32px 32px !important;
+    }
+    body.light-theme .site-footer h4,
+    body.light-theme .site-footer span:not(.logo-version-badge),
+    body.light-theme .site-footer p {
+        color: #0f172a !important;
+    }
+    body.light-theme .site-footer a {
+        color: #475569 !important;
+    }
+    body.light-theme .site-footer a:hover {
+        color: var(--primary) !important;
     }
     </style>
 

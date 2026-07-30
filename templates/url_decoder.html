@@ -106,24 +106,47 @@
 }
 
 /* ── Window Controls Functional States ──────────────────── */
-/* Minimized state: hide input row, presets, trace button */
-.ud-minimized .ud-input-row,
-.ud-minimized .ud-presets-section,
-.ud-minimized .ud-trace-btn { display: none !important; }
+/* Smooth Minimization Collapse */
+.ud-input-body {
+    max-height: 800px;
+    opacity: 1;
+    overflow: hidden;
+    transition: max-height 0.4s cubic-bezier(0.16, 1, 0.3, 1), 
+                opacity 0.3s ease, 
+                padding 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.ud-minimized .ud-input-body {
+    max-height: 0 !important;
+    opacity: 0 !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    pointer-events: none;
+}
 .ud-minimized .ud-term-hdr { border-bottom: none; }
 /* Redirect-chain animation stage */
 .ud-chain-stage {
-    display: none;
-    padding: 1.5rem 2rem;
-    min-height: 160px;
+    display: flex !important; /* Keep display: flex always */
+    max-height: 0;
+    min-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    padding: 0 2rem;
     cursor: pointer;
     align-items: center;
     justify-content: center;
     flex-direction: column;
     gap: 1rem;
-    overflow: hidden;
+    transition: max-height 0.4s cubic-bezier(0.16, 1, 0.3, 1), 
+                min-height 0.4s cubic-bezier(0.16, 1, 0.3, 1), 
+                opacity 0.3s ease, 
+                padding 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
-.ud-minimized .ud-chain-stage { display: flex; }
+.ud-minimized .ud-chain-stage {
+    max-height: 300px;
+    min-height: 160px;
+    opacity: 1;
+    padding: 1.5rem 2rem;
+}
 
 .ud-minimized-tracer {
     display: flex;
@@ -205,7 +228,7 @@
 }
 /* Expand overlay */
 .ud-expand-overlay {
-    display: none;
+    display: flex !important; /* Keep display: flex always */
     position: fixed;
     inset: 0;
     z-index: 9000;
@@ -215,8 +238,16 @@
     flex-direction: column;
     padding: 2rem;
     box-sizing: border-box;
+    opacity: 0;
+    pointer-events: none;
+    transform: scale(1.03);
+    transition: opacity 0.32s ease, transform 0.32s cubic-bezier(0.16, 1, 0.3, 1);
 }
-.ud-expand-overlay.active { display: flex; }
+.ud-expand-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+    transform: scale(1);
+}
 .ud-expand-header {
     display: flex;
     align-items: center;
@@ -1004,39 +1035,42 @@ body.light-theme .ha-reset-btn:active {
                 <div class="ud-term-status"><div class="ud-status-pulse"></div>STANDBY</div>
             </div>
 
-            <div class="ud-input-row">
-                <span class="ud-prompt-terminal">tracer_audit@phishsim:~$</span>
-                <input id="url-input" class="ud-input-field" type="text"
-                    placeholder="Paste redirection link or suspicious URL here..." spellcheck="false">
-            </div>
-
-            <!-- Suggestion Presets -->
-            <div class="ud-presets-section">
-                <div class="ud-presets-label">Forensic Samples:</div>
-                <div class="ud-presets-grid">
-                    <button class="ud-preset-btn" onclick="applyPreset('https://www.google.com')">
-                        <span class="ud-preset-indicator" style="background:#10b981"></span>
-                        Clean: Google Landing
-                    </button>
-                    <button class="ud-preset-btn" onclick="applyPreset('https://is.gd/EuvYes')">
-                        <span class="ud-preset-indicator" style="background:#f59e0b"></span>
-                        Shortened: is.gd Redirect
-                    </button>
-                    <button class="ud-preset-btn" onclick="applyPreset('http://195.133.19.141/')">
-                        <span class="ud-preset-indicator" style="background:#ef4444"></span>
-                        Dangerous: URLhaus listed
-                    </button>
-                    <button class="ud-preset-btn" onclick="applyPreset('https://httpbin.org/redirect-to?url=https%3A%2F%2Fhttpbin.org%2Fredirect-to%3Furl%3Dhttps%253A%252F%252Fwww.google.com%26status_code%3D302&status_code=302')">
-                        <span class="ud-preset-indicator" style="background:#f59e0b"></span>
-                        Redirect: Multi-hop Chain
-                    </button>
+            <!-- Wrapper for smooth minimization transition -->
+            <div class="ud-input-body" id="ud-input-body">
+                <div class="ud-input-row">
+                    <span class="ud-prompt-terminal">tracer_audit@phishsim:~$</span>
+                    <input id="url-input" class="ud-input-field" type="text"
+                        placeholder="Paste redirection link or suspicious URL here..." spellcheck="false">
                 </div>
-            </div>
 
-            <button class="ud-trace-btn" id="trace-btn" onclick="executeTrace()">
-                <i class="ti ti-radar"></i>
-                AUDIT ROUTING PATH
-            </button>
+                <!-- Suggestion Presets -->
+                <div class="ud-presets-section">
+                    <div class="ud-presets-label">Forensic Samples:</div>
+                    <div class="ud-presets-grid">
+                        <button class="ud-preset-btn" onclick="applyPreset('https://www.google.com')">
+                            <span class="ud-preset-indicator" style="background:#10b981"></span>
+                            Clean: Google Landing
+                        </button>
+                        <button class="ud-preset-btn" onclick="applyPreset('https://is.gd/EuvYes')">
+                            <span class="ud-preset-indicator" style="background:#f59e0b"></span>
+                            Shortened: is.gd Redirect
+                        </button>
+                        <button class="ud-preset-btn" onclick="applyPreset('http://195.133.19.141/')">
+                            <span class="ud-preset-indicator" style="background:#ef4444"></span>
+                            Dangerous: URLhaus listed
+                        </button>
+                        <button class="ud-preset-btn" onclick="applyPreset('https://httpbin.org/redirect-to?url=https%3A%2F%2Fhttpbin.org%2Fredirect-to%3Furl%3Dhttps%253A%252F%252Fwww.google.com%26status_code%3D302&status_code=302')">
+                            <span class="ud-preset-indicator" style="background:#f59e0b"></span>
+                            Redirect: Multi-hop Chain
+                        </button>
+                    </div>
+                </div>
+
+                <button class="ud-trace-btn" id="trace-btn" onclick="executeTrace()">
+                    <i class="ti ti-radar"></i>
+                    AUDIT ROUTING PATH
+                </button>
+            </div>
 
             <!-- Amber/minimize redirect-chain animation stage -->
             <div class="ud-chain-stage" id="ud-chain-stage" onclick="udRestoreFromMinimize()" title="Click to restore">
@@ -1057,15 +1091,7 @@ body.light-theme .ha-reset-btn:active {
         </div>
 
         <!-- PROGRESS/STREAM LOADER -->
-        <div id="ud-stream-loader" class="ud-stream-loader">
-            <div class="ud-stream-title">
-                <div class="ud-stream-pulse"></div>
-                Tracer stream: inspecting connections...
-            </div>
-            <div class="ud-stream-timeline" id="stream-timeline-container">
-                <!-- Streaming hops appear here dynamically -->
-            </div>
-        </div>
+        <div id="ud-stream-loader" class="ud-stream-loader" style="display: none; height: auto; min-height: unset; border: none; background: transparent; box-shadow: none; padding: 0;"></div>
 
         <!-- RESULT PREVIEW VIEW (CORE UX) -->
         <div id="ud-result-preview" style="display: none;">
@@ -1241,10 +1267,17 @@ async function executeTrace() {
     // Toggle loader states
     document.getElementById('ud-input-state').style.display = 'none';
     const streamLoader = document.getElementById('ud-stream-loader');
+    streamLoader.innerHTML = `
+        <div id="url-loader-container"></div>
+        <div id="stream-timeline-container" style="display: none;"></div>
+    `;
     streamLoader.style.display = 'block';
-    
-    const timeline = document.getElementById('stream-timeline-container');
-    timeline.innerHTML = '';
+
+    const loader = new ToolMiniLoader('url-loader-container', 'url');
+    loader.start();
+
+    let isSuccess = false;
+    let summaryData = null;
 
     const fd = new FormData();
     fd.append('url', urlVal);
@@ -1257,7 +1290,7 @@ async function executeTrace() {
 
         if (!response.ok) {
             alert('Tracer error: Response failed.');
-            resetToInput();
+            isSuccess = false;
             return;
         }
 
@@ -1280,7 +1313,8 @@ async function executeTrace() {
                     if (packet.type === 'hop') {
                         renderStreamingHop(packet.hop);
                     } else if (packet.type === 'summary') {
-                        renderDecoderResults(packet.summary);
+                        summaryData = packet.summary;
+                        isSuccess = true;
                     }
                 } catch(e) {
                     console.error("Chunk parse error:", e);
@@ -1289,7 +1323,15 @@ async function executeTrace() {
         }
     } catch(err) {
         alert('Connection error tracing URL redirects: ' + err.message);
-        resetToInput();
+        isSuccess = false;
+    } finally {
+        loader.stop(() => {
+            if (isSuccess && summaryData) {
+                renderDecoderResults(summaryData);
+            } else {
+                resetToInput();
+            }
+        });
     }
 }
 
@@ -1350,7 +1392,7 @@ function renderDecoderResults(summary) {
 
     // 4. Highlight Domain in Browser address bar
     const address = document.getElementById('browser-address-url');
-    address.innerHTML = highlightDomain(summary.final_url, summary.final_registered_domain);
+    address.innerHTML = highlightDomain(summary.final_url, summary.final_domain);
 
     // 5. Verdict Viewport banner
     const verdictLabel = document.getElementById('preview-verdict-label');

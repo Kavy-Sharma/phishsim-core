@@ -12,7 +12,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css', v='1.0.8-loading') }}">
 <style>
 :root {
   /* Font scale variables */
@@ -2163,6 +2163,20 @@ body.light-theme .timeline-counter {
 .cap-card-glare {
   display: none !important;
 }
+/* Pricing Toggle Switch & Premium Pro Card hover overrides */
+@keyframes proGlow {
+  0%, 100% { box-shadow: 0 0 30px rgba(6, 182, 212, 0.05), inset 0 0 10px rgba(6, 182, 212, 0.05); }
+  50% { box-shadow: 0 0 45px rgba(6, 182, 212, 0.12), inset 0 0 15px rgba(6, 182, 212, 0.10); }
+}
+.pro-card-premium {
+  animation: proGlow 4s ease-in-out infinite;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+.pro-card-premium:hover {
+  transform: translateY(-8px) scale(1.02) !important;
+  border-color: rgba(6, 182, 212, 0.6) !important;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.4), 0 0 30px rgba(6, 182, 212, 0.35) !important;
+}
 .cap-icon,
 .cap-title,
 .cap-desc {
@@ -2883,6 +2897,23 @@ body.light-theme .chain-card--right .card-connector--left {
 </head>
 <body>
 
+<script>
+// Home is intentionally standalone rather than extending base.html; expose the
+// same shared navigation progress contract used by every base-template page.
+if (!window.topProgressBar) {
+  window.topProgressBar = new (class {
+    constructor() { this.el = document.createElement('div'); this.el.id = 'top-progress-bar'; document.body.appendChild(this.el); this.width = 0; }
+    start() { clearInterval(this.timer); this.width = 0; this.el.style.cssText = 'width:0%;opacity:1'; setTimeout(() => { if (!this.width) { this.width = 30; this.el.style.width = '30%'; } }, 40); this.timer = setInterval(() => { this.width = Math.min(90, this.width + Math.max(.2, (90 - this.width) * .05)); this.el.style.width = this.width + '%'; }, 150); }
+    done() { clearInterval(this.timer); this.width = 100; this.el.style.width = '100%'; setTimeout(() => { this.el.style.opacity = '0'; }, 160); }
+  })();
+  document.addEventListener('click', event => {
+    const link = event.target.closest('a[href]');
+    if (link && !link.target && !link.hasAttribute('download') && !link.href.startsWith('mailto:') && new URL(link.href).origin === location.origin && !link.hash) window.topProgressBar.start();
+  });
+  document.addEventListener('submit', event => { if (!event.defaultPrevented) window.topProgressBar.start(); });
+}
+</script>
+
 <!-- SVG Liquid/Watery text hover effect filter -->
 <svg style="position: absolute; width: 0; height: 0;" width="0" height="0" version="1.1" xmlns="http://www.w3.org/2000/svg">
   <defs>
@@ -2896,249 +2927,168 @@ body.light-theme .chain-card--right .card-connector--left {
 </svg>
 
 <!-- ═══════════════════════════════════════════════════════════
-     INTERACTIVE PAGE LOADER — Cyberpunk hex-grid style
-     Users can interact with particles while page loads.
+     SKELETON LOADER & BRAND MOMENT OVERLAY
      ═══════════════════════════════════════════════════════════ -->
-<div id="page-loader" style="
-    position: fixed; inset: 0; z-index: 99999;
-    background: #020617;
-    display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
-    transition: opacity 0.5s ease, visibility 0.5s ease;
-">
-    <!-- Interactive canvas -->
-    <canvas id="loader-canvas" style="position:absolute;inset:0;width:100%;height:100%;"></canvas>
+<!-- FIRST VISIT BRAND SPLASH OVERLAY -->
+<div id="brand-splash-overlay" class="brand-moment-overlay" style="display: none;">
+    <svg class="brand-moment-logo" width="96" height="96" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+            <linearGradient id="cyberShieldGradHome" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="var(--primary)" />
+                <stop offset="100%" stop-color="#818CF8" />
+            </linearGradient>
+            <linearGradient id="cyberGlowHome" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="var(--primary)" stop-opacity="0.25" />
+                <stop offset="100%" stop-color="#818CF8" stop-opacity="0.05" />
+            </linearGradient>
+            <filter id="cyberNeonGlowHome" x="-20%" y="-20%" width="140%" height="140%">
+                <feGaussianBlur stdDeviation="2.5" result="blur" />
+                <feMerge>
+                    <feMergeNode in="blur" />
+                    <feMergeNode in="SourceGraphic" />
+                </feMerge>
+            </filter>
+        </defs>
+        <polygon points="24,3 43,12 43,33 24,45 5,33 5,12" fill="url(#cyberGlowHome)" stroke="url(#cyberShieldGradHome)" stroke-width="2" filter="url(#cyberNeonGlowHome)" />
+        <polygon points="24,7 39,14 39,31 24,41 9,31 9,14" fill="none" stroke="url(#cyberShieldGradHome)" stroke-width="1" stroke-opacity="0.35" />
+        <path d="M24 14C20.7 14 18 16.7 18 20C18 22.3 19.3 24.3 21 25.3V33C21 34.1 21.9 35 23 35H25C26.1 35 27 34.1 27 33V25.3C28.7 24.3 30 22.3 30 20C30 16.7 27.3 14 24 14ZM24 22C22.9 22 22 21.1 22 20C22 18.9 22.9 18 24 18C25.1 18 26 18.9 26 20C26 21.1 25.1 22 24 22Z" fill="url(#cyberShieldGradHome)" filter="url(#cyberNeonGlowHome)" />
+    </svg>
+</div>
 
-    <!-- Center content -->
-    <div style="position:relative;z-index:2;text-align:center;">
-        <!-- Logo -->
-        <div style="display:flex;align-items:center;gap:12px;justify-content:center;margin-bottom:2rem;">
-            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#06b6d4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
-            <span style="font-family:var(--font-sans);font-size:1.8rem;font-weight:900;color:#fff;">PhishSim<span style="color:#06b6d4;">.ai</span></span>
+<!-- HOMEPAGE SKELETON OVERLAY -->
+<div id="homepage-skeleton" class="skeleton-loader-overlay">
+    <!-- Mock Navbar -->
+    <div style="height: 70px; border-bottom: 1px solid var(--border-subtle); display: flex; align-items: center; justify-content: space-between; padding: 0 2rem; width: 100%; box-sizing: border-box;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <div class="skeleton-block" style="width: 24px; height: 24px; border-radius: 4px;"></div>
+            <div class="skeleton-block" style="width: 100px; height: 20px;"></div>
         </div>
-
-        <!-- Animated hexagon spinner -->
-        <div id="loader-hex" style="
-            width:80px; height:80px; margin:0 auto 2rem;
-            position:relative;
-        ">
-            <svg viewBox="0 0 100 100" style="width:100%;height:100%;">
-                <g style="transform-origin: center; animation: hexRotate 10s linear infinite;">
-                    <polygon points="50,5 90,27.5 90,72.5 50,95 10,72.5 10,27.5"
-                        fill="none" stroke="rgba(6,182,212,0.2)" stroke-width="4"/>
-                    <polygon id="loader-hex-fill" points="50,5 90,27.5 90,72.5 50,95 10,72.5 10,27.5"
-                        fill="none" stroke="#06b6d4" stroke-width="4"
-                        stroke-dasharray="265" stroke-dashoffset="265"
-                        style="transform-origin: center; transition: stroke-dashoffset 0.15s ease;">
-                    </polygon>
-                </g>
-                <text x="50" y="58" text-anchor="middle" font-family="var(--font-sans)" font-size="22" font-weight="900" fill="#06b6d4" id="loader-pct">0</text>
-            </svg>
+        <div style="display: flex; gap: 2rem; align-items: center;">
+            <div class="skeleton-block" style="width: 80px; height: 16px;"></div>
+            <div class="skeleton-block" style="width: 80px; height: 16px;"></div>
+            <div class="skeleton-block" style="width: 80px; height: 16px;"></div>
         </div>
-
-        <!-- Status line -->
-        <div id="loader-status" style="
-            font-family:var(--font-mono); font-size:0.78rem;
-            color:#334155; letter-spacing:2px; text-transform:uppercase;
-            margin-bottom:0.8rem;
-        ">INITIALIZING ENGINE</div>
-
-        <!-- Hint -->
-        <div style="color:#1e293b;font-size:0.72rem;font-family:var(--font-mono);">
-            ↑ Move your cursor around — the particles react
+        <div class="skeleton-block" style="width: 100px; height: 32px; border-radius: 9999px;"></div>
+    </div>
+    <!-- Hero layout -->
+    <div style="display: flex; padding: clamp(2rem, 5vw, 6rem) clamp(1.5rem, 5vw, 5rem); gap: 4rem; flex-wrap: wrap; box-sizing: border-box; max-width: 1200px; margin: 0 auto; width: 100%;">
+        <!-- Left Column -->
+        <div style="flex: 1; min-width: 300px;">
+            <div class="skeleton-block" style="width: 90%; height: 50px; margin-bottom: 24px;"></div>
+            <div class="skeleton-block" style="width: 75%; height: 50px; margin-bottom: 36px;"></div>
+            <div class="skeleton-block" style="width: 85%; height: 24px; margin-bottom: 16px;"></div>
+            <div class="skeleton-block" style="width: 60%; height: 20px; margin-bottom: 40px;"></div>
+            <div style="display: flex; gap: 16px;">
+                <div class="skeleton-block" style="width: 180px; height: 48px; border-radius: 8px;"></div>
+                <div class="skeleton-block" style="width: 160px; height: 48px; border-radius: 8px;"></div>
+            </div>
+        </div>
+        <!-- Right Column: match the real interactive workspace without implying content -->
+        <div style="flex: 1; min-width: 300px; height: 380px; border:1px solid var(--border-subtle); border-radius:12px; padding:18px; box-sizing:border-box; background:var(--bg-surface);">
+            <div style="display:flex;align-items:center;gap:7px;padding-bottom:14px;border-bottom:1px solid var(--border-subtle);">
+                <div class="skeleton-block" style="width:10px;height:10px;border-radius:50%;margin:0;"></div>
+                <div class="skeleton-block" style="width:10px;height:10px;border-radius:50%;margin:0;"></div>
+                <div class="skeleton-block" style="width:10px;height:10px;border-radius:50%;margin:0;"></div>
+                <div class="skeleton-block" style="width:42%;height:12px;margin:0 auto;"></div>
+            </div>
+            <div style="padding-top:26px;display:flex;flex-direction:column;gap:13px;">
+                <div class="skeleton-block" style="width:72%;height:14px;margin:0;"></div>
+                <div class="skeleton-block" style="width:88%;height:14px;margin:0;"></div>
+                <div class="skeleton-block" style="width:60%;height:14px;margin:0;"></div>
+                <div class="skeleton-block" style="width:82%;height:14px;margin:12px 0 0;"></div>
+                <div class="skeleton-block" style="width:96%;height:48px;border-radius:7px;margin:6px 0 0;"></div>
+                <div class="skeleton-block" style="width:48%;height:14px;margin:0;"></div>
+            </div>
         </div>
     </div>
-
-    <!-- Bottom scan line -->
-    <div style="
-        position:absolute; bottom:0; left:0; right:0; height:2px;
-        background: linear-gradient(90deg, transparent, #06b6d4, #3b82f6, transparent);
-        animation: scanBottom 2s ease-in-out infinite;
-    "></div>
+    <!-- The homepage continues below the hero; keep that part of the viewport populated too. -->
+    <div style="max-width:1200px;margin:0 auto;padding:0 clamp(1.5rem,5vw,5rem) 5rem;box-sizing:border-box;">
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--border-subtle);border-radius:12px;overflow:hidden;margin-bottom:56px;">
+            <div style="padding:24px;border-right:1px solid var(--border-subtle);"><div class="skeleton-block" style="width:58%;height:30px;margin-bottom:10px;"></div><div class="skeleton-block" style="width:84%;height:13px;"></div></div>
+            <div style="padding:24px;border-right:1px solid var(--border-subtle);"><div class="skeleton-block" style="width:58%;height:30px;margin-bottom:10px;"></div><div class="skeleton-block" style="width:84%;height:13px;"></div></div>
+            <div style="padding:24px;"><div class="skeleton-block" style="width:58%;height:30px;margin-bottom:10px;"></div><div class="skeleton-block" style="width:84%;height:13px;"></div></div>
+        </div>
+        <div style="text-align:center;margin-bottom:26px;"><div class="skeleton-block" style="width:260px;height:28px;margin:0 auto 12px;"></div><div class="skeleton-block" style="width:460px;max-width:90%;height:15px;margin:0 auto;"></div></div>
+        <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;">
+            <div class="skeleton-block" style="height:180px;border-radius:14px;"></div>
+            <div class="skeleton-block" style="height:180px;border-radius:14px;"></div>
+            <div class="skeleton-block" style="height:180px;border-radius:14px;"></div>
+        </div>
+    </div>
 </div>
 
 <script>
 (function() {
-    const loader    = document.getElementById('page-loader');
-    const canvas    = document.getElementById('loader-canvas');
-    const pctEl     = document.getElementById('loader-pct');
-    const statusEl  = document.getElementById('loader-status');
-    const statuses  = ['LOADING ASSETS', 'CONNECTING', 'DECRYPTING', 'ALMOST READY'];
-
-    if (!loader || !canvas) return;
-
-    const ctx = canvas.getContext('2d');
-    let W = canvas.width  = window.innerWidth;
-    let H = canvas.height = window.innerHeight;
-    window.addEventListener('resize', () => { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; });
-
-    let mx = W / 2, my = H / 2;
-    canvas.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; });
-    canvas.addEventListener('touchmove', e => {
-        if (e.touches[0]) { mx = e.touches[0].clientX; my = e.touches[0].clientY; }
-    }, { passive: true });
-
-    const nodes = Array.from({ length: 60 }, () => ({
-        x:  Math.random() * W,
-        y:  Math.random() * H,
-        vx: (Math.random() - 0.5) * 0.4,
-        vy: (Math.random() - 0.5) * 0.4,
-        r:  Math.random() * 2 + 1,
-        alpha: Math.random() * 0.5 + 0.2
-    }));
-
-    function drawLoader() {
-        ctx.clearRect(0, 0, W, H);
-        nodes.forEach(p => {
-            const dx = p.x - mx, dy = p.y - my;
-            const dist = Math.hypot(dx, dy);
-            if (dist < 120) {
-                const force = (120 - dist) / 120;
-                p.vx += (dx / dist) * force * 0.6;
-                p.vy += (dy / dist) * force * 0.6;
-            }
-            const speed = Math.hypot(p.vx, p.vy);
-            if (speed > 3) { p.vx *= 0.85; p.vy *= 0.85; }
-            p.x += p.vx; p.y += p.vy;
-            if (p.x < 0) p.x = W; if (p.x > W) p.x = 0;
-            if (p.y < 0) p.y = H; if (p.y > H) p.y = 0;
-
-            ctx.beginPath();
-            ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-            ctx.fillStyle = `rgba(6,182,212,${p.alpha})`;
-            ctx.fill();
-        });
-        for (let i = 0; i < nodes.length; i++) {
-            for (let j = i + 1; j < nodes.length; j++) {
-                const d = Math.hypot(nodes[i].x - nodes[j].x, nodes[i].y - nodes[j].y);
-                if (d < 100) {
-                    ctx.beginPath();
-                    ctx.moveTo(nodes[i].x, nodes[i].y);
-                    ctx.lineTo(nodes[j].x, nodes[j].y);
-                    ctx.strokeStyle = `rgba(6,182,212,${0.08 * (1 - d / 100)})`;
-                    ctx.lineWidth = 0.5;
-                    ctx.stroke();
-                }
-            }
-        }
-        requestAnimationFrame(drawLoader);
+    const brandSplash = document.getElementById('brand-splash-overlay');
+    const homeSkeleton = document.getElementById('homepage-skeleton');
+    
+    // Check if brand moment has played this session
+    const hasPlayed = sessionStorage.getItem('brand_moment_played');
+    
+    // Setup page loading progress bar
+    if (window.topProgressBar) {
+        window.topProgressBar.start();
     }
-    drawLoader();
-
-    // Animate progress counter 0→100
-    let pct = 0;
-    let pctTimer = null;
-    let loaderDismissed = false;
-    const fillPolygon = document.getElementById('loader-hex-fill');
-
-    function updateProgress(value) {
-        pct = value;
-        if (pctEl) pctEl.textContent = Math.round(pct);
-        if (statusEl && !loaderDismissed && pct < 100) {
-            statusEl.textContent = statuses[Math.floor(pct / 25)] || statuses[3];
-        }
-        if (fillPolygon) {
-            const offset = 265 - (265 * (pct / 100));
-            fillPolygon.style.strokeDashoffset = offset;
-        }
-    }
-
-    function startLoader(initialPct, statusText) {
-        if (pctTimer) clearInterval(pctTimer);
-        pct = initialPct || 0;
-        loaderDismissed = false;
-        if (loader) {
-            loader.style.opacity = '1';
-            loader.style.visibility = 'visible';
-        }
-        if (statusText && statusEl) statusEl.textContent = statusText;
-        updateProgress(pct);
-
-        pctTimer = setInterval(() => {
-            pct = Math.min(pct + Math.random() * 8 + 2, 99);
-            updateProgress(pct);
-        }, 120);
-    }
-
-    function dismissLoader() {
-        if (loaderDismissed) return;
-        loaderDismissed = true;
-        if (pctTimer) clearInterval(pctTimer);
-        let currentPct = pct;
-        const finishTimer = setInterval(() => {
-            currentPct = Math.min(currentPct + 10, 100);
-            updateProgress(currentPct);
-            if (currentPct >= 100) {
-                clearInterval(finishTimer);
-                if (statusEl) statusEl.textContent = 'READY';
-                setTimeout(() => {
-                    loader.style.opacity = '0';
-                    loader.style.visibility = 'hidden';
-                }, 300);
-            }
-        }, 30);
-    }
-
-    // Intercept clicks on all local anchors and form submissions to show loader instantly
-    document.addEventListener("click", (e) => {
-        const anchor = e.target.closest("a");
-        if (!anchor) return;
+    
+    if (!hasPlayed) {
+        // Show brand moment first
+        brandSplash.style.display = 'flex';
+        // Hide skeleton initially during splash
+        homeSkeleton.style.display = 'none';
         
-        const href = anchor.getAttribute("href");
-        const target = anchor.getAttribute("target");
-        
-        if (!href || href.startsWith("#") || href.startsWith("javascript:") || target === "_blank") {
-            return;
-        }
-        
-        if (href.startsWith("mailto:") || href.startsWith("tel:") || anchor.hasAttribute("download")) {
-            return;
-        }
-
-        try {
-            const url = new URL(anchor.href, window.location.href);
-            if (url.origin === window.location.origin && url.pathname === window.location.pathname && url.hash) {
-                return;
-            }
-        } catch(err) {}
-
-        if (loader) {
-            startLoader(0, 'CONNECTING');
-        }
-    });
-
-    document.addEventListener("submit", (e) => {
-        const form = e.target;
-        const target = form.getAttribute("target");
-        
-        if (target === "_blank" || e.defaultPrevented) {
-            return;
-        }
-
-        // Only show loader if the form is valid to prevent freezing the UI on browser-validation failure
-        if (typeof form.checkValidity === 'function' && !form.checkValidity()) {
-            return;
-        }
-        
-        if (loader) {
-            startLoader(0, 'PROCESSING SECURE UPLOAD');
-        }
-    });
-
-    // Start loader immediately on load
-    startLoader(0, 'INITIALIZING ENGINE');
-
-    if (document.readyState === 'complete') {
-        dismissLoader();
+        setTimeout(() => {
+            brandSplash.classList.add('fade-out');
+            setTimeout(() => {
+                brandSplash.style.display = 'none';
+                brandSplash.remove();
+                
+                // Show homepage skeleton and start fade sequence
+                homeSkeleton.style.display = 'block';
+                sessionStorage.setItem('brand_moment_played', 'true');
+                
+                // Set up load listener or dismiss immediately if loaded
+                checkAndDismissHomeSkeletons();
+            }, 300);
+        }, 900); // 900ms splash duration
     } else {
-        window.addEventListener('load', dismissLoader);
-        // Safety fallback — never block for more than 4s
-        setTimeout(dismissLoader, 4000);
+        // Brand moment already played, remove it immediately
+        brandSplash.remove();
+        checkAndDismissHomeSkeletons();
     }
 
-    window.addEventListener('pageshow', (event) => {
-        dismissLoader();
-    });
+    function checkAndDismissHomeSkeletons() {
+        const skeletonShownAt = performance.now();
+        const minimumSkeletonMs = 650;
+        let dismissalScheduled = false;
+        function dismiss() {
+            if (dismissalScheduled) return;
+            dismissalScheduled = true;
+            const finish = () => {
+                homeSkeleton.classList.add('fade-out');
+                setTimeout(() => {
+                    homeSkeleton.style.display = 'none';
+                    homeSkeleton.remove();
+                }, 250);
+                if (window.topProgressBar) {
+                    window.topProgressBar.done();
+                }
+            };
+
+            // The normal path reaches here from window.load while the document
+            // is still "loading". Without this guard, a cached refresh removes
+            // the overlay before the browser has a chance to paint it.
+            const remaining = minimumSkeletonMs - (performance.now() - skeletonShownAt);
+            if (remaining > 0) setTimeout(finish, remaining);
+            else finish();
+        }
+        
+        if (document.readyState === 'complete') {
+            dismiss();
+        } else {
+            window.addEventListener('load', dismiss);
+            setTimeout(dismiss, 2500); // safety fallback
+        }
+    }
 })();
 </script>
 
@@ -4306,6 +4256,21 @@ body.light-theme .chain-card--right .card-connector--left {
     <div class="section-eyebrow reveal" style="background: rgba(59, 130, 246, 0.08); border-color: rgba(59, 130, 246, 0.2); color: #60a5fa;">Flexible Plans</div>
     <h2 class="section-title reveal" style="font-size: clamp(2rem, 3.5vw, 2.8rem); font-weight: 700; color: var(--white); margin: 16px 0; line-height: 1.25;">Deploy Human Risk Mitigation</h2>
     <p class="section-sub reveal" style="font-size: 1.05rem; color: var(--muted); max-width: 600px; margin: 0 auto; line-height: 1.6;">Start simulating for free, then upgrade to full continuous automation when you are ready to scale.</p>
+    
+    <!-- Billing Toggle Switch -->
+    <div class="reveal" style="display: flex; justify-content: center; align-items: center; gap: 12px; margin-top: 32px; font-family: var(--sans);">
+      <span id="billing-monthly-label" style="font-size: 0.9rem; font-weight: 700; color: #38bdf8; transition: color 0.2s;">Monthly Billing</span>
+      <label class="switch-toggle" style="position: relative; display: inline-block; width: 48px; height: 26px;">
+        <input type="checkbox" id="pricing-toggle-switch" style="opacity: 0; width: 0; height: 0;" onchange="togglePricingFrequency(this)">
+        <span style="position: absolute; cursor: pointer; inset: 0; background-color: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); border-radius: 34px; transition: 0.3s; display: flex; align-items: center;">
+          <span style="position: absolute; content: ''; height: 18px; width: 18px; left: 4px; bottom: 3px; background-color: #38bdf8; border-radius: 50%; transition: 0.3s; box-shadow: 0 0 10px rgba(56, 189, 248, 0.4);" id="pricing-toggle-dot"></span>
+        </span>
+      </label>
+      <span id="billing-annual-label" style="font-size: 0.9rem; font-weight: 500; color: var(--muted); transition: color 0.2s; display: flex; align-items: center; gap: 6px;">
+        Annual Billing
+        <span style="font-size: 0.65rem; background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); color: #10b981; padding: 2px 6px; border-radius: 100px; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase;">Save 20%</span>
+      </span>
+    </div>
   </div>
 
   <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 32px; max-width: 900px; margin: 0 auto; align-items: stretch;">
@@ -4341,7 +4306,7 @@ body.light-theme .chain-card--right .card-connector--left {
     </div>
 
     <!-- Pricing Card 2: Pro -->
-    <div class="cap-card reveal reveal-delay-1" style="padding: 3rem 2.5rem; border-radius: 16px; background: rgba(6, 182, 212, 0.05); border: 1px solid rgba(6, 182, 212, 0.3); position: relative; display: flex; flex-direction: column; justify-content: space-between; overflow: hidden; transition: all 0.3s; box-shadow: 0 0 40px rgba(6, 182, 212, 0.05); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);" data-tilt>
+    <div class="cap-card pro-card-premium reveal reveal-delay-1" style="padding: 3rem 2.5rem; border-radius: 16px; background: rgba(6, 182, 212, 0.05); border: 1px solid rgba(6, 182, 212, 0.35); position: relative; display: flex; flex-direction: column; justify-content: space-between; overflow: hidden; transition: all 0.3s; backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);" data-tilt>
       <div class="cap-card-glare"></div>
       <div style="position: absolute; top: 20px; right: 20px; background: rgba(6, 182, 212, 0.15); border: 1px solid rgba(6, 182, 212, 0.3); color: #22d3ee; font-size: 0.65rem; font-weight: 800; padding: 4px 10px; border-radius: 100px; text-transform: uppercase; letter-spacing: 0.05em;">Most Popular</div>
       <div>
@@ -4350,8 +4315,8 @@ body.light-theme .chain-card--right .card-connector--left {
         <p style="color: var(--muted); font-size: 0.85rem; line-height: 1.5; margin-bottom: 2rem;">Flat rate covers up to 50 simulated targets. Includes automated recurring campaigns, PDF compliance reports, and full API access.</p>
         
         <div style="margin-bottom: 2.5rem; display: flex; align-items: baseline; gap: 4px;">
-          <span style="font-size: 3rem; font-weight: 800; color: var(--white);">$24</span>
-          <span style="color: var(--muted); font-size: 0.85rem;">/ month (Flat Rate)</span>
+          <span style="font-size: 3rem; font-weight: 800; color: var(--white);" id="pro-price-val">$24</span>
+          <span style="color: var(--muted); font-size: 0.85rem;" id="pro-price-period">/ month (Flat Rate)</span>
         </div>
 
         <div style="height: 1px; background: rgba(6, 182, 212, 0.2); margin-bottom: 2rem;"></div>
@@ -4498,8 +4463,8 @@ body.light-theme .chain-card--right .card-connector--left {
 </footer>
 
 <!-- LEGAL COMPLIANCE MODAL -->
-<div id="legal-modal" style="position:fixed; inset:0; z-index:99999; background:rgba(2, 6, 23, 0.85); backdrop-filter:blur(10px); display:none; align-items:center; justify-content:center; padding:1.5rem; box-sizing:border-box;">
-  <div style="background:var(--surface); border:1px solid var(--border); border-radius:16px; max-width:550px; width:100%; box-shadow:0 25px 50px -12px rgba(0,0,0,0.5); overflow:hidden;">
+<div id="legal-modal" class="home-modal" style="display: none;">
+  <div class="home-modal-box" style="max-width:550px; padding:0; overflow:hidden;">
     <div style="display:flex; justify-content:space-between; align-items:center; padding:1.5rem 2rem; border-bottom:1px solid var(--border); background:rgba(255,255,255,0.01);">
       <h3 id="legal-modal-title" style="color:var(--white); font-family:var(--sans); font-size:1.15rem; margin:0; font-weight:700;">Legal Document</h3>
       <button onclick="closeLegalModal()" style="background:none; border:none; color:var(--muted); font-size:1.5rem; cursor:pointer; line-height:1; transition:color 0.2s;" onmouseover="this.style.color='var(--white)'" onmouseout="this.style.color='var(--muted)'">&times;</button>
@@ -4514,8 +4479,8 @@ body.light-theme .chain-card--right .card-connector--left {
 </div>
 
 <!-- SOLUTIONS INTEL CENTER MODAL -->
-<div id="intel-modal" style="position:fixed; inset:0; z-index:99999; background:rgba(2, 6, 23, 0.85); backdrop-filter:blur(10px); display:none; align-items:center; justify-content:center; padding:1.5rem; box-sizing:border-box;">
-  <div style="background:#0b0f19; border:1px solid rgba(6, 182, 212, 0.2); border-radius:16px; max-width:650px; width:100%; box-shadow:0 0 30px rgba(6, 182, 212, 0.1); overflow:hidden;">
+<div id="intel-modal" class="home-modal" style="display: none;">
+  <div class="home-modal-box" style="max-width:650px; padding:0; overflow:hidden; background:#0b0f19; border:1px solid rgba(6, 182, 212, 0.2); box-shadow:0 0 30px rgba(6, 182, 212, 0.1);">
     <div style="display:flex; justify-content:space-between; align-items:center; padding:1.5rem 2rem; border-bottom:1px solid rgba(255,255,255,0.06); background:rgba(6, 182, 212, 0.02);">
       <div style="display:flex; align-items:center; gap:10px;">
         <span id="intel-modal-icon" style="font-size:1.4rem;"></span>
@@ -4579,13 +4544,19 @@ function openLegalModal(docKey) {
     title.textContent = legalModalData[docKey].title;
     body.innerHTML = legalModalData[docKey].content;
     modal.style.display = 'flex';
+    setTimeout(() => modal.classList.add('active'), 20);
   }
 }
 
 function closeLegalModal() {
   const modal = document.getElementById('legal-modal');
   if (modal) {
-    modal.style.display = 'none';
+    modal.classList.remove('active');
+    setTimeout(() => {
+      if (!modal.classList.contains('active')) {
+        modal.style.display = 'none';
+      }
+    }, 350);
   }
 }
 
@@ -4721,13 +4692,19 @@ function openIntelModal(key) {
     document.getElementById('intel-modal-title').textContent = data.title;
     document.getElementById('intel-modal-body').innerHTML = data.body;
     modal.style.display = 'flex';
+    setTimeout(() => modal.classList.add('active'), 20);
   }
 }
 
 function closeIntelModal() {
   const modal = document.getElementById('intel-modal');
   if (modal) {
-    modal.style.display = 'none';
+    modal.classList.remove('active');
+    setTimeout(() => {
+      if (!modal.classList.contains('active')) {
+        modal.style.display = 'none';
+      }
+    }, 350);
   }
 }
 
@@ -7194,6 +7171,44 @@ body.light-theme [style*="color:rgba(255,255,255,0.5)"],
 body.light-theme [style*="color: rgba(255,255,255,0.5)"] {
     color: #475569 !important;
 }
+
+/* Home Modal System Upgrades */
+.home-modal {
+    position: fixed; inset: 0; z-index: 99999;
+    background: rgba(2, 6, 23, 0.85);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    display: none; align-items: center; justify-content: center;
+    padding: 1.5rem;
+    box-sizing: border-box;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.35s ease;
+}
+.home-modal.active {
+    display: flex !important;
+    opacity: 1;
+    pointer-events: auto;
+}
+.home-modal-box {
+    background: var(--surface, #0d1526);
+    border: 1px solid var(--border, rgba(255,255,255,0.1));
+    border-radius: 16px;
+    padding: 2.5rem;
+    width: 100%;
+    max-width: 600px;
+    position: relative;
+    transform: translateY(24px) scale(0.95);
+    transition: transform 0.32s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+body.light-theme .home-modal-box {
+    background: #ffffff !important;
+    border-color: rgba(0, 0, 0, 0.08) !important;
+    box-shadow: 0 20px 40px rgba(37, 99, 235, 0.06) !important;
+}
+.home-modal.active .home-modal-box {
+    transform: translateY(0) scale(1);
+}
 </style>
 <script>
 document.addEventListener("DOMContentLoaded", () => {
@@ -7419,6 +7434,38 @@ document.addEventListener("DOMContentLoaded", () => {
 })();
 </script>
 
+<script>
+function togglePricingFrequency(checkbox) {
+    const isAnnual = checkbox.checked;
+    const priceVal = document.getElementById('pro-price-val');
+    const pricePeriod = document.getElementById('pro-price-period');
+    const toggleDot = document.getElementById('pricing-toggle-dot');
+    const monthlyLabel = document.getElementById('billing-monthly-label');
+    const annualLabel = document.getElementById('billing-annual-label');
+    
+    if (isAnnual) {
+        priceVal.textContent = '$19';
+        pricePeriod.textContent = '/ month (Billed Annually)';
+        toggleDot.style.transform = 'translateX(20px)';
+        toggleDot.style.backgroundColor = '#10b981';
+        toggleDot.style.boxShadow = '0 0 10px rgba(16, 185, 129, 0.4)';
+        monthlyLabel.style.color = 'var(--muted)';
+        monthlyLabel.style.fontWeight = '500';
+        annualLabel.style.color = '#10b981';
+        annualLabel.style.fontWeight = '700';
+    } else {
+        priceVal.textContent = '$24';
+        pricePeriod.textContent = '/ month (Flat Rate)';
+        toggleDot.style.transform = 'translateX(0px)';
+        toggleDot.style.backgroundColor = '#38bdf8';
+        toggleDot.style.boxShadow = '0 0 10px rgba(56, 189, 248, 0.4)';
+        monthlyLabel.style.color = '#38bdf8';
+        monthlyLabel.style.fontWeight = '700';
+        annualLabel.style.color = 'var(--muted)';
+        annualLabel.style.fontWeight = '500';
+    }
+}
+</script>
 
 </body>
 </html>
