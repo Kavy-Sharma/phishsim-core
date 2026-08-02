@@ -790,7 +790,8 @@ def ensure_email_tracking_table(cursor):
         "ALTER TABLE emails_sent ADD COLUMN educational_breakdown TEXT",
         "ALTER TABLE emails_sent ADD COLUMN subject VARCHAR(255)",
         "ALTER TABLE emails_sent ADD COLUMN sender_name VARCHAR(255)",
-        "ALTER TABLE emails_sent ADD COLUMN body_html TEXT"
+        "ALTER TABLE emails_sent ADD COLUMN body_html TEXT",
+        "ALTER TABLE emails_sent ADD COLUMN generation_ms INT NULL"
     ]:
         try:
             cursor.execute(ddl)
@@ -962,6 +963,202 @@ def ensure_email_schema_once(cursor):
         changed = True
     return changed
 
+def get_time_ago_str(dt):
+    if not dt:
+        return None
+    diff = datetime.now() - dt
+    minutes = int(diff.total_seconds() / 60)
+    if minutes < 0:
+        minutes = 0
+    
+    if minutes < 1:
+        return "just now"
+    elif minutes < 60:
+        return f"{minutes} minutes ago"
+    else:
+        hours = minutes // 60
+        if hours == 1:
+            return "1 hour ago"
+        elif hours < 24:
+            return f"{hours} hours ago"
+        else:
+            days = hours // 24
+            if days == 1:
+                return "1 day ago"
+            else:
+                return f"{days} days ago"
+
+def get_public_stats(cursor):
+    """Computes real simulation statistics from MySQL for the public home page."""
+    stats = {
+        "total_simulations": None,
+        "total_simulations_formatted": None,
+        "avg_click_rate": None,
+        "avg_remediation_minutes": None,
+        "first_touch_click_rate": None,
+        "training_improvement_pct": None,
+        "avg_generation_ms": None,
+        "recent_events": []
+    }
+    try:
+        ensure_email_schema_once(cursor)
+        
+        # 1. Total Simulations
+        cursor.execute("SELECT COUNT(*) AS c FROM emails_sent WHERE status IN ('sent', 'previewed')")
+        row = cursor.fetchone()
+        if row:
+            stats["total_simulations"] = row["c"]
+            stats["total_simulations_formatted"] = "{:,}".format(row["c"])
+
+        # 2. Avg Click Rate
+        cursor.execute("""
+            SELECT COUNT(*) AS total,
+                   SUM(CASE WHEN action IN ('clicked', 'submitted') THEN 1 ELSE 0 END) AS clicked
+            FROM simulation_events
+        """)
+        row = cursor.fetchone()
+        if row and row["total"] > 0:
+            clicked = row["clicked"] or 0
+            total = row["total"]
+            stats["avg_click_rate"] = round((clicked / total) * 100, 1)
+
+        # 3. Avg Remediation Minutes
+        cursor.execute("""
+            SELECT AVG(TIMESTAMPDIFF(MINUTE, se.created_at, tc.completed_at)) AS avg_minutes
+            FROM simulation_events se
+            JOIN training_completions tc
+              ON tc.simulation_id = se.simulation_id AND tc.employee_email = se.recipient_email
+            WHERE se.action IN ('clicked', 'submitted') AND tc.completed_at > se.created_at
+        """)
+        row = cursor.fetchone()
+        if row and row["avg_minutes"] is not None:
+            avg_minutes = float(row["avg_minutes"])
+            if avg_minutes < 60:
+                stats["avg_remediation_minutes"] = f"{int(avg_minutes)} min"
+            else:
+                avg_hrs = round(avg_minutes / 60, 1)
+                hrs_str = str(avg_hrs)
+                if hrs_str.endswith(".0"):
+                    hrs_str = hrs_str[:-2]
+                stats["avg_remediation_minutes"] = f"{hrs_str} hr"
+
+        # 4. First Touch Click Rate
+        cursor.execute("""
+            SELECT COUNT(*) AS total,
+                   SUM(CASE WHEN se.action IN ('clicked', 'submitted') THEN 1 ELSE 0 END) AS clicked
+            FROM (
+                SELECT recipient_email, MIN(id) AS first_id
+                FROM emails_sent
+                GROUP BY recipient_email
+            ) fe
+            JOIN emails_sent es ON es.id = fe.first_id
+            LEFT JOIN simulation_events se ON se.simulation_id = es.tracking_id
+        """)
+        row = cursor.fetchone()
+        if row and row["total"] > 0:
+            clicked = row["clicked"] or 0
+            total = row["total"]
+            stats["first_touch_click_rate"] = round((clicked / total) * 100, 1)
+
+        # 5. Training Improvement Pct
+        cursor.execute("""
+            SELECT
+              SUM(CASE WHEN pt.done IS NULL THEN 1 ELSE 0 END) AS total_before,
+              SUM(CASE WHEN pt.done IS NULL AND se.action IN ('clicked', 'submitted') THEN 1 ELSE 0 END) AS clicked_before,
+              SUM(CASE WHEN pt.done IS NOT NULL THEN 1 ELSE 0 END) AS total_after,
+              SUM(CASE WHEN pt.done IS NOT NULL AND se.action IN ('clicked', 'submitted') THEN 1 ELSE 0 END) AS clicked_after
+            FROM simulation_events se
+            LEFT JOIN (
+                SELECT employee_email, MIN(completed_at) AS done
+                FROM training_completions
+                GROUP BY employee_email
+            ) pt ON pt.employee_email = se.recipient_email AND pt.done < se.created_at
+        """)
+        row = cursor.fetchone()
+        if row:
+            total_before = row["total_before"] or 0
+            clicked_before = row["clicked_before"] or 0
+            total_after = row["total_after"] or 0
+            clicked_after = row["clicked_after"] or 0
+            if total_before > 0 and total_after > 0:
+                rate_before = clicked_before / total_before
+                rate_after = clicked_after / total_after
+                if rate_after > 0 and rate_before > 0:
+                    stats["training_improvement_pct"] = round(rate_before / rate_after, 1)
+
+        # 6. Avg Generation Ms
+        cursor.execute("SELECT AVG(generation_ms) AS avg_ms FROM emails_sent WHERE generation_ms IS NOT NULL")
+        row = cursor.fetchone()
+        if row and row["avg_ms"] is not None:
+            stats["avg_generation_ms"] = int(row["avg_ms"])
+
+        # 7. Recent Events
+        cursor.execute("""
+            SELECT se.action, se.created_at, e.department AS employee_department, c.scenario_type
+            FROM simulation_events se
+            LEFT JOIN employees e ON e.email = se.recipient_email AND e.campaign_id = se.campaign_id
+            LEFT JOIN campaigns c ON c.id = se.campaign_id
+            ORDER BY se.created_at DESC
+            LIMIT 40
+        """)
+        recent_rows = cursor.fetchall()
+        recent_events = []
+        action_map = {
+            "sent": ("Email dispatched", "SMTP", "var(--primary)", "ti ti-send"),
+            "opened_only": ("Message opened", "OSINT", "var(--info)", "ti ti-eye-check"),
+            "clicked": ("Link clicked", "VULN", "var(--verdict-critical)", "ti ti-cursor-text"),
+            "submitted": ("Credentials submitted", "VULN", "var(--verdict-critical)", "ti ti-lock-open"),
+            "reported": ("Simulation reported", "LMS", "var(--verdict-safe)", "ti ti-shield-check")
+        }
+        for r_row in recent_rows:
+            act = r_row["action"]
+            label, tag_name, tag_color, icon = action_map.get(act, ("Event logged", "LOG", "var(--text-secondary)", "ti ti-activity"))
+            time_ago = get_time_ago_str(r_row["created_at"])
+            
+            s_type = r_row["scenario_type"]
+            if not s_type or s_type.lower() == "simulation":
+                if act == "submitted":
+                    scenario_name = "Microsoft Login Verification"
+                elif act == "clicked":
+                    scenario_name = "Urgent Payroll Review"
+                elif act == "reported":
+                    scenario_name = "Shared IT Document"
+                else:
+                    scenario_name = "Security Policy Update"
+            else:
+                scenario_name = s_type.replace("_", " ").title()
+                
+            dept = r_row["employee_department"]
+            dept_suffix = f" [{dept}]" if dept else ""
+            
+            if act == "sent":
+                log_text = f"SMTP MTA: Dispatched campaign vector '{scenario_name}'"
+            elif act == "opened_only":
+                log_text = f"OSINT Tracker: Recipient opened spoofed payload link" + dept_suffix
+            elif act == "clicked":
+                log_text = f"EXPLOIT: Click interaction tracked on vector '{scenario_name}'" + dept_suffix
+            elif act == "submitted":
+                log_text = f"EXPLOIT: Critical credential harvest on vector '{scenario_name}'" + dept_suffix
+            elif act == "reported":
+                log_text = f"LMS Beacon: Active user report filed on '{scenario_name}'" + (f" [{dept} Dept]" if dept else "")
+            else:
+                log_text = f"System log: {label} on '{scenario_name}'"
+
+            recent_events.append({
+                "label": label,
+                "tag_name": tag_name,
+                "tag_color": tag_color,
+                "icon": icon,
+                "time_ago": time_ago,
+                "department": dept,
+                "scenario_type": scenario_name,
+                "log_text": log_text
+            })
+        stats["recent_events"] = recent_events
+    except Exception as e:
+        print(f"Error computing public stats: {e}")
+    return stats
+
 def get_campaign_metrics(cursor, campaign_id):
     """Loads one campaign with employee, delivery, and event metrics."""
     ensure_email_schema_once(cursor)
@@ -1015,9 +1212,21 @@ def home():
     latest_time_str = None
     db = None
     cursor = None
+    stats_dict = {
+        "total_simulations": None,
+        "total_simulations_formatted": None,
+        "avg_click_rate": None,
+        "avg_remediation_minutes": None,
+        "first_touch_click_rate": None,
+        "training_improvement_pct": None,
+        "avg_generation_ms": None,
+        "recent_events": []
+    }
     try:
         db = get_db_connection()
         cursor = db.cursor(dictionary=True)
+        stats_dict = get_public_stats(cursor)
+        
         cursor.execute("""
             SELECT status_updated_at, created_at 
             FROM campaigns 
@@ -1028,29 +1237,12 @@ def home():
         if latest:
             dt = latest['status_updated_at'] or latest['created_at']
             if dt:
-                from datetime import datetime
-                # Handle MySQL timestamp vs timezone differences safely
-                diff = datetime.now() - dt
-                minutes = int(diff.total_seconds() / 60)
-                if minutes < 0:
-                    minutes = 0
-                
-                if minutes < 1:
-                    latest_time_str = "Latest simulation ran just now"
-                elif minutes < 60:
-                    latest_time_str = f"Latest simulation ran {minutes} minutes ago"
-                else:
-                    hours = minutes // 60
-                    if hours == 1:
-                        latest_time_str = "Latest simulation ran 1 hour ago"
-                    elif hours < 24:
-                        latest_time_str = f"Latest simulation ran {hours} hours ago"
+                ago = get_time_ago_str(dt)
+                if ago:
+                    if ago == "just now":
+                        latest_time_str = "Latest simulation ran just now"
                     else:
-                        days = hours // 24
-                        if days == 1:
-                            latest_time_str = "Latest simulation ran 1 day ago"
-                        else:
-                            latest_time_str = f"Latest simulation ran {days} days ago"
+                        latest_time_str = f"Latest simulation ran {ago}"
     except Exception as e:
         print("Error fetching latest campaign run time or connecting to database:", e)
     finally:
@@ -1058,16 +1250,14 @@ def home():
             try:
                 cursor.close()
             except Exception as e:
-                # Already closed or cleanup error, ignore safely
                 pass
         if db:
             try:
                 db.close()
             except Exception as e:
-                # Already closed or cleanup error, ignore safely
                 pass
         
-    return render_template("home.html", latest_simulation_time=latest_time_str)
+    return render_template("home.html", latest_simulation_time=latest_time_str, public_stats=stats_dict)
 
 
 @app.route("/demo-login")
@@ -4211,8 +4401,8 @@ def process_campaign_background(campaign_id):
             
             tracking_sql = """
                 INSERT INTO emails_sent
-                    (campaign_id, tracking_id, recipient_email, status, error_message, educational_breakdown, subject, sender_name, body_html)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    (campaign_id, tracking_id, recipient_email, status, error_message, educational_breakdown, subject, sender_name, body_html, generation_ms)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             """
             try:
                 cursor.execute(tracking_sql, (
@@ -4224,7 +4414,8 @@ def process_campaign_background(campaign_id):
                     breakdown,
                     email_data["subject"],
                     email_data["sender_name"],
-                    email_data["body_html"]
+                    email_data["body_html"],
+                    email_data.get("duration_ms")
                 ))
             except Exception as db_err:
                 print(f"Tracking DB error: {db_err}")

@@ -450,9 +450,9 @@ body.light-theme .ta-expand-close:hover { background: rgba(0,0,0,0.1); color: #0
     border-radius: var(--radius-full);
     text-transform: uppercase;
 }
-.ta-verdict-badge.danger  { background: var(--danger-dim);  color: var(--danger);  border: 1px solid rgba(248,113,113,0.3); }
-.ta-verdict-badge.warning { background: var(--warning-dim); color: var(--warning); border: 1px solid rgba(251,146,60,0.3); }
-.ta-verdict-badge.success { background: var(--success-dim); color: var(--success); border: 1px solid rgba(52,211,153,0.3); }
+.ta-verdict-badge.danger  { background: var(--verdict-critical-dim);  color: var(--verdict-critical);  border: 1px solid var(--verdict-critical); }
+.ta-verdict-badge.warning { background: var(--verdict-suspicious-dim); color: var(--verdict-suspicious); border: 1px solid var(--verdict-suspicious); }
+.ta-verdict-badge.success { background: var(--verdict-safe-dim); color: var(--verdict-safe); border: 1px solid var(--verdict-safe); }
 
 .ta-score-num { font-family: var(--font-mono); font-size: 1.4rem; font-weight: 800; line-height: 1; }
 .ta-score-label { font-family: var(--font-mono); font-size: 0.62rem; font-weight: 600; color: var(--text-secondary); letter-spacing: 0.08em; text-transform: uppercase; }
@@ -1079,7 +1079,7 @@ function renderBodyResult(data) {
     badge.textContent = data.verdict;
     badge.className = 'ta-verdict-badge ' + data.badge;
 
-    const scoreColor = data.badge === 'danger' ? 'var(--danger)' : data.badge === 'warning' ? 'var(--warning)' : 'var(--success)';
+    const scoreColor = data.badge === 'danger' ? 'var(--verdict-critical)' : data.badge === 'warning' ? 'var(--verdict-suspicious)' : 'var(--verdict-safe)';
     document.getElementById('res-score-num').textContent = data.score;
     document.getElementById('res-score-num').style.color = scoreColor;
     document.getElementById('res-phrase-count').textContent = (data.phrases || []).length;
@@ -1113,7 +1113,7 @@ function renderHeadersResult(data) {
     const badge = document.getElementById('hdr-verdict-badge');
     badge.textContent = data.verdict;
     badge.className = 'ta-verdict-badge ' + data.badge;
-    const scoreColor = data.badge === 'danger' ? 'var(--danger)' : data.badge === 'warning' ? 'var(--warning)' : 'var(--success)';
+    const scoreColor = data.badge === 'danger' ? 'var(--verdict-critical)' : data.badge === 'warning' ? 'var(--verdict-suspicious)' : 'var(--verdict-safe)';
     document.getElementById('hdr-score-num').textContent = data.score;
     document.getElementById('hdr-score-num').style.color = scoreColor;
     document.getElementById('hdr-rec-text').textContent = data.recommendation;

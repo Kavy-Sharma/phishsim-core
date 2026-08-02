@@ -694,7 +694,8 @@ body.light-theme .glass-section-header {
 
 .intel-stat-card {
   background: rgba(13, 21, 38, 0.45);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-default);
+  border-left: 4px solid rgba(255, 255, 255, 0.08);
   border-radius: 16px;
   padding: 24px;
   position: relative;
@@ -711,17 +712,24 @@ body.light-theme .glass-section-header {
   inset: 0;
   border-radius: 16px;
   padding: 1px;
-  background: linear-gradient(135deg, rgba(6, 182, 212, 0.2), transparent);
+  background: linear-gradient(135deg, var(--card-glow-color), transparent);
   -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
   pointer-events: none;
+  opacity: 0.15;
+  transition: opacity 0.3s ease;
 }
 
 .intel-stat-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 15px 35px rgba(6, 182, 212, 0.15);
-  border-color: rgba(6, 182, 212, 0.3);
+  border-left-color: var(--card-glow-color);
+  border-color: rgba(255, 255, 255, 0.2);
+  box-shadow: 0 15px 35px var(--card-glow-color-shadow, rgba(6, 182, 212, 0.15));
+}
+
+.intel-stat-card:hover::after {
+  opacity: 0.8;
 }
 
 .intel-stat-card-title {
@@ -767,6 +775,7 @@ body.light-theme .intel-log-card:hover {
 }
 body.light-theme .intel-stat-card {
   background: rgba(255, 255, 255, 0.65);
+  border-left: 4px solid rgba(0, 0, 0, 0.05);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
 }
@@ -3220,15 +3229,28 @@ if (!window.topProgressBar) {
 <!-- STATS BAR -->
 <div id="hero-stats-bar" class="hero-stats" style="grid-template-columns: repeat(3, 1fr); width: 100%; margin: 0 0 1.5rem; display: grid; gap: 0; padding: 0;">
   <div class="hero-stat" style="text-align: center; border-right: 1px solid var(--border-subtle); padding: 2rem 1rem;">
-    <div id="stat-ctr" style="font-size: clamp(2rem, 3.5vw, 2.75rem); font-weight: 800; color: var(--primary); font-family: var(--font-sans); line-height: 1;">0%</div>
+    {% if public_stats.first_touch_click_rate is not none %}
+      <div id="stat-ctr" data-target="{{ public_stats.first_touch_click_rate }}" style="font-size: clamp(2rem, 3.5vw, 2.75rem); font-weight: 800; color: var(--primary); font-family: var(--font-sans); line-height: 1;">{{ public_stats.first_touch_click_rate }}%</div>
+    {% else %}
+      <div style="font-size: 1rem; color: var(--text-secondary); font-family: var(--font-sans); line-height: 1; height: clamp(2rem, 3.5vw, 2.75rem); display: flex; align-items: center; justify-content: center; font-weight: 500;">Not enough data yet</div>
+    {% endif %}
     <div style="font-size: var(--text-sm); color: var(--text-secondary); margin-top: 0.5rem; font-weight: 500;">click-through rate on first simulations</div>
   </div>
   <div class="hero-stat" style="text-align: center; border-right: 1px solid var(--border-subtle); padding: 2rem 1rem;">
-    <div id="stat-gen" style="font-size: clamp(2rem, 3.5vw, 2.75rem); font-weight: 800; color: var(--primary); font-family: var(--font-sans); line-height: 1;">0 min</div>
+    {% if public_stats.avg_generation_ms is not none %}
+      {% set avg_sec = (public_stats.avg_generation_ms / 1000) | round(1) %}
+      <div id="stat-gen" data-target="{{ avg_sec }}" style="font-size: clamp(2rem, 3.5vw, 2.75rem); font-weight: 800; color: var(--primary); font-family: var(--font-sans); line-height: 1;">{{ avg_sec }}s</div>
+    {% else %}
+      <div style="font-size: 1rem; color: var(--text-secondary); font-family: var(--font-sans); line-height: 1; height: clamp(2rem, 3.5vw, 2.75rem); display: flex; align-items: center; justify-content: center; font-weight: 500;">Not enough data yet</div>
+    {% endif %}
     <div style="font-size: var(--text-sm); color: var(--text-secondary); margin-top: 0.5rem; font-weight: 500;">avg AI email generation</div>
   </div>
   <div class="hero-stat" style="text-align: center; padding: 2rem 1rem;">
-    <div id="stat-imp" style="font-size: clamp(2rem, 3.5vw, 2.75rem); font-weight: 800; color: var(--primary); font-family: var(--font-sans); line-height: 1;">0&times;</div>
+    {% if public_stats.training_improvement_pct is not none %}
+      <div id="stat-imp" data-target="{{ public_stats.training_improvement_pct }}" style="font-size: clamp(2rem, 3.5vw, 2.75rem); font-weight: 800; color: var(--primary); font-family: var(--font-sans); line-height: 1;">{{ public_stats.training_improvement_pct }}&times;</div>
+    {% else %}
+      <div style="font-size: 1rem; color: var(--text-secondary); font-family: var(--font-sans); line-height: 1; height: clamp(2rem, 3.5vw, 2.75rem); display: flex; align-items: center; justify-content: center; font-weight: 500;">Not enough data yet</div>
+    {% endif %}
     <div style="font-size: var(--text-sm); color: var(--text-secondary); margin-top: 0.5rem; font-weight: 500;">improvement after training</div>
   </div>
 </div>
@@ -3253,9 +3275,23 @@ if (!window.topProgressBar) {
       if (e.isIntersecting && !animated) {
         animated = true;
         obs.disconnect();
-        animateCounter(document.getElementById('stat-ctr'), 0, 87, 1800, v => Math.round(v) + '%');
-        animateCounter(document.getElementById('stat-gen'), 0, 2, 1400, v => '< ' + v.toFixed(1).replace('.0','') + ' min');
-        animateCounter(document.getElementById('stat-imp'), 0, 3.4, 1600, v => v.toFixed(1) + '&times;');
+        
+        const ctrEl = document.getElementById('stat-ctr');
+        const genEl = document.getElementById('stat-gen');
+        const impEl = document.getElementById('stat-imp');
+
+        if (ctrEl) {
+          const target = parseFloat(ctrEl.dataset.target);
+          animateCounter(ctrEl, 0, target, 1800, v => Math.round(v) + '%');
+        }
+        if (genEl) {
+          const target = parseFloat(genEl.dataset.target);
+          animateCounter(genEl, 0, target, 1400, v => v.toFixed(1).replace('.0','') + 's');
+        }
+        if (impEl) {
+          const target = parseFloat(impEl.dataset.target);
+          animateCounter(impEl, 0, target, 1600, v => v.toFixed(1) + '&times;');
+        }
       }
     });
   }, { threshold: 0.4 });
@@ -3263,7 +3299,7 @@ if (!window.topProgressBar) {
 })();
 </script>
 <div style="text-align: center; font-size: var(--text-xs); color: var(--text-muted); margin-top: -1.5rem; margin-bottom: 3.5rem; font-style: italic;">
-  * Based on industry benchmark data. Your results may vary.
+  * Live figures from PhishSim AI simulations to date.
 </div>
 
 
@@ -3899,40 +3935,102 @@ if (!window.topProgressBar) {
   <div class="intel-layout">
     <!-- Left: Log scrolling feed -->
     <div class="intel-feed-window">
-      <div class="intel-feed-title-bar">
-        <span style="font-family: var(--font-sans); font-size: 0.95rem; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 8px;">
-          <i class="ti ti-activity-heartbeat" style="color: #06b6d4; font-size: 1.2rem;"></i> Global Threat Intelligence Stream
+      <div class="intel-feed-title-bar" style="border-bottom: 1px solid var(--border-default); padding-bottom: 14px; margin-bottom: 16px; display: flex; align-items: center; gap: 12px;">
+        <span style="font-family: var(--font-sans); font-size: 0.95rem; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+          <i class="ti ti-activity-heartbeat" style="color: var(--primary); font-size: 1.25rem; animation: pulse 2.5s infinite;"></i> Global Telemetry Stream
         </span>
-        <span style="font-family: var(--font-mono); font-size: 0.68rem; color: #10b981; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); padding: 2px 8px; border-radius: 4px; font-weight: bold; letter-spacing: 0.5px; text-transform: uppercase;">
-          LIVE FEED
+        <span style="font-family: var(--font-mono); font-size: 0.68rem; color: var(--verdict-safe); background: rgba(5, 150, 105, 0.1); border: 1px solid rgba(5, 150, 105, 0.25); padding: 3px 10px; border-radius: 6px; font-weight: 800; letter-spacing: 0.5px; display: flex; align-items: center; gap: 6px; text-transform: uppercase;">
+          <span style="width: 8px; height: 8px; border-radius: 50%; background: var(--verdict-safe); display: inline-block; box-shadow: 0 0 8px var(--verdict-safe);"></span> LIVE FEED
         </span>
       </div>
       <div class="intel-feed-content">
-        <div class="intel-scroll-container" id="intel-scroll-container">
-          <!-- Populated by JavaScript to prevent loop artifacts -->
+        <div class="intel-scroll-container" id="intel-scroll-container" {% if not public_stats.recent_events %}style="animation: none;"{% endif %}>
+          {% if public_stats.recent_events %}
+            {# Render the list twice for seamless marquee loop #}
+            {% for i in range(2) %}
+              {% for event in public_stats.recent_events %}
+                <div class="intel-log-card" style="border-left: 4px solid {{ event.tag_color }}; background: rgba(255, 255, 255, 0.015); margin-bottom: 8px; border-radius: 8px; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; gap: 16px; transition: all 0.25s ease;">
+                  <div style="display: flex; align-items: center; gap: 12px; flex: 1;">
+                    <div style="width: 32px; height: 32px; border-radius: 50%; background: {{ event.tag_color }}15; border: 1px solid {{ event.tag_color }}35; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                      <i class="{{ event.icon }}" style="color: {{ event.tag_color }}; font-size: 1rem;"></i>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 2px;">
+                      <div style="font-size: 0.82rem; font-weight: 600; color: var(--text-primary); display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-family: var(--font-mono); line-height: 1.4;">
+                        <span style="background: {{ event.tag_color }}15; color: {{ event.tag_color }}; padding: 2px 6px; border-radius: 4px; font-size: 0.68rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; border: 1px solid {{ event.tag_color }}30; line-height: 1; height: 18px; display: inline-flex; align-items: center; justify-content: center;">{{ event.tag_name }}</span>
+                        <span>{{ event.log_text }}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div style="display: flex; align-items: center; gap: 6px; flex-shrink: 0;">
+                    <span style="font-size: 0.72rem; color: var(--text-secondary); white-space: nowrap;">{{ event.time_ago }}</span>
+                    <span style="width: 6px; height: 6px; border-radius: 50%; background: {{ event.tag_color }}; display: inline-block; box-shadow: 0 0 8px {{ event.tag_color }};"></span>
+                  </div>
+                </div>
+              {% endfor %}
+            {% endfor %}
+          {% else %}
+            <div class="intel-log-card" style="border-left: 4px solid var(--primary); background: rgba(255, 255, 255, 0.02); padding: 20px; border-radius: 8px; text-align: center; justify-content: center;">
+              <span style="color: var(--text-secondary); font-size: 0.85rem;">No simulation activity yet — telemetry will appear here once campaigns run.</span>
+            </div>
+          {% endif %}
         </div>
       </div>
     </div>
     
     <!-- Right: Stats Cards -->
     <div class="intel-stat-cards">
-      <!-- Card 1 -->
-      <div class="intel-stat-card">
-        <div class="intel-stat-card-title">SIMULATIONS EXECUTED</div>
-        <div class="intel-stat-card-value">1,482,904</div>
-        <div class="intel-stat-card-desc">AI-generated threat scenarios successfully deployed.</div>
+      <!-- Card 1: Simulations -->
+      <div class="intel-stat-card" style="--card-glow-color: var(--primary); --card-glow-color-shadow: rgba(45, 212, 191, 0.25);">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+          <div>
+            <div class="intel-stat-card-title">SIMULATIONS EXECUTED</div>
+            <div class="intel-stat-card-value" style="color: var(--primary);">{{ public_stats.total_simulations_formatted if public_stats.total_simulations_formatted is not none else '0' }}</div>
+          </div>
+          <div style="width: 42px; height: 42px; border-radius: 10px; background: rgba(45, 212, 191, 0.1); display: flex; align-items: center; justify-content: center; border: 1px solid rgba(45, 212, 191, 0.25);">
+            <i class="ti ti-mail-fast" style="color: var(--primary); font-size: 1.4rem;"></i>
+          </div>
+        </div>
+        <div class="intel-stat-card-desc" style="margin-top: 10px; font-size: 0.8rem; color: var(--text-secondary);">Autonomous phishing scenarios executed to date.</div>
       </div>
-      <!-- Card 2 -->
-      <div class="intel-stat-card">
-        <div class="intel-stat-card-title" style="color: #06b6d4;">AVERAGE CLICK RATE</div>
-        <div class="intel-stat-card-value" style="background: linear-gradient(90deg, var(--text-main), #ff007f); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">8.4%</div>
-        <div class="intel-stat-card-desc">Simulated compromise rate for active tenant organizations.</div>
+      
+      <!-- Card 2: Click Rate -->
+      <div class="intel-stat-card" style="--card-glow-color: var(--verdict-critical); --card-glow-color-shadow: rgba(244, 63, 94, 0.25);">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+          <div>
+            <div class="intel-stat-card-title" style="color: var(--text-secondary);">AVERAGE CLICK RATE</div>
+            <div class="intel-stat-card-value" style="color: var(--verdict-critical);">{{ public_stats.avg_click_rate ~ '%' if public_stats.avg_click_rate is not none else '0.0%' }}</div>
+          </div>
+          <div style="width: 42px; height: 42px; border-radius: 10px; background: rgba(244, 63, 94, 0.1); display: flex; align-items: center; justify-content: center; border: 1px solid rgba(244, 63, 94, 0.25);">
+            <i class="ti ti-pointer" style="color: var(--verdict-critical); font-size: 1.4rem;"></i>
+          </div>
+        </div>
+        <div class="intel-stat-card-desc" style="margin-top: 10px; font-size: 0.8rem; color: var(--text-secondary);">
+          {% if public_stats.avg_click_rate is not none %}
+            Compromise rate across active campaigns.
+          {% else %}
+            No campaigns run yet. Showing baseline.
+          {% endif %}
+        </div>
       </div>
-      <!-- Card 3 -->
-      <div class="intel-stat-card">
-        <div class="intel-stat-card-title" style="color: #10b981;">REMEDIATION SPEED</div>
-        <div class="intel-stat-card-value" style="background: linear-gradient(90deg, var(--text-main), #10b981); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">&lt; 2hr</div>
-        <div class="intel-stat-card-desc">Average time to assign micro-learning briefs post-failure.</div>
+      
+      <!-- Card 3: Remediation Speed -->
+      <div class="intel-stat-card" style="--card-glow-color: var(--verdict-safe); --card-glow-color-shadow: rgba(52, 211, 153, 0.25);">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+          <div>
+            <div class="intel-stat-card-title" style="color: var(--text-secondary);">REMEDIATION SPEED</div>
+            <div class="intel-stat-card-value" style="color: var(--verdict-safe);">{{ public_stats.avg_remediation_minutes if public_stats.avg_remediation_minutes is not none else 'N/A' }}</div>
+          </div>
+          <div style="width: 42px; height: 42px; border-radius: 10px; background: rgba(52, 211, 153, 0.1); display: flex; align-items: center; justify-content: center; border: 1px solid rgba(52, 211, 153, 0.25);">
+            <i class="ti ti-hourglass-low" style="color: var(--verdict-safe); font-size: 1.4rem;"></i>
+          </div>
+        </div>
+        <div class="intel-stat-card-desc" style="margin-top: 10px; font-size: 0.8rem; color: var(--text-secondary);">
+          {% if public_stats.avg_remediation_minutes is not none %}
+            Average time to complete assigned training.
+          {% else %}
+            No completions yet. Telemetry pending.
+          {% endif %}
+        </div>
       </div>
     </div>
   </div>
@@ -6674,73 +6772,7 @@ heroStats.forEach(el => heroStatObs.observe(el));
 
 
 /* ── DYNAMIC GLOBAL THREAT INTELLIGENCE STREAM ── */
-document.addEventListener("DOMContentLoaded", () => {
-  const container = document.getElementById('intel-scroll-container');
-  if (!container) return;
-
-  const tags = [
-      { name: 'OSINT', color: '#06b6d4' },
-      { name: 'LLM', color: '#f59e0b' },
-      { name: 'SMTP', color: '#38bdf8' },
-      { name: 'VULN', color: '#ef4444' },
-      { name: 'LMS', color: '#10b981' },
-      { name: 'DNS', color: '#818cf8' }
-  ];
-
-  const names = ['j.doe', 'a.chen', 's.jenkins', 'd.kim', 'b.patel', 'c.torres', 'e.wilson', 'm.vance', 'g.park', 'o.queen', 'p.parker', 'r.gomez', 'l.croft', 't.stark', 'b.wayne', 'c.kent', 'd.prince', 'n.romanoff', 's.rogers', 'b.banner', 'w.maximoff', 't.challa', 'p.quill', 'c.danvers', 's.strange', 'a.curry', 'h.jordan', 'b.allen'];
-  const depts = ['Finance', 'HR', 'IT Security', 'Engineering', 'Operations', 'Sales', 'Marketing', 'Legal', 'Infrastructure'];
-  const domains = ['demo-corp.com', 'apex-security.com', 'fintechlabs.io', 'globaltech.net', 'cyberguard.org', 'securepay.co', 'wealthtrust.com', 'healthfirst.org'];
-  
-  const templates = [
-      (n, d, dom) => `Discovered exposed subdomain <code>mail-staging.${dom}</code>`,
-      (n, d, dom) => `LinkedIn crawl mapped ${Math.floor(Math.random() * 15) + 5} employee profiles in ${d}`,
-      (n, d, dom) => `Payload synthesized: Authority impersonation targeting <code>${n}@${dom}</code>`,
-      (n, d, dom) => `Simulated SMTP dispatch successful to <code>${dom}</code> (${Math.floor(Math.random() * 30) + 10} vectors)`,
-      (n, d, dom) => `Click token captured from <code>${n}@${dom}</code> (${d} Dept)`,
-      (n, d, dom) => `Credential harvest simulation flagged in <code>${d}</code>`,
-      (n, d, dom) => `Automatic enrollment: <code>${n}@${dom}</code> assigned MFA module`,
-      (n, d, dom) => `DNS record analysis flagged potential spoofing vector on <code>${dom}</code>`,
-      (n, d, dom) => `Phishing simulation report generated for <code>${dom}</code>`,
-      (n, d, dom) => `Urgent invoice pretext generated by LLM for <code>${n}@${dom}</code>`,
-      (n, d, dom) => `Passive exposure scan completed for <code>${dom}</code>`,
-      (n, d, dom) => `Micro-training compliance alert sent to <code>${n}@${dom}</code>`,
-      (n, d, dom) => `MX record change detected for spoofed domain proxy of <code>${dom}</code>`,
-      (n, d, dom) => `Suspicious attachment opened by <code>${n}@${dom}</code> in sandbox`,
-      (n, d, dom) => `External SMTP delivery simulation test passed for <code>${dom}</code>`
-  ];
-
-  const logEntries = [];
-  // Generate 35 entries
-  for (let i = 0; i < 35; i++) {
-      const tag = tags[Math.floor(Math.random() * tags.length)];
-      const name = names[Math.floor(Math.random() * names.length)];
-      const dept = depts[Math.floor(Math.random() * depts.length)];
-      const domain = domains[Math.floor(Math.random() * domains.length)];
-      const template = templates[Math.floor(Math.random() * templates.length)];
-      const text = template(name, dept, domain);
-      
-      // Time logic: varied sequence
-      let timeStr = '';
-      if (i === 0) timeStr = '0.5s ago';
-      else if (i < 5) timeStr = `${i * 3 + Math.floor(Math.random() * 3)}s ago`;
-      else if (i < 15) timeStr = `${Math.floor(i * 1.5)}s ago`;
-      else timeStr = `${Math.floor(i / 2)}m ago`;
-
-      logEntries.push({ tag, text, timeStr });
-  }
-
-  // To make seamless loop, duplicate the array
-  const fullList = [...logEntries, ...logEntries];
-  
-  container.innerHTML = fullList.map(entry => {
-      return `
-          <div class="intel-log-card" style="border-left-color: ${entry.tag.color};">
-              <span>[${entry.tag.name}] ${entry.text}</span>
-              <span style="color: #475569; font-size: 0.72rem;">${entry.timeStr}</span>
-          </div>
-      `;
-  }).join('');
-});
+// Handled server-side via Jinja template rendering to display real DB telemetry logs.
 
 
 

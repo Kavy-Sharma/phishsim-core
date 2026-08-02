@@ -298,11 +298,13 @@ def generate_phishing_email(
         urgency_level:    'low' | 'medium' | 'high'
 
     Returns:
-        dict: {subject, sender_name, body_html, educational_breakdown}
+        dict: {subject, sender_name, body_html, educational_breakdown, duration_ms}
     """
     if client is None:
         print("[email_gen] OPENROUTER_API_KEY not configured — using static fallback.")
-        return fallback_email(employee_profile)
+        fb = fallback_email(employee_profile)
+        fb["duration_ms"] = 0
+        return fb
 
     recipient_name  = employee_profile.get("name", "Employee")
     recipient_email = employee_profile.get("email", "employee@company.com")
@@ -337,9 +339,14 @@ def generate_phishing_email(
         {"role": "user",   "content": "Generate the phishing simulation email JSON now."},
     ]
 
+    t0 = time.time()
     raw = _call_with_fallback(messages)
+    duration_ms = int((time.time() - t0) * 1000)
+
     if not raw:
-        return fallback_email(employee_profile)
+        fb = fallback_email(employee_profile)
+        fb["duration_ms"] = duration_ms
+        return fb
 
     parsed = _parse_json_response(raw)
     if parsed:
@@ -351,10 +358,14 @@ def generate_phishing_email(
 
         parsed.setdefault("sender_name", parsed.get("sender_display", "IT Security Team"))
         parsed.setdefault("educational_breakdown", parsed.get("phishing_tactic", "Always verify unexpected requests."))
-        return clean_email_data(parsed)
+        cleaned = clean_email_data(parsed)
+        cleaned["duration_ms"] = duration_ms
+        return cleaned
 
     print(f"[email_gen] JSON parse failed. Raw snippet:\n{raw[:400]}")
-    return fallback_email(employee_profile)
+    fb = fallback_email(employee_profile)
+    fb["duration_ms"] = duration_ms
+    return fb
 
 
 # ─── CLI smoke-test ───────────────────────────────────────────────────────────

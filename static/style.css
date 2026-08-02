@@ -40,86 +40,94 @@
 
 :root, :root[data-theme="dark"] {
   /* === BACKGROUNDS === */
-  --bg-base:        #020617;   /* page background - deep navy-black, NOT pure #000 */
-  --bg-surface:     #0D1526;   /* cards, panels, modals */
-  --bg-elevated:    #121D35;   /* dropdowns, tooltips, secondary cards */
-  --bg-input:       #0A1020;   /* form inputs, textareas */
-  --bg-hover:       #1A2540;   /* hover states on list items, nav items */
-  --bg-navbar:      rgba(13, 21, 38, 0.75);
+  --bg-base:        #0A1420;   /* page background */
+  --bg-surface:     #111D2E;   /* cards, panels, modals */
+  --bg-surface-raised:#16283D; /* elevated cards/modals */
+  --bg-elevated:    #16283D;   /* dropdowns, tooltips, secondary cards */
+  --bg-input:       #0A1420;   /* form inputs, textareas */
+  --bg-hover:       #16283D;   /* hover states on list items, nav items */
+  --bg-navbar:      rgba(17, 29, 46, 0.85);
 
   /* === BORDERS === */
   --border-subtle:  rgba(255,255,255,0.06);   /* card outlines, dividers */
-  --border-default: rgba(255,255,255,0.12);   /* input borders, table rows */
-  --border-active:  rgba(99,179,237,0.4);     /* focused inputs, selected items */
+  --border-default: #1F2F42;                  /* input borders, table rows */
+  --border-active:  rgba(45,212,191,0.4);     /* focused inputs, selected items */
 
-  /* === PRIMARY - Cyan === */
-  --primary:        #38BDF8;   /* primary buttons, key links */
-  --primary-dim:    rgba(56,189,248,0.15);    /* button backgrounds, tag fills */
-  --primary-glow:   rgba(56,189,248,0.25);    /* box-shadow glow on hover */
+  /* === PRIMARY — Ocean Teal === */
+  --primary:        #2DD4BF;   /* primary buttons, key links, focus rings */
+  --primary-hover:  #5EEAD4;   /* hover states for primary elements */
+  --primary-dim:    rgba(45,212,191,0.15);    /* button backgrounds, tag fills */
+  --primary-glow:   rgba(45,212,191,0.25);    /* box-shadow glow on hover */
 
-  /* === DANGER / CRITICAL === */
-  --danger:         #F87171;   /* critical badges, error states */
-  --danger-dim:     rgba(248,113,113,0.15);
-  --danger-glow:    rgba(248,113,113,0.2);
+  /* === VERDICT SYSTEM (Distinct from Brand Primary) === */
+  --verdict-safe:          #34D399;           /* safe status, green verdict */
+  --verdict-safe-dim:      rgba(52,211,153,0.15);
+  --verdict-suspicious:    #F5A623;           /* suspicious status, amber verdict */
+  --verdict-suspicious-dim:rgba(245,166,35,0.15);
+  --verdict-critical:      #F43F5E;           /* phishing/critical threat verdict */
+  --verdict-critical-dim:  rgba(244,63,94,0.15);
 
-  /* === WARNING / HIGH RISK === */
-  --warning:        #FB923C;   /* high-risk badges, warn states */
-  --warning-dim:    rgba(251,146,60,0.15);
-
-  /* === SUCCESS / SAFE === */
-  --success:        #34D399;   /* safe badges, success toasts, reported status */
-  --success-dim:    rgba(52,211,153,0.15);
-
-  /* === INFO / NEUTRAL === */
-  --info:           #818CF8;   /* info badges, secondary highlights */
+  /* === LEGACY COMPATIBILITY ALIASES === */
+  --danger:         var(--verdict-critical);
+  --danger-dim:     var(--verdict-critical-dim);
+  --danger-glow:    rgba(244,63,94,0.2);
+  --warning:        var(--verdict-suspicious);
+  --warning-dim:    var(--verdict-suspicious-dim);
+  --success:        var(--verdict-safe);
+  --success-dim:    var(--verdict-safe-dim);
+  --info:           #818CF8;
   --info-dim:       rgba(129,140,248,0.15);
 
   /* === TEXT === */
-  --text-primary:   #F0F4FF;   /* headings, primary content */
-  --text-secondary: #94A3B8;   /* body copy, descriptions */
-  --text-muted:     #4A5568;   /* placeholders, disabled, timestamps */
-  --text-inverse:   #080D1A;   /* text on light/colored backgrounds */
+  --text-primary:   #E8EDF2;   /* headings, primary content */
+  --text-secondary: #8CA0B3;   /* body copy, descriptions */
+  --text-muted:     #64748B;   /* placeholders, disabled, timestamps */
+  --text-inverse:   #0A1420;   /* text on light/colored backgrounds */
 
   /* === SPECIAL === */
-  --terminal-green: #4ADE80;   /* terminal output text only */
-  --terminal-bg:    #050A14;   /* terminal window background */
-  --scrollbar:      #1A2540;
-  --scrollbar-thumb:#2D3F5F;
+  --terminal-green: #34D399;   /* terminal output text only */
+  --terminal-bg:    #060D17;   /* terminal window background */
+  --scrollbar:      #111D2E;
+  --scrollbar-thumb:#1F2F42;
 }
 
 :root[data-theme="light"] {
   /* === BACKGROUNDS === */
-  --bg-base:        #F5F7FF;   /* page background - very light blue-white, NOT pure #fff */
+  --bg-base:        #F6F9FA;   /* page background */
   --bg-surface:     #FFFFFF;   /* cards, panels */
-  --bg-elevated:    #EEF2FF;   /* secondary cards, hover surfaces */
+  --bg-surface-raised:#FFFFFF; /* elevated surfaces in light mode */
+  --bg-elevated:    #F1F5F9;   /* secondary cards, hover surfaces */
   --bg-input:       #FFFFFF;   /* inputs */
-  --bg-hover:       #E8EDFF;   /* hover states */
-  --bg-navbar:      rgba(255, 255, 255, 0.75);
+  --bg-hover:       #F1F5F9;   /* hover states */
+  --bg-navbar:      rgba(255, 255, 255, 0.85);
 
   /* === BORDERS === */
   --border-subtle:  rgba(0,0,0,0.06);
-  --border-default: rgba(0,0,0,0.12);
-  --border-active:  rgba(14,116,200,0.5);
+  --border-default: #E2E8F0;
+  --border-active:  rgba(13,148,136,0.5);
 
-  /* === PRIMARY === */
-  --primary:        #0E74C8;
-  --primary-dim:    rgba(14,116,200,0.1);
-  --primary-glow:   rgba(14,116,200,0.2);
+  /* === PRIMARY — Deep Teal === */
+  --primary:        #0D9488;
+  --primary-hover:  #0F766E;
+  --primary-dim:    rgba(13,148,136,0.12);
+  --primary-glow:   rgba(13,148,136,0.2);
 
-  /* === DANGER === */
-  --danger:         #DC2626;
-  --danger-dim:     rgba(220,38,38,0.1);
+  /* === VERDICT SYSTEM === */
+  --verdict-safe:          #059669;
+  --verdict-safe-dim:      rgba(5,150,105,0.12);
+  --verdict-suspicious:    #B45309;
+  --verdict-suspicious-dim:rgba(180,83,9,0.12);
+  --verdict-critical:      #DC2626;
+  --verdict-critical-dim:  rgba(220,38,38,0.12);
+
+  /* === LEGACY COMPATIBILITY ALIASES === */
+  --danger:         var(--verdict-critical);
+  --danger-dim:     var(--verdict-critical-dim);
   --danger-glow:    rgba(220,38,38,0.15);
-
-  /* === WARNING === */
-  --warning:        #EA580C;
-  --warning-dim:    rgba(234,88,12,0.1);
-
-  /* === SUCCESS === */
-  --success:        #059669;
-  --success-dim:    rgba(5,150,105,0.1);
-
-  /* === INFO === */
+  --warning:        var(--verdict-suspicious);
+  --warning-dim:    var(--verdict-suspicious-dim);
+  --success:        var(--verdict-safe);
+  --success-dim:    var(--verdict-safe-dim);
   --info:           #4F46E5;
   --info-dim:       rgba(79,70,229,0.1);
 
@@ -127,10 +135,10 @@
   --text-primary:   #0F172A;
   --text-secondary: #475569;
   --text-muted:     #94A3B8;
-  --text-inverse:   #F0F4FF;
+  --text-inverse:   #F6F9FA;
 
   /* === SPECIAL === */
-  --terminal-green: #16A34A;
+  --terminal-green: #059669;
   --terminal-bg:    #F0FDF4;
   --scrollbar:      #E2E8F0;
   --scrollbar-thumb:#CBD5E1;

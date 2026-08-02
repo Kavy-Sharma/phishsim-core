@@ -72,16 +72,16 @@
 
 /* Verdict classes for card glows */
 .card-verdict-LEGITIMATE {
-    border-color: rgba(52, 211, 153, 0.4);
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 50px rgba(52, 211, 153, 0.1);
+    border-color: var(--verdict-safe);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 50px var(--verdict-safe-dim);
 }
 .card-verdict-UNCERTAIN {
-    border-color: rgba(251, 146, 60, 0.4);
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 50px rgba(251, 146, 60, 0.1);
+    border-color: var(--verdict-suspicious);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 50px var(--verdict-suspicious-dim);
 }
 .card-verdict-SUSPICIOUS {
-    border-color: rgba(248, 113, 113, 0.4);
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 50px rgba(248, 113, 113, 0.1);
+    border-color: var(--verdict-critical);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 50px var(--verdict-critical-dim);
 }
 
 .ha-term-header {
@@ -169,7 +169,7 @@
 .ha-hop-svg { width: 280px; height: 70px; overflow: visible; }
 /* animated dots traveling path */
 .ha-hop-dot {
-    fill: #38bdf8;
+    fill: var(--primary);
     animation: haHopTravel 2.5s ease-in-out infinite;
 }
 .ha-hop-dot:nth-child(2) { animation-delay: 0.65s; fill: #a78bfa; }
@@ -361,7 +361,7 @@ body.light-theme .ha-expand-close:hover { background: rgba(0,0,0,0.1); color: #0
 .ha-action-btn {
     width: 100%;
     padding: 16px 24px;
-    background-color: #38bdf8;
+    background-color: var(--primary);
     border: 1px solid rgba(255, 255, 255, 0.25);
     border-bottom: 3.5px solid rgba(0, 0, 0, 0.45);
     border-radius: var(--radius-lg);
@@ -381,13 +381,13 @@ body.light-theme .ha-expand-close:hover { background: rgba(0,0,0,0.1); color: #0
     overflow: hidden;
     isolation: isolate;
 }
-/* Gradient: cyan → indigo — technical routing path, cool-technical feel */
+/* Gradient: primary → indigo */
 .ha-action-btn::before {
     content: '';
     position: absolute;
     inset: 0;
     border-radius: inherit;
-    background-image: linear-gradient(135deg, #38bdf8 0%, #6366f1 100%);
+    background-image: linear-gradient(135deg, var(--primary) 0%, #6366f1 100%);
     z-index: -1;
     transition: opacity 0.15s ease;
 }
@@ -679,25 +679,25 @@ body.light-theme .ha-expand-close:hover { background: rgba(0,0,0,0.1); color: #0
 
 /* Trust coding classes */
 .ha-node-card.trust-safe {
-    border-color: rgba(16, 185, 129, 0.3);
+    border-color: var(--verdict-safe-dim);
 }
 .ha-node-card.trust-safe:hover {
-    border-color: rgba(16, 185, 129, 0.8);
-    box-shadow: 0 15px 30px -5px rgba(16, 185, 129, 0.15);
+    border-color: var(--verdict-safe);
+    box-shadow: 0 15px 30px -5px var(--verdict-safe-dim);
 }
 .ha-node-card.trust-warn {
-    border-color: rgba(245, 158, 11, 0.3);
+    border-color: var(--verdict-suspicious-dim);
 }
 .ha-node-card.trust-warn:hover {
-    border-color: rgba(245, 158, 11, 0.8);
-    box-shadow: 0 15px 30px -5px rgba(245, 158, 11, 0.15);
+    border-color: var(--verdict-suspicious);
+    box-shadow: 0 15px 30px -5px var(--verdict-suspicious-dim);
 }
 .ha-node-card.trust-danger {
-    border-color: rgba(239, 68, 68, 0.3);
+    border-color: var(--verdict-critical-dim);
 }
 .ha-node-card.trust-danger:hover {
-    border-color: rgba(239, 68, 68, 0.8);
-    box-shadow: 0 15px 30px -5px rgba(239, 68, 68, 0.15);
+    border-color: var(--verdict-critical);
+    box-shadow: 0 15px 30px -5px var(--verdict-critical-dim);
 }
 
 /* Status Indicator Dot */
@@ -709,9 +709,9 @@ body.light-theme .ha-expand-close:hover { background: rgba(0,0,0,0.1); color: #0
     height: 8px;
     border-radius: 50%;
 }
-.ha-node-dot.trust-safe { background: #10b981; box-shadow: 0 0 10px rgba(16, 185, 129, 0.6); }
-.ha-node-dot.trust-warn { background: #f59e0b; box-shadow: 0 0 10px rgba(245, 158, 11, 0.6); }
-.ha-node-dot.trust-danger { background: #ef4444; box-shadow: 0 0 10px rgba(239, 68, 68, 0.6); }
+.ha-node-dot.trust-safe { background: var(--verdict-safe); box-shadow: 0 0 10px var(--verdict-safe-dim); }
+.ha-node-dot.trust-warn { background: var(--verdict-suspicious); box-shadow: 0 0 10px var(--verdict-suspicious-dim); }
+.ha-node-dot.trust-danger { background: var(--verdict-critical); box-shadow: 0 0 10px var(--verdict-critical-dim); }
 
 /* Node Contents */
 .ha-node-badge {
@@ -779,13 +779,13 @@ body.light-theme .ha-expand-close:hover { background: rgba(0,0,0,0.1); color: #0
 .ha-cluster-label {
     color: var(--text-muted, #64748b);
 }
-.cluster-status-pass { color: #10b981; }
-.cluster-status-fail { color: #ef4444; }
-.cluster-status-warn { color: #f59e0b; }
-.cluster-status-softfail { color: #f59e0b; }
-.cluster-status-neutral { color: #f59e0b; }
-.cluster-status-none { color: #94a3b8; }
-.cluster-status-info { color: #64748b; }
+.cluster-status-pass { color: var(--verdict-safe); }
+.cluster-status-fail { color: var(--verdict-critical); }
+.cluster-status-warn { color: var(--verdict-suspicious); }
+.cluster-status-softfail { color: var(--verdict-suspicious); }
+.cluster-status-neutral { color: var(--verdict-suspicious); }
+.cluster-status-none { color: var(--text-muted); }
+.cluster-status-info { color: var(--text-secondary); }
 
 .ha-node-label-indicator {
     font-family: 'JetBrains Mono', monospace;
@@ -795,9 +795,9 @@ body.light-theme .ha-expand-close:hover { background: rgba(0,0,0,0.1); color: #0
     letter-spacing: 0.05em;
     text-transform: uppercase;
 }
-.ha-node-label-indicator.status-safe { color: rgba(16, 185, 129, 0.7); }
-.ha-node-label-indicator.status-warn { color: rgba(245, 158, 11, 0.7); }
-.ha-node-label-indicator.status-danger { color: rgba(239, 68, 68, 0.7); }
+.ha-node-label-indicator.status-safe { color: var(--verdict-safe); }
+.ha-node-label-indicator.status-warn { color: var(--verdict-suspicious); }
+.ha-node-label-indicator.status-danger { color: var(--verdict-critical); }
 
 /* Node expand drawer details */
 .ha-drawer {
@@ -1297,7 +1297,7 @@ body.light-theme .ha-action-btn:focus-visible {
                     <polyline points="170,50 220,25" stroke="rgba(52,211,153,0.2)" stroke-width="1" stroke-dasharray="4 3" fill="none"/>
                     <polyline points="240,25 258,33" stroke="rgba(248,113,113,0.2)" stroke-width="1" stroke-dasharray="4 3" fill="none"/>
                     <!-- Traveling animated dots using offset-path on each circle -->
-                    <circle r="4" fill="#38bdf8" style="offset-path:path('M 20 35 L 90 20 L 160 50 L 230 25 L 265 35'); animation: haHopMove 2.8s ease-in-out infinite; opacity:0;"/>
+                    <circle r="4" fill="var(--primary)" style="offset-path:path('M 20 35 L 90 20 L 160 50 L 230 25 L 265 35'); animation: haHopMove 2.8s ease-in-out infinite; opacity:0;"/>
                     <circle r="3" fill="#a78bfa" style="offset-path:path('M 20 35 L 90 20 L 160 50 L 230 25 L 265 35'); animation: haHopMove 2.8s ease-in-out infinite; animation-delay:0.7s; opacity:0;"/>
                     <circle r="3" fill="#34d399" style="offset-path:path('M 20 35 L 90 20 L 160 50 L 230 25 L 265 35'); animation: haHopMove 2.8s ease-in-out infinite; animation-delay:1.4s; opacity:0;"/>
                     <circle r="2.5" fill="#f87171" style="offset-path:path('M 20 35 L 90 20 L 160 50 L 230 25 L 265 35'); animation: haHopMove 2.8s ease-in-out infinite; animation-delay:2.1s; opacity:0;"/>
