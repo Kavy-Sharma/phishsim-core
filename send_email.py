@@ -261,6 +261,53 @@ def send_phishing_email(
     )
 
 
+def send_plain_email(
+    to_email, subject, body_html,
+    delivery_mode=None, mailtrap_user=None, mailtrap_pass=None, reply_to=None,
+):
+    """
+    Send one plain email (e.g. exposure scan report) without injecting tracking pixels or report buttons.
+    """
+    settings = get_email_settings(
+        delivery_mode,
+        mailtrap_user_override=mailtrap_user,
+        mailtrap_pass_override=mailtrap_pass,
+    )
+    
+    sender_name = "PhishSim AI Exposure Shield"
+
+    if settings["provider"] == "brevo":
+        return _send_via_brevo(
+            to_email=to_email,
+            subject=subject,
+            sender_name=sender_name,
+            from_email=settings["from_email"],
+            body_html=body_html,
+            reply_to=reply_to,
+            tracking_id="exposure-scan",
+        )
+
+    if settings["provider"] == "resend":
+        return _send_via_resend(
+            to_email=to_email,
+            subject=subject,
+            sender_name=sender_name,
+            from_email=settings["from_email"],
+            body_html=body_html,
+            reply_to=reply_to,
+        )
+
+    # smtp/local providers
+    return _send_via_smtp(
+        to_email=to_email,
+        subject=subject,
+        sender_name=sender_name,
+        body_html=body_html,
+        settings=settings,
+        reply_to=reply_to,
+    )
+
+
 # ─── Provider implementations ─────────────────────────────────────────────────
 
 def _send_via_brevo(to_email, subject, sender_name, from_email, body_html, reply_to, tracking_id):

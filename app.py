@@ -108,6 +108,28 @@ def validate_password(password):
     return failures
 
 
+def get_system_setting(cursor, key, default="false"):
+    try:
+        cursor.execute("CREATE TABLE IF NOT EXISTS system_settings (setting_key VARCHAR(100) PRIMARY KEY, setting_value VARCHAR(255))")
+        cursor.execute("SELECT setting_value FROM system_settings WHERE setting_key = %s", (key,))
+        row = cursor.fetchone()
+        if row:
+            return row["setting_value"]
+    except Exception as e:
+        print(f"Error reading system setting {key}: {e}")
+    return default
+
+def set_system_setting(cursor, key, value):
+    try:
+        cursor.execute("CREATE TABLE IF NOT EXISTS system_settings (setting_key VARCHAR(100) PRIMARY KEY, setting_value VARCHAR(255))")
+        cursor.execute("""
+            INSERT INTO system_settings (setting_key, setting_value)
+            VALUES (%s, %s)
+            ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)
+        """, (key, value))
+    except Exception as e:
+        print(f"Error saving system setting {key}: {e}")
+
 def validate_signup_identity(name, email, password, company_domain):
     if len(name) < 2:
         return "Enter your full name."
@@ -309,6 +331,17 @@ def ensure_auth_schema(cursor):
             None
         ))
 
+def ensure_osint_scan_cache_table(cursor):
+    """Creates the osint_scan_cache table if it does not exist."""
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS osint_scan_cache (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            domain VARCHAR(255) UNIQUE,
+            profile_json TEXT,
+            scraped_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+
 def ensure_core_tables(cursor):
     """Creates the campaigns and employees tables if they do not exist."""
     cursor.execute("""
@@ -347,6 +380,7 @@ def ensure_core_tables(cursor):
     except Exception as e:
         # Table or column updates may already have been applied
         pass
+    ensure_osint_scan_cache_table(cursor)
 
 # Track the next time we should retry the schema bootstrap after a failure
 _SCHEMA_RETRY_AFTER = 0
@@ -988,6 +1022,44 @@ def get_time_ago_str(dt):
             else:
                 return f"{days} days ago"
 
+def scrape_company_cached(domain):
+    """Checks the database cache for a scraped company profile first (valid for 24h). Otherwise scrapes and caches it."""
+    import json
+    from datetime import datetime, timedelta
+    from osint.scraper import scrape_company
+    
+    db = get_db_connection()
+    cursor = db.cursor(dictionary=True)
+    try:
+        ensure_osint_scan_cache_table(cursor)
+        cursor.execute("SELECT profile_json, scraped_at FROM osint_scan_cache WHERE domain = %s", (domain,))
+        row = cursor.fetchone()
+        if row:
+            scraped_at = row["scraped_at"]
+            if datetime.now() - scraped_at < timedelta(hours=24):
+                try:
+                    profile = json.loads(row["profile_json"])
+                    return profile
+                except Exception as e:
+                    print(f"Error parsing cached profile json for {domain}: {e}")
+                    
+        # Otherwise, scrape fresh
+        profile = scrape_company(domain)
+        profile_json = json.dumps(profile)
+        cursor.execute("""
+            INSERT INTO osint_scan_cache (domain, profile_json, scraped_at)
+            VALUES (%s, %s, NOW())
+            ON DUPLICATE KEY UPDATE profile_json = VALUES(profile_json), scraped_at = NOW()
+        """, (domain, profile_json))
+        db.commit()
+        return profile
+    except Exception as err:
+        print(f"Database cache error for domain {domain}: {err}")
+        return scrape_company(domain)
+    finally:
+        cursor.close()
+        db.close()
+
 def get_public_stats(cursor):
     """Computes real simulation statistics from MySQL for the public home page."""
     stats = {
@@ -998,7 +1070,12 @@ def get_public_stats(cursor):
         "first_touch_click_rate": None,
         "training_improvement_pct": None,
         "avg_generation_ms": None,
-        "recent_events": []
+        "recent_events": [],
+        "pct_emails_opened": None,
+        "pct_clicked": None,
+        "pct_reported": None,
+        "avg_csv_to_first_email_minutes": None,
+        "pct_clicked_finance_dept": None,
     }
     try:
         ensure_email_schema_once(cursor)
@@ -1010,7 +1087,7 @@ def get_public_stats(cursor):
             stats["total_simulations"] = row["c"]
             stats["total_simulations_formatted"] = "{:,}".format(row["c"])
 
-        # 2. Avg Click Rate
+        # 2. Avg Click Rate & Reuse for pct_clicked
         cursor.execute("""
             SELECT COUNT(*) AS total,
                    SUM(CASE WHEN action IN ('clicked', 'submitted') THEN 1 ELSE 0 END) AS clicked
@@ -1021,6 +1098,7 @@ def get_public_stats(cursor):
             clicked = row["clicked"] or 0
             total = row["total"]
             stats["avg_click_rate"] = round((clicked / total) * 100, 1)
+            stats["pct_clicked"] = stats["avg_click_rate"]
 
         # 3. Avg Remediation Minutes
         cursor.execute("""
@@ -1091,6 +1169,60 @@ def get_public_stats(cursor):
         row = cursor.fetchone()
         if row and row["avg_ms"] is not None:
             stats["avg_generation_ms"] = int(row["avg_ms"])
+
+        # 7. pct_emails_opened
+        cursor.execute("""
+            SELECT COUNT(*) AS total,
+                   SUM(CASE WHEN action IN ('opened_only','clicked','submitted','reported')
+                            THEN 1 ELSE 0 END) AS opened
+            FROM simulation_events
+        """)
+        row = cursor.fetchone()
+        if row and row["total"] > 0:
+            opened = row["opened"] or 0
+            total = row["total"]
+            stats["pct_emails_opened"] = round((opened / total) * 100, 1)
+
+        # 8. pct_reported
+        cursor.execute("""
+            SELECT COUNT(*) AS total,
+                   SUM(CASE WHEN action = 'reported' THEN 1 ELSE 0 END) AS reported
+            FROM simulation_events
+        """)
+        row = cursor.fetchone()
+        if row and row["total"] > 0:
+            reported = row["reported"] or 0
+            total = row["total"]
+            stats["pct_reported"] = round((reported / total) * 100, 1)
+
+        # 9. avg_csv_to_first_email_minutes
+        cursor.execute("""
+            SELECT AVG(TIMESTAMPDIFF(MINUTE, c.created_at, first_email.first_sent)) AS avg_minutes
+            FROM campaigns c
+            JOIN (
+                SELECT campaign_id, MIN(sent_at) AS first_sent
+                FROM emails_sent
+                GROUP BY campaign_id
+            ) first_email ON first_email.campaign_id = c.id
+            WHERE first_email.first_sent > c.created_at
+        """)
+        row = cursor.fetchone()
+        if row and row["avg_minutes"] is not None:
+            stats["avg_csv_to_first_email_minutes"] = int(round(float(row["avg_minutes"])))
+
+        # 10. pct_clicked_finance_dept
+        cursor.execute("""
+            SELECT COUNT(*) AS total,
+                   SUM(CASE WHEN se.action IN ('clicked','submitted') THEN 1 ELSE 0 END) AS clicked
+            FROM simulation_events se
+            JOIN employees e ON e.email = se.recipient_email AND e.campaign_id = se.campaign_id
+            WHERE e.department = 'Finance'
+        """)
+        row = cursor.fetchone()
+        if row and row["total"] >= 5:
+            clicked = row["clicked"] or 0
+            total = row["total"]
+            stats["pct_clicked_finance_dept"] = round((clicked / total) * 100, 1)
 
         # 7. Recent Events
         cursor.execute("""
@@ -1562,6 +1694,20 @@ def signup():
         email = request.form.get("email", "").strip().lower()
         password = request.form.get("password", "")
         company_domain = normalize_domain(request.form.get("company_domain", ""))
+
+        db = get_db_connection()
+        cursor = db.cursor(dictionary=True)
+        try:
+            enforce_work = get_system_setting(cursor, "enforce_work_emails", "false") == "true"
+        finally:
+            cursor.close()
+            db.close()
+
+        if enforce_work:
+            domain = email.split('@')[-1]
+            if domain in FREE_EMAIL_DOMAINS:
+                flash("Signup requires a corporate work email. Personal/free email addresses are not allowed.")
+                return redirect(url_for("signup"))
 
         validation_error = validate_signup_identity(name, email, password, company_domain)
         if validation_error:
@@ -2723,6 +2869,7 @@ def admin_panel():
 
         # Email config status
         email_settings = get_email_settings(os.getenv("EMAIL_MODE", "local").strip().lower())
+        enforce_work_emails = get_system_setting(cursor, "enforce_work_emails", "false")
 
     finally:
         cursor.close()
@@ -2744,7 +2891,27 @@ def admin_panel():
         system_stats=system_stats,
         audit_log=audit_log,
         email_settings=email_settings,
+        enforce_work_emails=enforce_work_emails,
     )
+
+
+@app.route("/admin/save-settings", methods=["POST"])
+@admin_required
+def admin_save_settings():
+    enforce_work_emails = request.form.get("enforce_work_emails", "false")
+    db = get_db_connection()
+    cursor = db.cursor(dictionary=True)
+    try:
+        set_system_setting(cursor, "enforce_work_emails", enforce_work_emails)
+        db.commit()
+        flash("System settings updated.")
+    except Exception as e:
+        print(f"Error saving settings: {e}")
+        flash("Failed to save settings.")
+    finally:
+        cursor.close()
+        db.close()
+    return redirect(url_for("admin_panel"))
 
 
 @app.route("/users", methods=["GET", "POST"])
@@ -3983,9 +4150,8 @@ def upload_employees(campaign_id):
     
     if use_osint:
         try:
-            from osint.scraper import scrape_company
             domain = campaign.get("company_domain") or "example.com"
-            profile = scrape_company(domain)
+            profile = scrape_company_cached(domain)
             company_name = profile.get("company_name") or domain.split(".")[0].capitalize()
             
             # Standard template targets mapped to this domain
@@ -4220,8 +4386,7 @@ def process_campaign_background(campaign_id):
             return
         
         if os.getenv("PHISHSIM_ENABLE_OSINT", "false").strip().lower() in ("1", "true", "yes"):
-            from osint.scraper import scrape_company
-            company_profile = scrape_company(campaign["company_domain"])
+            company_profile = scrape_company_cached(campaign["company_domain"])
         else:
             company_profile = {
                 "company_name": campaign.get("company_domain", "Your Company"),
@@ -7421,12 +7586,220 @@ def consent_policy():
     return render_template("consent_policy.html")
 
 
-@app.route("/join-beta", methods=["POST"])
-def join_beta():
+def generate_lookalikes(domain):
+    parts = domain.rsplit('.', 1)
+    if len(parts) < 2:
+        return []
+    name, tld = parts[0], parts[1]
+    candidates = []
+
+    # 1. Adjacent character swap
+    if len(name) >= 3:
+        middle_idx = len(name) // 2
+        if middle_idx > 0:
+            swapped = name[:middle_idx-1] + name[middle_idx] + name[middle_idx-1] + name[middle_idx+1:]
+            candidates.append(f"{swapped}.{tld}")
+
+    # 2. Character omission
+    if len(name) >= 3:
+        middle_idx = len(name) // 2
+        omitted = name[:middle_idx] + name[middle_idx+1:]
+        candidates.append(f"{omitted}.{tld}")
+
+    # 3. Hyphenated
+    if len(name) >= 4:
+        idx = 4 if len(name) >= 5 else 3
+        hyphenated = name[:idx] + '-' + name[idx:]
+        candidates.append(f"{hyphenated}.{tld}")
+
+    # 4. Common substitution
+    sub_name = ""
+    applied = False
+    for char in name:
+        if not applied:
+            if char == 'o':
+                sub_name += '0'
+                applied = True
+            elif char in ('l', 'i'):
+                sub_name += '1'
+                applied = True
+            else:
+                sub_name += char
+        else:
+            sub_name += char
+    if applied:
+        candidates.append(f"{sub_name}.{tld}")
+
+    # 5. TLD swaps
+    for target_tld in ("net", "org"):
+        if tld.lower() != target_tld:
+            candidates.append(f"{name}.{target_tld}")
+
+    # De-duplicate
+    seen = set()
+    unique_candidates = []
+    for c in candidates:
+        if c.lower() != domain.lower() and c.lower() not in seen:
+            seen.add(c.lower())
+            unique_candidates.append(c)
+    return unique_candidates
+
+
+def run_exposure_scan(email, domain):
+    """Runs company reconnaissance, typosquatting resolution scans, computes threat scores, and dispatches email reports."""
+    import socket
+    from send_email import send_plain_email
+    import os
+
+    raw_base = os.getenv("APP_BASE_URL") or os.getenv("RENDER_EXTERNAL_URL") or "http://127.0.0.1:5050"
+    base_url = raw_base.rstrip("/")
+
+    try:
+        profile = scrape_company_cached(domain)
+    except Exception as e:
+        print(f"Error scraping cached profile in scan: {e}")
+        profile = {}
+
+    is_blocked = profile.get("blocked", False)
+    is_empty = not (profile.get("emails") or profile.get("socials") or profile.get("description"))
+
+    if is_blocked or is_empty:
+        body_html = f"""
+        <div style="font-family:Arial,sans-serif;line-height:1.6;color:#333;max-width:600px;margin:0 auto;padding:20px;border:1px solid #e2e8f0;border-radius:12px;background-color:#ffffff;">
+            <h2 style="color:#0f172a;border-bottom:1px solid #e2e8f0;padding-bottom:10px;margin-top:0;">Exposure Scan Completed</h2>
+            <p>Dear Administrator,</p>
+            <p>We completed our automated reconnaissance scan on <strong>{domain}</strong>.</p>
+            <div style="background:#fffbeb;border-left:4px solid #f59e0b;padding:12px 16px;margin:20px 0;border-radius:4px;">
+                <p style="margin:0;font-weight:600;color:#b45309;">Reconnaissance Limited</p>
+                <p style="margin:4px 0 0 0;font-size:14px;color:#78350f;">We couldn't fully access {domain}'s public site to complete this scan. This typically happens if the server is blocked by a web application firewall (WAF) or does not contain public company indicators.</p>
+            </div>
+            <hr style="border:0;border-top:1px solid #e2e8f0;margin:24px 0;">
+            <p style="font-size:12px;color:#64748b;"><em>Credential exposure isn't checked automatically in this scan — try our Password Breach Check tool at <a href="{base_url}/password-breach" style="color:#0ea5e9;text-decoration:none;">{base_url}/password-breach</a> to check a specific password yourself.</em></p>
+        </div>
+        """
+        subject = f"Exposure Scan Report: {domain} (Limited Data)"
+        try:
+            send_plain_email(to_email=email, subject=subject, body_html=body_html)
+        except Exception as mail_err:
+            print(f"Failed to send limited data exposure scan email: {mail_err}")
+        return
+
+    # Typosquatting checks
+    candidates = generate_lookalikes(domain)
+    registered_lookalikes = []
+    
+    old_timeout = socket.getdefaulttimeout()
+    socket.setdefaulttimeout(3.0)
+    try:
+        for candidate in candidates:
+            try:
+                socket.gethostbyname(candidate)
+                registered_lookalikes.append(candidate)
+            except socket.gaierror:
+                pass
+            except Exception:
+                pass
+    finally:
+        socket.setdefaulttimeout(old_timeout)
+
+    # Compute risk score
+    score = 0
+    emails_count = len(profile.get("emails") or [])
+    socials_count = len(profile.get("socials") or {})
+    
+    # 1. Email exposure points
+    score += min(emails_count, 10) * 3
+    # 2. Social attack surface points
+    score += min(socials_count, 4) * 5
+    # 3. Squatted domains found points
+    score += len(registered_lookalikes) * 15
+    score = min(score, 100)
+
+    company_name = profile.get("company_name") or domain
+
+    lookalikes_list_html = ""
+    if registered_lookalikes:
+        lookalikes_list_html = "<ul style='margin:10px 0;padding-left:20px;'>" + "".join([f"<li style='margin-bottom:4px;'><code>{val}</code></li>" for val in registered_lookalikes]) + "</ul>"
+    else:
+        lookalikes_list_html = "<p style='color:#64748b;'>No look-alike domains detected.</p>"
+
+    body_html = f"""
+    <div style="font-family:Arial,sans-serif;line-height:1.6;color:#333;max-width:600px;margin:0 auto;padding:20px;border:1px solid #e2e8f0;border-radius:12px;background-color:#ffffff;">
+        <h2 style="color:#0f172a;border-bottom:1px solid #e2e8f0;padding-bottom:10px;margin-top:0;">Exposure Scan Results: {company_name}</h2>
+        <p>Dear Administrator,</p>
+        <p>We completed our automated reconnaissance scan on <strong>{domain}</strong>.</p>
+        
+        <div style="background:#f1f5f9;border-radius:8px;padding:16px;margin:20px 0;text-align:center;">
+            <div style="font-size:12px;text-transform:uppercase;letter-spacing:1px;color:#64748b;font-weight:700;">Human Risk Rating</div>
+            <div style="font-size:48px;font-weight:800;color:#e11d48;margin:8px 0;">{score}/100</div>
+            <p style="margin:0;font-size:14px;color:#475569;">Risk index computed based on public reconnaissance surface metrics.</p>
+        </div>
+
+        <h3 style="color:#1e293b;margin-top:24px;">Reconnaissance Summary</h3>
+        <table style="width:100%;border-collapse:collapse;margin:12px 0;">
+            <tr style="border-bottom:1px solid #f1f5f9;">
+                <td style="padding:8px 0;font-weight:600;">Exposed Corporate Emails</td>
+                <td style="padding:8px 0;text-align:right;">{emails_count} found (+{min(emails_count, 10)*3} pts)</td>
+            </tr>
+            <tr style="border-bottom:1px solid #f1f5f9;">
+                <td style="padding:8px 0;font-weight:600;">Social Profiles Exposure</td>
+                <td style="padding:8px 0;text-align:right;">{socials_count} mapped (+{min(socials_count, 4)*5} pts)</td>
+            </tr>
+            <tr style="border-bottom:1px solid #f1f5f9;">
+                <td style="padding:8px 0;font-weight:600;">Registered Lookalike Domains</td>
+                <td style="padding:8px 0;text-align:right;">{len(registered_lookalikes)} identified (+{min(len(registered_lookalikes)*15, 50)} pts)</td>
+            </tr>
+        </table>
+
+        <h3 style="color:#1e293b;margin-top:24px;">Active Lookalike Domains Detected</h3>
+        {lookalikes_list_html}
+
+        <hr style="border:0;border-top:1px solid #e2e8f0;margin:24px 0;">
+        <p style="font-size:12px;color:#64748b;"><em>Credential exposure isn't checked automatically in this scan — try our Password Breach Check tool at <a href="{base_url}/password-breach" style="color:#0ea5e9;text-decoration:none;">{base_url}/password-breach</a> to check a specific password yourself.</em></p>
+    </div>
+    """
+
+    subject = f"Exposure Scan Report: {company_name} (Risk Score: {score}/100)"
+    try:
+        send_plain_email(to_email=email, subject=subject, body_html=body_html)
+    except Exception as mail_err:
+        print(f"Failed to send exposure scan results email: {mail_err}")
+
+
+@app.route("/scan-exposure", methods=["POST"])
+def scan_exposure():
+    import threading
     from flask import request, redirect, flash, url_for
+    
     email = request.form.get("email")
-    if email:
-        flash("Thank you for requesting early access! We have added you to our waitlist.")
+    if not email:
+        flash("Enter your work email.")
+        return redirect(url_for("home"))
+        
+    email_lower = email.lower().strip()
+    if '@' not in email_lower:
+        flash("Enter your work email.")
+        return redirect(url_for("home"))
+        
+    domain = email_lower.split('@')[-1]
+    
+    db = get_db_connection()
+    cursor = db.cursor(dictionary=True)
+    try:
+        enforce_work = get_system_setting(cursor, "enforce_work_emails", "false") == "true"
+    finally:
+        cursor.close()
+        db.close()
+
+    if enforce_work:
+        if domain in FREE_EMAIL_DOMAINS:
+            flash("Enter your work email. Gmail, Yahoo, Outlook, and Hotmail are not supported.")
+            return redirect(url_for("home"))
+        
+    # Kick off the scan in a background thread
+    threading.Thread(target=run_exposure_scan, args=(email, domain)).start()
+    
+    flash("Scanning your organization now — results will be emailed to you shortly.")
     return redirect(url_for("home"))
 
 

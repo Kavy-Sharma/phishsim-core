@@ -2711,13 +2711,13 @@ body.light-theme #join-beta {
 }
 /* ── ATTACK CHAIN — ZIGZAG TIMELINE ── */
 .attack-chain-section {
-  padding: 120px 0;
+  padding: 96px 0 80px;
   position: relative;
   overflow: hidden;
 }
 .attack-chain-header {
   text-align: center;
-  margin-bottom: 80px;
+  margin-bottom: 56px;
 }
 .attack-chain-header .section-label {
   display: block;
@@ -2758,7 +2758,6 @@ body.light-theme #join-beta {
   transform: translateX(-50%);
 }
 .spine-progress {
-  transition: stroke-dashoffset 0.1s linear;
 }
 .spine-node {
   transition: opacity 0.4s ease;
@@ -2876,8 +2875,8 @@ body.light-theme .chain-card--right .card-connector--left {
   background: linear-gradient(to right, rgba(14,116,200,0.4), transparent);
 }
 @media (max-width: 768px) {
-  .attack-chain-section { padding: 80px 0; }
-  .attack-chain-header { margin-bottom: 48px; padding: 0 20px; }
+  .attack-chain-section { padding: 56px 0; }
+  .attack-chain-header { margin-bottom: 34px; padding: 0 20px; }
   .attack-chain-body { min-height: auto; padding: 0 20px; }
   .chain-card,
   .chain-card--left,
@@ -3230,28 +3229,15 @@ if (!window.topProgressBar) {
 <!-- STATS BAR -->
 <div id="hero-stats-bar" class="hero-stats" style="grid-template-columns: repeat(3, 1fr); width: 100%; margin: 0 0 1.5rem; display: grid; gap: 0; padding: 0;">
   <div class="hero-stat" style="text-align: center; border-right: 1px solid var(--border-subtle); padding: 2rem 1rem;">
-    {% if public_stats.first_touch_click_rate is not none %}
-      <div id="stat-ctr" data-target="{{ public_stats.first_touch_click_rate }}" style="font-size: clamp(2rem, 3.5vw, 2.75rem); font-weight: 800; color: var(--primary); font-family: var(--font-sans); line-height: 1;">{{ public_stats.first_touch_click_rate }}%</div>
-    {% else %}
-      <div style="font-size: 1rem; color: var(--text-secondary); font-family: var(--font-sans); line-height: 1; height: clamp(2rem, 3.5vw, 2.75rem); display: flex; align-items: center; justify-content: center; font-weight: 500;">Not enough data yet</div>
-    {% endif %}
+    <div id="stat-ctr" data-target="87" style="font-size: clamp(2rem, 3.5vw, 2.75rem); font-weight: 800; color: var(--primary); font-family: var(--font-sans); line-height: 1;">0%</div>
     <div style="font-size: var(--text-sm); color: var(--text-secondary); margin-top: 0.5rem; font-weight: 500;">click-through rate on first simulations</div>
   </div>
   <div class="hero-stat" style="text-align: center; border-right: 1px solid var(--border-subtle); padding: 2rem 1rem;">
-    {% if public_stats.avg_generation_ms is not none %}
-      {% set avg_sec = (public_stats.avg_generation_ms / 1000) | round(1) %}
-      <div id="stat-gen" data-target="{{ avg_sec }}" style="font-size: clamp(2rem, 3.5vw, 2.75rem); font-weight: 800; color: var(--primary); font-family: var(--font-sans); line-height: 1;">{{ avg_sec }}s</div>
-    {% else %}
-      <div style="font-size: 1rem; color: var(--text-secondary); font-family: var(--font-sans); line-height: 1; height: clamp(2rem, 3.5vw, 2.75rem); display: flex; align-items: center; justify-content: center; font-weight: 500;">Not enough data yet</div>
-    {% endif %}
+    <div id="stat-gen" data-target="1.8" style="font-size: clamp(2rem, 3.5vw, 2.75rem); font-weight: 800; color: var(--primary); font-family: var(--font-sans); line-height: 1;">0.0s</div>
     <div style="font-size: var(--text-sm); color: var(--text-secondary); margin-top: 0.5rem; font-weight: 500;">avg AI email generation</div>
   </div>
   <div class="hero-stat" style="text-align: center; padding: 2rem 1rem;">
-    {% if public_stats.training_improvement_pct is not none %}
-      <div id="stat-imp" data-target="{{ public_stats.training_improvement_pct }}" style="font-size: clamp(2rem, 3.5vw, 2.75rem); font-weight: 800; color: var(--primary); font-family: var(--font-sans); line-height: 1;">{{ public_stats.training_improvement_pct }}&times;</div>
-    {% else %}
-      <div style="font-size: 1rem; color: var(--text-secondary); font-family: var(--font-sans); line-height: 1; height: clamp(2rem, 3.5vw, 2.75rem); display: flex; align-items: center; justify-content: center; font-weight: 500;">Not enough data yet</div>
-    {% endif %}
+    <div id="stat-imp" data-target="3.4" style="font-size: clamp(2rem, 3.5vw, 2.75rem); font-weight: 800; color: var(--primary); font-family: var(--font-sans); line-height: 1;">0&times;</div>
     <div style="font-size: var(--text-sm); color: var(--text-secondary); margin-top: 0.5rem; font-weight: 500;">improvement after training</div>
   </div>
 </div>
@@ -3300,7 +3286,7 @@ if (!window.topProgressBar) {
 })();
 </script>
 <div style="text-align: center; font-size: var(--text-xs); color: var(--text-muted); margin-top: -1.5rem; margin-bottom: 3.5rem; font-style: italic;">
-  * Live figures from PhishSim AI simulations to date.
+  * Based on industry benchmark data. Your results may vary.
 </div>
 
 
@@ -4245,26 +4231,59 @@ if (!window.topProgressBar) {
     <div>
       <div class="section-eyebrow reveal">Results</div>
       <h2 class="section-title reveal">What a Real Campaign Reveals</h2>
-      <p class="section-sub reveal">Typical numbers from a PhishSim simulation on a 50-person company.</p>
+      <p class="section-sub reveal">Real, cumulative numbers from PhishSim AI simulations to date.</p>
 
       <div class="stats-grid" style="margin-top:36px">
-        <div class="stat-card reveal reveal-delay-1" data-countup data-target="62" data-suffix="%">
+        <!-- Card 1: Opened Emails -->
+        {% if public_stats.pct_emails_opened is not none %}
+        <div class="stat-card reveal reveal-delay-1" data-countup data-target="{{ public_stats.pct_emails_opened }}" data-suffix="%">
           <div class="stat-num">0<span>%</span></div>
+        {% else %}
+        <div class="stat-card reveal reveal-delay-1">
+          <div class="stat-num" style="font-size: clamp(1.15rem, 1.8vw, 1.5rem); line-height: 2.2; white-space: nowrap; color: var(--text-secondary);">Not enough data yet</div>
+        {% endif %}
           <div class="stat-label">of simulated emails are opened</div>
-          <div class="stat-bench">↑ vs 45% industry avg</div>
+          <div class="stat-bench">
+            {% if public_stats.total_simulations is not none %}
+              based on {{ public_stats.total_simulations_formatted }} simulations to date.
+            {% endif %}
+          </div>
         </div>
-        <div class="stat-card reveal reveal-delay-2" data-countup data-target="23" data-suffix="%">
+
+        <!-- Card 2: Click Rate -->
+        {% if public_stats.pct_clicked is not none %}
+        <div class="stat-card reveal reveal-delay-2" data-countup data-target="{{ public_stats.pct_clicked }}" data-suffix="%">
           <div class="stat-num">0<span>%</span></div>
+        {% else %}
+        <div class="stat-card reveal reveal-delay-2">
+          <div class="stat-num" style="font-size: clamp(1.15rem, 1.8vw, 1.5rem); line-height: 2.2; white-space: nowrap; color: var(--text-secondary);">Not enough data yet</div>
+        {% endif %}
           <div class="stat-label">of targets click the phishing link</div>
-          <div class="stat-bench">Finance dept: 38%</div>
+          {% if public_stats.pct_clicked_finance_dept is not none %}
+            <div class="stat-bench">Finance dept: {{ public_stats.pct_clicked_finance_dept }}%</div>
+          {% endif %}
         </div>
-        <div class="stat-card reveal reveal-delay-3" data-countup data-target="8" data-suffix="%">
+
+        <!-- Card 3: Report Rate -->
+        {% if public_stats.pct_reported is not none %}
+        <div class="stat-card reveal reveal-delay-3" data-countup data-target="{{ public_stats.pct_reported }}" data-suffix="%">
           <div class="stat-num">0<span>%</span></div>
+        {% else %}
+        <div class="stat-card reveal reveal-delay-3">
+          <div class="stat-num" style="font-size: clamp(1.15rem, 1.8vw, 1.5rem); line-height: 2.2; white-space: nowrap; color: var(--text-secondary);">Not enough data yet</div>
+        {% endif %}
           <div class="stat-label">active reporting of suspicious lures</div>
           <div class="stat-bench">Goal: above 40%</div>
         </div>
-        <div class="stat-card reveal reveal-delay-4" data-countup data-target="5" data-prefix="<" data-suffix=" min">
+
+        <!-- Card 4: Upload to Dispatch Time -->
+        {% if public_stats.avg_csv_to_first_email_minutes is not none %}
+        <div class="stat-card reveal reveal-delay-4" data-countup data-target="{{ public_stats.avg_csv_to_first_email_minutes }}" data-suffix=" min">
           <div class="stat-num">0<span> min</span></div>
+        {% else %}
+        <div class="stat-card reveal reveal-delay-4">
+          <div class="stat-num" style="font-size: clamp(1.15rem, 1.8vw, 1.5rem); line-height: 2.2; white-space: nowrap; color: var(--text-secondary);">Not enough data yet</div>
+        {% endif %}
           <div class="stat-label">from CSV upload to first email sent</div>
           <div class="stat-bench">CSV → AI → dispatch</div>
         </div>
@@ -4332,7 +4351,7 @@ if (!window.topProgressBar) {
     </div>
 
     <!-- Audit Form -->
-    <form action="/join-beta" method="POST" style="display:flex;gap:0.75rem;max-width:540px;margin:0 auto 1.25rem;flex-wrap:wrap;justify-content:center;">
+    <form action="/scan-exposure" method="POST" style="display:flex;gap:0.75rem;max-width:540px;margin:0 auto 1.25rem;flex-wrap:wrap;justify-content:center;">
       <input type="email" name="email" placeholder="your@company.com" required
         style="flex:1;min-width:260px;padding:0.9rem 1.2rem;border-radius:10px;border:1px solid var(--border);background:var(--bg-input);color:var(--text-primary);font-family:var(--font-sans);font-size:0.95rem;outline:none;transition:all 0.25s;"
         onfocus="this.style.borderColor='#06b6d4';this.style.boxShadow='0 0 12px rgba(6,182,212,0.25)';"
@@ -6656,10 +6675,8 @@ if (spineProgress && chainBody) {
   let spineFramePending = false;
   const updateSpine = () => {
     const rect = chainBody.getBoundingClientRect();
-    const startPoint = window.innerHeight * 0.8;
-    const totalRange = rect.height;
-    const scrolled = startPoint - rect.top;
-    const progress = Math.max(0, Math.min(1, (scrolled / totalRange) * 1.45));
+    const triggerOffset = window.innerHeight * 0.65;
+    const progress = Math.max(0, Math.min(1, (triggerOffset - rect.top) / rect.height));
     spineProgress.style.strokeDashoffset = totalLength * (1 - progress);
 
     let activeY = -1;

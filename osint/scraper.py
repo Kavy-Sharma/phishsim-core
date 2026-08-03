@@ -8,7 +8,8 @@ import re
 import csv
 import time
 import os
-from urllib.parse import urljoin
+import concurrent.futures
+from urllib.parse import urljoin, urlparse
 
 import urllib3
 from bs4 import BeautifulSoup
@@ -16,13 +17,28 @@ import httpx
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
+HEADERS = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+}
+
+
+def _same_domain(url, domain):
+    try:
+        host = urlparse(url).netloc.lower()
+        host = host.split(':')[0]  # strip port
+        if host.startswith('www.'):
+            host = host[4:]
+        target = domain.lower()
+        if target.startswith('www.'):
+            target = target[4:]
+        return host == target or host.endswith('.' + target)
+    except Exception:
+        return False
+
 
 def get_page_source(domain):
     """Fetches page source using httpx, falls back to Jina AI if content is too thin."""
     url = f"https://{domain}"
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-    }
     
     html = None
     direct_timeout = float(os.getenv("OSINT_DIRECT_TIMEOUT_SECONDS", "5"))
@@ -30,7 +46,7 @@ def get_page_source(domain):
 
     try:
         with httpx.Client(verify=False, timeout=direct_timeout, follow_redirects=True) as client:
-            response = client.get(url, headers=headers)
+            response = client.get(url, headers=HEADERS)
             response.raise_for_status()
             html = response.text
     except Exception as e:
@@ -53,7 +69,7 @@ def get_page_source(domain):
     if needs_fallback:
         print(f"Content thin or request failed for {domain}, falling back to Jina AI...")
         jina_url = f"https://r.jina.ai/{url}"
-        jina_headers = headers.copy()
+        jina_headers = HEADERS.copy()
         jina_headers["X-Return-Format"] = "html"
         try:
             with httpx.Client(verify=False, timeout=fallback_timeout, follow_redirects=True) as client:
@@ -82,28 +98,37 @@ def scrape_company(domain):
     html = get_page_source(domain)
     if not html:
         return profile
-    blocked_keywords = [
-    "verify you are human",
-    "just a moment",
-    "access denied",
-    "not a robot",
-    "security check"
-    ]
-
-    if any(word in html.lower() for word in blocked_keywords):
-        profile["blocked"] = True
-        return profile
     soup = BeautifulSoup(html, "html.parser")
 
+    # Thin content check (moved earlier for reuse)
+    meta = soup.find("meta", {"name": "description"})
+    has_meta = meta and meta.get("content")
+    paragraphs = soup.find_all("p")
+    has_paragraphs = len(paragraphs) >= 3
+
+    blocked_keywords = [
+        "verify you are human",
+        "just a moment",
+        "access denied",
+        "not a robot",
+        "security check"
+    ]
+
+    is_blocked_keyword = any(word in html.lower() for word in blocked_keywords)
+    is_thin = not (has_meta and has_paragraphs)
+
+    if is_blocked_keyword and is_thin:
+        profile["blocked"] = True
+        return profile
+
     # --- Company name ---
+    raw_title = soup.title.text.strip() if soup.title and soup.title.text else ""
     profile["company_name"] = (
-        soup.title.text.split("|")[0].split("-")[0].split(",")[0].strip()
-        if soup.title else "Unknown"
+        raw_title.split("|")[0].split("-")[0].split(",")[0].strip() or "Unknown"
     )
 
     # --- Description (with fallback to first heading) ---
-    meta = soup.find("meta", {"name": "description"})
-    if meta and meta.get("content"):
+    if has_meta:
         profile["description"] = meta["content"]
     else:
         heading = soup.find(["h1", "h2"])
@@ -113,7 +138,7 @@ def scrape_company(domain):
     # --- Writing tone (checks p tags first, falls back to divs, then full body) ---
     texts = [
         p.get_text(strip=True)
-        for p in soup.find_all("p")
+        for p in paragraphs
         if len(p.get_text(strip=True)) > 20
     ]
 
@@ -194,7 +219,7 @@ def scrape_company(domain):
     subpages_to_crawl = []
     for link in profile["links"]:
         # Only crawl links from the same domain to prevent scraping third-party websites
-        if domain in link:
+        if _same_domain(link, domain):
             if any(kw in link.lower() for kw in subpage_keywords):
                 subpages_to_crawl.append(link)
     
@@ -203,25 +228,38 @@ def scrape_company(domain):
     
     scraped_emails = set(filtered_emails)
     
-    for page_url in subpages_to_crawl:
+    def fetch_subpage(page_url):
         try:
             print(f"OSINT Scraper crawling subpage: {page_url}")
-            with httpx.Client(verify=False, timeout=5, follow_redirects=True) as client:
-                res = client.get(page_url, headers=headers)
+            with httpx.Client(verify=False, timeout=4.0, follow_redirects=True) as client:
+                res = client.get(page_url, headers=HEADERS)
                 if res.status_code == 200:
-                    sub_html = res.text
-                    sub_emails = re.findall(r"[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+", sub_html)
-                    for semail in sub_emails:
-                        semail_lower = semail.lower()
-                        if "example.com" in semail_lower or "email.com" in semail_lower:
-                            continue
-                        if any(ext in semail_lower for ext in [".png", ".jpg", ".jpeg", ".svg", ".webp", ".css", ".js", ".mp4", ".webm"]):
-                            continue
-                        if not re.search(r"\.(com|org|net|edu|in|co)$", semail_lower):
-                            continue
-                        scraped_emails.add(semail)
+                    return res.text
         except Exception as crawl_err:
             print(f"Error crawling subpage {page_url}: {crawl_err}")
+        return None
+
+    if subpages_to_crawl:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
+            futures = {executor.submit(fetch_subpage, url): url for url in subpages_to_crawl}
+            done, not_done = concurrent.futures.wait(futures.keys(), timeout=6.0)
+            
+            for future in done:
+                try:
+                    sub_html = future.result()
+                    if sub_html:
+                        sub_emails = re.findall(r"[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+", sub_html)
+                        for semail in sub_emails:
+                            semail_lower = semail.lower()
+                            if "example.com" in semail_lower or "email.com" in semail_lower:
+                                continue
+                            if any(ext in semail_lower for ext in [".png", ".jpg", ".jpeg", ".svg", ".webp", ".css", ".js", ".mp4", ".webm"]):
+                                continue
+                            if not re.search(r"\.(com|org|net|edu|in|co)$", semail_lower):
+                                continue
+                            scraped_emails.add(semail)
+                except Exception as fut_err:
+                    print(f"Subpage future resolution error: {fut_err}")
 
     profile["emails"] = list(scraped_emails)[:10]
 
