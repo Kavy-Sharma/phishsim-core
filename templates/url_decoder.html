@@ -1039,7 +1039,7 @@ body.light-theme .ha-reset-btn:active {
             <div class="ud-input-body" id="ud-input-body">
                 <div class="ud-input-row">
                     <span class="ud-prompt-terminal">tracer_audit@phishsim:~$</span>
-                    <input id="url-input" class="ud-input-field" type="text"
+                    <input id="url-input" class="ud-input-field" type="text" value="{{ prefill_url or '' }}"
                         placeholder="Paste redirection link or suspicious URL here..." spellcheck="false">
                 </div>
 
@@ -1582,6 +1582,12 @@ document.getElementById('url-input').addEventListener('keydown', e => {
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape' && _udOverlay && _udOverlay.classList.contains('active')) udCollapse();
     });
+
+    {% if prefill_url %}
+    window.addEventListener('DOMContentLoaded', () => {
+        executeTrace();
+    });
+    {% endif %}
 })();
 </script>
 {% endblock %}

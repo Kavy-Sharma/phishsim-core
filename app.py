@@ -194,12 +194,20 @@ def is_safe_ip(ip_str):
 
 def is_safe_url(url_str):
     """Resolves all target hostname IPs and validates they belong to public routing spaces."""
-    import urllib.parse, socket
+    import urllib.parse, os, socket
     try:
         parsed = urllib.parse.urlparse(url_str)
         hostname = parsed.hostname
         if not hostname:
             return False
+        
+        # Allow local app self-tracing for debugging/demo purposes
+        base_url = os.getenv("APP_BASE_URL", "")
+        if base_url:
+            base_parsed = urllib.parse.urlparse(base_url)
+            if hostname == base_parsed.hostname:
+                return True
+                
         # Resolve all DNS records
         for info in socket.getaddrinfo(hostname, None):
             ip = info[4][0]
@@ -517,28 +525,14 @@ def send_verification_email(to_email, token):
 
 def send_system_email(to_email, subject, body_html):
     """Best-effort account notification email. Never raises into user workflows."""
-    mode = os.getenv("EMAIL_MODE", "").strip().lower() or ("mailtrap" if is_deployed_environment() else "local")
-    settings = get_email_settings(mode)
-    if not settings.get("host"):
-        return False, "Email provider is not configured."
-    msg = MIMEMultipart("alternative")
-    msg["Subject"] = subject
-    msg["From"] = f"PhishSim AI <{settings.get('from_email', 'training@phishsim.local')}>"
-    msg["To"] = to_email
-    msg.attach(MIMEText(body_html, "html"))
     try:
-        smtp_class = smtplib.SMTP_SSL if settings.get("encryption") == "ssl" else smtplib.SMTP
-        with smtp_class(settings["host"], settings["port"], timeout=8) as server:
-            if settings.get("encryption") == "starttls":
-                server.ehlo()
-                server.starttls()
-                server.ehlo()
-            if settings.get("user") and settings.get("password"):
-                server.login(settings["user"], settings["password"])
-            server.send_message(msg)
-        return True, None
+        from send_email import send_plain_email
+        mode = os.getenv("EMAIL_MODE", "").strip().lower() or ("mailtrap" if is_deployed_environment() else "local")
+        res = send_plain_email(to_email, subject, body_html, delivery_mode=mode)
+        return res.get("success", False), res.get("error")
     except Exception as e:
         return False, str(e)
+
 
 def cleanup_demo_user(user_id):
     if not user_id:
@@ -825,7 +819,8 @@ def ensure_email_tracking_table(cursor):
         "ALTER TABLE emails_sent ADD COLUMN subject VARCHAR(255)",
         "ALTER TABLE emails_sent ADD COLUMN sender_name VARCHAR(255)",
         "ALTER TABLE emails_sent ADD COLUMN body_html TEXT",
-        "ALTER TABLE emails_sent ADD COLUMN generation_ms INT NULL"
+        "ALTER TABLE emails_sent ADD COLUMN generation_ms INT NULL",
+        "ALTER TABLE emails_sent ADD COLUMN refresher_sent_at TIMESTAMP NULL DEFAULT NULL"
     ]:
         try:
             cursor.execute(ddl)
@@ -1995,6 +1990,65 @@ def api_terminal_health():
     return jsonify({"ok": True, "health": results})
 
 
+@app.route("/api/terminal/osint", methods=["POST"])
+def terminal_osint_api():
+    """Rate-limited public OSINT scraping endpoint for terminal demo."""
+    if not check_rate_limit(get_remote_ip(), "terminal-osint", 10, 60):
+        return jsonify({"success": False, "message": "Rate limit exceeded. Please wait 60 seconds before retrying."}), 429
+        
+    domain = request.form.get("domain", "").strip().lower()
+    if not domain:
+        return jsonify({"success": False, "message": "No domain specified."}), 400
+        
+    # Clean domain (strip schema, etc.)
+    import re
+    domain = re.sub(r'^https?://', '', domain)
+    domain = re.sub(r'^www\.', '', domain)
+    domain = domain.split('/')[0].split(':')[0]
+    
+    if not domain:
+        return jsonify({"success": False, "message": "Invalid domain."}), 400
+        
+    try:
+        # Check if the domain resolves to confirm it resolves at all
+        import socket
+        try:
+            socket.gethostbyname(domain)
+            resolves = True
+        except Exception:
+            resolves = False
+            
+        profile = scrape_company_cached(domain)
+        
+        has_socials = False
+        if profile.get("socials"):
+            if isinstance(profile["socials"], dict):
+                has_socials = any(profile["socials"].values())
+            elif isinstance(profile["socials"], list):
+                has_socials = len(profile["socials"]) > 0
+                
+        has_linkedin = False
+        social_str = str(profile.get("socials", "")).lower()
+        links_str = str(profile.get("links", "")).lower()
+        if "linkedin.com" in social_str or "linkedin.com" in links_str:
+            has_linkedin = True
+            
+        emails = profile.get("emails", [])
+        
+        return jsonify({
+            "success": True,
+            "domain": domain,
+            "resolves": resolves,
+            "emails_found": len(emails),
+            "emails": emails,
+            "has_socials": has_socials,
+            "has_linkedin": has_linkedin,
+            "blocked": profile.get("blocked", False)
+        })
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+
+
 @app.route("/api/terminal/campaign/create", methods=["POST"])
 
 def api_terminal_campaign_create():
@@ -2181,6 +2235,62 @@ def solution_detail(key):
     if not solution:
         return redirect(url_for("home"))
     return render_template("solution_detail.html", solution=solution)
+
+@app.route("/api/hero-demo-lure", methods=["POST"])
+def hero_demo_lure_api():
+    """Unauthenticated rate-limited endpoint for demonstrating AI email lure generation on the landing page."""
+    if not check_rate_limit(get_remote_ip(), "hero-demo-lure", 5, 60):
+        return jsonify({"success": False, "message": "Rate limit exceeded. Please wait 60 seconds before retrying."}), 429
+        
+    scenario = request.form.get("scenario", "").strip().lower()
+    valid_scenarios = ("ceo_fraud", "it_alert", "hr_update", "invoice")
+    if scenario not in valid_scenarios:
+        return jsonify({"success": False, "message": "Invalid scenario type specified."}), 400
+        
+    # Department mapping based on scenario
+    dept_map = {
+        "ceo_fraud": "Finance",
+        "it_alert": "IT Support",
+        "hr_update": "Human Resources",
+        "invoice": "Accounts Payable"
+    }
+    
+    placeholder_profile = {
+        "name": "Jordan Ellis",
+        "email": "jordan.ellis@example-corp.test",
+        "department": dept_map[scenario],
+        "company_name": "Example Corp"
+    }
+    
+    try:
+        from ai_engine.email_gen import generate_phishing_email
+        res = generate_phishing_email(
+            employee_profile=placeholder_profile,
+            scenario=scenario,
+            target_domain="example-corp.test"
+        )
+        if not res:
+            return jsonify({"success": False, "message": "Engine failed to generate lure."}), 500
+            
+        body_text = res.get("body_text")
+        if not body_text:
+            import re
+            html = res.get("body_html", "")
+            text = html.replace("<p>", "").replace("</p>", "\n\n").replace("<br>", "\n").replace("<br/>", "\n")
+            text = re.sub(r'<a href=[^>]+>([^<]+)</a>', r'\1 (visit PHISHING_LINK)', text)
+            text = re.sub(r'<[^>]+>', '', text)
+            body_text = text.strip()
+            
+        return jsonify({
+            "success": True,
+            "subject": res.get("subject", ""),
+            "sender_display": res.get("sender_display") or res.get("sender_name", "IT Security Team"),
+            "body_text": body_text,
+            "phishing_tactic": res.get("phishing_tactic") or res.get("educational_breakdown", "Urgency and authority cues."),
+            "duration_ms": res.get("duration_ms", 0)
+        })
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
 
 @app.route("/api/analyze-threat", methods=["POST"])
 def analyze_threat_api():
@@ -3397,7 +3507,7 @@ def new_campaign(campaign_id=None):
     if request.method == "POST":
         if campaign_id is None and campaign_limit_reached:
             flash("You have reached the limit of 3 campaigns for the Free tier. Please upgrade to PRO for unlimited campaigns!")
-            return redirect(url_for("billing"))
+            return redirect(url_for("billing_portal"))
         # 1. Get data from the form
         name = request.form.get("campaign_name")
         domain = normalize_domain(request.form.get("company_domain") or user.get("company_domain") or email_domain(user.get("email")))
@@ -4908,6 +5018,43 @@ def track_click(tracking_id):
     user_agent = request.headers.get("User-Agent", "Unknown")
     log_event(tracking_id, "open", request.remote_addr, user_agent)
     log_event(tracking_id, "click", request.remote_addr, user_agent)
+
+    try:
+        db = get_db_connection()
+        cursor = db.cursor(dictionary=True)
+        cursor.execute("SELECT refresher_sent_at, recipient_email FROM emails_sent WHERE tracking_id = %s", (tracking_id,))
+        row = cursor.fetchone()
+        if row and row["refresher_sent_at"] is None:
+            base_url = os.getenv("APP_BASE_URL", "http://127.0.0.1:5050").rstrip("/")
+            email = row["recipient_email"]
+            refresher_url = f"{base_url}/simulated?id={tracking_id}"
+            
+            subject = "Required: Phishing Awareness Refresher"
+            body_html = f"""
+            <div style="font-family: Arial, sans-serif; padding: 20px; line-height: 1.6; max-width: 600px; margin: 0 auto; border: 1px solid #e5e7eb; border-radius: 8px;">
+                <h2 style="color: #e11d48; margin-top: 0;">Security Refresher Notification</h2>
+                <p>Hello,</p>
+                <p>During our recent phishing simulation, your account flagged a potentially risky action.</p>
+                <p><strong>Your security team has requested you complete a brief security refresher.</strong></p>
+                <p style="margin: 25px 0; text-align: center;">
+                    <a href="{refresher_url}" style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">Start Security Refresher</a>
+                </p>
+                <p>This training takes less than 2 minutes and helps protect our organization from security breaches.</p>
+                <hr style="border: 0; border-top: 1px solid #e5e7eb; margin-top: 30px;">
+                <p style="font-size: 0.8rem; color: #6b7280; text-align: center;">This is an automated security system notification.</p>
+            </div>
+            """
+            success, err = send_system_email(email, subject, body_html)
+            if success:
+                cursor.execute("UPDATE emails_sent SET refresher_sent_at = NOW() WHERE tracking_id = %s", (tracking_id,))
+                db.commit()
+            else:
+                print(f"Failed to auto-send micro-training to {email}: {err}")
+        cursor.close()
+        db.close()
+    except Exception as e:
+        print(f"Error in automatic micro-training dispatch: {e}")
+
     return render_template("fake_login.html", tracking_id=tracking_id)
 
 @app.route("/submit/<tracking_id>", methods=["POST"])
@@ -6434,7 +6581,7 @@ def header_analyzer():
 @app.route("/url-decoder")
 def url_decoder():
     """Renders the Phishing URL Decoder page."""
-    return render_template("url_decoder.html")
+    return render_template("url_decoder.html", prefill_url=request.args.get("url", ""))
 
 @app.route("/password-breach")
 def password_breach():
@@ -6599,6 +6746,10 @@ def generate_real_alerts(campaign_data):
 def ai_risk_advisor():
     """Renders the AI Risk Advisor page."""
     user = current_user()
+    if user["role"] not in ("admin", "pro"):
+        flash("Pro tier subscription required to access the AI Risk Advisor Console.", "warning")
+        return redirect(url_for("billing_portal"))
+        
     db = get_db_connection()
     cursor = db.cursor(dictionary=True)
     
@@ -6899,12 +7050,12 @@ def remediate_micro_training():
 
         campaign_id = last_camp["id"]
 
-        # Find employees who clicked in that campaign
+        # Find employees who clicked in that campaign and haven't been sent a refresher
         cursor.execute("""
             SELECT DISTINCT es.recipient_email, es.tracking_id
             FROM emails_sent es
             JOIN events ev ON ev.tracking_id = es.tracking_id
-            WHERE es.campaign_id = %s AND ev.event_type = 'click'
+            WHERE es.campaign_id = %s AND ev.event_type = 'click' AND es.refresher_sent_at IS NULL
         """, (campaign_id,))
         clickers = cursor.fetchall()
 
@@ -6936,6 +7087,12 @@ def remediate_micro_training():
             """
             success, err = send_system_email(email, subject, body_html)
             if success:
+                cursor.execute("""
+                    UPDATE emails_sent 
+                    SET refresher_sent_at = NOW() 
+                    WHERE tracking_id = %s
+                """, (tracking_id,))
+                db.commit()
                 sent_count += 1
             else:
                 print(f"Failed to send micro-training to {email}: {err}")

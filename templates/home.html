@@ -3226,68 +3226,268 @@ if (!window.topProgressBar) {
   </div>
 </section>
 
-<!-- STATS BAR -->
-<div id="hero-stats-bar" class="hero-stats" style="grid-template-columns: repeat(3, 1fr); width: 100%; margin: 0 0 1.5rem; display: grid; gap: 0; padding: 0;">
-  <div class="hero-stat" style="text-align: center; border-right: 1px solid var(--border-subtle); padding: 2rem 1rem;">
-    <div id="stat-ctr" data-target="87" style="font-size: clamp(2rem, 3.5vw, 2.75rem); font-weight: 800; color: var(--primary); font-family: var(--font-sans); line-height: 1;">0%</div>
-    <div style="font-size: var(--text-sm); color: var(--text-secondary); margin-top: 0.5rem; font-weight: 500;">click-through rate on first simulations</div>
-  </div>
-  <div class="hero-stat" style="text-align: center; border-right: 1px solid var(--border-subtle); padding: 2rem 1rem;">
-    <div id="stat-gen" data-target="1.8" style="font-size: clamp(2rem, 3.5vw, 2.75rem); font-weight: 800; color: var(--primary); font-family: var(--font-sans); line-height: 1;">0.0s</div>
-    <div style="font-size: var(--text-sm); color: var(--text-secondary); margin-top: 0.5rem; font-weight: 500;">avg AI email generation</div>
-  </div>
-  <div class="hero-stat" style="text-align: center; padding: 2rem 1rem;">
-    <div id="stat-imp" data-target="3.4" style="font-size: clamp(2rem, 3.5vw, 2.75rem); font-weight: 800; color: var(--primary); font-family: var(--font-sans); line-height: 1;">0&times;</div>
-    <div style="font-size: var(--text-sm); color: var(--text-secondary); margin-top: 0.5rem; font-weight: 500;">improvement after training</div>
+<!-- LIVE AI EMAIL LURE GENERATION DEMO -->
+<div id="live-ai-lure-container" style="background: var(--bg-surface, #111D2E); border: 1px solid var(--border-default, #1F2F42); border-radius: 12px; padding: 1.5rem 2rem; margin: 0 auto 3.5rem; max-width: 800px; box-shadow: 0 8px 32px rgba(0,0,0,0.25); position: relative; z-index: 10;">
+  <div style="display: flex; flex-direction: column; gap: 14px;">
+    <!-- Label -->
+    <div style="font-family: var(--font-sans, 'Space Grotesk', sans-serif); font-size: 1rem; font-weight: 600; color: var(--text-primary, #E8EDF2);">
+      Watch the AI write a lure &mdash; live
+    </div>
+    
+    <!-- Scenario Selector Chips -->
+    <div id="demo-lure-chips-container" style="display: flex; gap: 8px; flex-wrap: wrap;">
+      <button type="button" class="demo-lure-chip" onclick="generateDemoLure('ceo_fraud')" style="background: rgba(56, 189, 248, 0.08); border: 1px solid rgba(56, 189, 248, 0.25); color: #38bdf8; padding: 6px 14px; border-radius: 100px; font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: all 0.2s; font-family: var(--font-sans);">
+        CEO Fraud
+      </button>
+      <button type="button" class="demo-lure-chip" onclick="generateDemoLure('it_alert')" style="background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.25); color: #f59e0b; padding: 6px 14px; border-radius: 100px; font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: all 0.2s; font-family: var(--font-sans);">
+        IT Alert
+      </button>
+      <button type="button" class="demo-lure-chip" onclick="generateDemoLure('hr_update')" style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.25); color: #10b981; padding: 6px 14px; border-radius: 100px; font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: all 0.2s; font-family: var(--font-sans);">
+        HR Update
+      </button>
+      <button type="button" class="demo-lure-chip" onclick="generateDemoLure('invoice')" style="background: rgba(244, 63, 94, 0.08); border: 1px solid rgba(244, 63, 94, 0.25); color: #f43f5e; padding: 6px 14px; border-radius: 100px; font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: all 0.2s; font-family: var(--font-sans);">
+        Urgent Invoice
+      </button>
+    </div>
+    
+    <!-- Demonstration Results Block -->
+    <div id="demo-lure-results" style="margin-top: 8px;">
+      <!-- Shared Tool Mini-Loader Hook Container -->
+      <div id="demo-lure-loader-container" style="display: none;"></div>
+      
+      <!-- Canned / Rendered Email Mockup Card -->
+      <div id="demo-lure-email-card" style="display: none; background: #020617; border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.3); font-family: var(--font-mono, 'JetBrains Mono', monospace); font-size: 0.8rem; line-height: 1.6;">
+        <!-- Email header -->
+        <div style="background: rgba(255,255,255,0.02); border-bottom: 1px solid rgba(255,255,255,0.06); padding: 10px 14px; display: flex; flex-direction: column; gap: 4px; color: #94a3b8;">
+          <div><span style="opacity: 0.5;">From:</span> <span id="demo-lure-sender" style="color: #fff;"></span></div>
+          <div><span style="opacity: 0.5;">Subject:</span> <span id="demo-lure-subject" style="color: #38bdf8; font-weight: 600;"></span></div>
+          <div><span style="opacity: 0.5;">To:</span> <span style="opacity: 0.5;">jordan.ellis@example-corp.test</span></div>
+        </div>
+        <!-- Email Body -->
+        <div id="demo-lure-body" style="padding: 16px 20px; background: #fff; color: #1e293b; font-family: sans-serif; font-size: 0.88rem; min-height: 120px; max-height: 250px; overflow-y: auto; white-space: pre-wrap;"></div>
+      </div>
+      
+      <!-- Tactic Flag & Disclaimer Footnote -->
+      <div id="demo-lure-meta-container" style="display: none; border-top: 1px solid var(--border-default, #1F2F42); margin-top: 14px; padding-top: 12px; flex-direction: column; gap: 6px;">
+        <div id="demo-lure-tactic" style="font-size: 0.78rem; color: #f59e0b; font-family: var(--font-sans); font-weight: 600;"></div>
+        <div style="font-size: 0.72rem; color: var(--text-muted, #64748b); font-family: var(--font-sans); font-style: italic;">
+          Fictional demo &mdash; Example Corp (target_domain: example-corp.test)
+        </div>
+      </div>
+      
+      <!-- Inline Error Output -->
+      <div id="demo-lure-error" style="display: none; color: #f43f5e; font-size: 0.8rem; font-family: var(--font-mono); margin-top: 10px; border-top: 1px solid var(--border-default, #1F2F42); padding-top: 12px;"></div>
+    </div>
   </div>
 </div>
-<script>
-(function(){
-  const bar = document.getElementById('hero-stats-bar');
-  if (!bar) return;
-  let animated = false;
-  function easeOut(t) { return 1 - Math.pow(1 - t, 3); }
-  function animateCounter(el, from, to, duration, format) {
-    const start = performance.now();
-    function step(now) {
-      const t = Math.min((now - start) / duration, 1);
-      const val = from + (to - from) * easeOut(t);
-      el.innerHTML = format(val);
-      if (t < 1) requestAnimationFrame(step);
-    }
-    requestAnimationFrame(step);
-  }
-  const obs = new IntersectionObserver((entries) => {
-    entries.forEach(e => {
-      if (e.isIntersecting && !animated) {
-        animated = true;
-        obs.disconnect();
-        
-        const ctrEl = document.getElementById('stat-ctr');
-        const genEl = document.getElementById('stat-gen');
-        const impEl = document.getElementById('stat-imp');
 
-        if (ctrEl) {
-          const target = parseFloat(ctrEl.dataset.target);
-          animateCounter(ctrEl, 0, target, 1800, v => Math.round(v) + '%');
+<style>
+.demo-lure-chip:hover {
+  filter: brightness(1.2);
+  transform: translateY(-1px);
+}
+.demo-lure-chip:active {
+  transform: translateY(0);
+}
+.demo-lure-chip.disabled {
+  opacity: 0.4 !important;
+  pointer-events: none !important;
+}
+</style>
+
+<script>
+// ── Shared Tool Mini-Loader Pattern (Ported for Standalone home.html) ──
+function createMiniLoaderHTML(toolType, id) {
+    if (toolType === 'threat') {
+        return `
+            <div class="skeleton-tool-preview ta-skeleton-preview" id="${id}-card" style="width: 100%; max-width: 800px; margin: 0 auto; padding: 24px; box-sizing: border-box;">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 2rem; border-bottom: 1px solid var(--border-subtle); padding-bottom: 1.5rem;">
+                    <div style="display: flex; align-items: center; gap: 16px;">
+                        <div class="skeleton-block" style="width: 110px; height: 32px; border-radius: 6px;"></div>
+                        <div>
+                            <div class="skeleton-block" style="width: 60px; height: 32px; margin-bottom: 6px;"></div>
+                            <div class="skeleton-block" style="width: 100px; height: 12px;"></div>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <div class="skeleton-block" style="width: 80px; height: 32px; border-radius: 6px;"></div>
+                        <div class="skeleton-block" style="width: 80px; height: 32px; border-radius: 6px;"></div>
+                    </div>
+                </div>
+                
+                <div style="display: flex; gap: 16px; margin-bottom: 1.5rem;">
+                    <div class="skeleton-block" style="width: 70px; height: 16px;"></div>
+                    <div class="skeleton-block" style="width: 70px; height: 16px;"></div>
+                    <div class="skeleton-block" style="width: 70px; height: 16px;"></div>
+                </div>
+
+                <div style="border: 1px solid var(--border-subtle); border-radius: 8px; padding: 20px; background: rgba(0,0,0,0.1); margin-bottom: 2rem;">
+                    <div class="skeleton-block" style="width: 95%; height: 16px; margin-bottom: 12px;"></div>
+                    <div class="skeleton-block" style="width: 40%; height: 16px; display: inline-block; margin-right: 10px;"></div>
+                    <div class="skeleton-block" style="width: 20%; height: 16px; display: inline-block; margin-bottom: 12px; opacity: 0.75;"></div>
+                    <div class="skeleton-block" style="width: 30%; height: 16px; display: inline-block; margin-bottom: 12px;"></div>
+                    <div class="skeleton-block" style="width: 88%; height: 16px; margin-bottom: 12px;"></div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 80px 1fr 2fr; gap: 24px; background: rgba(0,0,0,0.15); padding: 20px; border-radius: 8px;">
+                    <div class="skeleton-block" style="width: 72px; height: 72px; border-radius: 50%;"></div>
+                    <div>
+                        <div class="skeleton-block" style="width: 120px; height: 16px; margin-bottom: 12px;"></div>
+                        <div style="display: flex; gap: 8px;">
+                            <div class="skeleton-block" style="width: 50px; height: 20px; border-radius: 9999px;"></div>
+                            <div class="skeleton-block" style="width: 60px; height: 20px; border-radius: 9999px;"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="skeleton-block" style="width: 100px; height: 16px; margin-bottom: 12px;"></div>
+                        <div class="skeleton-block" style="width: 90%; height: 14px; margin-bottom: 8px;"></div>
+                        <div class="skeleton-block" style="width: 70%; height: 14px;"></div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    return '';
+}
+
+class ToolMiniLoader {
+    constructor(containerId, toolType) {
+        this.container = document.getElementById(containerId);
+        this.toolType = toolType;
+        this.cardId = containerId + '-loader';
+    }
+
+    start() {
+        if (!this.container) return;
+        this.startedAt = performance.now();
+        this.container.innerHTML = createMiniLoaderHTML(this.toolType, this.cardId);
+        this.container.style.display = 'block';
+        
+        const card = document.getElementById(this.cardId + '-card');
+        setTimeout(() => {
+            if (card) card.classList.add('active');
+        }, 20);
+    }
+
+    stop(onComplete) {
+        const card = document.getElementById(this.cardId + '-card');
+        if (!card) {
+            if (onComplete) onComplete();
+            return;
         }
-        if (genEl) {
-          const target = parseFloat(genEl.dataset.target);
-          animateCounter(genEl, 0, target, 1400, v => v.toFixed(1).replace('.0','') + 's');
+
+        const finish = () => {
+            card.classList.remove('active');
+            card.classList.add('exit');
+            setTimeout(() => {
+                if (this.container) this.container.style.display = 'none';
+                if (onComplete) onComplete();
+            }, 200);
+        };
+        const elapsed = performance.now() - (this.startedAt || performance.now());
+        setTimeout(finish, Math.max(0, 500 - elapsed));
+    }
+}
+
+function escapeHTML(str) {
+  if (!str) return '';
+  return str.replace(/[&<>'"]/g, 
+    tag => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      "'": '&#39;',
+      '"': '&quot;'
+    }[tag] || tag)
+  );
+}
+
+// ── Live AI Email Lure Generation Demo Script ──
+async function generateDemoLure(scenario) {
+  const chips = document.querySelectorAll('.demo-lure-chip');
+  const loaderContainer = document.getElementById('demo-lure-loader-container');
+  const emailCard = document.getElementById('demo-lure-email-card');
+  const metaContainer = document.getElementById('demo-lure-meta-container');
+  const errorDiv = document.getElementById('demo-lure-error');
+  
+  // Reset visibility states
+  errorDiv.style.display = 'none';
+  emailCard.style.display = 'none';
+  metaContainer.style.display = 'none';
+  
+  // Disable chips during network call
+  chips.forEach(c => c.classList.add('disabled'));
+  
+  // Initialize and trigger the base tool mini-loader
+  loaderContainer.style.display = 'block';
+  const loader = new ToolMiniLoader('demo-lure-loader-container', 'threat');
+  loader.start();
+  
+  const fd = new FormData();
+  fd.append('scenario', scenario);
+  
+  let success = false;
+  let responseData = null;
+  
+  try {
+    const response = await fetch('/api/hero-demo-lure', {
+      method: 'POST',
+      body: fd
+    });
+    
+    if (response.status === 429) {
+      throw new Error("Give it a minute &mdash; you've hit the rate limit.");
+    }
+    
+    if (!response.ok) {
+      throw new Error("Generation error: AI engine failed to build lure.");
+    }
+    
+    const data = await response.json();
+    if (data.success) {
+      responseData = data;
+      success = true;
+    } else {
+      throw new Error(data.message || "Failed to generate lure.");
+    }
+  } catch (err) {
+    errorDiv.innerHTML = err.message;
+    errorDiv.style.display = 'block';
+  } finally {
+    loader.stop(() => {
+      // Re-enable chips
+      chips.forEach(c => c.classList.remove('disabled'));
+      
+      if (success && responseData) {
+        document.getElementById('demo-lure-sender').textContent = responseData.sender_display;
+        document.getElementById('demo-lure-subject').textContent = responseData.subject;
+        document.getElementById('demo-lure-tactic').innerHTML = `Tactic identified: <span style="font-weight:700;">${escapeHTML(responseData.phishing_tactic)}</span>`;
+        
+        const bodyEl = document.getElementById('demo-lure-body');
+        bodyEl.innerHTML = '';
+        emailCard.style.display = 'block';
+        metaContainer.style.display = 'flex';
+        
+        // Typewriter effect over ~1.5s
+        const rawText = responseData.body_text;
+        let index = 0;
+        const totalChars = rawText.length;
+        const intervalTime = Math.max(5, Math.floor(1500 / totalChars)); // throttle rate
+        
+        function typeNextChar() {
+          if (index < totalChars) {
+            bodyEl.textContent += rawText[index];
+            index++;
+            bodyEl.scrollTop = bodyEl.scrollHeight;
+            setTimeout(typeNextChar, intervalTime);
+          }
         }
-        if (impEl) {
-          const target = parseFloat(impEl.dataset.target);
-          animateCounter(impEl, 0, target, 1600, v => v.toFixed(1) + '&times;');
-        }
+        typeNextChar();
       }
     });
-  }, { threshold: 0.4 });
-  obs.observe(bar);
-})();
+  }
+}
 </script>
-<div style="text-align: center; font-size: var(--text-xs); color: var(--text-muted); margin-top: -1.5rem; margin-bottom: 3.5rem; font-style: italic;">
-  * Based on industry benchmark data. Your results may vary.
-</div>
 
 
 <!-- ATTACK CHAIN (ZIGZAG TIMELINE) -->
@@ -4058,7 +4258,7 @@ if (!window.topProgressBar) {
         </div>
 
         <h3 style="font-size: 1.25rem; font-weight: 600; color: var(--white); margin-bottom: 0.8rem;" class="cap-title-inner">OSINT Surface Scan</h3>
-        <p style="font-size: 0.85rem; color: var(--muted); line-height: 1.6;" class="cap-desc-inner">Identify your organizational risk surface. The automated OSINT scanner harvests corporate leaks, public DNS properties, social channels, and credentials exposed in breaches.</p>
+        <p style="font-size: 0.85rem; color: var(--muted); line-height: 1.6;" class="cap-desc-inner">Identify your organizational risk surface. The automated OSINT scanner crawls public web pages for exposed email addresses and news signals, and resolves typosquatted domains using DNS verification.</p>
       </div>
       <div style="text-decoration: none;">
         <span style="font-size: 0.72rem; font-weight: 700; color: #a855f7; text-transform: uppercase; letter-spacing: 0.05em; display: inline-flex; align-items: center; gap: 4px; margin-top: 1rem; cursor: pointer; border-bottom: 1px dashed rgba(168,85,247,0.4); padding-bottom: 2px; transition: all 0.2s;" onmouseover="this.style.color='#fff'; this.style.borderBottomColor='#fff';" onmouseout="this.style.color='#a855f7'; this.style.borderBottomColor='rgba(168,85,247,0.4)';">Passive Discovery <i class="ti ti-zoom-in"></i></span>
@@ -4090,7 +4290,7 @@ if (!window.topProgressBar) {
         </div>
 
         <h3 style="font-size: 1.25rem; font-weight: 600; color: var(--white); margin-bottom: 0.8rem;" class="cap-title-inner">Active Report Plugin</h3>
-        <p style="font-size: 0.85rem; color: var(--muted); line-height: 1.6;" class="cap-desc-inner">Enable employee active reporting. The 1-click Outlook/Gmail add-in lets employees report real suspicious links and payloads directly to your centralized security console.</p>
+        <p style="font-size: 0.85rem; color: var(--muted); line-height: 1.6;" class="cap-desc-inner">Enable employee active reporting. Every simulated phishing email includes a convenient one-click report link that logs employee response metrics instantly with no software installation required.</p>
       </div>
       <div style="text-decoration: none;">
         <span style="font-size: 0.72rem; font-weight: 700; color: #f59e0b; text-transform: uppercase; letter-spacing: 0.05em; display: inline-flex; align-items: center; gap: 4px; margin-top: 1rem; cursor: pointer; border-bottom: 1px dashed rgba(245,158,11,0.4); padding-bottom: 2px; transition: all 0.2s;" onmouseover="this.style.color='#fff'; this.style.borderBottomColor='#fff';" onmouseout="this.style.color='#f59e0b'; this.style.borderBottomColor='rgba(245,158,11,0.4)';">Active Defense <i class="ti ti-focus-2"></i></span>
@@ -4411,7 +4611,7 @@ if (!window.topProgressBar) {
         <ul style="list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; font-size: 0.85rem; color: #94a3b8;">
           <li style="display: flex; align-items: center; gap: 8px;"><i class="ti ti-check" style="color: #22d3ee;"></i> One-Time Simulation Runs</li>
           <li style="display: flex; align-items: center; gap: 8px;"><i class="ti ti-check" style="color: #22d3ee;"></i> Realistic Preview Sandbox</li>
-          <li style="display: flex; align-items: center; gap: 8px;"><i class="ti ti-check" style="color: #22d3ee;"></i> 100+ Custom Templates Catalog</li>
+          <li style="display: flex; align-items: center; gap: 8px;"><i class="ti ti-check" style="color: #22d3ee;"></i> 4 Attack Scenario Types, AI-Personalized</li>
           <li style="display: flex; align-items: center; gap: 8px;"><i class="ti ti-check" style="color: #22d3ee;"></i> Centralised Campaign Analytics</li>
           <li style="display: flex; align-items: center; gap: 8px; opacity: 0.4;"><i class="ti ti-x" style="color: var(--danger);"></i> Automated Recurring Schedules</li>
           <li style="display: flex; align-items: center; gap: 8px; opacity: 0.4;"><i class="ti ti-x" style="color: var(--danger);"></i> External SMTP/Mailtrap Delivery</li>
@@ -4430,7 +4630,7 @@ if (!window.topProgressBar) {
       <div>
         <div style="font-size: 0.75rem; font-weight: 700; color: #22d3ee; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.8rem;">Pro Upgrade</div>
         <h3 style="font-size: 1.6rem; font-weight: 700; color: var(--white); margin-bottom: 0.8rem;">Enterprise PRO</h3>
-        <p style="color: var(--muted); font-size: 0.85rem; line-height: 1.5; margin-bottom: 2rem;">Flat rate covers up to 50 simulated targets. Includes automated recurring campaigns, PDF compliance reports, and full API access.</p>
+        <p style="color: var(--muted); font-size: 0.85rem; line-height: 1.5; margin-bottom: 2rem;">Flat rate covers up to 50 simulated targets. Includes automated recurring campaigns and PDF compliance reports.</p>
         
         <div style="margin-bottom: 2.5rem; display: flex; align-items: baseline; gap: 4px;">
           <span style="font-size: 3rem; font-weight: 800; color: var(--white);" id="pro-price-val">$24</span>
@@ -4445,7 +4645,7 @@ if (!window.topProgressBar) {
           <li style="display: flex; align-items: center; gap: 8px;"><i class="ti ti-check" style="color: #22d3ee;"></i> Up to 50 active simulated targets</li>
           <li style="display: flex; align-items: center; gap: 8px;"><i class="ti ti-check" style="color: #22d3ee;"></i> Triggered training LMS courses</li>
           <li style="display: flex; align-items: center; gap: 8px;"><i class="ti ti-check" style="color: #22d3ee;"></i> PDF Compliance Audit Reports</li>
-          <li style="display: flex; align-items: center; gap: 8px;"><i class="ti ti-check" style="color: #22d3ee;"></i> API Keys & SIEM Integration</li>
+          <li style="display: flex; align-items: center; gap: 8px;"><i class="ti ti-check" style="color: #22d3ee;"></i> AI Risk Advisor Console</li>
         </ul>
       </div>
 
@@ -4561,10 +4761,10 @@ if (!window.topProgressBar) {
     </div>
     <div class="footer-col">
       <h4>Scenarios</h4>
-      <a href="#">CEO Fraud</a>
-      <a href="#">IT Alert</a>
-      <a href="#">HR Update</a>
-      <a href="#">Urgent Invoice</a>
+      <a href="#threat-sandbox" onclick="if(typeof selectSandboxScenario === 'function') selectSandboxScenario('ceo')">CEO Fraud</a>
+      <a href="#threat-sandbox" onclick="if(typeof selectSandboxScenario === 'function') selectSandboxScenario('it')">IT Alert</a>
+      <a href="#threat-sandbox" onclick="if(typeof selectSandboxScenario === 'function') selectSandboxScenario('hr')">HR Update</a>
+      <a href="#threat-sandbox" onclick="if(typeof selectSandboxScenario === 'function') selectSandboxScenario('invoice')">Urgent Invoice</a>
     </div>
     <div class="footer-col">
       <h4>Legal</h4>
@@ -5515,7 +5715,7 @@ function clearTerminalContent() {
   });
 }
 
-function runBootSequence() {
+async function runBootSequence() {
     const isMobile = window.innerWidth < 768;
     const { body } = getTerminalElements();
     if (!body) return;
@@ -5530,14 +5730,51 @@ function runBootSequence() {
     clearTerminalContent();
     const logo = body.querySelector('.t-logo-area');
     if (logo) logo.style.display = 'block';
+
+    // Fetch health status with 1000ms timeout
+    let health = null;
+    try {
+        const controller = new AbortController();
+        const id = setTimeout(() => controller.abort(), 1000);
+        const response = await fetch('/api/terminal/health', { signal: controller.signal });
+        clearTimeout(id);
+        if (response.ok) {
+            const data = await response.json();
+            if (data.ok) {
+                health = data.health;
+            }
+        }
+    } catch (e) {
+        console.warn("Boot health check timed out or failed:", e);
+    }
+
+    function getStatusHtml(svcData, defaultLabel, defaultColor) {
+        if (!svcData || !svcData.status) {
+            return '<span style="color: rgba(255,255,255,0.4);">[Checking...]</span>';
+        }
+        const status = svcData.status;
+        if (status === 'DEGRADED') {
+            return '<span style="color: #F87171; font-weight: bold;">[DEGRADED]</span>';
+        }
+        if (status === 'STANDBY') {
+            return '<span style="color: #FB923C; font-weight: bold;">[STANDBY]</span>';
+        }
+        return `<span style="color: ${defaultColor}; font-weight: bold;">${defaultLabel}</span>`;
+    }
+
+    const llmHtml = getStatusHtml(health ? health.llm : null, '[OK]', '#34D399');
+    const dbHtml = getStatusHtml(health ? health.db : null, '[OK]', '#34D399');
+    const smtpHtml = getStatusHtml(health ? health.smtp : null, '[OK]', '#34D399');
+    const workerHtml = getStatusHtml(health ? health.worker : null, '[READY]', '#38BDF8');
+    const authHtml = getStatusHtml(health ? health.auth : null, '[OK]', '#34D399');
     
     const lines = [
         { text: '<span style="color: rgba(255,255,255,0.5);">[*] Loading PhishSim modules...</span>', delay: 0 },
-        { text: '[*] OpenRouter LLM connection............ <span style="color: #34D399;">[OK]</span>', delay: 300 },
-        { text: '[*] MySQL tracking database.............. <span style="color: #34D399;">[OK]</span>', delay: 300 },
-        { text: '[*] SMTP relay agent..................... <span style="color: #FB923C;">[STANDBY]</span>', delay: 300 },
-        { text: '[*] Agentic phishing engine v2.0......... <span style="color: #38BDF8;">[READY]</span>', delay: 300 },
-        { text: '[*] Auth module.......................... <span style="color: #34D399;">[OK]</span>', delay: 300 },
+        { text: `[*] OpenRouter LLM connection............ ${llmHtml}`, delay: 300 },
+        { text: `[*] MySQL tracking database.............. ${dbHtml}`, delay: 300 },
+        { text: `[*] SMTP relay agent..................... ${smtpHtml}`, delay: 300 },
+        { text: `[*] Agentic phishing engine v2.0......... ${workerHtml}`, delay: 300 },
+        { text: `[*] Auth module.......................... ${authHtml}`, delay: 300 },
         { text: '<span style="color: rgba(56,189,248,0.2);">────────────────────────────────────────────────</span>', delay: 300 },
     ];
     
@@ -5750,7 +5987,7 @@ const vfs = {
     },
     "var": {
         "log": {
-            "engine.log": "[2026-05-04 09:14:22] Engine boot complete\n[2026-05-04 09:14:23] OpenRouter LLM connection: OK\n[2026-05-04 09:14:24] MySQL connection: OK\n[2026-05-04 09:14:25] SMTP relay: OK (Gmail)\n[2026-05-04 09:15:01] Campaign #1 started: 45 targets\n[2026-05-04 09:15:02] OSINT scan: demo-corp.com → 142 employees found\n[2026-05-04 09:15:45] AI generated 45 unique phishing emails\n[2026-05-04 09:16:12] 45/45 emails dispatched successfully",
+            "engine.log": "[2026-05-04 09:14:22] Engine boot complete\n[2026-05-04 09:14:23] OpenRouter LLM connection: OK\n[2026-05-04 09:14:24] MySQL connection: OK\n[2026-05-04 09:14:25] SMTP relay: OK (Gmail)\n[2026-05-04 09:15:01] Campaign #1 started: 45 targets\n[2026-05-04 09:15:02] OSINT scan: demo-corp.com completed\n[2026-05-04 09:15:45] AI generated 45 unique phishing emails\n[2026-05-04 09:16:12] 45/45 emails dispatched successfully",
             "events.log": "[OPEN]   alice@demo-corp.com       09:18:44\n[OPEN]   bob@demo-corp.com         09:19:12\n[CLICK]  alice@demo-corp.com  ⚠️   09:19:01\n[REPORT] carol@demo-corp.com  ✅   09:21:33"
         }
     },
@@ -6294,11 +6531,66 @@ IT Compliance Dept</pre>`), 2200);
         } else if (cmd === 'pwd') {
             outputHTML = `<div class="t-output">${currentPath}</div>`;
         } else if (cmd === 'osint') {
-            const target = args[1] || 'demo-corp.com';
-            const safeTarget = escapeHTML(target);
-            outputHTML = `<div class="t-passive">[!] Initiating passive OSINT footprint on: ${safeTarget}</div>`;
-            setTimeout(() => appendTerminalHTML(`<div class="t-ok">[+] 142 employee profiles discovered</div>`), 1000);
-            setTimeout(() => appendTerminalHTML(`<div class="t-info">Report saved to osint_cache/${safeTarget}.txt</div>`), 2000);
+            const target = args[1];
+            if (!target) {
+                outputHTML = `<div class="t-error">Usage: osint &lt;domain&gt;</div>`;
+            } else {
+                const safeTarget = escapeHTML(target);
+                outputHTML = `<div class="t-passive">[!] Initiating passive OSINT footprint on: ${safeTarget}</div>`;
+                appendTerminalHTML(outputHTML);
+                outputHTML = '';
+                
+                const fd = new FormData();
+                fd.append('domain', target);
+                
+                fetch('/api/terminal/osint', {
+                    method: 'POST',
+                    body: fd
+                })
+                .then(r => {
+                    if (r.status === 429) {
+                        throw new Error("Rate limit exceeded. Please wait 60 seconds before retrying.");
+                    }
+                    if (!r.ok) {
+                        throw new Error("Scraper error.");
+                    }
+                    return r.json();
+                })
+                .then(d => {
+                    if (d.success) {
+                        if (!d.resolves) {
+                            appendTerminalHTML(`<div class="t-error">[-] Domain ${safeTarget} does not resolve.</div>`);
+                        } else {
+                            appendTerminalHTML(`<div class="t-ok">[+] Target domain resolves successfully.</div>`);
+                            if (d.emails_found > 0) {
+                                appendTerminalHTML(`<div class="t-ok">[+] ${d.emails_found} public email address(es) discovered:</div>`);
+                                d.emails.forEach(email => {
+                                    appendTerminalHTML(`<div style="color:#cbd5e1; font-family:monospace; margin-left: 12px;">- ${escapeHTML(email)}</div>`);
+                                });
+                            }
+                            if (d.has_socials) {
+                                if (d.has_linkedin) {
+                                    appendTerminalHTML(`<div class="t-info">[+] Active corporate social footprint & LinkedIn profiles identified.</div>`);
+                                } else {
+                                    appendTerminalHTML(`<div class="t-info">[+] Active corporate social footprint identified.</div>`);
+                                }
+                            }
+                            if (d.emails_found === 0 && !d.has_socials) {
+                                appendTerminalHTML(`<div class="t-warning">[!] No public contact data found for ${safeTarget}</div>`);
+                            } else {
+                                appendTerminalHTML(`<div class="t-info">Report saved to osint_cache/${safeTarget}.txt</div>`);
+                            }
+                        }
+                    } else {
+                        appendTerminalHTML(`<div class="t-error">[-] OSINT scan failed: ${escapeHTML(d.message)}</div>`);
+                    }
+                    tBody.scrollTop = tBody.scrollHeight;
+                })
+                .catch(err => {
+                    appendTerminalHTML(`<div class="t-error">[-] Error: ${escapeHTML(err.message)}</div>`);
+                    tBody.scrollTop = tBody.scrollHeight;
+                });
+            }
         } else if (cmd === 'run_agent') {
             outputHTML = `<div class="t-ok">[+] Bootstrapping PhishSim Agentic Engine...</div>`;
             setTimeout(() => appendTerminalHTML(`<div class="t-info">[*] Step 1/5: OSINT domain profiling initiated... [ OK ]</div>`), 500);
@@ -6306,7 +6598,8 @@ IT Compliance Dept</pre>`), 2200);
             setTimeout(() => appendTerminalHTML(`<div class="t-info">[*] Step 3/5: Dispatching simulation tokens via SMTP relay... [ OK ]</div>`), 2000);
             setTimeout(() => appendTerminalHTML(`<div class="t-info">[*] Step 4/5: Listening for real-time tracking webhook telemetry... [ OK ]</div>`), 2800);
             setTimeout(() => appendTerminalHTML(`<div class="t-info">[*] Step 5/5: Formatting PDF audit risk posture reports... [ OK ]</div>`), 3600);
-            setTimeout(() => appendTerminalHTML(`<div class="t-ok">[+] Success: Agent sequence completed. All targets simulated.</div>`), 4200);
+            setTimeout(() => appendTerminalHTML(`<div class="t-passive">[*] This is a walkthrough &mdash; run a real simulation free below.</div>`), 4200);
+            setTimeout(() => appendTerminalHTML(`<div class="t-ok">[+] <a href="/signup" style="color:#34d399; text-decoration:underline;">Sign up now</a> or access the dashboard via <a href="/demo-login" style="color:#34d399; text-decoration:underline;">one-click demo login</a> to launch campaigns.</div>`), 4800);
         } else if (cmd === 'ls') {
             const dir = getDir(currentPath);
             if (dir && typeof dir === 'object') {
@@ -6937,9 +7230,9 @@ const solutionsIntel = {
     tagline: "OSINT Exposure Scanner Specs",
     whyMatters: "Real attackers spend days on intelligence gathering (reconnaissance) before sending a single phishing email. Identifying public metadata allows administrators to patch leaks and train high-profile targets first.",
     specs: [
-      { name: "Subdomain Mapping", detail: "Passive DNS queries mapping dev/staging portals vulnerable to hijack." },
-      { name: "Employee Footprints", detail: "Harvests LinkedIn profiles to outline organizational hierarchy and roles." },
-      { name: "Breach Repository Match", detail: "Correlates domain emails with leaked password lists from public breaches." }
+      { name: "Website & Subpage Scan", detail: "Crawls the company site and about/contact/team pages for exposed email addresses and public social links." },
+      { name: "Look-Alike Domain Detection", detail: "DNS-checks common typosquat variants of the target domain (character substitution, TLD swaps, etc.) for active registration." },
+      { name: "Public Content Signals", detail: "Pulls recent headlines/news links found on the site to identify context an attacker could reference." }
     ],
     ctaText: "Read OSINT Surface Brief",
     ctaLink: "/solutions/osint"
@@ -6947,7 +7240,7 @@ const solutionsIntel = {
   lms: {
     title: "Trigger-Based LMS",
     tagline: "Teachable Moments LMS Workflow",
-    whyMatters: "Retention increases by 80% when employees receive feedback immediately after failure compared to quarterly compliance sessions.",
+    whyMatters: "Providing feedback immediately after a simulated click ensures employees learn while the mistake is fresh, reinforcing safe behavior far more effectively than scheduled compliance sessions.",
     specs: [
       { name: "1. Capture Event", detail: "Target clicks links, logs cookies, or submits simulated credentials." },
       { name: "2. Teachable Redirect", detail: "Redirects user to a mock learning console highlighting specific email markers." },
@@ -6958,14 +7251,14 @@ const solutionsIntel = {
   },
   plugin: {
     title: "Active Report Plugin",
-    tagline: "1-Click Active Reporting Plugin Specs",
+    tagline: "1-Click Active Reporting Specs",
     whyMatters: "Enables administrators to distinguish mock training reports from real security events immediately, improving response times.",
     specs: [
-      { name: "Add-In Integration", detail: "Native Outlook VSTO manifests and Google Workspace JSON configurations." },
-      { name: "Telemetry Match", detail: "Instantly matches reported emails against the active simulation database to record successful reporting metrics." },
-      { name: "SOC Pipeline", detail: "Emails reported outside simulations are instantly packaged with full headers and routed to IT support." }
+      { name: "Embedded Report Link", detail: "Every simulated phishing email includes a one-click report link, no browser extension or admin install required." },
+      { name: "Instant Event Logging", detail: "A report click is logged as a 'reported' action tied to that employee and campaign in real time." },
+      { name: "Dashboard Visibility", detail: "Reported emails show up immediately in the admin's campaign view alongside opens and clicks." }
     ],
-    ctaText: "Read Report Plugin Brief",
+    ctaText: "Read Report Link Brief",
     ctaLink: "/solutions/plugin"
   }
 };

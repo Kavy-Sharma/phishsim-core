@@ -261,6 +261,7 @@ def _call_with_fallback(messages: list) -> str | None:
                 messages=messages,
                 temperature=0.7,
                 max_tokens=2000,   # body_html needs room; 600/1200 was cutting JSON mid-sentence
+                timeout=3.0,
             )
             content = response.choices[0].message.content
             if content and content.strip():
