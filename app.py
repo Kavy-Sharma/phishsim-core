@@ -239,7 +239,8 @@ def get_db_connection():
                 charset="utf8mb4",
                 collation="utf8mb4_unicode_ci",
                 use_pure=True,
-                ssl_disabled=os.getenv("DB_SSL_DISABLED", "False").lower() == "true"
+                ssl_disabled=os.getenv("DB_SSL_DISABLED", "False").lower() == "true",
+                connection_timeout=5
             )
             print("Database connection pool initialized successfully with size 16.")
         except Exception as pool_err:
@@ -262,7 +263,8 @@ def get_db_connection():
         charset="utf8mb4",
         collation="utf8mb4_unicode_ci",
         use_pure=True,
-        ssl_disabled=os.getenv("DB_SSL_DISABLED", "False").lower() == "true"
+        ssl_disabled=os.getenv("DB_SSL_DISABLED", "False").lower() == "true",
+        connection_timeout=5
     )
 
 def ensure_auth_schema(cursor):
@@ -420,11 +422,12 @@ def bootstrap_schema():
 @app.errorhandler(mysql.connector.Error)
 def handle_db_error(e):
     print(f"Database error occurred: {e}")
-    flash(f"Database Error: {e}. Please ensure your local MySQL server is running and configured correctly in your .env file.")
+    flash("We're having trouble connecting right now. Please try again in a few minutes.")
     try:
-        return redirect(url_for("login"))
+        referrer = request.referrer or "/"
+        return render_template("service_unavailable.html", referrer=referrer), 503
     except Exception:
-        return "Database Connection Error. Please verify your MySQL database is active.", 500
+        return "We're having trouble connecting right now. Please try again in a few minutes.", 503
 
 
 @app.after_request
