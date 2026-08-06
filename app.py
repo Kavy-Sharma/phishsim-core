@@ -2295,6 +2295,74 @@ def hero_demo_lure_api():
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
 
+
+@app.route("/api/threat-sandbox/generate", methods=["POST"])
+def api_threat_sandbox_generate():
+    """Rate-limited public endpoint for Threat Sandbox email generation."""
+    if not check_rate_limit(get_remote_ip(), "threat-sandbox", 5, 60):
+        return jsonify({"success": False, "message": "Rate limit exceeded. Please wait 60 seconds before retrying."}), 429
+        
+    scenario_key = request.form.get("scenario", "").strip().lower()
+    if scenario_key not in ("ceo", "it", "hr", "invoice"):
+        return jsonify({"success": False, "message": "Invalid scenario type specified."}), 400
+        
+    scenario_mapping = {
+        "ceo": "ceo_fraud",
+        "it": "it_alert",
+        "hr": "hr_update",
+        "invoice": "invoice"
+    }
+    mapped_scenario = scenario_mapping[scenario_key]
+    
+    dept_map = {
+        "ceo": "Finance",
+        "it": "IT Support",
+        "hr": "Human Resources",
+        "invoice": "Accounts Payable"
+    }
+    
+    placeholder_profile = {
+        "name": "Jane Doe",
+        "email": "jane.doe@example-corp.com",
+        "department": dept_map[scenario_key],
+        "company_name": "Example Corp"
+    }
+    
+    try:
+        import re
+        from ai_engine.email_gen import generate_phishing_email
+        res = generate_phishing_email(
+            employee_profile=placeholder_profile,
+            scenario=mapped_scenario,
+            target_domain="example-corp.com"
+        )
+        if not res:
+            return jsonify({"success": False, "message": "Engine failed to generate sandbox email."}), 500
+            
+        sender_name = res.get("sender_display") or res.get("sender_name") or "IT Support"
+        # Clean sender name to construct a mock email address — strip non-alphanumeric, collapse dots
+        clean_name = re.sub(r'[^a-zA-Z0-9\.]', '', sender_name.lower().replace(" ", "."))
+        clean_name = re.sub(r'\.{2,}', '.', clean_name).strip('.')  # collapse multiple dots
+        if not clean_name:
+            clean_name = "noreply"
+        sender_email = f"{clean_name}@example-corp.com"
+        
+        # Prepare the HTML body
+        body_html = res.get("body_html", "")
+        
+        educational_breakdown = res.get("phishing_tactic") or res.get("educational_breakdown") or "Unexpected urgent request."
+        
+        return jsonify({
+            "success": True,
+            "from": f"{sender_name} &lt;{sender_email}&gt;",
+            "subject": res.get("subject", ""),
+            "body": body_html,
+            "educational_breakdown": educational_breakdown,
+            "duration_ms": res.get("duration_ms", 0)
+        })
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+
 @app.route("/api/analyze-threat", methods=["POST"])
 def analyze_threat_api():
     if not check_rate_limit(get_remote_ip(), "analyze-threat", 5, 60):

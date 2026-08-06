@@ -3227,7 +3227,8 @@ if (!window.topProgressBar) {
 </section>
 
 <!-- LIVE AI EMAIL LURE GENERATION DEMO -->
-<div id="live-ai-lure-container" style="background: var(--bg-surface, #111D2E); border: 1px solid var(--border-default, #1F2F42); border-radius: 12px; padding: 1.5rem 2rem; margin: 0 auto 3.5rem; max-width: 800px; box-shadow: 0 8px 32px rgba(0,0,0,0.25); position: relative; z-index: 10;">
+<section id="lure-demo-section" style="padding: 64px 5% 80px; background: var(--bg-base); position: relative; z-index: 2;">
+<div id="live-ai-lure-container" style="background: var(--bg-surface, #111D2E); border: 1px solid var(--border-default, #1F2F42); border-radius: 12px; padding: 1.5rem 2rem; margin: 0 auto; max-width: 800px; box-shadow: 0 8px 32px rgba(0,0,0,0.25); position: relative; z-index: 10;">
   <div style="display: flex; flex-direction: column; gap: 14px;">
     <!-- Label -->
     <div style="font-family: var(--font-sans, 'Space Grotesk', sans-serif); font-size: 1rem; font-weight: 600; color: var(--text-primary, #E8EDF2);">
@@ -3280,6 +3281,7 @@ if (!window.topProgressBar) {
     </div>
   </div>
 </div>
+</section>
 
 <style>
 .demo-lure-chip:hover {
@@ -3647,6 +3649,7 @@ async function generateDemoLure(scenario) {
             </div>
 
             <!-- Mail HTML Body -->
+            <div id="sandbox-loader-container" style="display: none; padding: 24px 30px; min-height: 200px;"></div>
             <div style="padding: 24px 30px; min-height: 200px; background: #fff; color: #1e293b; font-family: sans-serif; font-size: 0.95rem; line-height: 1.6;" id="mail-body">
               <!-- Loaded dynamically -->
             </div>
@@ -3655,15 +3658,15 @@ async function generateDemoLure(scenario) {
           <!-- Live Telemetry Panel -->
           <div style="background: #020617; border: 1px solid rgba(6, 182, 212, 0.2); border-radius: 12px; padding: 1.5rem; display: flex; flex-direction: column; font-family: var(--mono), monospace; font-size: 0.78rem; min-height: 320px; box-sizing: border-box;">
             <div style="color: var(--cyan); font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(6,182,212,0.15); padding-bottom: 8px; flex-shrink: 0;">
-              <span>LIVE TELEMETRY STREAM</span>
-              <span class="telemetry-pulse-dot" style="width: 8px; height: 8px; background: #10b981; border-radius: 50%; display: inline-block; box-shadow: 0 0 8px #10b981;"></span>
+              <span>SIMULATED TELEMETRY WALKTHROUGH</span>
+              <i class="ti ti-activity" style="color: var(--cyan); font-size: 0.95rem;"></i>
             </div>
             <div id="live-telemetry-container" style="display: flex; flex-direction: column; gap: 8px; color: #94a3b8; overflow-y: auto; flex: 1; max-height: 300px; min-height: 220px; scroll-behavior: smooth;">
 
               <!-- Logs are typewritten here -->
             </div>
             <div style="border-top: 1px solid rgba(255,255,255,0.05); padding-top: 8px; margin-top: 8px; color: #475569; font-size: 0.7rem; text-align: right; text-transform: uppercase; letter-spacing: 0.5px; flex-shrink: 0;">
-              Status: <span style="color: #10b981; font-weight: bold;">Monitoring</span>
+              Status: <span style="color: var(--cyan); font-weight: bold;">Walkthrough Active</span>
             </div>
           </div>
         </div>
@@ -3914,100 +3917,174 @@ async function generateDemoLure(scenario) {
     }
   };
 
-  const telemetryLoopLogs = {
-    ceo: [
-      { text: "[SYS] Spawning simulated target mailbox (recipient: david@demo-corp.com)..." },
-      { text: "[SMTP] Dispatching email envelope matching CEO Fraud template..." },
-      { text: "[SMTP] Email successfully delivered to recipient inbox." },
-      { text: "[IMAP] Email status: UNREAD." },
-      { text: "[IMAP] Email opened by target (david@demo-corp.com)." },
-      { text: "[IMAP] Target is reading the message details..." },
-      { text: "[IMAP] Target hovered over 'Authorize Wire Transfer' link..." }
-    ],
-    it: [
-      { text: "[SYS] Spawning simulated target mailbox (recipient: carol@demo-corp.com)..." },
-      { text: "[SMTP] Dispatching email envelope matching IT Credential template..." },
-      { text: "[SMTP] Email successfully delivered to recipient inbox." },
-      { text: "[IMAP] Email status: UNREAD." },
-      { text: "[IMAP] Email opened by target (carol@demo-corp.com)." },
-      { text: "[IMAP] Target is reading security credentials warning..." },
-      { text: "[IMAP] Target hovered over 'Update Credentials Now' button..." }
-    ],
-    hr: [
-      { text: "[SYS] Spawning simulated target mailbox (recipient: bob@demo-corp.com)..." },
-      { text: "[SMTP] Dispatching email envelope matching HR Compensation template..." },
-      { text: "[SMTP] Email successfully delivered to recipient inbox." },
-      { text: "[IMAP] Email status: UNREAD." },
-      { text: "[IMAP] Email opened by target (bob@demo-corp.com)." },
-      { text: "[IMAP] Target is reading compensation adjustment structure..." },
-      { text: "[IMAP] Target hovered over 'View Compensation Document' link..." }
-    ],
-    invoice: [
-      { text: "[SYS] Spawning simulated target mailbox (recipient: alice@demo-corp.com)..." },
-      { text: "[SMTP] Dispatching email envelope matching Vendor Invoice template..." },
-      { text: "[SMTP] Email successfully delivered to recipient inbox." },
-      { text: "[IMAP] Email status: UNREAD." },
-      { text: "[IMAP] Email opened by target (alice@demo-corp.com)." },
-      { text: "[IMAP] Target is reading overdue billing terms..." },
-      { text: "[IMAP] Target hovered over 'Download Overdue Invoice' button..." }
-    ]
-  };
-
+  let activeScenarioData = null;
   let activeTelemetryTimeout = null;
 
-  function runTelemetryLoop(key) {
-    if (activeTelemetryTimeout) clearTimeout(activeTelemetryTimeout);
-
+  function appendTelemetryLog(text, color = '#94a3b8', isWarning = false) {
     const container = document.getElementById('live-telemetry-container');
     if (!container) return;
-    container.innerHTML = '';
-
-    const logs = telemetryLoopLogs[key] || telemetryLoopLogs.ceo;
-    let logIdx = 0;
-
-    function printNextLog() {
-      if (logIdx >= logs.length) {
-        activeTelemetryTimeout = setTimeout(() => {
-          container.innerHTML = '';
-          logIdx = 0;
-          printNextLog();
-        }, 4000);
-        return;
-      }
-
-      const log = logs[logIdx];
-      const div = document.createElement('div');
-      div.style.marginBottom = '6px';
-      div.style.animation = 'fadeInUp 0.25s ease-out';
-      
-      const timeStr = new Date().toLocaleTimeString();
-      div.innerHTML = `<span style="color: #475569;">[${timeStr}]</span> ${log.text}`;
-      container.appendChild(div);
-      container.scrollTop = container.scrollHeight;
-
-      logIdx++;
-      activeTelemetryTimeout = setTimeout(printNextLog, 1500 + Math.random() * 1000);
+    const div = document.createElement('div');
+    div.style.marginBottom = '6px';
+    if (isWarning) {
+      div.style.color = '#ef4444';
+      div.style.fontWeight = 'bold';
+      div.style.margin = '8px 0';
+      div.style.animation = 'pulseWarning 1s infinite alternate';
+    } else if (color) {
+      div.style.color = color;
     }
-
-    printNextLog();
+    div.style.animation = 'fadeInUp 0.25s ease-out';
+    const timeStr = new Date().toLocaleTimeString();
+    div.innerHTML = `<span style="color: #475569;">[${timeStr}]</span> ${text}`;
+    container.appendChild(div);
+    container.scrollTop = container.scrollHeight;
   }
 
-  function selectSandboxScenario(key) {
+  function playTelemetryWalkthrough(key, data) {
+    if (activeTelemetryTimeout) clearTimeout(activeTelemetryTimeout);
+    
+    const container = document.getElementById('live-telemetry-container');
+    if (!container) return;
+    
+    appendTelemetryLog(`[AI ENGINE] Lure generation complete (took ${data.duration_ms}ms).`, 'var(--cyan)');
+    
+    const senderName = data.from.split(' &lt;')[0];
+    
+    const logs = [
+      { text: `[SMTP] Relaying simulated email payload from "${senderName}" to "jane.doe@example-corp.com"...`, delay: 500 },
+      { text: "[SMTP] Delivery confirmed: Inbox connection established.", delay: 800 },
+      { text: "[WALKTHROUGH] Step 1: Simulated recipient inbox status updated to UNREAD.", delay: 1200, color: '#38bdf8' },
+      { text: "[WALKTHROUGH] Step 2: Simulated recipient opened the email.", delay: 2000, color: '#38bdf8' },
+      { text: "[WALKTHROUGH] Step 3: Simulated recipient is reading the lure details...", delay: 2000, color: '#38bdf8' },
+      { text: "[WALKTHROUGH] Step 4: Simulated recipient hovered over the call-to-action link.", delay: 2000, color: '#38bdf8' }
+    ];
+    
+    let currentLogIdx = 0;
+    function printNextWalkthroughLog() {
+      if (currentLogIdx < logs.length) {
+        const item = logs[currentLogIdx];
+        activeTelemetryTimeout = setTimeout(() => {
+          appendTelemetryLog(item.text, item.color || '#94a3b8');
+          currentLogIdx++;
+          printNextWalkthroughLog();
+        }, item.delay);
+      }
+    }
+    
+    printNextWalkthroughLog();
+  }
+
+  async function selectSandboxScenario(key) {
     // Update active tab styling
     document.querySelectorAll('.sandbox-tab').forEach(t => t.classList.remove('active'));
-    document.getElementById(`tab-${key}`).classList.add('active');
-
-    // Update email fields
-    const data = scenarioData[key];
-    document.getElementById('mail-from').innerHTML = data.from;
-    document.getElementById('mail-subject').innerHTML = data.subject;
-    document.getElementById('mail-body').innerHTML = data.body;
+    const activeTab = document.getElementById(`tab-${key}`);
+    if (activeTab) activeTab.classList.add('active');
 
     // Reset outcome panel
+    document.getElementById('sandbox-compromise-panel').style.display = 'none';
     document.getElementById('sandbox-compromise-panel').classList.remove('show-panel');
 
-    // Restart typewriter log loop
-    runTelemetryLoop(key);
+    // Clear telemetry loop timeout
+    if (activeTelemetryTimeout) clearTimeout(activeTelemetryTimeout);
+
+    // Initialize telemetry panel and print start sequence
+    const container = document.getElementById('live-telemetry-container');
+    if (container) container.innerHTML = '';
+    
+    appendTelemetryLog(`[SYSTEM] Initializing email generator for scenario: ${key.toUpperCase()}`);
+    
+    activeTelemetryTimeout = setTimeout(() => {
+      appendTelemetryLog("[SYSTEM] Contacting AI engine backend...");
+    }, 250);
+    
+    activeTelemetryTimeout = setTimeout(() => {
+      appendTelemetryLog("[AI ENGINE] Constructing fictional recipient profile (Jane Doe / Example Corp)...");
+    }, 500);
+
+    // Start skeleton loading inside the sandbox loader
+    const mailBody = document.getElementById('mail-body');
+    const loaderContainer = document.getElementById('sandbox-loader-container');
+    
+    mailBody.style.display = 'none';
+    loaderContainer.style.display = 'block';
+    
+    // Clear mail headers to show loading state
+    document.getElementById('mail-from').innerHTML = '<span class="skeleton-block" style="display:inline-block; width:200px; height:14px; margin:0;"></span>';
+    document.getElementById('mail-subject').innerHTML = '<span class="skeleton-block" style="display:inline-block; width:300px; height:14px; margin:0;"></span>';
+    
+    const loader = new ToolMiniLoader('sandbox-loader-container', 'threat');
+    loader.start();
+
+    const fd = new FormData();
+    fd.append('scenario', key);
+
+    let success = false;
+    let fetchedData = null;
+    let errorMsg = null;
+
+    try {
+      const response = await fetch('/api/threat-sandbox/generate', {
+        method: 'POST',
+        body: fd
+      });
+
+      if (response.status === 429) {
+        throw new Error("Give it a minute &mdash; you've hit the rate limit.");
+      }
+
+      if (!response.ok) {
+        throw new Error("Generation error: AI engine failed to build lure.");
+      }
+
+      const data = await response.json();
+      if (data.success) {
+        fetchedData = data;
+        success = true;
+      } else {
+        throw new Error(data.message || "Engine failed to generate sandbox email.");
+      }
+    } catch (e) {
+      errorMsg = e.message;
+      success = false;
+    }
+
+    loader.stop(() => {
+      loaderContainer.style.display = 'none';
+      mailBody.style.display = 'block';
+
+      if (success && fetchedData) {
+        activeScenarioData = fetchedData;
+
+        // Populate mail-from, mail-subject
+        document.getElementById('mail-from').innerHTML = fetchedData.from;
+        document.getElementById('mail-subject').innerHTML = fetchedData.subject;
+
+        // Replace PHISHING_LINK with triggerSandboxCompromise click handler
+        let bodyHtml = fetchedData.body;
+        bodyHtml = bodyHtml.replace(/href=['"]PHISHING_LINK['"]/g, `href="#" onclick="triggerSandboxCompromise(event, '${key}')"`);
+        document.getElementById('mail-body').innerHTML = bodyHtml;
+
+        // Start telemetry walkthrough sequence
+        playTelemetryWalkthrough(key, fetchedData);
+      } else {
+        // Clear headers
+        document.getElementById('mail-from').innerHTML = 'N/A';
+        document.getElementById('mail-subject').innerHTML = 'N/A';
+        
+        // Render error card in mail body
+        document.getElementById('mail-body').innerHTML = `
+          <div style="color: #ef4444; padding: 30px 20px; text-align: center; font-family: sans-serif;">
+            <div style="font-size: 2rem; margin-bottom: 12px;">⚠️</div>
+            <strong style="font-size: 1.1rem; display: block; margin-bottom: 8px;">Generation Failed</strong>
+            <p style="margin: 0; color: #64748b; font-size: 0.9rem; line-height: 1.5;">${errorMsg}</p>
+          </div>
+        `;
+
+        if (activeTelemetryTimeout) clearTimeout(activeTelemetryTimeout);
+        appendTelemetryLog(`[ERROR] Generation failed: ${errorMsg}`, '#ef4444');
+        appendTelemetryLog("[SYSTEM] Aborting simulated telemetry walkthrough.", '#ef4444');
+      }
+    });
   }
 
   function triggerSandboxCompromise(e, key) {
@@ -4017,17 +4094,31 @@ async function generateDemoLure(scenario) {
     // Fill flags
     const flagsList = document.getElementById('compromise-red-flags');
     flagsList.innerHTML = '';
-    data.flags.forEach(f => {
+    
+    // Add scenario-specific static flags
+    const staticFlags = data.flags || [];
+    staticFlags.forEach(f => {
       flagsList.innerHTML += `
-        <li style="display:flex; gap:10px; align-items:start;">
+        <li style="display:flex; gap:10px; align-items:start; margin-bottom: 8px;">
           <span style="color:#ef4444; font-size:1.1rem; line-height:1;">⚡</span>
           <span>${f}</span>
         </li>
       `;
     });
+    
+    // Add dynamic AI analysis breakdown
+    if (activeScenarioData && activeScenarioData.educational_breakdown) {
+      flagsList.innerHTML += `
+        <li style="display:flex; gap:10px; align-items:start; margin-bottom: 8px;">
+          <span style="color:#ef4444; font-size:1.1rem; line-height:1;">⚡</span>
+          <span><strong>AI Threat Analysis:</strong> ${activeScenarioData.educational_breakdown}</span>
+        </li>
+      `;
+    }
 
     // Support layout on mobile vs desktop
     const panel = document.getElementById('sandbox-compromise-panel');
+    panel.style.display = 'block';
     panel.classList.add('show-panel');
 
     // Also inject compromise logs into the live telemetry stream
@@ -4035,24 +4126,18 @@ async function generateDemoLure(scenario) {
     if (container) {
       if (activeTelemetryTimeout) clearTimeout(activeTelemetryTimeout);
       
-      const warnDiv = document.createElement('div');
-      warnDiv.style.color = '#ef4444';
-      warnDiv.style.fontWeight = 'bold';
-      warnDiv.style.margin = '8px 0';
-      warnDiv.style.animation = 'pulseWarning 1s infinite alternate';
-      warnDiv.innerHTML = `[!!!] VULNERABILITY ALERT: TARGET COMPROMISED`;
-      container.appendChild(warnDiv);
+      appendTelemetryLog("[!!!] VULNERABILITY ALERT: TARGET COMPROMISED", '#ef4444', true);
       
-      data.logs.forEach((log, index) => {
+      const compLogs = [
+        { text: "[WALKTHROUGH] Step 5: Captured click event telemetry payload.", color: '#ef4444' },
+        { text: "[WALKTHROUGH] Step 6: Logged compromise details in simulation DB.", color: '#ef4444' },
+        { text: "[SYSTEM] Compromise sequence completed. Review red flags panel.", color: 'var(--cyan)' }
+      ];
+      
+      compLogs.forEach((log, index) => {
         setTimeout(() => {
-          const div = document.createElement('div');
-          div.style.marginBottom = '6px';
-          div.style.color = '#ef4444';
-          div.style.animation = 'fadeInUp 0.2s ease-out';
-          div.innerHTML = `<span style="color: #64748b;">[${new Date().toLocaleTimeString()}]</span> ${log.text}`;
-          container.appendChild(div);
-          container.scrollTop = container.scrollHeight;
-        }, index * 400 + 500);
+          appendTelemetryLog(log.text, log.color);
+        }, index * 400 + 400);
       });
     }
   }
@@ -5731,26 +5816,41 @@ async function runBootSequence() {
     const logo = body.querySelector('.t-logo-area');
     if (logo) logo.style.display = 'block';
 
-    // Fetch health status with 1000ms timeout
+    // Fetch health status with 6000ms timeout
     let health = null;
+    let fetchPending = true;
+    let fetchFailed = false;
     try {
         const controller = new AbortController();
-        const id = setTimeout(() => controller.abort(), 1000);
+        const id = setTimeout(() => controller.abort(), 6000);
         const response = await fetch('/api/terminal/health', { signal: controller.signal });
         clearTimeout(id);
+        fetchPending = false;
         if (response.ok) {
             const data = await response.json();
             if (data.ok) {
                 health = data.health;
+            } else {
+                fetchFailed = true;
             }
+        } else {
+            fetchFailed = true;
         }
     } catch (e) {
+        fetchPending = false;
+        fetchFailed = true;
         console.warn("Boot health check timed out or failed:", e);
     }
 
     function getStatusHtml(svcData, defaultLabel, defaultColor) {
         if (!svcData || !svcData.status) {
-            return '<span style="color: rgba(255,255,255,0.4);">[Checking...]</span>';
+            if (fetchFailed) {
+                return '<span style="color: #F87171; font-weight: bold;">[UNAVAILABLE]</span>';
+            }
+            if (fetchPending) {
+                return '<span style="color: rgba(255,255,255,0.4);">[Checking...]</span>';
+            }
+            return '<span style="color: #F87171; font-weight: bold;">[UNAVAILABLE]</span>';
         }
         const status = svcData.status;
         if (status === 'DEGRADED') {
