@@ -243,8 +243,9 @@ def _parse_json_response(raw: str) -> dict | None:
 
 def _call_with_fallback(messages: list) -> str | None:
     """
-    Try each currently-free OpenRouter model in priority order.
-    Returns raw content string on success, None if all models fail.
+    Race the top-N free OpenRouter models in parallel threads and return
+    whichever succeeds first.  This eliminates the cumulative 3-s-per-model
+    sequential timeout — worst-case latency becomes single-model latency.
     """
     if client is None:
         return None
@@ -254,31 +255,63 @@ def _call_with_fallback(messages: list) -> str | None:
         print("[email_gen] No models available.")
         return None
 
-    for model in models:
+    # Race the top N models; more racers = better resilience, diminishing returns past 4
+    RACE_LIMIT = min(4, len(models))
+    race_models = models[:RACE_LIMIT]
+
+    import concurrent.futures
+
+    result_holder: list[str | None] = [None]  # shared slot (GIL-safe for simple assign)
+
+    def _try_model(model: str) -> tuple[str, str | None]:
         try:
             response = client.chat.completions.create(
                 model=model,
                 messages=messages,
                 temperature=0.7,
-                max_tokens=2000,   # body_html needs room; 600/1200 was cutting JSON mid-sentence
-                timeout=3.0,
+                max_tokens=2000,
+                timeout=22.0,   # generous — the race itself caps wall-clock time
             )
             content = response.choices[0].message.content
             if content and content.strip():
-                print(f"[email_gen] Success with model: {model}")
-                return content
-            print(f"[email_gen] {model} returned empty — trying next...")
-
+                print(f"[email_gen] Race winner: {model}")
+                return model, content
+            return model, None
         except Exception as exc:
-            err = str(exc)
-            if "404" in err or "429" in err or "unavailable" in err.lower():
-                print(f"[email_gen] {model} unavailable — trying next...")
-                continue
+            print(f"[email_gen] {model} failed in race: {exc}")
+            return model, None
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=RACE_LIMIT) as pool:
+        futures = {pool.submit(_try_model, m): m for m in race_models}
+        for fut in concurrent.futures.as_completed(futures):
+            _, content = fut.result()
+            if content:
+                # Cancel remaining (best-effort — threads may already be in-flight)
+                for f in futures:
+                    f.cancel()
+                return content
+
+    # All racers failed — try remaining models sequentially as last resort
+    for model in models[RACE_LIMIT:]:
+        try:
+            response = client.chat.completions.create(
+                model=model,
+                messages=messages,
+                temperature=0.7,
+                max_tokens=2000,
+                timeout=22.0,
+            )
+            content = response.choices[0].message.content
+            if content and content.strip():
+                print(f"[email_gen] Fallback success: {model}")
+                return content
+        except Exception as exc:
             print(f"[email_gen] {model} error: {exc} — trying next...")
             continue
 
-    print("[email_gen] All free models exhausted — using static fallback.")
+    print("[email_gen] All models exhausted — using static fallback.")
     return None
+
 
 
 # ─── Public API ───────────────────────────────────────────────────────────────

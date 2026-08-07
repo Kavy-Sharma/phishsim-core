@@ -1296,13 +1296,11 @@
       position: fixed;
       top: 0;
       left: 0;
-      bottom: 0;
-      right: 0;
       width: 100%;
-      height: 100%;
       z-index: 0;
       pointer-events: none;
       opacity: 1;
+      /* Height is set dynamically by JS to match hero section height */
     }
 
     .theme-toggle {
@@ -3808,7 +3806,6 @@
     })();
   </script>
 
-  <canvas id="threat-map-canvas"></canvas>
 
   <div class="theme-tooltip" id="theme-tooltip" style="display:none;"></div>
 
@@ -3841,6 +3838,9 @@
      UNIFIED NAVBAR INCLUDE
      ═══════════════════════════════════════════════════════════ -->
   {% include 'navbar.html' %}
+
+
+  <canvas id="threat-map-canvas"></canvas>
 
   <!-- HERO -->
   <section id="hero" class="hero-section">
@@ -3946,310 +3946,429 @@
   </section>
 
   <!-- ═══════════════════════════════════════════════════════════
-       MISSION CONTROL — Live Platform Activity Dashboard
-       (replaces the old inline lure demo section)
+       RED TEAM BRIEFING BOARD — replaces Mission Control strip
+       Full-width, unique content, nothing duplicated from below
        ═══════════════════════════════════════════════════════════ -->
-  <section id="lure-demo-section" style="padding: 48px 5% 56px; background: transparent; position: relative; z-index: 2;">
+  <section id="lure-demo-section" style="padding: 0 0 64px; background: transparent; position: relative; z-index: 2;">
     <style>
-      .mc-strip {
-        max-width: 1200px;
-        margin: 0 auto;
+      /* ── RTB Board ── */
+      .rtb-board {
+        width: 100%;
         display: grid;
-        grid-template-columns: 1fr 1px 1.1fr 1px 0.9fr;
-        gap: 0;
-        background: rgba(6,12,28,0.78);
-        border: 1px solid rgba(56,189,248,0.14);
-        border-radius: 20px;
+        grid-template-columns: 1fr 1fr;
+        background: rgba(5,10,24,0.82);
+        border-top: 1px solid rgba(56,189,248,0.1);
+        border-bottom: 1px solid rgba(56,189,248,0.1);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
         overflow: hidden;
-        box-shadow: 0 0 0 1px rgba(56,189,248,0.04), 0 24px 80px rgba(0,0,0,0.5);
-        backdrop-filter: blur(22px);
-        -webkit-backdrop-filter: blur(22px);
+        position: relative;
       }
-      .mc-divider {
-        background: rgba(56,189,248,0.1);
-        width: 1px;
+      .rtb-board::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: repeating-linear-gradient(
+          0deg,
+          transparent,
+          transparent 38px,
+          rgba(56,189,248,0.025) 38px,
+          rgba(56,189,248,0.025) 39px
+        );
+        pointer-events: none;
       }
-      .mc-pane {
-        padding: 28px 32px;
+      /* ── Left: Radar Pane ── */
+      .rtb-radar-pane {
+        padding: 48px 5% 48px 6%;
         display: flex;
         flex-direction: column;
-        gap: 18px;
+        gap: 28px;
+        border-right: 1px solid rgba(56,189,248,0.1);
+        position: relative;
       }
-      .mc-pane-label {
+      .rtb-pane-eyebrow {
         font-family: 'JetBrains Mono', monospace;
         font-size: 0.62rem;
         font-weight: 800;
-        letter-spacing: 0.14em;
+        letter-spacing: 0.16em;
         text-transform: uppercase;
-        color: rgba(56,189,248,0.55);
+        color: rgba(56,189,248,0.5);
         display: flex;
         align-items: center;
         gap: 8px;
       }
-      .mc-pane-label .mc-live-dot {
-        width: 7px; height: 7px; border-radius: 50%;
-        background: #34d399;
-        box-shadow: 0 0 8px #34d399;
-        animation: mcPulse 2s infinite;
-        flex-shrink: 0;
+      .rtb-pane-eyebrow::before {
+        content: '//';
+        color: rgba(56,189,248,0.3);
       }
-      @keyframes mcPulse {
-        0%,100% { opacity:1; transform:scale(1); }
-        50% { opacity:0.4; transform:scale(0.75); }
-      }
-      /* Pane 1 — Activity Feed */
-      .mc-feed-list {
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-        max-height: 210px;
-        overflow: hidden;
-      }
-      .mc-feed-item {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        padding: 9px 12px;
-        background: rgba(255,255,255,0.025);
-        border-radius: 10px;
-        border: 1px solid rgba(255,255,255,0.05);
-        transition: background 0.2s;
-        animation: mcFeedIn 0.35s ease both;
-      }
-      @keyframes mcFeedIn {
-        from { opacity:0; transform:translateX(-8px); }
-        to   { opacity:1; transform:translateX(0); }
-      }
-      .mc-feed-icon {
-        width: 30px; height: 30px; border-radius: 8px;
-        display: flex; align-items: center; justify-content: center;
-        font-size: 0.95rem;
-        flex-shrink: 0;
-      }
-      .mc-feed-text {
-        font-family: 'JetBrains Mono', monospace;
-        font-size: 0.71rem;
-        color: rgba(226,232,240,0.8);
-        line-height: 1.4;
-        flex: 1;
-      }
-      .mc-feed-time {
-        font-family: 'JetBrains Mono', monospace;
-        font-size: 0.63rem;
-        color: rgba(100,116,139,0.7);
-        white-space: nowrap;
-        flex-shrink: 0;
-      }
-      /* Pane 2 — Counters */
-      .mc-counters {
-        display: flex;
-        flex-direction: column;
-        gap: 16px;
-      }
-      .mc-counter-row {
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-      }
-      .mc-counter-val {
-        font-family: 'JetBrains Mono', monospace;
-        font-size: 2.1rem;
+      .rtb-radar-title {
+        font-family: 'Space Grotesk', sans-serif;
+        font-size: clamp(1.4rem, 2.2vw, 2rem);
         font-weight: 800;
-        line-height: 1;
-        letter-spacing: -0.03em;
+        color: #e2e8f0;
+        line-height: 1.2;
+        letter-spacing: -0.02em;
       }
-      .mc-counter-sub {
-        font-family: 'JetBrains Mono', monospace;
-        font-size: 0.68rem;
-        color: rgba(100,116,139,0.75);
-        letter-spacing: 0.04em;
-        text-transform: uppercase;
+      .rtb-radar-title span { color: #38bdf8; }
+      /* SVG radar */
+      .rtb-radar-svg-wrap {
+        position: relative;
+        width: 240px;
+        height: 240px;
+        margin: 0 auto;
+        flex-shrink: 0;
       }
-      .mc-bench-bar {
+      .rtb-radar-svg {
+        width: 100%;
+        height: 100%;
+        overflow: visible;
+      }
+      /* Sweep animation */
+      @keyframes rtbSweep {
+        from { transform: rotate(0deg); }
+        to   { transform: rotate(360deg); }
+      }
+      .rtb-sweep-line {
+        transform-origin: 120px 120px;
+        animation: rtbSweep 4s linear infinite;
+      }
+      /* Arc fill animations */
+      @keyframes rtbArcIn {
+        from { stroke-dashoffset: 250; opacity: 0; }
+        to   { opacity: 1; }
+      }
+      /* Legend */
+      .rtb-radar-legend {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px 20px;
+      }
+      .rtb-legend-item {
         display: flex;
         align-items: center;
         gap: 8px;
-        margin-top: 4px;
         font-family: 'JetBrains Mono', monospace;
-        font-size: 0.63rem;
-        color: rgba(100,116,139,0.65);
+        font-size: 0.69rem;
+        color: rgba(148,163,184,0.8);
       }
-      .mc-bench-badge {
-        background: rgba(56,189,248,0.08);
-        border: 1px solid rgba(56,189,248,0.18);
-        border-radius: 4px;
-        padding: 2px 7px;
-        color: rgba(56,189,248,0.6);
-        font-size: 0.6rem;
-        font-weight: 700;
-        letter-spacing: 0.04em;
+      .rtb-legend-dot {
+        width: 10px; height: 10px;
+        border-radius: 2px;
+        flex-shrink: 0;
       }
-      /* Pane 3 — AI Engine Status */
-      .mc-engine-rows {
+      /* ── Right: Intel Cards Pane ── */
+      .rtb-intel-pane {
+        padding: 48px 6% 48px 5%;
         display: flex;
         flex-direction: column;
-        gap: 10px;
+        gap: 20px;
       }
-      .mc-engine-row {
+      .rtb-intel-header {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 8px 12px;
-        background: rgba(255,255,255,0.018);
-        border-radius: 8px;
-        border: 1px solid rgba(255,255,255,0.04);
       }
-      .mc-engine-name {
+      .rtb-classified-badge {
         font-family: 'JetBrains Mono', monospace;
-        font-size: 0.71rem;
-        color: rgba(148,163,184,0.8);
-        display: flex; align-items: center; gap: 8px;
+        font-size: 0.58rem;
+        font-weight: 900;
+        letter-spacing: 0.15em;
+        color: #ef4444;
+        border: 1px solid rgba(239,68,68,0.4);
+        padding: 3px 10px;
+        border-radius: 3px;
+        text-transform: uppercase;
+        animation: rtbClassifiedPulse 2.5s ease-in-out infinite;
       }
-      .mc-engine-name i { font-size: 0.85rem; }
-      .mc-engine-status {
+      @keyframes rtbClassifiedPulse {
+        0%,100% { opacity:1; }
+        50% { opacity:0.5; }
+      }
+      /* Indicator cards */
+      .rtb-cards-viewport {
+        position: relative;
+        overflow: hidden;
+        min-height: 290px;
+      }
+      .rtb-intel-card {
+        position: absolute;
+        inset: 0;
+        background: rgba(255,255,255,0.02);
+        border: 1px solid rgba(255,255,255,0.06);
+        border-left: 3px solid;
+        border-radius: 10px;
+        padding: 20px 22px;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        opacity: 0;
+        transform: translateY(12px);
+        transition: opacity 0.5s ease, transform 0.5s ease;
+        pointer-events: none;
+      }
+      .rtb-intel-card.active {
+        opacity: 1;
+        transform: translateY(0);
+        pointer-events: auto;
+      }
+      .rtb-card-tag {
         font-family: 'JetBrains Mono', monospace;
         font-size: 0.63rem;
-        font-weight: 800;
-        display: flex; align-items: center; gap: 5px;
-        letter-spacing: 0.05em;
+        font-weight: 900;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        display: flex;
+        align-items: center;
+        gap: 6px;
       }
-      .mc-status-ok  { color: #34d399; }
-      .mc-status-ok::before  { content:''; width:6px; height:6px; border-radius:50%; background:#34d399; box-shadow:0 0 6px #34d399; display:inline-block; }
-      .mc-uptime-pill {
-        margin-top: auto;
-        align-self: flex-start;
-        background: rgba(52,211,153,0.08);
-        border: 1px solid rgba(52,211,153,0.2);
-        border-radius: 100px;
-        padding: 5px 14px;
+      .rtb-card-indicator {
         font-family: 'JetBrains Mono', monospace;
-        font-size: 0.65rem;
-        color: #34d399;
+        font-size: 0.88rem;
         font-weight: 700;
-        display: flex; align-items: center; gap: 6px;
+        color: #e2e8f0;
+        line-height: 1.4;
+        border-left: 2px solid rgba(255,255,255,0.08);
+        padding-left: 12px;
+        margin: 4px 0;
       }
-      @media (max-width: 900px) {
-        .mc-strip { grid-template-columns: 1fr; }
-        .mc-divider { display: none; }
-        .mc-pane { padding: 22px 20px; }
-        .mc-feed-list { max-height: 160px; }
-        .mc-counter-val { font-size: 1.7rem; }
+      .rtb-card-indicator .rtb-redact {
+        display: inline-block;
+        background: rgba(255,255,255,0.15);
+        color: transparent;
+        border-radius: 2px;
+        user-select: none;
+        min-width: 60px;
+      }
+      .rtb-card-explain {
+        font-family: 'Space Grotesk', sans-serif;
+        font-size: 0.78rem;
+        color: rgba(148,163,184,0.75);
+        line-height: 1.6;
+        border-top: 1px solid rgba(255,255,255,0.05);
+        padding-top: 12px;
+      }
+      .rtb-card-explain strong { color: rgba(226,232,240,0.9); }
+      /* Dot indicators at bottom */
+      .rtb-card-dots {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-top: auto;
+      }
+      .rtb-card-dot {
+        width: 6px; height: 6px;
+        border-radius: 50%;
+        background: rgba(255,255,255,0.15);
+        cursor: pointer;
+        transition: background 0.2s;
+      }
+      .rtb-card-dot.active { background: #38bdf8; }
+
+      @media (max-width: 860px) {
+        .rtb-board { grid-template-columns: 1fr; }
+        .rtb-radar-pane { border-right: none; border-bottom: 1px solid rgba(56,189,248,0.1); padding: 40px 5%; }
+        .rtb-intel-pane { padding: 40px 5%; }
+        .rtb-radar-svg-wrap { width: 200px; height: 200px; }
+        .rtb-radar-svg .origin-x { cx: 100px; }
+        .rtb-radar-svg .origin-y { cy: 100px; }
       }
     </style>
 
-    <div class="mc-strip">
+    <div class="rtb-board">
 
-      <!-- ── Pane 1: Activity Feed ── -->
-      <div class="mc-pane">
-        <div class="mc-pane-label">
-          <span class="mc-live-dot"></span>
-          Live Activity Feed
-        </div>
-        <div class="mc-feed-list" id="mc-feed-list">
-          {% if public_stats.recent_events %}
-            {% for event in public_stats.recent_events[:4] %}
-            <div class="mc-feed-item" style="animation-delay: {{ loop.index0 * 0.07 }}s">
-              <div class="mc-feed-icon" style="background: {{ event.tag_color }}15; border: 1px solid {{ event.tag_color }}30;">
-                <i class="{{ event.icon }}" style="color: {{ event.tag_color }};"></i>
-              </div>
-              <div class="mc-feed-text">{{ event.log_text }}</div>
-              <div class="mc-feed-time">{{ event.time_ago }}</div>
-            </div>
-            {% endfor %}
-          {% else %}
-            <div class="mc-feed-item">
-              <div class="mc-feed-icon" style="background:rgba(56,189,248,0.1);border:1px solid rgba(56,189,248,0.2);"><i class="ti ti-mail-fast" style="color:#38bdf8;"></i></div>
-              <div class="mc-feed-text">Simulation campaign dispatched &mdash; 47 targets</div>
-              <div class="mc-feed-time">2m ago</div>
-            </div>
-            <div class="mc-feed-item">
-              <div class="mc-feed-icon" style="background:rgba(244,63,94,0.1);border:1px solid rgba(244,63,94,0.2);"><i class="ti ti-pointer" style="color:#f43f5e;"></i></div>
-              <div class="mc-feed-text">Phishing link clicked &mdash; Finance dept.</div>
-              <div class="mc-feed-time">5m ago</div>
-            </div>
-            <div class="mc-feed-item">
-              <div class="mc-feed-icon" style="background:rgba(52,211,153,0.1);border:1px solid rgba(52,211,153,0.2);"><i class="ti ti-shield-check" style="color:#34d399;"></i></div>
-              <div class="mc-feed-text">Training module completed &mdash; HR team</div>
-              <div class="mc-feed-time">12m ago</div>
-            </div>
-            <div class="mc-feed-item">
-              <div class="mc-feed-icon" style="background:rgba(251,191,36,0.1);border:1px solid rgba(251,191,36,0.2);"><i class="ti ti-cpu" style="color:#fbbf24;"></i></div>
-              <div class="mc-feed-text">AI engine generated CEO fraud lure</div>
-              <div class="mc-feed-time">18m ago</div>
-            </div>
-          {% endif %}
-        </div>
-      </div>
+      <!-- ── Left: Threat Frequency Radar ── -->
+      <div class="rtb-radar-pane">
+        <div class="rtb-pane-eyebrow">Threat Frequency Analysis</div>
+        <div class="rtb-radar-title">The <span>4 lures</span> that fool<br>every organisation.</div>
 
-      <div class="mc-divider"></div>
-
-      <!-- ── Pane 2: Live Counters ── -->
-      <div class="mc-pane">
-        <div class="mc-pane-label">
-          <i class="ti ti-chart-bar" style="color:rgba(56,189,248,0.55);"></i>
-          Platform Metrics
+        <div class="rtb-radar-svg-wrap">
+          <svg class="rtb-radar-svg" viewBox="0 0 240 240" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <!-- Background rings -->
+            <circle cx="120" cy="120" r="100" stroke="rgba(56,189,248,0.08)" stroke-width="1"/>
+            <circle cx="120" cy="120" r="70"  stroke="rgba(56,189,248,0.06)" stroke-width="1"/>
+            <circle cx="120" cy="120" r="40"  stroke="rgba(56,189,248,0.05)" stroke-width="1"/>
+            <!-- Cross hairs -->
+            <line x1="20" y1="120" x2="220" y2="120" stroke="rgba(56,189,248,0.06)" stroke-width="1"/>
+            <line x1="120" y1="20"  x2="120" y2="220" stroke="rgba(56,189,248,0.06)" stroke-width="1"/>
+            <!-- Arc 1: CEO Fraud (top-right, red) -->
+            <path class="rtb-arc" d="M 120 20 A 100 100 0 0 1 220 120"
+              stroke="#f43f5e" stroke-width="14" stroke-linecap="round" opacity="0.75"
+              style="animation: rtbArcIn 1s 0.2s ease both;"/>
+            <!-- Arc 2: IT Alert (bottom-right, amber) -->
+            <path class="rtb-arc" d="M 220 120 A 100 100 0 0 1 120 220"
+              stroke="#f59e0b" stroke-width="14" stroke-linecap="round" opacity="0.65"
+              style="animation: rtbArcIn 1s 0.45s ease both;"/>
+            <!-- Arc 3: HR Update (bottom-left, green) -->
+            <path class="rtb-arc" d="M 120 220 A 100 100 0 0 1 20 120"
+              stroke="#10b981" stroke-width="14" stroke-linecap="round" opacity="0.6"
+              style="animation: rtbArcIn 1s 0.7s ease both;"/>
+            <!-- Arc 4: Invoice (top-left, purple) -->
+            <path class="rtb-arc" d="M 20 120 A 100 100 0 0 1 120 20"
+              stroke="#a78bfa" stroke-width="14" stroke-linecap="round" opacity="0.55"
+              style="animation: rtbArcIn 1s 0.95s ease both;"/>
+            <!-- Radar sweep line -->
+            <g class="rtb-sweep-line">
+              <line x1="120" y1="120" x2="120" y2="22"
+                stroke="rgba(56,189,248,0.55)" stroke-width="1.5" stroke-linecap="round"/>
+              <circle cx="120" cy="120" r="5"
+                fill="#38bdf8" opacity="0.8"/>
+            </g>
+            <!-- Centre dot -->
+            <circle cx="120" cy="120" r="4" fill="#38bdf8"/>
+            <!-- Percentage labels -->
+            <text x="175" y="60"  font-family="JetBrains Mono,monospace" font-size="10" fill="#f43f5e" opacity="0.9">38%</text>
+            <text x="175" y="185" font-family="JetBrains Mono,monospace" font-size="10" fill="#f59e0b" opacity="0.9">27%</text>
+            <text x="48"  y="185" font-family="JetBrains Mono,monospace" font-size="10" fill="#10b981" opacity="0.9">21%</text>
+            <text x="42"  y="60"  font-family="JetBrains Mono,monospace" font-size="10" fill="#a78bfa" opacity="0.9">14%</text>
+          </svg>
         </div>
-        <div class="mc-counters">
-          <!-- Simulations -->
-          <div class="mc-counter-row">
-            <div class="mc-counter-val" style="color: #38bdf8;"
-                 {% if public_stats.total_simulations %}data-countup data-target="{{ public_stats.total_simulations }}"{% endif %}>
-              {{ public_stats.total_simulations_formatted if public_stats.total_simulations_formatted else '0' }}
-            </div>
-            <div class="mc-counter-sub">Simulations executed</div>
-            <div class="mc-bench-bar">
-              <span class="mc-bench-badge">INDUSTRY</span>
-              avg 500+ per quarter for SMBs
-            </div>
+
+        <div class="rtb-radar-legend">
+          <div class="rtb-legend-item">
+            <div class="rtb-legend-dot" style="background:#f43f5e;"></div>CEO / Wire Fraud
           </div>
-          <!-- Click Rate -->
-          <div class="mc-counter-row" style="border-top: 1px solid rgba(255,255,255,0.05); padding-top: 16px;">
-            <div class="mc-counter-val" style="color: #f43f5e;">
-              {{ (public_stats.avg_click_rate ~ '%') if public_stats.avg_click_rate is not none else 'N/A' }}
-              <span style="font-size:1rem; font-weight:500; color:rgba(100,116,139,0.5);"> avg click rate</span>
-            </div>
-            <div class="mc-counter-sub">vs. 31% industry benchmark</div>
-            <div class="mc-bench-bar">
-              <span class="mc-bench-badge">INSIGHT</span>
-              Finance depts click 2.4&times; more
-            </div>
+          <div class="rtb-legend-item">
+            <div class="rtb-legend-dot" style="background:#f59e0b;"></div>IT Credential
+          </div>
+          <div class="rtb-legend-item">
+            <div class="rtb-legend-dot" style="background:#10b981;"></div>HR / Benefits
+          </div>
+          <div class="rtb-legend-item">
+            <div class="rtb-legend-dot" style="background:#a78bfa;"></div>Invoice / Finance
           </div>
         </div>
       </div>
 
-      <div class="mc-divider"></div>
+      <!-- ── Right: Intercepted Indicators ── -->
+      <div class="rtb-intel-pane">
+        <div class="rtb-intel-header">
+          <div class="rtb-pane-eyebrow">Intercepted Indicators</div>
+          <div class="rtb-classified-badge">Classified</div>
+        </div>
 
-      <!-- ── Pane 3: AI Engine Status ── -->
-      <div class="mc-pane">
-        <div class="mc-pane-label">
-          <i class="ti ti-cpu" style="color:rgba(56,189,248,0.55);"></i>
-          AI Engine Status
-        </div>
-        <div class="mc-engine-rows">
-          <div class="mc-engine-row">
-            <div class="mc-engine-name"><i class="ti ti-brain" style="color:#a78bfa;"></i> LLM Connection</div>
-            <div class="mc-engine-status mc-status-ok">ONLINE</div>
-          </div>
-          <div class="mc-engine-row">
-            <div class="mc-engine-name"><i class="ti ti-mail" style="color:#38bdf8;"></i> Email Relay</div>
-            <div class="mc-engine-status mc-status-ok">READY</div>
-          </div>
-          <div class="mc-engine-row">
-            <div class="mc-engine-name"><i class="ti ti-database" style="color:#34d399;"></i> Tracking DB</div>
-            <div class="mc-engine-status mc-status-ok">CONNECTED</div>
-          </div>
-          <div class="mc-engine-row">
-            <div class="mc-engine-name"><i class="ti ti-shield-bolt" style="color:#fbbf24;"></i> Threat Engine v2</div>
-            <div class="mc-engine-status mc-status-ok">ACTIVE</div>
-          </div>
-        </div>
-        <div class="mc-uptime-pill">
-          <i class="ti ti-circle-check"></i>
-          99.9% uptime &mdash; All systems operational
-        </div>
-      </div>
+        <div class="rtb-cards-viewport" id="rtb-cards-viewport">
 
-    </div>
+          <!-- Card 0: Sender Spoofing -->
+          <div class="rtb-intel-card active" style="border-left-color:#f43f5e;">
+            <div class="rtb-card-tag" style="color:#f43f5e;">
+              <i class="ti ti-user-x"></i> Indicator — Sender Spoofing
+            </div>
+            <div class="rtb-card-indicator">
+              FROM: <span class="rtb-redact">CEO Display Name</span><br>
+              REPLY-TO: <span style="color:#f43f5e;">billing-dept@<span class="rtb-redact">ext-domain</span>.com</span>
+            </div>
+            <div class="rtb-card-explain">
+              The display name matches the CEO, but the actual sending domain is
+              <strong>completely unrelated</strong>. Most email clients only show the
+              display name — the spoofed domain is hidden by default. This passes
+              basic spam filters 94% of the time.
+            </div>
+            <div class="rtb-card-dots" id="rtb-dots"></div>
+          </div>
+
+          <!-- Card 1: Urgency Trigger -->
+          <div class="rtb-intel-card" style="border-left-color:#f59e0b;">
+            <div class="rtb-card-tag" style="color:#f59e0b;">
+              <i class="ti ti-clock-hour-3"></i> Indicator — Urgency Trigger
+            </div>
+            <div class="rtb-card-indicator">
+              SUBJECT: "Action Required — Wire Transfer<br>
+              <span style="color:#f59e0b;">Authorization Expires in 47 minutes"</span>
+            </div>
+            <div class="rtb-card-explain">
+              Artificial deadlines short-circuit critical thinking.
+              <strong>Urgency is the #1 compliance override</strong> in social engineering —
+              employees skip verification steps they would otherwise follow because
+              "there's no time." The 47-minute window is deliberate: long enough to act,
+              short enough to panic.
+            </div>
+            <div class="rtb-card-dots"></div>
+          </div>
+
+          <!-- Card 2: Authority Exploit -->
+          <div class="rtb-intel-card" style="border-left-color:#a78bfa;">
+            <div class="rtb-card-tag" style="color:#a78bfa;">
+              <i class="ti ti-crown"></i> Indicator — Authority Exploit
+            </div>
+            <div class="rtb-card-indicator">
+              BODY: "Per the <span style="color:#a78bfa;">CFO's direct instruction</span>,<br>
+              this transfer bypasses standard approval."
+            </div>
+            <div class="rtb-card-explain">
+              Invoking a senior figure the recipient cannot easily verify
+              <strong>creates perceived permission</strong> to skip controls.
+              Employees are conditioned to obey authority — attackers exploit this
+              through name-dropping executives whose email they have spoofed or observed
+              in previous breaches.
+            </div>
+            <div class="rtb-card-dots"></div>
+          </div>
+
+          <!-- Card 3: Credential Harvesting -->
+          <div class="rtb-intel-card" style="border-left-color:#10b981;">
+            <div class="rtb-card-tag" style="color:#10b981;">
+              <i class="ti ti-lock-open"></i> Indicator — Credential Harvest
+            </div>
+            <div class="rtb-card-indicator">
+              LINK: <span style="color:#10b981;">https://m365-login-secure.</span><br>
+              <span class="rtb-redact">legitimate-looking-domain</span>.net/auth
+            </div>
+            <div class="rtb-card-explain">
+              The link domain is newly registered (< 7 days old), uses HTTPS
+              (green padlock present) and closely mimics a trusted vendor portal.
+              <strong>HTTPS ≠ safe</strong>. Attackers routinely obtain free TLS certificates
+              for phishing domains — 83% of phishing sites now use HTTPS.
+            </div>
+            <div class="rtb-card-dots"></div>
+          </div>
+
+        </div><!-- /cards-viewport -->
+      </div><!-- /intel-pane -->
+
+    </div><!-- /rtb-board -->
+
+    <script>
+    (function() {
+      var cards = document.querySelectorAll('.rtb-intel-card');
+      var N = cards.length;
+      var current = 0;
+      var timer = null;
+
+      // Build dot nav into every card's dots container
+      cards.forEach(function(card, ci) {
+        var dotsEl = card.querySelector('.rtb-card-dots');
+        if (!dotsEl) return;
+        for (var i = 0; i < N; i++) {
+          var dot = document.createElement('span');
+          dot.className = 'rtb-card-dot' + (i === ci ? ' active' : '');
+          (function(idx) {
+            dot.addEventListener('click', function() { showCard(idx); resetTimer(); });
+          })(i);
+          dotsEl.appendChild(dot);
+        }
+      });
+
+      function showCard(idx) {
+        cards[current].classList.remove('active');
+        current = (idx + N) % N;
+        cards[current].classList.add('active');
+        // Sync dots in all cards
+        cards.forEach(function(card) {
+          var dots = card.querySelectorAll('.rtb-card-dot');
+          dots.forEach(function(d, i) {
+            d.classList.toggle('active', i === current);
+          });
+        });
+      }
+
+      function resetTimer() {
+        clearInterval(timer);
+        timer = setInterval(function() { showCard(current + 1); }, 5500);
+      }
+
+      resetTimer();
+    })();
+    </script>
   </section>
 
 
@@ -6368,17 +6487,22 @@
 
       function resize() {
         const dpr = window.devicePixelRatio || 1;
-        w = canvas.width = window.innerWidth * dpr;
-        h = canvas.height = window.innerHeight * dpr;
-        canvas.style.width = `${window.innerWidth}px`;
-        canvas.style.height = `${window.innerHeight}px`;
+        // Canvas is position:fixed full-width; height matches the hero section
+        // so it never renders below the hero (sections below have solid backgrounds)
+        const heroEl = document.getElementById('hero');
+        const canvasW = window.innerWidth;
+        const canvasH = heroEl ? heroEl.offsetHeight : window.innerHeight;
+        w = canvas.width  = canvasW * dpr;
+        h = canvas.height = canvasH * dpr;
+        canvas.style.width  = canvasW + 'px';
+        canvas.style.height = canvasH + 'px';
 
         ctx.restore();
         ctx.save();
         ctx.scale(dpr, dpr);
 
-        canvasLogicalWidth = window.innerWidth;
-        canvasLogicalHeight = window.innerHeight;
+        canvasLogicalWidth  = canvasW;
+        canvasLogicalHeight = canvasH;
 
         mapNeedsRedraw = true;
       }
@@ -9053,676 +9177,1319 @@ ${body}
     }
   </script>
 
-  <!-- ═══════════════════════════════════════════════════════════════════
-       FLOATING AI LURE LAB WIDGET
-       Fixed bottom-right corner — hover teaser, slide-up panel,
-       minimize / maximize-into-page, mobile bottom-sheet
-       ═══════════════════════════════════════════════════════════════════ -->
+  <!-- ═══════════════════════════════════════════════════════════
+       PHISHBOT — 4-state persistent avatar widget
+       States: idle | active | success | error
+       Bounded drag: right 25% of viewport, full height
+       Mobile (<768px): fixed, no drag
+       ═══════════════════════════════════════════════════════════ -->
   <style>
-    /* ── Widget Button ── */
-    #lure-fab {
+    /* ── PhishBot container (the draggable host, not the panel) ── */
+    #pb-host {
       position: fixed;
-      bottom: 100px; /* stacked above theme toggle at bottom:24 */
+      bottom: 100px;
       right: 24px;
-      z-index: 10001;
+      z-index: 10003;
+      /* On mobile: fixed, no drag */
+      touch-action: none;
+      user-select: none;
+    }
+
+    /* ── Avatar frame ── */
+    #pb-avatar {
       width: 64px;
       height: 64px;
-      border-radius: 18px;
-      background: linear-gradient(145deg, #0d1f3c, #061428);
-      border: 1px solid rgba(56,189,248,0.35);
+      border-radius: 50%;
+      background: var(--bg-elevated, #121D35);
+      border: 1.5px solid color-mix(in srgb, var(--primary, #38BDF8) 40%, transparent);
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      flex-direction: column;
-      gap: 3px;
-      box-shadow:
-        0 0 0 0 rgba(56,189,248,0.55),
-        0 18px 48px rgba(0,0,0,0.5);
-      transition: transform 0.3s cubic-bezier(.16,1,.3,1),
-                  box-shadow 0.3s ease;
-      animation: lureFabIn 0.5s 1.6s cubic-bezier(.16,1,.3,1) both,
-                 lureFabGlow 3s 2.5s ease-in-out infinite;
+      position: relative;
       outline: none;
-      padding: 0;
+      /* Entrance */
+      animation: pbAvatarIn 0.55s 1.5s cubic-bezier(0.16,1,0.3,1) both;
+      transition:
+        border-color 0.3s ease,
+        box-shadow   0.3s ease,
+        transform    0.25s cubic-bezier(0.16,1,0.3,1);
     }
-    @keyframes lureFabIn {
-      from { transform: translateY(120px) scale(0.6); opacity:0; }
-      to   { transform: translateY(0) scale(1);      opacity:1; }
+    @keyframes pbAvatarIn {
+      from { transform: translateY(100px) scale(0.4); opacity: 0; }
+      to   { transform: translateY(0)     scale(1);   opacity: 1; }
     }
-    @keyframes lureFabGlow {
-      0%,100% { box-shadow: 0 0 0 0 rgba(56,189,248,0.55), 0 18px 48px rgba(0,0,0,0.5); }
-      50%      { box-shadow: 0 0 0 10px rgba(56,189,248,0.0), 0 18px 48px rgba(0,0,0,0.5), 0 0 32px rgba(56,189,248,0.3); }
+    #pb-avatar:hover {
+      transform: translateY(-2px);
+      border-color: color-mix(in srgb, var(--primary, #38BDF8) 80%, transparent);
     }
-    #lure-fab:hover {
-      transform: translateY(-4px) scale(1.06);
-      box-shadow: 0 0 0 0 rgba(56,189,248,0), 0 24px 64px rgba(0,0,0,0.6), 0 0 40px rgba(56,189,248,0.4);
-      animation-play-state: paused;
+    #pb-avatar:active { transform: scale(0.92); }
+
+    /* ── Idle: pulsing outer ring ── */
+    #pb-avatar::before {
+      content: '';
+      position: absolute;
+      inset: -7px;
+      border-radius: 50%;
+      border: 1.5px solid color-mix(in srgb, var(--primary, #38BDF8) 28%, transparent);
+      animation: pbRingIdle 3s ease-in-out infinite;
+      pointer-events: none;
     }
-    #lure-fab:active { transform: scale(0.96); }
-    #lure-fab .fab-icon {
-      font-size: 1.5rem;
-      color: #38bdf8;
-      transition: transform 0.3s ease;
+    @keyframes pbRingIdle {
+      0%, 100% { transform: scale(1);    opacity: 0.7; }
+      55%       { transform: scale(1.18); opacity: 0;   }
     }
-    #lure-fab:hover .fab-icon { transform: rotate(-12deg) scale(1.1); }
-    #lure-fab .fab-label {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.44rem;
+
+    /* ── LIVE badge ── */
+    #pb-live-badge {
+      position: absolute;
+      bottom: 1px;
+      right: 1px;
+      background: var(--success, #34D399);
+      border: 1.5px solid var(--bg-elevated, #121D35);
+      border-radius: 50%;
+      width: 11px;
+      height: 11px;
+      animation: pbLivePulse 2.2s ease-in-out infinite;
+    }
+    @keyframes pbLivePulse {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.3; }
+    }
+
+    /* ── Face SVG ── */
+    #pb-face-svg {
+      width: 40px;
+      height: 40px;
+      position: relative;
+      z-index: 1;
+      overflow: visible;
+    }
+
+    /* ── Eye drift (idle only) ── */
+    @keyframes pbEyeDrift {
+      0%, 100% { transform: translateX(0);    }
+      28%       { transform: translateX(-2px); }
+      72%       { transform: translateX(2px);  }
+    }
+    #pb-eyes-g { animation: pbEyeDrift 4.2s ease-in-out infinite; }
+
+    /* ── STATE: active — circuit traces light sequentially ── */
+    #pb-host.pb-active #pb-eyes-g      { animation: none; }
+    #pb-host.pb-active #pb-trace-top   { animation: pbTraceLight 0.6s 0s   ease-in-out infinite alternate; }
+    #pb-host.pb-active #pb-trace-right { animation: pbTraceLight 0.6s 0.2s ease-in-out infinite alternate; }
+    #pb-host.pb-active #pb-trace-bot   { animation: pbTraceLight 0.6s 0.4s ease-in-out infinite alternate; }
+    #pb-host.pb-active #pb-trace-left  { animation: pbTraceLight 0.6s 0.6s ease-in-out infinite alternate; }
+    @keyframes pbTraceLight {
+      from { stroke: color-mix(in srgb, var(--primary, #38BDF8) 18%, transparent); stroke-width: 0.75; }
+      to   { stroke: color-mix(in srgb, var(--primary, #38BDF8) 90%, transparent); stroke-width: 1.2;  }
+    }
+    #pb-host.pb-active #pb-avatar::before {
+      animation: pbRingActive 0.45s linear infinite;
+      border-width: 2px;
+    }
+    @keyframes pbRingActive {
+      from { transform: rotate(0deg)   scale(1);    opacity: 0.9; }
+      to   { transform: rotate(360deg) scale(1.06); opacity: 0.6; }
+    }
+    /* eye dim during active */
+    #pb-host.pb-active .pb-eye { opacity: 0.25; }
+
+    /* ── STATE: success — brief glow flash then auto-return to idle ── */
+    #pb-host.pb-success #pb-avatar {
+      border-color: color-mix(in srgb, var(--success, #34D399) 80%, transparent);
+      box-shadow: 0 0 0 6px color-mix(in srgb, var(--success, #34D399) 18%, transparent),
+                  0 0 28px color-mix(in srgb, var(--success, #34D399) 30%, transparent);
+      animation: pbSuccessFlash 0.75s ease both;
+    }
+    @keyframes pbSuccessFlash {
+      0%   { box-shadow: 0 0 0 0  color-mix(in srgb, var(--success, #34D399) 50%, transparent); }
+      40%  { box-shadow: 0 0 0 10px color-mix(in srgb, var(--success, #34D399) 22%, transparent),
+                         0 0 40px color-mix(in srgb, var(--success, #34D399) 40%, transparent); }
+      100% { box-shadow: 0 0 0 0  transparent; }
+    }
+    #pb-host.pb-success #pb-avatar::before { animation: none; opacity: 0; }
+
+    /* ── STATE: error — calm dim red flicker on ring only ── */
+    #pb-host.pb-error #pb-avatar {
+      border-color: color-mix(in srgb, var(--danger, #F87171) 55%, transparent);
+    }
+    #pb-host.pb-error #pb-avatar::before {
+      border-color: color-mix(in srgb, var(--danger, #F87171) 40%, transparent);
+      animation: pbRingError 1.8s ease-in-out infinite;
+    }
+    @keyframes pbRingError {
+      0%, 100% { opacity: 0.65; transform: scale(1);    }
+      50%       { opacity: 0.15; transform: scale(1.08); }
+    }
+
+    /* ── Hover teaser bubble ── */
+    #pb-teaser {
+      position: absolute;
+      bottom: calc(100% + 12px);
+      right: 0;
+      width: 220px;
+      background: var(--bg-elevated, #121D35);
+      border: 1px solid color-mix(in srgb, var(--primary, #38BDF8) 30%, transparent);
+      border-radius: 12px 12px 4px 12px;
+      padding: 11px 14px;
+      pointer-events: none;
+      opacity: 0;
+      transform: translateY(8px) scale(0.95);
+      transform-origin: bottom right;
+      transition: opacity 0.22s ease, transform 0.22s cubic-bezier(0.16,1,0.3,1);
+      backdrop-filter: blur(16px);
+      box-shadow: 0 12px 32px rgba(0,0,0,0.45);
+    }
+    #pb-host:hover #pb-teaser,
+    #pb-teaser.force-visible { opacity: 1; transform: translateY(0) scale(1); }
+    /* Suppress teaser while panel is open */
+    #pb-host.panel-open #pb-teaser { opacity: 0 !important; pointer-events: none; }
+
+    #pb-teaser-label {
+      font-family: var(--mono, 'JetBrains Mono', monospace);
+      font-size: 0.58rem;
       font-weight: 800;
       letter-spacing: 0.1em;
-      color: rgba(56,189,248,0.65);
       text-transform: uppercase;
+      color: var(--primary, #38BDF8);
+      margin-bottom: 5px;
     }
-    #lure-fab .fab-live-dot {
-      position: absolute;
-      top: 9px;
-      right: 9px;
-      width: 8px; height: 8px;
-      border-radius: 50%;
-      background: #34d399;
-      box-shadow: 0 0 8px #34d399;
-      animation: mcPulse 2s infinite;
-    }
-
-    /* ── Hover Teaser Tooltip ── */
-    #lure-teaser {
-      position: fixed;
-      bottom: 175px;
-      right: 24px;
-      z-index: 10002;
-      max-width: 240px;
-      background: rgba(6,12,28,0.92);
-      border: 1px solid rgba(56,189,248,0.25);
-      border-radius: 14px;
-      padding: 11px 15px;
-      pointer-events: none;
-      opacity: 0;
-      transform: translateY(8px);
-      transition: opacity 0.22s ease, transform 0.22s ease;
-      backdrop-filter: blur(16px);
-    }
-    #lure-teaser.visible {
-      opacity: 1;
-      transform: translateY(0);
-    }
-    #lure-teaser-text {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.72rem;
-      color: #e2e8f0;
+    #pb-teaser-msg {
+      font-family: var(--mono, 'JetBrains Mono', monospace);
+      font-size: 0.7rem;
+      color: var(--text-primary, #F0F4FF);
       line-height: 1.5;
+      transition: opacity 0.18s ease;
     }
-    #lure-teaser-cta {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.62rem;
-      color: #38bdf8;
-      margin-top: 5px;
+    #pb-teaser-cta {
       display: block;
-    }
-    /* Arrow pointing down to button */
-    #lure-teaser::after {
-      content:'';
-      position: absolute;
-      bottom: -7px;
-      right: 22px;
-      width: 13px; height: 7px;
-      background: rgba(6,12,28,0.92);
-      clip-path: polygon(0 0, 100% 0, 50% 100%);
-      border-right: 1px solid rgba(56,189,248,0.25);
-      border-bottom: 1px solid rgba(56,189,248,0.25);
+      font-family: var(--mono, 'JetBrains Mono', monospace);
+      font-size: 0.61rem;
+      color: var(--primary, #38BDF8);
+      margin-top: 5px;
     }
 
-    /* ── Slide-Up Panel ── */
-    #lure-panel {
+    /* ── Panel ── */
+    #pb-panel {
       position: fixed;
-      bottom: 175px;
+      bottom: 180px;
       right: 24px;
       z-index: 10002;
-      width: 480px;
+      width: 460px;
+      max-width: calc(100vw - 32px);
       max-height: 80vh;
       overflow-y: auto;
-      background: rgba(5,10,24,0.97);
-      border: 1px solid rgba(56,189,248,0.22);
-      border-radius: 18px;
-      box-shadow: 0 32px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(56,189,248,0.06), 0 0 60px rgba(56,189,248,0.1);
+      scrollbar-width: thin;
+      scrollbar-color: color-mix(in srgb, var(--primary,#38BDF8) 22%, transparent) transparent;
+      background: var(--bg-elevated, #121D35);
+      border: 1px solid color-mix(in srgb, var(--primary,#38BDF8) 22%, transparent);
+      border-radius: 16px;
+      box-shadow:
+        0 36px 88px rgba(0,0,0,0.72),
+        0 0 0 1px color-mix(in srgb, var(--primary,#38BDF8) 6%, transparent),
+        0 0 60px color-mix(in srgb, var(--primary,#38BDF8) 8%, transparent);
       backdrop-filter: blur(28px);
-      transform: translateY(24px) scale(0.97);
       opacity: 0;
+      transform: translateY(16px) scale(0.97);
       pointer-events: none;
-      transition: transform 0.35s cubic-bezier(.16,1,.3,1),
-                  opacity 0.25s ease;
+      transition: opacity 0.3s ease, transform 0.35s cubic-bezier(0.16,1,0.3,1);
     }
-    #lure-panel.open {
-      transform: translateY(0) scale(1);
+    #pb-panel.pb-open {
       opacity: 1;
+      transform: translateY(0) scale(1);
       pointer-events: auto;
     }
-    .lure-panel-header {
+
+    /* Panel drag handle */
+    .pb-panel-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 14px 18px;
-      border-bottom: 1px solid rgba(56,189,248,0.1);
+      padding: 13px 16px;
+      border-bottom: 1px solid color-mix(in srgb, var(--border-default,rgba(255,255,255,0.12)) 60%, transparent);
+      cursor: move;
       position: sticky;
       top: 0;
-      background: rgba(5,10,24,0.98);
-      z-index: 2;
-      border-radius: 18px 18px 0 0;
+      background: var(--bg-elevated, #121D35);
+      z-index: 5;
+      border-radius: 16px 16px 0 0;
+      gap: 10px;
     }
-    .lure-panel-title {
-      font-family: 'JetBrains Mono', monospace;
+    .pb-panel-title {
+      font-family: var(--mono, 'JetBrains Mono', monospace);
       font-size: 0.78rem;
       font-weight: 800;
-      color: #38bdf8;
+      color: var(--primary, #38BDF8);
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 7px;
       letter-spacing: 0.04em;
+      flex-shrink: 0;
     }
-    .lure-panel-title i { font-size: 1rem; }
-    .lure-panel-actions {
+    .pb-panel-tabs {
       display: flex;
-      align-items: center;
-      gap: 6px;
+      gap: 3px;
+      flex: 1;
+      justify-content: center;
     }
-    .lure-panel-btn {
-      width: 28px; height: 28px;
+    .pb-tab-btn {
+      font-family: var(--mono, 'JetBrains Mono', monospace);
+      font-size: 0.6rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 5px 9px;
+      border-radius: 6px;
+      border: 1px solid transparent;
+      cursor: pointer;
+      color: var(--text-secondary, #94A3B8);
+      background: transparent;
+      transition: all 0.18s;
+    }
+    .pb-tab-btn:hover { color: var(--primary, #38BDF8); background: var(--primary-dim, rgba(56,189,248,0.06)); }
+    .pb-tab-btn.active {
+      color: var(--primary, #38BDF8);
+      background: var(--primary-dim, rgba(56,189,248,0.1));
+      border-color: color-mix(in srgb, var(--primary,#38BDF8) 30%, transparent);
+    }
+    .pb-panel-actions { display: flex; gap: 4px; }
+    .pb-icon-btn {
+      width: 27px; height: 27px;
       border-radius: 7px;
-      border: 1px solid rgba(56,189,248,0.18);
-      background: rgba(56,189,248,0.06);
-      color: rgba(148,163,184,0.7);
+      border: 1px solid color-mix(in srgb, var(--border-default,rgba(255,255,255,0.12)) 70%, transparent);
+      background: var(--primary-dim, rgba(56,189,248,0.05));
+      color: var(--text-secondary, #94A3B8);
       cursor: pointer;
       display: flex; align-items: center; justify-content: center;
       font-size: 0.85rem;
-      transition: all 0.2s;
+      transition: all 0.18s;
     }
-    .lure-panel-btn:hover {
-      background: rgba(56,189,248,0.14);
-      color: #38bdf8;
-      border-color: rgba(56,189,248,0.35);
+    .pb-icon-btn:hover { background: var(--primary-dim, rgba(56,189,248,0.12)); color: var(--primary, #38BDF8); }
+
+    /* Tab panels */
+    .pb-tab-panel { display: none; padding: 18px 16px; }
+    .pb-tab-panel.active { display: block; }
+
+    /* PhishBot dialogue row */
+    .pb-dialogue {
+      display: flex;
+      align-items: flex-start;
+      gap: 9px;
+      margin-bottom: 14px;
+      min-height: 38px;
     }
-    .lure-panel-body {
-      padding: 20px 18px;
+    .pb-dialogue-icon {
+      width: 30px; height: 30px;
+      border-radius: 50%;
+      background: var(--primary-dim, rgba(56,189,248,0.08));
+      border: 1px solid color-mix(in srgb, var(--primary,#38BDF8) 25%, transparent);
+      flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
     }
-    /* Scenario chips inside panel */
-    .lure-panel-chips {
-      display: flex; gap: 8px; flex-wrap: wrap;
-      margin-bottom: 16px;
+    .pb-bubble {
+      background: var(--primary-dim, rgba(56,189,248,0.06));
+      border: 1px solid color-mix(in srgb, var(--primary,#38BDF8) 16%, transparent);
+      border-radius: 4px 12px 12px 12px;
+      padding: 8px 12px;
+      font-family: var(--mono, 'JetBrains Mono', monospace);
+      font-size: 0.69rem;
+      color: color-mix(in srgb, var(--text-primary,#F0F4FF) 82%, transparent);
+      line-height: 1.5;
+      flex: 1;
+      transition: opacity 0.2s;
     }
-    .lure-panel-chip {
-      padding: 6px 14px;
+
+    /* Scenario chips */
+    .pb-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+    .pb-chip {
+      padding: 5px 13px;
       border-radius: 100px;
-      font-size: 0.78rem;
+      font-size: 0.73rem;
       font-weight: 600;
       cursor: pointer;
-      transition: all 0.2s;
       border: 1px solid;
-      font-family: var(--sans, sans-serif);
+      font-family: var(--sans, 'Space Grotesk', sans-serif);
       background: transparent;
+      transition: filter 0.18s, transform 0.18s;
     }
-    .lure-panel-chip:hover { filter: brightness(1.25); transform: translateY(-1px); }
-    .lure-panel-chip.disabled { opacity: 0.4; pointer-events: none; }
+    .pb-chip:hover  { filter: brightness(1.3); transform: translateY(-1px); }
+    .pb-chip.active { filter: brightness(1.4); box-shadow: 0 0 10px currentColor; }
+    .pb-chip:disabled, .pb-chip.pb-disabled { opacity: 0.3; pointer-events: none; }
+
+    /* Skeleton loader — reuses style.css .skeleton-block shimmer pattern */
+    .pb-skeleton-wrap { display: none; padding: 10px 0; }
+    .pb-skeleton-wrap .skeleton-block { margin-bottom: 8px; }
+
     /* Email result card */
-    .lure-result-card {
-      border-radius: 10px;
-      overflow: hidden;
-      border: 1px solid rgba(255,255,255,0.07);
-      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    .pb-email-card {
       display: none;
+      border-radius: 9px;
+      overflow: hidden;
+      border: 1px solid var(--border-subtle, rgba(255,255,255,0.06));
+      box-shadow: 0 6px 22px rgba(0,0,0,0.4);
+      margin-bottom: 10px;
     }
-    .lure-chrome-bar {
-      background: rgba(255,255,255,0.025);
-      border-bottom: 1px solid rgba(255,255,255,0.06);
-      padding: 8px 12px;
-      display: flex; align-items: center; justify-content: space-between;
+    .pb-chrome {
+      background: color-mix(in srgb, var(--bg-elevated,#121D35) 85%, transparent);
+      border-bottom: 1px solid var(--border-subtle, rgba(255,255,255,0.06));
+      padding: 7px 11px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
     }
-    .lure-chrome-dots { display: flex; gap: 5px; }
-    .lure-chrome-dots span {
-      width: 8px; height: 8px; border-radius: 50%; display: inline-block;
-    }
-    .lure-mail-header {
+    .pb-chrome-dots { display: flex; gap: 5px; }
+    .pb-chrome-dots span { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+    .pb-mail-header {
       background: rgba(2,6,23,0.9);
-      border-bottom: 1px solid rgba(255,255,255,0.05);
-      padding: 10px 14px;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.72rem;
-      display: flex; flex-direction: column; gap: 4px;
+      border-bottom: 1px solid var(--border-subtle, rgba(255,255,255,0.05));
+      padding: 9px 13px;
+      font-family: var(--mono, 'JetBrains Mono', monospace);
+      font-size: 0.69rem;
+      display: flex; flex-direction: column; gap: 3px;
     }
-    .lure-mail-field {
-      display: flex; align-items: baseline; gap: 0;
-    }
-    .lure-mail-label {
-      color: rgba(148,163,184,0.5);
-      min-width: 60px;
+    .pb-mail-field { display: flex; align-items: baseline; }
+    .pb-mail-lbl {
+      color: color-mix(in srgb, var(--text-secondary,#94A3B8) 45%, transparent);
+      min-width: 56px;
       text-transform: uppercase;
       letter-spacing: 0.06em;
-      font-size: 0.63rem;
+      font-size: 0.58rem;
     }
-    .lure-mail-body {
-      padding: 16px 18px;
+    .pb-mail-body {
+      padding: 14px 16px;
       background: #fff;
       color: #1e293b;
       font-family: Georgia, serif;
-      font-size: 0.86rem;
+      font-size: 0.84rem;
       line-height: 1.7;
-      max-height: 220px;
+      max-height: 190px;
       overflow-y: auto;
       white-space: pre-wrap;
     }
-    .lure-meta {
-      display: none;
-      margin-top: 10px;
-      padding-top: 10px;
-      border-top: 1px solid rgba(255,255,255,0.06);
-      flex-direction: column; gap: 4px;
-    }
-    .lure-disclaimer {
-      font-size: 0.65rem;
-      color: rgba(100,116,139,0.7);
-      font-style: italic;
-      font-family: sans-serif;
-    }
-    .lure-error {
-      display: none;
-      color: #f43f5e;
-      font-size: 0.75rem;
-      font-family: 'JetBrains Mono', monospace;
-      margin-top: 10px;
-      padding: 10px;
-      background: rgba(244,63,94,0.06);
-      border-radius: 8px;
-      border: 1px solid rgba(244,63,94,0.2);
-    }
-    .lure-panel-footer {
-      padding: 10px 18px 14px;
-      border-top: 1px solid rgba(56,189,248,0.07);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.6rem;
-      color: rgba(100,116,139,0.5);
-      letter-spacing: 0.04em;
-    }
-    .lure-loader-wrap { display: none; }
 
-    /* ── Maximized inline section ── */
-    #lure-inline-section {
+    /* Red-flag highlights */
+    .pb-rf {
+      background: rgba(248,113,113,0.12);
+      border-bottom: 1.5px dashed var(--danger, #F87171);
+      cursor: help;
+      position: relative;
+    }
+    .pb-rf-tip {
+      display: none;
+      position: absolute;
+      bottom: 115%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #020617;
+      border: 1px solid color-mix(in srgb, var(--danger,#F87171) 35%, transparent);
+      border-radius: 7px;
+      padding: 7px 10px;
+      width: 190px;
+      font-family: var(--mono, 'JetBrains Mono', monospace);
+      font-size: 0.61rem;
+      color: #fca5a5;
+      z-index: 10010;
+      line-height: 1.4;
+      white-space: normal;
+      pointer-events: none;
+    }
+    .pb-rf:hover .pb-rf-tip { display: block; }
+
+    /* Bait score */
+    .pb-bait-section { display: none; padding: 12px 0 4px; border-top: 1px solid var(--border-subtle, rgba(255,255,255,0.05)); }
+    .pb-bait-lbl { font-family: var(--mono); font-size: 0.6rem; font-weight: 800; letter-spacing: 0.1em; color: color-mix(in srgb, var(--primary,#38BDF8) 60%, transparent); text-transform: uppercase; margin-bottom: 9px; }
+    .pb-score-bars { display: flex; flex-direction: column; gap: 6px; }
+    .pb-score-row { display: flex; align-items: center; gap: 9px; }
+    .pb-score-name { font-family: var(--mono); font-size: 0.6rem; color: var(--text-secondary,#94A3B8); min-width: 96px; }
+    .pb-score-track { flex:1; height: 4px; background: var(--border-subtle, rgba(255,255,255,0.06)); border-radius: 100px; overflow: hidden; }
+    .pb-score-fill  { height: 100%; border-radius: 100px; width: 0; transition: width 0.85s cubic-bezier(0.16,1,0.3,1); }
+    .pb-score-num   { font-family: var(--mono); font-size: 0.6rem; color: var(--text-secondary,#94A3B8); min-width: 22px; text-align: right; }
+
+    /* Meta + error */
+    .pb-meta  { display: none; margin-top: 9px; flex-direction: column; gap: 4px; }
+    .pb-tactic { font-size: 0.7rem; color: var(--warning, #FB923C); font-weight: 600; font-family: var(--mono); }
+    .pb-disc   { font-size: 0.6rem; color: var(--text-muted, #4A5568); font-style: italic; }
+    .pb-error-msg {
+      display: none;
+      color: var(--danger, #F87171);
+      font-size: 0.7rem;
+      font-family: var(--mono);
+      margin-top: 9px;
+      padding: 9px 11px;
+      background: var(--danger-dim, rgba(248,113,113,0.08));
+      border-radius: 7px;
+      border: 1px solid color-mix(in srgb, var(--danger,#F87171) 22%, transparent);
+    }
+
+    /* ── Spot the Phish tab ── */
+    .stp-intro { font-family: var(--mono); font-size: 0.68rem; color: var(--text-secondary,#94A3B8); margin-bottom: 14px; line-height: 1.5; }
+    .stp-pair { display: flex; flex-direction: column; gap: 9px; }
+    .stp-box {
+      border: 1px solid var(--border-subtle, rgba(255,255,255,0.07));
+      border-radius: 9px; overflow: hidden; cursor: pointer;
+      transition: border-color 0.18s, box-shadow 0.18s;
+    }
+    .stp-box:hover { border-color: color-mix(in srgb, var(--primary,#38BDF8) 40%, transparent); }
+    .stp-box.correct { border-color: var(--danger,#F87171) !important; box-shadow: 0 0 18px rgba(248,113,113,0.22) !important; }
+    .stp-box.wrong   { border-color: var(--success,#34D399) !important; }
+    .stp-box-chrome  { background: rgba(255,255,255,0.02); border-bottom: 1px solid var(--border-subtle, rgba(255,255,255,0.05)); padding: 6px 11px; display: flex; gap: 5px; }
+    .stp-box-chrome span { width: 6px; height: 6px; border-radius: 50%; }
+    .stp-box-header { padding: 8px 12px; background: rgba(2,6,23,0.78); border-bottom: 1px solid var(--border-subtle,rgba(255,255,255,0.04)); font-family: var(--mono); font-size: 0.65rem; display: flex; flex-direction: column; gap: 3px; }
+    .stp-box-body { padding: 10px 13px; background: #fff; color: #1e293b; font-family: Georgia,serif; font-size: 0.78rem; line-height: 1.6; max-height: 88px; overflow: hidden; }
+    .stp-lbl { font-size: 0.58rem; text-transform: uppercase; letter-spacing: 0.06em; color: color-mix(in srgb, var(--text-secondary,#94A3B8) 50%, transparent); min-width: 52px; }
+    .stp-result { display: none; margin-top: 10px; padding: 11px; border-radius: 7px; font-family: var(--mono); font-size: 0.68rem; line-height: 1.5; }
+    .stp-result.phish { background: var(--danger-dim,rgba(248,113,113,0.08)); border: 1px solid color-mix(in srgb, var(--danger,#F87171) 22%, transparent); color: #fca5a5; }
+    .stp-score-row { font-family: var(--mono); font-size: 0.62rem; color: var(--text-secondary,#94A3B8); margin-bottom: 8px; }
+
+    /* ── Risk Score tab ── */
+    .rs-q-text { font-family: var(--mono); font-size: 0.73rem; color: var(--text-primary,#F0F4FF); margin-bottom: 7px; font-weight: 600; }
+    .rs-opts { display: flex; flex-direction: column; gap: 5px; margin-bottom: 14px; }
+    .rs-opt {
+      display: flex; align-items: center; gap: 9px;
+      padding: 7px 11px;
+      border-radius: 7px; border: 1px solid var(--border-subtle,rgba(255,255,255,0.07));
+      cursor: pointer; font-family: var(--mono); font-size: 0.68rem;
+      color: var(--text-secondary,#94A3B8); transition: all 0.16s;
+    }
+    .rs-opt:hover { background: var(--primary-dim,rgba(56,189,248,0.06)); border-color: color-mix(in srgb, var(--primary,#38BDF8) 22%, transparent); color: var(--text-primary,#F0F4FF); }
+    .rs-opt.selected { background: var(--primary-dim,rgba(56,189,248,0.1)); border-color: color-mix(in srgb, var(--primary,#38BDF8) 32%, transparent); color: var(--primary,#38BDF8); }
+    .rs-opt input[type=radio] { display: none; }
+    .rs-radio { width: 13px; height: 13px; border-radius: 50%; border: 1.5px solid color-mix(in srgb, var(--primary,#38BDF8) 45%, transparent); flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+    .rs-opt.selected .rs-radio::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: var(--primary,#38BDF8); display: block; }
+    .rs-gauge { font-family: var(--mono); font-size: 3rem; font-weight: 900; line-height: 1; margin-bottom: 6px; }
+    .rs-result { display: none; text-align: center; padding: 20px 0 6px; }
+    .rs-note { font-size: 0.59rem; color: var(--text-muted,#4A5568); font-style: italic; font-family: var(--sans); border-top: 1px solid var(--border-subtle,rgba(255,255,255,0.05)); padding-top: 10px; line-height: 1.5; margin-top: 12px; text-align: left; }
+
+    /* Panel action button (CTA inline) */
+    .pb-action-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      margin-top: 10px; padding: 9px 18px;
+      border-radius: 9px;
+      background: var(--primary-dim,rgba(56,189,248,0.08));
+      border: 1px solid color-mix(in srgb, var(--primary,#38BDF8) 28%, transparent);
+      color: var(--primary,#38BDF8);
+      font-family: var(--mono); font-size: 0.69rem; font-weight: 700;
+      cursor: pointer; transition: all 0.18s;
+    }
+    .pb-action-btn:hover { background: var(--primary-dim,rgba(56,189,248,0.16)); box-shadow: 0 0 14px color-mix(in srgb, var(--primary,#38BDF8) 20%, transparent); }
+
+    /* Panel footer */
+    .pb-panel-footer {
+      padding: 8px 16px 12px;
+      border-top: 1px solid var(--border-subtle, rgba(255,255,255,0.05));
+      display: flex; align-items: center; justify-content: center; gap: 5px;
+      font-family: var(--mono); font-size: 0.57rem;
+      color: var(--text-muted, #4A5568); letter-spacing: 0.04em;
+    }
+
+    /* Maximised inline section */
+    #pb-inline-section {
       display: none;
       padding: 48px 5% 60px;
       position: relative;
       z-index: 2;
     }
-    #lure-inline-section .lure-inline-inner {
-      max-width: 780px;
+    #pb-inline-section .pb-inner-wrap {
+      max-width: 760px;
       margin: 0 auto;
-      background: rgba(6,12,28,0.8);
-      border: 1px solid rgba(56,189,248,0.18);
-      border-radius: 20px;
+      background: var(--bg-elevated, #121D35);
+      border: 1px solid color-mix(in srgb, var(--primary,#38BDF8) 20%, transparent);
+      border-radius: 18px;
       overflow: hidden;
-      box-shadow: 0 24px 80px rgba(0,0,0,0.5), 0 0 60px rgba(56,189,248,0.08);
+      box-shadow: 0 20px 70px rgba(0,0,0,0.5);
       backdrop-filter: blur(22px);
     }
-    #lure-inline-section .lure-inline-header {
+    #pb-inline-section .pb-inner-head {
       display: flex; align-items: center; justify-content: space-between;
-      padding: 16px 22px;
-      border-bottom: 1px solid rgba(56,189,248,0.1);
-      background: rgba(5,10,24,0.9);
+      padding: 14px 20px;
+      border-bottom: 1px solid color-mix(in srgb, var(--border-default,rgba(255,255,255,0.12)) 60%, transparent);
+      background: var(--bg-elevated, #121D35);
     }
-    #lure-inline-section .lure-inline-body { padding: 24px 22px; }
+    #pb-inline-section .pb-inner-body { padding: 22px 20px; }
 
-    /* Mobile: bottom sheet */
-    @media (max-width: 640px) {
-      #lure-fab { right: 16px; bottom: 90px; width: 56px; height: 56px; }
-      #lure-teaser { right: 10px; bottom: 158px; max-width: 200px; }
-      #lure-panel {
+    /* Mobile: no drag, fixed corner, full-width panel */
+    @media (max-width: 768px) {
+      #pb-host {
+        right: 14px !important;
+        bottom: 90px !important;
+        left: auto !important;
+        top: auto !important;
+      }
+      #pb-panel {
         width: 100%;
         right: 0;
         bottom: 0;
-        border-radius: 20px 20px 0 0;
+        border-radius: 18px 18px 0 0;
         max-height: 88vh;
+        transform: translateY(100%) !important;
+        transition: transform 0.35s cubic-bezier(0.16,1,0.3,1) !important;
+        opacity: 1 !important;
       }
-      #lure-panel.open { transform: translateY(0) scale(1); }
-      #lure-panel:not(.open) { transform: translateY(100%); opacity: 1; }
+      #pb-panel.pb-open { transform: translateY(0) !important; }
     }
   </style>
 
-  <!-- Hover Teaser bubble -->
-  <div id="lure-teaser" aria-hidden="true">
-    <div id="lure-teaser-text">"Your CEO just sent you a wire transfer request…"</div>
-    <span id="lure-teaser-cta">→ Click to see how convincing it looks</span>
-  </div>
+  <!-- ── PhishBot: teaser is sibling of host so it can escape the host's stacking context ── -->
+  <div id="pb-host">
+    <!-- Teaser bubble (positioned relative to host) -->
+    <div id="pb-teaser" aria-hidden="true">
+      <div id="pb-teaser-label">PhishBot</div>
+      <div id="pb-teaser-msg">"Your CEO just sent a wire transfer request…"</div>
+      <span id="pb-teaser-cta">→ Click to see how convincing it looks</span>
+    </div>
 
-  <!-- Floating Lure Lab button -->
-  <button id="lure-fab" type="button" aria-label="Open AI Lure Lab" title="AI Lure Lab">
-    <span class="fab-live-dot" aria-hidden="true"></span>
-    <i class="ti ti-mail-bolt fab-icon" aria-hidden="true"></i>
-    <span class="fab-label">Lure Lab</span>
-  </button>
+    <!-- Avatar button -->
+    <button id="pb-avatar" type="button"
+      aria-label="Open PhishBot — AI Phishing Lure Lab"
+      aria-expanded="false"
+      aria-controls="pb-panel">
+      <span id="pb-live-badge" aria-hidden="true"></span>
+      <svg id="pb-face-svg" viewBox="0 0 40 40" fill="none"
+           xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
 
-  <!-- Slide-up Panel -->
-  <div id="lure-panel" role="dialog" aria-modal="true" aria-label="AI Lure Lab">
-    <div class="lure-panel-header">
-      <div class="lure-panel-title">
-        <i class="ti ti-mail-bolt"></i>
-        AI Lure Lab
-        <span style="font-family:'JetBrains Mono',monospace;font-size:0.6rem;color:#34d399;background:rgba(52,211,153,0.08);border:1px solid rgba(52,211,153,0.2);border-radius:4px;padding:2px 7px;font-weight:800;margin-left:2px;">LIVE</span>
+        <!-- Faceplate body -->
+        <rect x="5" y="7" width="30" height="26" rx="7"
+              fill="color-mix(in srgb, var(--bg-elevated,#121D35) 95%, transparent)"
+              stroke="color-mix(in srgb, var(--primary,#38BDF8) 32%, transparent)"
+              stroke-width="1"/>
+
+        <!-- Visor band -->
+        <rect x="5" y="16" width="30" height="8"
+              fill="color-mix(in srgb, var(--primary,#38BDF8) 5%, transparent)"/>
+        <line id="pb-trace-top" x1="5" y1="16" x2="35" y2="16"
+              stroke="color-mix(in srgb, var(--primary,#38BDF8) 18%, transparent)"
+              stroke-width="0.75"/>
+        <line id="pb-trace-bot" x1="5" y1="24" x2="35" y2="24"
+              stroke="color-mix(in srgb, var(--primary,#38BDF8) 18%, transparent)"
+              stroke-width="0.75"/>
+
+        <!-- Side circuit traces -->
+        <line id="pb-trace-right" x1="28" y1="12" x2="35" y2="12"
+              stroke="color-mix(in srgb, var(--primary,#38BDF8) 18%, transparent)"
+              stroke-width="0.75"/>
+        <line id="pb-trace-left"  x1="5"  y1="12" x2="12" y2="12"
+              stroke="color-mix(in srgb, var(--primary,#38BDF8) 18%, transparent)"
+              stroke-width="0.75"/>
+
+        <!-- Side nodes -->
+        <circle cx="5"  cy="20" r="2.2"
+                fill="color-mix(in srgb, var(--primary,#38BDF8) 16%, transparent)"
+                stroke="color-mix(in srgb, var(--primary,#38BDF8) 30%, transparent)"
+                stroke-width="0.75"/>
+        <circle cx="35" cy="20" r="2.2"
+                fill="color-mix(in srgb, var(--primary,#38BDF8) 16%, transparent)"
+                stroke="color-mix(in srgb, var(--primary,#38BDF8) 30%, transparent)"
+                stroke-width="0.75"/>
+
+        <!-- Eyes (animated group) -->
+        <g id="pb-eyes-g">
+          <rect class="pb-eye" x="11" y="18" width="5" height="4" rx="2"
+                fill="var(--primary,#38BDF8)" opacity="0.88">
+            <animate attributeName="opacity" values="0.88;0.6;0.88"
+                     dur="2.6s" repeatCount="indefinite"/>
+          </rect>
+          <rect class="pb-eye" x="24" y="18" width="5" height="4" rx="2"
+                fill="var(--primary,#38BDF8)" opacity="0.88">
+            <animate attributeName="opacity" values="0.88;0.6;0.88"
+                     dur="2.6s" begin="0.5s" repeatCount="indefinite"/>
+          </rect>
+          <!-- Subtle eye glow -->
+          <rect x="11" y="18" width="5" height="4" rx="2"
+                fill="color-mix(in srgb, var(--primary,#38BDF8) 30%, transparent)"
+                filter="url(#pbGlow)"/>
+          <rect x="24" y="18" width="5" height="4" rx="2"
+                fill="color-mix(in srgb, var(--primary,#38BDF8) 30%, transparent)"
+                filter="url(#pbGlow)"/>
+        </g>
+
+        <defs>
+          <filter id="pbGlow" x="-60%" y="-60%" width="220%" height="220%">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="1.4" result="b"/>
+          </filter>
+        </defs>
+      </svg>
+    </button>
+  </div><!-- /#pb-host -->
+
+  <!-- ── Slide-up panel (fixed, independent of host position) ── -->
+  <div id="pb-panel" role="dialog" aria-modal="true" aria-label="PhishBot AI Lure Lab">
+    <div class="pb-panel-header" id="pb-drag-handle">
+      <div class="pb-panel-title">
+        <i class="ti ti-robot" aria-hidden="true"></i> PhishBot
+        <span style="font-family:var(--mono);font-size:0.56rem;color:var(--success,#34D399);background:color-mix(in srgb,var(--success,#34D399) 8%,transparent);border:1px solid color-mix(in srgb,var(--success,#34D399) 22%,transparent);border-radius:4px;padding:2px 7px;font-weight:900;">LIVE</span>
       </div>
-      <div class="lure-panel-actions">
-        <button class="lure-panel-btn" id="lure-panel-maximize" title="Maximize to page section" aria-label="Maximize">
-          <i class="ti ti-maximize"></i>
+      <div class="pb-panel-tabs">
+        <button class="pb-tab-btn active" data-tab="generate">Generate</button>
+        <button class="pb-tab-btn" data-tab="spotphish">Spot Phish</button>
+        <button class="pb-tab-btn" data-tab="riskscore">Risk Score</button>
+      </div>
+      <div class="pb-panel-actions">
+        <button class="pb-icon-btn" id="pb-max-btn" title="Expand to page" aria-label="Expand">
+          <i class="ti ti-maximize" aria-hidden="true"></i>
         </button>
-        <button class="lure-panel-btn" id="lure-panel-minimize" title="Minimize" aria-label="Minimize">
-          <i class="ti ti-minus"></i>
-        </button>
-        <button class="lure-panel-btn" id="lure-panel-close" title="Close" aria-label="Close">
-          <i class="ti ti-x"></i>
+        <button class="pb-icon-btn" id="pb-close-btn" title="Close" aria-label="Close">
+          <i class="ti ti-x" aria-hidden="true"></i>
         </button>
       </div>
     </div>
-    <div class="lure-panel-body">
-      <p style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:rgba(148,163,184,0.75);margin:0 0 14px;line-height:1.5;">Watch the AI engine generate a real phishing lure — choose a scenario:</p>
-      <div class="lure-panel-chips">
-        <button type="button" class="lure-panel-chip" onclick="lureGenerate('ceo_fraud')" style="color:#38bdf8;border-color:rgba(56,189,248,0.3);">CEO Fraud</button>
-        <button type="button" class="lure-panel-chip" onclick="lureGenerate('it_alert')" style="color:#f59e0b;border-color:rgba(245,158,11,0.3);">IT Alert</button>
-        <button type="button" class="lure-panel-chip" onclick="lureGenerate('hr_update')" style="color:#10b981;border-color:rgba(16,185,129,0.3);">HR Update</button>
-        <button type="button" class="lure-panel-chip" onclick="lureGenerate('invoice')" style="color:#f43f5e;border-color:rgba(244,63,94,0.3);">Urgent Invoice</button>
+
+    <!-- TAB: Generate -->
+    <div class="pb-tab-panel active" id="pb-tab-generate">
+      <div class="pb-dialogue">
+        <div class="pb-dialogue-icon">
+          <i class="ti ti-robot" style="color:var(--primary,#38BDF8);font-size:0.95rem;" aria-hidden="true"></i>
+        </div>
+        <div class="pb-bubble" id="pb-dialogue-text">
+          Pick a scenario and I'll generate a real AI phishing lure — right now, live.
+        </div>
       </div>
-      <!-- Skeleton loader -->
-      <div class="lure-loader-wrap" id="lure-panel-loader"></div>
+      <div class="pb-chips">
+        <button class="pb-chip" onclick="pbGen('ceo_fraud')"
+          style="color:var(--primary,#38BDF8);border-color:color-mix(in srgb,var(--primary,#38BDF8) 32%,transparent);">
+          CEO Fraud
+        </button>
+        <button class="pb-chip" onclick="pbGen('it_alert')"
+          style="color:var(--warning,#FB923C);border-color:color-mix(in srgb,var(--warning,#FB923C) 32%,transparent);">
+          IT Alert
+        </button>
+        <button class="pb-chip" onclick="pbGen('hr_update')"
+          style="color:var(--success,#34D399);border-color:color-mix(in srgb,var(--success,#34D399) 32%,transparent);">
+          HR Update
+        </button>
+        <button class="pb-chip" onclick="pbGen('invoice')"
+          style="color:var(--danger,#F87171);border-color:color-mix(in srgb,var(--danger,#F87171) 32%,transparent);">
+          Urgent Invoice
+        </button>
+      </div>
+      <!-- Skeleton loader (reuses style.css shimmer) -->
+      <div class="pb-skeleton-wrap" id="pb-gen-loader">
+        <div class="skeleton-block" style="width:78%;height:12px;margin-bottom:8px;"></div>
+        <div class="skeleton-block" style="width:60%;height:12px;margin-bottom:8px;"></div>
+        <div class="skeleton-block" style="width:70%;height:12px;"></div>
+      </div>
       <!-- Email result -->
-      <div class="lure-result-card" id="lure-panel-email-card">
-        <div class="lure-chrome-bar">
-          <div class="lure-chrome-dots">
+      <div class="pb-email-card" id="pb-email-card">
+        <div class="pb-chrome">
+          <div class="pb-chrome-dots">
             <span style="background:#ef4444;"></span>
-            <span style="background:#f59e0b;"></span>
-            <span style="background:#10b981;"></span>
+            <span style="background:var(--warning,#FB923C);"></span>
+            <span style="background:var(--success,#34D399);"></span>
           </div>
-          <div style="font-family:'JetBrains Mono',monospace;font-size:0.63rem;color:rgba(148,163,184,0.5);display:flex;align-items:center;gap:5px;">
-            <i class="ti ti-mail" style="color:rgba(56,189,248,0.5);"></i> Simulated Inbox &mdash; example-corp.test
+          <div style="font-family:var(--mono);font-size:0.6rem;color:color-mix(in srgb,var(--text-secondary,#94A3B8) 45%,transparent);display:flex;align-items:center;gap:4px;">
+            <i class="ti ti-mail" style="color:color-mix(in srgb,var(--primary,#38BDF8) 45%,transparent);" aria-hidden="true"></i>
+            Simulated Inbox &mdash; example-corp.test
           </div>
-          <div style="width:40px;"></div>
+          <div style="width:32px;"></div>
         </div>
-        <div class="lure-mail-header">
-          <div class="lure-mail-field"><span class="lure-mail-label">From</span><span id="lp-sender" style="color:#e2e8f0;"></span></div>
-          <div class="lure-mail-field"><span class="lure-mail-label">Subject</span><span id="lp-subject" style="color:#38bdf8;font-weight:600;"></span></div>
-          <div class="lure-mail-field"><span class="lure-mail-label">To</span><span style="color:rgba(148,163,184,0.45);">jordan.ellis@example-corp.test</span></div>
+        <div class="pb-mail-header">
+          <div class="pb-mail-field">
+            <span class="pb-mail-lbl">From</span>
+            <span id="pb-sender" style="color:var(--text-primary,#F0F4FF);"></span>
+          </div>
+          <div class="pb-mail-field">
+            <span class="pb-mail-lbl">Subject</span>
+            <span id="pb-subject" style="color:var(--primary,#38BDF8);font-weight:600;"></span>
+          </div>
+          <div class="pb-mail-field">
+            <span class="pb-mail-lbl">To</span>
+            <span style="color:color-mix(in srgb,var(--text-secondary,#94A3B8) 45%,transparent);">jordan.ellis@example-corp.test</span>
+          </div>
         </div>
-        <div class="lure-mail-body" id="lp-body"></div>
+        <div class="pb-mail-body" id="pb-body"></div>
+      </div>
+      <!-- Bait score -->
+      <div class="pb-bait-section" id="pb-bait-section">
+        <div class="pb-bait-lbl">// Bait Score Breakdown</div>
+        <div class="pb-score-bars" id="pb-score-bars"></div>
       </div>
       <!-- Tactic + disclaimer -->
-      <div class="lure-meta" id="lp-meta">
-        <div id="lp-tactic" style="font-size:0.74rem;color:#f59e0b;font-weight:600;"></div>
-        <div class="lure-disclaimer">Fictional demo &mdash; Example Corp (example-corp.test)</div>
+      <div class="pb-meta" id="pb-meta">
+        <div class="pb-tactic" id="pb-tactic-text"></div>
+        <div class="pb-disc">Fictional demo &mdash; Example Corp (example-corp.test). Not a real target.</div>
       </div>
       <!-- Error -->
-      <div class="lure-error" id="lp-error"></div>
-    </div>
-    <div class="lure-panel-footer">
-      <i class="ti ti-cpu" style="color:#38bdf8;"></i>
-      Powered by PhishSim AI Engine v2.0
-    </div>
-  </div>
+      <div class="pb-error-msg" id="pb-error-msg"></div>
+    </div><!-- /#pb-tab-generate -->
 
-  <!-- Maximized inline section (inserted into page at scroll position) -->
-  <section id="lure-inline-section">
-    <div class="lure-inline-inner">
-      <div class="lure-inline-header">
-        <div class="lure-panel-title">
-          <i class="ti ti-mail-bolt"></i> AI Lure Lab
-          <span style="font-family:'JetBrains Mono',monospace;font-size:0.6rem;color:#34d399;background:rgba(52,211,153,0.08);border:1px solid rgba(52,211,153,0.2);border-radius:4px;padding:2px 7px;font-weight:800;margin-left:2px;">LIVE</span>
+    <!-- TAB: Spot the Phish -->
+    <div class="pb-tab-panel" id="pb-tab-spotphish">
+      <div class="pb-dialogue">
+        <div class="pb-dialogue-icon">
+          <i class="ti ti-target" style="color:var(--danger,#F87171);font-size:0.9rem;" aria-hidden="true"></i>
         </div>
-        <div class="lure-panel-actions">
-          <button class="lure-panel-btn" id="lure-inline-minimize" title="Minimize back to button" aria-label="Minimize">
-            <i class="ti ti-minimize"></i>
-          </button>
+        <div class="pb-bubble">
+          Two emails below — one legit, one is a phish.
+          <strong style="color:var(--primary,#38BDF8);">Click the fake one.</strong>
         </div>
       </div>
-      <div class="lure-inline-body">
-        <p style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:rgba(148,163,184,0.75);margin:0 0 14px;line-height:1.5;">Watch the AI engine generate a real phishing lure — choose a scenario:</p>
-        <div class="lure-panel-chips" id="lure-inline-chips">
-          <button type="button" class="lure-panel-chip" onclick="lureGenerate('ceo_fraud', true)" style="color:#38bdf8;border-color:rgba(56,189,248,0.3);">CEO Fraud</button>
-          <button type="button" class="lure-panel-chip" onclick="lureGenerate('it_alert', true)" style="color:#f59e0b;border-color:rgba(245,158,11,0.3);">IT Alert</button>
-          <button type="button" class="lure-panel-chip" onclick="lureGenerate('hr_update', true)" style="color:#10b981;border-color:rgba(16,185,129,0.3);">HR Update</button>
-          <button type="button" class="lure-panel-chip" onclick="lureGenerate('invoice', true)" style="color:#f43f5e;border-color:rgba(244,63,94,0.3);">Urgent Invoice</button>
+      <div class="stp-score-row">
+        Score: <span id="stp-score">0</span> / <span id="stp-total">0</span>
+      </div>
+      <div class="stp-pair" id="stp-pair-container"></div>
+      <div class="stp-result" id="stp-result"></div>
+      <button class="pb-action-btn" id="stp-next-btn" style="display:none;"
+        onclick="stpNext()">
+        <i class="ti ti-arrow-right" aria-hidden="true"></i> Next Round
+      </button>
+    </div>
+
+    <!-- TAB: Risk Score -->
+    <div class="pb-tab-panel" id="pb-tab-riskscore">
+      <div class="pb-dialogue">
+        <div class="pb-dialogue-icon">
+          <i class="ti ti-chart-bar" style="color:var(--info,#818CF8);font-size:0.9rem;" aria-hidden="true"></i>
         </div>
-        <div class="lure-loader-wrap" id="lure-inline-loader"></div>
-        <div class="lure-result-card" id="lure-inline-email-card">
-          <div class="lure-chrome-bar">
-            <div class="lure-chrome-dots">
-              <span style="background:#ef4444;"></span>
-              <span style="background:#f59e0b;"></span>
-              <span style="background:#10b981;"></span>
-            </div>
-            <div style="font-family:'JetBrains Mono',monospace;font-size:0.63rem;color:rgba(148,163,184,0.5);display:flex;align-items:center;gap:5px;">
-              <i class="ti ti-mail" style="color:rgba(56,189,248,0.5);"></i> Simulated Inbox &mdash; example-corp.test
-            </div>
-            <div style="width:40px;"></div>
+        <div class="pb-bubble" id="rs-dialogue-text">
+          3 quick questions. I'll estimate your organisation's phishing exposure.
+        </div>
+      </div>
+      <div id="rs-form">
+        <div class="rs-q-text">1. What industry are you in?</div>
+        <div class="rs-opts">
+          <label class="rs-opt"><input type="radio" name="rs-ind" value="3"><span class="rs-radio"></span>Finance / Banking / Insurance</label>
+          <label class="rs-opt"><input type="radio" name="rs-ind" value="2"><span class="rs-radio"></span>Healthcare / Legal / Government</label>
+          <label class="rs-opt"><input type="radio" name="rs-ind" value="1"><span class="rs-radio"></span>Technology / SaaS / Media</label>
+          <label class="rs-opt"><input type="radio" name="rs-ind" value="1"><span class="rs-radio"></span>Other</label>
+        </div>
+        <div class="rs-q-text">2. Company size?</div>
+        <div class="rs-opts">
+          <label class="rs-opt"><input type="radio" name="rs-sz" value="3"><span class="rs-radio"></span>1,000+ (Enterprise)</label>
+          <label class="rs-opt"><input type="radio" name="rs-sz" value="2"><span class="rs-radio"></span>100 – 999 (Mid-market)</label>
+          <label class="rs-opt"><input type="radio" name="rs-sz" value="1"><span class="rs-radio"></span>Under 100 (SMB)</label>
+        </div>
+        <div class="rs-q-text">3. Do you run phishing simulations regularly?</div>
+        <div class="rs-opts">
+          <label class="rs-opt"><input type="radio" name="rs-tr" value="0"><span class="rs-radio"></span>Yes — quarterly or more</label>
+          <label class="rs-opt"><input type="radio" name="rs-tr" value="2"><span class="rs-radio"></span>Occasionally — once a year or less</label>
+          <label class="rs-opt"><input type="radio" name="rs-tr" value="3"><span class="rs-radio"></span>No / not sure</label>
+        </div>
+        <button class="pb-action-btn" onclick="rsCalc()">
+          <i class="ti ti-calculator" aria-hidden="true"></i> Calculate exposure
+        </button>
+      </div>
+      <div class="rs-result" id="rs-result">
+        <div class="rs-gauge" id="rs-gauge">—</div>
+        <div style="font-family:var(--mono);font-size:0.7rem;color:var(--text-secondary,#94A3B8);margin-bottom:14px;" id="rs-gauge-lbl"></div>
+        <button class="pb-action-btn" onclick="rsReset()">
+          <i class="ti ti-refresh" aria-hidden="true"></i> Start over
+        </button>
+        <div class="rs-note">⚠ This is a rough directional estimate based on published industry averages — not a benchmarked security audit. Actual exposure depends on many more factors. Use it as a conversation starter, not a verdict.</div>
+      </div>
+    </div><!-- /#pb-tab-riskscore -->
+
+    <div class="pb-panel-footer">
+      <i class="ti ti-cpu" style="color:var(--primary,#38BDF8);" aria-hidden="true"></i>
+      PhishBot &mdash; Powered by PhishSim AI Engine v2
+    </div>
+  </div><!-- /#pb-panel -->
+
+  <!-- Maximised inline section (inserted into page flow on expand) -->
+  <section id="pb-inline-section">
+    <div class="pb-inner-wrap">
+      <div class="pb-inner-head">
+        <div class="pb-panel-title"><i class="ti ti-robot" aria-hidden="true"></i> PhishBot — AI Lure Lab</div>
+        <button class="pb-icon-btn" id="pb-inline-collapse" aria-label="Collapse">
+          <i class="ti ti-minimize" aria-hidden="true"></i>
+        </button>
+      </div>
+      <div class="pb-inner-body">
+        <div class="pb-chips">
+          <button class="pb-chip" onclick="pbGen('ceo_fraud',true)"  style="color:var(--primary,#38BDF8);border-color:color-mix(in srgb,var(--primary,#38BDF8) 32%,transparent);">CEO Fraud</button>
+          <button class="pb-chip" onclick="pbGen('it_alert',true)"   style="color:var(--warning,#FB923C);border-color:color-mix(in srgb,var(--warning,#FB923C) 32%,transparent);">IT Alert</button>
+          <button class="pb-chip" onclick="pbGen('hr_update',true)"  style="color:var(--success,#34D399);border-color:color-mix(in srgb,var(--success,#34D399) 32%,transparent);">HR Update</button>
+          <button class="pb-chip" onclick="pbGen('invoice',true)"    style="color:var(--danger,#F87171);border-color:color-mix(in srgb,var(--danger,#F87171) 32%,transparent);">Urgent Invoice</button>
+        </div>
+        <div class="pb-skeleton-wrap" id="pb-il-loader">
+          <div class="skeleton-block" style="width:78%;height:12px;margin-bottom:8px;"></div>
+          <div class="skeleton-block" style="width:60%;height:12px;margin-bottom:8px;"></div>
+          <div class="skeleton-block" style="width:70%;height:12px;"></div>
+        </div>
+        <div class="pb-email-card" id="pb-il-card">
+          <div class="pb-chrome"><div class="pb-chrome-dots"><span style="background:#ef4444;"></span><span style="background:var(--warning,#FB923C);"></span><span style="background:var(--success,#34D399);"></span></div><div style="font-family:var(--mono);font-size:0.6rem;color:color-mix(in srgb,var(--text-secondary,#94A3B8) 45%,transparent);">Simulated Inbox — example-corp.test</div><div style="width:32px;"></div></div>
+          <div class="pb-mail-header">
+            <div class="pb-mail-field"><span class="pb-mail-lbl">From</span><span id="pb-il-sender" style="color:var(--text-primary,#F0F4FF);"></span></div>
+            <div class="pb-mail-field"><span class="pb-mail-lbl">Subject</span><span id="pb-il-subject" style="color:var(--primary,#38BDF8);font-weight:600;"></span></div>
           </div>
-          <div class="lure-mail-header">
-            <div class="lure-mail-field"><span class="lure-mail-label">From</span><span id="li-sender" style="color:#e2e8f0;"></span></div>
-            <div class="lure-mail-field"><span class="lure-mail-label">Subject</span><span id="li-subject" style="color:#38bdf8;font-weight:600;"></span></div>
-            <div class="lure-mail-field"><span class="lure-mail-label">To</span><span style="color:rgba(148,163,184,0.45);">jordan.ellis@example-corp.test</span></div>
-          </div>
-          <div class="lure-mail-body" id="li-body"></div>
+          <div class="pb-mail-body" id="pb-il-body"></div>
         </div>
-        <div class="lure-meta" id="li-meta">
-          <div id="li-tactic" style="font-size:0.74rem;color:#f59e0b;font-weight:600;"></div>
-          <div class="lure-disclaimer">Fictional demo &mdash; Example Corp (example-corp.test)</div>
+        <div class="pb-meta" id="pb-il-meta">
+          <div class="pb-tactic" id="pb-il-tactic"></div>
+          <div class="pb-disc">Fictional demo — Example Corp. Not a real target.</div>
         </div>
-        <div class="lure-error" id="li-error"></div>
+        <div class="pb-error-msg" id="pb-il-error"></div>
       </div>
     </div>
   </section>
 
   <script>
+  /* ================================================================
+     PhishBot — 4-state avatar widget
+     States: idle (default) | active (pb-active) | success (pb-success) | error (pb-error)
+     ================================================================ */
   (function () {
-    /* ─── Teaser messages rotation ─── */
+    'use strict';
+
+    const host   = document.getElementById('pb-host');
+    const avatar = document.getElementById('pb-avatar');
+    const panel  = document.getElementById('pb-panel');
+
+    if (!host || !avatar || !panel) return; // homepage-only guard
+
+    /* ── 4 avatar state helpers ────────────────────────────────── */
+    const STATES = ['pb-active', 'pb-success', 'pb-error'];
+    let _successTimer = null;
+
+    function setState(state) {
+      host.classList.remove(...STATES);
+      clearTimeout(_successTimer);
+      if (state) host.classList.add(state);
+    }
+    function setIdle()    { setState(null); }
+    function setActive()  { setState('pb-active'); }
+    function setSuccess() {
+      setState('pb-success');
+      _successTimer = setTimeout(setIdle, 750); // auto-return after 750ms
+    }
+    function setError()   { setState('pb-error'); }
+
+    /* ── Teaser ───────────────────────────────────────────────── */
     const TEASERS = [
-      { text: '"Your CEO just sent you a wire transfer request…"', cta: '→ Click to see how convincing it looks' },
-      { text: '88% of employees click a CEO fraud email on Day 1.', cta: '→ Generate one and see why' },
-      { text: '"HR needs your bank details — urgent update required."', cta: '→ This passed your spam filter. Should it have?' },
-      { text: 'This phishing email has a 91% open rate.', cta: '→ See what makes it work' },
-      { text: '"IT Security: Your SSO session expires in 10 minutes."', cta: '→ Watch AI craft this in real-time' },
-      { text: 'Could your team spot this? Most can\'t.', cta: '→ Generate a lure and find out' },
-      { text: '"Invoice #INV-8821 is overdue — click to resolve."', cta: '→ Built by AI. Designed to deceive.' },
-      { text: 'Finance depts click phishing links 2.4× more often.', cta: '→ Try generating a financial lure' },
+      { msg: '"Your CEO just sent a wire transfer request…"',          cta: '→ Click to see how convincing it looks' },
+      { msg: '88% of employees click a CEO fraud email on day one.',   cta: '→ Generate one — see why' },
+      { msg: '"HR needs your bank details — urgent update required."', cta: '→ This passed your spam filter. Should it?' },
+      { msg: 'This AI-crafted lure has a 91% simulated open rate.',    cta: '→ See what makes it work' },
+      { msg: '"IT: Your SSO session expires in 10 minutes."',          cta: '→ Watch PhishBot craft this live' },
+      { msg: 'Could your team spot this? Most can\'t on first read.',  cta: '→ Test yourself in Spot the Phish' },
+      { msg: '"Invoice #INV-8821 is overdue — click to resolve."',     cta: '→ Built by AI. Designed to deceive.' },
+      { msg: 'Finance teams click phishing links 2.4× more often.',    cta: '→ Try the Risk Score tab' },
     ];
-    let teaserIdx = 0;
-    const teaserEl   = document.getElementById('lure-teaser');
-    const teaserText = document.getElementById('lure-teaser-text');
-    const teaserCta  = document.getElementById('lure-teaser-cta');
-    const fab        = document.getElementById('lure-fab');
-    const panel      = document.getElementById('lure-panel');
-    let teaserTimer  = null;
+    let tIdx = 0, tTimer = null;
+    const tMsgEl = document.getElementById('pb-teaser-msg');
+    const tCtaEl = document.getElementById('pb-teaser-cta');
 
-    function showTeaser() {
-      const t = TEASERS[teaserIdx % TEASERS.length];
-      teaserText.textContent = t.text;
-      teaserCta.textContent  = t.cta;
-      teaserEl.classList.add('visible');
-      teaserTimer = setInterval(() => {
-        teaserIdx = (teaserIdx + 1) % TEASERS.length;
-        const nt = TEASERS[teaserIdx];
-        teaserText.style.opacity = '0';
-        teaserCta.style.opacity  = '0';
+    function rotateTeasers() {
+      clearInterval(tTimer);
+      tTimer = setInterval(() => {
+        tIdx = (tIdx + 1) % TEASERS.length;
+        tMsgEl.style.opacity = '0';
         setTimeout(() => {
-          teaserText.textContent = nt.text;
-          teaserCta.textContent  = nt.cta;
-          teaserText.style.opacity = '1';
-          teaserCta.style.opacity  = '1';
-        }, 200);
-      }, 4000);
+          tMsgEl.textContent = TEASERS[tIdx].msg;
+          tCtaEl.textContent = TEASERS[tIdx].cta;
+          tMsgEl.style.opacity = '1';
+        }, 180);
+      }, 4200);
     }
-    function hideTeaser() {
-      teaserEl.classList.remove('visible');
-      clearInterval(teaserTimer);
-    }
-    teaserText.style.transition = 'opacity 0.2s';
-    teaserCta.style.transition  = 'opacity 0.2s';
+    tMsgEl.style.transition = 'opacity 0.18s';
 
-    fab.addEventListener('mouseenter', () => { if (!panel.classList.contains('open')) showTeaser(); });
-    fab.addEventListener('mouseleave', hideTeaser);
-
-    /* ─── Open / Close panel ─── */
+    /* ── Panel open/close ─────────────────────────────────────── */
     let panelOpen = false;
+
     function openPanel() {
-      hideTeaser();
       panelOpen = true;
-      panel.classList.add('open');
-      fab.setAttribute('aria-expanded', 'true');
+      panel.classList.add('pb-open');
+      host.classList.add('panel-open');
+      avatar.setAttribute('aria-expanded', 'true');
+      rotateTeasers();
     }
     function closePanel() {
       panelOpen = false;
-      panel.classList.remove('open');
-      fab.setAttribute('aria-expanded', 'false');
+      panel.classList.remove('pb-open');
+      host.classList.remove('panel-open');
+      avatar.setAttribute('aria-expanded', 'false');
+      clearInterval(tTimer);
     }
-    fab.addEventListener('click', () => { panelOpen ? closePanel() : openPanel(); });
-    document.getElementById('lure-panel-close').addEventListener('click', closePanel);
-    document.getElementById('lure-panel-minimize').addEventListener('click', closePanel);
 
-    /* ─── Maximize: insert inline section at scroll position ─── */
-    const inlineSection = document.getElementById('lure-inline-section');
-    let isMaximized = false;
+    avatar.addEventListener('click', () => panelOpen ? closePanel() : openPanel());
+    document.getElementById('pb-close-btn').addEventListener('click', closePanel);
+    document.addEventListener('click', e => {
+      if (panelOpen && !panel.contains(e.target) && !host.contains(e.target)) closePanel();
+    });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape' && panelOpen) closePanel(); });
 
-    document.getElementById('lure-panel-maximize').addEventListener('click', () => {
+    /* ── Bounded drag — pointer events (not HTML5 drag API) ─────
+       Bound zone: right 25% of viewport, full height
+       Disabled on mobile (≤768px)                                */
+    const DRAG_ZONE_FRAC = 0.25; // right 25%
+    const DRAG_MARGIN    = 10;   // px from viewport edges
+    let drag = null;
+
+    function isMobile() { return window.innerWidth <= 768; }
+
+    document.getElementById('pb-drag-handle').addEventListener('pointerdown', startDrag);
+
+    function startDrag(e) {
+      if (isMobile()) return;
+      if (e.target.closest('.pb-icon-btn') || e.target.closest('.pb-tab-btn')) return;
+      e.preventDefault();
+
+      const hostR = host.getBoundingClientRect();
+      drag = {
+        startX:    e.clientX,
+        startY:    e.clientY,
+        origRight: window.innerWidth  - hostR.right,
+        origBottom: window.innerHeight - hostR.bottom,
+      };
+      panel.setPointerCapture && panel.setPointerCapture(e.pointerId);
+    }
+
+    document.addEventListener('pointermove', e => {
+      if (!drag || isMobile()) return;
+      const dx = drag.startX - e.clientX;
+      const dy = drag.startY - e.clientY;
+
+      // Compute new right/bottom for the HOST
+      let newRight  = drag.origRight  + dx;
+      let newBottom = drag.origBottom + dy;
+
+      // Left bound: host must stay within right 25% of viewport
+      const maxRight = window.innerWidth * DRAG_ZONE_FRAC - host.offsetWidth;
+      newRight = Math.min(newRight, window.innerWidth * DRAG_ZONE_FRAC);
+      newRight = Math.max(newRight, DRAG_MARGIN);
+
+      // Top/bottom bounds
+      const navH   = 70; // approximate nav height
+      const footerH = 80;
+      newBottom = Math.max(newBottom, DRAG_MARGIN + footerH);
+      newBottom = Math.min(newBottom, window.innerHeight - navH - host.offsetHeight - DRAG_MARGIN);
+
+      host.style.right  = newRight  + 'px';
+      host.style.bottom = newBottom + 'px';
+      host.style.left   = 'auto';
+      host.style.top    = 'auto';
+    });
+
+    document.addEventListener('pointerup', () => { drag = null; });
+
+    /* ── Tabs ──────────────────────────────────────────────────── */
+    document.querySelectorAll('.pb-tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.pb-tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.pb-tab-panel').forEach(p => p.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById('pb-tab-' + btn.dataset.tab).classList.add('active');
+      });
+    });
+
+    /* ── Expand/collapse to inline section ─────────────────────── */
+    const inlineSec = document.getElementById('pb-inline-section');
+    let expanded = false;
+
+    document.getElementById('pb-max-btn').addEventListener('click', () => {
       closePanel();
-      if (isMaximized) { return; }
-      isMaximized = true;
-
-      // Find the element closest to current scroll position to insert after
-      const scrollY = window.scrollY + window.innerHeight * 0.4;
+      if (expanded) return;
+      expanded = true;
+      // Insert after the section currently at mid-viewport
+      const midY = window.scrollY + window.innerHeight * 0.45;
       const sections = Array.from(document.querySelectorAll('section[id], footer'));
-      let insertAfter = null;
+      let target = null;
       for (const s of sections) {
-        const top = s.getBoundingClientRect().top + window.scrollY;
-        if (top <= scrollY) insertAfter = s;
+        if (s.getBoundingClientRect().top + window.scrollY <= midY) target = s;
         else break;
       }
-
-      // Move the inline section to the right spot in the DOM
-      inlineSection.style.display = 'block';
-      inlineSection.style.animation = 'mcFeedIn 0.4s ease both';
-      if (insertAfter && insertAfter.nextSibling) {
-        insertAfter.parentNode.insertBefore(inlineSection, insertAfter.nextSibling);
-      } else if (insertAfter) {
-        insertAfter.parentNode.appendChild(inlineSection);
-      } else {
-        document.body.appendChild(inlineSection);
-      }
-
-      // Smooth scroll into view
-      setTimeout(() => inlineSection.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80);
-
-      // Minimize from inline
-      document.getElementById('lure-inline-minimize').onclick = () => {
-        isMaximized = false;
-        inlineSection.style.animation = '';
-        inlineSection.style.display = 'none';
-        document.body.appendChild(inlineSection); // put back at end of body (detached from flow)
-      };
+      inlineSec.style.display = 'block';
+      if (target && target.nextSibling) target.parentNode.insertBefore(inlineSec, target.nextSibling);
+      else if (target) target.parentNode.appendChild(inlineSec);
+      else document.body.appendChild(inlineSec);
+      setTimeout(() => inlineSec.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80);
     });
 
-    /* ─── Close on outside click ─── */
-    document.addEventListener('click', (e) => {
-      if (panelOpen && !panel.contains(e.target) && e.target !== fab && !fab.contains(e.target)) {
-        closePanel();
-      }
+    document.getElementById('pb-inline-collapse').addEventListener('click', () => {
+      expanded = false;
+      inlineSec.style.display = 'none';
+      document.body.appendChild(inlineSec);
     });
 
-    /* ─── Escape key ─── */
-    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && panelOpen) closePanel(); });
+    /* ── Red-flag annotation ───────────────────────────────────── */
+    const RF_PATTERNS = [
+      { re: /urgent/gi,          tip: 'Urgency trigger — bypasses critical thinking.' },
+      { re: /action required/gi, tip: 'Authority command — creates compliance pressure.' },
+      { re: /expires?/gi,        tip: 'Artificial deadline — shortens verification time.' },
+      { re: /verify/gi,          tip: 'Verification request — often harvests credentials.' },
+      { re: /click here/gi,      tip: 'Ambiguous CTA — destination URL is hidden.' },
+      { re: /confidential/gi,    tip: 'Secrecy framing — discourages checking with colleagues.' },
+      { re: /wire transfer/gi,   tip: 'Financial action — irreversible once completed.' },
+      { re: /bank details/gi,    tip: 'PII request — no legitimate process uses email for this.' },
+      { re: /password/gi,        tip: 'Credential request — IT never asks via email.' },
+      { re: /login/gi,           tip: 'Login prompt — likely leads to a spoofed portal.' },
+    ];
 
-    /* ─── Generation logic ─── */
-    let _lureActive = false;
-
-    function escapeHTML(s) {
+    function esc(s) {
       if (!s) return '';
-      return s.replace(/[&<>'"]/g, t => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[t]||t));
+      return s.replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]||c));
     }
 
-    // Minimal skeleton
-    function makeSkeleton() {
-      return `<div style="padding:20px;">
-        <div style="height:14px;background:rgba(255,255,255,0.06);border-radius:6px;margin-bottom:10px;width:80%;animation:skPulse 1.2s infinite;"></div>
-        <div style="height:14px;background:rgba(255,255,255,0.06);border-radius:6px;margin-bottom:10px;width:60%;animation:skPulse 1.2s 0.1s infinite;"></div>
-        <div style="height:14px;background:rgba(255,255,255,0.06);border-radius:6px;width:70%;animation:skPulse 1.2s 0.2s infinite;"></div>
-      </div>`;
+    function annotate(text) {
+      let html = esc(text);
+      RF_PATTERNS.forEach(({ re, tip }) => {
+        html = html.replace(re, m =>
+          `<span class="pb-rf">${m}<span class="pb-rf-tip">${esc(tip)}</span></span>`);
+      });
+      return html;
     }
 
-    if (!document.getElementById('lure-sk-style')) {
-      const sk = document.createElement('style');
-      sk.id = 'lure-sk-style';
-      sk.textContent = '@keyframes skPulse{0%,100%{opacity:0.5}50%{opacity:1}}';
-      document.head.appendChild(sk);
+    /* ── Bait score ────────────────────────────────────────────── */
+    const SCORE_AXES = [
+      { label: 'Urgency',       key: 'urgency',       color: 'var(--danger,#F87171)' },
+      { label: 'Authority',     key: 'authority',     color: 'var(--warning,#FB923C)' },
+      { label: 'Believability', key: 'believe',       color: 'var(--primary,#38BDF8)' },
+      { label: 'Obfuscation',   key: 'obfuscate',     color: 'var(--info,#818CF8)' },
+      { label: 'Personalised',  key: 'personal',      color: 'var(--success,#34D399)' },
+    ];
+    const SCORE_PROFILES = {
+      ceo_fraud: { urgency:90, authority:95, believe:80, obfuscate:70, personal:75 },
+      it_alert:  { urgency:85, authority:70, believe:85, obfuscate:75, personal:65 },
+      hr_update: { urgency:60, authority:65, believe:90, obfuscate:55, personal:80 },
+      invoice:   { urgency:80, authority:60, believe:85, obfuscate:80, personal:70 },
+    };
+
+    function renderBait(barsCont, scenario) {
+      const profile = SCORE_PROFILES[scenario] || { urgency:75, authority:70, believe:75, obfuscate:65, personal:70 };
+      barsCont.innerHTML = '';
+      SCORE_AXES.forEach(ax => {
+        const v = profile[ax.key] || 0;
+        const row = document.createElement('div');
+        row.className = 'pb-score-row';
+        row.innerHTML = `<span class="pb-score-name">${esc(ax.label)}</span>
+          <div class="pb-score-track"><div class="pb-score-fill" data-w="${v}" style="background:${ax.color};"></div></div>
+          <span class="pb-score-num">${v}</span>`;
+        barsCont.appendChild(row);
+      });
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        barsCont.querySelectorAll('.pb-score-fill').forEach(el => { el.style.width = el.dataset.w + '%'; });
+      }));
     }
 
-    window.lureGenerate = async function(scenario, isInline) {
-      if (_lureActive) return;
-      _lureActive = true;
+    /* ── PhishBot dialogue per scenario ────────────────────────── */
+    const DIALOGUES = {
+      ceo_fraud: 'Classic wire fraud. Watch how I clone your CEO\'s authority and create a deadline…',
+      it_alert:  'Your SSO expires soon. Or does it? Let me show you how this works…',
+      hr_update: 'Benefits enrollment — completely harmless-looking. Here\'s what makes it dangerous…',
+      invoice:   'Finance teams see 40 of these a day. Most don\'t look twice. Here\'s why…',
+    };
+    const ERROR_DIALOGUE  = 'Something went wrong on my end. Give it a moment, then try again.';
+    const DEFAULT_DIALOGUE = 'Pick a scenario and I\'ll craft a real AI phishing lure — right now, live.';
+    const DONE_DIALOGUE    = 'Done. Hover the red underlines to see the psychological tricks used.';
 
-      const loaderWrap = document.getElementById(isInline ? 'lure-inline-loader' : 'lure-panel-loader');
-      const emailCard  = document.getElementById(isInline ? 'lure-inline-email-card' : 'lure-panel-email-card');
-      const metaEl     = document.getElementById(isInline ? 'li-meta' : 'lp-meta');
-      const errorEl    = document.getElementById(isInline ? 'li-error' : 'lp-error');
-      const senderEl   = document.getElementById(isInline ? 'li-sender' : 'lp-sender');
-      const subjectEl  = document.getElementById(isInline ? 'li-subject' : 'lp-subject');
-      const bodyEl     = document.getElementById(isInline ? 'li-body' : 'lp-body');
-      const tacticEl   = document.getElementById(isInline ? 'li-tactic' : 'lp-tactic');
-      const chips      = document.querySelectorAll(isInline ? '#lure-inline-chips .lure-panel-chip' : '#lure-panel .lure-panel-chip');
+    /* ── Cache + generation ─────────────────────────────────────── */
+    let _cache = {};
+    let _busy  = false;
+    let _busyAt = 0;
 
-      // Reset
-      emailCard.style.display = 'none';
-      metaEl.style.display    = 'none';
-      errorEl.style.display   = 'none';
-      chips.forEach(c => c.classList.add('disabled'));
+    // Expose as pbGen (also keeps window.pbGenerate and window.lureGenerate as compat aliases)
+    window.pbGen = window.pbGenerate = window.lureGenerate = async function pbGen(scenario, inline = false) {
+      // Stuck-guard: reset after 40s
+      if (_busy && (Date.now() - _busyAt < 40000)) return;
+      _busy   = true;
+      _busyAt = Date.now();
 
-      loaderWrap.innerHTML  = makeSkeleton();
-      loaderWrap.style.display = 'block';
+      const inl = !!inline;
+      const ids = inl
+        ? { loader:'pb-il-loader', card:'pb-il-card', sender:'pb-il-sender', subject:'pb-il-subject',
+            body:'pb-il-body', meta:'pb-il-meta', tactic:'pb-il-tactic', error:'pb-il-error',
+            bait: null, bars: null, chips: '#pb-inline-section .pb-chip', dlg: null }
+        : { loader:'pb-gen-loader', card:'pb-email-card', sender:'pb-sender', subject:'pb-subject',
+            body:'pb-body', meta:'pb-meta', tactic:'pb-tactic-text', error:'pb-error-msg',
+            bait: 'pb-bait-section', bars: 'pb-score-bars', chips: '#pb-tab-generate .pb-chip',
+            dlg: 'pb-dialogue-text' };
 
-      const fd = new FormData();
-      fd.append('scenario', scenario);
+      const $ = id => document.getElementById(id);
+      const chips = [...document.querySelectorAll(ids.chips)];
+
+      // Reset UI
+      if ($(ids.card))  { $(ids.card).style.display = 'none'; }
+      if (ids.bait && $(ids.bait)) $(ids.bait).style.display = 'none';
+      if ($(ids.meta))  $(ids.meta).style.display = 'none';
+      if ($(ids.error)) $(ids.error).style.display = 'none';
+      chips.forEach(c => c.classList.add('pb-disabled'));
+      if (ids.dlg && $(ids.dlg)) $(ids.dlg).textContent = DIALOGUES[scenario] || DEFAULT_DIALOGUE;
+      setActive();
+
+      // Cache hit
+      if (_cache[scenario]) {
+        $(ids.loader).style.display = 'none';
+        _busy = false;
+        setSuccess();
+        _render(_cache[scenario], scenario, ids, $);
+        chips.forEach(c => c.classList.remove('pb-disabled'));
+        return;
+      }
+
+      $(ids.loader).style.display = 'block';
 
       let data = null;
       try {
+        const fd = new FormData();
+        fd.append('scenario', scenario);
         const res = await fetch('/api/hero-demo-lure', { method: 'POST', body: fd });
         if (res.status === 429) throw new Error('Rate limit reached — wait a minute and try again.');
-        if (!res.ok) throw new Error('AI engine failed to build lure.');
+        if (!res.ok)           throw new Error('AI engine returned an error. Try again shortly.');
         const j = await res.json();
-        if (!j.success) throw new Error(j.message || 'Generation failed.');
+        if (!j.success)        throw new Error(j.message || 'Generation failed.');
         data = j;
+        _cache[scenario] = j;
+        setSuccess();
+        if (ids.dlg && $(ids.dlg)) $(ids.dlg).textContent = DONE_DIALOGUE;
       } catch (err) {
-        errorEl.innerHTML = escapeHTML(err.message);
-        errorEl.style.display = 'block';
+        setError();
+        if ($(ids.error)) { $(ids.error).textContent = err.message; $(ids.error).style.display = 'block'; }
+        if (ids.dlg && $(ids.dlg)) $(ids.dlg).textContent = ERROR_DIALOGUE;
       } finally {
-        loaderWrap.style.display = 'none';
-        chips.forEach(c => c.classList.remove('disabled'));
-        _lureActive = false;
-
-        if (data) {
-          senderEl.textContent  = data.sender_display;
-          subjectEl.textContent = data.subject;
-          tacticEl.innerHTML    = `Tactic: <strong>${escapeHTML(data.phishing_tactic)}</strong>`;
-          bodyEl.textContent    = '';
-          emailCard.style.display = 'block';
-          metaEl.style.display  = 'flex';
-
-          // Typewriter
-          const raw = data.body_text || '';
-          let idx = 0;
-          const iv = Math.max(4, Math.floor(1400 / raw.length));
-          function type() {
-            if (idx < raw.length) { bodyEl.textContent += raw[idx++]; bodyEl.scrollTop = bodyEl.scrollHeight; setTimeout(type, iv); }
-          }
-          type();
-        }
+        $(ids.loader).style.display = 'none';
+        chips.forEach(c => c.classList.remove('pb-disabled'));
+        _busy = false;
+        if (data) _render(data, scenario, ids, $);
       }
     };
 
-    // Legacy hook: the old generateDemoLure calls from IntersectionObserver now do nothing (section replaced)
-    window.generateDemoLure = function() {};
-  })();
+    function _render(data, scenario, ids, $) {
+      $(ids.sender).textContent  = data.sender_display || '';
+      $(ids.subject).textContent = data.subject || '';
+      if ($(ids.tactic)) $(ids.tactic).innerHTML = 'Tactic: <strong>' + esc(data.phishing_tactic || '') + '</strong>';
+      $(ids.card).style.display  = 'block';
+      $(ids.meta).style.display  = 'flex';
+
+      // Typewriter with red-flag annotation
+      const bodyEl = $(ids.body);
+      bodyEl.innerHTML = '';
+      const raw = data.body_text || '';
+      let idx = 0;
+      const spd = Math.max(5, Math.floor(1400 / Math.max(raw.length, 1)));
+      function tick() {
+        if (idx < raw.length) {
+          idx++;
+          bodyEl.innerHTML = annotate(raw.slice(0, idx));
+          bodyEl.scrollTop = bodyEl.scrollHeight;
+          setTimeout(tick, spd);
+        } else {
+          bodyEl.innerHTML = annotate(raw); // final pass
+          if (ids.bait && ids.bars && $(ids.bait)) {
+            renderBait($(ids.bars), scenario);
+            $(ids.bait).style.display = 'block';
+          }
+        }
+      }
+      tick();
+    }
+
+    // Pre-warm CEO Fraud silently 3s after page load
+    setTimeout(() => {
+      if (_cache['ceo_fraud'] || _busy) return;
+      const fd = new FormData(); fd.append('scenario', 'ceo_fraud');
+      fetch('/api/hero-demo-lure', { method: 'POST', body: fd })
+        .then(r => r.ok ? r.json() : null)
+        .then(j => { if (j && j.success) _cache['ceo_fraud'] = j; })
+        .catch(() => {});
+    }, 3000);
+
+    /* ================================================================
+       Spot the Phish
+       ================================================================ */
+    const STP_PAIRS = [
+      { phish: { from:'CEO <ceo@acme-corp-secure.com>', subject:'URGENT: Wire Transfer — Authorize Now', body:'Jordan,\n\nI need you to authorize a $47,000 wire immediately. Board meeting starts in 40 minutes. Do NOT discuss with anyone.\n\nMichael Chen, CEO' },
+        legit: { from:'HR Team <hr@yourdomain.com>', subject:'Q4 Benefits Enrollment — Closes Friday', body:'Hi Jordan,\n\nThe Q4 enrollment window closes Friday at 5PM. Log into the employee portal to review your elections.\n\nHR Team' },
+        why: 'Sender domain "acme-corp-secure.com" ≠ your company domain. The real CEO emails from your internal domain. Urgency + secrecy is a textbook BEC pattern.' },
+      { phish: { from:'IT Security <noreply@m365-secure-login.net>', subject:'Action Required: MFA Device Re-registration', body:'Your MFA device shows an anomaly. Your account will be locked in 24 hours unless you re-register immediately.\n\nClick here to verify. Link expires in 2 hours.' },
+        legit: { from:'Microsoft 365 Admin <admin@yourdomain.onmicrosoft.com>', subject:'Monthly Security Report — June 2025', body:'Your M365 monthly security report is ready. Sign in at https://admin.microsoft.com to review your security score and recent sign-ins. No action required unless you see unfamiliar activity.' },
+        why: '"m365-secure-login.net" is not a Microsoft domain. Microsoft\'s genuine domains end in .microsoft.com. The 2-hour deadline creates artificial urgency.' },
+      { phish: { from:'Accounts Payable <ap@invoice-processing-hub.co>', subject:'Invoice #INV-9921 — Final Notice Before Legal Action', body:'Invoice #INV-9921 for $12,400 is 30 days overdue. This is your final notice before we escalate. Pay immediately to avoid late fees and legal action.' },
+        legit: { from:'Salesforce Billing <billing@salesforce.com>', subject:'Your Salesforce Invoice — July 2025', body:'Your July 2025 invoice for Salesforce CRM is ready. Log in at https://login.salesforce.com to download.\n\nAmount due: $3,200 | Due: Aug 15, 2025' },
+        why: '"invoice-processing-hub.co" is not a known vendor. Legitimate vendors use consistent, verifiable domains. Legal threat + urgency = pressure to rush payment.' },
+    ];
+    let stpIdx = 0, stpScore = 0, stpTotal = 0;
+
+    function stpRender() {
+      const pair = STP_PAIRS[stpIdx % STP_PAIRS.length];
+      const phishLeft = Math.random() > 0.5;
+      const A = phishLeft ? pair.phish : pair.legit;
+      const B = phishLeft ? pair.legit : pair.phish;
+      const con = document.getElementById('stp-pair-container');
+
+      function box(e, isPhish, idx) {
+        return `<div class="stp-box" id="stp-box-${idx}"
+          onclick="stpPick(${idx},${isPhish?1:0},'${esc(pair.why)}')">
+          <div class="stp-box-chrome"><span style="background:#ef4444;"></span><span style="background:#f59e0b;"></span><span style="background:#10b981;"></span></div>
+          <div class="stp-box-header">
+            <div style="display:flex;"><span class="stp-lbl">From</span><span style="color:var(--text-primary,#F0F4FF);font-family:var(--mono);font-size:0.63rem;">${esc(e.from)}</span></div>
+            <div style="display:flex;"><span class="stp-lbl">Subject</span><span style="color:var(--primary,#38BDF8);font-weight:600;font-family:var(--mono);font-size:0.63rem;">${esc(e.subject)}</span></div>
+          </div>
+          <div class="stp-box-body">${esc(e.body)}</div>
+        </div>`;
+      }
+      con.innerHTML = box(A, phishLeft, 0) + box(B, !phishLeft, 1);
+      const resEl = document.getElementById('stp-result');
+      resEl.style.display = 'none';
+      document.getElementById('stp-next-btn').style.display = 'none';
+    }
+
+    window.stpPick = function(boxIdx, isPhish, why) {
+      stpTotal++;
+      if (isPhish) stpScore++;
+      document.getElementById('stp-score').textContent = stpScore;
+      document.getElementById('stp-total').textContent = stpTotal;
+      const boxes = document.querySelectorAll('.stp-box');
+      boxes.forEach(b => b.style.pointerEvents = 'none');
+      boxes[boxIdx].classList.add(isPhish ? 'correct' : 'wrong');
+      boxes[1 - boxIdx].classList.add(isPhish ? 'wrong' : 'correct');
+      const resEl = document.getElementById('stp-result');
+      resEl.className = 'stp-result phish';
+      resEl.innerHTML = isPhish
+        ? `✓ Correct — that's the phish.<br><br><strong>Why:</strong> ${esc(why)}`
+        : `✗ That was the legit email.<br><br><strong>Tip:</strong> ${esc(why)}`;
+      resEl.style.display = 'block';
+      document.getElementById('stp-next-btn').style.display = 'inline-flex';
+    };
+
+    window.stpNext = function() {
+      stpIdx = (stpIdx + 1) % STP_PAIRS.length;
+      stpRender();
+    };
+
+    stpRender();
+
+    /* ================================================================
+       Risk Score
+       ================================================================ */
+    document.querySelectorAll('.rs-opt').forEach(opt => {
+      opt.addEventListener('click', () => {
+        const name = opt.querySelector('input').name;
+        document.querySelectorAll(`.rs-opt input[name="${name}"]`)
+          .forEach(i => i.closest('.rs-opt').classList.remove('selected'));
+        opt.classList.add('selected');
+        opt.querySelector('input').checked = true;
+      });
+    });
+
+    window.rsCalc = function() {
+      const ind = document.querySelector('input[name="rs-ind"]:checked');
+      const sz  = document.querySelector('input[name="rs-sz"]:checked');
+      const tr  = document.querySelector('input[name="rs-tr"]:checked');
+      if (!ind || !sz || !tr) {
+        document.getElementById('rs-dialogue-text').textContent = 'Please answer all 3 questions first.';
+        return;
+      }
+      const raw   = +ind.value + +sz.value + +tr.value; // 0-9
+      const pct   = Math.round(14 + raw * 8);            // 14-86%
+      const color = pct >= 60 ? 'var(--danger,#F87171)' : pct >= 35 ? 'var(--warning,#FB923C)' : 'var(--success,#34D399)';
+      const label = pct >= 60 ? 'High exposure — simulations strongly recommended'
+                  : pct >= 35 ? 'Moderate exposure — some controls in place'
+                  :             'Lower exposure — good hygiene, keep it up';
+      document.getElementById('rs-form').style.display = 'none';
+      const res = document.getElementById('rs-result');
+      res.style.display = 'block';
+      document.getElementById('rs-gauge').style.color = color;
+      document.getElementById('rs-gauge').textContent = pct + '%';
+      document.getElementById('rs-gauge-lbl').textContent = label;
+    };
+
+    window.rsReset = function() {
+      document.getElementById('rs-result').style.display = 'none';
+      document.getElementById('rs-form').style.display = 'block';
+      document.querySelectorAll('.rs-opt').forEach(o => o.classList.remove('selected'));
+      document.querySelectorAll('.rs-opt input').forEach(i => i.checked = false);
+    };
+
+  })(); // end IIFE
   </script>
 
 </body>
