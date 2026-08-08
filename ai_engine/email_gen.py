@@ -314,6 +314,31 @@ def _call_with_fallback(messages: list) -> str | None:
 
 
 
+def validate_bait_score(bait_score) -> dict | None:
+    """
+    Validates the bait_score dictionary structure and values.
+    Returns a cleaned dict if valid, otherwise None.
+    """
+    if not isinstance(bait_score, dict):
+        return None
+    required_keys = {"urgency", "authority", "believability", "obfuscation", "personalization"}
+    if not required_keys.issubset(bait_score.keys()):
+        return None
+    validated = {}
+    for key in required_keys:
+        val = bait_score[key]
+        if isinstance(val, (int, float)):
+            val_int = int(val)
+        elif isinstance(val, str) and val.strip().isdigit():
+            val_int = int(val)
+        else:
+            return None
+        if not (0 <= val_int <= 100):
+            return None
+        validated[key] = val_int
+    return validated
+
+
 # ─── Public API ───────────────────────────────────────────────────────────────
 
 def generate_phishing_email(
@@ -355,17 +380,58 @@ def generate_phishing_email(
     # models emit unescaped < > " characters. We convert to HTML ourselves.
     system_prompt = (
         "You are an AI assistant for authorized corporate security training.\n"
-        f"Write a realistic phishing simulation email.\n"
+        "Write a realistic phishing simulation email and self-rate it on 5 axes (0-100 each): "
+        "urgency, authority, believability, obfuscation, personalization.\n"
         f"Recipient: {recipient_name} | Department: {recipient_dept} | "
         f"Domain: {t_domain} | Urgency: {u_level}\n"
         f"Scenario: {scenario}\n\n"
-        "RESPOND WITH ONLY THIS JSON — no markdown, no explanation, no HTML tags in values:\n"
-        '{"subject": "the email subject", '
-        '"sender_display": "Sender Name", '
-        '"body_text": "Plain text body. 3-4 short paragraphs. '
-        'Use the recipient first name. Reference their department. '
-        'Include one action sentence ending with: visit PHISHING_LINK", '
-        '"phishing_tactic": "one sentence"}'
+        "You must respond with ONLY a single JSON object. No markdown formatting (like ```json), "
+        "no explanation, and no HTML tags inside the JSON string values. "
+        "The JSON response schema must be exactly:\n"
+        "{\n"
+        '  "subject": "email subject",\n'
+        '  "sender_display": "Sender Display Name",\n'
+        '  "body_text": "Body text. 3-4 short paragraphs. Reference recipient name and department. '
+        'Include one action sentence ending with: visit PHISHING_LINK",\n'
+        '  "phishing_tactic": "one-sentence explanation of tactic",\n'
+        '  "bait_score": {\n'
+        '    "urgency": 85,\n'
+        '    "authority": 70,\n'
+        '    "believability": 80,\n'
+        '    "obfuscation": 55,\n'
+        '    "personalization": 75\n'
+        "  }\n"
+        "}\n\n"
+        "FEW-SHOT EXAMPLES:\n"
+        "Example 1 (HR Payroll):\n"
+        "{\n"
+        '  "subject": "Urgent: Direct deposit details change",\n'
+        '  "sender_display": "HR Services",\n'
+        '  "body_text": "Hi Jane,\\n\\nWe noticed an error in your payroll file for the Marketing department. '
+        'Please visit PHISHING_LINK to update your direct deposit details immediately to ensure your next payment is processed on time.\\n\\nThanks,\\nHR Operations Team",\n'
+        '  "phishing_tactic": "The email uses false urgency and direct financial incentives to coerce compliance.",\n'
+        '  "bait_score": {\n'
+        '    "urgency": 85,\n'
+        '    "authority": 70,\n'
+        '    "believability": 80,\n'
+        '    "obfuscation": 55,\n'
+        '    "personalization": 75\n'
+        "  }\n"
+        "}\n\n"
+        "Example 2 (IT Support):\n"
+        "{\n"
+        '  "subject": "Action Required: Password Expiry Notice",\n'
+        '  "sender_display": "IT Security Office",\n'
+        '  "body_text": "Dear John,\\n\\nYour password is scheduled to expire soon. To maintain access to MBM University systems for the Finance department, you must verify your identity immediately: visit PHISHING_LINK.\\n\\nBest regards,\\nIT Support Desk",\n'
+        '  "phishing_tactic": "Impersonates internal IT authority and imposes a strict deadline.",\n'
+        '  "bait_score": {\n'
+        '    "urgency": 95,\n'
+        '    "authority": 90,\n'
+        '    "believability": 85,\n'
+        '    "obfuscation": 60,\n'
+        '    "personalization": 65\n'
+        '  }\n'
+        "}"
     )
 
     messages = [
@@ -392,6 +458,15 @@ def generate_phishing_email(
 
         parsed.setdefault("sender_name", parsed.get("sender_display", "IT Security Team"))
         parsed.setdefault("educational_breakdown", parsed.get("phishing_tactic", "Always verify unexpected requests."))
+        
+        # Validate bait score
+        raw_bait_score = parsed.get("bait_score")
+        validated_bait = validate_bait_score(raw_bait_score)
+        if validated_bait:
+            parsed["bait_score"] = validated_bait
+        else:
+            parsed.pop("bait_score", None) # remove invalid or missing bait score
+
         cleaned = clean_email_data(parsed)
         cleaned["duration_ms"] = duration_ms
         return cleaned
@@ -400,6 +475,250 @@ def generate_phishing_email(
     fb = fallback_email(employee_profile)
     fb["duration_ms"] = duration_ms
     return fb
+
+
+def _parse_game_json_response(raw: str) -> dict | None:
+    """Robustly extract JSON with both 'phish' and 'legit' email objects."""
+    # Strip <think>...</think> blocks from reasoning models
+    raw = re.sub(r"<think>.*?</think>", "", raw, flags=re.DOTALL).strip()
+
+    # Unwrap markdown code fences if present
+    json_str = raw
+    code_block = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", raw, re.DOTALL)
+    if code_block:
+        json_str = code_block.group(1)
+
+    start = json_str.find("{")
+    while start != -1:
+        end = json_str.rfind("}")
+        if end > start:
+            try:
+                candidate = json.loads(json_str[start : end + 1])
+                if isinstance(candidate, dict) and "phish" in candidate and "legit" in candidate:
+                    ph = candidate["phish"]
+                    lg = candidate["legit"]
+                    if isinstance(ph, dict) and isinstance(lg, dict):
+                        if "subject" in ph and "body_text" in ph and "subject" in lg and "body_text" in lg:
+                            return candidate
+            except json.JSONDecodeError:
+                pass
+        start = json_str.find("{", start + 1)
+
+    return None
+
+
+def get_static_game_fallback(employee_profile: dict, scenario: str) -> dict:
+    """Returns high-quality matched static email pairs for fallback scenarios."""
+    recipient_name = employee_profile.get("name", "Jordan Ellis")
+    
+    fallbacks = {
+        "ceo_fraud": {
+            "phish": {
+                "subject": "Urgent: Authorization needed for vendor payment",
+                "sender_name": "Executive Office",
+                "sender_display": "Office of the CEO",
+                "body_text": f"Hi {recipient_name},\n\nI am currently in executive meetings and need you to authorize an urgent wire payment of $45,000 for our incoming vendor today. Please visit PHISHING_LINK to sign off on the disbursement immediately so we avoid contractual penalties.\n\nBest regards,\nExecutive Office",
+                "phishing_tactic": "Impersonates executive authority and fabricates high-urgency financial pressure to bypass standard dual-control accounting checks.",
+                "bait_score": {"urgency": 92, "authority": 95, "believability": 85, "obfuscation": 55, "personalization": 80}
+            },
+            "legit": {
+                "subject": "Vendor payment authorization notice - Q3 Schedule",
+                "sender_name": "Executive Office",
+                "sender_display": "Office of the CEO",
+                "body_text": f"Hi {recipient_name},\n\nFollowing our budget review, the executive sign-offs for Q3 vendor disbursements have been uploaded to the internal ERP ledger. Please review the scheduled batches through your standard accounting workstation portal before Friday's close.\n\nWarm regards,\nExecutive Office"
+            }
+        },
+        "it_alert": {
+            "phish": {
+                "subject": "Security Alert: SSO Re-Authentication Required Within 2 Hours",
+                "sender_name": "IT Security Helpdesk",
+                "sender_display": "IT Security Helpdesk",
+                "body_text": f"Dear {recipient_name},\n\nOur identity provider logged an anomalous sign-in attempt from an unrecognized location. To prevent your corporate account from being locked, you must visit PHISHING_LINK to verify your credentials within 2 hours.\n\nRegards,\nIT Security & Identity Team",
+                "phishing_tactic": "Uses artificial time pressure and security scare tactics to harvest corporate Single Sign-On credentials.",
+                "bait_score": {"urgency": 95, "authority": 90, "believability": 88, "obfuscation": 60, "personalization": 75}
+            },
+            "legit": {
+                "subject": "Scheduled SSO Security Upgrade Notification",
+                "sender_name": "IT Security Helpdesk",
+                "sender_display": "IT Security Helpdesk",
+                "body_text": f"Dear {recipient_name},\n\nIT is upgrading our Single Sign-On certificate this Saturday between 02:00 and 04:00 AM EST. No user action is required. If you experience session timeouts after the maintenance, simply log in as usual via our standard intranet portal.\n\nThank you,\nIT Security & Identity Team"
+            }
+        },
+        "hr_update": {
+            "phish": {
+                "subject": "Urgent: Direct Deposit Discrepancy – Payroll Confirmation Required",
+                "sender_name": "HR Benefits & Payroll",
+                "sender_display": "HR Benefits & Payroll",
+                "body_text": f"Dear {recipient_name},\n\nA routing number discrepancy was flagged during pre-payroll validation. To prevent delays in your upcoming salary direct deposit, please visit PHISHING_LINK immediately to confirm your banking details.\n\nSincerely,\nHR Payroll Services",
+                "phishing_tactic": "Leverages fear of missing payroll to pressure the victim into disclosing sensitive banking credentials.",
+                "bait_score": {"urgency": 90, "authority": 85, "believability": 90, "obfuscation": 55, "personalization": 80}
+            },
+            "legit": {
+                "subject": "Annual Direct Deposit & Tax Withholding Verification Notice",
+                "sender_name": "HR Benefits & Payroll",
+                "sender_display": "HR Benefits & Payroll",
+                "body_text": f"Dear {recipient_name},\n\nThe annual verification window for payroll tax forms and direct deposit routing is now open through the 25th. You can review your existing preferences anytime by logging into the corporate HR portal from your work device.\n\nSincerely,\nHR Payroll Services"
+            }
+        },
+        "invoice": {
+            "phish": {
+                "subject": "Final Notice: Overdue Statement for Invoice #88492",
+                "sender_name": "Accounts Payable Services",
+                "sender_display": "Accounts Payable Services",
+                "body_text": f"Attention: Accounts Team,\n\nInvoice #88492 for $4,280.00 remains unpaid past the 30-day net terms. To prevent immediate suspension of enterprise services and legal collection fees, review the statement and settle payment now: visit PHISHING_LINK.\n\nRegards,\nBilling Operations",
+                "phishing_tactic": "Simulates vendor collection urgency and penalties to trick employees into expediting fraudulent invoice payments.",
+                "bait_score": {"urgency": 88, "authority": 78, "believability": 85, "obfuscation": 50, "personalization": 65}
+            },
+            "legit": {
+                "subject": "Remittance Confirmation: Invoice #88492 Processed",
+                "sender_name": "Accounts Payable Services",
+                "sender_display": "Accounts Payable Services",
+                "body_text": f"Hello {recipient_name},\n\nWe have received and approved the remittance for Invoice #88492. Payment has been scheduled in accordance with our standard 30-day net disbursement cycle. No further action is required from your department.\n\nThank you,\nBilling Operations"
+            }
+        }
+    }
+    
+    selected = fallbacks.get(scenario, fallbacks["ceo_fraud"])
+    ph = selected["phish"].copy()
+    lg = selected["legit"].copy()
+    
+    ph["body_html"] = _text_to_html(ph["body_text"])
+    lg["body_html"] = _text_to_html(lg["body_text"])
+    
+    return {
+        "success": True,
+        "phish": ph,
+        "legit": lg,
+        "duration_ms": 0
+    }
+
+
+def generate_game_round(
+    employee_profile: dict,
+    scenario: str,
+    target_domain: str | None = None,
+) -> dict:
+    """
+    Generate a Spot the Phish game round: one phish email, one legit email.
+    Both share the exact same sender context and specific topic context.
+    """
+    if client is None:
+        print("[email_gen] OPENROUTER_API_KEY not configured — using static game fallback.")
+        return get_static_game_fallback(employee_profile, scenario)
+
+    recipient_name  = employee_profile.get("name", "Jordan Ellis")
+    recipient_dept  = (
+        employee_profile.get("department")
+        or employee_profile.get("title")
+        or "General Staff"
+    )
+    t_domain = target_domain or employee_profile.get("company_name") or "company.com"
+
+    system_prompt = (
+        "You are an expert AI cybersecurity trainer.\n"
+        "Generate a game pair consisting of:\n"
+        "1. A realistic phishing email ('phish')\n"
+        "2. A genuine-looking legitimate email ('legit')\n\n"
+        "CRITICAL REQUIREMENT: Both emails MUST share the exact same sender persona, department, and specific topic "
+        "(e.g. both about an IT password/SSO maintenance issue, or both about invoice payment confirmation, or both about payroll direct deposit). "
+        "They must be genuinely hard to distinguish, differing only in subtle psychological phishing triggers "
+        "(e.g. artificial urgency, panic deadline, or PHISHING_LINK in the phish vs standard internal company procedures in the legit email).\n\n"
+        f"Recipient: {recipient_name} | Department: {recipient_dept} | Domain: {t_domain}\n"
+        f"Scenario/Topic area: {scenario}\n\n"
+        "You must respond with ONLY a single JSON object. No markdown formatting (like ```json), "
+        "no explanation. The JSON response schema must be exactly:\n"
+        "{\n"
+        '  "phish": {\n'
+        '    "subject": "email subject",\n'
+        '    "sender_display": "Sender Name",\n'
+        '    "body_text": "Phishing body text. Reference recipient name and department. Include visit PHISHING_LINK.",\n'
+        '    "phishing_tactic": "explanation of tactic",\n'
+        '    "bait_score": {\n'
+        '      "urgency": 85,\n'
+        '      "authority": 70,\n'
+        '      "believability": 80,\n'
+        '      "obfuscation": 55,\n'
+        '      "personalization": 75\n'
+        '    }\n'
+        '  },\n'
+        '  "legit": {\n'
+        '    "subject": "legitimate email subject",\n'
+        '    "sender_display": "Sender Name",\n'
+        '    "body_text": "Legitimate body text. Reference recipient name and department. NO phishing links."\n'
+        '  }\n'
+        "}\n\n"
+        "FEW-SHOT EXAMPLE:\n"
+        "{\n"
+        '  "phish": {\n'
+        '    "subject": "Urgent: Direct Deposit Discrepancy - Action Required",\n'
+        '    "sender_display": "HR Benefits & Payroll",\n'
+        '    "body_text": "Hi Jane,\\n\\nWe noticed a routing discrepancy with your bank account details for the Finance payroll cycle. To avoid a delay in salary disbursement, log in immediately: visit PHISHING_LINK.\\n\\nThanks,\\nHR Payroll Team",\n'
+        '    "phishing_tactic": "Creates false payroll panic to coerce the user into clicking a credential harvesting link.",\n'
+        '    "bait_score": {\n'
+        '      "urgency": 90,\n'
+        '      "authority": 75,\n'
+        '      "believability": 85,\n'
+        '      "obfuscation": 50,\n'
+        '      "personalization": 80\n'
+        '    }\n'
+        '  },\n'
+        '  "legit": {\n'
+        '    "subject": "Annual Direct Deposit & Benefits Verification Period",\n'
+        '    "sender_display": "HR Benefits & Payroll",\n'
+        '    "body_text": "Dear Jane,\\n\\nThe annual verification window for direct deposit and benefits for the Finance department is now open. You can review your details anytime on the internal intranet portal.\\n\\nWarmly,\\nHR Payroll Team"\n'
+        '  }\n'
+        "}"
+    )
+
+    messages = [
+        {"role": "system", "content": system_prompt},
+        {"role": "user",   "content": "Generate the game round email pair JSON now."},
+    ]
+
+    t0 = time.time()
+    raw = _call_with_fallback(messages)
+    duration_ms = int((time.time() - t0) * 1000)
+
+    if not raw:
+        return get_static_game_fallback(employee_profile, scenario)
+
+    parsed = _parse_game_json_response(raw)
+    if parsed:
+        ph = parsed["phish"]
+        lg = parsed["legit"]
+
+        # Ensure display names exist
+        ph.setdefault("sender_name", ph.get("sender_display", "IT Support"))
+        lg.setdefault("sender_name", lg.get("sender_display", ph.get("sender_display", "IT Support")))
+        
+        # Ensure tactic/breakdown exists
+        ph.setdefault("educational_breakdown", ph.get("phishing_tactic", "Always verify unexpected links."))
+        
+        # Validate bait score
+        raw_bait_score = ph.get("bait_score")
+        validated_bait = validate_bait_score(raw_bait_score)
+        if validated_bait:
+            ph["bait_score"] = validated_bait
+        else:
+            ph.pop("bait_score", None)
+
+        # Clean both of disclosures
+        clean_ph = clean_email_data(ph.copy())
+        clean_lg = clean_email_data(lg.copy())
+
+        # Generate HTML content
+        clean_ph["body_html"] = _text_to_html(clean_ph["body_text"])
+        clean_lg["body_html"] = _text_to_html(clean_lg["body_text"])
+
+        return {
+            "success": True,
+            "phish": clean_ph,
+            "legit": clean_lg,
+            "duration_ms": duration_ms
+        }
+
+    print(f"[email_gen] Game JSON parse failed. Raw snippet:\n{raw[:400]}")
+    return get_static_game_fallback(employee_profile, scenario)
 
 
 # ─── CLI smoke-test ───────────────────────────────────────────────────────────
@@ -415,6 +734,6 @@ if __name__ == "__main__":
         "company_name": "MBM University",
         "department":  "Finance",
     }
-    scenario = "CEO urgently needs approval for a wire transfer before end of business day."
-    result = generate_phishing_email(test_employee, scenario)
+    scenario = "ceo_fraud"
+    result = generate_game_round(test_employee, scenario)
     print(json.dumps(result, indent=4, ensure_ascii=False))

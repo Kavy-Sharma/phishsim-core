@@ -1,5 +1,4 @@
-with open('static/style.css', 'r', encoding='utf-8') as f:
+with open('scratch/home_curl_fresh.html', 'r', encoding='utf-8') as f:
     for i, line in enumerate(f):
-        if 'overflow' in line:
-            safe_line = line.strip().encode('ascii', errors='ignore').decode('ascii')
-            print(f'{i+1}: {safe_line}')
+        if 'selectSandboxScenario(' in line or 'class ToolMiniLoader' in line:
+            print(f'{i+1}: {line.strip()[:100]}')

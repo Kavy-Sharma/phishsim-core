@@ -2284,14 +2284,17 @@ def hero_demo_lure_api():
             text = re.sub(r'<[^>]+>', '', text)
             body_text = text.strip()
             
-        return jsonify({
+        resp_data = {
             "success": True,
             "subject": res.get("subject", ""),
             "sender_display": res.get("sender_display") or res.get("sender_name", "IT Security Team"),
             "body_text": body_text,
             "phishing_tactic": res.get("phishing_tactic") or res.get("educational_breakdown", "Urgency and authority cues."),
             "duration_ms": res.get("duration_ms", 0)
-        })
+        }
+        if "bait_score" in res:
+            resp_data["bait_score"] = res["bait_score"]
+        return jsonify(resp_data)
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
 
@@ -2352,16 +2355,138 @@ def api_threat_sandbox_generate():
         
         educational_breakdown = res.get("phishing_tactic") or res.get("educational_breakdown") or "Unexpected urgent request."
         
-        return jsonify({
+        resp_data = {
             "success": True,
             "from": f"{sender_name} &lt;{sender_email}&gt;",
             "subject": res.get("subject", ""),
             "body": body_html,
             "educational_breakdown": educational_breakdown,
             "duration_ms": res.get("duration_ms", 0)
-        })
+        }
+        if "bait_score" in res:
+            resp_data["bait_score"] = res["bait_score"]
+        return jsonify(resp_data)
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
+
+
+@app.route("/api/spot-the-phish/status", methods=["GET"])
+def spot_the_phish_status():
+    from flask import session
+    import time
+    ip = get_remote_ip()
+    now = time.time()
+
+    sess_history = [t for t in session.get("game_history", []) if now - t < 86400]
+    session["game_history"] = sess_history
+
+    ip_key = (ip, "spot-the-phish-game")
+    ip_history = [t for t in PUBLIC_RATE_LIMITS.get(ip_key, []) if now - t < 86400]
+    
+    used_rounds = max(len(sess_history), len(ip_history))
+    rounds_left = max(0, 3 - used_rounds)
+    
+    return jsonify({
+        "success": True,
+        "rounds_left": rounds_left
+    })
+
+
+@app.route("/api/spot-the-phish/generate", methods=["POST"])
+def spot_the_phish_generate():
+    from flask import session
+    import random
+    import time
+    from ai_engine.email_gen import generate_game_round
+
+    ip = get_remote_ip()
+    now = time.time()
+
+    # 1. Clean session and IP histories (rolling 24h)
+    sess_history = [t for t in session.get("game_history", []) if now - t < 86400]
+    session["game_history"] = sess_history
+
+    ip_key = (ip, "spot-the-phish-game")
+    ip_history = [t for t in PUBLIC_RATE_LIMITS.get(ip_key, []) if now - t < 86400]
+    PUBLIC_RATE_LIMITS[ip_key] = ip_history
+
+    used_rounds = max(len(sess_history), len(ip_history))
+
+    # 2. Enforce limit (3 rounds max)
+    if used_rounds >= 3:
+        return jsonify({
+            "success": False,
+            "message": "Come back tomorrow. You have completed your 3 daily rounds.",
+            "rounds_left": 0
+        }), 429
+
+    # 3. Generate emails
+    scenario = random.choice(["ceo_fraud", "it_alert", "hr_update", "invoice"])
+    
+    dept_map = {
+        "ceo_fraud": "Finance",
+        "it_alert": "IT Support",
+        "hr_update": "Human Resources",
+        "invoice": "Accounts Payable"
+    }
+
+    placeholder_profile = {
+        "name": "Jordan Ellis",
+        "email": "jordan.ellis@example-corp.test",
+        "department": dept_map[scenario],
+        "company_name": "Example Corp"
+    }
+
+    res = generate_game_round(
+        employee_profile=placeholder_profile,
+        scenario=scenario,
+        target_domain="example-corp.test"
+    )
+
+    if not res or not res.get("success"):
+        return jsonify({"success": False, "message": "Failed to generate game round."}), 500
+
+    ph = res["phish"]
+    lg = res["legit"]
+
+    # 4. Record round
+    sess_history.append(now)
+    session["game_history"] = sess_history
+    ip_history.append(now)
+    PUBLIC_RATE_LIMITS[ip_key] = ip_history
+
+    rounds_left = max(0, 3 - len(sess_history))
+
+    # 5. Randomize placement
+    phish_index = random.choice([0, 1])
+    emails = [None, None]
+    
+    ph_data = {
+        "subject": ph.get("subject", ""),
+        "sender_name": ph.get("sender_display") or ph.get("sender_name", "IT Support"),
+        "body_text": ph.get("body_text", ""),
+        "body_html": ph.get("body_html", "")
+    }
+    
+    lg_data = {
+        "subject": lg.get("subject", ""),
+        "sender_name": lg.get("sender_display") or lg.get("sender_name", "IT Support"),
+        "body_text": lg.get("body_text", ""),
+        "body_html": lg.get("body_html", "")
+    }
+
+    emails[phish_index] = ph_data
+    emails[1 - phish_index] = lg_data
+
+    return jsonify({
+        "success": True,
+        "phish_index": phish_index,
+        "scenario": scenario,
+        "emails": emails,
+        "phish_tactic": ph.get("phishing_tactic") or ph.get("educational_breakdown") or "Unexpected urgent request.",
+        "bait_score": ph.get("bait_score"),
+        "rounds_left": rounds_left
+    })
 
 @app.route("/api/analyze-threat", methods=["POST"])
 def analyze_threat_api():
