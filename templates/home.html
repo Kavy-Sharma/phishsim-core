@@ -77,27 +77,10 @@
       --border-default: rgba(255, 255, 255, 0.12);
       --border-active: rgba(99, 179, 237, 0.4);
 
-      /* === PRIMARY — Cyan === */
-      --primary: #38BDF8;
-      --primary-dim: rgba(56, 189, 248, 0.15);
-      --primary-glow: rgba(56, 189, 248, 0.25);
 
-      /* === DANGER / CRITICAL === */
-      --danger: #F87171;
-      --danger-dim: rgba(248, 113, 113, 0.15);
-      --danger-glow: rgba(248, 113, 113, 0.2);
 
-      /* === WARNING / HIGH RISK === */
-      --warning: #FB923C;
-      --warning-dim: rgba(251, 146, 60, 0.15);
 
-      /* === SUCCESS / SAFE === */
-      --success: #34D399;
-      --success-dim: rgba(52, 211, 153, 0.15);
 
-      /* === INFO / NEUTRAL === */
-      --info: #818CF8;
-      --info-dim: rgba(129, 140, 248, 0.15);
 
       /* === TEXT === */
       --text-primary: #F0F4FF;
@@ -123,29 +106,12 @@
       /* === BORDERS === */
       --border-subtle: rgba(0, 0, 0, 0.06);
       --border-default: rgba(0, 0, 0, 0.12);
-      --border-active: rgba(14, 116, 200, 0.5);
+      --border-active: color-mix(in srgb, var(--primary) 50%, transparent);
 
-      /* === PRIMARY === */
-      --primary: #0E74C8;
-      --primary-dim: rgba(14, 116, 200, 0.1);
-      --primary-glow: rgba(14, 116, 200, 0.2);
 
-      /* === DANGER === */
-      --danger: #DC2626;
-      --danger-dim: rgba(220, 38, 38, 0.1);
-      --danger-glow: rgba(220, 38, 38, 0.15);
 
-      /* === WARNING === */
-      --warning: #EA580C;
-      --warning-dim: rgba(234, 88, 12, 0.1);
 
-      /* === SUCCESS === */
-      --success: #059669;
-      --success-dim: rgba(5, 150, 105, 0.1);
 
-      /* === INFO === */
-      --info: #4F46E5;
-      --info-dim: rgba(79, 70, 229, 0.1);
 
       /* === TEXT === */
       --text-primary: #0F172A;
@@ -202,16 +168,22 @@
       transition: background 0.35s ease, color 0.35s ease;
     }
 
-    body,
-    .hero-section,
-    #app {
-      background-color: #060B18 !important;
+    body {
+      background-color: var(--bg-base) !important;
     }
 
-    body.light-theme,
+    .hero-section,
+    #app {
+      background-color: transparent !important;
+    }
+
+    body.light-theme {
+      background-color: #F5F7FF !important;
+    }
+
     body.light-theme .hero-section,
     body.light-theme #app {
-      background-color: #F5F7FF !important;
+      background-color: transparent !important;
     }
 
     /* ── FLASH MESSAGES ── */
@@ -265,24 +237,24 @@
     }
 
     .timeline-wavy-svg path:first-of-type {
-      stroke: rgba(6, 182, 212, 0.12);
+      stroke: color-mix(in srgb, var(--primary) 12%, transparent);
     }
 
     #timeline-wavy-fill {
-      stroke: #06b6d4;
-      filter: drop-shadow(0 0 5px rgba(6, 182, 212, 0.6));
+      stroke: var(--primary);
+      filter: drop-shadow(0 0 5px color-mix(in srgb, var(--primary) 60%, transparent));
       stroke-dasharray: 1500;
       stroke-dashoffset: 1500;
       transition: stroke-dashoffset 0.6s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
     body.light-theme .timeline-wavy-svg path:first-of-type {
-      stroke: rgba(37, 99, 235, 0.08) !important;
+      stroke: color-mix(in srgb, var(--primary) 8%, transparent) !important;
     }
 
     body.light-theme #timeline-wavy-fill {
-      stroke: #2563eb !important;
-      filter: drop-shadow(0 0 5px rgba(37, 99, 235, 0.4)) !important;
+      stroke: var(--primary) !important;
+      filter: drop-shadow(0 0 5px color-mix(in srgb, var(--primary) 40%, transparent)) !important;
     }
 
     /* Mobile straight progress line fallback (hidden on desktop) */
@@ -293,7 +265,7 @@
       top: 50px;
       bottom: 50px;
       width: 4px;
-      background: rgba(6, 182, 212, 0.1);
+      background: color-mix(in srgb, var(--primary) 10%, transparent);
       border-radius: 2px;
       z-index: 10;
     }
@@ -301,8 +273,8 @@
     .timeline-progress-line-fill {
       width: 100%;
       height: 0%;
-      background: #06b6d4;
-      box-shadow: 0 0 10px #06b6d4, 0 0 20px #06b6d4;
+      background: var(--primary);
+      box-shadow: 0 0 5px color-mix(in srgb, var(--primary) 60%, transparent), 0 0 10px color-mix(in srgb, var(--primary) 60%, transparent);
       border-radius: 2px;
       transition: height 0.4s cubic-bezier(0.16, 1, 0.3, 1);
     }
@@ -315,9 +287,9 @@
       font-family: var(--mono), monospace;
       font-size: 0.85rem;
       font-weight: 700;
-      color: #06b6d4;
+      color: var(--primary);
       background: rgba(2, 6, 23, 0.8);
-      border: 1px solid rgba(6, 182, 212, 0.3);
+      border: 1px solid color-mix(in srgb, var(--primary) 30%, transparent);
       padding: 8px 16px;
       border-radius: 50px;
       backdrop-filter: blur(8px);
@@ -382,25 +354,25 @@
       font-family: var(--mono), monospace;
       font-size: 3.5rem;
       font-weight: 900;
-      color: rgba(6, 182, 212, 0.2);
+      color: color-mix(in srgb, var(--primary) 20%, transparent);
       transition: color 0.4s ease;
       line-height: 1;
       margin-bottom: 10px;
     }
 
     .timeline-panel.active .timeline-step-num {
-      color: #06b6d4;
-      text-shadow: 0 0 20px rgba(6, 182, 212, 0.6);
+      color: var(--primary);
+      text-shadow: 0 0 20px color-mix(in srgb, var(--primary) 60%, transparent);
       animation: cyanPulse 2s infinite alternate;
     }
 
     @keyframes cyanPulse {
       from {
-        text-shadow: 0 0 10px rgba(6, 182, 212, 0.4);
+        text-shadow: 0 0 10px color-mix(in srgb, var(--primary) 40%, transparent);
       }
 
       to {
-        text-shadow: 0 0 25px rgba(6, 182, 212, 0.8), 0 0 10px rgba(6, 182, 212, 0.5);
+        text-shadow: 0 0 25px color-mix(in srgb, var(--primary) 80%, transparent), 0 0 10px color-mix(in srgb, var(--primary) 50%, transparent);
       }
     }
 
@@ -408,22 +380,22 @@
       width: 100px;
       height: 100px;
       border-radius: 20px;
-      background: rgba(6, 182, 212, 0.05);
-      border: 1px solid rgba(6, 182, 212, 0.2);
+      background: color-mix(in srgb, var(--primary) 5%, transparent);
+      border: 1px solid color-mix(in srgb, var(--primary) 20%, transparent);
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 3rem;
-      color: #06b6d4;
+      color: var(--primary);
       box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
       transform: scale(0.7) rotate(-15deg);
       transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275), border-color 0.3s, background 0.3s;
     }
 
     .timeline-panel.active .timeline-icon-box {
-      background: rgba(6, 182, 212, 0.1);
-      border-color: #06b6d4;
-      box-shadow: 0 12px 40px rgba(6, 182, 212, 0.2);
+      background: color-mix(in srgb, var(--primary) 10%, transparent);
+      border-color: var(--primary);
+      box-shadow: 0 12px 20px color-mix(in srgb, var(--primary) 13%, transparent);
       transform: scale(1) rotate(0deg) !important;
     }
 
@@ -525,8 +497,8 @@
     /* Light theme overrides for dialog cards and pointer tails */
     body.light-theme .timeline-right {
       background: rgba(255, 255, 255, 0.65) !important;
-      border-color: rgba(37, 99, 235, 0.06) !important;
-      box-shadow: 0 10px 40px rgba(37, 99, 235, 0.05) !important;
+      border-color: color-mix(in srgb, var(--primary) 6%, transparent) !important;
+      box-shadow: 0 10px 20px color-mix(in srgb, var(--primary) 3%, transparent) !important;
     }
 
     body.light-theme .timeline-panel:nth-of-type(odd) .timeline-right::before {
@@ -548,8 +520,8 @@
 
     body.light-theme .glass-blur-text {
       background: rgba(245, 247, 255, 0.65) !important;
-      border-color: rgba(37, 99, 235, 0.06) !important;
-      box-shadow: 0 10px 40px rgba(37, 99, 235, 0.05) !important;
+      border-color: color-mix(in srgb, var(--primary) 6%, transparent) !important;
+      box-shadow: 0 10px 20px color-mix(in srgb, var(--primary) 3%, transparent) !important;
     }
 
     .glass-section-header {
@@ -566,8 +538,8 @@
 
     body.light-theme .glass-section-header {
       background: rgba(245, 247, 255, 0.6) !important;
-      border-color: rgba(37, 99, 235, 0.06) !important;
-      box-shadow: 0 8px 32px rgba(37, 99, 235, 0.03) !important;
+      border-color: color-mix(in srgb, var(--primary) 6%, transparent) !important;
+      box-shadow: 0 8px 16px color-mix(in srgb, var(--primary) 2%, transparent) !important;
     }
 
     @media (max-width: 768px) {
@@ -659,7 +631,7 @@
 
     .intel-feed-window {
       background: #020617;
-      border: 1px solid rgba(6, 182, 212, 0.2);
+      border: 1px solid color-mix(in srgb, var(--primary) 20%, transparent);
       border-radius: 16px;
       padding: 24px;
       box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
@@ -673,7 +645,7 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      border-bottom: 1px solid rgba(6, 182, 212, 0.15);
+      border-bottom: 1px solid color-mix(in srgb, var(--primary) 15%, transparent);
       padding-bottom: 12px;
       margin-bottom: 16px;
     }
@@ -708,7 +680,7 @@
     .intel-log-card {
       background: rgba(255, 255, 255, 0.02);
       border: 1px solid rgba(255, 255, 255, 0.04);
-      border-left: 3px solid #06b6d4;
+      border-left: 3px solid var(--primary);
       border-radius: 6px;
       padding: 12px 16px;
       font-family: var(--mono), monospace;
@@ -722,7 +694,7 @@
     }
 
     .intel-log-card:hover {
-      background: rgba(6, 182, 212, 0.05);
+      background: color-mix(in srgb, var(--primary) 5%, transparent);
       border-left-color: #ff007f;
     }
 
@@ -765,7 +737,7 @@
       transform: translateY(-4px);
       border-left-color: var(--card-glow-color);
       border-color: rgba(255, 255, 255, 0.2);
-      box-shadow: 0 15px 35px var(--card-glow-color-shadow, rgba(6, 182, 212, 0.15));
+      box-shadow: 0 15px 20px var(--card-glow-color-shadow, color-mix(in srgb, var(--primary) 10%, transparent));
     }
 
     .intel-stat-card:hover::after {
@@ -803,7 +775,7 @@
 
     body.light-theme .intel-feed-window {
       background: #ffffff;
-      border-color: rgba(37, 99, 235, 0.15);
+      border-color: color-mix(in srgb, var(--primary) 15%, transparent);
       box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
     }
 
@@ -814,7 +786,7 @@
     }
 
     body.light-theme .intel-log-card:hover {
-      background: rgba(37, 99, 235, 0.05);
+      background: color-mix(in srgb, var(--primary) 5%, transparent);
     }
 
     body.light-theme .intel-stat-card {
@@ -881,7 +853,7 @@
       inset: 0;
       border-radius: 16px;
       padding: 1px;
-      background: linear-gradient(135deg, rgba(6, 182, 212, 0.15), transparent);
+      background: linear-gradient(135deg, color-mix(in srgb, var(--primary) 15%, transparent), transparent);
       -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
       -webkit-mask-composite: xor;
       mask-composite: exclude;
@@ -890,8 +862,8 @@
 
     .suite-card:not(.disabled):hover {
       transform: translateY(-4px);
-      border-color: #06b6d4;
-      box-shadow: 0 15px 35px rgba(6, 182, 212, 0.15);
+      border-color: var(--primary);
+      box-shadow: 0 15px 20px color-mix(in srgb, var(--primary) 10%, transparent);
     }
 
     .suite-card.disabled {
@@ -910,26 +882,26 @@
       width: 50px;
       height: 50px;
       border-radius: 10px;
-      background: rgba(6, 182, 212, 0.08);
-      border: 1px solid rgba(6, 182, 212, 0.2);
+      background: color-mix(in srgb, var(--primary) 8%, transparent);
+      border: 1px solid color-mix(in srgb, var(--primary) 20%, transparent);
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 1.5rem;
-      color: #06b6d4;
+      color: var(--primary);
       transition: all 0.3s ease;
     }
 
     .suite-card:not(.disabled):hover .suite-icon {
-      background: rgba(6, 182, 212, 0.15);
-      border-color: #06b6d4;
-      box-shadow: 0 0 15px rgba(6, 182, 212, 0.2);
+      background: color-mix(in srgb, var(--primary) 15%, transparent);
+      border-color: var(--primary);
+      box-shadow: 0 0 8px color-mix(in srgb, var(--primary) 12%, transparent);
     }
 
     .suite-badge-pro {
-      background: rgba(245, 158, 11, 0.1);
-      border: 1px solid rgba(245, 158, 11, 0.3);
-      color: #f59e0b;
+      background: color-mix(in srgb, var(--warning) 10.0%, transparent);
+      border: 1px solid color-mix(in srgb, var(--warning) 30.0%, transparent);
+      color: var(--warning);
       font-family: var(--mono), monospace;
       font-size: 0.7rem;
       font-weight: 700;
@@ -957,7 +929,7 @@
       font-family: var(--sans), sans-serif;
       font-size: 0.85rem;
       font-weight: 600;
-      color: #06b6d4;
+      color: var(--primary);
       display: inline-flex;
       align-items: center;
       gap: 6px;
@@ -984,14 +956,14 @@
     }
 
     body.light-theme .suite-icon {
-      background: rgba(37, 99, 235, 0.08);
-      border-color: rgba(37, 99, 235, 0.2);
-      color: #2563eb;
+      background: color-mix(in srgb, var(--primary) 8%, transparent);
+      border-color: color-mix(in srgb, var(--primary) 20%, transparent);
+      color: var(--primary);
     }
 
     body.light-theme .suite-card:not(.disabled):hover .suite-icon {
-      background: rgba(37, 99, 235, 0.15);
-      border-color: #2563eb;
+      background: color-mix(in srgb, var(--primary) 15%, transparent);
+      border-color: var(--primary);
     }
 
     @media (max-width: 768px) {
@@ -1051,7 +1023,7 @@
       letter-spacing: -0.03em !important;
       margin-bottom: 24px !important;
       color: var(--text-primary) !important;
-      background: linear-gradient(100deg, #f0f4ff 5%, #38bdf8 35%, #818cf8 65%, #c084fc 85%, #f0f4ff 100%);
+      background: linear-gradient(100deg, #f0f4ff 5%, var(--primary) 35%, #818cf8 65%, #c084fc 85%, #f0f4ff 100%);
       background-size: 220% 100%;
       background-position: 0% 50%;
       -webkit-background-clip: text;
@@ -1062,11 +1034,11 @@
 
     .hero-h1:hover {
       animation: hero-gradient-flow 2.6s ease-in-out infinite alternate;
-      filter: drop-shadow(0 0 18px rgba(56, 189, 248, 0.2));
+      filter: drop-shadow(0 0 18px color-mix(in srgb, var(--primary) 20.0%, transparent));
     }
 
     body.light-theme .hero-h1 {
-      background-image: linear-gradient(100deg, #0f172a 5%, #0e74c8 35%, #4f46e5 65%, #7c3aed 85%, #0f172a 100%);
+      background-image: linear-gradient(100deg, #0f172a 5%, var(--primary) 35%, #4f46e5 65%, #7c3aed 85%, #0f172a 100%);
     }
 
     @keyframes hero-gradient-flow {
@@ -1102,12 +1074,12 @@
       background: var(--primary) !important;
       color: var(--text-inverse) !important;
       border: none !important;
-      box-shadow: 0 4px 14px var(--primary-glow) !important;
+      box-shadow: 0 4px 8px color-mix(in srgb, var(--primary) 15%, transparent) !important;
     }
 
     .btn-hero-primary:hover {
       transform: translateY(-2px) !important;
-      box-shadow: 0 6px 20px var(--primary-glow) !important;
+      box-shadow: 0 6px 10px color-mix(in srgb, var(--primary) 15%, transparent) !important;
     }
 
     .btn-hero-ghost {
@@ -1165,7 +1137,7 @@
 
     .btn-primary:hover {
       transform: translateY(-2px);
-      box-shadow: 0 8px 30px rgba(14, 165, 233, 0.4);
+      box-shadow: 0 8px 15px color-mix(in srgb, var(--primary) 24%, transparent);
     }
 
     .btn-primary:hover::after {
@@ -1209,40 +1181,40 @@
     }
 
     .btn-nav-pro {
-      background: linear-gradient(135deg, #06b6d4, #3b82f6);
+      background: linear-gradient(135deg, var(--primary), var(--primary));
       color: #fff !important;
       border-color: transparent !important;
-      box-shadow: 0 0 20px rgba(6, 182, 212, 0.3);
+      box-shadow: 0 0 10px color-mix(in srgb, var(--primary) 18%, transparent);
       transition: all 0.25s ease;
     }
 
     .btn-nav-pro:hover {
       transform: translateY(-2px);
-      box-shadow: 0 0 25px rgba(6, 182, 212, 0.5);
+      box-shadow: 0 0 15px color-mix(in srgb, var(--primary) 30%, transparent);
     }
 
     body.light-theme .btn-primary {
-      background: linear-gradient(135deg, #2563eb, #4f46e5);
-      box-shadow: 0 12px 28px rgba(37, 99, 235, 0.18);
+      background: linear-gradient(135deg, var(--primary), #4f46e5);
+      box-shadow: 0 12px 15px color-mix(in srgb, var(--primary) 11%, transparent);
     }
 
     body.light-theme .btn-nav {
-      background: linear-gradient(135deg, #2563eb, #4f46e5) !important;
+      background: linear-gradient(135deg, var(--primary), #4f46e5) !important;
       color: #fff !important;
       border-color: transparent !important;
-      box-shadow: 0 12px 28px rgba(37, 99, 235, 0.18) !important;
+      box-shadow: 0 12px 15px color-mix(in srgb, var(--primary) 11%, transparent) !important;
     }
 
     body.light-theme .btn-nav-pro {
-      background: linear-gradient(135deg, #2563eb, #4f46e5) !important;
+      background: linear-gradient(135deg, var(--primary), #4f46e5) !important;
       color: #fff !important;
-      box-shadow: 0 12px 28px rgba(37, 99, 235, 0.18) !important;
+      box-shadow: 0 12px 15px color-mix(in srgb, var(--primary) 11%, transparent) !important;
     }
 
     body.light-theme .btn-ghost {
       background: rgba(255, 255, 255, 0.66);
-      border-color: rgba(37, 99, 235, 0.18);
-      color: #1e3a8a;
+      border-color: color-mix(in srgb, var(--primary) 18%, transparent);
+      color: var(--primary);
     }
 
     .hero-trust {
@@ -1275,13 +1247,13 @@
       background: #050A14;
       width: 100%;
       max-width: 620px;
-      border: 1px solid rgba(56, 189, 248, 0.15);
+      border: 1px solid color-mix(in srgb, var(--primary) 15%, transparent);
       border-radius: 12px;
       overflow: hidden;
       box-shadow:
-        0 0 0 1px rgba(56, 189, 248, 0.05),
+        0 0 0 1px color-mix(in srgb, var(--primary) 5.0%, transparent),
         0 24px 60px rgba(0, 0, 0, 0.6),
-        0 0 40px rgba(56, 189, 248, 0.06);
+        0 0 40px color-mix(in srgb, var(--primary) 6.0%, transparent);
       position: relative;
       z-index: 10;
       font-family: 'JetBrains Mono', monospace;
@@ -1312,19 +1284,19 @@
       border: 1px solid rgba(148, 220, 255, 0.34);
       border-radius: 14px;
       background: linear-gradient(145deg, rgba(2, 6, 23, 0.92), rgba(15, 23, 42, 0.82));
-      color: #e0f2fe;
+      color: var(--primary);
       z-index: 10000;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 18px 42px rgba(0, 0, 0, 0.34), 0 0 26px rgba(56, 189, 248, 0.18);
+      box-shadow: 0 18px 42px rgba(0, 0, 0, 0.34), 0 0 15px color-mix(in srgb, var(--primary) 11%, transparent);
       transition: transform 0.25s ease, background 0.25s ease, box-shadow 0.25s ease;
     }
 
     .theme-toggle:hover {
       transform: translateY(-3px);
-      box-shadow: 0 22px 50px rgba(0, 0, 0, 0.42), 0 0 36px rgba(56, 189, 248, 0.3);
+      box-shadow: 0 22px 50px rgba(0, 0, 0, 0.42), 0 0 20px color-mix(in srgb, var(--primary) 18%, transparent);
     }
 
     .theme-toggle-icon {
@@ -1348,9 +1320,9 @@
 
     body.light-theme .theme-toggle {
       background: linear-gradient(145deg, rgba(255, 255, 255, 0.96), rgba(219, 234, 254, 0.9));
-      color: #1d4ed8;
-      border-color: rgba(37, 99, 235, 0.22);
-      box-shadow: 0 18px 42px rgba(37, 99, 235, 0.16);
+      color: var(--primary);
+      border-color: color-mix(in srgb, var(--primary) 22%, transparent);
+      box-shadow: 0 18px 22px color-mix(in srgb, var(--primary) 10%, transparent);
     }
 
     body.light-theme .theme-toggle-dark {
@@ -1372,7 +1344,7 @@
       border: 1px solid rgba(148, 220, 255, 0.2);
       border-radius: 8px;
       background: rgba(2, 6, 23, 0.9);
-      color: #e0f2fe;
+      color: var(--primary);
       font-family: var(--mono);
       font-size: 0.72rem;
       opacity: 0;
@@ -1388,8 +1360,8 @@
 
     body.light-theme .theme-tooltip {
       background: rgba(255, 255, 255, 0.95);
-      color: #1e3a8a;
-      border-color: rgba(37, 99, 235, 0.18);
+      color: var(--primary);
+      border-color: color-mix(in srgb, var(--primary) 18%, transparent);
     }
 
     .terminal-wrapper::after {
@@ -1398,7 +1370,7 @@
       inset: 0;
       background:
         linear-gradient(rgba(255, 255, 255, 0.012) 50%, rgba(0, 0, 0, 0.06) 50%),
-        radial-gradient(circle at 50% 18%, rgba(56, 189, 248, 0.035), transparent 42%);
+        radial-gradient(circle at 50% 18%, color-mix(in srgb, var(--primary) 3.5%, transparent), transparent 42%);
       background-size: 100% 3px, 100% 100%;
       pointer-events: none;
       opacity: 0.4;
@@ -1409,22 +1381,22 @@
       transform: translateY(-12px) scale(1.045);
       width: min(100%, 920px);
       z-index: 1001;
-      border-color: rgba(0, 240, 255, 0.85);
+      border-color: color-mix(in srgb, var(--primary) 85%, transparent);
       box-shadow:
         0 0 0 1px rgba(255, 255, 255, 0.05) inset,
         0 32px 100px rgba(0, 0, 0, 0.8),
-        0 0 140px rgba(0, 240, 255, 0.35);
+        0 0 80px color-mix(in srgb, var(--primary) 22%, transparent);
       animation: cyber-expand-pulse 1.5s ease-in-out infinite alternate;
     }
 
     @keyframes cyber-expand-pulse {
       0% {
-        box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.05) inset, 0 32px 100px rgba(0, 0, 0, 0.8), 0 0 140px rgba(0, 240, 255, 0.35);
-        border-color: rgba(0, 240, 255, 0.85);
+        box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.05) inset, 0 32px 100px rgba(0, 0, 0, 0.8), 0 0 80px color-mix(in srgb, var(--primary) 22%, transparent);
+        border-color: color-mix(in srgb, var(--primary) 85%, transparent);
       }
 
       100% {
-        box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.05) inset, 0 32px 100px rgba(0, 0, 0, 0.8), 0 0 180px rgba(255, 0, 127, 0.45);
+        box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.05) inset, 0 32px 100px rgba(0, 0, 0, 0.8), 0 0 100px rgba(255, 0, 127, 0.28);
         border-color: rgba(255, 0, 127, 0.8);
       }
     }
@@ -1452,7 +1424,7 @@
       display: flex;
       align-items: center;
       gap: 12px;
-      border-bottom: 1px solid rgba(56, 189, 248, 0.1);
+      border-bottom: 1px solid color-mix(in srgb, var(--primary) 10.0%, transparent);
       position: relative;
       z-index: 2;
       flex-shrink: 0;
@@ -1585,7 +1557,7 @@
     }
 
     .terminal-body::-webkit-scrollbar-thumb {
-      background: rgba(56, 189, 248, 0.2);
+      background: color-mix(in srgb, var(--primary) 20.0%, transparent);
       border-radius: 2px;
     }
 
@@ -1593,7 +1565,7 @@
       text-align: center;
       margin-bottom: 14px;
       padding-bottom: 16px;
-      border-bottom: 1px solid rgba(56, 189, 248, 0.1);
+      border-bottom: 1px solid color-mix(in srgb, var(--primary) 10.0%, transparent);
       flex-shrink: 0;
     }
 
@@ -1606,7 +1578,7 @@
 
     .t-system-name {
       font-size: 0.72rem;
-      color: #38BDF8;
+      color: var(--primary);
       letter-spacing: 0.08em;
       font-weight: 700;
       margin-top: 8px;
@@ -1621,13 +1593,13 @@
 
     /* Boot sequence ASCII art */
     .t-ascii {
-      color: #38BDF8;
+      color: var(--primary);
       font-size: 9px;
       line-height: 1.3;
       white-space: pre;
       display: block;
       margin-bottom: 6px;
-      text-shadow: 0 0 8px rgba(56, 189, 248, 0.4);
+      text-shadow: 0 0 8px color-mix(in srgb, var(--primary) 40.0%, transparent);
     }
 
     /* Terminal line classes */
@@ -1641,7 +1613,7 @@
     }
 
     .t-passive {
-      color: #FB923C;
+      color: var(--warning);
     }
 
     .t-info {
@@ -1658,7 +1630,7 @@
     }
 
     .t-prompt-echo {
-      color: #38BDF8;
+      color: var(--primary);
     }
 
     .t-output {
@@ -1666,7 +1638,7 @@
     }
 
     .t-error {
-      color: #F87171;
+      color: var(--danger);
     }
 
     .t-cmd {
@@ -1674,7 +1646,7 @@
     }
 
     .t-divider {
-      color: rgba(56, 189, 248, 0.2);
+      color: color-mix(in srgb, var(--primary) 20.0%, transparent);
       display: block;
       flex-shrink: 0;
     }
@@ -1684,11 +1656,11 @@
     }
 
     .t-warn {
-      color: #FB923C;
+      color: var(--warning);
     }
 
     .t-danger {
-      color: #F87171;
+      color: var(--danger);
     }
 
     .terminal-input-row {
@@ -1708,7 +1680,7 @@
 
     /* Colored prompt segments */
     .t-prompt-user {
-      color: #38BDF8;
+      color: var(--primary);
       font-family: 'JetBrains Mono', monospace;
       font-size: 13px;
     }
@@ -1751,7 +1723,7 @@
       color: #F0F4FF;
       font-family: 'JetBrains Mono', monospace;
       font-size: 13px;
-      caret-color: #38BDF8;
+      caret-color: var(--primary);
       min-width: 0;
     }
 
@@ -1780,11 +1752,11 @@
     }
 
     .term-chip {
-      background: rgba(56, 189, 248, 0.08);
-      border: 1px solid rgba(56, 189, 248, 0.2);
+      background: color-mix(in srgb, var(--primary) 8.0%, transparent);
+      border: 1px solid color-mix(in srgb, var(--primary) 15%, transparent);
       border-radius: 6px;
       padding: 3px 9px;
-      color: #38bdf8;
+      color: var(--primary);
       font-family: 'JetBrains Mono', monospace;
       font-size: 0.7rem;
       cursor: pointer;
@@ -1792,8 +1764,8 @@
     }
 
     .term-chip:hover {
-      background: rgba(56, 189, 248, 0.18);
-      border-color: rgba(56, 189, 248, 0.5);
+      background: color-mix(in srgb, var(--primary) 18.0%, transparent);
+      border-color: color-mix(in srgb, var(--primary) 22%, transparent);
     }
 
     .term-chip-label {
@@ -1807,11 +1779,11 @@
 
     body.light-theme .terminal-wrapper {
       background: #050A14;
-      border-color: rgba(56, 189, 248, 0.15);
+      border-color: color-mix(in srgb, var(--primary) 15%, transparent);
       box-shadow:
-        0 0 0 1px rgba(56, 189, 248, 0.05),
+        0 0 0 1px color-mix(in srgb, var(--primary) 5.0%, transparent),
         0 24px 60px rgba(0, 0, 0, 0.55),
-        0 0 40px rgba(56, 189, 248, 0.06);
+        0 0 40px color-mix(in srgb, var(--primary) 6.0%, transparent);
     }
 
     body.light-theme .terminal-bar {
@@ -1834,12 +1806,12 @@
       border-radius: 10px;
       background:
         linear-gradient(180deg, rgba(15, 23, 42, 0.96) 0 18px, rgba(0, 0, 0, 0.94) 18px 100%),
-        radial-gradient(circle at 30% 72%, rgba(56, 189, 248, 0.18), transparent 42%);
+        radial-gradient(circle at 30% 72%, color-mix(in srgb, var(--primary) 18.0%, transparent), transparent 42%);
       color: var(--cyan);
       cursor: grab;
       box-shadow:
         0 16px 38px rgba(0, 0, 0, 0.55),
-        0 0 24px rgba(56, 189, 248, 0.22),
+        0 0 24px color-mix(in srgb, var(--primary) 22.0%, transparent),
         inset 0 0 0 1px rgba(255, 255, 255, 0.04);
       transition: transform 0.24s ease, opacity 0.24s ease, box-shadow 0.24s ease;
       user-select: none;
@@ -1868,7 +1840,7 @@
       font-family: var(--mono);
       font-size: 1rem;
       font-weight: 700;
-      text-shadow: 0 0 14px rgba(56, 189, 248, 0.9);
+      text-shadow: 0 0 14px color-mix(in srgb, var(--primary) 90.0%, transparent);
     }
 
     .floating-terminal-icon .mini-terminal-line {
@@ -1877,8 +1849,8 @@
       right: 12px;
       height: 2px;
       border-radius: 99px;
-      background: rgba(56, 189, 248, 0.55);
-      box-shadow: 0 0 10px rgba(56, 189, 248, 0.38);
+      background: color-mix(in srgb, var(--primary) 55.0%, transparent);
+      box-shadow: 0 0 6px color-mix(in srgb, var(--primary) 24%, transparent);
     }
 
     .floating-terminal-icon .mini-terminal-line:nth-child(1) {
@@ -1905,7 +1877,7 @@
       transform: translateY(-2px);
       box-shadow:
         0 18px 46px rgba(0, 0, 0, 0.6),
-        0 0 36px rgba(56, 189, 248, 0.34),
+        0 0 36px color-mix(in srgb, var(--primary) 34.0%, transparent),
         inset 0 0 0 1px rgba(255, 255, 255, 0.05);
     }
 
@@ -1914,9 +1886,9 @@
       z-index: 9998;
       border: 1px solid rgba(148, 220, 255, 0.12);
       background:
-        linear-gradient(145deg, rgba(56, 189, 248, 0.12), rgba(15, 23, 42, 0.94) 40%, rgba(0, 0, 0, 0.98)),
+        linear-gradient(145deg, color-mix(in srgb, var(--primary) 12.0%, transparent), rgba(15, 23, 42, 0.94) 40%, rgba(0, 0, 0, 0.98)),
         repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.06) 0 1px, transparent 1px 4px);
-      box-shadow: 0 18px 45px rgba(0, 0, 0, 0.45), 0 0 28px rgba(56, 189, 248, 0.16);
+      box-shadow: 0 18px 45px rgba(0, 0, 0, 0.45), 0 0 15px color-mix(in srgb, var(--primary) 10%, transparent);
       pointer-events: none;
       transform-origin: center;
     }
@@ -1927,8 +1899,8 @@
       z-index: 9997;
       pointer-events: none;
       transform-origin: right center;
-      background: linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.18), rgba(56, 189, 248, 0.95));
-      box-shadow: 0 0 18px rgba(56, 189, 248, 0.82), 0 0 42px rgba(99, 102, 241, 0.38);
+      background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--primary) 18.0%, transparent), color-mix(in srgb, var(--primary) 95.0%, transparent));
+      box-shadow: 0 0 10px color-mix(in srgb, var(--primary) 50%, transparent), 0 0 22px rgba(99, 102, 241, 0.24);
     }
 
     .terminal-spark {
@@ -1938,7 +1910,7 @@
       z-index: 9999;
       border-radius: 50%;
       background: rgba(125, 231, 255, 0.95);
-      box-shadow: 0 0 14px rgba(56, 189, 248, 0.9);
+      box-shadow: 0 0 8px color-mix(in srgb, var(--primary) 55%, transparent);
       pointer-events: none;
     }
 
@@ -1999,7 +1971,7 @@
 
     body.light-theme .hero-stats {
       background: rgba(255, 255, 255, 0.68);
-      border-color: rgba(37, 99, 235, 0.12);
+      border-color: color-mix(in srgb, var(--primary) 12%, transparent);
     }
 
     /* ── SECTION COMMON ── */
@@ -2012,8 +1984,8 @@
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      background: rgba(6, 182, 212, 0.08);
-      border: 1px solid rgba(6, 182, 212, 0.2);
+      background: color-mix(in srgb, var(--primary) 8%, transparent);
+      border: 1px solid color-mix(in srgb, var(--primary) 20%, transparent);
       border-radius: 100px;
       padding: 6px 14px;
       font-size: 0.72rem;
@@ -2026,9 +1998,9 @@
     }
 
     body.light-theme .section-eyebrow {
-      background: rgba(37, 99, 235, 0.06);
-      border-color: rgba(37, 99, 235, 0.15);
-      color: #2563eb;
+      background: color-mix(in srgb, var(--primary) 6%, transparent);
+      border-color: color-mix(in srgb, var(--primary) 15%, transparent);
+      color: var(--primary);
     }
 
     .section-eyebrow::before,
@@ -2097,7 +2069,7 @@
     #attack-flow {
       background:
         linear-gradient(180deg, var(--bg-base), var(--bg-surface)),
-        radial-gradient(circle at 18% 28%, rgba(56, 189, 248, 0.12), transparent 30%);
+        radial-gradient(circle at 18% 28%, color-mix(in srgb, var(--primary) 12.0%, transparent), transparent 30%);
       position: relative;
       border-top: 1px solid var(--border);
       overflow: clip;
@@ -2133,7 +2105,7 @@
     .scrolly-card {
       background:
         linear-gradient(145deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.025)),
-        radial-gradient(circle at 16% 18%, rgba(56, 189, 248, 0.12), transparent 34%);
+        radial-gradient(circle at 16% 18%, color-mix(in srgb, var(--primary) 12.0%, transparent), transparent 34%);
       border: 1px solid rgba(148, 220, 255, 0.12);
       border-radius: 14px;
       padding: 34px;
@@ -2150,7 +2122,7 @@
       content: '';
       position: absolute;
       inset: 0;
-      background: linear-gradient(90deg, rgba(56, 189, 248, 0.28), transparent 28%);
+      background: linear-gradient(90deg, color-mix(in srgb, var(--primary) 28.0%, transparent), transparent 28%);
       opacity: 0;
       transform: translateX(-70%);
       transition: opacity 0.35s ease, transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
@@ -2160,8 +2132,8 @@
     .scrolly-card.focus {
       opacity: 1;
       transform: translateX(0) scale(1);
-      border-color: rgba(56, 189, 248, 0.48);
-      box-shadow: 0 24px 70px rgba(0, 0, 0, 0.42), 0 0 36px rgba(56, 189, 248, 0.12);
+      border-color: color-mix(in srgb, var(--primary) 22%, transparent);
+      box-shadow: 0 24px 70px rgba(0, 0, 0, 0.42), 0 0 20px color-mix(in srgb, var(--primary) 8%, transparent);
     }
 
     .scrolly-card.focus::before {
@@ -2176,8 +2148,8 @@
     .scrolly-icon {
       width: 58px;
       height: 58px;
-      background: rgba(56, 189, 248, 0.08);
-      border: 1px solid rgba(56, 189, 248, 0.22);
+      background: color-mix(in srgb, var(--primary) 8.0%, transparent);
+      border: 1px solid color-mix(in srgb, var(--primary) 18%, transparent);
       border-radius: 12px;
       display: flex;
       align-items: center;
@@ -2185,7 +2157,7 @@
       font-size: 1.45rem;
       margin-bottom: 24px;
       color: var(--white);
-      box-shadow: inset 0 0 18px rgba(56, 189, 248, 0.08);
+      box-shadow: inset 0 0 10px color-mix(in srgb, var(--primary) 5%, transparent);
     }
 
     .scrolly-num {
@@ -2205,10 +2177,10 @@
       border: 1px solid rgba(148, 220, 255, 0.14);
       border-radius: 18px;
       background:
-        radial-gradient(circle at 50% 50%, rgba(56, 189, 248, 0.13), transparent 16%),
-        radial-gradient(circle at 50% 50%, transparent 0 35%, rgba(56, 189, 248, 0.08) 36% 37%, transparent 38%),
+        radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--primary) 13.0%, transparent), transparent 16%),
+        radial-gradient(circle at 50% 50%, transparent 0 35%, color-mix(in srgb, var(--primary) 8.0%, transparent) 36% 37%, transparent 38%),
         linear-gradient(145deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.012));
-      box-shadow: inset 0 0 48px rgba(56, 189, 248, 0.06), 0 24px 80px rgba(0, 0, 0, 0.26);
+      box-shadow: inset 0 0 24px color-mix(in srgb, var(--primary) 4%, transparent), 0 24px 80px rgba(0, 0, 0, 0.26);
       overflow: hidden;
       container-type: inline-size;
       flex-shrink: 0;
@@ -2262,7 +2234,7 @@
       content: '';
       position: absolute;
       inset: 14%;
-      border: 1px solid rgba(56, 189, 248, 0.16);
+      border: 1px solid color-mix(in srgb, var(--primary) 16%, transparent);
       border-radius: 50%;
       animation: attackOrbit 18s linear infinite;
     }
@@ -2283,14 +2255,14 @@
       transform: translate(-50%, -50%);
       border-radius: 18px;
       background: #000;
-      border: 1px solid rgba(56, 189, 248, 0.35);
+      border: 1px solid color-mix(in srgb, var(--primary) 18%, transparent);
       display: grid;
       place-items: center;
       color: var(--cyan);
       font-family: var(--mono);
       font-weight: 700;
       font-size: clamp(0.75rem, 2cqw, 1.05rem);
-      box-shadow: 0 0 38px rgba(56, 189, 248, 0.24);
+      box-shadow: 0 0 20px color-mix(in srgb, var(--primary) 15%, transparent);
       cursor: pointer;
       transition: transform 0.24s ease, border-color 0.24s ease, box-shadow 0.24s ease;
       z-index: 4;
@@ -2298,8 +2270,8 @@
 
     .attack-core:hover {
       transform: translate(-50%, -50%) scale(1.08);
-      border-color: rgba(125, 211, 252, 0.75);
-      box-shadow: 0 0 54px rgba(56, 189, 248, 0.38);
+      border-color: color-mix(in srgb, var(--primary) 75%, transparent);
+      box-shadow: 0 0 28px color-mix(in srgb, var(--primary) 24%, transparent);
     }
 
     .attack-node {
@@ -2315,7 +2287,7 @@
       border-radius: 12px;
       border: 1px solid rgba(148, 220, 255, 0.16);
       background: rgba(2, 6, 23, 0.72);
-      color: #e0f2fe;
+      color: var(--primary);
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -2366,9 +2338,9 @@
     .attack-visual[data-active="4"] .attack-node:nth-child(6),
     .attack-visual[data-active="5"] .attack-node:nth-child(7) {
       transform: translate(-50%, -50%) rotate(var(--node-angle)) translate(calc(var(--node-radius) + 8px)) rotate(calc(var(--node-angle) * -1)) scale(1.12);
-      border-color: rgba(56, 189, 248, 0.62);
+      border-color: color-mix(in srgb, var(--primary) 22%, transparent);
       background: rgba(8, 47, 73, 0.8);
-      box-shadow: 0 0 28px rgba(56, 189, 248, 0.22);
+      box-shadow: 0 0 15px color-mix(in srgb, var(--primary) 14%, transparent);
     }
 
     .attack-progress {
@@ -2386,7 +2358,7 @@
       height: 100%;
       border-radius: inherit;
       background: linear-gradient(90deg, var(--cyan), var(--blue2));
-      box-shadow: 0 0 18px rgba(56, 189, 248, 0.42);
+      box-shadow: 0 0 10px color-mix(in srgb, var(--primary) 26%, transparent);
       transition: width 0.45s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
@@ -2399,59 +2371,59 @@
     body.light-theme #attack-flow {
       background:
         linear-gradient(180deg, rgba(238, 244, 255, 0.96), rgba(248, 251, 255, 0.98)),
-        radial-gradient(circle at 18% 28%, rgba(37, 99, 235, 0.1), transparent 30%);
+        radial-gradient(circle at 18% 28%, color-mix(in srgb, var(--primary) 10%, transparent), transparent 30%);
     }
 
     body.light-theme .scrolly-card,
     body.light-theme .attack-visual {
       background: rgba(255, 255, 255, 0.78);
-      border-color: rgba(37, 99, 235, 0.16);
-      box-shadow: 0 24px 70px rgba(37, 99, 235, 0.1);
+      border-color: color-mix(in srgb, var(--primary) 16%, transparent);
+      box-shadow: 0 24px 35px color-mix(in srgb, var(--primary) 7%, transparent);
     }
 
     body.light-theme .attack-node {
       background: rgba(255, 255, 255, 0.82);
-      color: #1e3a8a;
-      border-color: rgba(37, 99, 235, 0.18);
+      color: var(--primary);
+      border-color: color-mix(in srgb, var(--primary) 18%, transparent);
     }
 
     body.light-theme .timeline-step-num {
-      color: rgba(37, 99, 235, 0.15);
+      color: color-mix(in srgb, var(--primary) 15%, transparent);
     }
 
     body.light-theme .timeline-panel.active .timeline-step-num {
-      color: #2563eb;
-      text-shadow: 0 0 20px rgba(37, 99, 235, 0.3);
+      color: var(--primary);
+      text-shadow: 0 0 20px color-mix(in srgb, var(--primary) 30%, transparent);
       animation: bluePulse 2s infinite alternate;
     }
 
     body.light-theme .timeline-icon-box {
-      background: rgba(37, 99, 235, 0.05);
-      border-color: rgba(37, 99, 235, 0.2);
-      color: #2563eb;
-      box-shadow: 0 12px 40px rgba(37, 99, 235, 0.08);
+      background: color-mix(in srgb, var(--primary) 5%, transparent);
+      border-color: color-mix(in srgb, var(--primary) 20%, transparent);
+      color: var(--primary);
+      box-shadow: 0 12px 20px color-mix(in srgb, var(--primary) 5%, transparent);
     }
 
     body.light-theme .timeline-panel.active .timeline-icon-box {
-      background: rgba(37, 99, 235, 0.1);
-      border-color: #2563eb;
-      box-shadow: 0 12px 40px rgba(37, 99, 235, 0.15);
+      background: color-mix(in srgb, var(--primary) 10%, transparent);
+      border-color: var(--primary);
+      box-shadow: 0 12px 20px color-mix(in srgb, var(--primary) 10%, transparent);
     }
 
     body.light-theme .timeline-progress-line-container {
-      background: rgba(37, 99, 235, 0.08);
+      background: color-mix(in srgb, var(--primary) 8%, transparent);
     }
 
     body.light-theme .timeline-progress-line-fill {
-      background: #2563eb;
-      box-shadow: 0 0 10px #2563eb, 0 0 20px rgba(37, 99, 235, 0.4);
+      background: var(--primary);
+      box-shadow: 0 0 5px color-mix(in srgb, var(--primary) 60%, transparent), 0 0 10px color-mix(in srgb, var(--primary) 25%, transparent);
     }
 
     body.light-theme .timeline-counter {
       background: rgba(255, 255, 255, 0.9);
-      border-color: rgba(37, 99, 235, 0.25);
-      color: #2563eb;
-      box-shadow: 0 8px 32px rgba(37, 99, 235, 0.12);
+      border-color: color-mix(in srgb, var(--primary) 25%, transparent);
+      color: var(--primary);
+      box-shadow: 0 8px 16px color-mix(in srgb, var(--primary) 8%, transparent);
     }
 
     @media (max-width: 900px) {
@@ -2528,7 +2500,7 @@
       right: -70px;
       top: -70px;
       border-radius: 50%;
-      background: radial-gradient(circle, var(--cap-accent, rgba(56, 189, 248, 0.28)), transparent 66%);
+      background: radial-gradient(circle, var(--cap-accent, color-mix(in srgb, var(--primary) 28.0%, transparent)), transparent 66%);
       opacity: 0.72;
     }
 
@@ -2542,7 +2514,7 @@
 
     .cap-card:hover {
       border-color: var(--cap-accent);
-      box-shadow: 0 26px 72px rgba(0, 0, 0, 0.34), 0 0 34px var(--cap-accent);
+      box-shadow: 0 26px 72px rgba(0, 0, 0, 0.34), 0 0 18px var(--cap-accent);
     }
 
     .cap-card:hover::before {
@@ -2564,11 +2536,11 @@
 
       0%,
       100% {
-        box-shadow: 0 0 30px rgba(6, 182, 212, 0.05), inset 0 0 10px rgba(6, 182, 212, 0.05);
+        box-shadow: 0 0 16px color-mix(in srgb, var(--primary) 3%, transparent), inset 0 0 6px color-mix(in srgb, var(--primary) 3%, transparent);
       }
 
       50% {
-        box-shadow: 0 0 45px rgba(6, 182, 212, 0.12), inset 0 0 15px rgba(6, 182, 212, 0.10);
+        box-shadow: 0 0 24px color-mix(in srgb, var(--primary) 7.0%, transparent), inset 0 0 9px color-mix(in srgb, var(--primary) 6%, transparent);
       }
     }
 
@@ -2579,8 +2551,8 @@
 
     .pro-card-premium:hover {
       transform: translateY(-8px) scale(1.02) !important;
-      border-color: rgba(6, 182, 212, 0.6) !important;
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), 0 0 30px rgba(6, 182, 212, 0.35) !important;
+      border-color: color-mix(in srgb, var(--primary) 60%, transparent) !important;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), 0 0 16px color-mix(in srgb, var(--primary) 22%, transparent) !important;
     }
 
     .cap-icon,
@@ -2595,8 +2567,8 @@
       width: 48px;
       height: 48px;
       border-radius: 12px;
-      background: rgba(56, 189, 248, 0.1);
-      border: 1px solid rgba(56, 189, 248, 0.15);
+      background: color-mix(in srgb, var(--primary) 10.0%, transparent);
+      border: 1px solid color-mix(in srgb, var(--primary) 15%, transparent);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -2606,9 +2578,9 @@
 
     .cap-card:hover .cap-icon {
       transform: translateZ(40px) translateY(-10px) scale(1.15) rotate(10deg);
-      background: rgba(6, 182, 212, 0.2);
-      border-color: rgba(6, 182, 212, 0.4);
-      box-shadow: 0 5px 15px rgba(6, 182, 212, 0.25);
+      background: color-mix(in srgb, var(--primary) 20%, transparent);
+      border-color: color-mix(in srgb, var(--primary) 40%, transparent);
+      box-shadow: 0 5px 8px color-mix(in srgb, var(--primary) 15%, transparent);
     }
 
     .cap-title {
@@ -2637,41 +2609,41 @@
     }
 
     .cap-card-1 {
-      --cap-accent: rgba(56, 189, 248, 0.28);
-      --cap-pattern: repeating-linear-gradient(90deg, rgba(56, 189, 248, 0.14) 0 1px, transparent 1px 13px);
+      --cap-accent: color-mix(in srgb, var(--primary) 28.0%, transparent);
+      --cap-pattern: repeating-linear-gradient(90deg, color-mix(in srgb, var(--primary) 14.0%, transparent) 0 1px, transparent 1px 13px);
     }
 
     .cap-card-2 {
       --cap-accent: rgba(99, 102, 241, 0.32);
-      --cap-pattern: radial-gradient(circle at 20% 80%, rgba(99, 102, 241, 0.24), transparent 34%), linear-gradient(135deg, transparent 0 42%, rgba(56, 189, 248, 0.12) 43% 45%, transparent 46%);
+      --cap-pattern: radial-gradient(circle at 20% 80%, rgba(99, 102, 241, 0.24), transparent 34%), linear-gradient(135deg, transparent 0 42%, color-mix(in srgb, var(--primary) 12.0%, transparent) 43% 45%, transparent 46%);
     }
 
     .cap-card-3 {
       --cap-accent: rgba(52, 211, 153, 0.26);
-      --cap-pattern: linear-gradient(90deg, transparent 0 18%, rgba(52, 211, 153, 0.16) 19% 21%, transparent 22% 42%, rgba(56, 189, 248, 0.12) 43% 45%, transparent 46%);
+      --cap-pattern: linear-gradient(90deg, transparent 0 18%, rgba(52, 211, 153, 0.16) 19% 21%, transparent 22% 42%, color-mix(in srgb, var(--primary) 12.0%, transparent) 43% 45%, transparent 46%);
     }
 
     .cap-card-4 {
       --cap-accent: rgba(248, 113, 113, 0.24);
-      --cap-pattern: conic-gradient(from 90deg at 18% 24%, rgba(248, 113, 113, 0.18), transparent 34%, rgba(56, 189, 248, 0.12), transparent 68%);
+      --cap-pattern: conic-gradient(from 90deg at 18% 24%, rgba(248, 113, 113, 0.18), transparent 34%, color-mix(in srgb, var(--primary) 12.0%, transparent), transparent 68%);
     }
 
     .cap-card-5 {
-      --cap-accent: rgba(251, 191, 36, 0.24);
-      --cap-pattern: repeating-linear-gradient(135deg, rgba(251, 191, 36, 0.12) 0 2px, transparent 2px 16px);
+      --cap-accent: color-mix(in srgb, var(--warning) 24.0%, transparent);
+      --cap-pattern: repeating-linear-gradient(135deg, color-mix(in srgb, var(--warning) 12.0%, transparent) 0 2px, transparent 2px 16px);
     }
 
     .cap-card-6 {
-      --cap-accent: rgba(14, 165, 233, 0.26);
-      --cap-pattern: radial-gradient(circle at 24% 28%, rgba(14, 165, 233, 0.18) 0 7px, transparent 8px 32px), radial-gradient(circle at 74% 66%, rgba(99, 102, 241, 0.2) 0 7px, transparent 8px 34px);
+      --cap-accent: color-mix(in srgb, var(--primary) 26%, transparent);
+      --cap-pattern: radial-gradient(circle at 24% 28%, color-mix(in srgb, var(--primary) 18%, transparent) 0 7px, transparent 8px 32px), radial-gradient(circle at 74% 66%, rgba(99, 102, 241, 0.2) 0 7px, transparent 8px 34px);
     }
 
     body.light-theme .cap-card,
     body.light-theme .stat-card,
     body.light-theme .compare-col {
       background: rgba(255, 255, 255, 0.76);
-      border-color: rgba(37, 99, 235, 0.14);
-      box-shadow: 0 18px 48px rgba(37, 99, 235, 0.08);
+      border-color: color-mix(in srgb, var(--primary) 14.0%, transparent);
+      box-shadow: 0 18px 24px color-mix(in srgb, var(--primary) 5%, transparent);
     }
 
     body.light-theme #stats {
@@ -2890,7 +2862,7 @@
       overflow: hidden;
       background-color: #030712 !important;
       background-image:
-        radial-gradient(circle at 80% 20%, rgba(6, 182, 212, 0.04) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, color-mix(in srgb, var(--primary) 4%, transparent) 0%, transparent 50%),
         radial-gradient(circle at 10% 80%, rgba(99, 102, 241, 0.04) 0%, transparent 50%),
         linear-gradient(rgba(255, 255, 255, 0.007) 1px, transparent 1px),
         linear-gradient(90deg, rgba(255, 255, 255, 0.007) 1px, transparent 1px) !important;
@@ -2899,12 +2871,12 @@
 
     body.light-theme footer {
       background-color: #f8fafc !important;
-      border-color: rgba(37, 99, 235, 0.12) !important;
+      border-color: color-mix(in srgb, var(--primary) 12%, transparent) !important;
       background-image:
-        radial-gradient(circle at 80% 20%, rgba(37, 99, 235, 0.03) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, color-mix(in srgb, var(--primary) 3%, transparent) 0%, transparent 50%),
         radial-gradient(circle at 10% 80%, rgba(79, 70, 229, 0.03) 0%, transparent 50%),
-        linear-gradient(rgba(37, 99, 235, 0.015) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(37, 99, 235, 0.015) 1px, transparent 1px) !important;
+        linear-gradient(color-mix(in srgb, var(--primary) 1.5%, transparent) 1px, transparent 1px),
+        linear-gradient(90deg, color-mix(in srgb, var(--primary) 1.5%, transparent) 1px, transparent 1px) !important;
       background-size: 100% 100%, 100% 100%, 32px 32px, 32px 32px !important;
     }
 
@@ -3115,7 +3087,7 @@
 
       body.light-theme .nav-links {
         background: rgba(248, 251, 255, 0.98);
-        border-left-color: rgba(37, 99, 235, 0.12);
+        border-left-color: color-mix(in srgb, var(--primary) 12%, transparent);
       }
 
       .nav-links.active {
@@ -3136,10 +3108,10 @@
     }
 
     .term-chip:hover {
-      background: rgba(56, 189, 248, 0.18) !important;
-      border-color: rgba(56, 189, 248, 0.4) !important;
+      background: color-mix(in srgb, var(--primary) 18.0%, transparent) !important;
+      border-color: color-mix(in srgb, var(--primary) 40.0%, transparent) !important;
       color: #fff !important;
-      box-shadow: 0 0 10px rgba(56, 189, 248, 0.15);
+      box-shadow: 0 0 6px color-mix(in srgb, var(--primary) 10%, transparent);
     }
 
     /* --- COLORFUL ANIMATED GRADIENT HEADINGS --- */
@@ -3427,8 +3399,8 @@
     }
 
     .card-inner:hover {
-      border-color: rgba(56, 189, 248, 0.3);
-      box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.1), 0 8px 24px rgba(0, 0, 0, 0.3);
+      border-color: color-mix(in srgb, var(--primary) 30.0%, transparent);
+      box-shadow: 0 0 0 1px color-mix(in srgb, var(--primary) 10.0%, transparent), 0 8px 24px rgba(0, 0, 0, 0.3);
     }
 
     .card-step-number {
@@ -3483,12 +3455,12 @@
 
     .chain-card--left .card-connector--right {
       right: -32px;
-      background: rgba(56, 189, 248, 0.45);
+      background: color-mix(in srgb, var(--primary) 45.0%, transparent);
     }
 
     .chain-card--right .card-connector--left {
       left: -32px;
-      background: rgba(56, 189, 248, 0.45);
+      background: color-mix(in srgb, var(--primary) 45.0%, transparent);
     }
 
     :root[data-theme="light"] .card-inner,
@@ -3499,33 +3471,33 @@
 
     :root[data-theme="light"] .card-inner:hover,
     body.light-theme .card-inner:hover {
-      border-color: rgba(14, 116, 200, 0.3);
+      border-color: color-mix(in srgb, var(--primary) 30%, transparent);
       box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
     }
 
     :root[data-theme="light"] .spine-track,
     body.light-theme .spine-track {
-      stroke: rgba(14, 116, 200, 0.1);
+      stroke: color-mix(in srgb, var(--primary) 10%, transparent);
     }
 
     :root[data-theme="light"] .spine-progress,
     body.light-theme .spine-progress {
-      stroke: #0E74C8;
+      stroke: var(--primary);
     }
 
     :root[data-theme="light"] .spine-node,
     body.light-theme .spine-node {
-      fill: #0E74C8;
+      fill: var(--primary);
     }
 
     :root[data-theme="light"] .chain-card--left .card-connector--right,
     body.light-theme .chain-card--left .card-connector--right {
-      background: linear-gradient(to right, transparent, rgba(14, 116, 200, 0.4));
+      background: linear-gradient(to right, transparent, color-mix(in srgb, var(--primary) 40%, transparent));
     }
 
     :root[data-theme="light"] .chain-card--right .card-connector--left,
     body.light-theme .chain-card--right .card-connector--left {
-      background: linear-gradient(to right, rgba(14, 116, 200, 0.4), transparent);
+      background: linear-gradient(to right, color-mix(in srgb, var(--primary) 40%, transparent), transparent);
     }
 
     @media (max-width: 768px) {
@@ -3563,7 +3535,7 @@
         bottom: 0;
         left: 32px;
         width: 1px;
-        background: linear-gradient(to bottom, transparent, rgba(56, 189, 248, 0.3) 10%, rgba(56, 189, 248, 0.3) 90%, transparent);
+        background: linear-gradient(to bottom, transparent, color-mix(in srgb, var(--primary) 30.0%, transparent) 10%, color-mix(in srgb, var(--primary) 30.0%, transparent) 90%, transparent);
       }
 
       .card-connector {
@@ -3957,8 +3929,8 @@
         display: grid;
         grid-template-columns: 1fr 1fr;
         background: rgba(5,10,24,0.82);
-        border-top: 1px solid rgba(56,189,248,0.1);
-        border-bottom: 1px solid rgba(56,189,248,0.1);
+        border-top: 1px solid color-mix(in srgb, var(--primary) 10%, transparent);
+        border-bottom: 1px solid color-mix(in srgb, var(--primary) 10%, transparent);
         backdrop-filter: blur(20px);
         -webkit-backdrop-filter: blur(20px);
         overflow: hidden;
@@ -3972,8 +3944,8 @@
           0deg,
           transparent,
           transparent 38px,
-          rgba(56,189,248,0.025) 38px,
-          rgba(56,189,248,0.025) 39px
+          color-mix(in srgb, var(--primary) 2.5%, transparent) 38px,
+          color-mix(in srgb, var(--primary) 2.5%, transparent) 39px
         );
         pointer-events: none;
       }
@@ -3983,7 +3955,7 @@
         display: flex;
         flex-direction: column;
         gap: 28px;
-        border-right: 1px solid rgba(56,189,248,0.1);
+        border-right: 1px solid color-mix(in srgb, var(--primary) 10%, transparent);
         position: relative;
       }
       .rtb-pane-eyebrow {
@@ -3992,14 +3964,14 @@
         font-weight: 800;
         letter-spacing: 0.16em;
         text-transform: uppercase;
-        color: rgba(56,189,248,0.5);
+        color: color-mix(in srgb, var(--primary) 50.0%, transparent);
         display: flex;
         align-items: center;
         gap: 8px;
       }
       .rtb-pane-eyebrow::before {
         content: '//';
-        color: rgba(56,189,248,0.3);
+        color: color-mix(in srgb, var(--primary) 30.0%, transparent);
       }
       .rtb-radar-title {
         font-family: 'Space Grotesk', sans-serif;
@@ -4009,7 +3981,7 @@
         line-height: 1.2;
         letter-spacing: -0.02em;
       }
-      .rtb-radar-title span { color: #38bdf8; }
+      .rtb-radar-title span { color: var(--primary); }
       /* SVG radar */
       .rtb-radar-svg-wrap {
         position: relative;
@@ -4073,8 +4045,8 @@
         font-size: 0.58rem;
         font-weight: 900;
         letter-spacing: 0.15em;
-        color: #ef4444;
-        border: 1px solid rgba(239,68,68,0.4);
+        color: var(--danger);
+        border: 1px solid color-mix(in srgb, var(--danger) 40.0%, transparent);
         padding: 3px 10px;
         border-radius: 3px;
         text-transform: uppercase;
@@ -4162,11 +4134,11 @@
         cursor: pointer;
         transition: background 0.2s;
       }
-      .rtb-card-dot.active { background: #38bdf8; }
+      .rtb-card-dot.active { background: var(--primary); }
 
       @media (max-width: 860px) {
         .rtb-board { grid-template-columns: 1fr; }
-        .rtb-radar-pane { border-right: none; border-bottom: 1px solid rgba(56,189,248,0.1); padding: 40px 5%; }
+        .rtb-radar-pane { border-right: none; border-bottom: 1px solid color-mix(in srgb, var(--primary) 10%, transparent); padding: 40px 5%; }
         .rtb-intel-pane { padding: 40px 5%; }
         .rtb-radar-svg-wrap { width: 200px; height: 200px; }
         .rtb-radar-svg .origin-x { cx: 100px; }
@@ -4184,19 +4156,19 @@
         <div class="rtb-radar-svg-wrap">
           <svg class="rtb-radar-svg" viewBox="0 0 240 240" fill="none" xmlns="http://www.w3.org/2000/svg">
             <!-- Background rings -->
-            <circle cx="120" cy="120" r="100" stroke="rgba(56,189,248,0.08)" stroke-width="1"/>
-            <circle cx="120" cy="120" r="70"  stroke="rgba(56,189,248,0.06)" stroke-width="1"/>
-            <circle cx="120" cy="120" r="40"  stroke="rgba(56,189,248,0.05)" stroke-width="1"/>
+            <circle cx="120" cy="120" r="100" stroke="color-mix(in srgb, var(--primary) 8.0%, transparent)" stroke-width="1"/>
+            <circle cx="120" cy="120" r="70"  stroke="color-mix(in srgb, var(--primary) 6.0%, transparent)" stroke-width="1"/>
+            <circle cx="120" cy="120" r="40"  stroke="color-mix(in srgb, var(--primary) 5.0%, transparent)" stroke-width="1"/>
             <!-- Cross hairs -->
-            <line x1="20" y1="120" x2="220" y2="120" stroke="rgba(56,189,248,0.06)" stroke-width="1"/>
-            <line x1="120" y1="20"  x2="120" y2="220" stroke="rgba(56,189,248,0.06)" stroke-width="1"/>
+            <line x1="20" y1="120" x2="220" y2="120" stroke="color-mix(in srgb, var(--primary) 6.0%, transparent)" stroke-width="1"/>
+            <line x1="120" y1="20"  x2="120" y2="220" stroke="color-mix(in srgb, var(--primary) 6.0%, transparent)" stroke-width="1"/>
             <!-- Arc 1: CEO Fraud (top-right, red) -->
             <path class="rtb-arc" d="M 120 20 A 100 100 0 0 1 220 120"
               stroke="#f43f5e" stroke-width="14" stroke-linecap="round" opacity="0.75"
               style="animation: rtbArcIn 1s 0.2s ease both;"/>
             <!-- Arc 2: IT Alert (bottom-right, amber) -->
             <path class="rtb-arc" d="M 220 120 A 100 100 0 0 1 120 220"
-              stroke="#f59e0b" stroke-width="14" stroke-linecap="round" opacity="0.65"
+              stroke="var(--warning)" stroke-width="14" stroke-linecap="round" opacity="0.65"
               style="animation: rtbArcIn 1s 0.45s ease both;"/>
             <!-- Arc 3: HR Update (bottom-left, green) -->
             <path class="rtb-arc" d="M 120 220 A 100 100 0 0 1 20 120"
@@ -4209,15 +4181,15 @@
             <!-- Radar sweep line -->
             <g class="rtb-sweep-line">
               <line x1="120" y1="120" x2="120" y2="22"
-                stroke="rgba(56,189,248,0.55)" stroke-width="1.5" stroke-linecap="round"/>
+                stroke="color-mix(in srgb, var(--primary) 55.0%, transparent)" stroke-width="1.5" stroke-linecap="round"/>
               <circle cx="120" cy="120" r="5"
-                fill="#38bdf8" opacity="0.8"/>
+                fill="var(--primary)" opacity="0.8"/>
             </g>
             <!-- Centre dot -->
-            <circle cx="120" cy="120" r="4" fill="#38bdf8"/>
+            <circle cx="120" cy="120" r="4" fill="var(--primary)"/>
             <!-- Percentage labels -->
             <text x="175" y="60"  font-family="JetBrains Mono,monospace" font-size="10" fill="#f43f5e" opacity="0.9">38%</text>
-            <text x="175" y="185" font-family="JetBrains Mono,monospace" font-size="10" fill="#f59e0b" opacity="0.9">27%</text>
+            <text x="175" y="185" font-family="JetBrains Mono,monospace" font-size="10" fill="var(--warning)" opacity="0.9">27%</text>
             <text x="48"  y="185" font-family="JetBrains Mono,monospace" font-size="10" fill="#10b981" opacity="0.9">21%</text>
             <text x="42"  y="60"  font-family="JetBrains Mono,monospace" font-size="10" fill="#a78bfa" opacity="0.9">14%</text>
           </svg>
@@ -4228,7 +4200,7 @@
             <div class="rtb-legend-dot" style="background:#f43f5e;"></div>CEO / Wire Fraud
           </div>
           <div class="rtb-legend-item">
-            <div class="rtb-legend-dot" style="background:#f59e0b;"></div>IT Credential
+            <div class="rtb-legend-dot" style="background:var(--warning);"></div>IT Credential
           </div>
           <div class="rtb-legend-item">
             <div class="rtb-legend-dot" style="background:#10b981;"></div>HR / Benefits
@@ -4267,13 +4239,13 @@
           </div>
 
           <!-- Card 1: Urgency Trigger -->
-          <div class="rtb-intel-card" style="border-left-color:#f59e0b;">
-            <div class="rtb-card-tag" style="color:#f59e0b;">
+          <div class="rtb-intel-card" style="border-left-color:var(--warning);">
+            <div class="rtb-card-tag" style="color:var(--warning);">
               <i class="ti ti-clock-hour-3"></i> Indicator — Urgency Trigger
             </div>
             <div class="rtb-card-indicator">
               SUBJECT: "Action Required — Wire Transfer<br>
-              <span style="color:#f59e0b;">Authorization Expires in 47 minutes"</span>
+              <span style="color:var(--warning);">Authorization Expires in 47 minutes"</span>
             </div>
             <div class="rtb-card-explain">
               Artificial deadlines short-circuit critical thinking.
@@ -4388,18 +4360,18 @@
         aria-hidden="true">
         <path class="spine-track"
           d="M 50,0 C 50,45 20,55 20,100 C 20,180 80,180 80,260 C 80,340 20,340 20,420 C 20,500 80,500 80,580 C 80,660 20,660 20,740 C 20,820 80,820 80,900 C 80,960 50,980 50,1020"
-          fill="none" stroke="rgba(56,189,248,0.12)" stroke-width="2" />
+          fill="none" stroke="color-mix(in srgb, var(--primary) 12.0%, transparent)" stroke-width="2" />
         <path class="spine-progress"
           d="M 50,0 C 50,45 20,55 20,100 C 20,180 80,180 80,260 C 80,340 20,340 20,420 C 20,500 80,500 80,580 C 80,660 20,660 20,740 C 20,820 80,820 80,900 C 80,960 50,980 50,1020"
-          fill="none" stroke="#38BDF8" stroke-width="2" stroke-dasharray="1500" stroke-dashoffset="1500" />
-        <circle class="spine-node" cx="20" cy="100" r="4.5" fill="#38BDF8" opacity="0" />
-        <circle class="spine-node" cx="80" cy="260" r="4.5" fill="#38BDF8" opacity="0" />
-        <circle class="spine-node" cx="20" cy="420" r="4.5" fill="#38BDF8" opacity="0" />
-        <circle class="spine-node" cx="80" cy="580" r="4.5" fill="#38BDF8" opacity="0" />
-        <circle class="spine-node" cx="20" cy="740" r="4.5" fill="#38BDF8" opacity="0" />
-        <circle class="spine-node" cx="80" cy="900" r="4.5" fill="#38BDF8" opacity="0" />
-        <circle class="spine-dot-progress" r="6" fill="#00f0ff" opacity="0"
-          style="filter: drop-shadow(0 0 6px #00f0ff);" />
+          fill="none" stroke="var(--primary)" stroke-width="2" stroke-dasharray="1500" stroke-dashoffset="1500" />
+        <circle class="spine-node" cx="20" cy="100" r="4.5" fill="var(--primary)" opacity="0" />
+        <circle class="spine-node" cx="80" cy="260" r="4.5" fill="var(--primary)" opacity="0" />
+        <circle class="spine-node" cx="20" cy="420" r="4.5" fill="var(--primary)" opacity="0" />
+        <circle class="spine-node" cx="80" cy="580" r="4.5" fill="var(--primary)" opacity="0" />
+        <circle class="spine-node" cx="20" cy="740" r="4.5" fill="var(--primary)" opacity="0" />
+        <circle class="spine-node" cx="80" cy="900" r="4.5" fill="var(--primary)" opacity="0" />
+        <circle class="spine-dot-progress" r="6" fill="var(--primary)" opacity="0"
+          style="filter: drop-shadow(0 0 6px var(--primary));" />
       </svg>
 
       <div class="chain-card chain-card--left" data-step="1">
@@ -4559,9 +4531,9 @@
                 style="background: rgba(255,255,255,0.02); border-bottom: 1px solid rgba(255,255,255,0.06); padding: 12px 16px; display: flex; align-items: center; justify-content: space-between;">
                 <div style="display: flex; gap: 6px;">
                   <span
-                    style="width:10px; height:10px; border-radius:50%; background:#ef4444; display:inline-block;"></span>
+                    style="width:10px; height:10px; border-radius:50%; background:var(--danger); display:inline-block;"></span>
                   <span
-                    style="width:10px; height:10px; border-radius:50%; background:#f59e0b; display:inline-block;"></span>
+                    style="width:10px; height:10px; border-radius:50%; background:var(--warning); display:inline-block;"></span>
                   <span
                     style="width:10px; height:10px; border-radius:50%; background:#10b981; display:inline-block;"></span>
                 </div>
@@ -4579,7 +4551,7 @@
                   <span id="mail-from" style="color:#fff;"></span></div>
                 <div><span
                     style="color:var(--muted); font-weight:600; width:60px; display:inline-block;">Subject:</span> <span
-                    id="mail-subject" style="color: #38bdf8; font-weight: 600;"></span></div>
+                    id="mail-subject" style="color: var(--primary); font-weight: 600;"></span></div>
                 <div><span style="color:var(--muted); font-weight:600; width:60px; display:inline-block;">To:</span>
                   <span style="color:var(--muted);">recipient-team@your-corp.com</span></div>
               </div>
@@ -4595,9 +4567,9 @@
 
             <!-- Live Telemetry Panel -->
             <div
-              style="background: #020617; border: 1px solid rgba(6, 182, 212, 0.2); border-radius: 12px; padding: 1.5rem; display: flex; flex-direction: column; font-family: var(--mono), monospace; font-size: 0.78rem; min-height: 320px; box-sizing: border-box;">
+              style="background: #020617; border: 1px solid color-mix(in srgb, var(--primary) 20%, transparent); border-radius: 12px; padding: 1.5rem; display: flex; flex-direction: column; font-family: var(--mono), monospace; font-size: 0.78rem; min-height: 320px; box-sizing: border-box;">
               <div
-                style="color: var(--cyan); font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(6,182,212,0.15); padding-bottom: 8px; flex-shrink: 0;">
+                style="color: var(--cyan); font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid color-mix(in srgb, var(--primary) 15%, transparent); padding-bottom: 8px; flex-shrink: 0;">
                 <span>SIMULATED TELEMETRY WALKTHROUGH</span>
                 <i class="ti ti-activity" style="color: var(--cyan); font-size: 0.95rem;"></i>
               </div>
@@ -4619,9 +4591,9 @@
 
             <!-- Teachable Moment Warning Box -->
             <div
-              style="background: rgba(239, 68, 68, 0.04); border: 1px solid rgba(239, 68, 68, 0.25); border-radius: 12px; padding: 1.5rem;">
+              style="background: color-mix(in srgb, var(--danger) 4.0%, transparent); border: 1px solid color-mix(in srgb, var(--danger) 25.0%, transparent); border-radius: 12px; padding: 1.5rem;">
               <h4
-                style="color:#ef4444; font-family:var(--sans); font-size:1.05rem; font-weight:700; margin-top:0; margin-bottom:12px; display:flex; align-items:center; gap:8px;">
+                style="color:var(--danger); font-family:var(--sans); font-size:1.05rem; font-weight:700; margin-top:0; margin-bottom:12px; display:flex; align-items:center; gap:8px;">
                 <i class="ti ti-alert-triangle"></i> Trapped: Phishing Red Flags
               </h4>
               <ul
@@ -4672,12 +4644,12 @@
 
     body.light-theme .sandbox-tab {
       background: rgba(255, 255, 255, 0.65);
-      border-color: rgba(37, 99, 235, 0.08);
+      border-color: color-mix(in srgb, var(--primary) 8%, transparent);
     }
 
     .sandbox-tab:hover {
       background: rgba(13, 21, 38, 0.65);
-      border-color: rgba(6, 182, 212, 0.25);
+      border-color: color-mix(in srgb, var(--primary) 25%, transparent);
     }
 
     body.light-theme .sandbox-tab:hover {
@@ -4685,13 +4657,13 @@
     }
 
     .sandbox-tab.active {
-      background: rgba(6, 182, 212, 0.08);
+      background: color-mix(in srgb, var(--primary) 8%, transparent);
       border-color: var(--cyan);
-      box-shadow: 0 0 20px rgba(6, 182, 212, 0.08);
+      box-shadow: 0 0 10px color-mix(in srgb, var(--primary) 5%, transparent);
     }
 
     body.light-theme .sandbox-tab.active {
-      background: rgba(37, 99, 235, 0.12);
+      background: color-mix(in srgb, var(--primary) 12%, transparent);
     }
 
     .sandbox-tab-icon {
@@ -4722,9 +4694,9 @@
     }
 
     .sandbox-tab.active .sandbox-tab-icon {
-      background: rgba(6, 182, 212, 0.15);
+      background: color-mix(in srgb, var(--primary) 15%, transparent);
       color: var(--cyan);
-      box-shadow: 0 0 10px rgba(6, 182, 212, 0.15);
+      box-shadow: 0 0 6px color-mix(in srgb, var(--primary) 9%, transparent);
     }
 
     /* --- CYBER SPOTLIGHT TEXT EFFECT --- */
@@ -4733,10 +4705,10 @@
     .cyber-spotlight-text {
       position: relative;
       background: radial-gradient(circle 160px at var(--mouse-x, 50%) var(--mouse-y, 50%),
-          #7dd3fc 0%,
-          #38bdf8 25%,
+          var(--primary) 0%,
+          var(--primary) 25%,
           #a78bfa 55%,
-          #e0f2fe 80%);
+          var(--primary) 80%);
       background-size: 250% 100%;
       -webkit-background-clip: text !important;
       background-clip: text !important;
@@ -4750,8 +4722,8 @@
     body.light-theme h2,
     body.light-theme .cyber-spotlight-text {
       background: radial-gradient(circle 160px at var(--mouse-x, 50%) var(--mouse-y, 50%),
-          #3b82f6 0%,
-          #2563eb 25%,
+          var(--primary) 0%,
+          var(--primary) 25%,
           #4f46e5 55%,
           #0f172a 80%);
       background-size: 250% 100%;
@@ -4870,7 +4842,7 @@
         <p style="margin-bottom:12px;">I'm currently in an executive board meeting and cannot take calls. We need to immediately authorize the release of deposits for our new logistics vendor integration.</p>
         <p style="margin-bottom:20px;">Please review the transfer documents and complete the priority authorization wire of <strong>$42,500.00 USD</strong> before 3:00 PM EST today.</p>
         <div style="text-align:center; margin-bottom:20px;">
-          <a href="#" onclick="triggerSandboxCompromise(event, 'ceo')" style="display:inline-block; background:#2563eb; color:#fff; padding:12px 24px; border-radius:6px; font-weight:bold; text-decoration:none; box-shadow:0 4px 6px rgba(37,99,235,0.2);">Authorize Wire Transfer</a>
+          <a href="#" onclick="triggerSandboxCompromise(event, 'ceo')" style="display:inline-block; background:var(--primary); color:#fff; padding:12px 24px; border-radius:6px; font-weight:bold; text-decoration:none; box-shadow:0 4px 6px color-mix(in srgb, var(--primary) 20%, transparent);">Authorize Wire Transfer</a>
         </div>
         <p>Thanks,<br>Richard Sterling<br>CEO, Demo Corp</p>
       `,
@@ -4945,7 +4917,7 @@
         <p style="margin-bottom:12px;">Please find attached the priority overdue invoice notice for logistics delivery services executed during the Q1 cycle.</p>
         <p style="margin-bottom:20px;">As we have migrated our banking clearing house systems, future payments must be made to our new clearing account detailed in the invoice statements. Future invoice shipments will be held if payment is not settled immediately.</p>
         <div style="text-align:center; margin-bottom:20px;">
-          <a href="#" onclick="triggerSandboxCompromise(event, 'invoice')" style="display:inline-block; background:#f59e0b; color:#fff; padding:12px 24px; border-radius:6px; font-weight:bold; text-decoration:none; box-shadow:0 4px 6px rgba(245,158,11,0.2);">Download Overdue Invoice</a>
+          <a href="#" onclick="triggerSandboxCompromise(event, 'invoice')" style="display:inline-block; background:var(--warning); color:#fff; padding:12px 24px; border-radius:6px; font-weight:bold; text-decoration:none; box-shadow:0 4px 4px color-mix(in srgb, var(--warning) 12%, transparent);">Download Overdue Invoice</a>
         </div>
         <p>Sincerely,<br>Billing Department<br>Acme Logistics LLC</p>
       `,
@@ -4973,7 +4945,7 @@
       const div = document.createElement('div');
       div.style.marginBottom = '6px';
       if (isWarning) {
-        div.style.color = '#ef4444';
+        div.style.color = 'var(--danger)';
         div.style.fontWeight = 'bold';
         div.style.margin = '8px 0';
         div.style.animation = 'pulseWarning 1s infinite alternate';
@@ -5000,10 +4972,10 @@
       const logs = [
         { text: `[SMTP] Relaying simulated email payload from "${senderName}" to "jane.doe@example-corp.com"...`, delay: 500 },
         { text: "[SMTP] Delivery confirmed: Inbox connection established.", delay: 800 },
-        { text: "[WALKTHROUGH] Step 1: Simulated recipient inbox status updated to UNREAD.", delay: 1200, color: '#38bdf8' },
-        { text: "[WALKTHROUGH] Step 2: Simulated recipient opened the email.", delay: 2000, color: '#38bdf8' },
-        { text: "[WALKTHROUGH] Step 3: Simulated recipient is reading the lure details...", delay: 2000, color: '#38bdf8' },
-        { text: "[WALKTHROUGH] Step 4: Simulated recipient hovered over the call-to-action link.", delay: 2000, color: '#38bdf8' }
+        { text: "[WALKTHROUGH] Step 1: Simulated recipient inbox status updated to UNREAD.", delay: 1200, color: 'var(--primary)' },
+        { text: "[WALKTHROUGH] Step 2: Simulated recipient opened the email.", delay: 2000, color: 'var(--primary)' },
+        { text: "[WALKTHROUGH] Step 3: Simulated recipient is reading the lure details...", delay: 2000, color: 'var(--primary)' },
+        { text: "[WALKTHROUGH] Step 4: Simulated recipient hovered over the call-to-action link.", delay: 2000, color: 'var(--primary)' }
       ];
 
       let currentLogIdx = 0;
@@ -5120,7 +5092,7 @@
 
           // Render error card in mail body
           document.getElementById('mail-body').innerHTML = `
-          <div style="color: #ef4444; padding: 30px 20px; text-align: center; font-family: sans-serif;">
+          <div style="color: var(--danger); padding: 30px 20px; text-align: center; font-family: sans-serif;">
             <div style="font-size: 2rem; margin-bottom: 12px;">⚠️</div>
             <strong style="font-size: 1.1rem; display: block; margin-bottom: 8px;">Generation Failed</strong>
             <p style="margin: 0; color: #64748b; font-size: 0.9rem; line-height: 1.5;">${errorMsg}</p>
@@ -5128,8 +5100,8 @@
         `;
 
           if (activeTelemetryTimeout) clearTimeout(activeTelemetryTimeout);
-          appendTelemetryLog(`[ERROR] Generation failed: ${errorMsg}`, '#ef4444');
-          appendTelemetryLog("[SYSTEM] Aborting simulated telemetry walkthrough.", '#ef4444');
+          appendTelemetryLog(`[ERROR] Generation failed: ${errorMsg}`, 'var(--danger)');
+          appendTelemetryLog("[SYSTEM] Aborting simulated telemetry walkthrough.", 'var(--danger)');
         }
       });
     }
@@ -5147,7 +5119,7 @@
       staticFlags.forEach(f => {
         flagsList.innerHTML += `
         <li style="display:flex; gap:10px; align-items:start; margin-bottom: 8px;">
-          <span style="color:#ef4444; font-size:1.1rem; line-height:1;">⚡</span>
+          <span style="color:var(--danger); font-size:1.1rem; line-height:1;">⚡</span>
           <span>${f}</span>
         </li>
       `;
@@ -5157,7 +5129,7 @@
       if (activeScenarioData && activeScenarioData.educational_breakdown) {
         flagsList.innerHTML += `
         <li style="display:flex; gap:10px; align-items:start; margin-bottom: 8px;">
-          <span style="color:#ef4444; font-size:1.1rem; line-height:1;">⚡</span>
+          <span style="color:var(--danger); font-size:1.1rem; line-height:1;">⚡</span>
           <span><strong>AI Threat Analysis:</strong> ${activeScenarioData.educational_breakdown}</span>
         </li>
       `;
@@ -5173,11 +5145,11 @@
       if (container) {
         if (activeTelemetryTimeout) clearTimeout(activeTelemetryTimeout);
 
-        appendTelemetryLog("[!!!] VULNERABILITY ALERT: TARGET COMPROMISED", '#ef4444', true);
+        appendTelemetryLog("[!!!] VULNERABILITY ALERT: TARGET COMPROMISED", 'var(--danger)', true);
 
         const compLogs = [
-          { text: "[WALKTHROUGH] Step 5: Captured click event telemetry payload.", color: '#ef4444' },
-          { text: "[WALKTHROUGH] Step 6: Logged compromise details in simulation DB.", color: '#ef4444' },
+          { text: "[WALKTHROUGH] Step 5: Captured click event telemetry payload.", color: 'var(--danger)' },
+          { text: "[WALKTHROUGH] Step 6: Logged compromise details in simulation DB.", color: 'var(--danger)' },
           { text: "[SYSTEM] Compromise sequence completed. Review red flags panel.", color: 'var(--cyan)' }
         ];
 
@@ -5415,12 +5387,12 @@
 
       <!-- Solution Card 1 -->
       <div class="cap-card cap-card-1 solution-card cyber-glow-hover reveal" data-tilt style="cursor: pointer;"
-        onclick="toggleSolutionsDrawer(event, 'phishing', '#38bdf8')">
+        onclick="toggleSolutionsDrawer(event, 'phishing', 'var(--primary)')">
         <div class="cap-card-glare"></div>
         <div>
           <div
-            style="width:54px;height:54px;border-radius:12px;background:rgba(56,189,248,0.12);border:1px solid rgba(56,189,248,0.25);display:flex;align-items:center;justify-content:center;margin-bottom:1.5rem;transition:transform 0.3s;">
-            <i class="ti ti-target" style="font-size:1.6rem;color:#38bdf8;"></i>
+            style="width:54px;height:54px;border-radius:12px;background:color-mix(in srgb, var(--primary) 12%, transparent);border:1px solid color-mix(in srgb, var(--primary) 16%, transparent);display:flex;align-items:center;justify-content:center;margin-bottom:1.5rem;transition:transform 0.3s;">
+            <i class="ti ti-target" style="font-size:1.6rem;color:var(--primary);"></i>
           </div>
 
           <h3 style="font-size: 1.25rem; font-weight: 600; color: var(--white); margin-bottom: 0.8rem;"
@@ -5431,9 +5403,9 @@
         </div>
         <div style="text-decoration: none;">
           <span
-            style="font-size: 0.72rem; font-weight: 700; color: #38bdf8; text-transform: uppercase; letter-spacing: 0.05em; display: inline-flex; align-items: center; gap: 4px; margin-top: 1rem; cursor: pointer; border-bottom: 1px dashed rgba(56,189,248,0.4); padding-bottom: 2px; transition: all 0.2s;"
+            style="font-size: 0.72rem; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 0.05em; display: inline-flex; align-items: center; gap: 4px; margin-top: 1rem; cursor: pointer; border-bottom: 1px dashed color-mix(in srgb, var(--primary) 20%, transparent); padding-bottom: 2px; transition: all 0.2s;"
             onmouseover="this.style.color='#fff'; this.style.borderBottomColor='#fff';"
-            onmouseout="this.style.color='#38bdf8'; this.style.borderBottomColor='rgba(56,189,248,0.4)';">Core Service
+            onmouseout="this.style.color='var(--primary)'; this.style.borderBottomColor='color-mix(in srgb, var(--primary) 20%, transparent)';">Core Service
             <i class="ti ti-circle-check"></i></span>
         </div>
       </div>
@@ -5490,12 +5462,12 @@
 
       <!-- Solution Card 4 -->
       <div class="cap-card cap-card-4 solution-card cyber-glow-hover reveal reveal-delay-3" data-tilt
-        style="cursor: pointer;" onclick="toggleSolutionsDrawer(event, 'plugin', '#f59e0b')">
+        style="cursor: pointer;" onclick="toggleSolutionsDrawer(event, 'plugin', 'var(--warning)')">
         <div class="cap-card-glare"></div>
         <div>
           <div
-            style="width:54px;height:54px;border-radius:12px;background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.25);display:flex;align-items:center;justify-content:center;margin-bottom:1.5rem;transition:transform 0.3s;">
-            <i class="ti ti-alert-triangle" style="font-size:1.6rem;color:#f59e0b;"></i>
+            style="width:54px;height:54px;border-radius:12px;background:color-mix(in srgb, var(--warning) 12.0%, transparent);border:1px solid color-mix(in srgb, var(--warning) 25.0%, transparent);display:flex;align-items:center;justify-content:center;margin-bottom:1.5rem;transition:transform 0.3s;">
+            <i class="ti ti-alert-triangle" style="font-size:1.6rem;color:var(--warning);"></i>
           </div>
 
           <h3 style="font-size: 1.25rem; font-weight: 600; color: var(--white); margin-bottom: 0.8rem;"
@@ -5506,9 +5478,9 @@
         </div>
         <div style="text-decoration: none;">
           <span
-            style="font-size: 0.72rem; font-weight: 700; color: #f59e0b; text-transform: uppercase; letter-spacing: 0.05em; display: inline-flex; align-items: center; gap: 4px; margin-top: 1rem; cursor: pointer; border-bottom: 1px dashed rgba(245,158,11,0.4); padding-bottom: 2px; transition: all 0.2s;"
+            style="font-size: 0.72rem; font-weight: 700; color: var(--warning); text-transform: uppercase; letter-spacing: 0.05em; display: inline-flex; align-items: center; gap: 4px; margin-top: 1rem; cursor: pointer; border-bottom: 1px dashed color-mix(in srgb, var(--warning) 20%, transparent); padding-bottom: 2px; transition: all 0.2s;"
             onmouseover="this.style.color='#fff'; this.style.borderBottomColor='#fff';"
-            onmouseout="this.style.color='#f59e0b'; this.style.borderBottomColor='rgba(245,158,11,0.4)';">Active Defense
+            onmouseout="this.style.color='var(--warning)'; this.style.borderBottomColor='color-mix(in srgb, var(--warning) 20%, transparent)';">Active Defense
             <i class="ti ti-focus-2"></i></span>
         </div>
       </div><!-- /cap-card-4 -->
@@ -5546,7 +5518,7 @@
         <div class="suite-card-top">
           <div class="suite-icon"><i class="ti ti-heartbeat"></i></div>
           <span class="suite-badge-pro"
-            style="background:rgba(6,182,212,0.1); border-color:rgba(6,182,212,0.3); color:#06b6d4;">CORE</span>
+            style="background:color-mix(in srgb, var(--primary) 10%, transparent); border-color:color-mix(in srgb, var(--primary) 30%, transparent); color:var(--primary);">CORE</span>
         </div>
         <div>
           <h3 class="suite-title">Threat Analyzer</h3>
@@ -5594,17 +5566,17 @@
       <a href="/password-breach" class="suite-card">
         <div class="suite-card-top">
           <div class="suite-icon"
-            style="color:#f59e0b; background:rgba(245,158,11,0.08); border-color:rgba(245,158,11,0.2);"><i
+            style="color:var(--warning); background:color-mix(in srgb, var(--warning) 8%, transparent); border-color:color-mix(in srgb, var(--warning) 15%, transparent);"><i
               class="ti ti-key"></i></div>
           <span class="suite-badge-pro"
-            style="background:rgba(245,158,11,0.1); border-color:rgba(245,158,11,0.3); color:#f59e0b;">BREACH</span>
+            style="background:color-mix(in srgb, var(--warning) 10%, transparent); border-color:color-mix(in srgb, var(--warning) 18%, transparent); color:var(--warning);">BREACH</span>
         </div>
         <div>
           <h3 class="suite-title">Password Breach Check</h3>
           <p class="suite-desc">Instantly check if a password appears in any known data breach using the HaveIBeenPwned
             k-anonymity API — password never leaves your browser in full.</p>
         </div>
-        <div class="suite-link-text" style="color:#f59e0b;">Check Password <i class="ti ti-arrow-right"></i></div>
+        <div class="suite-link-text" style="color:var(--warning);">Check Password <i class="ti ti-arrow-right"></i></div>
       </a>
     </div>
 
@@ -5616,11 +5588,11 @@
         <span class="advisor-pulse-ring"></span>
         <div class="suite-card-top">
           <div class="suite-icon"
-            style="color:#fbbf24; background:linear-gradient(135deg, rgba(251,191,36,0.2), rgba(217,119,6,0.1)); border-color:rgba(251,191,36,0.45); box-shadow: 0 0 10px rgba(251,191,36,0.25);">
+            style="color:#fbbf24; background:linear-gradient(135deg, color-mix(in srgb, var(--warning) 20.0%, transparent), rgba(217,119,6,0.1)); border-color:color-mix(in srgb, var(--warning) 45.0%, transparent); box-shadow: 0 0 6px color-mix(in srgb, var(--warning) 16%, transparent);">
             <i class="ti ti-crown"></i></div>
           <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
             <span class="suite-badge-pro"
-              style="background:rgba(251,191,36,0.15); border-color:rgba(251,191,36,0.5); color:#fbbf24;">
+              style="background:color-mix(in srgb, var(--warning) 15.0%, transparent); border-color:color-mix(in srgb, var(--warning) 50.0%, transparent); color:#fbbf24;">
               <i class="ti ti-crown" style="margin-right:3px; font-size:0.75rem;"></i>
               {% if current_user and current_user.role in ('admin', 'pro') %}UNLOCKED{% else %}PRO EXCLUSIVE{% endif %}
             </span>
@@ -5649,13 +5621,13 @@
 
     <style>
       .suite-card-advisor {
-        border: 1px solid rgba(251, 191, 36, 0.35) !important;
+        border: 1px solid color-mix(in srgb, var(--warning) 35.0%, transparent) !important;
         animation: advisorPulse 2.8s ease-in-out infinite;
       }
 
       .suite-card-advisor:hover {
         animation-play-state: paused;
-        box-shadow: 0 0 0 6px rgba(251, 191, 36, 0.18), 0 16px 48px rgba(251, 191, 36, 0.22) !important;
+        box-shadow: 0 0 0 6px color-mix(in srgb, var(--warning) 12%, transparent), 0 16px 28px color-mix(in srgb, var(--warning) 14%, transparent) !important;
         transform: translateY(-4px) scale(1.012);
       }
 
@@ -5663,11 +5635,11 @@
 
         0%,
         100% {
-          box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.4), 0 8px 32px rgba(251, 191, 36, 0.08);
+          box-shadow: 0 0 0 0 color-mix(in srgb, var(--warning) 40.0%, transparent), 0 8px 32px color-mix(in srgb, var(--warning) 8.0%, transparent);
         }
 
         50% {
-          box-shadow: 0 0 0 8px rgba(251, 191, 36, 0), 0 12px 40px rgba(251, 191, 36, 0.18);
+          box-shadow: 0 0 0 8px color-mix(in srgb, var(--warning) 0.0%, transparent), 0 12px 40px color-mix(in srgb, var(--warning) 18.0%, transparent);
         }
       }
 
@@ -5676,7 +5648,7 @@
         inset: -3px;
         border-radius: inherit;
         pointer-events: none;
-        border: 2px solid rgba(251, 191, 36, 0.5);
+        border: 2px solid color-mix(in srgb, var(--warning) 50.0%, transparent);
         animation: advisorRing 2.8s ease-in-out infinite;
       }
 
@@ -5809,10 +5781,10 @@
 
     <!-- Scanning grid overlay -->
     <div
-      style="position:absolute;inset:0;background-image:linear-gradient(rgba(56,189,248,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(56,189,248,0.04) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;">
+      style="position:absolute;inset:0;background-image:linear-gradient(color-mix(in srgb, var(--primary) 4.0%, transparent) 1px,transparent 1px),linear-gradient(90deg,color-mix(in srgb, var(--primary) 4.0%, transparent) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;">
     </div>
     <div
-      style="position:absolute;top:0;left:50%;transform:translateX(-50%);width:800px;height:300px;background:radial-gradient(ellipse at 50% 0%,rgba(6,182,212,0.12) 0%,transparent 70%);pointer-events:none;">
+      style="position:absolute;top:0;left:50%;transform:translateX(-50%);width:800px;height:300px;background:radial-gradient(ellipse at 50% 0%,color-mix(in srgb, var(--primary) 12%, transparent) 0%,transparent 70%);pointer-events:none;">
     </div>
 
     <div style="max-width: 860px; margin: 0 auto; position: relative; z-index: 2;" class="reveal">
@@ -5833,16 +5805,16 @@
       <div
         style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;max-width:700px;margin:0 auto 2.5rem;">
         <div
-          style="background:rgba(6,182,212,0.06);border:1px solid rgba(6,182,212,0.25);border-radius:12px;padding:1rem;">
+          style="background:color-mix(in srgb, var(--primary) 6%, transparent);border:1px solid color-mix(in srgb, var(--primary) 25%, transparent);border-radius:12px;padding:1rem;">
           <div style="font-size:1.5rem;margin-bottom:6px;">🎯</div>
-          <div style="font-size:0.82rem;font-weight:600;color:#06b6d4;">Domain Phishing Scan</div>
+          <div style="font-size:0.82rem;font-weight:600;color:var(--primary);">Domain Phishing Scan</div>
           <div style="font-size:0.75rem;color:var(--text-muted);margin-top:4px;">Check lookalike domains targeting your
             brand</div>
         </div>
         <div
-          style="background:rgba(59,130,246,0.06);border:1px solid rgba(59,130,246,0.25);border-radius:12px;padding:1rem;">
+          style="background:color-mix(in srgb, var(--primary) 6%, transparent);border:1px solid color-mix(in srgb, var(--primary) 25%, transparent);border-radius:12px;padding:1rem;">
           <div style="font-size:1.5rem;margin-bottom:6px;">🔓</div>
-          <div style="font-size:0.82rem;font-weight:600;color:#60a5fa;">Credential Leak Check</div>
+          <div style="font-size:0.82rem;font-weight:600;color:var(--primary);">Credential Leak Check</div>
           <div style="font-size:0.75rem;color:var(--text-muted);margin-top:4px;">Detect breached employee passwords in
             the wild</div>
         </div>
@@ -5860,7 +5832,7 @@
         style="display:flex;gap:0.75rem;max-width:540px;margin:0 auto 1.25rem;flex-wrap:wrap;justify-content:center;">
         <input type="email" name="email" placeholder="your@company.com" required
           style="flex:1;min-width:260px;padding:0.9rem 1.2rem;border-radius:10px;border:1px solid var(--border);background:var(--bg-input);color:var(--text-primary);font-family:var(--font-sans);font-size:0.95rem;outline:none;transition:all 0.25s;"
-          onfocus="this.style.borderColor='#06b6d4';this.style.boxShadow='0 0 12px rgba(6,182,212,0.25)';"
+          onfocus="this.style.borderColor='var(--primary)';this.style.boxShadow='0 0 12px color-mix(in srgb, var(--primary) 25%, transparent)';"
           onblur="this.style.borderColor='var(--border)';this.style.boxShadow='none';">
         <button type="submit" class="btn-primary btn-scan"
           style="padding:0.9rem 1.8rem;border-radius:10px;font-weight:700;border:none;font-size:0.95rem;cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:8px;color:#fff;transition:all 0.25s;">
@@ -5880,7 +5852,7 @@
     style="padding: 100px 5% 80px; background: var(--bg2); position: relative; z-index: 2; border-top: 1px solid var(--border);">
     <div style="max-width: 1200px; margin: 0 auto; text-align: center; margin-bottom: 60px;">
       <div class="section-eyebrow reveal"
-        style="background: rgba(59, 130, 246, 0.08); border-color: rgba(59, 130, 246, 0.2); color: #60a5fa;">Flexible
+        style="background: color-mix(in srgb, var(--primary) 8%, transparent); border-color: color-mix(in srgb, var(--primary) 20%, transparent); color: var(--primary);">Flexible
         Plans</div>
       <h2 class="section-title reveal"
         style="font-size: clamp(2rem, 3.5vw, 2.8rem); font-weight: 700; color: var(--white); margin: 16px 0; line-height: 1.25;">
@@ -5893,14 +5865,14 @@
       <div class="reveal"
         style="display: flex; justify-content: center; align-items: center; gap: 12px; margin-top: 32px; font-family: var(--sans);">
         <span id="billing-monthly-label"
-          style="font-size: 0.9rem; font-weight: 700; color: #38bdf8; transition: color 0.2s;">Monthly Billing</span>
+          style="font-size: 0.9rem; font-weight: 700; color: var(--primary); transition: color 0.2s;">Monthly Billing</span>
         <label class="switch-toggle" style="position: relative; display: inline-block; width: 48px; height: 26px;">
           <input type="checkbox" id="pricing-toggle-switch" style="opacity: 0; width: 0; height: 0;"
             onchange="togglePricingFrequency(this)">
           <span
             style="position: absolute; cursor: pointer; inset: 0; background-color: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); border-radius: 34px; transition: 0.3s; display: flex; align-items: center;">
             <span
-              style="position: absolute; content: ''; height: 18px; width: 18px; left: 4px; bottom: 3px; background-color: #38bdf8; border-radius: 50%; transition: 0.3s; box-shadow: 0 0 10px rgba(56, 189, 248, 0.4);"
+              style="position: absolute; content: ''; height: 18px; width: 18px; left: 4px; bottom: 3px; background-color: var(--primary); border-radius: 50%; transition: 0.3s; box-shadow: 0 0 6px color-mix(in srgb, var(--primary) 25%, transparent);"
               id="pricing-toggle-dot"></span>
           </span>
         </label>
@@ -5941,13 +5913,13 @@
           <ul
             style="list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; font-size: 0.85rem; color: #94a3b8;">
             <li style="display: flex; align-items: center; gap: 8px;"><i class="ti ti-check"
-                style="color: #22d3ee;"></i> One-Time Simulation Runs</li>
+                style="color: var(--primary);"></i> One-Time Simulation Runs</li>
             <li style="display: flex; align-items: center; gap: 8px;"><i class="ti ti-check"
-                style="color: #22d3ee;"></i> Realistic Preview Sandbox</li>
+                style="color: var(--primary);"></i> Realistic Preview Sandbox</li>
             <li style="display: flex; align-items: center; gap: 8px;"><i class="ti ti-check"
-                style="color: #22d3ee;"></i> 4 Attack Scenario Types, AI-Personalized</li>
+                style="color: var(--primary);"></i> 4 Attack Scenario Types, AI-Personalized</li>
             <li style="display: flex; align-items: center; gap: 8px;"><i class="ti ti-check"
-                style="color: #22d3ee;"></i> Centralised Campaign Analytics</li>
+                style="color: var(--primary);"></i> Centralised Campaign Analytics</li>
             <li style="display: flex; align-items: center; gap: 8px; opacity: 0.4;"><i class="ti ti-x"
                 style="color: var(--danger);"></i> Automated Recurring Schedules</li>
             <li style="display: flex; align-items: center; gap: 8px; opacity: 0.4;"><i class="ti ti-x"
@@ -5964,15 +5936,15 @@
 
       <!-- Pricing Card 2: Pro -->
       <div class="cap-card pro-card-premium reveal reveal-delay-1"
-        style="padding: 3rem 2.5rem; border-radius: 16px; background: rgba(6, 182, 212, 0.05); border: 1px solid rgba(6, 182, 212, 0.35); position: relative; display: flex; flex-direction: column; justify-content: space-between; overflow: hidden; transition: all 0.3s; backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);"
+        style="padding: 3rem 2.5rem; border-radius: 16px; background: color-mix(in srgb, var(--primary) 5%, transparent); border: 1px solid color-mix(in srgb, var(--primary) 35%, transparent); position: relative; display: flex; flex-direction: column; justify-content: space-between; overflow: hidden; transition: all 0.3s; backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);"
         data-tilt>
         <div class="cap-card-glare"></div>
         <div
-          style="position: absolute; top: 20px; right: 20px; background: rgba(6, 182, 212, 0.15); border: 1px solid rgba(6, 182, 212, 0.3); color: #22d3ee; font-size: 0.65rem; font-weight: 800; padding: 4px 10px; border-radius: 100px; text-transform: uppercase; letter-spacing: 0.05em;">
+          style="position: absolute; top: 20px; right: 20px; background: color-mix(in srgb, var(--primary) 15%, transparent); border: 1px solid color-mix(in srgb, var(--primary) 30%, transparent); color: var(--primary); font-size: 0.65rem; font-weight: 800; padding: 4px 10px; border-radius: 100px; text-transform: uppercase; letter-spacing: 0.05em;">
           Most Popular</div>
         <div>
           <div
-            style="font-size: 0.75rem; font-weight: 700; color: #22d3ee; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.8rem;">
+            style="font-size: 0.75rem; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.8rem;">
             Pro Upgrade</div>
           <h3 style="font-size: 1.6rem; font-weight: 700; color: var(--white); margin-bottom: 0.8rem;">Enterprise PRO
           </h3>
@@ -5984,22 +5956,22 @@
             <span style="color: var(--muted); font-size: 0.85rem;" id="pro-price-period">/ month (Flat Rate)</span>
           </div>
 
-          <div style="height: 1px; background: rgba(6, 182, 212, 0.2); margin-bottom: 2rem;"></div>
+          <div style="height: 1px; background: color-mix(in srgb, var(--primary) 20%, transparent); margin-bottom: 2rem;"></div>
 
           <ul
             style="list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; font-size: 0.85rem; color: #cbd5e1;">
             <li style="display: flex; align-items: center; gap: 8px;"><i class="ti ti-check"
-                style="color: #22d3ee;"></i> <strong>Daily, Weekly, Monthly Schedules</strong></li>
+                style="color: var(--primary);"></i> <strong>Daily, Weekly, Monthly Schedules</strong></li>
             <li style="display: flex; align-items: center; gap: 8px;"><i class="ti ti-check"
-                style="color: #22d3ee;"></i> <strong>Live SMTP & Mailtrap Senders</strong></li>
+                style="color: var(--primary);"></i> <strong>Live SMTP & Mailtrap Senders</strong></li>
             <li style="display: flex; align-items: center; gap: 8px;"><i class="ti ti-check"
-                style="color: #22d3ee;"></i> Up to 50 active simulated targets</li>
+                style="color: var(--primary);"></i> Up to 50 active simulated targets</li>
             <li style="display: flex; align-items: center; gap: 8px;"><i class="ti ti-check"
-                style="color: #22d3ee;"></i> Triggered training LMS courses</li>
+                style="color: var(--primary);"></i> Triggered training LMS courses</li>
             <li style="display: flex; align-items: center; gap: 8px;"><i class="ti ti-check"
-                style="color: #22d3ee;"></i> PDF Compliance Audit Reports</li>
+                style="color: var(--primary);"></i> PDF Compliance Audit Reports</li>
             <li style="display: flex; align-items: center; gap: 8px;"><i class="ti ti-check"
-                style="color: #22d3ee;"></i> AI Risk Advisor Console</li>
+                style="color: var(--primary);"></i> AI Risk Advisor Console</li>
           </ul>
         </div>
 
@@ -6198,9 +6170,9 @@
   <!-- SOLUTIONS INTEL CENTER MODAL -->
   <div id="intel-modal" class="home-modal" style="display: none;">
     <div class="home-modal-box"
-      style="max-width:650px; padding:0; overflow:hidden; background:#0b0f19; border:1px solid rgba(6, 182, 212, 0.2); box-shadow:0 0 30px rgba(6, 182, 212, 0.1);">
+      style="max-width:650px; padding:0; overflow:hidden; background:#0b0f19; border:1px solid color-mix(in srgb, var(--primary) 20%, transparent); box-shadow:0 0 30px color-mix(in srgb, var(--primary) 10%, transparent);">
       <div
-        style="display:flex; justify-content:space-between; align-items:center; padding:1.5rem 2rem; border-bottom:1px solid rgba(255,255,255,0.06); background:rgba(6, 182, 212, 0.02);">
+        style="display:flex; justify-content:space-between; align-items:center; padding:1.5rem 2rem; border-bottom:1px solid rgba(255,255,255,0.06); background:color-mix(in srgb, var(--primary) 2%, transparent);">
         <div style="display:flex; align-items:center; gap:10px;">
           <span id="intel-modal-icon" style="font-size:1.4rem;"></span>
           <h3 id="intel-modal-title"
@@ -6216,7 +6188,7 @@
         <!-- Content populated by JS -->
       </div>
       <div
-        style="padding:1.2rem 2rem; border-top:1px solid rgba(255,255,255,0.06); text-align:right; background:rgba(6, 182, 212, 0.02);">
+        style="padding:1.2rem 2rem; border-top:1px solid rgba(255,255,255,0.06); text-align:right; background:color-mix(in srgb, var(--primary) 2%, transparent);">
         <button onclick="closeIntelModal()" class="btn-nav"
           style="padding:8px 18px; font-size:0.8rem; border-radius:6px; cursor:pointer;">Close Briefing</button>
       </div>
@@ -6231,7 +6203,7 @@
       if (p.style.display === 'none' || !p.style.display) {
         p.style.display = 'block';
         span.textContent = '−';
-        el.parentElement.style.borderColor = 'rgba(6, 182, 212, 0.4)';
+        el.parentElement.style.borderColor = 'color-mix(in srgb, var(--primary) 40%, transparent)';
       } else {
         p.style.display = 'none';
         span.textContent = '+';
@@ -6289,7 +6261,7 @@
     /* ── SOLUTIONS INTEL MODAL ── */
     const intelData = {
       phishing: {
-        icon: '<i class="ti ti-target" style="color:#38bdf8;"></i>',
+        icon: '<i class="ti ti-target" style="color:var(--primary);"></i>',
         title: "Autonomous Spear Phishing Heuristics",
         body: `
       <p style="margin-bottom: 16px;">The <strong>PhishSim AI Phishing Simulator</strong> uses agentic natural language processing to craft dynamic, context-aware simulation templates. Rather than relying on static mailing lists, the system analyzes target metadata in real-time.</p>
@@ -6301,15 +6273,15 @@
           <th style="padding:8px 0; color:#64748b; font-family:var(--mono); text-transform:uppercase;">Capability Details</th>
         </tr>
         <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
-          <td style="padding:8px 0; color:#38bdf8; font-weight:600;">Sender Impersonation</td>
+          <td style="padding:8px 0; color:var(--primary); font-weight:600;">Sender Impersonation</td>
           <td style="padding:8px 0; color:#94a3b8;">Automatic lookalike domain routing and SPF/DKIM validation simulation.</td>
         </tr>
         <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
-          <td style="padding:8px 0; color:#38bdf8; font-weight:600;">Linguistic Alignment</td>
+          <td style="padding:8px 0; color:var(--primary); font-weight:600;">Linguistic Alignment</td>
           <td style="padding:8px 0; color:#94a3b8;">Matches company communication guides and tone of voice.</td>
         </tr>
         <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
-          <td style="padding:8px 0; color:#38bdf8; font-weight:600;">Payload Integration</td>
+          <td style="padding:8px 0; color:var(--primary); font-weight:600;">Payload Integration</td>
           <td style="padding:8px 0; color:#94a3b8;">Safe attachments (macros) and URL redirects featuring automated tracking hooks.</td>
         </tr>
       </table>
@@ -6379,7 +6351,7 @@
     `
       },
       plugin: {
-        icon: '<i class="ti ti-alert-triangle" style="color:#f59e0b;"></i>',
+        icon: '<i class="ti ti-alert-triangle" style="color:var(--warning);"></i>',
         title: "1-Click Active Reporting Plugin Specs",
         body: `
       <p style="margin-bottom: 16px;">The <strong>Active Report Plugin</strong> builds a network of active sensors. It turns passive employees into security reporting agents by simplifying the threat reporting pipeline.</p>
@@ -6391,15 +6363,15 @@
           <th style="padding:8px 0; color:#64748b; font-family:var(--mono); text-transform:uppercase;">Operational Spec</th>
         </tr>
         <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
-          <td style="padding:8px 0; color:#f59e0b; font-weight:600;">Add-In Integration</td>
+          <td style="padding:8px 0; color:var(--warning); font-weight:600;">Add-In Integration</td>
           <td style="padding:8px 0; color:#94a3b8;">Native Outlook VSTO manifests and Google Workspace JSON configurations.</td>
         </tr>
         <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
-          <td style="padding:8px 0; color:#f59e0b; font-weight:600;">Telemetry Match</td>
+          <td style="padding:8px 0; color:var(--warning); font-weight:600;">Telemetry Match</td>
           <td style="padding:8px 0; color:#94a3b8;">Correlates reported messages with active simulator database IDs in real-time.</td>
         </tr>
         <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
-          <td style="padding:8px 0; color:#f59e0b; font-weight:600;">SOC Pipeline</td>
+          <td style="padding:8px 0; color:var(--warning); font-weight:600;">SOC Pipeline</td>
           <td style="padding:8px 0; color:#94a3b8;">Emails reported outside simulations are instantly packaged with full headers and routed to IT support.</td>
         </tr>
       </table>
@@ -6668,9 +6640,9 @@
             offscreenCtx.fillRect(0, 0, canvasLogicalWidth, canvasLogicalHeight);
           }
 
-          offscreenCtx.strokeStyle = isLight ? 'rgba(14, 116, 200, 0.35)' : 'rgba(56, 189, 248, 0.22)';
+          offscreenCtx.strokeStyle = isLight ? 'color-mix(in srgb, var(--primary) 35%, transparent)' : 'color-mix(in srgb, var(--primary) 22.0%, transparent)';
           offscreenCtx.lineWidth = isLight ? 0.8 : 0.7;
-          offscreenCtx.fillStyle = isLight ? 'rgba(14, 116, 200, 0.1)' : 'rgba(56, 189, 248, 0.06)';
+          offscreenCtx.fillStyle = isLight ? 'color-mix(in srgb, var(--primary) 10%, transparent)' : 'color-mix(in srgb, var(--primary) 6.0%, transparent)';
 
           geojsonData.features.forEach(feature => {
             if (feature.geometry) {
@@ -7173,19 +7145,19 @@
       function getStatusHtml(svcData, defaultLabel, defaultColor) {
         if (!svcData || !svcData.status) {
           if (fetchFailed) {
-            return '<span style="color: #F87171; font-weight: bold;">[UNAVAILABLE]</span>';
+            return '<span style="color: var(--danger); font-weight: bold;">[UNAVAILABLE]</span>';
           }
           if (fetchPending) {
             return '<span style="color: rgba(255,255,255,0.4);">[Checking...]</span>';
           }
-          return '<span style="color: #F87171; font-weight: bold;">[UNAVAILABLE]</span>';
+          return '<span style="color: var(--danger); font-weight: bold;">[UNAVAILABLE]</span>';
         }
         const status = svcData.status;
         if (status === 'DEGRADED') {
-          return '<span style="color: #F87171; font-weight: bold;">[DEGRADED]</span>';
+          return '<span style="color: var(--danger); font-weight: bold;">[DEGRADED]</span>';
         }
         if (status === 'STANDBY') {
-          return '<span style="color: #FB923C; font-weight: bold;">[STANDBY]</span>';
+          return '<span style="color: var(--warning); font-weight: bold;">[STANDBY]</span>';
         }
         return `<span style="color: ${defaultColor}; font-weight: bold;">${defaultLabel}</span>`;
       }
@@ -7193,7 +7165,7 @@
       const llmHtml = getStatusHtml(health ? health.llm : null, '[OK]', '#34D399');
       const dbHtml = getStatusHtml(health ? health.db : null, '[OK]', '#34D399');
       const smtpHtml = getStatusHtml(health ? health.smtp : null, '[OK]', '#34D399');
-      const workerHtml = getStatusHtml(health ? health.worker : null, '[READY]', '#38BDF8');
+      const workerHtml = getStatusHtml(health ? health.worker : null, '[READY]', 'var(--primary)');
       const authHtml = getStatusHtml(health ? health.auth : null, '[OK]', '#34D399');
 
       const lines = [
@@ -7203,7 +7175,7 @@
         { text: `[*] SMTP relay agent..................... ${smtpHtml}`, delay: 300 },
         { text: `[*] Agentic phishing engine v2.0......... ${workerHtml}`, delay: 300 },
         { text: `[*] Auth module.......................... ${authHtml}`, delay: 300 },
-        { text: '<span style="color: rgba(56,189,248,0.2);">────────────────────────────────────────────────</span>', delay: 300 },
+        { text: '<span style="color: color-mix(in srgb, var(--primary) 20.0%, transparent);">────────────────────────────────────────────────</span>', delay: 300 },
       ];
 
       let currentIdx = 0;
@@ -7224,7 +7196,7 @@
             helpDiv.className = 't-line t-info';
             helpDiv.innerHTML = `Type 'help' to see available commands.
 Authenticate with 'login' to access live features.
-<span style="color: rgba(56,189,248,0.2);">────────────────────────────────────────────────</span>`;
+<span style="color: color-mix(in srgb, var(--primary) 20.0%, transparent);">────────────────────────────────────────────────</span>`;
             appendTerminalNode(helpDiv);
           }, 300);
         }
@@ -7522,10 +7494,10 @@ Authenticate with 'login' to access live features.
         let outputHTML = '';
 
         if (cmd === 'help') {
-          const boxColor = 'rgba(56,189,248,0.3)';
-          const dividerColor = 'rgba(56,189,248,0.2)';
+          const boxColor = 'color-mix(in srgb, var(--primary) 30.0%, transparent)';
+          const dividerColor = 'color-mix(in srgb, var(--primary) 20.0%, transparent)';
           const headerColor = '#818CF8';
-          const cmdColor = '#38BDF8';
+          const cmdColor = 'var(--primary)';
           const descColor = 'rgba(255,255,255,0.5)';
 
           outputHTML = `<div style="font-family:'JetBrains Mono',monospace; font-size:12px; line-height:1.8; white-space:pre;">
@@ -7589,7 +7561,7 @@ PhishSim AI v2.0.0<br>
 Built with: OpenRouter · MySQL · Agentic Engine<br>
 Environment: Production Sandbox<br>
 Last deploy: ${actualDate}<br>
-<span style="color:#38BDF8;">[→] <a href="https://phishsim-ai.onrender.com" target="_blank" style="color:#38BDF8;text-decoration:underline;">https://phishsim-ai.onrender.com</a></span>
+<span style="color:var(--primary);">[→] <a href="https://phishsim-ai.onrender.com" target="_blank" style="color:var(--primary);text-decoration:underline;">https://phishsim-ai.onrender.com</a></span>
 </div>`;
         } else if (cmd === 'logout') {
           if (!termAuth.authenticated) {
@@ -7607,10 +7579,10 @@ Last deploy: ${actualDate}<br>
         } else if (cmd === 'whoami') {
           if (!termAuth.authenticated) {
             outputHTML = `<div style="font-family:'JetBrains Mono',monospace; font-size:12px; line-height:1.8;">
-<span style="color:#F87171; font-weight:700;">[AUTH] Not authenticated.</span>
+<span style="color:var(--danger); font-weight:700;">[AUTH] Not authenticated.</span>
        Session: anonymous
        Access level: GUEST
-<span style="color:#38BDF8;">[→] Type 'login' to authenticate.</span>
+<span style="color:var(--primary);">[→] Type 'login' to authenticate.</span>
 </div>`;
           } else {
             outputHTML = `<div class="t-info">[*] Fetching current session details...</div>`;
@@ -7641,10 +7613,10 @@ Last deploy: ${actualDate}<br>
                   termAuth.authenticated = false;
                   updatePrompt();
                   appendTerminalHTML(`<div style="font-family:'JetBrains Mono',monospace; font-size:12px; line-height:1.8;">
-<span style="color:#F87171; font-weight:700;">[AUTH] Not authenticated.</span>
+<span style="color:var(--danger); font-weight:700;">[AUTH] Not authenticated.</span>
        Session: anonymous
        Access level: GUEST
-<span style="color:#38BDF8;">[→] Type 'login' to authenticate.</span>
+<span style="color:var(--primary);">[→] Type 'login' to authenticate.</span>
 </div>`);
                 }
                 tBody.scrollTop = tBody.scrollHeight;
@@ -7663,7 +7635,7 @@ Last deploy: ${actualDate}<br>
           }
         } else if (cmd === 'login') {
           if (termAuth.authenticated) {
-            outputHTML = `<div class="t-info">[*] Already signed in as <strong style="color:#34D399;">${escapeHTML(termAuth.email)}</strong>. Type <span style="color:#38BDF8;">logout</span> to switch accounts.</div>`;
+            outputHTML = `<div class="t-info">[*] Already signed in as <strong style="color:#34D399;">${escapeHTML(termAuth.email)}</strong>. Type <span style="color:var(--primary);">logout</span> to switch accounts.</div>`;
           } else {
             termState.mode = 'login'; termState.step = 1; termState.data = {};
             outputHTML = `<div class="t-info">[AUTH] Initiating login sequence...</div>
@@ -7694,11 +7666,11 @@ Last deploy: ${actualDate}<br>
                   let statusHtml = `<span style="color:#34D399; font-weight:bold;">[OK]</span>`;
                   let bar = '████████████████';
                   if (status === 'DEGRADED') {
-                    barColor = '#F87171';
-                    statusHtml = `<span style="color:#F87171; font-weight:bold;">[DEGRADED]</span>`;
+                    barColor = 'var(--danger)';
+                    statusHtml = `<span style="color:var(--danger); font-weight:bold;">[DEGRADED]</span>`;
                   } else if (status === 'STANDBY') {
-                    barColor = '#FB923C';
-                    statusHtml = `<span style="color:#FB923C; font-weight:bold;">[STANDBY]</span>`;
+                    barColor = 'var(--warning)';
+                    statusHtml = `<span style="color:var(--warning); font-weight:bold;">[STANDBY]</span>`;
                     bar = '████████░░░░░░░░';
                   }
                   const latency = timeMs ? `   ${timeMs}ms` : '';
@@ -7714,7 +7686,7 @@ Last deploy: ${actualDate}<br>
 
                 const overallStatus = (h.llm.status !== 'DEGRADED' && h.db.status !== 'DEGRADED')
                   ? '<span style="color:#34D399; font-weight:bold;">OPERATIONAL</span>'
-                  : '<span style="color:#F87171; font-weight:bold;">DEGRADED</span>';
+                  : '<span style="color:var(--danger); font-weight:bold;">DEGRADED</span>';
 
                 details += `  Overall: ${overallStatus}  ·  Last checked: just now</div>`;
                 appendTerminalHTML(details);
@@ -7732,8 +7704,8 @@ Last deploy: ${actualDate}<br>
           if (subCmd === 'list') {
             if (!termAuth.authenticated) {
               outputHTML = `<div style="font-family:'JetBrains Mono',monospace; font-size:12px; line-height:1.8;">
-<span style="color:#F87171; font-weight:700;">[AUTH] You must be logged in to view campaigns.</span>
-<span style="color:#38BDF8;">[→] Type 'login' to authenticate.</span>
+<span style="color:var(--danger); font-weight:700;">[AUTH] You must be logged in to view campaigns.</span>
+<span style="color:var(--primary);">[→] Type 'login' to authenticate.</span>
 </div>`;
             } else {
               outputHTML = `<div class="t-info">[CAMPAIGNS] Fetching your campaigns...</div>`;
@@ -7749,7 +7721,7 @@ Last deploy: ${actualDate}<br>
                     let runningCount = 0;
                     let rows = `<div style="font-family:'JetBrains Mono',monospace; font-size:11px; line-height:1.8; margin:6px 0;">
   ID       NAME                          STATUS      TARGETS   CLICKS
-  <span style="color:rgba(56,189,248,0.2);">───────────────────────────────────────────────────────────────────</span><br>`;
+  <span style="color:color-mix(in srgb, var(--primary) 20.0%, transparent);">───────────────────────────────────────────────────────────────────</span><br>`;
 
                     d.campaigns.forEach(c => {
                       const cidStr = `#${c.id}`.padEnd(8, ' ');
@@ -7776,14 +7748,14 @@ Last deploy: ${actualDate}<br>
                       if (c.status !== 'scheduled' && c.status !== 'draft') {
                         const clickPercent = targetCount > 0 ? Math.round((clickCount / targetCount) * 100) : 0;
                         let pctColor = 'rgba(255,255,255,0.6)';
-                        if (clickPercent >= 30) pctColor = '#F87171';
+                        if (clickPercent >= 30) pctColor = 'var(--danger)';
                         else if (clickPercent <= 15) pctColor = '#34D399';
                         clickStr = `${clickCount} (<span style="color:${pctColor};">${clickPercent}%</span>)`;
                       }
                       rows += `  ${cidStr}${cnameStr}${statusStr}${targetStr}${clickStr}<br>`;
                     });
                     rows += `<br>  ${d.campaigns.length} campaigns · ${totalTargets} targets · ${runningCount} running<br>`;
-                    rows += `  <span style="color:#38BDF8;">[→] Type 'campaign create' to launch a new simulation.</span></div>`;
+                    rows += `  <span style="color:var(--primary);">[→] Type 'campaign create' to launch a new simulation.</span></div>`;
                     appendTerminalHTML(rows);
                   }
                   tBody.scrollTop = tBody.scrollHeight;
@@ -7795,7 +7767,7 @@ Last deploy: ${actualDate}<br>
             }
           } else if (subCmd === 'create') {
             if (!termAuth.authenticated) {
-              outputHTML = `<div class="t-info">[*] <span style="color:#FB923C;">Auth required.</span> Type <span style="color:#38BDF8;">login</span> first.</div>`;
+              outputHTML = `<div class="t-info">[*] <span style="color:var(--warning);">Auth required.</span> Type <span style="color:var(--primary);">login</span> first.</div>`;
             } else {
               termState.mode = 'campaign_create'; termState.step = 1; termState.data = {};
               outputHTML = `<div class="t-info">[NEW CAMPAIGN] Agentic campaign creation wizard</div>
@@ -7804,7 +7776,7 @@ Last deploy: ${actualDate}<br>
             }
           } else if (subCmd === 'status') {
             if (!termAuth.authenticated) {
-              outputHTML = `<div class="t-info">[*] <span style="color:#FB923C;">Auth required.</span> Type <span style="color:#38BDF8;">login</span> first.</div>`;
+              outputHTML = `<div class="t-info">[*] <span style="color:var(--warning);">Auth required.</span> Type <span style="color:var(--primary);">login</span> first.</div>`;
             } else {
               outputHTML = `<div class="t-info">[*] Fetching live metrics...</div>`;
               appendTerminalHTML(outputHTML);
@@ -7832,7 +7804,7 @@ Last deploy: ${actualDate}<br>
                 });
             }
           } else {
-            outputHTML = `<div class="t-error">Unknown subcommand. Try: <span style="color:#38BDF8;">campaign list</span> or <span style="color:#38BDF8;">campaign create</span></div>`;
+            outputHTML = `<div class="t-error">Unknown subcommand. Try: <span style="color:var(--primary);">campaign list</span> or <span style="color:var(--primary);">campaign create</span></div>`;
           }
         } else if (cmd === 'exit') {
           outputHTML = `<div class="t-passive">Logging off terminal shell. Docking session...</div>`;
@@ -7842,7 +7814,7 @@ Last deploy: ${actualDate}<br>
           outputHTML = `<div class="t-passive">[*] Priming target context for: ${escapeHTML(email)}...</div>`;
           setTimeout(() => appendTerminalHTML(`<div class="t-info">[*] Harvesting OSINT indicators and writing custom prompt...</div>`), 500);
           setTimeout(() => appendTerminalHTML(`<div class="t-info">[*] LLM Synthesis engine initialized. Generating context-aware lure...</div>`), 1200);
-          setTimeout(() => appendTerminalHTML(`<pre style="color:#fbbf24; font-family:monospace; font-size:0.8rem; background:rgba(251,191,36,0.06); padding:10px; border-radius:6px; border:1px dashed rgba(251,191,36,0.2); margin:8px 0; white-space:pre-wrap;">
+          setTimeout(() => appendTerminalHTML(`<pre style="color:#fbbf24; font-family:monospace; font-size:0.8rem; background:color-mix(in srgb, var(--warning) 6.0%, transparent); padding:10px; border-radius:6px; border:1px dashed color-mix(in srgb, var(--warning) 20.0%, transparent); margin:8px 0; white-space:pre-wrap;">
 Subject: Action Required: Syncing of Corporate Credentials
 
 We detected a mismatch in your device sync settings for corporate databases. 
@@ -7859,7 +7831,7 @@ IT Compliance Dept</pre>`), 2200);
           setTimeout(() => appendTerminalHTML(`<div class="t-ok">[+] Signature Verification Success: Package is authentic & tamper-free.</div>`), 1800);
         } else if (cmd === 'scan_network') {
           outputHTML = `<div class="t-passive">[*] Broadcasting ARP requests to subnet...</div>`;
-          setTimeout(() => appendTerminalHTML(`<div class="t-output" style="margin-top:6px; font-weight:bold; color:#38bdf8;">IP Address      MAC Address        Hostname</div>`), 300);
+          setTimeout(() => appendTerminalHTML(`<div class="t-output" style="margin-top:6px; font-weight:bold; color:var(--primary);">IP Address      MAC Address        Hostname</div>`), 300);
           setTimeout(() => appendTerminalHTML(`<div class="t-output">192.168.1.1     00:1E:73:9B:A1:10  router.local</div>`), 600);
           setTimeout(() => appendTerminalHTML(`<div class="t-output">192.168.1.102   54:E1:AD:60:E2:4C  database-prod.local</div>`), 900);
           setTimeout(() => appendTerminalHTML(`<div class="t-output">192.168.1.104   70:3E:AC:8D:1E:FF  cfo-laptop.local</div>`), 1200);
@@ -7903,7 +7875,7 @@ IT Compliance Dept</pre>`), 2200);
             window.location.href = '/demo-login';
           }, 750);
         } else if (cmd === 'banner') {
-          outputHTML = `<pre style="color:#0ea5e9; font-family:monospace; font-size:0.75rem; line-height:1.2; text-shadow: 0 0 5px rgba(14,165,233,0.4); margin:1rem 0;">
+          outputHTML = `<pre style="color:var(--primary); font-family:monospace; font-size:0.75rem; line-height:1.2; text-shadow: 0 0 5px color-mix(in srgb, var(--primary) 40%, transparent); margin:1rem 0;">
   _____  _     _       _      _____  _            
  |  __ \\| |   (_)     | |    / ____|(_)           
  | |__) | |__  _  ___ | |__ | (___   _ _ __ ___   
@@ -7927,7 +7899,7 @@ IT Compliance Dept</pre>`), 2200);
           outputHTML = `<div style="color:#fbbf24; font-style:italic;">"${randomJoke}"</div>`;
         } else if (cmd === 'headers') {
           outputHTML = `<div class="t-info">[HEADERS] Email header analyzer ready.</div>
-<div class="t-info">Paste full raw headers in the <a href="/header-analyzer" style="color:#38BDF8;text-decoration:underline;">Header Analyzer</a> for SPF, DKIM, DMARC, routing, and sender-domain checks.</div>`;
+<div class="t-info">Paste full raw headers in the <a href="/header-analyzer" style="color:var(--primary);text-decoration:underline;">Header Analyzer</a> for SPF, DKIM, DMARC, routing, and sender-domain checks.</div>`;
         } else if (cmd === 'analyze') {
           const target = args[1] || 'payload.exe';
           outputHTML = `<div class="t-passive">[*] Loading sandbox analysis engine for: ${escapeHTML(target)}...</div>`;
@@ -8032,7 +8004,7 @@ IT Compliance Dept</pre>`), 2200);
           const dir = getDir(currentPath);
           if (dir && typeof dir === 'object') {
             let items = Object.keys(dir).map(k => typeof dir[k] === 'object'
-              ? `<span style="color:#3b82f6;font-weight:bold">${k}/</span>`
+              ? `<span style="color:var(--primary);font-weight:bold">${k}/</span>`
               : `<span style="color:#cbd5e1">${k}</span>`);
             outputHTML = `<div class="t-output" style="display:flex;gap:20px;flex-wrap:wrap;">${items.join('')}</div>`;
           }
@@ -8283,7 +8255,7 @@ ${body}
           const filledCount = Math.round(percent / 5);
           const emptyCount = 20 - filledCount;
           const bar = '█'.repeat(filledCount) + '░'.repeat(emptyCount);
-          progressLine.innerHTML = `[AI] Generating personalized phishing email...<br>[AI] <span style="color:#38BDF8;">${bar}  ${percent}%</span>`;
+          progressLine.innerHTML = `[AI] Generating personalized phishing email...<br>[AI] <span style="color:var(--primary);">${bar}  ${percent}%</span>`;
         }
         tBody.scrollTop = tBody.scrollHeight;
       }, 150);
@@ -8355,7 +8327,7 @@ ${body}
               if (d.ok) {
                 appendTerminalHTML(`<div class="t-ok">[✓] Campaign created successfully.</div>
 <div class="t-ok">[✓] Campaign ID: #${d.campaign_id}</div>
-<div class="t-info">[→] Visit <a href="/campaign-emails/${d.campaign_id}" style="color:#38BDF8;text-decoration:underline;">/campaign-emails/${d.campaign_id}</a> to view generated emails.</div>
+<div class="t-info">[→] Visit <a href="/campaign-emails/${d.campaign_id}" style="color:var(--primary);text-decoration:underline;">/campaign-emails/${d.campaign_id}</a> to view generated emails.</div>
 <div class="t-info">    Or type 'campaign list' to see all campaigns.</div>`);
               } else {
                 appendTerminalHTML(`<div class="t-error">[-] Failed to save campaign: ${escapeHTML(d.error || 'Server error.')}</div>`);
@@ -8547,7 +8519,7 @@ ${body}
         const shadowBlur = 20 + (currentScale - 1) * 300;
 
         // Set dynamic shadow
-        card.style.boxShadow = `${shadowOffsetX}px ${shadowOffsetY}px ${shadowBlur}px rgba(0,0,0,0.4), 0 0 24px rgba(56,189,248,0.06)`;
+        card.style.boxShadow = `${shadowOffsetX}px ${shadowOffsetY}px ${shadowBlur}px rgba(0,0,0,0.4), 0 0 12px color-mix(in srgb, var(--primary) 4%, transparent)`;
 
         animId = requestAnimationFrame(animate);
       }
@@ -8615,7 +8587,7 @@ ${body}
                 rebootTerminal();
               }, delay);
             } else {
-              recStatus.innerHTML = `<span style="color:#ef4444;">[-] Error: Invalid recovery key "${escapeHTML(cmd)}". Try again.</span>`;
+              recStatus.innerHTML = `<span style="color:var(--danger);">[-] Error: Invalid recovery key "${escapeHTML(cmd)}". Try again.</span>`;
             }
           }
         });
@@ -8839,19 +8811,19 @@ ${body}
     <div class="glitch-container" style="text-align:center; max-width:680px; position:relative; z-index:10;">
       <!-- Flashing Warning Badge -->
       <div
-        style="border: 2px solid #ef4444; background: rgba(239, 68, 68, 0.1); border-radius: 8px; padding: 12px; margin-bottom: 2rem; color: #ef4444; font-weight: bold; font-size: 1.1rem; text-shadow: 0 0 8px rgba(239, 68, 68, 0.5); animation: pulseWarning 1s infinite alternate;">
+        style="border: 1.5px solid var(--danger); background: color-mix(in srgb, var(--danger) 10.0%, transparent); border-radius: 8px; padding: 12px; margin-bottom: 2rem; color: var(--danger); font-weight: bold; font-size: 1.1rem; text-shadow: 0 0 8px color-mix(in srgb, var(--danger) 50.0%, transparent); animation: pulseWarning 1s infinite alternate;">
         ⚠️ CRITICAL CORRUPTION ALERT: FILESYSTEM PURGED ⚠️
       </div>
 
       <p
-        style="color:#ef4444; font-size:1rem; margin-bottom:1.5rem; text-align:left; border-left:4px solid #ef4444; padding-left:1rem; line-height:1.6;">
+        style="color:var(--danger); font-size:1rem; margin-bottom:1.5rem; text-align:left; border-left:3px solid var(--danger); padding-left:1rem; line-height:1.6;">
         KERNEL PANIC: A fatal user operation (rm -rf /) was executed. Virtual memory sectors have been scrambled to
         protect platform integrity.<br>
         All normal website functions have been locked.
       </p>
 
       <div
-        style="background:rgba(0,0,0,0.6); border:1px solid rgba(239, 68, 68, 0.3); border-radius:10px; padding:1.5rem; text-align:left; margin-bottom:2rem; box-shadow:0 0 30px rgba(239,68,68,0.05);">
+        style="background:rgba(0,0,0,0.6); border:1px solid color-mix(in srgb, var(--danger) 18%, transparent); border-radius:10px; padding:1.5rem; text-align:left; margin-bottom:2rem; box-shadow:0 0 30px color-mix(in srgb, var(--danger) 5.0%, transparent);">
         <div
           style="color:#64748b; font-size:0.85rem; border-bottom:1px solid rgba(255,255,255,0.06); padding-bottom:6px; margin-bottom:12px;">
           SYSTEM RECOVERY TERMINAL</div>
@@ -8860,10 +8832,10 @@ ${body}
         </div>
 
         <div
-          style="display:flex; align-items:center; gap:8px; background:rgba(0,0,0,0.4); border:1px solid rgba(6,182,212,0.3); border-radius:6px; padding:10px 12px;">
-          <span style="color:#06b6d4; font-weight:bold; font-size:1rem;">recovery@phishsim:~$</span>
+          style="display:flex; align-items:center; gap:8px; background:rgba(0,0,0,0.4); border:1px solid color-mix(in srgb, var(--primary) 30%, transparent); border-radius:6px; padding:10px 12px;">
+          <span style="color:var(--primary); font-weight:bold; font-size:1rem;">recovery@phishsim:~$</span>
           <input type="text" id="recovery-input" autocomplete="off" placeholder="type recovery command..."
-            style="flex:1; background:none; border:none; outline:none; color:#22d3ee; font-family:monospace; font-size:1rem; caret-color:#22d3ee;">
+            style="flex:1; background:none; border:none; outline:none; color:var(--primary); font-family:monospace; font-size:1rem; caret-color:var(--primary);">
         </div>
         <div id="recovery-status" style="color:#64748b; font-size:0.85rem; margin-top:10px; min-height:20px;">Ready for
           recovery command.</div>
@@ -8874,13 +8846,13 @@ ${body}
   <style>
     @keyframes pulseWarning {
       0% {
-        box-shadow: 0 0 10px rgba(239, 68, 68, 0.2);
-        border-color: rgba(239, 68, 68, 0.5);
+        box-shadow: 0 0 6px color-mix(in srgb, var(--danger) 12%, transparent);
+        border-color: color-mix(in srgb, var(--danger) 50.0%, transparent);
       }
 
       100% {
-        box-shadow: 0 0 25px rgba(239, 68, 68, 0.6);
-        border-color: #ef4444;
+        box-shadow: 0 0 14px color-mix(in srgb, var(--danger) 38%, transparent);
+        border-color: var(--danger);
       }
     }
 
@@ -8908,9 +8880,9 @@ ${body}
       z-index: 999999;
       transform: translate(-50%, -50%);
       mix-blend-mode: difference;
-      border: 1px solid rgba(0, 240, 255, 0.7);
+      border: 1px solid color-mix(in srgb, var(--primary) 70%, transparent);
       background: transparent;
-      box-shadow: 0 0 10px rgba(0, 240, 255, 0.2);
+      box-shadow: 0 0 6px color-mix(in srgb, var(--primary) 12%, transparent);
       transition: width 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275),
         height 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275),
         border-color 0.2s ease,
@@ -8924,32 +8896,32 @@ ${body}
       left: 50%;
       width: 4px;
       height: 4px;
-      background: #00f0ff;
+      background: var(--primary);
       border-radius: 50%;
       transform: translate(-50%, -50%);
-      box-shadow: 0 0 8px #00f0ff;
+      box-shadow: 0 0 5px color-mix(in srgb, var(--primary) 60%, transparent);
       transition: background 0.2s ease, box-shadow 0.2s ease;
     }
 
     @keyframes rgb-glow-cycle {
       0% {
-        background: radial-gradient(circle, #00f0ff 0%, #ff007f 100%);
-        box-shadow: 0 0 15px rgba(0, 240, 255, 0.6), 0 0 30px rgba(255, 0, 127, 0.4);
+        background: radial-gradient(circle, var(--primary) 0%, #ff007f 100%);
+        box-shadow: 0 0 9px color-mix(in srgb, var(--primary) 38%, transparent), 0 0 16px rgba(255, 0, 127, 0.25);
       }
 
       33% {
         background: radial-gradient(circle, #ff007f 0%, #eab308 100%);
-        box-shadow: 0 0 15px rgba(255, 0, 127, 0.6), 0 0 30px rgba(234, 179, 8, 0.4);
+        box-shadow: 0 0 9px rgba(255, 0, 127, 0.38), 0 0 16px rgba(234, 179, 8, 0.25);
       }
 
       66% {
-        background: radial-gradient(circle, #eab308 0%, #00f0ff 100%);
-        box-shadow: 0 0 15px rgba(234, 179, 8, 0.6), 0 0 30px rgba(0, 240, 255, 0.4);
+        background: radial-gradient(circle, #eab308 0%, var(--primary) 100%);
+        box-shadow: 0 0 9px rgba(234, 179, 8, 0.38), 0 0 16px color-mix(in srgb, var(--primary) 25%, transparent);
       }
 
       100% {
-        background: radial-gradient(circle, #00f0ff 0%, #ff007f 100%);
-        box-shadow: 0 0 15px rgba(0, 240, 255, 0.6), 0 0 30px rgba(255, 0, 127, 0.4);
+        background: radial-gradient(circle, var(--primary) 0%, #ff007f 100%);
+        box-shadow: 0 0 9px color-mix(in srgb, var(--primary) 38%, transparent), 0 0 16px rgba(255, 0, 127, 0.25);
       }
     }
 
@@ -9010,7 +8982,7 @@ ${body}
     body.light-theme .home-modal-box {
       background: #ffffff !important;
       border-color: rgba(0, 0, 0, 0.08) !important;
-      box-shadow: 0 20px 40px rgba(37, 99, 235, 0.06) !important;
+      box-shadow: 0 20px 20px color-mix(in srgb, var(--primary) 4%, transparent) !important;
     }
 
     .home-modal.active .home-modal-box {
@@ -9067,7 +9039,7 @@ ${body}
           el.addEventListener("mouseleave", () => {
             dot.style.width = "18px";
             dot.style.height = "18px";
-            dot.style.borderColor = "rgba(0, 240, 255, 0.7)";
+            dot.style.borderColor = "color-mix(in srgb, var(--primary) 70%, transparent)";
             dot.style.borderStyle = "solid";
           });
         });
@@ -9141,8 +9113,8 @@ ${body}
     // Instead of animating the whole heading, a liquid spotlight flows only where
     // the mouse cursor is hovering inside the heading.
     (function () {
-      const DARK_COLORS = ['#06b6d4', '#00d2ff', '#3b82f6', '#00f0ff', '#8b5cf6', '#38bdf8', '#06b6d4'];
-      const LIGHT_COLORS = ['#1d4ed8', '#2563eb', '#3b82f6', '#0284c7', '#4f46e5', '#2563eb', '#1d4ed8'];
+      const DARK_COLORS = ['var(--primary)', 'var(--primary)', 'var(--primary)', 'var(--primary)', '#8b5cf6', 'var(--primary)', 'var(--primary)'];
+      const LIGHT_COLORS = ['var(--primary)', 'var(--primary)', 'var(--primary)', 'var(--primary)', '#4f46e5', 'var(--primary)', 'var(--primary)'];
       const RADIUS = 120; // px — spread of the liquid spotlight
 
       function isLiquidTarget(el) {
@@ -9264,9 +9236,9 @@ ${body}
         priceVal.textContent = '$24';
         pricePeriod.textContent = '/ month (Flat Rate)';
         toggleDot.style.transform = 'translateX(0px)';
-        toggleDot.style.backgroundColor = '#38bdf8';
-        toggleDot.style.boxShadow = '0 0 10px rgba(56, 189, 248, 0.4)';
-        monthlyLabel.style.color = '#38bdf8';
+        toggleDot.style.backgroundColor = 'var(--primary)';
+        toggleDot.style.boxShadow = '0 0 10px color-mix(in srgb, var(--primary) 40.0%, transparent)';
+        monthlyLabel.style.color = 'var(--primary)';
         monthlyLabel.style.fontWeight = '700';
         annualLabel.style.color = 'var(--muted)';
         annualLabel.style.fontWeight = '500';
@@ -9298,7 +9270,7 @@ ${body}
       height: 64px;
       border-radius: 50%;
       background: var(--bg-elevated, #121D35);
-      border: 1.5px solid color-mix(in srgb, var(--primary, #38BDF8) 40%, transparent);
+      border: 1.5px solid color-mix(in srgb, var(--primary) 40%, transparent);
       cursor: pointer;
       display: flex;
       align-items: center;
@@ -9318,7 +9290,7 @@ ${body}
     }
     #pb-avatar:hover {
       transform: translateY(-2px);
-      border-color: color-mix(in srgb, var(--primary, #38BDF8) 80%, transparent);
+      border-color: color-mix(in srgb, var(--primary) 80%, transparent);
     }
     #pb-avatar:active { transform: scale(0.92); }
 
@@ -9328,7 +9300,7 @@ ${body}
       position: absolute;
       inset: -7px;
       border-radius: 50%;
-      border: 1.5px solid color-mix(in srgb, var(--primary, #38BDF8) 28%, transparent);
+      border: 1.5px solid color-mix(in srgb, var(--primary) 28%, transparent);
       animation: pbRingIdle 3s ease-in-out infinite;
       pointer-events: none;
     }
@@ -9378,8 +9350,8 @@ ${body}
     #pb-host.pb-active #pb-trace-bot   { animation: pbTraceLight 0.6s 0.4s ease-in-out infinite alternate; }
     #pb-host.pb-active #pb-trace-left  { animation: pbTraceLight 0.6s 0.6s ease-in-out infinite alternate; }
     @keyframes pbTraceLight {
-      from { stroke: color-mix(in srgb, var(--primary, #38BDF8) 18%, transparent); stroke-width: 0.75; }
-      to   { stroke: color-mix(in srgb, var(--primary, #38BDF8) 90%, transparent); stroke-width: 1.2;  }
+      from { stroke: color-mix(in srgb, var(--primary) 18%, transparent); stroke-width: 0.75; }
+      to   { stroke: color-mix(in srgb, var(--primary) 90%, transparent); stroke-width: 1.2;  }
     }
     #pb-host.pb-active #pb-avatar::before {
       animation: pbRingActive 0.45s linear infinite;
@@ -9409,10 +9381,10 @@ ${body}
 
     /* ── STATE: error — calm dim red flicker on ring only ── */
     #pb-host.pb-error #pb-avatar {
-      border-color: color-mix(in srgb, var(--danger, #F87171) 55%, transparent);
+      border-color: color-mix(in srgb, var(--danger) 55%, transparent);
     }
     #pb-host.pb-error #pb-avatar::before {
-      border-color: color-mix(in srgb, var(--danger, #F87171) 40%, transparent);
+      border-color: color-mix(in srgb, var(--danger) 40%, transparent);
       animation: pbRingError 1.8s ease-in-out infinite;
     }
     @keyframes pbRingError {
@@ -9427,7 +9399,7 @@ ${body}
       right: 0;
       width: 220px;
       background: var(--bg-elevated, #121D35);
-      border: 1px solid color-mix(in srgb, var(--primary, #38BDF8) 30%, transparent);
+      border: 1px solid color-mix(in srgb, var(--primary) 30%, transparent);
       border-radius: 12px 12px 4px 12px;
       padding: 11px 14px;
       pointer-events: none;
@@ -9449,7 +9421,7 @@ ${body}
       font-weight: 800;
       letter-spacing: 0.1em;
       text-transform: uppercase;
-      color: var(--primary, #38BDF8);
+      color: var(--primary);
       margin-bottom: 5px;
     }
     #pb-teaser-msg {
@@ -9463,7 +9435,7 @@ ${body}
       display: block;
       font-family: var(--mono, 'JetBrains Mono', monospace);
       font-size: 0.61rem;
-      color: var(--primary, #38BDF8);
+      color: var(--primary);
       margin-top: 5px;
     }
 
@@ -9478,14 +9450,14 @@ ${body}
       max-height: 80vh;
       overflow-y: auto;
       scrollbar-width: thin;
-      scrollbar-color: color-mix(in srgb, var(--primary,#38BDF8) 22%, transparent) transparent;
+      scrollbar-color: color-mix(in srgb, var(--primary) 22%, transparent) transparent;
       background: var(--bg-elevated, #121D35);
-      border: 1px solid color-mix(in srgb, var(--primary,#38BDF8) 22%, transparent);
+      border: 1px solid color-mix(in srgb, var(--primary) 22%, transparent);
       border-radius: 16px;
       box-shadow:
         0 36px 88px rgba(0,0,0,0.72),
-        0 0 0 1px color-mix(in srgb, var(--primary,#38BDF8) 6%, transparent),
-        0 0 60px color-mix(in srgb, var(--primary,#38BDF8) 8%, transparent);
+        0 0 0 1px color-mix(in srgb, var(--primary) 6%, transparent),
+        0 0 60px color-mix(in srgb, var(--primary) 8%, transparent);
       backdrop-filter: blur(28px);
       opacity: 0;
       transform: translateY(16px) scale(0.97);
@@ -9517,7 +9489,7 @@ ${body}
       font-family: var(--mono, 'JetBrains Mono', monospace);
       font-size: 0.78rem;
       font-weight: 800;
-      color: var(--primary, #38BDF8);
+      color: var(--primary);
       display: flex;
       align-items: center;
       gap: 7px;
@@ -9544,25 +9516,25 @@ ${body}
       background: transparent;
       transition: all 0.18s;
     }
-    .pb-tab-btn:hover { color: var(--primary, #38BDF8); background: var(--primary-dim, rgba(56,189,248,0.06)); }
+    .pb-tab-btn:hover { color: var(--primary); background: var(--primary-dim); }
     .pb-tab-btn.active {
-      color: var(--primary, #38BDF8);
-      background: var(--primary-dim, rgba(56,189,248,0.1));
-      border-color: color-mix(in srgb, var(--primary,#38BDF8) 30%, transparent);
+      color: var(--primary);
+      background: var(--primary-dim);
+      border-color: color-mix(in srgb, var(--primary) 30%, transparent);
     }
     .pb-panel-actions { display: flex; gap: 4px; }
     .pb-icon-btn {
       width: 27px; height: 27px;
       border-radius: 7px;
       border: 1px solid color-mix(in srgb, var(--border-default,rgba(255,255,255,0.12)) 70%, transparent);
-      background: var(--primary-dim, rgba(56,189,248,0.05));
+      background: var(--primary-dim);
       color: var(--text-secondary, #94A3B8);
       cursor: pointer;
       display: flex; align-items: center; justify-content: center;
       font-size: 0.85rem;
       transition: all 0.18s;
     }
-    .pb-icon-btn:hover { background: var(--primary-dim, rgba(56,189,248,0.12)); color: var(--primary, #38BDF8); }
+    .pb-icon-btn:hover { background: var(--primary-dim); color: var(--primary); }
 
     /* Tab panels */
     .pb-tab-panel { display: none; padding: 18px 16px; }
@@ -9579,14 +9551,14 @@ ${body}
     .pb-dialogue-icon {
       width: 30px; height: 30px;
       border-radius: 50%;
-      background: var(--primary-dim, rgba(56,189,248,0.08));
-      border: 1px solid color-mix(in srgb, var(--primary,#38BDF8) 25%, transparent);
+      background: var(--primary-dim);
+      border: 1px solid color-mix(in srgb, var(--primary) 25%, transparent);
       flex-shrink: 0;
       display: flex; align-items: center; justify-content: center;
     }
     .pb-bubble {
-      background: var(--primary-dim, rgba(56,189,248,0.06));
-      border: 1px solid color-mix(in srgb, var(--primary,#38BDF8) 16%, transparent);
+      background: var(--primary-dim);
+      border: 1px solid color-mix(in srgb, var(--primary) 16%, transparent);
       border-radius: 4px 12px 12px 12px;
       padding: 8px 12px;
       font-family: var(--mono, 'JetBrains Mono', monospace);
@@ -9668,7 +9640,7 @@ ${body}
     /* Red-flag highlights */
     .pb-rf {
       background: rgba(248,113,113,0.12);
-      border-bottom: 1.5px dashed var(--danger, #F87171);
+      border-bottom: 1.5px dashed var(--danger);
       cursor: help;
       position: relative;
     }
@@ -9679,7 +9651,7 @@ ${body}
       left: 50%;
       transform: translateX(-50%);
       background: #020617;
-      border: 1px solid color-mix(in srgb, var(--danger,#F87171) 35%, transparent);
+      border: 1px solid color-mix(in srgb, var(--danger) 35%, transparent);
       border-radius: 7px;
       padding: 7px 10px;
       width: 190px;
@@ -9695,7 +9667,7 @@ ${body}
 
     /* Bait score */
     .pb-bait-section { display: none; padding: 12px 0 4px; border-top: 1px solid var(--border-subtle, rgba(255,255,255,0.05)); }
-    .pb-bait-lbl { font-family: var(--mono); font-size: 0.6rem; font-weight: 800; letter-spacing: 0.1em; color: color-mix(in srgb, var(--primary,#38BDF8) 60%, transparent); text-transform: uppercase; margin-bottom: 9px; }
+    .pb-bait-lbl { font-family: var(--mono); font-size: 0.6rem; font-weight: 800; letter-spacing: 0.1em; color: color-mix(in srgb, var(--primary) 60%, transparent); text-transform: uppercase; margin-bottom: 9px; }
     .pb-score-bars { display: flex; flex-direction: column; gap: 6px; }
     .pb-score-row { display: flex; align-items: center; gap: 9px; }
     .pb-score-name { font-family: var(--mono); font-size: 0.6rem; color: var(--text-secondary,#94A3B8); min-width: 96px; }
@@ -9705,18 +9677,18 @@ ${body}
 
     /* Meta + error */
     .pb-meta  { display: none; margin-top: 9px; flex-direction: column; gap: 4px; }
-    .pb-tactic { font-size: 0.7rem; color: var(--warning, #FB923C); font-weight: 600; font-family: var(--mono); }
+    .pb-tactic { font-size: 0.7rem; color: var(--warning); font-weight: 600; font-family: var(--mono); }
     .pb-disc   { font-size: 0.6rem; color: var(--text-muted, #4A5568); font-style: italic; }
     .pb-error-msg {
       display: none;
-      color: var(--danger, #F87171);
+      color: var(--danger);
       font-size: 0.7rem;
       font-family: var(--mono);
       margin-top: 9px;
       padding: 9px 11px;
       background: var(--danger-dim, rgba(248,113,113,0.08));
       border-radius: 7px;
-      border: 1px solid color-mix(in srgb, var(--danger,#F87171) 22%, transparent);
+      border: 1px solid color-mix(in srgb, var(--danger) 22%, transparent);
     }
 
     /* ── Spot the Phish tab ── */
@@ -9727,8 +9699,8 @@ ${body}
       border-radius: 9px; overflow: hidden; cursor: pointer;
       transition: border-color 0.18s, box-shadow 0.18s;
     }
-    .stp-box:hover { border-color: color-mix(in srgb, var(--primary,#38BDF8) 40%, transparent); }
-    .stp-box.correct { border-color: var(--danger,#F87171) !important; box-shadow: 0 0 18px rgba(248,113,113,0.22) !important; }
+    .stp-box:hover { border-color: color-mix(in srgb, var(--primary) 40%, transparent); }
+    .stp-box.correct { border-color: var(--danger) !important; box-shadow: 0 0 10px color-mix(in srgb, var(--danger) 14%, transparent) !important; }
     .stp-box.wrong   { border-color: var(--success,#34D399) !important; }
     .stp-box-chrome  { background: rgba(255,255,255,0.02); border-bottom: 1px solid var(--border-subtle, rgba(255,255,255,0.05)); padding: 6px 11px; display: flex; gap: 5px; }
     .stp-box-chrome span { width: 6px; height: 6px; border-radius: 50%; }
@@ -9736,7 +9708,7 @@ ${body}
     .stp-box-body { padding: 10px 13px; background: #fff; color: #1e293b; font-family: Georgia,serif; font-size: 0.78rem; line-height: 1.6; max-height: 88px; overflow: hidden; }
     .stp-lbl { font-size: 0.58rem; text-transform: uppercase; letter-spacing: 0.06em; color: color-mix(in srgb, var(--text-secondary,#94A3B8) 50%, transparent); min-width: 52px; }
     .stp-result { display: none; margin-top: 10px; padding: 11px; border-radius: 7px; font-family: var(--mono); font-size: 0.68rem; line-height: 1.5; }
-    .stp-result.phish { background: var(--danger-dim,rgba(248,113,113,0.08)); border: 1px solid color-mix(in srgb, var(--danger,#F87171) 22%, transparent); color: #fca5a5; }
+    .stp-result.phish { background: var(--danger-dim,rgba(248,113,113,0.08)); border: 1px solid color-mix(in srgb, var(--danger) 22%, transparent); color: #fca5a5; }
     .stp-score-row { font-family: var(--mono); font-size: 0.62rem; color: var(--text-secondary,#94A3B8); margin-bottom: 8px; }
 
     @media (min-width: 480px) {
@@ -9754,11 +9726,11 @@ ${body}
       cursor: pointer; font-family: var(--mono); font-size: 0.68rem;
       color: var(--text-secondary,#94A3B8); transition: all 0.16s;
     }
-    .rs-opt:hover { background: var(--primary-dim,rgba(56,189,248,0.06)); border-color: color-mix(in srgb, var(--primary,#38BDF8) 22%, transparent); color: var(--text-primary,#F0F4FF); }
-    .rs-opt.selected { background: var(--primary-dim,rgba(56,189,248,0.1)); border-color: color-mix(in srgb, var(--primary,#38BDF8) 32%, transparent); color: var(--primary,#38BDF8); }
+    .rs-opt:hover { background: var(--primary-dim); border-color: color-mix(in srgb, var(--primary) 22%, transparent); color: var(--text-primary,#F0F4FF); }
+    .rs-opt.selected { background: var(--primary-dim); border-color: color-mix(in srgb, var(--primary) 32%, transparent); color: var(--primary); }
     .rs-opt input[type=radio] { display: none; }
-    .rs-radio { width: 13px; height: 13px; border-radius: 50%; border: 1.5px solid color-mix(in srgb, var(--primary,#38BDF8) 45%, transparent); flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
-    .rs-opt.selected .rs-radio::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: var(--primary,#38BDF8); display: block; }
+    .rs-radio { width: 13px; height: 13px; border-radius: 50%; border: 1.5px solid color-mix(in srgb, var(--primary) 45%, transparent); flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+    .rs-opt.selected .rs-radio::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: var(--primary); display: block; }
     .rs-gauge { font-family: var(--mono); font-size: 3rem; font-weight: 900; line-height: 1; margin-bottom: 6px; }
     .rs-result { display: none; text-align: center; padding: 20px 0 6px; }
     .rs-note { font-size: 0.59rem; color: var(--text-muted,#4A5568); font-style: italic; font-family: var(--sans); border-top: 1px solid var(--border-subtle,rgba(255,255,255,0.05)); padding-top: 10px; line-height: 1.5; margin-top: 12px; text-align: left; }
@@ -9768,13 +9740,13 @@ ${body}
       display: inline-flex; align-items: center; gap: 6px;
       margin-top: 10px; padding: 9px 18px;
       border-radius: 9px;
-      background: var(--primary-dim,rgba(56,189,248,0.08));
-      border: 1px solid color-mix(in srgb, var(--primary,#38BDF8) 28%, transparent);
-      color: var(--primary,#38BDF8);
+      background: var(--primary-dim);
+      border: 1px solid color-mix(in srgb, var(--primary) 28%, transparent);
+      color: var(--primary);
       font-family: var(--mono); font-size: 0.69rem; font-weight: 700;
       cursor: pointer; transition: all 0.18s;
     }
-    .pb-action-btn:hover { background: var(--primary-dim,rgba(56,189,248,0.16)); box-shadow: 0 0 14px color-mix(in srgb, var(--primary,#38BDF8) 20%, transparent); }
+    .pb-action-btn:hover { background: var(--primary-dim); box-shadow: 0 0 14px color-mix(in srgb, var(--primary) 20%, transparent); }
 
     /* Panel footer */
     .pb-panel-footer {
@@ -9796,7 +9768,7 @@ ${body}
       max-width: 760px;
       margin: 0 auto;
       background: var(--bg-elevated, #121D35);
-      border: 1px solid color-mix(in srgb, var(--primary,#38BDF8) 20%, transparent);
+      border: 1px solid color-mix(in srgb, var(--primary) 20%, transparent);
       border-radius: 18px;
       overflow: hidden;
       box-shadow: 0 20px 70px rgba(0,0,0,0.5);
@@ -9820,8 +9792,8 @@ ${body}
 
     /* Interactive Walkthrough Highlighter */
     .pb-highlight-active {
-      outline: 3px solid var(--primary, #38BDF8) !important;
-      box-shadow: 0 0 25px rgba(56, 189, 248, 0.45) !important;
+      outline: 3px solid var(--primary) !important;
+      box-shadow: 0 0 14px color-mix(in srgb, var(--primary) 28%, transparent) !important;
       transition: outline 0.3s ease, box-shadow 0.3s ease !important;
       position: relative;
       z-index: 1000 !important;
@@ -9840,7 +9812,7 @@ ${body}
       animation: pbCardPop 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
     #pb-inline-section.pb-walkthrough-active .pb-inner-wrap {
-      border: 1px solid var(--primary, #38BDF8) !important;
+      border: 1px solid var(--primary) !important;
       box-shadow: 0 10px 40px rgba(0,0,0,0.65) !important;
       border-radius: 14px !important;
     }
@@ -9927,55 +9899,55 @@ ${body}
         <!-- Faceplate body -->
         <rect x="5" y="7" width="30" height="26" rx="7"
               fill="color-mix(in srgb, var(--bg-elevated,#121D35) 95%, transparent)"
-              stroke="color-mix(in srgb, var(--primary,#38BDF8) 32%, transparent)"
+              stroke="color-mix(in srgb, var(--primary) 32%, transparent)"
               stroke-width="1"/>
 
         <!-- Visor band -->
         <rect x="5" y="16" width="30" height="8"
-              fill="color-mix(in srgb, var(--primary,#38BDF8) 5%, transparent)"/>
+              fill="color-mix(in srgb, var(--primary) 5%, transparent)"/>
         <line id="pb-trace-top" x1="5" y1="16" x2="35" y2="16"
-              stroke="color-mix(in srgb, var(--primary,#38BDF8) 18%, transparent)"
+              stroke="color-mix(in srgb, var(--primary) 18%, transparent)"
               stroke-width="0.75"/>
         <line id="pb-trace-bot" x1="5" y1="24" x2="35" y2="24"
-              stroke="color-mix(in srgb, var(--primary,#38BDF8) 18%, transparent)"
+              stroke="color-mix(in srgb, var(--primary) 18%, transparent)"
               stroke-width="0.75"/>
 
         <!-- Side circuit traces -->
         <line id="pb-trace-right" x1="28" y1="12" x2="35" y2="12"
-              stroke="color-mix(in srgb, var(--primary,#38BDF8) 18%, transparent)"
+              stroke="color-mix(in srgb, var(--primary) 18%, transparent)"
               stroke-width="0.75"/>
         <line id="pb-trace-left"  x1="5"  y1="12" x2="12" y2="12"
-              stroke="color-mix(in srgb, var(--primary,#38BDF8) 18%, transparent)"
+              stroke="color-mix(in srgb, var(--primary) 18%, transparent)"
               stroke-width="0.75"/>
 
         <!-- Side nodes -->
         <circle cx="5"  cy="20" r="2.2"
-                fill="color-mix(in srgb, var(--primary,#38BDF8) 16%, transparent)"
-                stroke="color-mix(in srgb, var(--primary,#38BDF8) 30%, transparent)"
+                fill="color-mix(in srgb, var(--primary) 16%, transparent)"
+                stroke="color-mix(in srgb, var(--primary) 30%, transparent)"
                 stroke-width="0.75"/>
         <circle cx="35" cy="20" r="2.2"
-                fill="color-mix(in srgb, var(--primary,#38BDF8) 16%, transparent)"
-                stroke="color-mix(in srgb, var(--primary,#38BDF8) 30%, transparent)"
+                fill="color-mix(in srgb, var(--primary) 16%, transparent)"
+                stroke="color-mix(in srgb, var(--primary) 30%, transparent)"
                 stroke-width="0.75"/>
 
         <!-- Eyes (animated group) -->
         <g id="pb-eyes-g">
           <rect class="pb-eye" x="11" y="18" width="5" height="4" rx="2"
-                fill="var(--primary,#38BDF8)" opacity="0.88">
+                fill="var(--primary)" opacity="0.88">
             <animate attributeName="opacity" values="0.88;0.6;0.88"
                      dur="2.6s" repeatCount="indefinite"/>
           </rect>
           <rect class="pb-eye" x="24" y="18" width="5" height="4" rx="2"
-                fill="var(--primary,#38BDF8)" opacity="0.88">
+                fill="var(--primary)" opacity="0.88">
             <animate attributeName="opacity" values="0.88;0.6;0.88"
                      dur="2.6s" begin="0.5s" repeatCount="indefinite"/>
           </rect>
           <!-- Subtle eye glow -->
           <rect x="11" y="18" width="5" height="4" rx="2"
-                fill="color-mix(in srgb, var(--primary,#38BDF8) 30%, transparent)"
+                fill="color-mix(in srgb, var(--primary) 30%, transparent)"
                 filter="url(#pbGlow)"/>
           <rect x="24" y="18" width="5" height="4" rx="2"
-                fill="color-mix(in srgb, var(--primary,#38BDF8) 30%, transparent)"
+                fill="color-mix(in srgb, var(--primary) 30%, transparent)"
                 filter="url(#pbGlow)"/>
         </g>
 
@@ -10014,7 +9986,7 @@ ${body}
     <div class="pb-tab-panel active" id="pb-tab-generate">
       <div class="pb-dialogue">
         <div class="pb-dialogue-icon">
-          <i class="ti ti-robot" style="color:var(--primary,#38BDF8);font-size:0.95rem;" aria-hidden="true"></i>
+          <i class="ti ti-robot" style="color:var(--primary);font-size:0.95rem;" aria-hidden="true"></i>
         </div>
         <div class="pb-bubble" id="pb-dialogue-text">
           Pick a scenario and I'll generate a real AI phishing lure — right now, live.
@@ -10022,11 +9994,11 @@ ${body}
       </div>
       <div class="pb-chips">
         <button class="pb-chip" onclick="pbGen('ceo_fraud')"
-          style="color:var(--primary,#38BDF8);border-color:color-mix(in srgb,var(--primary,#38BDF8) 32%,transparent);">
+          style="color:var(--primary);border-color:color-mix(in srgb,var(--primary) 32%,transparent);">
           CEO Fraud
         </button>
         <button class="pb-chip" onclick="pbGen('it_alert')"
-          style="color:var(--warning,#FB923C);border-color:color-mix(in srgb,var(--warning,#FB923C) 32%,transparent);">
+          style="color:var(--warning);border-color:color-mix(in srgb,var(--warning) 32%,transparent);">
           IT Alert
         </button>
         <button class="pb-chip" onclick="pbGen('hr_update')"
@@ -10034,7 +10006,7 @@ ${body}
           HR Update
         </button>
         <button class="pb-chip" onclick="pbGen('invoice')"
-          style="color:var(--danger,#F87171);border-color:color-mix(in srgb,var(--danger,#F87171) 32%,transparent);">
+          style="color:var(--danger);border-color:color-mix(in srgb,var(--danger) 32%,transparent);">
           Urgent Invoice
         </button>
       </div>
@@ -10048,12 +10020,12 @@ ${body}
       <div class="pb-email-card" id="pb-email-card">
         <div class="pb-chrome">
           <div class="pb-chrome-dots">
-            <span style="background:#ef4444;"></span>
-            <span style="background:var(--warning,#FB923C);"></span>
+            <span style="background:var(--danger);"></span>
+            <span style="background:var(--warning);"></span>
             <span style="background:var(--success,#34D399);"></span>
           </div>
           <div style="font-family:var(--mono);font-size:0.6rem;color:color-mix(in srgb,var(--text-secondary,#94A3B8) 45%,transparent);display:flex;align-items:center;gap:4px;">
-            <i class="ti ti-mail" style="color:color-mix(in srgb,var(--primary,#38BDF8) 45%,transparent);" aria-hidden="true"></i>
+            <i class="ti ti-mail" style="color:color-mix(in srgb,var(--primary) 45%,transparent);" aria-hidden="true"></i>
             Simulated Inbox &mdash; example-corp.test
           </div>
           <div style="width:32px;"></div>
@@ -10065,7 +10037,7 @@ ${body}
           </div>
           <div class="pb-mail-field">
             <span class="pb-mail-lbl">Subject</span>
-            <span id="pb-subject" style="color:var(--primary,#38BDF8);font-weight:600;"></span>
+            <span id="pb-subject" style="color:var(--primary);font-weight:600;"></span>
           </div>
           <div class="pb-mail-field">
             <span class="pb-mail-lbl">To</span>
@@ -10092,11 +10064,11 @@ ${body}
     <div class="pb-tab-panel" id="pb-tab-spotphish">
       <div class="pb-dialogue">
         <div class="pb-dialogue-icon">
-          <i class="ti ti-target" style="color:var(--danger,#F87171);font-size:0.9rem;" aria-hidden="true"></i>
+          <i class="ti ti-target" style="color:var(--danger);font-size:0.9rem;" aria-hidden="true"></i>
         </div>
         <div class="pb-bubble">
           Two emails below — one legit, one is a phish.
-          <strong style="color:var(--primary,#38BDF8);">Click the fake one.</strong>
+          <strong style="color:var(--primary);">Click the fake one.</strong>
         </div>
       </div>
 
@@ -10158,7 +10130,7 @@ ${body}
     </div><!-- /#pb-tab-riskscore -->
 
     <div class="pb-panel-footer">
-      <i class="ti ti-cpu" style="color:var(--primary,#38BDF8);" aria-hidden="true"></i>
+      <i class="ti ti-cpu" style="color:var(--primary);" aria-hidden="true"></i>
       PhishBot &mdash; Powered by PhishSim AI Engine v2
     </div>
   </div><!-- /#pb-panel -->
@@ -10185,10 +10157,10 @@ ${body}
         <!-- TAB PANEL: Generate -->
         <div class="pb-inline-tab-panel active" id="pb-tab-il-generate">
           <div class="pb-chips">
-            <button class="pb-chip" onclick="pbGen('ceo_fraud',true)"  style="color:var(--primary,#38BDF8);border-color:color-mix(in srgb,var(--primary,#38BDF8) 32%,transparent);">CEO Fraud</button>
-            <button class="pb-chip" onclick="pbGen('it_alert',true)"   style="color:var(--warning,#FB923C);border-color:color-mix(in srgb,var(--warning,#FB923C) 32%,transparent);">IT Alert</button>
+            <button class="pb-chip" onclick="pbGen('ceo_fraud',true)"  style="color:var(--primary);border-color:color-mix(in srgb,var(--primary) 32%,transparent);">CEO Fraud</button>
+            <button class="pb-chip" onclick="pbGen('it_alert',true)"   style="color:var(--warning);border-color:color-mix(in srgb,var(--warning) 32%,transparent);">IT Alert</button>
             <button class="pb-chip" onclick="pbGen('hr_update',true)"  style="color:var(--success,#34D399);border-color:color-mix(in srgb,var(--success,#34D399) 32%,transparent);">HR Update</button>
-            <button class="pb-chip" onclick="pbGen('invoice',true)"    style="color:var(--danger,#F87171);border-color:color-mix(in srgb,var(--danger,#F87171) 32%,transparent);">Urgent Invoice</button>
+            <button class="pb-chip" onclick="pbGen('invoice',true)"    style="color:var(--danger);border-color:color-mix(in srgb,var(--danger) 32%,transparent);">Urgent Invoice</button>
           </div>
           <div class="pb-skeleton-wrap" id="pb-il-loader">
             <div class="skeleton-block" style="width:78%;height:12px;margin-bottom:8px;"></div>
@@ -10196,10 +10168,10 @@ ${body}
             <div class="skeleton-block" style="width:70%;height:12px;"></div>
           </div>
           <div class="pb-email-card" id="pb-il-card">
-            <div class="pb-chrome"><div class="pb-chrome-dots"><span style="background:#ef4444;"></span><span style="background:var(--warning,#FB923C);"></span><span style="background:var(--success,#34D399);"></span></div><div style="font-family:var(--mono);font-size:0.6rem;color:color-mix(in srgb,var(--text-secondary,#94A3B8) 45%,transparent);">Simulated Inbox — example-corp.test</div><div style="width:32px;"></div></div>
+            <div class="pb-chrome"><div class="pb-chrome-dots"><span style="background:var(--danger);"></span><span style="background:var(--warning);"></span><span style="background:var(--success,#34D399);"></span></div><div style="font-family:var(--mono);font-size:0.6rem;color:color-mix(in srgb,var(--text-secondary,#94A3B8) 45%,transparent);">Simulated Inbox — example-corp.test</div><div style="width:32px;"></div></div>
             <div class="pb-mail-header">
               <div class="pb-mail-field"><span class="pb-mail-lbl">From</span><span id="pb-il-sender" style="color:var(--text-primary,#F0F4FF);"></span></div>
-              <div class="pb-mail-field"><span class="pb-mail-lbl">Subject</span><span id="pb-il-subject" style="color:var(--primary,#38BDF8);font-weight:600;"></span></div>
+              <div class="pb-mail-field"><span class="pb-mail-lbl">Subject</span><span id="pb-il-subject" style="color:var(--primary);font-weight:600;"></span></div>
             </div>
             <div class="pb-mail-body" id="pb-il-body"></div>
           </div>
@@ -10214,11 +10186,11 @@ ${body}
         <div class="pb-inline-tab-panel" id="pb-tab-il-spotphish">
           <div class="pb-dialogue" style="margin-bottom: 12px;">
             <div class="pb-dialogue-icon">
-              <i class="ti ti-target" style="color:var(--danger,#F87171);font-size:0.95rem;" aria-hidden="true"></i>
+              <i class="ti ti-target" style="color:var(--danger);font-size:0.95rem;" aria-hidden="true"></i>
             </div>
             <div class="pb-bubble">
               Two freshly generated emails below. One is legitimate, one is a phishing attempt.
-              <strong style="color:var(--primary,#38BDF8);">Click the fake one.</strong>
+              <strong style="color:var(--primary);">Click the fake one.</strong>
             </div>
           </div>
           <div class="stp-score-row" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
@@ -10237,7 +10209,7 @@ ${body}
         <!-- TAB PANEL: Walkthrough -->
         <div class="pb-inline-tab-panel" id="pb-tab-il-walkthrough" style="padding: 10px 0;">
           <div style="display:flex; gap:16px; align-items:flex-start;">
-            <div style="font-size:2rem; line-height:1; color:var(--primary,#38BDF8);">
+            <div style="font-size:2rem; line-height:1; color:var(--primary);">
               <i class="ti ti-route-2"></i>
             </div>
             <div style="flex:1;">
@@ -10516,7 +10488,7 @@ ${body}
             if (limitText) {
               if (ilGameRoundsLeft === 0) {
                 limitText.textContent = "0 rounds left today (Come back tomorrow)";
-                limitText.style.color = "var(--warning, #FB923C)";
+                limitText.style.color = "var(--warning)";
               } else {
                 limitText.textContent = `Rounds Left Today: ${ilGameRoundsLeft} / 3`;
                 limitText.style.color = "var(--text-secondary, #94A3B8)";
@@ -10567,7 +10539,7 @@ ${body}
         if (res.status === 429) {
           const j = await res.json();
           con.innerHTML = `
-            <div style="font-family:var(--mono); font-size:0.7rem; color:var(--warning,#FB923C); text-align:center; padding:20px 0;">
+            <div style="font-family:var(--mono); font-size:0.7rem; color:var(--warning); text-align:center; padding:20px 0;">
               ${esc(j.message || "0 rounds left today. Please come back tomorrow.")}
             </div>
           `;
@@ -10599,13 +10571,13 @@ ${body}
 
           boxEl.innerHTML = `
             <div class="stp-box-chrome">
-              <span style="background:#ef4444;"></span>
-              <span style="background:#f59e0b;"></span>
+              <span style="background:var(--danger);"></span>
+              <span style="background:var(--warning);"></span>
               <span style="background:#10b981;"></span>
             </div>
             <div class="stp-box-header">
               <div style="display:flex;"><span class="stp-lbl">From</span><span style="color:var(--text-primary,#F0F4FF);font-family:var(--mono);font-size:0.63rem;">${esc(email.sender_name)}</span></div>
-              <div style="display:flex;"><span class="stp-lbl">Subject</span><span style="color:var(--primary,#38BDF8);font-weight:600;font-family:var(--mono);font-size:0.63rem;">${esc(email.subject)}</span></div>
+              <div style="display:flex;"><span class="stp-lbl">Subject</span><span style="color:var(--primary);font-weight:600;font-family:var(--mono);font-size:0.63rem;">${esc(email.subject)}</span></div>
             </div>
             <div class="stp-box-body" style="height: 60px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;">${esc(bodyPreview)}</div>
           `;
@@ -10616,7 +10588,7 @@ ${body}
 
       } catch (err) {
         con.innerHTML = `
-          <div style="font-family:var(--mono); font-size:0.7rem; color:var(--danger,#F87171); text-align:center; padding:20px 0;">
+          <div style="font-family:var(--mono); font-size:0.7rem; color:var(--danger); text-align:center; padding:20px 0;">
             Error loading round: ${esc(err.message)}
           </div>
         `;
@@ -10773,7 +10745,7 @@ ${body}
         tabBody.innerHTML = `
           <div style="display:flex; flex-direction:column; gap:12px;">
             <div style="display:flex; justify-content:space-between; align-items:center;">
-              <span style="font-family:var(--sans); font-size:0.75rem; font-weight:700; color:var(--primary,#38BDF8);">
+              <span style="font-family:var(--sans); font-size:0.75rem; font-weight:700; color:var(--primary);">
                 ${esc(step.title)}
               </span>
               <span style="font-family:var(--mono); font-size:0.58rem; color:var(--text-secondary,#94A3B8);">
@@ -10841,7 +10813,7 @@ ${body}
       if (tabBody) {
         tabBody.innerHTML = `
           <div style="display:flex; gap:16px; align-items:flex-start;">
-            <div style="font-size:2rem; line-height:1; color:var(--primary,#38BDF8);">
+            <div style="font-size:2rem; line-height:1; color:var(--primary);">
               <i class="ti ti-route-2"></i>
             </div>
             <div style="flex:1;">
@@ -10888,9 +10860,9 @@ ${body}
 
     /* ── Bait score ────────────────────────────────────────────── */
     const SCORE_AXES = [
-      { label: 'Urgency',       key: 'urgency',       color: 'var(--danger,#F87171)' },
-      { label: 'Authority',     key: 'authority',     color: 'var(--warning,#FB923C)' },
-      { label: 'Believability', key: 'believe',       color: 'var(--primary,#38BDF8)' },
+      { label: 'Urgency',       key: 'urgency',       color: 'var(--danger)' },
+      { label: 'Authority',     key: 'authority',     color: 'var(--warning)' },
+      { label: 'Believability', key: 'believe',       color: 'var(--primary)' },
       { label: 'Obfuscation',   key: 'obfuscate',     color: 'var(--info,#818CF8)' },
       { label: 'Personalised',  key: 'personal',      color: 'var(--success,#34D399)' },
     ];
@@ -11062,7 +11034,7 @@ ${body}
             if (limitText) {
               if (gameRoundsLeft === 0) {
                 limitText.textContent = "0 rounds left today (Come back tomorrow)";
-                limitText.style.color = "var(--warning, #FB923C)";
+                limitText.style.color = "var(--warning)";
               } else {
                 limitText.textContent = `Rounds Left Today: ${gameRoundsLeft} / 3`;
                 limitText.style.color = "var(--text-secondary, #94A3B8)";
@@ -11113,7 +11085,7 @@ ${body}
         if (res.status === 429) {
           const j = await res.json();
           con.innerHTML = `
-            <div style="font-family:var(--mono); font-size:0.7rem; color:var(--warning,#FB923C); text-align:center; padding:20px 0;">
+            <div style="font-family:var(--mono); font-size:0.7rem; color:var(--warning); text-align:center; padding:20px 0;">
               ${esc(j.message || "0 rounds left today. Please come back tomorrow.")}
             </div>
           `;
@@ -11145,13 +11117,13 @@ ${body}
 
           boxEl.innerHTML = `
             <div class="stp-box-chrome">
-              <span style="background:#ef4444;"></span>
-              <span style="background:#f59e0b;"></span>
+              <span style="background:var(--danger);"></span>
+              <span style="background:var(--warning);"></span>
               <span style="background:#10b981;"></span>
             </div>
             <div class="stp-box-header">
               <div style="display:flex;"><span class="stp-lbl">From</span><span style="color:var(--text-primary,#F0F4FF);font-family:var(--mono);font-size:0.63rem;">${esc(email.sender_name)}</span></div>
-              <div style="display:flex;"><span class="stp-lbl">Subject</span><span style="color:var(--primary,#38BDF8);font-weight:600;font-family:var(--mono);font-size:0.63rem;">${esc(email.subject)}</span></div>
+              <div style="display:flex;"><span class="stp-lbl">Subject</span><span style="color:var(--primary);font-weight:600;font-family:var(--mono);font-size:0.63rem;">${esc(email.subject)}</span></div>
             </div>
             <div class="stp-box-body" style="height: 60px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;">${esc(bodyPreview)}</div>
           `;
@@ -11162,7 +11134,7 @@ ${body}
 
       } catch (err) {
         con.innerHTML = `
-          <div style="font-family:var(--mono); font-size:0.7rem; color:var(--danger,#F87171); text-align:center; padding:20px 0;">
+          <div style="font-family:var(--mono); font-size:0.7rem; color:var(--danger); text-align:center; padding:20px 0;">
             Error loading round: ${esc(err.message)}
           </div>
         `;
@@ -11267,7 +11239,7 @@ ${body}
       }
       const raw   = +ind.value + +sz.value + +tr.value; // 0-9
       const pct   = Math.round(14 + raw * 8);            // 14-86%
-      const color = pct >= 60 ? 'var(--danger,#F87171)' : pct >= 35 ? 'var(--warning,#FB923C)' : 'var(--success,#34D399)';
+      const color = pct >= 60 ? 'var(--danger)' : pct >= 35 ? 'var(--warning)' : 'var(--success,#34D399)';
       const label = pct >= 60 ? 'High exposure — simulations strongly recommended'
                   : pct >= 35 ? 'Moderate exposure — some controls in place'
                   :             'Lower exposure — good hygiene, keep it up';
