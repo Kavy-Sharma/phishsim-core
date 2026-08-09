@@ -1,0 +1,2029 @@
+<!-- ═══════════════════════════════════════════════════════════
+     LURE — 4-state persistent avatar companion bot widget
+     ═══════════════════════════════════════════════════════════ -->
+<style>
+    /* ── PhishBot container (the draggable host, not the panel) ── */
+    #pb-host {
+      position: fixed;
+      bottom: 100px;
+      right: 24px;
+      z-index: 10003;
+      touch-action: none;
+      user-select: none;
+    }
+
+    /* ── Avatar frame (transparent, fish mascot itself) ── */
+    #pb-avatar {
+      width: 72px;
+      height: 72px;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      outline: none;
+    }
+
+    /* Outer glow ring around the fish mascot (primary glow, 25% opacity) */
+    #pb-avatar::before {
+      content: '';
+      position: absolute;
+      width: 58px;
+      height: 52px;
+      border-radius: 50%;
+      background: transparent;
+      box-shadow: 0 0 16px var(--primary);
+      opacity: 0.15;
+      z-index: 1;
+      pointer-events: none;
+      animation: pbPulse 2.8s infinite ease-in-out;
+    }
+    @keyframes pbPulse {
+      0%, 100% { transform: scale(1); opacity: 0.15; }
+      50% { transform: scale(1.08); opacity: 0.3; }
+    }
+
+    /* Stalk/Lure animations */
+    #pb-lure-group {
+      transform-origin: 22px 16px;
+      animation: pbWiggle 4s infinite ease-in-out;
+    }
+    @keyframes pbWiggle {
+      0%, 100% { transform: rotate(0deg); }
+      50% { transform: rotate(4deg); }
+    }
+
+    #pb-orb-glow {
+      animation: pbOrbPulse 2s infinite ease-in-out;
+    }
+    @keyframes pbOrbPulse {
+      0%, 100% { transform: scale(1); opacity: 0.2; }
+      50% { transform: scale(1.3); opacity: 0.4; }
+    }
+
+    /* ── Teaser bubble (flies out left of avatar) ── */
+    #pb-teaser {
+      position: absolute;
+      right: 88px;
+      bottom: 12px;
+      width: 250px;
+      background: var(--bg-elevated, #121D35);
+      border: 1px solid color-mix(in srgb, var(--primary) 35%, transparent);
+      border-radius: 12px;
+      padding: 11px 13px;
+      box-shadow:
+        0 14px 45px rgba(0,0,0,0.5),
+        0 0 0 1px color-mix(in srgb, var(--primary) 8%, transparent);
+      backdrop-filter: blur(20px);
+      cursor: pointer;
+      opacity: 0;
+      transform: translateX(12px) scale(0.96);
+      pointer-events: none;
+      transition: opacity 0.28s ease, transform 0.28s cubic-bezier(0.16,1,0.3,1);
+      z-index: 10001;
+    }
+    #pb-teaser.pb-show {
+      opacity: 1;
+      transform: translateX(0) scale(1);
+      pointer-events: auto;
+    }
+    #pb-teaser::after {
+      content: '';
+      position: absolute;
+      right: -6px;
+      bottom: 18px;
+      width: 10px;
+      height: 10px;
+      background: var(--bg-elevated, #121D35);
+      border-right: 1px solid color-mix(in srgb, var(--primary) 35%, transparent);
+      border-bottom: 1px solid color-mix(in srgb, var(--primary) 35%, transparent);
+      transform: rotate(-45deg);
+    }
+    #pb-teaser-label {
+      font-family: var(--mono, 'JetBrains Mono', monospace);
+      font-size: 0.58rem;
+      font-weight: 800;
+      color: var(--primary);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 3px;
+    }
+    #pb-teaser-msg {
+      font-size: 0.72rem;
+      color: var(--text-primary, #E8EDF2);
+      line-height: 1.35;
+      margin-bottom: 4px;
+      font-weight: 500;
+    }
+    #pb-teaser-cta {
+      font-size: 0.58rem;
+      color: var(--text-muted, #4A5568);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    /* ── Quick control panel (anchored relative to host) ── */
+    #pb-panel {
+      position: fixed;
+      z-index: 10002;
+      width: 380px;
+      max-width: 90vw;
+      height: 480px;
+      max-height: 80vh;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: color-mix(in srgb, var(--primary) 22%, transparent) transparent;
+      background: var(--bg-elevated, #121D35);
+      border: 1px solid color-mix(in srgb, var(--primary) 22%, transparent);
+      border-radius: 16px;
+      box-shadow:
+        0 36px 88px rgba(0,0,0,0.72),
+        0 0 0 1px color-mix(in srgb, var(--primary) 6%, transparent),
+        0 0 60px color-mix(in srgb, var(--primary) 8%, transparent);
+      backdrop-filter: blur(28px);
+      opacity: 0;
+      transform: translateY(16px) scale(0.97);
+      pointer-events: none;
+      transition: opacity 0.3s ease, transform 0.35s cubic-bezier(0.16,1,0.3,1);
+    }
+    #pb-panel.pb-open {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+      pointer-events: auto;
+    }
+
+    /* ── First Visit Popover ── */
+    #pb-first-visit-popover {
+      position: fixed;
+      z-index: 10002;
+      width: 320px;
+      background: var(--bg-elevated, #121D35);
+      border: 1px solid color-mix(in srgb, var(--primary) 30%, transparent);
+      border-radius: 16px;
+      padding: 18px;
+      box-shadow:
+        0 24px 50px rgba(0,0,0,0.6),
+        0 0 0 1px color-mix(in srgb, var(--primary) 8%, transparent),
+        0 0 30px color-mix(in srgb, var(--primary) 12%, transparent);
+      backdrop-filter: blur(20px);
+      opacity: 0;
+      transform: translateY(12px) scale(0.96);
+      pointer-events: none;
+      transition: opacity 0.25s ease, transform 0.25s cubic-bezier(0.16,1,0.3,1);
+    }
+    #pb-first-visit-popover.pb-open {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+      pointer-events: auto;
+    }
+    .pb-popover-title {
+      font-family: var(--font-sans, sans-serif);
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--text-primary, #E8EDF2);
+      margin-bottom: 6px;
+    }
+    .pb-popover-text {
+      font-size: 0.8rem;
+      color: var(--text-secondary, #8CA0B3);
+      line-height: 1.4;
+      margin-bottom: 16px;
+    }
+    .pb-popover-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .pb-popover-btn {
+      width: 100%;
+      padding: 8px 12px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-align: center;
+      border: none;
+      outline: none;
+    }
+    .pb-popover-btn.primary {
+      background: var(--primary);
+      color: var(--text-inverse, #0A1420);
+    }
+    .pb-popover-btn.primary:hover {
+      background: var(--primary-hover);
+      box-shadow: 0 0 12px var(--primary-glow);
+    }
+    .pb-popover-btn.secondary {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-primary, #E8EDF2);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .pb-popover-btn.secondary:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    /* Panel drag handle */
+    .pb-panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 13px 16px;
+      border-bottom: 1px solid color-mix(in srgb, var(--border-default,rgba(255,255,255,0.12)) 60%, transparent);
+      cursor: move;
+      position: sticky;
+      top: 0;
+      background: var(--bg-elevated, #121D35);
+      z-index: 5;
+      border-radius: 16px 16px 0 0;
+      gap: 10px;
+    }
+    .pb-panel-title {
+      font-family: var(--mono, 'JetBrains Mono', monospace);
+      font-size: 0.78rem;
+      font-weight: 800;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      letter-spacing: 0.04em;
+      flex-shrink: 0;
+    }
+    .pb-panel-tabs {
+      display: flex;
+      gap: 3px;
+      flex: 1;
+      justify-content: center;
+    }
+    .pb-tab-btn {
+      font-family: var(--mono, 'JetBrains Mono', monospace);
+      font-size: 0.6rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 5px 9px;
+      border-radius: 6px;
+      border: 1px solid transparent;
+      cursor: pointer;
+      color: var(--text-secondary, #94A3B8);
+      background: transparent;
+      transition: all 0.18s;
+    }
+    .pb-tab-btn:hover { color: var(--primary); background: var(--primary-dim); }
+    .pb-tab-btn.active {
+      color: var(--primary);
+      background: var(--primary-dim);
+      border-color: color-mix(in srgb, var(--primary) 30%, transparent);
+    }
+    .pb-panel-actions { display: flex; gap: 4px; }
+    .pb-icon-btn {
+      width: 27px; height: 27px;
+      border-radius: 7px;
+      border: 1px solid color-mix(in srgb, var(--border-default,rgba(255,255,255,0.12)) 70%, transparent);
+      background: var(--primary-dim);
+      color: var(--text-secondary, #94A3B8);
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.85rem;
+      transition: all 0.18s;
+    }
+    .pb-icon-btn:hover { background: var(--primary-dim); color: var(--primary); }
+
+    /* Tab panels */
+    .pb-tab-panel { display: none; padding: 18px 16px; }
+    .pb-tab-panel.active { display: block; }
+
+    /* PhishBot dialogue row */
+    .pb-dialogue {
+      display: flex;
+      align-items: flex-start;
+      gap: 9px;
+      margin-bottom: 14px;
+      min-height: 38px;
+    }
+    .pb-dialogue-icon {
+      width: 30px; height: 30px;
+      border-radius: 50%;
+      background: var(--primary-dim);
+      border: 1px solid color-mix(in srgb, var(--primary) 25%, transparent);
+      flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .pb-bubble {
+      background: var(--primary-dim);
+      border: 1px solid color-mix(in srgb, var(--primary) 16%, transparent);
+      border-radius: 4px 12px 12px 12px;
+      padding: 8px 12px;
+      font-family: var(--mono, 'JetBrains Mono', monospace);
+      font-size: 0.69rem;
+      color: color-mix(in srgb, var(--text-primary,#F0F4FF) 82%, transparent);
+      line-height: 1.5;
+      flex: 1;
+      transition: opacity 0.2s;
+    }
+
+    /* Scenario chips */
+    .pb-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+    .pb-chip {
+      padding: 5px 13px;
+      border-radius: 100px;
+      font-size: 0.73rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid;
+      font-family: var(--sans, 'Space Grotesk', sans-serif);
+      background: transparent;
+      transition: filter 0.18s, transform 0.18s;
+    }
+    .pb-chip:hover  { filter: brightness(1.3); transform: translateY(-1px); }
+    .pb-chip.active { filter: brightness(1.4); box-shadow: 0 0 10px currentColor; }
+    .pb-chip:disabled, .pb-chip.pb-disabled { opacity: 0.3; pointer-events: none; }
+
+    /* Skeleton loader */
+    .pb-skeleton-wrap { display: none; padding: 10px 0; }
+    .pb-skeleton-wrap .skeleton-block { margin-bottom: 8px; }
+
+    /* Email result card */
+    .pb-email-card {
+      display: none;
+      border-radius: 9px;
+      overflow: hidden;
+      border: 1px solid var(--border-subtle, rgba(255,255,255,0.06));
+      box-shadow: 0 6px 22px rgba(0,0,0,0.4);
+      margin-bottom: 10px;
+    }
+    .pb-chrome {
+      background: color-mix(in srgb, var(--bg-elevated,#121D35) 85%, transparent);
+      border-bottom: 1px solid var(--border-subtle, rgba(255,255,255,0.06));
+      padding: 7px 11px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .pb-chrome-dots { display: flex; gap: 5px; }
+    .pb-chrome-dots span { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+    .pb-mail-header {
+      background: rgba(2,6,23,0.9);
+      border-bottom: 1px solid var(--border-subtle, rgba(255,255,255,0.05));
+      padding: 9px 13px;
+      font-family: var(--mono, 'JetBrains Mono', monospace);
+      font-size: 0.69rem;
+      display: flex; flex-direction: column; gap: 3px;
+    }
+    .pb-mail-field { display: flex; align-items: baseline; }
+    .pb-mail-lbl {
+      color: color-mix(in srgb, var(--text-secondary,#94A3B8) 45%, transparent);
+      min-width: 56px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      font-size: 0.58rem;
+    }
+    .pb-mail-body {
+      padding: 14px 16px;
+      background: #fff;
+      color: #1e293b;
+      font-family: Georgia, serif;
+      font-size: 0.84rem;
+      line-height: 1.7;
+      max-height: 190px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+    }
+
+    /* Red-flag highlights */
+    .pb-rf {
+      background: rgba(248,113,113,0.12);
+      border-bottom: 1.5px dashed var(--danger);
+      cursor: help;
+      position: relative;
+    }
+    .pb-rf-tip {
+      display: none;
+      position: absolute;
+      bottom: 115%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #020617;
+      border: 1px solid color-mix(in srgb, var(--danger) 35%, transparent);
+      border-radius: 7px;
+      padding: 7px 10px;
+      width: 190px;
+      font-family: var(--mono, 'JetBrains Mono', monospace);
+      font-size: 0.61rem;
+      color: #fca5a5;
+      z-index: 10010;
+      line-height: 1.4;
+      white-space: normal;
+      pointer-events: none;
+    }
+    .pb-rf:hover .pb-rf-tip { display: block; }
+
+    /* Bait score */
+    .pb-bait-section { display: none; padding: 12px 0 4px; border-top: 1px solid var(--border-subtle, rgba(255,255,255,0.05)); }
+    .pb-bait-lbl { font-family: var(--mono); font-size: 0.6rem; font-weight: 800; letter-spacing: 0.1em; color: color-mix(in srgb, var(--primary) 60%, transparent); text-transform: uppercase; margin-bottom: 9px; }
+    .pb-score-bars { display: flex; flex-direction: column; gap: 6px; }
+    .pb-score-row { display: flex; align-items: center; gap: 9px; }
+    .pb-score-name { font-family: var(--mono); font-size: 0.6rem; color: var(--text-secondary,#94A3B8); min-width: 96px; }
+    .pb-score-track { flex:1; height: 4px; background: var(--border-subtle, rgba(255,255,255,0.06)); border-radius: 100px; overflow: hidden; }
+    .pb-score-fill  { height: 100%; border-radius: 100px; width: 0; transition: width 0.85s cubic-bezier(0.16,1,0.3,1); }
+    .pb-score-num   { font-family: var(--mono); font-size: 0.6rem; color: var(--text-secondary,#94A3B8); min-width: 22px; text-align: right; }
+
+    /* Meta + error */
+    .pb-meta  { display: none; margin-top: 9px; flex-direction: column; gap: 4px; }
+    .pb-tactic { font-size: 0.7rem; color: var(--warning); font-weight: 600; font-family: var(--mono); }
+    .pb-disc   { font-size: 0.6rem; color: var(--text-muted, #4A5568); font-style: italic; }
+    .pb-error-msg {
+      display: none;
+      color: var(--danger);
+      font-size: 0.7rem;
+      font-family: var(--mono);
+      margin-top: 9px;
+      padding: 9px 11px;
+      background: var(--danger-dim, rgba(248,113,113,0.08));
+      border-radius: 7px;
+      border: 1px solid color-mix(in srgb, var(--danger) 22%, transparent);
+    }
+
+    /* ── Spot the Phish tab ── */
+    .stp-intro { font-family: var(--mono); font-size: 0.68rem; color: var(--text-secondary,#94A3B8); margin-bottom: 14px; line-height: 1.5; }
+    .stp-pair { display: flex; flex-direction: column; gap: 9px; }
+    .stp-box {
+      border: 1px solid var(--border-subtle, rgba(255,255,255,0.07));
+      border-radius: 9px; overflow: hidden; cursor: pointer;
+      transition: border-color 0.18s, box-shadow 0.18s;
+    }
+    .stp-box:hover { border-color: color-mix(in srgb, var(--primary) 40%, transparent); }
+    .stp-box.correct { border-color: var(--danger) !important; box-shadow: 0 0 10px color-mix(in srgb, var(--danger) 14%, transparent) !important; }
+    .stp-box.wrong   { border-color: var(--success,#34D399) !important; }
+    .stp-box-chrome  { background: rgba(255,255,255,0.02); border-bottom: 1px solid var(--border-subtle, rgba(255,255,255,0.05)); padding: 6px 11px; display: flex; gap: 5px; }
+    .stp-box-chrome span { width: 6px; height: 6px; border-radius: 50%; }
+    .stp-box-header { padding: 8px 12px; background: rgba(2,6,23,0.78); border-bottom: 1px solid var(--border-subtle,rgba(255,255,255,0.04)); font-family: var(--mono); font-size: 0.65rem; display: flex; flex-direction: column; gap: 3px; }
+    .stp-box-body { padding: 10px 13px; background: #fff; color: #1e293b; font-family: Georgia,serif; font-size: 0.78rem; line-height: 1.6; max-height: 88px; overflow: hidden; }
+    .stp-lbl { font-size: 0.58rem; text-transform: uppercase; letter-spacing: 0.06em; color: color-mix(in srgb, var(--text-secondary,#94A3B8) 50%, transparent); min-width: 52px; }
+    .stp-result { display: none; margin-top: 10px; padding: 11px; border-radius: 7px; font-family: var(--mono); font-size: 0.68rem; line-height: 1.5; }
+    .stp-result.phish { background: var(--danger-dim,rgba(248,113,113,0.08)); border: 1px solid color-mix(in srgb, var(--danger) 22%, transparent); color: #fca5a5; }
+    .stp-score-row { font-family: var(--mono); font-size: 0.62rem; color: var(--text-secondary,#94A3B8); margin-bottom: 8px; }
+
+    @media (min-width: 480px) {
+      .stp-pair { flex-direction: row; }
+      .stp-box { flex: 1; min-width: 0; }
+    }
+
+    /* ── Risk Score tab ── */
+    .rs-q-text { font-family: var(--mono); font-size: 0.73rem; color: var(--text-primary,#F0F4FF); margin-bottom: 7px; font-weight: 600; }
+    .rs-opts { display: flex; flex-direction: column; gap: 5px; margin-bottom: 14px; }
+    .rs-opt {
+      display: flex; align-items: center; gap: 9px;
+      padding: 7px 11px;
+      border-radius: 7px; border: 1px solid var(--border-subtle,rgba(255,255,255,0.07));
+      cursor: pointer; font-family: var(--mono); font-size: 0.68rem;
+      color: var(--text-secondary,#94A3B8); transition: all 0.16s;
+    }
+    .rs-opt:hover { background: var(--primary-dim); border-color: color-mix(in srgb, var(--primary) 22%, transparent); color: var(--text-primary,#F0F4FF); }
+    .rs-opt.selected { background: var(--primary-dim); border-color: color-mix(in srgb, var(--primary) 32%, transparent); color: var(--primary); }
+    .rs-opt input[type=radio] { display: none; }
+    .rs-radio { width: 13px; height: 13px; border-radius: 50%; border: 1.5px solid color-mix(in srgb, var(--primary) 45%, transparent); flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+    .rs-opt.selected .rs-radio::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: var(--primary); display: block; }
+    .rs-gauge { font-family: var(--mono); font-size: 3rem; font-weight: 900; line-height: 1; margin-bottom: 6px; }
+    .rs-result { display: none; text-align: center; padding: 20px 0 6px; }
+    .rs-note { font-size: 0.59rem; color: var(--text-muted,#4A5568); font-style: italic; font-family: var(--sans); border-top: 1px solid var(--border-subtle,rgba(255,255,255,0.05)); padding-top: 10px; line-height: 1.5; margin-top: 12px; text-align: left; }
+
+    /* Panel action button (CTA inline) */
+    .pb-action-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      margin-top: 10px; padding: 9px 18px;
+      border-radius: 9px;
+      background: var(--primary-dim);
+      border: 1px solid color-mix(in srgb, var(--primary) 28%, transparent);
+      color: var(--primary);
+      font-family: var(--mono); font-size: 0.69rem; font-weight: 700;
+      cursor: pointer; transition: all 0.18s;
+      outline: none;
+    }
+    .pb-action-btn:hover { background: var(--primary-dim); box-shadow: 0 0 14px color-mix(in srgb, var(--primary) 20%, transparent); }
+
+    /* Panel footer */
+    .pb-panel-footer {
+      padding: 8px 16px 12px;
+      border-top: 1px solid var(--border-subtle, rgba(255,255,255,0.05));
+      display: flex; align-items: center; justify-content: center; gap: 5px;
+      font-family: var(--mono); font-size: 0.57rem;
+      color: var(--text-muted, #4A5568); letter-spacing: 0.04em;
+    }
+
+    /* Maximised inline section -> Full-Screen takeover modal */
+    #pb-inline-section {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 10005;
+      background: rgba(4, 9, 20, 0.75);
+      backdrop-filter: blur(12px);
+      padding: 60px 16px;
+      box-sizing: border-box;
+      overflow-y: auto;
+    }
+    #pb-inline-section .pb-inner-wrap {
+      max-width: 760px;
+      margin: 0 auto;
+      background: var(--bg-elevated, #121D35);
+      border: 1px solid color-mix(in srgb, var(--primary) 20%, transparent);
+      border-radius: 18px;
+      overflow: hidden;
+      box-shadow: 0 20px 70px rgba(0,0,0,0.5);
+    }
+    #pb-inline-section .pb-inner-head {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 20px;
+      border-bottom: 1px solid color-mix(in srgb, var(--border-default,rgba(255,255,255,0.12)) 60%, transparent);
+      background: var(--bg-elevated, #121D35);
+    }
+    #pb-inline-section .pb-inner-body { padding: 22px 20px; }
+
+    /* Maximized view tab controls */
+    .pb-inline-tab-panel {
+      display: none;
+    }
+    .pb-inline-tab-panel.active {
+      display: block;
+    }
+
+    /* Interactive Walkthrough Highlighter */
+    .pb-highlight-active {
+      outline: 3px solid var(--primary) !important;
+      box-shadow: 0 0 14px color-mix(in srgb, var(--primary) 28%, transparent) !important;
+      transition: outline 0.3s ease, box-shadow 0.3s ease !important;
+      position: relative;
+      z-index: 1000 !important;
+    }
+
+    /* Floating Walkthrough Corner Card (Overrides fullscreen modal layout) */
+    #pb-inline-section.pb-walkthrough-active {
+      position: fixed !important;
+      top: auto !important;
+      left: auto !important;
+      bottom: 24px !important;
+      right: 24px !important;
+      width: 380px !important;
+      max-width: 90% !important;
+      height: auto !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      z-index: 20000 !important;
+      background: transparent !important;
+      backdrop-filter: none !important;
+      overflow-y: visible !important;
+      animation: pbCardPop 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    #pb-inline-section.pb-walkthrough-active .pb-inner-wrap {
+      border: 1px solid var(--primary) !important;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.65) !important;
+      border-radius: 14px !important;
+    }
+    #pb-inline-section.pb-walkthrough-active .pb-inner-head {
+      padding: 10px 14px !important;
+    }
+    #pb-inline-section.pb-walkthrough-active .pb-inner-head .pb-panel-tabs {
+      display: none !important;
+    }
+    #pb-inline-section.pb-walkthrough-active .pb-inner-body {
+      padding: 14px 16px !important;
+    }
+
+    @keyframes pbCardPop {
+      from { transform: scale(0.9) translateY(20px); opacity: 0; }
+      to { transform: scale(1) translateY(0); opacity: 1; }
+    }
+
+    /* Walkthrough Selection Guide List Styles */
+    .pb-wt-guide-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-width: 480px;
+      margin: 0 auto;
+    }
+    .pb-wt-guide-card {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 12px;
+      padding: 10px 14px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .pb-wt-guide-card:hover {
+      background: rgba(255, 255, 255, 0.04);
+      border-color: rgba(255, 255, 255, 0.12);
+      transform: translateY(-1px);
+    }
+    .pb-wt-guide-icon {
+      font-size: 1.1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 8px;
+    }
+    .pb-wt-guide-info {
+      flex: 1;
+      text-align: left;
+    }
+    .pb-wt-guide-name {
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--text-primary, #E8EDF2);
+      margin-bottom: 2px;
+    }
+    .pb-wt-guide-desc {
+      font-size: 0.65rem;
+      color: var(--text-secondary, #8CA0B3);
+      line-height: 1.3;
+    }
+    .pb-wt-guide-go {
+      background: transparent;
+      border: none;
+      color: var(--text-secondary, #8CA0B3);
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+    .pb-wt-guide-card:hover .pb-wt-guide-go {
+      color: var(--primary);
+    }
+</style>
+
+<div id="pb-host">
+  <!-- Teaser bubble -->
+  <div id="pb-teaser" aria-hidden="true">
+    <div id="pb-teaser-label">Lure</div>
+    <div id="pb-teaser-msg">"Your CEO just sent a wire transfer request…"</div>
+    <span id="pb-teaser-cta">→ Click to see how convincing it looks</span>
+  </div>
+
+  <!-- First Visit Popover -->
+  <div id="pb-first-visit-popover" role="dialog" aria-modal="false" aria-label="Welcome to Lure">
+    <div class="pb-popover-title">Welcome to Lure AI Lab!</div>
+    <div class="pb-popover-text">Let's get started. Would you like a quick walkthrough of the social engineering sandbox, or do you want to start generating email lures right away?</div>
+    <div class="pb-popover-actions">
+      <button class="pb-popover-btn primary" id="pb-fv-walkthrough-btn">Show me around</button>
+      <button class="pb-popover-btn secondary" id="pb-fv-generate-btn">Just generate a lure</button>
+    </div>
+  </div>
+
+  <!-- Draggable Mascot Avatar Button -->
+  <button id="pb-avatar" type="button"
+    aria-label="Open Lure — AI Phishing Lure Lab"
+    aria-expanded="false"
+    aria-controls="pb-panel">
+    <svg width="36" height="36" viewBox="0 0 36 36" style="filter: drop-shadow(0 0 6px var(--primary-glow));">
+      <!-- Tail -->
+      <path id="pb-tail-fin" d="M8 24 L2 17 C1.5 20, 1.5 28, 2 31 Z" fill="color-mix(in srgb, var(--primary) 80%, #000000)"/>
+      <!-- Dorsal Fin -->
+      <path id="pb-dorsal-fin" d="M11 16 C12 11, 16 11, 17 16 Z" fill="color-mix(in srgb, var(--primary) 80%, #000000)"/>
+      <!-- Pectoral Fin -->
+      <path id="pb-pectoral-fin" d="M14 26 C11 26, 10 29, 12 30 C14 31, 16 28, 14 26 Z" fill="color-mix(in srgb, var(--primary) 80%, #000000)"/>
+      <!-- Body shape filled with primary teal -->
+      <ellipse id="pb-avatar-body" cx="18" cy="24" rx="11" ry="9" fill="var(--primary)"/>
+      <!-- Eye -->
+      <circle cx="24" cy="21" r="2" fill="#0A1420"/>
+      <circle cx="24.8" cy="20.2" r="0.6" fill="#ffffff"/>
+      <!-- Smile mouth -->
+      <path id="pb-mouth" d="M24 26.5 Q26.5 27.8 28.3 26.3" stroke="#0A1420" stroke-width="2.2" stroke-linecap="round" fill="none"/>
+      <defs>
+        <filter id="pbOrbGlow" x="-80%" y="-80%" width="260%" height="260%">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="1.6" result="blur"/>
+          <feMerge>
+            <feMergeNode in="blur"/>
+            <feMergeNode in="SourceGraphic"/>
+          </feMerge>
+        </filter>
+      </defs>
+      <!-- Stalk & Orb -->
+      <g id="pb-lure-group">
+        <path d="M22 16 Q26 10 29 11" stroke="color-mix(in srgb, var(--primary) 80%, #000000)" stroke-width="2.6" stroke-linecap="round" fill="none"/>
+        <circle cx="29" cy="11" r="5" fill="none" stroke="var(--warning)" stroke-width="1.5" opacity="0.25" id="pb-orb-glow"/>
+        <circle cx="29" cy="11" r="2.8" fill="var(--warning)" id="pb-orb" filter="url(#pbOrbGlow)"/>
+      </g>
+    </svg>
+  </button>
+</div>
+
+<!-- Lure Sidebar/Slide-up Panel -->
+<div id="pb-panel" role="dialog" aria-modal="true" aria-label="Lure AI Lure Lab">
+  <div class="pb-panel-header" id="pb-drag-handle">
+    <div class="pb-panel-title">
+      <i class="ti ti-mood-smile" aria-hidden="true"></i> Lure
+    </div>
+    <div class="pb-panel-tabs">
+      <button class="pb-tab-btn active" data-tab="generate">Generate</button>
+      <button class="pb-tab-btn" data-tab="spotphish">Spot Phish</button>
+      <button class="pb-tab-btn" data-tab="riskscore">Risk Score</button>
+    </div>
+    <div class="pb-panel-actions">
+      <button class="pb-icon-btn" id="pb-max-btn" title="Expand to page" aria-label="Expand">
+        <i class="ti ti-maximize" aria-hidden="true"></i>
+      </button>
+      <button class="pb-icon-btn" id="pb-close-btn" title="Close" aria-label="Close">
+        <i class="ti ti-x" aria-hidden="true"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- TAB: Generate -->
+  <div class="pb-tab-panel active" id="pb-tab-generate">
+    <div class="pb-dialogue">
+      <div class="pb-dialogue-icon">
+        <i class="ti ti-mood-smile" style="color:var(--primary);font-size:0.95rem;" aria-hidden="true"></i>
+      </div>
+      <div class="pb-bubble" id="pb-dialogue-text">
+        Pick a scenario and I'll generate a real AI phishing lure — right now, live.
+      </div>
+    </div>
+    <div class="pb-chips">
+      <button class="pb-chip" onclick="pbGen('ceo_fraud')" style="color:var(--primary);border-color:color-mix(in srgb,var(--primary) 32%,transparent);">CEO Fraud</button>
+      <button class="pb-chip" onclick="pbGen('it_alert')" style="color:var(--warning);border-color:color-mix(in srgb,var(--warning) 32%,transparent);">IT Alert</button>
+      <button class="pb-chip" onclick="pbGen('hr_update')" style="color:var(--success,#34D399);border-color:color-mix(in srgb,var(--success,#34D399) 32%,transparent);">HR Update</button>
+      <button class="pb-chip" onclick="pbGen('invoice')" style="color:var(--danger);border-color:color-mix(in srgb,var(--danger) 32%,transparent);">Urgent Invoice</button>
+    </div>
+    <div class="pb-skeleton-wrap" id="pb-gen-loader">
+      <div class="skeleton-block" style="width:78%;height:12px;margin-bottom:8px;"></div>
+      <div class="skeleton-block" style="width:60%;height:12px;margin-bottom:8px;"></div>
+      <div class="skeleton-block" style="width:70%;height:12px;"></div>
+    </div>
+    <div class="pb-email-card" id="pb-email-card">
+      <div class="pb-chrome">
+        <div class="pb-chrome-dots">
+          <span style="background:var(--danger);"></span>
+          <span style="background:var(--warning);"></span>
+          <span style="background:var(--success,#34D399);"></span>
+        </div>
+        <div style="font-family:var(--mono);font-size:0.6rem;color:color-mix(in srgb,var(--text-secondary,#94A3B8) 45%,transparent);display:flex;align-items:center;gap:4px;">
+          <i class="ti ti-mail" style="color:color-mix(in srgb,var(--primary) 45%,transparent);" aria-hidden="true"></i>
+          Simulated Inbox &mdash; example-corp.test
+        </div>
+        <div style="width:32px;"></div>
+      </div>
+      <div class="pb-mail-header">
+        <div class="pb-mail-field"><span class="pb-mail-lbl">From</span><span id="pb-sender" style="color:var(--text-primary,#F0F4FF);"></span></div>
+        <div class="pb-mail-field"><span class="pb-mail-lbl">Subject</span><span id="pb-subject" style="color:var(--primary);font-weight:600;"></span></div>
+        <div class="pb-mail-field"><span class="pb-mail-lbl">To</span><span style="color:color-mix(in srgb,var(--text-secondary,#94A3B8) 45%,transparent);">jordan.ellis@example-corp.test</span></div>
+      </div>
+      <div class="pb-mail-body" id="pb-body"></div>
+    </div>
+    <div class="pb-bait-section" id="pb-bait-section">
+      <div class="pb-bait-lbl">// Bait Score Breakdown</div>
+      <div class="pb-score-bars" id="pb-score-bars"></div>
+    </div>
+    <div class="pb-meta" id="pb-meta">
+      <div class="pb-tactic" id="pb-tactic-text"></div>
+      <div class="pb-disc">Fictional demo &mdash; Example Corp (example-corp.test). Not a real target.</div>
+    </div>
+    <div class="pb-error-msg" id="pb-error-msg"></div>
+  </div>
+
+  <!-- TAB: Spot the Phish -->
+  <div class="pb-tab-panel" id="pb-tab-spotphish">
+    <div class="pb-dialogue">
+      <div class="pb-dialogue-icon">
+        <i class="ti ti-target" style="color:var(--danger);font-size:0.9rem;" aria-hidden="true"></i>
+      </div>
+      <div class="pb-bubble">
+        Two emails below — one legit, one is a phish. <strong style="color:var(--primary);">Click the fake one.</strong>
+      </div>
+    </div>
+    <div class="stp-score-row" style="display:flex; justify-content:space-between; align-items:center;">
+      <div>Score: <span id="stp-score">0</span> / <span id="stp-total">0</span></div>
+      <div id="stp-limit-text" style="font-size:0.62rem; color:var(--text-secondary,#94A3B8);">Rounds Left Today: 3 / 3</div>
+    </div>
+    <div class="stp-pair" id="stp-pair-container"></div>
+    <div class="stp-result" id="stp-result"></div>
+    <button class="pb-action-btn" id="stp-next-btn" style="display:none;" onclick="stpNext()">
+      <i class="ti ti-arrow-right" aria-hidden="true"></i> Next Round
+    </button>
+  </div>
+
+  <!-- TAB: Risk Score -->
+  <div class="pb-tab-panel" id="pb-tab-riskscore">
+    <div class="pb-dialogue">
+      <div class="pb-dialogue-icon">
+        <i class="ti ti-chart-bar" style="color:var(--info,#818CF8);font-size:0.9rem;" aria-hidden="true"></i>
+      </div>
+      <div class="pb-bubble" id="rs-dialogue-text">
+        3 quick questions. I'll estimate your organisation's phishing exposure.
+      </div>
+    </div>
+    <div id="rs-form">
+      <div class="rs-q-text">1. What industry are you in?</div>
+      <div class="rs-opts">
+        <label class="rs-opt"><input type="radio" name="rs-ind" value="3"><span class="rs-radio"></span>Finance / Banking / Insurance</label>
+        <label class="rs-opt"><input type="radio" name="rs-ind" value="2"><span class="rs-radio"></span>Healthcare / Legal / Government</label>
+        <label class="rs-opt"><input type="radio" name="rs-ind" value="1"><span class="rs-radio"></span>Technology / SaaS / Media</label>
+        <label class="rs-opt"><input type="radio" name="rs-ind" value="1"><span class="rs-radio"></span>Other</label>
+      </div>
+      <div class="rs-q-text">2. Company size?</div>
+      <div class="rs-opts">
+        <label class="rs-opt"><input type="radio" name="rs-sz" value="3"><span class="rs-radio"></span>1,000+ (Enterprise)</label>
+        <label class="rs-opt"><input type="radio" name="rs-sz" value="2"><span class="rs-radio"></span>100 – 999 (Mid-market)</label>
+        <label class="rs-opt"><input type="radio" name="rs-sz" value="1"><span class="rs-radio"></span>Under 100 (SMB)</label>
+      </div>
+      <div class="rs-q-text">3. Do you run phishing simulations regularly?</div>
+      <div class="rs-opts">
+        <label class="rs-opt"><input type="radio" name="rs-tr" value="0"><span class="rs-radio"></span>Yes — quarterly or more</label>
+        <label class="rs-opt"><input type="radio" name="rs-tr" value="2"><span class="rs-radio"></span>Occasionally — once a year or less</label>
+        <label class="rs-opt"><input type="radio" name="rs-tr" value="3"><span class="rs-radio"></span>No / not sure</label>
+      </div>
+      <button class="pb-action-btn" onclick="rsCalc()">
+        <i class="ti ti-calculator" aria-hidden="true"></i> Calculate exposure
+      </button>
+    </div>
+    <div class="rs-result" id="rs-result">
+      <div class="rs-gauge" id="rs-gauge">—</div>
+      <div style="font-family:var(--mono);font-size:0.7rem;color:var(--text-secondary,#94A3B8);margin-bottom:14px;" id="rs-gauge-lbl"></div>
+      <button class="pb-action-btn" onclick="rsReset()">
+        <i class="ti ti-refresh" aria-hidden="true"></i> Start over
+      </button>
+      <div class="rs-note">⚠ This is a directional estimate based on averages. Actual risk depends on technical configurations and ongoing training levels.</div>
+    </div>
+  </div>
+
+  <div class="pb-panel-footer">
+    <i class="ti ti-cpu" style="color:var(--primary);" aria-hidden="true"></i>
+    Lure &mdash; Powered by PhishSim AI Engine v2
+  </div>
+</div>
+
+<!-- Full-screen Takeover Modal / Maximized Window container -->
+<section id="pb-inline-section">
+  <div class="pb-inner-wrap">
+    <div class="pb-inner-head">
+      <div class="pb-panel-title"><i class="ti ti-mood-smile" aria-hidden="true"></i> Lure — AI Lure Lab</div>
+      <div class="pb-panel-tabs" style="margin-left: 20px;">
+        <button class="pb-inline-tab-btn pb-tab-btn active" data-tab="il-generate">Generate</button>
+        <button class="pb-inline-tab-btn pb-tab-btn" data-tab="il-spotphish">Spot Phish</button>
+        <button class="pb-inline-tab-btn pb-tab-btn" data-tab="il-walkthrough">How This Works</button>
+      </div>
+      <button class="pb-icon-btn" id="pb-inline-collapse" aria-label="Collapse">
+        <i class="ti ti-minimize" aria-hidden="true"></i>
+      </button>
+    </div>
+    <div class="pb-inner-body">
+      
+      <!-- TAB PANEL: Generate -->
+      <div class="pb-inline-tab-panel active" id="pb-tab-il-generate">
+        <div class="pb-chips">
+          <button class="pb-chip" onclick="pbGen('ceo_fraud',true)" style="color:var(--primary);border-color:color-mix(in srgb,var(--primary) 32%,transparent);">CEO Fraud</button>
+          <button class="pb-chip" onclick="pbGen('it_alert',true)" style="color:var(--warning);border-color:color-mix(in srgb,var(--warning) 32%,transparent);">IT Alert</button>
+          <button class="pb-chip" onclick="pbGen('hr_update',true)" style="color:var(--success,#34D399);border-color:color-mix(in srgb,var(--success,#34D399) 32%,transparent);">HR Update</button>
+          <button class="pb-chip" onclick="pbGen('invoice',true)" style="color:var(--danger);border-color:color-mix(in srgb,var(--danger) 32%,transparent);">Urgent Invoice</button>
+        </div>
+        <div class="pb-skeleton-wrap" id="pb-il-loader">
+          <div class="skeleton-block" style="width:78%;height:12px;margin-bottom:8px;"></div>
+          <div class="skeleton-block" style="width:60%;height:12px;margin-bottom:8px;"></div>
+          <div class="skeleton-block" style="width:70%;height:12px;"></div>
+        </div>
+        <div class="pb-email-card" id="pb-il-card">
+          <div class="pb-chrome">
+            <div class="pb-chrome-dots"><span style="background:var(--danger);"></span><span style="background:var(--warning);"></span><span style="background:var(--success,#34D399);"></span></div>
+            <div style="font-family:var(--mono);font-size:0.6rem;color:color-mix(in srgb,var(--text-secondary,#94A3B8) 45%,transparent);">Simulated Inbox — example-corp.test</div>
+            <div style="width:32px;"></div>
+          </div>
+          <div class="pb-mail-header">
+            <div class="pb-mail-field"><span class="pb-mail-lbl">From</span><span id="pb-il-sender" style="color:var(--text-primary,#F0F4FF);"></span></div>
+            <div class="pb-mail-field"><span class="pb-mail-lbl">Subject</span><span id="pb-il-subject" style="color:var(--primary);font-weight:600;"></span></div>
+          </div>
+          <div class="pb-mail-body" id="pb-il-body"></div>
+        </div>
+        <div class="pb-meta" id="pb-il-meta">
+          <div class="pb-tactic" id="pb-il-tactic"></div>
+          <div class="pb-disc">Fictional demo — Example Corp. Not a real target.</div>
+        </div>
+        <div class="pb-error-msg" id="pb-il-error"></div>
+      </div>
+
+      <!-- TAB PANEL: Spot Phish -->
+      <div class="pb-inline-tab-panel" id="pb-tab-il-spotphish">
+        <div class="pb-dialogue" style="margin-bottom: 12px;">
+          <div class="pb-dialogue-icon">
+            <i class="ti ti-target" style="color:var(--danger);font-size:0.95rem;" aria-hidden="true"></i>
+          </div>
+          <div class="pb-bubble">
+            Two freshly generated emails below. One is legitimate, one is a phishing attempt. <strong style="color:var(--primary);">Click the fake one.</strong>
+          </div>
+        </div>
+        <div class="stp-score-row" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+          <div>Score: <span id="stp-il-score">0</span> / <span id="stp-il-total">0</span></div>
+          <div id="stp-il-limit-text" style="font-size:0.62rem; color:var(--text-secondary,#94A3B8);">Rounds Left Today: 3 / 3</div>
+        </div>
+        <div class="stp-pair" id="stp-il-pair-container"></div>
+        <div class="stp-result" id="stp-il-result" style="margin-top:12px; display:none;"></div>
+        <div style="margin-top:12px; display:flex; justify-content:flex-end;">
+          <button class="pb-action-btn" id="stp-il-next-btn" style="display:none;" onclick="stpInlineNext()">
+            <i class="ti ti-arrow-right" aria-hidden="true"></i> Next Round
+          </button>
+        </div>
+      </div>
+
+      <!-- TAB PANEL: Walkthrough selection list (Dynamic overlay) -->
+      <div class="pb-inline-tab-panel" id="pb-tab-il-walkthrough" style="padding: 10px 0;">
+        <div style="padding: 12px 10px;">
+          <h4 style="font-family:var(--mono); font-size:0.85rem; color:var(--text-primary,#F0F4FF); margin-bottom:6px; text-align: center;">Interactive Guided Tours</h4>
+          <p style="font-size:0.72rem; color:var(--text-secondary,#8CA0B3); text-align: center; margin-bottom:16px;">
+            Select a specialized guide below, and I'll walk you through the platform step-by-step.
+          </p>
+          
+          <div class="pb-wt-guide-list">
+            <div class="pb-wt-guide-card" onclick="startWalkthrough('full_tour')">
+              <div class="pb-wt-guide-icon" style="color: var(--primary);"><i class="ti ti-compass"></i></div>
+              <div class="pb-wt-guide-info">
+                <div class="pb-wt-guide-name">Full Platform Tour</div>
+                <div class="pb-wt-guide-desc">A complete walkthrough of all landing page modules, terminal, and sandbox clients.</div>
+              </div>
+              <button class="pb-wt-guide-go"><i class="ti ti-arrow-right"></i></button>
+            </div>
+
+            <div class="pb-wt-guide-card" onclick="startWalkthrough('campaign_launch')">
+              <div class="pb-wt-guide-icon" style="color: var(--warning);"><i class="ti ti-terminal-2"></i></div>
+              <div class="pb-wt-guide-info">
+                <div class="pb-wt-guide-name">Simulating Campaigns Guide</div>
+                <div class="pb-wt-guide-desc">Learn how to run OSINT queries, check credential leaks, and launch simulation tests.</div>
+              </div>
+              <button class="pb-wt-guide-go"><i class="ti ti-arrow-right"></i></button>
+            </div>
+
+            <div class="pb-wt-guide-card" onclick="startWalkthrough('lure_generation')">
+              <div class="pb-wt-guide-icon" style="color: var(--cyan);"><i class="ti ti-mail"></i></div>
+              <div class="pb-wt-guide-info">
+                <div class="pb-wt-guide-name">AI Email Generation Guide</div>
+                <div class="pb-wt-guide-desc">Learn how I formulate context-aware email copy and calculate real-time bait scores.</div>
+              </div>
+              <button class="pb-wt-guide-go"><i class="ti ti-arrow-right"></i></button>
+            </div>
+
+            <div class="pb-wt-guide-card" onclick="startWalkthrough('attack_analysis')">
+              <div class="pb-wt-guide-icon" style="color: var(--danger);"><i class="ti ti-git-commit"></i></div>
+              <div class="pb-wt-guide-info">
+                <div class="pb-wt-guide-name">Attack Chain & Analysis Guide</div>
+                <div class="pb-wt-guide-desc">Deconstruct the campaign lifecycle and examine platform risk scoring tools.</div>
+              </div>
+              <button class="pb-wt-guide-go"><i class="ti ti-arrow-right"></i></button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<script>
+  (function () {
+    'use strict';
+
+    // Helper: Esc html content
+    function esc(s) {
+      if (!s) return '';
+      return s.toString()
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    const host      = document.getElementById('pb-host');
+    const avatar    = document.getElementById('pb-avatar');
+    const panel     = document.getElementById('pb-panel');
+    const teaser    = document.getElementById('pb-teaser');
+    const fvPopover = document.getElementById('pb-first-visit-popover');
+    const inlineSec = document.getElementById('pb-inline-section');
+
+    let panelOpen = false;
+    let fvOpen    = false;
+    let expanded  = false;
+
+    // Cache pre-warmed generator scenario
+    const _cache = {};
+    let _busy = false;
+
+    /* ── Positioning & Layout Clamping ── */
+    function repositionPanel() {
+      if (!panelOpen) return;
+      const avatarR = avatar.getBoundingClientRect();
+      const panelW  = panel.offsetWidth;
+      const panelH  = panel.offsetHeight;
+
+      // Position panel relative to avatar
+      let left = avatarR.left + (avatarR.width / 2) - (panelW / 2);
+      let top  = avatarR.top - panelH - 12; // 12px gap above avatar
+
+      // Clamp coordinates to viewport boundaries
+      const margin = 10;
+      left = Math.max(margin, Math.min(left, window.innerWidth - panelW - margin));
+      
+      // If panel overflows the top edge of screen, open it downwards
+      if (top < margin) {
+        top = avatarR.bottom + 12;
+      }
+      // Clamp bottom
+      top = Math.max(margin, Math.min(top, window.innerHeight - panelH - margin));
+
+      panel.style.left = left + 'px';
+      panel.style.top  = top + 'px';
+    }
+
+    function repositionFvPopover() {
+      if (!fvOpen) return;
+      const avatarR = avatar.getBoundingClientRect();
+      const popW    = fvPopover.offsetWidth;
+      const popH    = fvPopover.offsetHeight;
+
+      let left = avatarR.left + (avatarR.width / 2) - (popW / 2);
+      let top  = avatarR.top - popH - 12;
+
+      const margin = 10;
+      left = Math.max(margin, Math.min(left, window.innerWidth - popW - margin));
+      if (top < margin) {
+        top = avatarR.bottom + 12;
+      }
+      top = Math.max(margin, Math.min(top, window.innerHeight - popH - margin));
+
+      fvPopover.style.left = left + 'px';
+      fvPopover.style.top  = top + 'px';
+    }
+
+    function openPanel() {
+      if (fvOpen) closeFvPopover();
+      panelOpen = true;
+      panel.classList.add('pb-open');
+      repositionPanel();
+      avatar.setAttribute('aria-expanded', 'true');
+      
+      // Mark first visit popover dismissed when panel is explicitly opened
+      localStorage.setItem('first_visit_popover_dismissed', 'true');
+    }
+
+    function closePanel() {
+      panelOpen = false;
+      panel.classList.remove('pb-open');
+      avatar.setAttribute('aria-expanded', 'false');
+    }
+
+    function openFvPopover() {
+      if (panelOpen) closePanel();
+      fvOpen = true;
+      fvPopover.classList.add('pb-open');
+      repositionFvPopover();
+    }
+
+    function closeFvPopover() {
+      fvOpen = false;
+      fvPopover.classList.remove('pb-open');
+    }
+
+    // Teaser hover delay loops
+    let teaserTimeout = null;
+    avatar.addEventListener('pointerenter', () => {
+      // Lazy pre-warm trigger
+      prewarmCeoFraud();
+
+      if (localStorage.getItem('first_visit_popover_dismissed') === 'true') {
+        teaserTimeout = setTimeout(() => {
+          if (!panelOpen && !fvOpen) {
+            teaser.classList.add('pb-show');
+          }
+        }, 1200);
+      }
+    });
+
+    avatar.addEventListener('pointerleave', () => {
+      clearTimeout(teaserTimeout);
+      teaser.classList.remove('pb-show');
+    });
+
+    teaser.addEventListener('click', () => {
+      teaser.classList.remove('pb-show');
+      openPanel();
+    });
+
+    // Check first visit state
+    setTimeout(() => {
+      const dismissed = localStorage.getItem('first_visit_popover_dismissed') === 'true';
+      const wtActiveGlobal = localStorage.getItem('pb_wt_active') === 'true';
+      if (!dismissed && !wtActiveGlobal) {
+        openFvPopover();
+      }
+    }, 2000);
+
+    /* ── Click / Close hooks ── */
+    let preventClick = false;
+
+    avatar.addEventListener('click', () => {
+      if (preventClick) return;
+      const dismissed = localStorage.getItem('first_visit_popover_dismissed') === 'true';
+      if (!dismissed) {
+        fvOpen ? closeFvPopover() : openFvPopover();
+      } else {
+        panelOpen ? closePanel() : openPanel();
+      }
+    });
+
+    document.getElementById('pb-close-btn').addEventListener('click', closePanel);
+
+    document.getElementById('pb-fv-walkthrough-btn').addEventListener('click', () => {
+      localStorage.setItem('first_visit_popover_dismissed', 'true');
+      closeFvPopover();
+      openWalkthroughDirectly();
+    });
+
+    document.getElementById('pb-fv-generate-btn').addEventListener('click', () => {
+      localStorage.setItem('first_visit_popover_dismissed', 'true');
+      closeFvPopover();
+      openPanel();
+    });
+
+    document.addEventListener('click', e => {
+      if (panelOpen && !panel.contains(e.target) && !host.contains(e.target)) closePanel();
+      if (fvOpen && !fvPopover.contains(e.target) && !host.contains(e.target)) closeFvPopover();
+    });
+
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') {
+        if (panelOpen) closePanel();
+        if (fvOpen) closeFvPopover();
+      }
+    });
+
+    /* ── Bounded drag — pointer events (not HTML5 drag API) ─────
+       Bound zone: right 25% of viewport, full height
+       Disabled on mobile (≤768px)                                */
+    const DRAG_ZONE_FRAC = 0.25; // right 25%
+    const DRAG_MARGIN    = 10;   // px from viewport edges
+    let drag = null;
+
+    function isMobile() { return window.innerWidth <= 768; }
+
+    document.getElementById('pb-drag-handle').addEventListener('pointerdown', startDrag);
+    avatar.addEventListener('pointerdown', startDrag);
+
+    function startDrag(e) {
+      if (isMobile()) return;
+      if (e.target.closest('.pb-icon-btn') || e.target.closest('.pb-tab-btn')) return;
+      
+      const targetEl = e.currentTarget;
+      targetEl.setPointerCapture && targetEl.setPointerCapture(e.pointerId);
+      e.preventDefault();
+
+      const hostR = host.getBoundingClientRect();
+      drag = {
+        pointerId: e.pointerId,
+        target:    targetEl,
+        startX:    e.clientX,
+        startY:    e.clientY,
+        origRight: window.innerWidth  - hostR.right,
+        origBottom: window.innerHeight - hostR.bottom,
+        hasMoved:  false
+      };
+    }
+
+    document.addEventListener('pointermove', e => {
+      if (!drag || isMobile()) return;
+      const dx = drag.startX - e.clientX;
+      const dy = drag.startY - e.clientY;
+
+      if (!drag.hasMoved && (Math.abs(dx) > 4 || Math.abs(dy) > 4)) {
+        drag.hasMoved = true;
+      }
+
+      if (!drag.hasMoved) return;
+
+      // Compute new right/bottom for the HOST
+      let newRight  = drag.origRight  + dx;
+      let newBottom = drag.origBottom + dy;
+
+      // Left bound: host must stay within right 25% of viewport
+      newRight = Math.min(newRight, window.innerWidth * DRAG_ZONE_FRAC);
+      newRight = Math.max(newRight, DRAG_MARGIN);
+
+      // Top/bottom bounds
+      const navH   = 70; // approximate nav height
+      const footerH = 80;
+      newBottom = Math.max(newBottom, DRAG_MARGIN + footerH);
+      newBottom = Math.min(newBottom, window.innerHeight - navH - host.offsetHeight - DRAG_MARGIN);
+
+      host.style.right  = newRight  + 'px';
+      host.style.bottom = newBottom + 'px';
+      host.style.left   = 'auto';
+      host.style.top    = 'auto';
+
+      if (panelOpen) repositionPanel();
+      if (fvOpen) repositionFvPopover();
+    });
+
+    document.addEventListener('pointerup', e => {
+      if (!drag) return;
+      if (drag.target) {
+        drag.target.releasePointerCapture && drag.target.releasePointerCapture(drag.pointerId);
+      }
+      const wasDragged = drag.hasMoved;
+      drag = null;
+      if (wasDragged) {
+        preventClick = true;
+        setTimeout(() => { preventClick = false; }, 50);
+      }
+    });
+
+    /* ── Tabs (Floating Panel) ─────────────────────────────────── */
+    panel.querySelectorAll('.pb-tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const tab = btn.dataset.tab;
+        panel.querySelectorAll('.pb-tab-btn').forEach(b => b.classList.remove('active'));
+        panel.querySelectorAll('.pb-tab-panel').forEach(p => p.classList.remove('active'));
+        btn.classList.add('active');
+        const p = panel.querySelector(`#pb-tab-${tab}`);
+        if (p) p.classList.add('active');
+        repositionPanel();
+      });
+    });
+
+    /* ── Tabs (Maximized Fullscreen Takeover Modal) ────────────── */
+    inlineSec.querySelectorAll('.pb-inline-tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const tab = btn.dataset.tab;
+        inlineSec.querySelectorAll('.pb-inline-tab-btn').forEach(b => b.classList.remove('active'));
+        inlineSec.querySelectorAll('.pb-inline-tab-panel').forEach(p => p.classList.remove('active'));
+        btn.classList.add('active');
+        const p = inlineSec.querySelector(`#pb-tab-${tab}`);
+        if (p) p.classList.add('active');
+      });
+    });
+
+    /* ── Maximize and Collapse handlers ── */
+    document.getElementById('pb-max-btn').addEventListener('click', () => {
+      closePanel();
+      if (expanded) return;
+      expanded = true;
+      document.body.appendChild(inlineSec);
+      inlineSec.style.display = 'block';
+    });
+
+    document.getElementById('pb-inline-collapse').addEventListener('click', () => {
+      exitWalkthrough();
+      expanded = false;
+      inlineSec.style.display = 'none';
+    });
+
+    function openWalkthroughDirectly() {
+      if (!expanded) {
+        document.getElementById('pb-max-btn').click();
+      }
+      setTimeout(() => {
+        const wtTabBtn = inlineSec.querySelector('.pb-tab-btn[data-tab="il-walkthrough"]');
+        if (wtTabBtn) wtTabBtn.click();
+        
+        // Start Full Platform Tour directly
+        setTimeout(() => {
+          startWalkthrough('full_tour');
+        }, 200);
+      }, 150);
+    }
+
+    /* ── Generator API logic ── */
+    const SCORE_AXES = {
+      urgency: "Urgency",
+      authority: "Authority Focus",
+      believability: "Believability",
+      obfuscation: "Obfuscation",
+      personalization: "Personalisation"
+    };
+
+    function renderBait(container, baitScore) {
+      container.innerHTML = '';
+      if (!baitScore) return;
+      Object.keys(SCORE_AXES).forEach(key => {
+        const val = baitScore[key] || 0; // 0 - 100
+        const labelText = SCORE_AXES[key];
+        const row = document.createElement('div');
+        row.className = 'pb-score-row';
+        row.innerHTML = `
+          <div class="pb-score-name">${esc(labelText)}</div>
+          <div class="pb-score-track">
+            <div class="pb-score-fill" style="width:0%; background:${val >= 75 ? 'var(--danger)' : val >= 45 ? 'var(--warning)' : 'var(--success,#34D399)'};"></div>
+          </div>
+          <div class="pb-score-num">${val}%</div>
+        `;
+        container.appendChild(row);
+        setTimeout(() => {
+          const fill = row.querySelector('.pb-score-fill');
+          if (fill) fill.style.width = val + '%';
+        }, 50);
+      });
+    }
+
+    function annotate(html) {
+      // Find Red-Flag definitions in markdown format [text](rf:tip)
+      const rx = /\[([^\]]+)\]\(rf:([^)]+)\)/g;
+      return html.replace(rx, (_, text, tip) => {
+        return `<span class="pb-rf">${esc(text)}<span class="pb-rf-tip">${esc(tip)}</span></span>`;
+      });
+    }
+
+    window.pbGen = function (scenario, isInline = false) {
+      if (_busy) return;
+      _busy = true;
+
+      const prefix = isInline ? 'pb-il-' : 'pb-';
+      const dialogue = document.getElementById('pb-dialogue-text');
+      const loader = document.getElementById(prefix + 'gen-loader');
+      const card = document.getElementById(prefix + 'card');
+      const sender = document.getElementById(prefix + 'sender');
+      const subject = document.getElementById(prefix + 'subject');
+      const body = document.getElementById(prefix + 'body');
+      const tacticText = document.getElementById(prefix + 'tactic');
+      const meta = document.getElementById(prefix + 'meta');
+      const errorMsg = document.getElementById(prefix + 'error');
+      
+      const baitSect = document.getElementById('pb-bait-section');
+      const scoreBars = document.getElementById('pb-score-bars');
+
+      // Reset
+      if (errorMsg) errorMsg.style.display = 'none';
+      card.style.display = 'none';
+      if (meta) meta.style.display = 'none';
+      if (baitSect) baitSect.style.display = 'none';
+      loader.style.display = 'block';
+
+      // Set avatar status
+      host.className = 'pb-active';
+
+      if (dialogue && !isInline) {
+        dialogue.style.opacity = '0.5';
+        dialogue.textContent = 'Generating custom security lure...';
+      }
+
+      function process(data) {
+        loader.style.display = 'none';
+        host.className = 'pb-success';
+        if (dialogue && !isInline) {
+          dialogue.style.opacity = '1';
+          dialogue.textContent = 'Lure formulated successfully. Review the indicators below!';
+        }
+        _render(data, scenario, {
+          sender: sender, subject: subject, body: body, card: card, meta: meta, tactic: tacticText,
+          bait: baitSect, bars: scoreBars
+        }, id => document.getElementById(id));
+      }
+
+      // Check pre-warmed cache
+      if (_cache[scenario]) {
+        setTimeout(() => {
+          _busy = false;
+          process(_cache[scenario]);
+        }, 400);
+        return;
+      }
+
+      const fd = new FormData();
+      fd.append('scenario', scenario);
+
+      fetch('/api/hero-demo-lure', { method: 'POST', body: fd })
+        .then(r => {
+          if (!r.ok) throw new Error('AI Lure Engine is currently busy. Try again later.');
+          return r.json();
+        })
+        .then(j => {
+          _busy = false;
+          if (j && j.success) {
+            // Save to cache
+            _cache[scenario] = j;
+            process(j);
+          } else {
+            throw new Error(j.message || 'Lure formulation failed.');
+          }
+        })
+        .catch(err => {
+          _busy = false;
+          loader.style.display = 'none';
+          host.className = 'pb-error';
+          if (dialogue && !isInline) {
+            dialogue.style.opacity = '1';
+            dialogue.textContent = 'Formulation failed. Lure offline.';
+          }
+          errorMsg.style.display = 'block';
+          errorMsg.textContent = err.message;
+          if (isInline) repositionPanel();
+        });
+    };
+
+    function _render(data, scenario, ids, $) {
+      $(ids.sender).textContent  = data.sender_display || '';
+      $(ids.subject).textContent = data.subject || '';
+      if ($(ids.tactic)) $(ids.tactic).innerHTML = 'Tactic: <strong>' + esc(data.phishing_tactic || '') + '</strong>';
+      $(ids.card).style.display  = 'block';
+      $(ids.meta).style.display  = 'flex';
+      repositionPanel(); // Adjust position on content reveal!
+
+      // Typewriter with red-flag annotation
+      const bodyEl = $(ids.body);
+      bodyEl.innerHTML = '';
+      const raw = data.body_text || '';
+      let idx = 0;
+      const spd = Math.max(5, Math.floor(1400 / Math.max(raw.length, 1)));
+      function tick() {
+        if (idx < raw.length) {
+          idx++;
+          bodyEl.innerHTML = annotate(raw.slice(0, idx));
+          bodyEl.scrollTop = bodyEl.scrollHeight;
+          setTimeout(tick, spd);
+        } else {
+          bodyEl.innerHTML = annotate(raw); // final pass
+          if (ids.bait && ids.bars && $(ids.bait)) {
+            if (data.bait_score) {
+              renderBait($(ids.bars), data.bait_score);
+              $(ids.bait).style.display = 'block';
+            } else {
+              $(ids.bait).style.display = 'none';
+            }
+          }
+          repositionPanel(); // Adjust position again after bait section shows/hides!
+        }
+      }
+      tick();
+    }
+
+    // Lazy pre-warm trigger on hover/tap
+    let prewarmed = false;
+    function prewarmCeoFraud() {
+      if (prewarmed || _cache['ceo_fraud'] || _busy) return;
+      prewarmed = true;
+      const fd = new FormData(); fd.append('scenario', 'ceo_fraud');
+      fetch('/api/hero-demo-lure', { method: 'POST', body: fd })
+        .then(r => r.ok ? r.json() : null)
+        .then(j => { if (j && j.success) _cache['ceo_fraud'] = j; })
+        .catch(() => {});
+    }
+
+
+    /* ================================================================
+       Interactive Walkthrough Engine (Global & Cross-Page support)
+       ================================================================ */
+    const WALKTHROUGH_CONFIGS = {
+      full_tour: [
+        { targetId: "hero", title: "Sandbox Terminal", text: "This is where I simulate real-world attacks! Go ahead and type commands to run OSINT lookups or check domain leaks right in my active terminal.", path: "/" },
+        { targetId: "pb-avatar", title: "AI Lure Generator", text: "I can draft highly customized, context-aware emails to test your team's defense. Just click a scenario in my panel to watch me write one live!", path: "/" },
+        { targetId: "wt-dashboard-view", title: "Dashboard Overview", text: "Welcome to your main Dashboard! Here, you can monitor global test results, track employee click rates, and audit live campaign statuses.", path: "/dashboard" },
+        { targetId: "wt-create-campaign-btn", title: "Launching Simulations", text: "Ready to build your first simulation? Click 'Create Campaign' here to open the campaign creator, or let me take you there!", path: "/dashboard", redirectPath: "/new-campaign" },
+        { targetId: "campaign-form", title: "Campaign Creator", text: "This is the Campaign Creator. Just name your campaign, select a scenario, upload target employees, and launch it! Let's check out a sample report next.", path: "/new-campaign", redirectPath: "/reports-demo" },
+        { targetId: "sec-hero", title: "AI Campaign Report", text: "This is the AI Report dashboard. I analyze employee clicks, identify department vulnerabilities, and compile risk scores. How cool is that?", path: "/reports-demo" }
+      ],
+      campaign_launch: [
+        { targetId: "hero", title: "Terminal Queries", text: "First, let's look at my Sandbox Terminal. Here, you can type active security commands to query target email domains and analyze target vulnerabilities.", path: "/" },
+        { targetId: "wt-create-campaign-btn", title: "Campaign Hub", text: "Ready to launch? We go to the Dashboard to create a campaign.", path: "/dashboard", redirectPath: "/new-campaign" },
+        { targetId: "campaign-form", title: "Campaign Creator", text: "In this form, you configure targets and scenarios. Once launched, simulation results flow right back into the dashboard.", path: "/new-campaign" }
+      ],
+      lure_generation: [
+        { targetId: "pb-avatar", title: "Formulating Lures", text: "This is my AI Lure Generator! I write personalized phishing emails on the fly based on threat scenarios you select.", path: "/" },
+        { targetId: "campaign-form", title: "Injecting Targets", text: "To make these emails convincing, I can ingest CSV lists containing target names, departments, and titles to craft context-aware copy.", path: "/new-campaign" },
+        { targetId: "pricing", title: "Scaling Simulation", text: "Once you are ready to deploy automated lures across your company, you can choose a subscription that scales to your target count.", path: "/" }
+      ],
+      attack_analysis: [
+        { targetId: "attack-chain", title: "Attack Visualizations", text: "Take a look at this campaign attack chain. I'll help your security officers map how phishing templates, credential harvesters, and data breaches link together.", path: "/" },
+        { targetId: "sec-hero", title: "Risk Profile Grading", text: "We will track every interaction and report detailed risk grades to help you prioritize training for vulnerable departments.", path: "/reports-demo" }
+      ]
+    };
+
+    let wtActive = false;
+    let wtCurrentStep = 0;
+    let wtSteps = [];
+    let wtCurrentPage = 'full_tour';
+
+    window.startWalkthrough = function(pageKey) {
+      const config = WALKTHROUGH_CONFIGS[pageKey];
+      if (!config || config.length === 0) return;
+
+      wtSteps = config;
+      wtCurrentStep = 0;
+      wtCurrentPage = pageKey;
+      wtActive = true;
+
+      // Save state in localStorage to track it across reloads
+      localStorage.setItem('pb_wt_active', 'true');
+      localStorage.setItem('pb_wt_page_key', pageKey);
+      localStorage.setItem('pb_wt_step_idx', '0');
+
+      // Add walkthrough active classes to maximized overlay to shrink it
+      inlineSec.classList.add('pb-walkthrough-active');
+      inlineSec.style.display = 'block';
+
+      // Check if we need to redirect immediately
+      const currentPath = window.location.pathname.replace(/\/$/, '') || '/';
+      const targetPath = config[0].path.replace(/\/$/, '') || '/';
+
+      if (currentPath !== targetPath) {
+        window.location.href = config[0].path;
+      } else {
+        renderWalkthroughStep();
+      }
+    };
+
+    function renderWalkthroughStep() {
+      if (!wtActive || wtCurrentStep < 0 || wtCurrentStep >= wtSteps.length) return;
+
+      const step = wtSteps[wtCurrentStep];
+      
+      // Remove any existing highlights
+      document.querySelectorAll('.pb-highlight-active').forEach(el => {
+        el.classList.remove('pb-highlight-active');
+      });
+
+      // Highlight the target section
+      const targetEl = document.getElementById(step.targetId);
+      if (targetEl) {
+        targetEl.classList.add('pb-highlight-active');
+        setTimeout(() => {
+          targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 100);
+      }
+
+      // Update the inline section's body to show the walkthrough controls
+      const tabBody = document.getElementById('pb-tab-il-walkthrough');
+      if (tabBody) {
+        const isLastStep = (wtCurrentStep === wtSteps.length - 1);
+        tabBody.innerHTML = `
+          <div class="pb-wt-bubble" style="display:flex; flex-direction:column; gap:12px;">
+            <!-- Header title & counter -->
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom:6px;">
+              <span style="font-family:var(--sans); font-size:0.75rem; font-weight:700; color:var(--primary);">
+                ${esc(step.title)}
+              </span>
+              <span style="font-family:var(--mono); font-size:0.58rem; color:var(--text-secondary,#94A3B8);">
+                Step ${wtCurrentStep + 1} of ${wtSteps.length}
+              </span>
+            </div>
+
+            <!-- Dialogue bubble with Lure mascot -->
+            <div style="display:flex; gap:12px; align-items:flex-start; background: rgba(0,0,0,0.2); border-radius: 10px; padding: 10px;">
+              <!-- Mini Anglerfish SVG -->
+              <svg width="36" height="36" viewBox="0 0 36 36" style="flex-shrink:0; filter:drop-shadow(0 0 4px rgba(245,166,35,0.4));">
+                <ellipse cx="18" cy="22" rx="10" ry="8" fill="var(--primary)"/>
+                <path d="M8 22 L3 17 C2.5 19, 2.5 25, 3 27 Z" fill="color-mix(in srgb, var(--primary) 80%, #000000)"/>
+                <path d="M11 15 C12 11, 15 11, 16 15 Z" fill="color-mix(in srgb, var(--primary) 80%, #000000)"/>
+                <path d="M14 24 C11 24, 10 27, 12 28 C14 29, 16 26, 14 24 Z" fill="color-mix(in srgb, var(--primary) 80%, #000000)"/>
+                <path d="M23 15 Q26 10 29 11" stroke="color-mix(in srgb, var(--primary) 80%, #000000)" stroke-width="2" stroke-linecap="round" fill="none"/>
+                <circle cx="29" cy="11" r="2.5" fill="var(--warning)"/>
+                <circle cx="23" cy="20" r="1.8" fill="#0A1420"/>
+                <circle cx="23.6" cy="19.4" r="0.5" fill="#ffffff"/>
+                <path d="M22 24.5 Q24.5 25.8 26.3 24.3" stroke="#0A1420" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+              </svg>
+              <!-- Speech Text -->
+              <div style="flex:1;">
+                <div style="font-size:0.6rem; text-transform:uppercase; font-weight:700; color:var(--warning); letter-spacing:0.05em; margin-bottom:2px;">Lure says:</div>
+                <p style="font-size:0.68rem; color:var(--text-primary,#F0F4FF); line-height:1.45; margin:0;">
+                  "${esc(step.text)}"
+                </p>
+              </div>
+            </div>
+
+            <!-- Action buttons row -->
+            <div style="display:flex; flex-direction:column; gap:8px; margin-top:4px;">
+              <div style="display:flex; justify-content:space-between; gap:8px;">
+                <button class="pb-action-btn" onclick="prevWalkthroughStep()" ${wtCurrentStep === 0 ? 'disabled class="pb-disabled"' : ''} style="flex:1; padding:6px 10px; font-size:0.62rem; margin: 0;">
+                  <i class="ti ti-arrow-left"></i> Back
+                </button>
+                <button class="pb-action-btn" onclick="repeatWalkthroughStep()" style="flex:1; padding:6px 10px; font-size:0.62rem; margin: 0;">
+                  <i class="ti ti-refresh"></i> Repeat
+                </button>
+                <button class="pb-action-btn" onclick="nextWalkthroughStepBtn()" style="flex:2; padding:6px 10px; font-size:0.62rem; font-weight:bold; background:var(--primary); color:var(--text-inverse,#0A1420); margin: 0;">
+                  ${isLastStep ? 'Finish' : 'Next <i class="ti ti-arrow-right"></i>'}
+                </button>
+              </div>
+              <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid rgba(255,255,255,0.04); padding-top:6px; font-size:0.6rem;">
+                <button class="pb-action-btn" onclick="exitWalkthrough()" style="padding:2px 6px; font-size:0.58rem; background:transparent; opacity:0.6; margin: 0;">
+                  Skip All
+                </button>
+                <button class="pb-action-btn" onclick="nextWalkthroughStepBtn()" style="padding:2px 6px; font-size:0.58rem; background:transparent; opacity:0.6; margin: 0;">
+                  Skip Step
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+    }
+
+    window.repeatWalkthroughStep = function() {
+      if (!wtActive || wtCurrentStep < 0 || wtCurrentStep >= wtSteps.length) return;
+      const step = wtSteps[wtCurrentStep];
+      const targetEl = document.getElementById(step.targetId);
+      if (targetEl) {
+        targetEl.classList.remove('pb-highlight-active');
+        void targetEl.offsetWidth; // force reflow
+        targetEl.classList.add('pb-highlight-active');
+        targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    };
+
+    window.nextWalkthroughStepBtn = function() {
+      if (wtCurrentStep === wtSteps.length - 1) {
+        finishWalkthrough();
+        return;
+      }
+      
+      const step = wtSteps[wtCurrentStep];
+      
+      // Increment step
+      wtCurrentStep++;
+      localStorage.setItem('pb_wt_step_idx', wtCurrentStep.toString());
+
+      // Check if we need redirection
+      if (step.redirectPath) {
+        window.location.href = step.redirectPath;
+      } else {
+        const nextStep = wtSteps[wtCurrentStep];
+        const currentPath = window.location.pathname.replace(/\/$/, '') || '/';
+        const targetPath = nextStep.path.replace(/\/$/, '') || '/';
+
+        if (currentPath !== targetPath) {
+          window.location.href = nextStep.path;
+        } else {
+          renderWalkthroughStep();
+        }
+      }
+    };
+
+    window.prevWalkthroughStep = function() {
+      if (wtCurrentStep > 0) {
+        wtCurrentStep--;
+        localStorage.setItem('pb_wt_step_idx', wtCurrentStep.toString());
+
+        const prevStep = wtSteps[wtCurrentStep];
+        const currentPath = window.location.pathname.replace(/\/$/, '') || '/';
+        const targetPath = prevStep.path.replace(/\/$/, '') || '/';
+
+        if (currentPath !== targetPath) {
+          window.location.href = prevStep.path;
+        } else {
+          renderWalkthroughStep();
+        }
+      }
+    };
+
+    window.exitWalkthrough = function() {
+      cleanupWalkthrough();
+    };
+
+    window.finishWalkthrough = function() {
+      cleanupWalkthrough();
+    };
+
+    function cleanupWalkthrough() {
+      wtActive = false;
+      localStorage.removeItem('pb_wt_active');
+      localStorage.removeItem('pb_wt_page_key');
+      localStorage.removeItem('pb_wt_step_idx');
+      
+      document.querySelectorAll('.pb-highlight-active').forEach(el => {
+        el.classList.remove('pb-highlight-active');
+      });
+      
+      inlineSec.classList.remove('pb-walkthrough-active');
+      inlineSec.style.display = 'none';
+      expanded = false;
+    }
+
+    // Resume walkthrough logic on page load
+    window.addEventListener('DOMContentLoaded', () => {
+      const active = localStorage.getItem('pb_wt_active') === 'true';
+      if (active) {
+        const pageKey = localStorage.getItem('pb_wt_page_key') || 'full_tour';
+        const stepIdx = parseInt(localStorage.getItem('pb_wt_step_idx') || '0', 10);
+        
+        wtCurrentPage = pageKey;
+        wtSteps = WALKTHROUGH_CONFIGS[pageKey];
+        wtCurrentStep = stepIdx;
+        wtActive = true;
+        
+        expanded = true;
+        inlineSec.classList.add('pb-walkthrough-active');
+        inlineSec.style.display = 'block';
+        
+        renderWalkthroughStep();
+      }
+    });
+
+    /* ================================================================
+       Spot the Phish Game Script (Inline/Overlay Mode support)
+       ================================================================ */
+    let gameRoundsLeft = 3;
+    let correctPhishIndex = null;
+    let currentPhishTactic = "";
+    let currentBaitScore = null;
+    let gameScoreCorrect = 0;
+    let gameScoreTotal = 0;
+    let gameActive = false;
+
+    let ilGameRoundsLeft = 3;
+    let ilCorrectPhishIndex = null;
+    let ilCurrentPhishTactic = "";
+    let ilCurrentBaitScore = null;
+    let ilGameScoreCorrect = 0;
+    let ilGameScoreTotal = 0;
+    let ilGameActive = false;
+
+    async function updateGameStatus() {
+      try {
+        const res = await fetch("/api/spot-the-phish/status");
+        if (res.ok) {
+          const j = await res.json();
+          if (j.success) {
+            gameRoundsLeft = j.rounds_left;
+            const limitText = document.getElementById("stp-limit-text");
+            if (limitText) {
+              if (gameRoundsLeft === 0) {
+                limitText.textContent = "0 rounds left today (Come back tomorrow)";
+                limitText.style.color = "var(--warning)";
+              } else {
+                limitText.textContent = `Rounds Left Today: ${gameRoundsLeft} / 3`;
+                limitText.style.color = "var(--text-secondary, #94A3B8)";
+              }
+            }
+            const nextBtn = document.getElementById("stp-next-btn");
+            if (nextBtn) {
+              if (gameRoundsLeft === 0) {
+                nextBtn.textContent = "0 rounds left today";
+                nextBtn.disabled = true;
+                nextBtn.classList.add("pb-disabled");
+              } else {
+                nextBtn.textContent = "Next Round";
+                nextBtn.disabled = false;
+                nextBtn.classList.remove("pb-disabled");
+              }
+            }
+          }
+        }
+      } catch (e) {
+        console.error("Failed to fetch game status", e);
+      }
+    }
+
+    async function updateInlineGameStatus() {
+      try {
+        const res = await fetch("/api/spot-the-phish/status");
+        if (res.ok) {
+          const j = await res.json();
+          if (j.success) {
+            ilGameRoundsLeft = j.rounds_left;
+            const limitText = document.getElementById("stp-il-limit-text");
+            if (limitText) {
+              if (ilGameRoundsLeft === 0) {
+                limitText.textContent = "0 rounds left today (Come back tomorrow)";
+                limitText.style.color = "var(--warning)";
+              } else {
+                limitText.textContent = `Rounds Left Today: ${ilGameRoundsLeft} / 3`;
+                limitText.style.color = "var(--text-secondary, #94A3B8)";
+              }
+            }
+            const nextBtn = document.getElementById("stp-il-next-btn");
+            if (nextBtn) {
+              if (ilGameRoundsLeft === 0) {
+                nextBtn.textContent = "0 rounds left today";
+                nextBtn.disabled = true;
+                nextBtn.classList.add("pb-disabled");
+              } else {
+                nextBtn.textContent = "Next Round";
+                nextBtn.disabled = false;
+                nextBtn.classList.remove("pb-disabled");
+              }
+            }
+          }
+        }
+      } catch (e) {
+        console.error("Failed to fetch inline game status", e);
+      }
+    }
+
+    window.stpRender = async function() {
+      const con = document.getElementById('stp-pair-container');
+      const resEl = document.getElementById('stp-result');
+      const nextBtn = document.getElementById('stp-next-btn');
+      if (!con) return;
+
+      resEl.style.display = 'none';
+      nextBtn.style.display = 'none';
+      await updateGameStatus();
+
+      con.innerHTML = `
+        <div class="pb-skeleton-wrap" style="display:block; width:100%;">
+          <div class="skeleton-block" style="width:80%;height:10px;"></div>
+          <div class="skeleton-block" style="width:70%;height:10px;"></div>
+        </div>
+      `;
+
+      try {
+        const res = await fetch("/api/spot-the-phish/generate", { method: "POST" });
+        if (res.status === 429) {
+          const j = await res.json();
+          con.innerHTML = `<div style="color:var(--warning);font-size:0.7rem;text-align:center;">${esc(j.message)}</div>`;
+          gameRoundsLeft = 0;
+          await updateGameStatus();
+          return;
+        }
+        if (!res.ok) throw new Error("API failed");
+        const data = await res.json();
+        correctPhishIndex = data.phish_index;
+        currentPhishTactic = data.phish_tactic;
+        currentBaitScore = data.bait_score;
+        gameRoundsLeft = data.rounds_left;
+
+        con.innerHTML = '';
+        data.emails.forEach((email, index) => {
+          const box = document.createElement('div');
+          box.className = 'stp-box';
+          box.innerHTML = `
+            <div class="stp-box-chrome"><span style="background:#ef4444;"></span><span style="background:#f59e0b;"></span><span style="background:#10b981;"></span></div>
+            <div class="stp-box-header">
+              <div><span class="stp-lbl">From:</span> ${esc(email.sender_display || email.sender)}</div>
+              <div><span class="stp-lbl">Subject:</span> ${esc(email.subject)}</div>
+            </div>
+            <div class="stp-box-body">${esc(email.body_text)}</div>
+          `;
+          box.addEventListener('click', () => {
+            if (!gameActive) return;
+            gameActive = false;
+            if (index === correctPhishIndex) {
+              box.classList.add('correct');
+              resEl.className = 'stp-result phish';
+              resEl.style.display = 'block';
+              resEl.innerHTML = `<strong>CORRECT! That was a Phish!</strong><br>Tactic: ${esc(currentPhishTactic)}`;
+              gameScoreCorrect++;
+            } else {
+              box.classList.add('wrong');
+              resEl.className = 'stp-result';
+              resEl.style.display = 'block';
+              resEl.style.background = 'var(--danger-dim)';
+              resEl.style.color = 'var(--danger)';
+              resEl.innerHTML = `<strong>INCORRECT! That was Legitimate!</strong><br>The other one was the phish.`;
+            }
+            gameScoreTotal++;
+            document.getElementById('stp-score').textContent = gameScoreCorrect;
+            document.getElementById('stp-total').textContent = gameScoreTotal;
+            nextBtn.style.display = 'inline-flex';
+            repositionPanel();
+          });
+          con.appendChild(box);
+        });
+        gameActive = true;
+      } catch (e) {
+        con.innerHTML = `<div style="color:var(--danger);font-size:0.7rem;">Failed to load game round.</div>`;
+      }
+      repositionPanel();
+    };
+
+    window.stpInlineRender = async function() {
+      const con = document.getElementById('stp-il-pair-container');
+      const resEl = document.getElementById('stp-il-result');
+      const nextBtn = document.getElementById('stp-il-next-btn');
+      if (!con) return;
+
+      resEl.style.display = 'none';
+      if (nextBtn) nextBtn.style.display = 'none';
+      await updateInlineGameStatus();
+
+      con.innerHTML = `
+        <div class="pb-skeleton-wrap" style="display:block; width:100%;">
+          <div class="skeleton-block" style="width:80%;height:10px;"></div>
+          <div class="skeleton-block" style="width:70%;height:10px;"></div>
+        </div>
+      `;
+
+      try {
+        const res = await fetch("/api/spot-the-phish/generate", { method: "POST" });
+        if (res.status === 429) {
+          const j = await res.json();
+          con.innerHTML = `<div style="color:var(--warning);font-size:0.7rem;text-align:center;">${esc(j.message)}</div>`;
+          ilGameRoundsLeft = 0;
+          await updateInlineGameStatus();
+          return;
+        }
+        if (!res.ok) throw new Error("API failed");
+        const data = await res.json();
+        ilCorrectPhishIndex = data.phish_index;
+        ilCurrentPhishTactic = data.phish_tactic;
+        ilCurrentBaitScore = data.bait_score;
+        ilGameRoundsLeft = data.rounds_left;
+
+        con.innerHTML = '';
+        data.emails.forEach((email, index) => {
+          const box = document.createElement('div');
+          box.className = 'stp-box';
+          box.innerHTML = `
+            <div class="stp-box-chrome"><span style="background:#ef4444;"></span><span style="background:#f59e0b;"></span><span style="background:#10b981;"></span></div>
+            <div class="stp-box-header">
+              <div><span class="stp-lbl">From:</span> ${esc(email.sender_display || email.sender)}</div>
+              <div><span class="stp-lbl">Subject:</span> ${esc(email.subject)}</div>
+            </div>
+            <div class="stp-box-body">${esc(email.body_text)}</div>
+          `;
+          box.addEventListener('click', () => {
+            if (!ilGameActive) return;
+            ilGameActive = false;
+            if (index === ilCorrectPhishIndex) {
+              box.classList.add('correct');
+              resEl.className = 'stp-result phish';
+              resEl.style.display = 'block';
+              resEl.innerHTML = `<strong>CORRECT! That was a Phish!</strong><br>Tactic: ${esc(ilCurrentPhishTactic)}`;
+              ilGameScoreCorrect++;
+            } else {
+              box.classList.add('wrong');
+              resEl.className = 'stp-result';
+              resEl.style.display = 'block';
+              resEl.style.background = 'var(--danger-dim)';
+              resEl.style.color = 'var(--danger)';
+              resEl.innerHTML = `<strong>INCORRECT! That was Legitimate!</strong><br>The other one was the phish.`;
+            }
+            ilGameScoreTotal++;
+            document.getElementById('stp-il-score').textContent = ilGameScoreCorrect;
+            document.getElementById('stp-il-total').textContent = ilGameScoreTotal;
+            if (nextBtn) nextBtn.style.display = 'inline-flex';
+          });
+          con.appendChild(box);
+        });
+        ilGameActive = true;
+      } catch (e) {
+        con.innerHTML = `<div style="color:var(--danger);font-size:0.7rem;">Failed to load game round.</div>`;
+      }
+    };
+
+    window.stpNext = function() {
+      stpRender();
+    };
+
+    window.stpInlineNext = function() {
+      stpInlineRender();
+    };
+
+    // Attach tab show triggers to bootstrap games
+    panel.querySelector('.pb-tab-btn[data-tab="spotphish"]').addEventListener('click', () => {
+      stpRender();
+    });
+    inlineSec.querySelector('.pb-tab-btn[data-tab="il-spotphish"]').addEventListener('click', () => {
+      stpInlineRender();
+    });
+
+    /* ================================================================
+       Risk Score calculations
+       ================================================================ */
+    window.rsCalc = function() {
+      const ind = document.querySelector('input[name="rs-ind"]:checked');
+      const sz  = document.querySelector('input[name="rs-sz"]:checked');
+      const tr  = document.querySelector('input[name="rs-tr"]:checked');
+      if (!ind || !sz || !tr) {
+        document.getElementById('rs-dialogue-text').textContent = 'Please answer all 3 questions first.';
+        return;
+      }
+      const raw   = +ind.value + +sz.value + +tr.value; // 0-9
+      const pct   = Math.round(14 + raw * 8);            // 14-86%
+      const color = pct >= 60 ? 'var(--danger)' : pct >= 35 ? 'var(--warning)' : 'var(--success,#34D399)';
+      const label = pct >= 60 ? 'High exposure — simulations strongly recommended'
+                  : pct >= 35 ? 'Moderate exposure — some controls in place'
+                  :             'Lower exposure — good hygiene, keep it up';
+      document.getElementById('rs-form').style.display = 'none';
+      const res = document.getElementById('rs-result');
+      res.style.display = 'block';
+      document.getElementById('rs-gauge').style.color = color;
+      document.getElementById('rs-gauge').textContent = pct + '%';
+      document.getElementById('rs-gauge-lbl').textContent = label;
+      repositionPanel();
+    };
+
+    window.rsReset = function() {
+      document.getElementById('rs-result').style.display = 'none';
+      document.getElementById('rs-form').style.display = 'block';
+      document.querySelectorAll('.rs-opt').forEach(o => o.classList.remove('selected'));
+      document.querySelectorAll('.rs-opt input').forEach(i => i.checked = false);
+      repositionPanel();
+    };
+
+    document.querySelectorAll('.rs-opt').forEach(opt => {
+      opt.addEventListener('click', () => {
+        const name = opt.querySelector('input').name;
+        document.querySelectorAll(`.rs-opt input[name="${name}"]`)
+          .forEach(i => i.closest('.rs-opt').classList.remove('selected'));
+        opt.classList.add('selected');
+        opt.querySelector('input').checked = true;
+      });
+    });
+
+  })();
+</script>
