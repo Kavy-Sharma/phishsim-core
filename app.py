@@ -8,7 +8,7 @@ import re
 import time
 import uuid
 import secrets
-from datetime import datetime
+from datetime import datetime, timedelta
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from functools import wraps
@@ -661,6 +661,21 @@ def current_user():
 @app.context_processor
 def inject_current_user():
     user = current_user()
+    if not user:
+        from flask import request
+        try:
+            if request.endpoint in ('dashboard', 'new_campaign', 'new_campaign_upload', 'new_campaign_launch', 'campaign_emails', 'campaign_report'):
+                user = {
+                    "id": 0,
+                    "name": "Demo Visitor",
+                    "email": "demo@demo-corp.com",
+                    "role": "company_user",
+                    "company_domain": "demo-corp.com",
+                    "email_verified": False,
+                    "two_factor_enabled": False,
+                }
+        except Exception:
+            pass
     latest_active_campaign = None
     if user:
         try:
@@ -3373,9 +3388,114 @@ def reset_user_password(user_id):
     return redirect(url_for("manage_users"))
 
 @app.route("/dashboard")
-@login_required
 def dashboard():
     user = current_user()
+    if not user:
+        campaigns = [
+            {
+                "id": 0,
+                "name": "Executive CEO Fraud Test",
+                "status": "launched",
+                "scenario_type": "ceo_fraud",
+                "delivery_mode": "sandbox",
+                "company_domain": "demo-corp.com",
+                "employee_name": "Alex Rivera",
+                "employee_email": "alex.rivera@demo-corp.com",
+                "employee_count": 24,
+                "emails_sent": 24,
+                "opens": 19,
+                "clicks": 8,
+                "reports": 5,
+                "created_at": "2026-08-01",
+                "hss": {"score": 62, "tier": "amber", "label": "At Risk"}
+            },
+            {
+                "id": 1,
+                "name": "Q3 Password Reset Drill",
+                "status": "completed",
+                "scenario_type": "it_alert",
+                "delivery_mode": "sandbox",
+                "company_domain": "demo-corp.com",
+                "employee_name": "Jordan Ellis",
+                "employee_email": "jordan.ellis@demo-corp.com",
+                "employee_count": 36,
+                "emails_sent": 36,
+                "opens": 32,
+                "clicks": 4,
+                "reports": 21,
+                "created_at": "2026-07-15",
+                "hss": {"score": 88, "tier": "green", "label": "Good"}
+            }
+        ]
+        
+        global_stats = {
+            "total_campaigns": 2,
+            "total_employees": 60,
+            "global_risk": 20,
+            "total_reports": 26
+        }
+        
+        global_hss = {
+            "score": 75,
+            "tier": "amber",
+            "label": "At Risk"
+        }
+        
+        risk_trend = [
+            {"name": "Q3 Password Reset Drill", "hss": 88, "tier": "green"},
+            {"name": "Executive CEO Fraud Test", "hss": 62, "tier": "amber"}
+        ]
+        
+        demo_summary = {
+            "total_campaigns": 2,
+            "avg_click_rate": 20.0,
+            "best_campaign": {"name": "Q3 Password Reset Drill", "click_rate": 11.1},
+            "worst_campaign": {"name": "Executive CEO Fraud Test", "click_rate": 33.3}
+        }
+        
+        dept_count = 3
+        
+        recent_activities = [
+            {
+                "entry_type": "event",
+                "event_type": "report",
+                "created_at": datetime.now() - timedelta(hours=1),
+                "campaign_name": "Executive CEO Fraud Test",
+                "employee_name": "Sarah Chen",
+                "employee_department": "Finance",
+                "owner_name": None
+            },
+            {
+                "entry_type": "event",
+                "event_type": "click",
+                "created_at": datetime.now() - timedelta(hours=3),
+                "campaign_name": "Executive CEO Fraud Test",
+                "employee_name": "Alex Rivera",
+                "employee_department": "Operations",
+                "owner_name": None
+            },
+            {
+                "entry_type": "campaign_created",
+                "event_type": "create",
+                "created_at": datetime.now() - timedelta(days=8),
+                "campaign_name": "Executive CEO Fraud Test",
+                "employee_name": None,
+                "employee_department": None,
+                "owner_name": "Demo Operator"
+            }
+        ]
+        
+        return render_template(
+            "dashboard.html",
+            campaigns=campaigns,
+            global_stats=global_stats,
+            global_hss=global_hss,
+            risk_trend=risk_trend,
+            demo_summary=demo_summary,
+            dept_count=dept_count,
+            recent_activities=recent_activities,
+            is_demo_preview=True
+        )
     db = get_db_connection()
     cursor = db.cursor(dictionary=True)
     try:
@@ -3665,9 +3785,37 @@ def reports_demo():
 # 1. ADD THIS ROUTE: This shows the "Create Campaign" page
 @app.route("/new-campaign", methods=["GET", "POST"])
 @app.route("/new-campaign/<int:campaign_id>", methods=["GET", "POST"])
-@login_required
 def new_campaign(campaign_id=None):
     user = current_user()
+    if not user:
+        if request.method == "POST":
+            return redirect(url_for("login"))
+        local_delivery_available = False
+        safe_send_available = False
+        preview_available = True
+        campaign_limit_reached = False
+        campaign = None
+        if campaign_id == 0:
+            campaign = {
+                "id": 0,
+                "name": "Executive CEO Fraud Test",
+                "company_domain": "demo-corp.com",
+                "scenario_type": "ceo_fraud",
+                "delivery_mode": "sandbox",
+                "status": "launched",
+            }
+        elif campaign_id is not None:
+            return redirect(url_for("login"))
+        return render_template(
+            "new_campaign.html",
+            user={"role": "company_user", "company_domain": "demo-corp.com"},
+            local_delivery_available=local_delivery_available,
+            safe_send_available=safe_send_available,
+            preview_available=preview_available,
+            campaign_limit_reached=campaign_limit_reached,
+            campaign=campaign,
+            is_demo_preview=True
+        )
     local_delivery_available = user["role"] == "admin"
     # Safe Send = Mailtrap sandbox (works on Render, no domain needed)
     safe_send_available = bool(
@@ -3798,9 +3946,22 @@ def new_campaign(campaign_id=None):
 
 # Wizard Step 2: Upload targets for campaign
 @app.route("/new-campaign/upload/<int:campaign_id>", methods=["GET"])
-@login_required
 def new_campaign_upload(campaign_id):
     user = current_user()
+    if not user:
+        if campaign_id == 0:
+            campaign = {
+                "id": 0,
+                "name": "Executive CEO Fraud Test",
+                "company_domain": "demo-corp.com",
+                "scenario_type": "ceo_fraud",
+                "delivery_mode": "sandbox",
+                "status": "launched",
+            }
+            return render_template("new_campaign_upload.html", campaign=campaign, is_demo_preview=True)
+        else:
+            return redirect(url_for("login"))
+            
     db = get_db_connection()
     cursor = db.cursor(dictionary=True)
     campaign = user_can_access_campaign(cursor, campaign_id, user)
@@ -3812,9 +3973,22 @@ def new_campaign_upload(campaign_id):
 
 # Wizard Step 3: Launch or preview campaign
 @app.route("/new-campaign/launch/<int:campaign_id>", methods=["GET"])
-@login_required
 def new_campaign_launch(campaign_id):
     user = current_user()
+    if not user:
+        if campaign_id == 0:
+            campaign = {
+                "id": 0,
+                "name": "Executive CEO Fraud Test",
+                "company_domain": "demo-corp.com",
+                "scenario_type": "ceo_fraud",
+                "delivery_mode": "sandbox",
+                "status": "launched",
+            }
+            return render_template("new_campaign_launch.html", campaign=campaign, employee_count=24, is_demo_preview=True)
+        else:
+            return redirect(url_for("login"))
+
     db = get_db_connection()
     cursor = db.cursor(dictionary=True)
     campaign = user_can_access_campaign(cursor, campaign_id, user)
@@ -5253,6 +5427,31 @@ def track_click(tracking_id):
 
     return render_template("fake_login.html", tracking_id=tracking_id)
 
+@app.route("/fake-login-demo")
+def fake_login_demo():
+    """Tour-safe demo of the fake credential-harvesting landing page.
+    
+    Uses a hardcoded sentinel tracking_id so the template renders realistically
+    without touching the database. The ?tour=1 param is accepted but ignored —
+    the route is always public and always returns demo content.
+    """
+    return render_template("fake_login.html", tracking_id="demo-tour-sentinel-00000")
+
+@app.route("/reporting-demo")
+def reporting_demo():
+    """Tour-safe demo of the 'thank you for reporting' page.
+    
+    Renders with hardcoded demo context so the walkthrough can show this
+    employee-success state without requiring a real simulation tracking token.
+    """
+    return render_template(
+        "thank_you_for_reporting.html",
+        recipient_name="Alex Chen",
+        recipient_email="alex.chen@demo-corp.com",
+        tracking_id="demo-tour-sentinel-00000",
+        duplicate=False
+    )
+
 @app.route("/submit/<tracking_id>", methods=["POST"])
 def track_submit(tracking_id):
     """Logs credential submission and redirects to simulation reveal."""
@@ -5608,10 +5807,88 @@ def data_handling_policy():
 
 
 @app.route("/campaign-report/<int:campaign_id>")
-@login_required
 def campaign_report(campaign_id):
     """Shows an agentic campaign summary based on tracked behavior."""
     user = current_user()
+    if not user:
+        if campaign_id == 0:
+            campaign = {
+                "id": 0,
+                "name": "Executive CEO Fraud Test",
+                "company_domain": "demo-corp.com",
+                "scenario_type": "ceo_fraud",
+                "delivery_mode": "sandbox",
+                "status": "launched",
+                "employee_count": 24,
+                "emails_sent": 24,
+                "opens": 19,
+                "clicks": 8,
+                "reports": 5,
+                "created_at": "2026-08-01",
+                "repeat_pct": 8.3
+            }
+            report = {
+                "risk_level": "High",
+                "summary": "This campaign targeted the Finance and Operations departments. Urgency cues and authority pressure were highly successful, resulting in an overall click rate of 33.3%. Recommend targeted follow-up training on off-channel verification.",
+                "delivery_rate": 100.0,
+                "open_rate": 79.2,
+                "click_rate": 33.3,
+                "report_rate": 20.8,
+                "recommendations": [
+                    "Establish formal off-channel verification protocols for wire transfers.",
+                    "Run a follow-up simulation with standard HR/benefits pretexts.",
+                    "Provide priority micro-learning modules to the Finance department."
+                ],
+                "hss": {"score": 62, "tier": "amber", "label": "At Risk"}
+            }
+            department_stats = [
+                {"department": "Finance", "targets": 8, "opens": 7, "clicks": 5, "reports": 1, "open_rate": 88, "click_rate": 63},
+                {"department": "Operations", "targets": 10, "opens": 8, "clicks": 3, "reports": 2, "open_rate": 80, "click_rate": 30},
+                {"department": "Engineering", "targets": 6, "opens": 4, "clicks": 0, "reports": 2, "open_rate": 67, "click_rate": 0}
+            ]
+            repeat_offenders = [
+                {"name": "Sarah Chen", "email": "sarah.chen@demo-corp.com", "department": "Finance", "campaigns_clicked": 2}
+            ]
+            employee_logs = [
+                {"name": "Sarah Chen", "email": "sarah.chen@demo-corp.com", "department": "Finance", "opened": 1, "clicked": 1, "reported": 0, "risk_score": 92, "risk_reason": "Clicked link within 12s — immediate action bias under urgency cues.", "trend_dir": "worse", "trend_val": " +15 pts (Worse)"},
+                {"name": "Alex Rivera", "email": "alex.rivera@demo-corp.com", "department": "Operations", "opened": 1, "clicked": 1, "reported": 0, "risk_score": 85, "risk_reason": "Clicked link & visited credential clone — vulnerable to credential harvesting.", "trend_dir": "worse", "trend_val": " +8 pts (Worse)"},
+                {"name": "Jordan Ellis", "email": "jordan.ellis@demo-corp.com", "department": "Finance", "opened": 1, "clicked": 1, "reported": 1, "risk_score": 78, "risk_reason": "Clicked link but reported email later — delayed threat recognition.", "trend_dir": "stable", "trend_val": " (Stable)"},
+                {"name": "Michael Chang", "email": "michael.chang@demo-corp.com", "department": "Engineering", "opened": 1, "clicked": 0, "reported": 1, "risk_score": 8, "risk_reason": "Flagged impersonation attempt and reported within 2m — strong verification protocol.", "trend_dir": "better", "trend_val": " -12 pts (Better)"},
+                {"name": "Emma Watson", "email": "emma.watson@demo-corp.com", "department": "Operations", "opened": 1, "clicked": 0, "reported": 0, "risk_score": 35, "risk_reason": "Opened email but took no action — needs reinforcement on active reporting.", "trend_dir": "stable", "trend_val": " (Stable)"}
+            ]
+            sparklines = {
+                "delivery": [100.0, 100.0, 100.0],
+                "open": [72.0, 75.0, 79.2],
+                "click": [42.0, 38.0, 33.3],
+                "report": [12.0, 15.0, 20.8]
+            }
+            hss_history = [52, 58, 62]
+            hss_delta = 4
+            brief_data = {
+                "date": datetime.datetime.utcnow().strftime("%B %d, %Y"),
+                "company": "demo-corp.com",
+                "vector": "CEO Fraud",
+                "click_rate": 33.3,
+                "failed_departments": "Finance (63% clicks), Operations (30% clicks)",
+                "at_risk_employees": "Sarah Chen, Alex Rivera, Jordan Ellis",
+                "employee_count": 24,
+                "clicks": 8
+            }
+            return render_template(
+                "campaign_report.html",
+                campaign=campaign,
+                report=report,
+                department_stats=department_stats,
+                repeat_offenders=repeat_offenders,
+                employee_logs=employee_logs,
+                sparklines=sparklines,
+                hss_history=hss_history,
+                hss_delta=hss_delta,
+                brief_data=brief_data,
+                is_demo_preview=True
+            )
+        else:
+            return redirect(url_for("login"))
     db = get_db_connection()
     cursor = db.cursor(dictionary=True)
     department_stats = []
@@ -6575,10 +6852,69 @@ def delete_campaigns():
     return redirect(url_for('dashboard'))
 
 @app.route("/campaign-emails/<int:campaign_id>")
-@login_required
 def campaign_emails(campaign_id):
     """Shows a beautiful page of all AI-generated emails for a campaign."""
     user = current_user()
+    if not user:
+        if campaign_id == 0:
+            campaign = {
+                "id": 0,
+                "name": "Executive CEO Fraud Test",
+                "company_domain": "demo-corp.com",
+                "scenario_type": "ceo_fraud",
+                "delivery_mode": "sandbox",
+                "status": "launched",
+            }
+            emails = [
+                {
+                    "id": 1,
+                    "recipient_email": "finance-dept@demo-corp.com",
+                    "sender_name": "Chief Executive Officer",
+                    "subject": "Confidential: Urgent Acquisition Request",
+                    "body_html": "<p>Hi team,</p><p>I am currently in an offsite meeting with our legal counsel finalizing a confidential asset acquisition. We need to secure the initial escrow deposit of <strong>$45,000</strong> today to lock in the terms.</p><p>Please process this invoice immediately through the safe link below to prevent transaction delays: <a href='TRACKING_LINK'>Acquisition Invoice Portal</a>.</p><p>Thanks,<br>Executive Office</p>",
+                    "educational_breakdown": '{"obfuscation": "Bypasses standard approval using urgency", "authority": "CEO display name spoofing"}',
+                    "status": "sent",
+                    "tracking_id": "demo_track_1"
+                },
+                {
+                    "id": 2,
+                    "recipient_email": "operations@demo-corp.com",
+                    "sender_name": "IT Helpdesk",
+                    "subject": "CRITICAL: Urgent Security Patch Required",
+                    "body_html": "<p>Dear employee,</p><p>We have detected suspicious logon attempts targeting your Microsoft 365 profile from an external address. To secure your account, you are required to verify your password immediately.</p><p>Failure to complete security validation within 1 hour will result in temporary account lockout. Access the authentication server here: <a href='TRACKING_LINK'>M365 Authentication portal</a>.</p><p>Sincerely,<br>IT Security Team</p>",
+                    "educational_breakdown": '{"urgency": "1-hour deadline to induce panic", "believability": "Realistic IT security warning branding"}',
+                    "status": "sent",
+                    "tracking_id": "demo_track_2"
+                },
+                {
+                    "id": 3,
+                    "recipient_email": "talent@demo-corp.com",
+                    "sender_name": "HR Department",
+                    "subject": "All-Staff Update: Q3 Employee Health Benefits Program",
+                    "body_html": "<p>Hello all,</p><p>Our annual Q3 health benefits enrollment window is now open. We have partnered with a new provider to offer expanded dental and wellness coverage starting next month.</p><p>You must review and sign the new policy documentation by Friday to ensure continuous coverage. View the health benefits portal to select your plan: <a href='TRACKING_LINK'>Q3 Benefits Enrollment Policy</a>.</p><p>Best regards,<br>Human Resources</p>",
+                    "educational_breakdown": '{"personalization": "Targeted staff wellness benefit lure", "obfuscation": "Uses standard organizational HR templates"}',
+                    "status": "sent",
+                    "tracking_id": "demo_track_3"
+                },
+                {
+                    "id": 4,
+                    "recipient_email": "jordan.ellis@demo-corp.com",
+                    "sender_name": "Invoice Dispatch",
+                    "subject": "Action Required: Outstanding Corporate Travel Invoice #88492",
+                    "body_html": "<p>Good day,</p><p>This is a second reminder that corporate travel invoice #88492 is currently <strong>12 days overdue</strong>. A late penalty fee of 5% will be applied if payment is not received by tomorrow morning.</p><p>Please review the line-item invoice details and settle payment through our client billing portal: <a href='TRACKING_LINK'>Pay Travel Invoice #88492</a>.</p><p>Regards,<br>Finance Operations</p>",
+                    "educational_breakdown": '{"urgency": "Threatens late fee penalties", "obfuscation": "Simulates routine corporate travel expense billing"}',
+                    "status": "sent",
+                    "tracking_id": "demo_track_4"
+                }
+            ]
+            base_url = os.getenv("APP_BASE_URL", "http://127.0.0.1:5050").rstrip("/")
+            for email in emails:
+                if email.get("body_html") and email.get("tracking_id"):
+                    tracking_url = f"{base_url}/click/{email['tracking_id']}"
+                    email["body_html"] = email["body_html"].replace("TRACKING_LINK", tracking_url).replace("<a ", "<a target='_blank' ")
+            return render_template("campaign_emails.html", campaign=campaign, emails=emails, is_demo_preview=True)
+        else:
+            return redirect(url_for("login"))
     db = get_db_connection()
     cursor = db.cursor(dictionary=True)
     try:

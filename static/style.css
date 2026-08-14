@@ -5183,3 +5183,67 @@ body.light-theme .skeleton-block::after {
     transition: opacity 0.15s ease-in, transform 0.15s ease-in;
 }
 
+/* =========================================================
+   POLISH PASS — Scroll-Reveal + Button Hover Consistency
+   ========================================================= */
+
+/* 1. Scroll-Reveal ----------------------------------------
+   Sections start invisible + shifted 12px down, then
+   transition to visible + y=0 once IntersectionObserver
+   adds the .is-visible class. Pure CSS transition (no
+   keyframe) so scroll-back doesn't ghost-pop sections.
+   --------------------------------------------------------- */
+.reveal-section {
+    opacity: 0;
+    transform: translateY(12px);
+    transition: opacity 0.4s ease, transform 0.4s ease;
+    will-change: opacity, transform;
+}
+
+.reveal-section.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Honour prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+    .reveal-section,
+    .reveal-section.is-visible {
+        opacity: 1 !important;
+        transform: none !important;
+        transition: none !important;
+    }
+}
+
+/* 2. Button hover-transform consistency fixes ---------------
+   The following classes lacked the translateY lift that every
+   other button on the site has. Pre-fix audit:
+     - .btn-outline-glow  → no transform (only bg/border changed)
+     - .btn-get-started   → no transform at line 3385;
+                            actively transform:none at line 4428
+     - .pb-action-btn     → no transform (only box-shadow)
+     - .modern-cyber-btn  → no transform (only glow/shadow)
+   All other button classes already had a consistent lift.
+   --------------------------------------------------------- */
+
+.btn-outline-glow:hover {
+    transform: translateY(-2px) !important;
+}
+
+/* Restore lift for standalone (non-navbar) btn-get-started uses.
+   The line-4428 rule blocks transform for the navbar context;
+   this re-enables it for hero / CTA / section usages only. */
+.hero-buttons .btn-get-started:hover,
+.hero-cta-group .btn-get-started:hover,
+.cta-buttons .btn-get-started:hover,
+section .btn-get-started:hover {
+    transform: translateY(-2px) !important;
+}
+
+.pb-action-btn:hover {
+    transform: translateY(-1px);
+}
+
+.modern-cyber-btn:hover {
+    transform: translateY(-2px);
+}

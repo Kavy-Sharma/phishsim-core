@@ -1,5 +1,7 @@
 <!-- ═══════════════════════════════════════════════════════════
-     LURE — 4-state persistent avatar companion bot widget
+     LURE — persistent avatar companion bot widget
+     States: idle / active / success / error
+     Exposed API: window.lureFlashSuccess(), window.lureSetState()
      ═══════════════════════════════════════════════════════════ -->
 <style>
     /* ── PhishBot container (the draggable host, not the panel) ── */
@@ -14,8 +16,8 @@
 
     /* ── Avatar frame (transparent, fish mascot itself) ── */
     #pb-avatar {
-      width: 72px;
-      height: 72px;
+      width: 76px;
+      height: 76px;
       background: transparent;
       border: none;
       cursor: pointer;
@@ -24,6 +26,40 @@
       justify-content: center;
       position: relative;
       outline: none;
+      transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    /* Subtle bounce on hover */
+    #pb-avatar:hover {
+      transform: translateY(-4px) scale(1.06);
+    }
+    #pb-avatar:active {
+      transform: translateY(0) scale(0.96);
+    }
+
+    /* "Lure" name tooltip that pops up above avatar on hover */
+    #pb-avatar::after {
+      content: 'Lure AI';
+      position: absolute;
+      top: -28px;
+      left: 50%;
+      transform: translateX(-50%) translateY(4px);
+      background: var(--bg-elevated, #121D35);
+      border: 1px solid color-mix(in srgb, var(--primary) 30%, transparent);
+      border-radius: 6px;
+      padding: 3px 8px;
+      font-family: var(--mono, 'JetBrains Mono', monospace);
+      font-size: 0.58rem;
+      font-weight: 700;
+      color: var(--primary);
+      letter-spacing: 0.06em;
+      white-space: nowrap;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.18s ease, transform 0.18s ease;
+    }
+    #pb-avatar:hover::after {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
     }
 
     /* Outer glow ring around the fish mascot (primary glow, 25% opacity) */
@@ -57,11 +93,142 @@
 
     #pb-orb-glow {
       animation: pbOrbPulse 2s infinite ease-in-out;
+      transition: stroke 0.35s ease;
     }
     @keyframes pbOrbPulse {
       0%, 100% { transform: scale(1); opacity: 0.2; }
       50% { transform: scale(1.3); opacity: 0.4; }
     }
+    @keyframes pbOrbPulseFast {
+      0%, 100% { transform: scale(1); opacity: 0.35; }
+      50% { transform: scale(1.5); opacity: 0.65; }
+    }
+    @keyframes pbOrbSuccess {
+      0%   { transform: scale(1); opacity: 0.3; }
+      40%  { transform: scale(1.7); opacity: 0.7; }
+      100% { transform: scale(1); opacity: 0.3; }
+    }
+
+    /* ── Orb fill/glow color transitions ── */
+    #pb-orb { transition: fill 0.3s ease; }
+    #pb-avatar::before { transition: box-shadow 0.3s ease, opacity 0.3s ease; }
+
+    /* ── State: active — cyan orb spin (AI thinking) ── */
+    #pb-host.pb-active #pb-orb {
+      fill: var(--primary);
+    }
+    #pb-host.pb-active #pb-orb-glow {
+      stroke: var(--primary);
+      animation: pbOrbPulseFast 0.75s infinite ease-in-out;
+    }
+    #pb-host.pb-active #pb-lure-group {
+      animation: pbWiggle 0.6s infinite ease-in-out;
+    }
+    #pb-host.pb-active #pb-avatar::before {
+      box-shadow: 0 0 22px var(--primary);
+      opacity: 0.35;
+      animation: pbPulse 1s infinite ease-in-out;
+    }
+
+    /* ── State: success — green celebration flash ── */
+    #pb-host.pb-success #pb-orb {
+      fill: var(--success, #34D399);
+    }
+    #pb-host.pb-success #pb-orb-glow {
+      stroke: var(--success, #34D399);
+      animation: pbOrbSuccess 0.55s 3 ease-in-out;
+    }
+    #pb-host.pb-success #pb-avatar::before {
+      box-shadow: 0 0 26px var(--success, #34D399);
+      opacity: 0.55;
+      animation: pbPulse 0.7s infinite ease-in-out;
+    }
+    #pb-host.pb-success #pb-avatar-body {
+      filter: brightness(1.15);
+    }
+
+    /* ── State: error — red droop ── */
+    #pb-host.pb-error #pb-orb {
+      fill: var(--danger);
+    }
+    #pb-host.pb-error #pb-orb-glow {
+      stroke: var(--danger);
+      animation: pbOrbPulse 1.8s infinite ease-in-out;
+    }
+    #pb-host.pb-error #pb-avatar::before {
+      box-shadow: 0 0 18px var(--danger);
+      opacity: 0.35;
+    }
+    #pb-host.pb-error #pb-lure-group {
+      animation: none;
+      transform: rotate(-8deg);
+    }
+    #pb-host.pb-error #pb-mouth {
+      /* Frown — flip the smile arc via CSS filter (subtle) */
+      transform-origin: 26px 27px;
+      transform: scaleY(-0.7) translateY(-2px);
+      transition: transform 0.4s ease;
+    }
+
+    /* ── Proactive callout strip (near avatar, non-blocking) ── */
+    #pb-callout {
+      position: absolute;
+      right: 84px;
+      bottom: 10px;
+      width: 240px;
+      background: color-mix(in srgb, var(--warning) 8%, var(--bg-elevated, #121D35));
+      border: 1px solid color-mix(in srgb, var(--warning) 38%, transparent);
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-family: var(--mono, 'JetBrains Mono', monospace);
+      font-size: 0.65rem;
+      color: var(--text-primary, #E8EDF2);
+      line-height: 1.42;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.45);
+      pointer-events: auto;
+      opacity: 0;
+      transform: translateX(8px) scale(0.97);
+      transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.16,1,0.3,1);
+      z-index: 10001;
+    }
+    #pb-callout.pb-show {
+      opacity: 1;
+      transform: translateX(0) scale(1);
+    }
+    #pb-callout::after {
+      content: '';
+      position: absolute;
+      right: -6px;
+      bottom: 16px;
+      width: 10px;
+      height: 10px;
+      background: color-mix(in srgb, var(--warning) 10%, var(--bg-elevated, #121D35));
+      border-right: 1px solid color-mix(in srgb, var(--warning) 38%, transparent);
+      border-bottom: 1px solid color-mix(in srgb, var(--warning) 38%, transparent);
+      transform: rotate(-45deg);
+    }
+    #pb-callout-label {
+      font-size: 0.55rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--warning);
+      margin-bottom: 4px;
+    }
+    #pb-callout-dismiss {
+      position: absolute;
+      top: 6px;
+      right: 8px;
+      background: none;
+      border: none;
+      color: var(--text-muted, #4A5568);
+      cursor: pointer;
+      font-size: 0.75rem;
+      line-height: 1;
+      padding: 0;
+      transition: color 0.15s;
+    }
+    #pb-callout-dismiss:hover { color: var(--text-primary, #E8EDF2); }
 
     /* ── Teaser bubble (flies out left of avatar) ── */
     #pb-teaser {
@@ -682,12 +849,19 @@
     </div>
   </div>
 
+  <!-- Proactive insight callout (non-blocking, near avatar) -->
+  <div id="pb-callout" aria-live="polite" role="status" aria-hidden="true">
+    <div id="pb-callout-label">Lure — Insight</div>
+    <button id="pb-callout-dismiss" title="Dismiss" aria-label="Dismiss insight">✕</button>
+    <div id="pb-callout-text"></div>
+  </div>
+
   <!-- Draggable Mascot Avatar Button -->
   <button id="pb-avatar" type="button"
     aria-label="Open Lure — AI Phishing Lure Lab"
     aria-expanded="false"
     aria-controls="pb-panel">
-    <svg width="36" height="36" viewBox="0 0 36 36" style="filter: drop-shadow(0 0 6px var(--primary-glow));">
+    <svg width="40" height="40" viewBox="0 0 36 36" style="filter: drop-shadow(0 0 8px var(--primary-glow)); overflow: visible;">
       <!-- Tail -->
       <path id="pb-tail-fin" d="M8 24 L2 17 C1.5 20, 1.5 28, 2 31 Z" fill="color-mix(in srgb, var(--primary) 80%, #000000)"/>
       <!-- Dorsal Fin -->
@@ -1480,13 +1654,174 @@
        ================================================================ */
     const WALKTHROUGH_CONFIGS = {
       full_tour: [
-        { targetId: "hero", title: "Sandbox Terminal", text: "This is where I simulate real-world attacks! Go ahead and type commands to run OSINT lookups or check domain leaks right in my active terminal.", path: "/" },
-        { targetId: "pb-avatar", title: "AI Lure Generator", text: "I can draft highly customized, context-aware emails to test your team's defense. Just click a scenario in my panel to watch me write one live!", path: "/" },
-        { targetId: "wt-dashboard-view", title: "Dashboard Overview", text: "Welcome to your main Dashboard! Here, you can monitor global test results, track employee click rates, and audit live campaign statuses.", path: "/dashboard" },
-        { targetId: "wt-create-campaign-btn", title: "Launching Simulations", text: "Ready to build your first simulation? Click 'Create Campaign' here to open the campaign creator, or let me take you there!", path: "/dashboard", redirectPath: "/new-campaign" },
-        { targetId: "campaign-form", title: "Campaign Creator", text: "This is the Campaign Creator. Just name your campaign, select a scenario, upload target employees, and launch it! Let's check out a sample report next.", path: "/new-campaign", redirectPath: "/reports-demo" },
-        { targetId: "sec-hero", title: "AI Campaign Report", text: "This is the AI Report dashboard. I analyze employee clicks, identify department vulnerabilities, and compile risk scores. How cool is that?", path: "/reports-demo" }
+        // ── Homepage: hero terminal ──────────────────────────────────────────────
+        {
+          targetId: "hero",
+          title: "Sandbox Terminal",
+          text: "I'm Lure, your AI phishing co-pilot — and this is my live sandbox terminal. Before any campaign runs, I can query your domain's MX records, SPF configuration, and OSINT-exposed employee data right here, so you know exactly what an attacker already knows about your org.",
+          path: "/"
+        },
+        // ── Homepage: AI Lure Generator section ──────────────────────────────────
+        {
+          targetId: "threat-sandbox",
+          title: "AI Lure Generator",
+          text: "This is where the magic happens. I generate scenario-specific phishing emails on demand — CEO Fraud, IT Alerts, HR Updates, and more. Each one is crafted with contextual pretexts so your simulation emails are indistinguishable from real threats your employees will face.",
+          path: "/"
+        },
+        // ── Homepage: attack chain visualization ────────────────────────────────
+        {
+          targetId: "attack-chain",
+          title: "Attack Chain Visualization",
+          text: "Every phishing engagement is really a six-stage kill chain. Here I map how a crafted lure progresses from first contact through credential harvest to data exfiltration — so your security team understands the full blast radius, not just the click rate.",
+          path: "/"
+        },
+        // ── Homepage: pricing ────────────────────────────────────────────────────
+        {
+          targetId: "pricing",
+          title: "Flexible Pricing",
+          text: "Phishing risk doesn't scale with org size — but your simulation program should. Review our plans here: the free tier gives you a taste, while Pro and Enterprise unlock automated scheduling, custom SMTP delivery, OSINT-sourced target discovery, and full 90-day reporting history.",
+          path: "/"
+        },
+        // ── Homepage: signup nav link (highlight only, no redirect) ─────────────
+        {
+          targetId: "wt-signup-btn",
+          title: "Unlock a Free Account",
+          text: "Creating an account is what turns this demo into a live simulation engine. Once you sign up, I can run real campaigns against your own employee list, track every click and report action, and build a cumulative Human Security Score across your entire organization — all from your dashboard.",
+          path: "/"
+        },
+        // ── Dashboard overview ───────────────────────────────────────────────────
+        {
+          targetId: "wt-dashboard-view",
+          title: "Dashboard Overview",
+          text: "Welcome to your Simulation Dashboard — this is my command center. The four KPI cards you see here show active campaigns, total employees in scope, your current average click rate, and your organization's overall Human Security Score. Everything updates in real time as simulations run.",
+          path: "/dashboard?tour=1"
+        },
+        // ── New campaign: name the campaign ─────────────────────────────────────
+        {
+          targetId: "campaign_name",
+          title: "Name Your Campaign",
+          text: "Every phishing exercise starts here. Give this campaign a name that maps to a training objective — for example 'Q3 Finance Phishing Test' — and enter your target domain. I use the domain to craft lure emails that look like they genuinely originated inside your organization.",
+          path: "/new-campaign?tour=1"
+        },
+        // ── New campaign: pick a scenario ────────────────────────────────────────
+        {
+          targetId: "wt-scenarios-container",
+          title: "Choose a Threat Scenario",
+          text: "This is where you direct my AI engine. Each scenario — CEO Fraud, IT Security Alert, HR Update, Invoice Request — maps to a real-world pretext I've been trained on. The scenario shapes the email subject, sender persona, urgency framing, and the credential-harvest landing page your employees will see.",
+          path: "/new-campaign?tour=1"
+        },
+        // ── New campaign: Next button → upload step ──────────────────────────────
+        {
+          targetId: "wt-next-btn",
+          title: "Proceed to Target Upload",
+          text: "Happy with your scenario? Hit Next and I'll carry your settings into Step 2, where you'll upload your employee roster. A precise target list is what separates a generic awareness exercise from a surgical simulation that identifies your highest-risk individuals by name and department.",
+          path: "/new-campaign?tour=1",
+          redirectPath: "/new-campaign/upload/0?tour=1"
+        },
+        // ── Upload step ──────────────────────────────────────────────────────────
+        {
+          targetId: "section-csv",
+          title: "Upload Target Employees",
+          text: "Drop a CSV here with your employee names, emails, and departments and I'll map every lure to its recipient personally. Alternatively, switch to the OSINT tab and I'll crawl public sources to discover exposed addresses for your domain automatically — no spreadsheet required.",
+          path: "/new-campaign/upload/0?tour=1",
+          redirectPath: "/new-campaign/launch/0?tour=1"
+        },
+        // ── Launch step ──────────────────────────────────────────────────────────
+        {
+          targetId: "launch-btn",
+          title: "Launch the Campaign",
+          text: "This is the moment of truth. Once you click Launch, I generate individualized phishing emails for every target, schedule delivery, and arm the tracking pixels and link intercepts that capture every open, click, and credential submission — all without impacting your production mail flow.",
+          path: "/new-campaign/launch/0?tour=1"
+        },
+        // ── Campaign email inbox ─────────────────────────────────────────────────
+        {
+          targetId: "wt-emails-inbox",
+          title: "Generated Email Inbox",
+          text: "Here's the dispatch queue for your campaign. Every email I generated is listed here — you can click any one to review its exact pretext, sender persona, and embedded tracking link before it lands in an employee's inbox. This audit view lets you catch anything that needs a tone adjustment.",
+          path: "/campaign-emails/0?tour=1"
+        },
+        // ── Reports demo overview ────────────────────────────────────────────────
+        {
+          targetId: "sec-hero",
+          title: "AI Report Overview",
+          text: "After a campaign runs, I build a full intelligence brief here. This overview surfaces department-level risk rankings, interaction timelines, and training prioritization recommendations — the kind of data that turns raw click rates into an actionable security roadmap for your CISO.",
+          path: "/reports-demo"
+        },
+        // ── Detailed campaign report ─────────────────────────────────────────────
+        {
+          targetId: "wt-report-hero",
+          title: "Detailed Campaign Report",
+          text: "Drilling into a specific campaign reveals the full telemetry picture: who clicked, when, from what device, and how far through the credential-harvest flow they progressed. I correlate all of this into a precise Human Security Score so you can track resilience improvement campaign over campaign.",
+          path: "/campaign-report/0?tour=1"
+        },
+        // ── PDF export ───────────────────────────────────────────────────────────
+        {
+          targetId: "pdf-dl-btn",
+          title: "Export for Leadership",
+          text: "Security work needs to be visible to decision-makers. Hit this button and I'll render your campaign findings into a polished, board-ready PDF — complete with risk score breakdowns, department heat maps, and recommended training actions.",
+          path: "/campaign-report/0?tour=1"
+        },
+
+        // ════════════════════════════════════════════════════════════════════════
+        // Employee-perspective section: what happens when a link gets clicked
+        // ════════════════════════════════════════════════════════════════════════
+
+        // ── Fake credential-harvesting landing page ───────────────────────────
+        {
+          targetId: "login-form",
+          title: "The Credential Harvest Page",
+          text: "This is exactly what an employee sees the moment they click my link — a pixel-perfect clone of a legitimate corporate login page. I can mimic Microsoft, Google, Okta, and others. The goal isn't to actually steal credentials: it's to measure how many employees hand them over without questioning the URL or sender.",
+          path: "/fake-login-demo"
+        },
+        // ── Simulation reveal page ────────────────────────────────────────────
+        {
+          targetId: "warning-card-container",
+          title: "The Reveal — You Got Phished",
+          text: "The moment an employee submits the form, I redirect them here. This is my 'gotcha' reveal: I explain what just happened, which red flags they missed — urgency language, mismatched domains, generic greetings — and why a real attacker would now own their account. This micro-training moment is the most effective part of the entire simulation.",
+          path: "/simulated"
+        },
+        // ── Thank you for reporting page ──────────────────────────────────────
+        {
+          targetId: "thank-you-card-container",
+          title: "The Right Move — Threat Reported",
+          text: "When an employee spots the lure and reports it instead of clicking, they land here. I reward the behaviour with positive reinforcement and a Security Champion badge. Organizations that run regular simulations see report rates climb from under 5% to over 40% within three campaigns — because employees learn that reporting is celebrated, not ignored.",
+          path: "/reporting-demo"
+        },
+
+        // ════════════════════════════════════════════════════════════════════════
+        // Security analyst tools — all public, no login required
+        // ════════════════════════════════════════════════════════════════════════
+
+        // ── Email Header Analyzer ─────────────────────────────────────────────
+        {
+          targetId: "ha-card-container",
+          title: "Email Header Analyzer",
+          text: "Paste raw email headers here and I'll decode every hop the message traveled, flag authentication failures (SPF, DKIM, DMARC), and surface the true originating IP — the exact forensic workflow a SOC analyst runs to determine whether a suspicious email is malicious or benign.",
+          path: "/header-analyzer"
+        },
+        // ── Threat Analyzer ───────────────────────────────────────────────────
+        {
+          targetId: "ta-main-card",
+          title: "Phishing Threat Analyzer",
+          text: "Drop suspicious email body text or headers in here and I'll score it across twenty-plus phishing signals: urgency language, lookalike domains, credential-request patterns, and social-engineering cues. Security teams use this to triage reported emails in seconds rather than minutes.",
+          path: "/threat-analyzer"
+        },
+        // ── URL Decoder ───────────────────────────────────────────────────────
+        {
+          targetId: "ud-input-state",
+          title: "Phishing URL Decoder",
+          text: "Attackers hide malicious destinations behind redirect chains, base64 blobs, and URL-shorteners. Paste any suspicious link here and I'll unpack every redirect hop, resolve the final destination, and flag known threat-intel matches — without you ever having to actually visit the page.",
+          path: "/url-decoder"
+        },
+        // ── Password Breach Checker ───────────────────────────────────────────
+        {
+          targetId: "pb-vault-card",
+          title: "Password Breach Checker",
+          text: "Before you even run a simulation, it helps to know which employees are already compromised. This tool checks whether a password or email address appears in known breach datasets — using a k-anonymity hash so the actual credential never leaves the browser. That wraps the full platform tour — you've now seen every stage of the phishing lifecycle, from lure to lesson.",
+          path: "/password-breach"
+        }
       ],
+
       campaign_launch: [
         { targetId: "hero", title: "Terminal Queries", text: "First, let's look at my Sandbox Terminal. Here, you can type active security commands to query target email domains and analyze target vulnerabilities.", path: "/" },
         { targetId: "wt-create-campaign-btn", title: "Campaign Hub", text: "Ready to launch? We go to the Dashboard to create a campaign.", path: "/dashboard", redirectPath: "/new-campaign" },
@@ -1508,6 +1843,76 @@
     let wtSteps = [];
     let wtCurrentPage = 'full_tour';
 
+    function repositionWalkthroughElements() {
+      if (!wtActive || wtCurrentStep < 0 || wtCurrentStep >= wtSteps.length) return;
+      const step = wtSteps[wtCurrentStep];
+      const targetEl = document.getElementById(step.targetId);
+      
+      let highlighter = document.getElementById('pb-wt-highlighter');
+      if (!targetEl) {
+        if (highlighter) highlighter.style.display = 'none';
+        return;
+      }
+
+      // Check path matching first
+      const currentPath = window.location.pathname.replace(/\/$/, '') || '/';
+      const targetPath = step.path.split('?')[0].replace(/\/$/, '') || '/';
+      if (currentPath !== targetPath) {
+        if (highlighter) highlighter.style.display = 'none';
+        return;
+      }
+
+      const rect = targetEl.getBoundingClientRect();
+      
+      // Update/Create highlighter overlay
+      if (!highlighter) {
+        highlighter = document.createElement('div');
+        highlighter.id = 'pb-wt-highlighter';
+        highlighter.style.position = 'absolute';
+        highlighter.style.pointerEvents = 'none';
+        highlighter.style.boxSizing = 'border-box';
+        highlighter.style.borderRadius = '12px';
+        highlighter.style.border = '3px solid var(--primary)';
+        highlighter.style.boxShadow = '0 0 20px rgba(6, 182, 212, 0.45)';
+        highlighter.style.zIndex = '9999';
+        highlighter.style.transition = 'all 0.15s ease-out';
+        document.body.appendChild(highlighter);
+      }
+      highlighter.style.display = 'block';
+      highlighter.style.top = (rect.top + window.scrollY - 6) + 'px';
+      highlighter.style.left = (rect.left + window.scrollX - 6) + 'px';
+      highlighter.style.width = (rect.width + 12) + 'px';
+      highlighter.style.height = (rect.height + 12) + 'px';
+
+      // Reposition Lure Card
+      const padding = 16;
+      let cardHeight = inlineSec.offsetHeight || 220;
+      let cardWidth = 380;
+      
+      let cardTop = rect.bottom + window.scrollY + padding;
+      let cardLeft = rect.left + window.scrollX + (rect.width - cardWidth) / 2;
+
+      // Restrict within window width
+      const scrollBarWidth = 15;
+      const viewportWidth = window.innerWidth - scrollBarWidth;
+      if (cardLeft < 16) cardLeft = 16;
+      if (cardLeft + cardWidth > viewportWidth - 16) {
+          cardLeft = viewportWidth - cardWidth - 16;
+      }
+
+      // If card overflows viewport bottom, place it above target
+      const viewportBottom = window.scrollY + window.innerHeight;
+      if (rect.bottom + window.scrollY + cardHeight + padding > viewportBottom) {
+          cardTop = rect.top + window.scrollY - cardHeight - padding;
+      }
+
+      inlineSec.style.setProperty('position', 'absolute', 'important');
+      inlineSec.style.setProperty('top', cardTop + 'px', 'important');
+      inlineSec.style.setProperty('left', cardLeft + 'px', 'important');
+      inlineSec.style.setProperty('bottom', 'auto', 'important');
+      inlineSec.style.setProperty('right', 'auto', 'important');
+    }
+
     window.startWalkthrough = function(pageKey) {
       const config = WALKTHROUGH_CONFIGS[pageKey];
       if (!config || config.length === 0) return;
@@ -1526,9 +1931,12 @@
       inlineSec.classList.add('pb-walkthrough-active');
       inlineSec.style.display = 'block';
 
+      window.addEventListener('scroll', repositionWalkthroughElements);
+      window.addEventListener('resize', repositionWalkthroughElements);
+
       // Check if we need to redirect immediately
       const currentPath = window.location.pathname.replace(/\/$/, '') || '/';
-      const targetPath = config[0].path.replace(/\/$/, '') || '/';
+      const targetPath = config[0].path.split('?')[0].replace(/\/$/, '') || '/';
 
       if (currentPath !== targetPath) {
         window.location.href = config[0].path;
@@ -1541,7 +1949,15 @@
       if (!wtActive || wtCurrentStep < 0 || wtCurrentStep >= wtSteps.length) return;
 
       const step = wtSteps[wtCurrentStep];
-      
+
+      // Check path matching first
+      const currentPath = window.location.pathname.replace(/\/$/, '') || '/';
+      const targetPath = step.path.split('?')[0].replace(/\/$/, '') || '/';
+      if (currentPath !== targetPath) {
+        window.location.href = step.path;
+        return;
+      }
+
       // Remove any existing highlights
       document.querySelectorAll('.pb-highlight-active').forEach(el => {
         el.classList.remove('pb-highlight-active');
@@ -1553,6 +1969,7 @@
         targetEl.classList.add('pb-highlight-active');
         setTimeout(() => {
           targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          setTimeout(repositionWalkthroughElements, 300);
         }, 100);
       }
 
@@ -1619,6 +2036,7 @@
             </div>
           </div>
         `;
+        setTimeout(repositionWalkthroughElements, 300);
       }
     }
 
@@ -1631,6 +2049,7 @@
         void targetEl.offsetWidth; // force reflow
         targetEl.classList.add('pb-highlight-active');
         targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        setTimeout(repositionWalkthroughElements, 300);
       }
     };
 
@@ -1652,7 +2071,7 @@
       } else {
         const nextStep = wtSteps[wtCurrentStep];
         const currentPath = window.location.pathname.replace(/\/$/, '') || '/';
-        const targetPath = nextStep.path.replace(/\/$/, '') || '/';
+        const targetPath = nextStep.path.split('?')[0].replace(/\/$/, '') || '/';
 
         if (currentPath !== targetPath) {
           window.location.href = nextStep.path;
@@ -1669,7 +2088,7 @@
 
         const prevStep = wtSteps[wtCurrentStep];
         const currentPath = window.location.pathname.replace(/\/$/, '') || '/';
-        const targetPath = prevStep.path.replace(/\/$/, '') || '/';
+        const targetPath = prevStep.path.split('?')[0].replace(/\/$/, '') || '/';
 
         if (currentPath !== targetPath) {
           window.location.href = prevStep.path;
@@ -1696,10 +2115,22 @@
       document.querySelectorAll('.pb-highlight-active').forEach(el => {
         el.classList.remove('pb-highlight-active');
       });
+
+      const highlighter = document.getElementById('pb-wt-highlighter');
+      if (highlighter) highlighter.style.display = 'none';
+
+      inlineSec.style.removeProperty('position');
+      inlineSec.style.removeProperty('top');
+      inlineSec.style.removeProperty('left');
+      inlineSec.style.removeProperty('bottom');
+      inlineSec.style.removeProperty('right');
       
       inlineSec.classList.remove('pb-walkthrough-active');
       inlineSec.style.display = 'none';
       expanded = false;
+
+      window.removeEventListener('scroll', repositionWalkthroughElements);
+      window.removeEventListener('resize', repositionWalkthroughElements);
     }
 
     // Resume walkthrough logic on page load
@@ -1717,7 +2148,10 @@
         expanded = true;
         inlineSec.classList.add('pb-walkthrough-active');
         inlineSec.style.display = 'block';
-        
+
+        window.addEventListener('scroll', repositionWalkthroughElements);
+        window.addEventListener('resize', repositionWalkthroughElements);
+
         renderWalkthroughStep();
       }
     });
@@ -2024,6 +2458,64 @@
         opt.querySelector('input').checked = true;
       });
     });
+
+    /* ════════════════════════════════════════════════════════
+       Proactive Callout Controller
+       ════════════════════════════════════════════════════════ */
+    const calloutEl = document.getElementById('pb-callout');
+    const calloutText = document.getElementById('pb-callout-text');
+    const calloutDismiss = document.getElementById('pb-callout-dismiss');
+
+    function showCallout(message) {
+      if (!calloutEl || !calloutText) return;
+      calloutText.textContent = message;
+      calloutEl.setAttribute('aria-hidden', 'false');
+      // Small delay so CSS transition fires
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          calloutEl.classList.add('pb-show');
+        });
+      });
+    }
+
+    function hideCallout() {
+      if (!calloutEl) return;
+      calloutEl.classList.remove('pb-show');
+      calloutEl.setAttribute('aria-hidden', 'true');
+    }
+
+    if (calloutDismiss) {
+      calloutDismiss.addEventListener('click', (e) => {
+        e.stopPropagation();
+        hideCallout();
+      });
+    }
+
+    // Expose for page-level use
+    window.lureShowCallout = function(msg) { showCallout(msg); };
+    window.lureHideCallout = function() { hideCallout(); };
+
+    /* ════════════════════════════════════════════════════════
+       Public Orb State API
+       ════════════════════════════════════════════════════════
+       window.lureFlashSuccess() — briefly flashes the success
+       (green) orb state for ~2.2 s then reverts to idle.
+
+       window.lureSetState(state) — sets orb to any named
+       state: 'idle' | 'active' | 'success' | 'error'
+       ════════════════════════════════════════════════════════ */
+    window.lureFlashSuccess = function () {
+      host.className = 'pb-success';
+      clearTimeout(window._lureSuccessTimer);
+      window._lureSuccessTimer = setTimeout(function () {
+        host.className = '';
+      }, 2200);
+    };
+
+    window.lureSetState = function (state) {
+      clearTimeout(window._lureSuccessTimer);
+      host.className = (state === 'idle') ? '' : 'pb-' + state;
+    };
 
   })();
 </script>

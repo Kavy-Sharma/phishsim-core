@@ -8835,7 +8835,49 @@ ${body}
     }
   </script>
 
+
+  <script>
+  /* ── Scroll-Reveal: fade-up sections on viewport entry ──
+     Respects prefers-reduced-motion via the CSS guard in
+     style.css (.reveal-section is opacity:1/transform:none
+     when reduced-motion is on, so the observer still runs
+     but has no visible effect — no JS branch needed here). */
+  (function () {
+    'use strict';
+    // Skip if IntersectionObserver not supported (very old browsers)
+    if (!('IntersectionObserver' in window)) return;
+
+    // Exclude #hero (above-fold, must be instantly visible) so it never
+    // flickers. Also exclude #attack-chain (the existing .reveal system
+    // already handles its children with its own observer).
+    const sections = document.querySelectorAll(
+      'section:not(#hero):not(#attack-chain)'
+    );
+    sections.forEach(function (sec) {
+      sec.classList.add('reveal-section');
+    });
+
+    const observer = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('is-visible');
+          // Once visible, stop observing — no fade-out on scroll-back
+          observer.unobserve(entry.target);
+        }
+      });
+    }, {
+      threshold: 0.06,         // trigger when 6% of section enters viewport
+      rootMargin: '0px 0px -30px 0px'  // slight bottom offset for natural feel
+    });
+
+    sections.forEach(function (sec) {
+      observer.observe(sec);
+    });
+  })();
+  </script>
+
   {% include 'lure_bot.html' %}
+
 </body>
 
 </html>

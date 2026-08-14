@@ -750,6 +750,20 @@
 <div class="dash-page">
     {% set is_demo = (current_user and current_user.company_domain == 'demo-corp.com') %}
 
+    {% if is_demo_preview %}
+    <div class="demo-preview-banner" style="background: linear-gradient(90deg, rgba(245,158,11,0.15), rgba(245,158,11,0.05)); border: 1px solid rgba(245,158,11,0.3); border-radius: 12px; padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; gap: 16px;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <i class="ti ti-info-circle" style="color: var(--warning); font-size: 1.25rem;"></i>
+            <span style="font-size: 0.85rem; color: var(--text-primary); font-weight: 500;">
+                <strong>Demo Preview</strong> — You are viewing simulation metrics as a visitor. Sign up to run live tests on your own domain!
+            </span>
+        </div>
+        <a href="/signup" class="btn-primary-filled" style="padding: 8px 16px; font-size: 0.75rem; border-radius: 8px; margin: 0; white-space: nowrap; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+            <i class="ti ti-user-plus"></i> Create Free Account
+        </a>
+    </div>
+    {% endif %}
+
     <!-- 1. Page Header Row -->
     <div class="dash-header-row">
         <div>
@@ -784,15 +798,18 @@
     'launched_with_errors', 'launching']) | list | length) %}
     {% set dept_count_value = 3 if is_demo else dept_count %}
 
+    {# Expose click_rate to JS for Lure's proactive callout #}
+    <script>window._lureClickRate = {{ click_rate | float }}; window._lurIsDemo = {{ 'true' if is_demo else 'false' }};</script>
+
     <!-- 2. Bento Stats Strip (4 bento cards) -->
-    <div class="stats-strip">
+    <div class="stats-strip" id="wt-dashboard-view">
         <!-- Card 1: Active Campaigns -->
         <div class="bento-card">
             <div>
                 <div class="stat-card-title">
                     <i class="ti ti-stack-2" style="color: var(--primary);"></i> Active Campaigns
                 </div>
-                <div class="stat-card-value">{{ active_count }}</div>
+                <div class="stat-card-value" data-countup>{{ active_count }}</div>
             </div>
             <div class="stat-card-subtext">{{ scheduled_count }} scheduled · {{ running_count }} running</div>
         </div>
@@ -803,7 +820,7 @@
                 <div class="stat-card-title">
                     <i class="ti ti-users" style="color: #a855f7;"></i> Employees Targeted
                 </div>
-                <div class="stat-card-value">{{ targets_count }}</div>
+                <div class="stat-card-value" data-countup>{{ targets_count }}</div>
             </div>
             <div class="stat-card-subtext">Across {{ dept_count_value }} departments</div>
         </div>
@@ -814,7 +831,7 @@
                 <div class="stat-card-title">
                     <i class="ti ti-alert-triangle" style="color: var(--warning);"></i> Avg Click Rate
                 </div>
-                <div class="stat-card-value" style="color: var(--warning);">{{ click_rate }}%</div>
+                <div class="stat-card-value" style="color: var(--warning);" data-countup data-countup-suffix="%">{{ click_rate }}</div>
             </div>
             <div class="stat-card-subtext">Industry avg: 28%</div>
         </div>
@@ -849,7 +866,7 @@
                             stroke-dashoffset="{{ 169.64 - (169.64 * hss_score / 100) }}" stroke-linecap="round"
                             style="transition: stroke-dashoffset 1s ease-in-out;" />
                     </svg>
-                    <div class="hss-gauge-value">{{ hss_score }}</div>
+                    <div class="hss-gauge-value" data-countup>{{ hss_score }}</div>
                 </div>
             </div>
         </div>
@@ -2352,4 +2369,114 @@
             }, 500);
         });
     </script>
+
+    <script>
+    /* ── Stat card count-up animation ──────────────────────────────
+       Reads real server-rendered values, counts from 0 to target
+       over 800ms using requestAnimationFrame. Respects
+       prefers-reduced-motion: skips animation if user prefers it.
+       Targets elements with data-countup attribute.
+       Optional data-countup-suffix appended after the number.
+    ─────────────────────────────────────────────────────────────── */
+    (function () {
+      'use strict';
+      const DURATION = 800; // ms
+      const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+      function easeOutCubic(t) {
+        return 1 - Math.pow(1 - t, 3);
+      }
+
+      function animateCountUp(el, target, suffix) {
+        if (reducedMotion) {
+          // Just show final value immediately
+          el.textContent = target + suffix;
+          return;
+        }
+        const start = performance.now();
+        function frame(now) {
+          const elapsed = now - start;
+          const progress = Math.min(elapsed / DURATION, 1);
+          const current = Math.round(easeOutCubic(progress) * target);
+          el.textContent = current + suffix;
+          if (progress < 1) {
+            requestAnimationFrame(frame);
+          } else {
+            el.textContent = target + suffix;
+          }
+        }
+        el.textContent = '0' + suffix;
+        requestAnimationFrame(frame);
+      }
+
+      function initCountUps() {
+        const els = document.querySelectorAll('[data-countup]');
+        els.forEach(function (el) {
+          const rawText = el.textContent.trim();
+          const suffix = el.getAttribute('data-countup-suffix') || '';
+          // Strip any existing suffix to get the bare number
+          const numStr = rawText.replace(suffix, '').trim();
+          const target = parseFloat(numStr);
+          if (isNaN(target)) return; // skip non-numeric (e.g. empty demo slots)
+          animateCountUp(el, target, suffix);
+        });
+      }
+
+      // Use IntersectionObserver so the animation fires when the
+      // stats strip scrolls into view (relevant for short viewports)
+      const strip = document.getElementById('wt-dashboard-view');
+      if (strip && 'IntersectionObserver' in window) {
+        const stripObserver = new IntersectionObserver(function (entries) {
+          entries.forEach(function (entry) {
+            if (entry.isIntersecting) {
+              initCountUps();
+              stripObserver.disconnect();
+            }
+          });
+        }, { threshold: 0.2 });
+        stripObserver.observe(strip);
+      } else {
+        // Fallback: just run on DOMContentLoaded
+        initCountUps();
+      }
+    })();
+    </script>
+
+    <script>
+    /* ── Lure: proactive callout when click-rate is high ──────────────────
+       Fires once per browser session (sessionStorage-gated).
+       Threshold: click_rate > 40 and not demo mode.
+       Framed as a helpful suggestion, not a monitoring notice.
+    ─────────────────────────────────────────────────────────── */
+    (function () {
+      'use strict';
+      var SESSION_KEY = 'lure_cr_callout_shown';
+      var THRESHOLD   = 40;  // %
+
+      function maybeShowCallout() {
+        if (!window.lureShowCallout) return; // lure_bot not loaded
+        if (window._lurIsDemo) return;       // skip for demo accounts
+        var rate = window._lureClickRate || 0;
+        if (rate <= THRESHOLD) return;       // below threshold
+        if (sessionStorage.getItem(SESSION_KEY)) return; // already shown this session
+
+        sessionStorage.setItem(SESSION_KEY, '1');
+        var rate_str = rate.toFixed ? rate.toFixed(1) : rate;
+        window.lureShowCallout(
+          'Your avg click rate is ' + rate_str + '% — that’s above the 40% mark. ' +
+          'A follow-up simulation for the most-clicked departments could help build stronger habits.'
+        );
+      }
+
+      // Run after Lure has had time to initialise (it’s included late in the page)
+      if (document.readyState === 'complete') {
+        setTimeout(maybeShowCallout, 2800);
+      } else {
+        window.addEventListener('load', function () {
+          setTimeout(maybeShowCallout, 2800);
+        });
+      }
+    })();
+    </script>
+
     {% endblock %}

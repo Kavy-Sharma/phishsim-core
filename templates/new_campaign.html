@@ -677,14 +677,16 @@
         font-weight: 600;
         cursor: pointer;
         margin-bottom: 8px;
-        transition: opacity 0.2s;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         text-decoration: none;
     }
     .pro-modal-btn-upgrade:hover {
+        transform: translateY(-2px);
         opacity: 1;
         background: linear-gradient(135deg, #0891b2, #2563eb) !important;
         color: #ffffff !important;
         text-decoration: none !important;
+        box-shadow: 0 8px 20px rgba(6, 182, 212, 0.3);
     }
     .pro-modal-btn-close {
         background: transparent;
@@ -913,6 +915,20 @@
 <canvas id="auth-canvas" aria-hidden="true"></canvas>
 
 <div class="nc-page">
+    {% if is_demo_preview %}
+    <div class="demo-preview-banner" style="background: linear-gradient(90deg, rgba(245,158,11,0.15), rgba(245,158,11,0.05)); border: 1px solid rgba(245,158,11,0.3); border-radius: 12px; padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; gap: 16px; width: 100%; box-sizing: border-box;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <i class="ti ti-info-circle" style="color: var(--warning); font-size: 1.25rem;"></i>
+            <span style="font-size: 0.85rem; color: var(--text-primary); font-weight: 500;">
+                <strong>Demo Preview</strong> — You are configuring a simulation as a visitor. Sign up to upload your targets and launch it!
+            </span>
+        </div>
+        <a href="/signup" class="btn-primary-filled" style="padding: 8px 16px; font-size: 0.75rem; border-radius: 8px; margin: 0; white-space: nowrap; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+            <i class="ti ti-user-plus"></i> Create Free Account
+        </a>
+    </div>
+    {% endif %}
+
     <a href="/dashboard" class="nc-back">
         <i class="ti ti-arrow-left"></i> Back to Dashboard
     </a>
@@ -985,7 +1001,7 @@
                     <div class="section-divider"></div>
 
                     <!-- Scenario Selection -->
-                    <div class="nc-group">
+                    <div class="nc-group" id="wt-scenarios-container">
                         <label style="margin-bottom:1rem;display:block;">AI Generation Scenario</label>
                         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;">
 
@@ -1313,7 +1329,7 @@
                         </label>
                     </div>
 
-                    <button type="submit" class="nc-submit" {% if campaign_limit_reached %}disabled style="opacity: 0.5; cursor: not-allowed; background: linear-gradient(135deg, #475569, #334155); box-shadow: none;"{% endif %}>
+                    <button type="submit" id="wt-next-btn" class="nc-submit" {% if campaign_limit_reached %}disabled style="opacity: 0.5; cursor: not-allowed; background: linear-gradient(135deg, #475569, #334155); box-shadow: none;"{% endif %}>
                         <i class="fas fa-rocket" style="margin-right:8px;"></i> Create Campaign
                     </button>
                 </div>
@@ -1883,6 +1899,38 @@
     }
     resize();
     animate();
+})();
+</script>
+
+<script>
+/* ── Lure: flash success orb when Step 1 form is fully ready ──────────
+   Watches campaign_name + scenario radio. When both have values
+   the orb briefly goes green to confirm Lure noticed.
+   Silent no-op if lure_bot isn’t on the page. ─────────────────── */
+(function () {
+  'use strict';
+  var hasFlashed = false;
+
+  function checkFormReady() {
+    var nameEl = document.getElementById('campaign_name');
+    var scenarioEl = document.querySelector('input[name="scenario"]:checked');
+    var ready = nameEl && nameEl.value.trim().length > 0 && !!scenarioEl;
+    if (ready && !hasFlashed) {
+      hasFlashed = true;
+      window.lureFlashSuccess?.();
+    } else if (!ready) {
+      // Re-arm when user clears the form
+      hasFlashed = false;
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    var nameEl = document.getElementById('campaign_name');
+    if (nameEl) nameEl.addEventListener('input', checkFormReady);
+    document.querySelectorAll('input[name="scenario"]').forEach(function (r) {
+      r.addEventListener('change', checkFormReady);
+    });
+  });
 })();
 </script>
 {% endblock %}
