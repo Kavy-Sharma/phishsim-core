@@ -111,6 +111,7 @@
                 <div class="window-body" style="padding: 1.5rem;">
                     <h2 style="margin-top: 0; font-family: var(--font-sans);">Create User</h2>
                     <form method="POST" class="users-form-grid">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <div>
                             <label for="name">Name</label>
                             <input type="text" id="name" name="name" placeholder="Security Manager" required>
@@ -171,6 +172,7 @@
                                       data-confirm-title="Verify user?"
                                       data-confirm-message="This marks the user's email as verified without requiring an email link."
                                       data-confirm-action="Verify">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                     <button type="submit" class="role-btn" title="Mark verified">
                                         <i class="fas fa-envelope-circle-check"></i>
                                     </button>
@@ -183,6 +185,7 @@
                                       data-confirm-title="{% if user.role == 'admin' %}Remove admin access?{% else %}Make user admin?{% endif %}"
                                       data-confirm-message="{% if user.role == 'admin' %}This user will become a company user and lose admin-only controls.{% else %}This user will be able to manage users and admin-only delivery options.{% endif %}"
                                       data-confirm-action="{% if user.role == 'admin' %}Remove admin{% else %}Make admin{% endif %}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                     <input type="hidden" name="role" value="{{ role_action }}">
                                     <button type="submit" class="role-btn {% if user.role == 'admin' %}warning{% endif %}"
                                             title="{% if user.role == 'admin' %}Remove admin{% else %}Make admin{% endif %}">
@@ -191,10 +194,12 @@
                                 </form>
                                 <button type="button" class="icon-btn" title="Reset password" onclick="toggleReset({{ user.id }})"><i class="fas fa-key"></i></button>
                                 <form action="/delete-user/{{ user.id }}" method="POST" data-confirm-title="Delete user?" data-confirm-message="This will delete the user account. Campaign data may remain attached to historical records." style="margin:0;">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                     <button type="submit" class="icon-btn danger" title="Delete user"><i class="fas fa-trash-alt"></i></button>
                                 </form>
                             </div>
                             <form id="reset-{{ user.id }}" class="reset-form" action="/reset-user-password/{{ user.id }}" method="POST">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <input type="password" name="new_password" placeholder="New password" required>
                                 <button type="submit">Reset</button>
                             </form>

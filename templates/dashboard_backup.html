@@ -476,6 +476,7 @@ body.light-theme .enterprise-view { display: block !important; }
     </div>
 
     <form id="bulk-delete-form" action="/delete-campaigns" method="POST" style="display: none;">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <input type="hidden" name="campaign_ids" id="selected-ids">
     </form>
 
@@ -529,6 +530,7 @@ body.light-theme .enterprise-view { display: block !important; }
                 <p class="step-label">Step 2 — Launch Simulation</p>
                 <p class="step-desc"><span style="color:#06b6d4; font-weight:600;">{{ camp.employee_count }} employees loaded.</span> AI emails will be generated and dispatched immediately.</p>
                 <form action="/launch-campaign/{{ camp.id }}" method="POST">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <button type="submit" class="camp-action-btn btn-launch"><i class="fas fa-rocket"></i> Launch Campaign</button>
                 </form>
                 {% endif %}
@@ -547,6 +549,7 @@ body.light-theme .enterprise-view { display: block !important; }
                 {% if camp.latest_error %}<p style="margin-top:6px!important; opacity:0.7;">Error: {{ camp.latest_error }}</p>{% endif %}
             </div>
             <form action="/launch-campaign/{{ camp.id }}" method="POST" style="margin-top:0.8rem;">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <button type="submit" class="camp-action-btn btn-retry"><i class="fas fa-redo"></i> Retry Campaign</button>
             </form>
 
@@ -580,9 +583,11 @@ body.light-theme .enterprise-view { display: block !important; }
 
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 1.2rem;">
                 <form action="/clone-campaign/{{ camp.id }}" method="POST">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <button type="submit" class="camp-action-btn btn-retry" style="margin-bottom:0;"><i class="fas fa-copy"></i> Clone</button>
                 </form>
                 <form action="/delete-campaign/{{ camp.id }}" method="POST" data-confirm-title="Delete campaign?" data-confirm-message="This will permanently delete this campaign, its targets, generated emails, and events.">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <button type="submit" class="camp-action-btn btn-delete" style="margin-bottom:0;"><i class="fas fa-trash-alt"></i> Delete</button>
                 </form>
             </div>

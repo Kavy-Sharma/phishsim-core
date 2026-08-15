@@ -1109,6 +1109,7 @@
                                     {% else %}
                                     <form action="/launch-campaign/{{ camp.id }}" method="POST"
                                         style="display: inline;">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                         <button type="submit" class="btn-primary-filled"
                                             style="padding: 4px 8px; font-size: 12px; font-weight: 600; background: var(--success); border-color: var(--success);"><i
                                                 class="ti ti-rocket"></i> Launch</button>
@@ -1137,11 +1138,13 @@
                                                 class="ti ti-dots-vertical"></i></button>
                                         <div id="dropdown-{{ camp.id }}" class="row-dropdown-menu">
                                             <form action="/clone-campaign/{{ camp.id }}" method="POST">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                                 <button type="submit"><i class="ti ti-copy"></i> Clone</button>
                                             </form>
                                             <form action="/delete-campaign/{{ camp.id }}" method="POST"
                                                 data-confirm-title="Delete campaign?"
                                                 data-confirm-message="This will permanently delete this campaign, its targets, generated emails, and events.">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                                 <button type="submit" class="delete-btn-color"><i
                                                         class="ti ti-trash"></i> Delete</button>
                                             </form>
@@ -1195,11 +1198,13 @@
                             <div id="grid-dropdown-{{ camp.id }}" class="row-dropdown-menu"
                                 style="right: 0; left: auto; top: 100%;">
                                 <form action="/clone-campaign/{{ camp.id }}" method="POST">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                     <button type="submit"><i class="ti ti-copy"></i> Clone</button>
                                 </form>
                                 <form action="/delete-campaign/{{ camp.id }}" method="POST"
                                     data-confirm-title="Delete campaign?"
                                     data-confirm-message="This will permanently delete this campaign, its targets, generated emails, and events.">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                     <button type="submit" class="delete-btn-color"><i class="ti ti-trash"></i>
                                         Delete</button>
                                 </form>
@@ -1356,6 +1361,7 @@
                     </a>
                     {% else %}
                     <form action="/launch-campaign/{{ camp.id }}" method="POST" style="width: 100%;">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <button type="submit" class="btn-primary-filled"
                             style="display: flex; align-items: center; justify-content: center; gap: 6px; padding: 10px; font-size: 13px; width: 100%; background: var(--success); border-color: var(--success);">
                             <i class="ti ti-rocket"></i> Launch Campaign
@@ -1364,6 +1370,7 @@
                     {% endif %}
                     {% elif camp.status == 'failed' %}
                     <form action="/launch-campaign/{{ camp.id }}" method="POST" style="width: 100%;">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <button type="submit" class="btn-outline"
                             style="display: flex; align-items: center; justify-content: center; gap: 6px; padding: 10px; font-size: 13px; width: 100%; border-color: var(--warning); color: var(--warning); background: color-mix(in srgb, var(--warning) 4.0%, transparent);">
                             <i class="ti ti-refresh"></i> Retry Launch
@@ -1383,6 +1390,7 @@
                     <!-- Clone / Delete buttons side by side at the bottom -->
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px;">
                         <form action="/clone-campaign/{{ camp.id }}" method="POST" style="width: 100%;">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <button type="submit" class="btn-outline"
                                 style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 8px; font-size: 12px; border-color: color-mix(in srgb, var(--warning) 30.0%, transparent); color: #fbbf24; background: color-mix(in srgb, var(--warning) 3.0%, transparent);">
                                 <i class="ti ti-copy"></i> Clone
@@ -1392,6 +1400,7 @@
                             data-confirm-title="Delete campaign?"
                             data-confirm-message="This will permanently delete this campaign, its targets, generated emails, and events."
                             style="width: 100%;">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <button type="submit" class="btn-outline"
                                 style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 8px; font-size: 12px; border-color: color-mix(in srgb, var(--danger) 18%, transparent); color: var(--danger); background: color-mix(in srgb, var(--danger) 3.0%, transparent);">
                                 <i class="ti ti-trash"></i> Delete

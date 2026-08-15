@@ -160,6 +160,7 @@ body.light-theme .audit-table td { color: #334155; border-color: #f1f5f9; }
                         <h3><i class="fas fa-key" style="color:#3b82f6;"></i> Update Password</h3>
                         <p style="color:#64748b; font-size:0.86rem; margin-bottom: 1rem;">Use a strong, unique password to secure your account.</p>
                         <form method="POST" action="/change-password">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <input type="password" name="current_password" placeholder="Current password" required>
                             <input type="password" name="new_password" placeholder="New password" required>
                             <button type="submit">Update Password</button>
@@ -278,6 +279,7 @@ body.light-theme .audit-table td { color: #334155; border-color: #f1f5f9; }
                     </h3>
                     <p style="color:#64748b; font-size:0.86rem; margin-bottom: 1.5rem;">Customize your platform experience and notifications.</p>
                     <form method="POST" action="/update-profile-preferences">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         
                     <div style="display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.05);" class="pref-row">
                         <div>
@@ -327,6 +329,7 @@ body.light-theme .audit-table td { color: #334155; border-color: #f1f5f9; }
                             <span style="color: #64748b; font-size: 0.8rem;">Permanently delete your account.</span>
                         </div>
                         <form id="delete-account-form" method="POST" action="/delete-account">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <button type="button" onclick="showProfileConfirm('Delete your account permanently?', 'This deletes your data completely from the system.', () => document.getElementById('delete-account-form').submit())" style="background: transparent; border: 1px solid rgba(239,68,68,0.3); color: #ef4444; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-weight: 600;" onmouseover="this.style.background='rgba(239,68,68,0.1)'" onmouseout="this.style.background='transparent'">Delete Account</button>
                         </form>
                     </div>

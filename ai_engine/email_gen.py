@@ -139,8 +139,33 @@ def _get_models() -> list[str]:
 
 # ─── Static email helpers ─────────────────────────────────────────────────────
 
-def fallback_email(employee_profile: dict) -> dict:
+def fallback_email(employee_profile: dict, scenario: str | None = None) -> dict:
     """Returns a pre-written fallback email when AI generation is unavailable."""
+    if scenario:
+        s_mapped = scenario.lower().strip()
+        if s_mapped == "ceo": s_mapped = "ceo_fraud"
+        if s_mapped == "it": s_mapped = "it_alert"
+        if s_mapped == "hr": s_mapped = "hr_update"
+        
+        try:
+            static_pair = get_static_game_fallback(employee_profile, s_mapped)
+            if static_pair and "phish" in static_pair:
+                phish = static_pair["phish"]
+                body_text = phish.get("body_text", "")
+                body_html = _text_to_html(body_text) if body_text else ""
+                return clean_email_data({
+                    "subject": phish.get("subject", "Action Required"),
+                    "sender_name": phish.get("sender_name", "IT Support"),
+                    "sender_display": phish.get("sender_display") or phish.get("sender_name"),
+                    "body_html": body_html,
+                    "body_text": body_text,
+                    "phishing_tactic": phish.get("phishing_tactic", ""),
+                    "educational_breakdown": phish.get("phishing_tactic", "Always verify unexpected links."),
+                    "bait_score": phish.get("bait_score")
+                })
+        except Exception as e:
+            print(f"[email_gen] Error loading static scenario fallback: {e}")
+
     return clean_email_data({
         "subject": "Action Required: Security Notice Review",
         "sender_name": "IT Security Team",
@@ -361,7 +386,7 @@ def generate_phishing_email(
     """
     if client is None:
         print("[email_gen] OPENROUTER_API_KEY not configured — using static fallback.")
-        fb = fallback_email(employee_profile)
+        fb = fallback_email(employee_profile, scenario)
         fb["duration_ms"] = 0
         return fb
 
@@ -444,7 +469,7 @@ def generate_phishing_email(
     duration_ms = int((time.time() - t0) * 1000)
 
     if not raw:
-        fb = fallback_email(employee_profile)
+        fb = fallback_email(employee_profile, scenario)
         fb["duration_ms"] = duration_ms
         return fb
 
@@ -454,7 +479,7 @@ def generate_phishing_email(
         if "body_text" in parsed and "body_html" not in parsed:
             parsed["body_html"] = _text_to_html(parsed["body_text"])
         elif "body_html" not in parsed:
-            parsed["body_html"] = fallback_email(employee_profile)["body_html"]
+            parsed["body_html"] = fallback_email(employee_profile, scenario)["body_html"]
 
         parsed.setdefault("sender_name", parsed.get("sender_display", "IT Security Team"))
         parsed.setdefault("educational_breakdown", parsed.get("phishing_tactic", "Always verify unexpected requests."))
@@ -472,7 +497,7 @@ def generate_phishing_email(
         return cleaned
 
     print(f"[email_gen] JSON parse failed. Raw snippet:\n{raw[:400]}")
-    fb = fallback_email(employee_profile)
+    fb = fallback_email(employee_profile, scenario)
     fb["duration_ms"] = duration_ms
     return fb
 

@@ -249,6 +249,7 @@
                     <div style="display:flex; gap:12px; flex-wrap:wrap; border-top:1px solid rgba(255,255,255,0.06); padding-top:1.5rem;">
                         {% if user.stripe_customer_id %}
                         <form action="/billing/portal" method="POST" style="display:inline-block;">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <button type="submit" class="checkout-btn" style="padding: 10px 20px; font-size: 0.85rem; width: auto; background: linear-gradient(135deg, #0ea5e9, #6366f1);">
                                 <i class="ti ti-credit-card"></i>
                                 Manage Subscription (Stripe Portal)
@@ -256,6 +257,7 @@
                         </form>
                         {% endif %}
                         <form action="/billing/cancel" method="POST" id="cancel-form" style="display:inline-block;">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <button type="button" onclick="confirmCancel()" style="background:transparent; border:1px solid rgba(239,68,68,0.35); color:#f87171; padding:10px 20px; border-radius:10px; cursor:pointer; font-weight:600; font-size:0.85rem; transition:all 0.25s cubic-bezier(0.16,1,0.3,1); display:inline-flex; align-items:center; gap:6px;" onmouseover="this.style.background='rgba(239,68,68,0.08)'" onmouseout="this.style.background='transparent'">
                                 <i class="ti ti-trash"></i> Cancel Subscription
                             </button>
@@ -364,6 +366,7 @@
                                 </div>
                             </div>
                             <form action="/billing/upgrade" method="POST">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <button type="submit" class="checkout-btn" style="padding:15px; font-size:1rem; border-radius:10px;">
                                     <i class="ti ti-credit-card" style="font-size:1.15rem;"></i> Proceed to Stripe Checkout ($24.00/mo)
                                 </button>
@@ -376,6 +379,7 @@
                                 Evaluate all **PRO** features for 30 days entirely free of charge. No credit card is required. During the trial period, you will have access to custom phishing templates, the full automated scheduler, API keys, and active decoy IMAP monitoring. At the end of the one-month evaluation, your account will downgrade back to the Free tier.
                             </p>
                             <form action="/billing/activate-trial" method="POST" id="trial-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <button type="submit" class="checkout-btn" style="padding:15px; font-size:1rem; border-radius:10px; background: linear-gradient(135deg, var(--pro-gold), #fbbf24); color:#020617; font-weight:700;">
                                     <i class="ti ti-gift" style="font-size:1.15rem;"></i> Activate 1-Month Free Trial
                                 </button>
@@ -389,6 +393,7 @@
                                 This is a developer utility designed for self-hosting, local debugging, or offline evaluation. Clicking the button below bypasses external Stripe checkout processors entirely and updates your local database instance to grant immediate, lifetime **PRO Operator** privileges. Recommended for testing the recurrence engine locally.
                             </p>
                             <form action="/billing/activate-free" method="POST" id="sandbox-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <button type="button" onclick="confirmSandbox()" class="checkout-btn" style="padding:15px; font-size:1rem; border-radius:10px; background: linear-gradient(135deg, #10b981, #059669);">
                                     <i class="ti ti-test-pipe" style="font-size:1.15rem;"></i> Activate Free PRO Status
                                 </button>
@@ -398,6 +403,7 @@
                         <!-- Tab 3: Contact Sales -->
                         <div id="content-tab-sales" class="tab-content-panel" style="display: none;">
                             <form action="/api/contact-sales" method="POST" style="display: flex; flex-direction: column; gap: 12px;">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
                                     <div class="form-group" style="margin:0;">
                                         <label for="sales-name">Your Name</label>

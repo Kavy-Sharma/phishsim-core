@@ -12,6 +12,7 @@ from datetime import datetime, timedelta
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from functools import wraps
+from flask_wtf.csrf import CSRFProtect
 import smtplib
 from werkzeug.security import generate_password_hash, check_password_hash
 from ai_engine.report_agent import build_campaign_report, compute_human_security_score
@@ -22,7 +23,15 @@ from concurrent.futures import ThreadPoolExecutor
 DIAGNOSTICS_EXECUTOR = ThreadPoolExecutor(max_workers=16)
 
 app = Flask(__name__)
-app.secret_key = os.getenv("FLASK_SECRET_KEY", "dev-secret-change-me")
+csrf = CSRFProtect(app)
+
+flask_secret_key = os.getenv("FLASK_SECRET_KEY")
+if not flask_secret_key:
+    flask_secret_key = secrets.token_hex(32)
+    print("[WARNING] FLASK_SECRET_KEY environment variable is missing!")
+    print("[WARNING] Using a dynamically generated random secret key for this session boot.")
+    print("[WARNING] Note: User sessions will not persist across server restarts.")
+app.secret_key = flask_secret_key
 app.config.update(
     SESSION_COOKIE_HTTPONLY=True,
     SESSION_COOKIE_SAMESITE="Lax",
@@ -2281,14 +2290,27 @@ def hero_demo_lure_api():
     }
     
     try:
-        from ai_engine.email_gen import generate_phishing_email
-        res = generate_phishing_email(
-            employee_profile=placeholder_profile,
-            scenario=scenario,
-            target_domain="example-corp.test"
-        )
-        if not res:
-            return jsonify({"success": False, "message": "Engine failed to generate lure."}), 500
+        from ai_engine.email_gen import generate_phishing_email, fallback_email
+        res = None
+        try:
+            res = generate_phishing_email(
+                employee_profile=placeholder_profile,
+                scenario=scenario,
+                target_domain="example-corp.test"
+            )
+        except Exception as inner_e:
+            print(f"[api] generate_phishing_email exception in hero-demo-lure: {inner_e}")
+
+        if not res or not isinstance(res, dict):
+            try:
+                res = fallback_email(placeholder_profile, scenario)
+            except Exception:
+                res = {
+                    "subject": "Action Required: Security Notice Review",
+                    "sender_name": "IT Security Team",
+                    "body_text": "Dear Jordan Ellis,\n\nWe detected a security notice that requires your immediate review: visit PHISHING_LINK.",
+                    "phishing_tactic": "Uses generic IT authority to request actions."
+                }
             
         body_text = res.get("body_text")
         if not body_text:
@@ -2317,7 +2339,7 @@ def hero_demo_lure_api():
 @app.route("/api/threat-sandbox/generate", methods=["POST"])
 def api_threat_sandbox_generate():
     """Rate-limited public endpoint for Threat Sandbox email generation."""
-    if not check_rate_limit(get_remote_ip(), "threat-sandbox", 5, 60):
+    if not check_rate_limit(get_remote_ip(), "threat-sandbox", 12, 60):
         return jsonify({"success": False, "message": "Rate limit exceeded. Please wait 60 seconds before retrying."}), 429
         
     scenario_key = request.form.get("scenario", "").strip().lower()
@@ -2348,14 +2370,27 @@ def api_threat_sandbox_generate():
     
     try:
         import re
-        from ai_engine.email_gen import generate_phishing_email
-        res = generate_phishing_email(
-            employee_profile=placeholder_profile,
-            scenario=mapped_scenario,
-            target_domain="example-corp.com"
-        )
-        if not res:
-            return jsonify({"success": False, "message": "Engine failed to generate sandbox email."}), 500
+        from ai_engine.email_gen import generate_phishing_email, fallback_email
+        res = None
+        try:
+            res = generate_phishing_email(
+                employee_profile=placeholder_profile,
+                scenario=mapped_scenario,
+                target_domain="example-corp.com"
+            )
+        except Exception as inner_e:
+            print(f"[api] generate_phishing_email exception in threat-sandbox: {inner_e}")
+
+        if not res or not isinstance(res, dict):
+            try:
+                res = fallback_email(placeholder_profile, mapped_scenario)
+            except Exception:
+                res = {
+                    "subject": "Action Required: Account Verification",
+                    "sender_name": "Security Center",
+                    "body_html": "<p>Please verify your account details by visiting PHISHING_LINK.</p>",
+                    "educational_breakdown": "Unexpected security request."
+                }
             
         sender_name = res.get("sender_display") or res.get("sender_name") or "IT Support"
         # Clean sender name to construct a mock email address — strip non-alphanumeric, collapse dots
@@ -4240,6 +4275,7 @@ def open_customer_portal():
 
 # Stripe Webhook handler
 @app.route("/stripe/webhook", methods=["POST"])
+@csrf.exempt
 def stripe_webhook():
     payload = request.data
     sig_header = request.headers.get("Stripe-Signature")
@@ -8492,7 +8528,12 @@ def scan_exposure():
     return redirect(url_for("home"))
 
 
+@app.route("/robots.txt")
+def serve_robots():
+    return app.send_static_file("robots.txt")
+
+
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 5050))
-    app.run(host="127.0.0.1", port=port, debug=True)
+    app.run(host="127.0.0.1", port=port, debug=os.getenv("FLASK_DEBUG", "false").lower() == "true")
 

@@ -4562,7 +4562,18 @@
       printNextWalkthroughLog();
     }
 
-    async function selectSandboxScenario(key) {
+    const sandboxScenarioCache = {};
+
+    window.regenerateSandboxScenario = function(e, key) {
+      if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      delete sandboxScenarioCache[key];
+      selectSandboxScenario(key, true);
+    };
+
+    async function selectSandboxScenario(key, forceRegenerate = false) {
       // Update active tab styling
       document.querySelectorAll('.sandbox-tab').forEach(t => t.classList.remove('active'));
       const activeTab = document.getElementById(`tab-${key}`);
@@ -4578,6 +4589,40 @@
       // Initialize telemetry panel and print start sequence
       const container = document.getElementById('live-telemetry-container');
       if (container) container.innerHTML = '';
+
+      // Check client-side cache first
+      if (!forceRegenerate && sandboxScenarioCache[key]) {
+        const cached = sandboxScenarioCache[key];
+        activeScenarioData = cached;
+
+        appendTelemetryLog(`[SYSTEM] Scenario retrieved from session cache.`);
+
+        const mailBody = document.getElementById('mail-body');
+        const loaderContainer = document.getElementById('sandbox-loader-container');
+
+        loaderContainer.style.display = 'none';
+        mailBody.style.display = 'block';
+
+        // Render cached details with DOMPurify sanitization
+        document.getElementById('mail-from').innerHTML = DOMPurify.sanitize(cached.from);
+        document.getElementById('mail-subject').innerHTML = DOMPurify.sanitize(cached.subject) + `
+          <button onclick="regenerateSandboxScenario(event, '${key}')" title="Regenerate lure" style="background: transparent; border: none; color: var(--muted); cursor: pointer; padding: 2px 6px; font-size: 0.85rem; display: inline-flex; align-items: center; justify-content: center; vertical-align: middle; transition: color 0.2s;" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--muted)'">
+            <i class="ti ti-refresh" style="font-size: 0.95rem;"></i>
+          </button>
+        `;
+
+        let bodyHtml = cached.body;
+        bodyHtml = DOMPurify.sanitize(bodyHtml, {
+          ALLOWED_TAGS: ['p', 'br', 'a', 'b', 'strong', 'i', 'em', 'ul', 'ol', 'li', 'span', 'div', 'h1', 'h2', 'h3', 'h4'],
+          ALLOWED_ATTR: ['href']
+        });
+        bodyHtml = bodyHtml.replace(/href=['"]PHISHING_LINK['"]/g, `href="#" onclick="triggerSandboxCompromise(event, '${key}')"`);
+        mailBody.innerHTML = bodyHtml;
+
+        // Start telemetry walkthrough sequence
+        playTelemetryWalkthrough(key, cached);
+        return;
+      }
 
       appendTelemetryLog(`[SYSTEM] Initializing email generator for scenario: ${key.toUpperCase()}`);
 
@@ -4628,6 +4673,8 @@
         if (data.success) {
           fetchedData = data;
           success = true;
+          // Cache successful response data
+          sandboxScenarioCache[key] = data;
         } else {
           throw new Error(data.message || "Engine failed to generate sandbox email.");
         }
@@ -4643,14 +4690,22 @@
         if (success && fetchedData) {
           activeScenarioData = fetchedData;
 
-          // Populate mail-from, mail-subject
-          document.getElementById('mail-from').innerHTML = fetchedData.from;
-          document.getElementById('mail-subject').innerHTML = fetchedData.subject;
+          // Populate mail-from, mail-subject with DOMPurify sanitization
+          document.getElementById('mail-from').innerHTML = DOMPurify.sanitize(fetchedData.from);
+          document.getElementById('mail-subject').innerHTML = DOMPurify.sanitize(fetchedData.subject) + `
+            <button onclick="regenerateSandboxScenario(event, '${key}')" title="Regenerate lure" style="background: transparent; border: none; color: var(--muted); cursor: pointer; padding: 2px 6px; font-size: 0.85rem; display: inline-flex; align-items: center; justify-content: center; vertical-align: middle; transition: color 0.2s;" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--muted)'">
+              <i class="ti ti-refresh" style="font-size: 0.95rem;"></i>
+            </button>
+          `;
 
-          // Replace PHISHING_LINK with triggerSandboxCompromise click handler
+          // Replace PHISHING_LINK with triggerSandboxCompromise click handler after sanitizing AI HTML
           let bodyHtml = fetchedData.body;
+          bodyHtml = DOMPurify.sanitize(bodyHtml, {
+            ALLOWED_TAGS: ['p', 'br', 'a', 'b', 'strong', 'i', 'em', 'ul', 'ol', 'li', 'span', 'div', 'h1', 'h2', 'h3', 'h4'],
+            ALLOWED_ATTR: ['href']
+          });
           bodyHtml = bodyHtml.replace(/href=['"]PHISHING_LINK['"]/g, `href="#" onclick="triggerSandboxCompromise(event, '${key}')"`);
-          document.getElementById('mail-body').innerHTML = bodyHtml;
+          mailBody.innerHTML = bodyHtml;
 
           // Start telemetry walkthrough sequence
           playTelemetryWalkthrough(key, fetchedData);
@@ -4660,13 +4715,13 @@
           document.getElementById('mail-subject').innerHTML = 'N/A';
 
           // Render error card in mail body
-          document.getElementById('mail-body').innerHTML = `
-          <div style="color: var(--danger); padding: 30px 20px; text-align: center; font-family: sans-serif;">
-            <div style="font-size: 2rem; margin-bottom: 12px;">⚠️</div>
-            <strong style="font-size: 1.1rem; display: block; margin-bottom: 8px;">Generation Failed</strong>
-            <p style="margin: 0; color: #64748b; font-size: 0.9rem; line-height: 1.5;">${errorMsg}</p>
-          </div>
-        `;
+          mailBody.innerHTML = `
+            <div style="color: var(--danger); padding: 30px 20px; text-align: center; font-family: sans-serif;">
+              <div style="font-size: 2rem; margin-bottom: 12px;">⚠️</div>
+              <strong style="font-size: 1.1rem; display: block; margin-bottom: 8px;">Generation Failed</strong>
+              <p style="margin: 0; color: #64748b; font-size: 0.9rem; line-height: 1.5;">${errorMsg}</p>
+            </div>
+          `;
 
           if (activeTelemetryTimeout) clearTimeout(activeTelemetryTimeout);
           appendTelemetryLog(`[ERROR] Generation failed: ${errorMsg}`, 'var(--danger)');
@@ -5399,6 +5454,7 @@
       <!-- Audit Form -->
       <form action="/scan-exposure" method="POST"
         style="display:flex;gap:0.75rem;max-width:540px;margin:0 auto 1.25rem;flex-wrap:wrap;justify-content:center;">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <input type="email" name="email" placeholder="your@company.com" required
           style="flex:1;min-width:260px;padding:0.9rem 1.2rem;border-radius:10px;border:1px solid var(--border);background:var(--bg-input);color:var(--text-primary);font-family:var(--font-sans);font-size:0.95rem;outline:none;transition:all 0.25s;"
           onfocus="this.style.borderColor='#06b6d4';this.style.boxShadow='0 0 12px rgba(6,182,212,0.25)';"

@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="PhishSim AI - Advanced phishing simulation and training platform.">
     <title>{% block title %}PhishSim AI{% endblock %}</title>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -27,6 +28,9 @@
     
     <!-- CountUp JS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/countup.js/2.8.0/countUp.umd.js"></script>
+
+    <!-- DOMPurify for secure client-side HTML sanitization -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.9/purify.min.js"></script>
 
     <!-- Main Stylesheet -->
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css', v='1.0.8-loading') }}">
@@ -317,10 +321,41 @@ window.topProgressBar = new TopProgressBar();
     // A single network hook keeps the bar in sync with every fetch-based action,
     // including actions added after this shared template was written.
     const nativeFetch = window.fetch.bind(window);
-    window.fetch = (...args) => {
+    window.fetch = (input, init) => {
+        let url = "";
+        let method = "GET";
+        if (typeof input === "string" || input instanceof URL) {
+            url = input.toString();
+            if (init && init.method) {
+                method = init.method.toUpperCase();
+            }
+        } else if (input && typeof input === "object") {
+            url = input.url || "";
+            method = (input.method || "GET").toUpperCase();
+        }
+        const isPost = ["POST", "PUT", "DELETE", "PATCH"].includes(method);
+        const isSameOrigin = !url.startsWith("http://") && !url.startsWith("https://") || url.startsWith(window.location.origin);
+        if (isPost && isSameOrigin) {
+            const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            if (token) {
+                if (!init) init = {};
+                if (!init.headers) init.headers = {};
+                if (init.headers instanceof Headers) {
+                    if (!init.headers.has('X-CSRFToken')) {
+                        init.headers.append('X-CSRFToken', token);
+                    }
+                } else if (Array.isArray(init.headers)) {
+                    const hasCsrf = init.headers.some(h => h[0].toLowerCase() === 'x-csrftoken');
+                    if (!hasCsrf) init.headers.push(['X-CSRFToken', token]);
+                } else {
+                    const hasCsrf = Object.keys(init.headers).some(k => k.toLowerCase() === 'x-csrftoken');
+                    if (!hasCsrf) init.headers['X-CSRFToken'] = token;
+                }
+            }
+        }
         activeRequests += 1;
         window.topProgressBar.start();
-        return nativeFetch(...args).finally(() => {
+        return nativeFetch(input, init).finally(() => {
             activeRequests = Math.max(0, activeRequests - 1);
             if (activeRequests === 0) window.topProgressBar.done();
         });
