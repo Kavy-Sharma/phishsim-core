@@ -2264,6 +2264,7 @@ def solution_detail(key):
     return render_template("solution_detail.html", solution=solution)
 
 @app.route("/api/hero-demo-lure", methods=["POST"])
+@csrf.exempt
 def hero_demo_lure_api():
     """Unauthenticated rate-limited endpoint for demonstrating AI email lure generation on the landing page."""
     if not check_rate_limit(get_remote_ip(), "hero-demo-lure", 5, 60):
@@ -2290,27 +2291,16 @@ def hero_demo_lure_api():
     }
     
     try:
-        from ai_engine.email_gen import generate_phishing_email, fallback_email
-        res = None
+        from ai_engine.email_gen import fallback_email
         try:
-            res = generate_phishing_email(
-                employee_profile=placeholder_profile,
-                scenario=scenario,
-                target_domain="example-corp.test"
-            )
-        except Exception as inner_e:
-            print(f"[api] generate_phishing_email exception in hero-demo-lure: {inner_e}")
-
-        if not res or not isinstance(res, dict):
-            try:
-                res = fallback_email(placeholder_profile, scenario)
-            except Exception:
-                res = {
-                    "subject": "Action Required: Security Notice Review",
-                    "sender_name": "IT Security Team",
-                    "body_text": "Dear Jordan Ellis,\n\nWe detected a security notice that requires your immediate review: visit PHISHING_LINK.",
-                    "phishing_tactic": "Uses generic IT authority to request actions."
-                }
+            res = fallback_email(placeholder_profile, scenario)
+        except Exception:
+            res = {
+                "subject": "Action Required: Security Notice Review",
+                "sender_name": "IT Security Team",
+                "body_text": "Dear Jordan Ellis,\n\nWe detected a security notice that requires your immediate review: visit PHISHING_LINK.",
+                "phishing_tactic": "Uses generic IT authority to request actions."
+            }
             
         body_text = res.get("body_text")
         if not body_text:
@@ -2336,7 +2326,66 @@ def hero_demo_lure_api():
         return jsonify({"success": False, "message": str(e)}), 500
 
 
+@app.route("/api/lure-chat", methods=["POST"])
+@csrf.exempt
+def lure_chat_api():
+    """Unauthenticated rate-limited chatbot route for the Ask Lure panel tab."""
+    # 1. Enforce simple session-based and IP-based rate limiting (similar to spot-the-phish)
+    now = time.time()
+    ip = get_remote_ip()
+    
+    # Session history cleaning
+    sess_history = [t for t in session.get("lure_chat_history", []) if now - t < 86400]
+    session["lure_chat_history"] = sess_history
+    
+    # IP history cleaning
+    ip_key = (ip, "lure-chat-rate-limit")
+    ip_history = [t for t in PUBLIC_RATE_LIMITS.get(ip_key, []) if now - t < 86400]
+    PUBLIC_RATE_LIMITS[ip_key] = ip_history
+    
+    used_chats = max(len(sess_history), len(ip_history))
+    
+    # Limit to 30 messages per rolling 24h
+    CHAT_DAILY_LIMIT = 30
+    if used_chats >= CHAT_DAILY_LIMIT:
+        return jsonify({
+            "success": False, 
+            "message": "Daily chat limit reached. Please wait or come back tomorrow."
+        }), 429
+
+    # 2. Extract and validate parameters
+    data = request.get_json(silent=True) or {}
+    message = data.get("message", "").strip()
+    history = data.get("history", [])
+
+    if not message:
+        return jsonify({"success": False, "message": "Message is required."}), 400
+        
+    if len(message) > 500:
+        return jsonify({"success": False, "message": "Message exceeds the 500-character limit."}), 400
+
+    # 3. Call chatbot generator
+    try:
+        from ai_engine.lure_chat import generate_lure_chat_response
+        reply = generate_lure_chat_response(message, history)
+        
+        # Record successful message
+        sess_history.append(now)
+        session["lure_chat_history"] = sess_history
+        ip_history.append(now)
+        PUBLIC_RATE_LIMITS[ip_key] = ip_history
+        
+        return jsonify({
+            "success": True,
+            "reply": reply
+        })
+    except Exception as e:
+        print(f"[api] lure-chat exception: {e}")
+        return jsonify({"success": False, "message": "An internal error occurred."}), 500
+
+
 @app.route("/api/threat-sandbox/generate", methods=["POST"])
+@csrf.exempt
 def api_threat_sandbox_generate():
     """Rate-limited public endpoint for Threat Sandbox email generation."""
     if not check_rate_limit(get_remote_ip(), "threat-sandbox", 12, 60):
@@ -2370,27 +2419,16 @@ def api_threat_sandbox_generate():
     
     try:
         import re
-        from ai_engine.email_gen import generate_phishing_email, fallback_email
-        res = None
+        from ai_engine.email_gen import fallback_email
         try:
-            res = generate_phishing_email(
-                employee_profile=placeholder_profile,
-                scenario=mapped_scenario,
-                target_domain="example-corp.com"
-            )
-        except Exception as inner_e:
-            print(f"[api] generate_phishing_email exception in threat-sandbox: {inner_e}")
-
-        if not res or not isinstance(res, dict):
-            try:
-                res = fallback_email(placeholder_profile, mapped_scenario)
-            except Exception:
-                res = {
-                    "subject": "Action Required: Account Verification",
-                    "sender_name": "Security Center",
-                    "body_html": "<p>Please verify your account details by visiting PHISHING_LINK.</p>",
-                    "educational_breakdown": "Unexpected security request."
-                }
+            res = fallback_email(placeholder_profile, mapped_scenario)
+        except Exception:
+            res = {
+                "subject": "Action Required: Account Verification",
+                "sender_name": "Security Center",
+                "body_html": "<p>Please verify your account details by visiting PHISHING_LINK.</p>",
+                "educational_breakdown": "Unexpected security request."
+            }
             
         sender_name = res.get("sender_display") or res.get("sender_name") or "IT Support"
         # Clean sender name to construct a mock email address — strip non-alphanumeric, collapse dots
@@ -2443,6 +2481,7 @@ def spot_the_phish_status():
 
 
 @app.route("/api/spot-the-phish/generate", methods=["POST"])
+@csrf.exempt
 def spot_the_phish_generate():
     from flask import session
     import random
@@ -2487,11 +2526,8 @@ def spot_the_phish_generate():
         "company_name": "Example Corp"
     }
 
-    res = generate_game_round(
-        employee_profile=placeholder_profile,
-        scenario=scenario,
-        target_domain="example-corp.test"
-    )
+    from ai_engine.email_gen import get_static_game_fallback
+    res = get_static_game_fallback(placeholder_profile, scenario)
 
     if not res or not res.get("success"):
         return jsonify({"success": False, "message": "Failed to generate game round."}), 500

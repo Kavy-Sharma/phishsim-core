@@ -1,3 +1,10 @@
+<!--
+  This file must only be included ONCE per page.
+  Included from:
+    - templates/base.html
+    - templates/fake_login.html
+    - templates/home.html
+-->
 <!-- ═══════════════════════════════════════════════════════════
      LURE — persistent avatar companion bot widget
      States: idle / active / success / error
@@ -105,6 +112,38 @@
       0%   { transform: scale(1); opacity: 0.3; }
       40%  { transform: scale(1.7); opacity: 0.7; }
       100% { transform: scale(1); opacity: 0.3; }
+    }
+
+    /* Squash & Stretch transition micro-animation */
+    @keyframes pbSquashStretch {
+      0% { transform: scale(1); }
+      30% { transform: scale(0.85, 1.15); }
+      60% { transform: scale(1.15, 0.85); }
+      100% { transform: scale(1); }
+    }
+    .pb-squash-active {
+      animation: pbSquashStretch 0.18s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+    }
+
+    /* Happy bounce success animation */
+    @keyframes pbHappyBounce {
+      0%, 100% { transform: translateY(0); }
+      25% { transform: translateY(-16px); }
+      50% { transform: translateY(0); }
+      75% { transform: translateY(-8px); }
+    }
+    #pb-host.pb-success #pb-avatar svg {
+      animation: pbHappyBounce 0.45s ease-out 1;
+    }
+
+    /* Shake error animation */
+    @keyframes pbErrorShake {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-6px); }
+      40%, 80% { transform: translateX(6px); }
+    }
+    #pb-host.pb-error #pb-avatar svg {
+      animation: pbErrorShake 0.3s ease-in-out 1;
     }
 
     /* ── Orb fill/glow color transitions ── */
@@ -841,6 +880,206 @@
     .pb-wt-guide-card:hover .pb-wt-guide-go {
       color: var(--primary);
     }
+
+    /* ── Ask Lure Chat Tab ── */
+    #pb-tab-chat {
+      display: none;
+      flex-direction: column;
+      height: 380px;
+      box-sizing: border-box;
+      padding: 12px 14px;
+    }
+    #pb-tab-chat.active {
+      display: flex;
+    }
+    .pb-chat-container {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      gap: 8px;
+    }
+    .pb-chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding-right: 4px;
+      margin-bottom: 4px;
+    }
+    .pb-chat-messages::-webkit-scrollbar {
+      width: 4px;
+    }
+    .pb-chat-messages::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .pb-chat-messages::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 2px;
+    }
+    .pb-chat-msg-row {
+      display: flex;
+      width: 100%;
+    }
+    .pb-chat-msg-row.user {
+      justify-content: flex-end;
+    }
+    .pb-chat-msg-row.lure {
+      justify-content: flex-start;
+    }
+    .pb-chat-bubble {
+      max-width: 80%;
+      border-radius: 12px;
+      padding: 8px 12px;
+      font-size: 0.72rem;
+      line-height: 1.4;
+      word-wrap: break-word;
+      white-space: pre-wrap;
+    }
+    .pb-chat-msg-row.user .pb-chat-bubble {
+      background: var(--bg-hover, rgba(255, 255, 255, 0.08));
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: var(--text-primary, #F0F4FF);
+      border-bottom-right-radius: 2px;
+    }
+    .pb-chat-msg-row.lure .pb-chat-bubble {
+      background: color-mix(in srgb, var(--primary) 8%, var(--bg-elevated, #121D35));
+      border: 1px solid color-mix(in srgb, var(--primary) 28%, transparent);
+      color: var(--text-primary, #F0F4FF);
+      border-bottom-left-radius: 2px;
+    }
+    .pb-chat-input-wrap {
+      display: flex;
+      gap: 8px;
+      align-items: flex-end;
+      border: 1px solid var(--border-default, rgba(255,255,255,0.12));
+      border-radius: 10px;
+      padding: 6px 10px;
+      background: rgba(0, 0, 0, 0.2);
+    }
+    .pb-chat-input-wrap textarea {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--text-primary, #F0F4FF);
+      font-family: inherit;
+      font-size: 0.72rem;
+      resize: none;
+      max-height: 70px;
+      height: 20px;
+      line-height: 1.4;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    .pb-chat-input-wrap textarea::placeholder {
+      color: var(--text-muted, #4A5568);
+    }
+    .pb-chat-input-wrap button {
+      background: transparent;
+      border: none;
+      color: var(--primary);
+      cursor: pointer;
+      padding: 2px;
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.2s, color 0.2s;
+    }
+    .pb-chat-input-wrap button:hover:not(:disabled) {
+      color: var(--warning);
+      transform: scale(1.05);
+    }
+    .pb-chat-input-wrap button:disabled {
+      color: var(--text-muted, #4A5568);
+      cursor: not-allowed;
+    }
+    .pb-chat-char-counter {
+      font-size: 0.55rem;
+      color: var(--text-muted, #4A5568);
+      text-align: right;
+      margin-top: -4px;
+    }
+    .pb-chat-error {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: #f87171;
+      font-size: 0.65rem;
+      padding: 6px 10px;
+      border-radius: 8px;
+      text-align: center;
+      margin-bottom: 4px;
+    }
+    .pb-typing-indicator {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 6px;
+    }
+    .pb-typing-dot {
+      width: 4px;
+      height: 4px;
+      background: var(--primary);
+      border-radius: 50%;
+      animation: pbTypingDotPulse 1.2s infinite ease-in-out;
+    }
+    .pb-typing-dot:nth-child(2) {
+      animation-delay: 0.2s;
+    }
+    .pb-typing-dot:nth-child(3) {
+      animation-delay: 0.4s;
+    }
+    @keyframes pbTypingDotPulse {
+      0%, 100% { transform: scale(0.8); opacity: 0.4; }
+      50% { transform: scale(1.4); opacity: 1; }
+    }
+
+    /* Mobile responsive overrides (max-width: 768px) */
+    @media (max-width: 768px) {
+      .pb-mobile-no-arrow::before {
+        display: none !important;
+      }
+      #pb-host {
+        bottom: 72px !important;
+        right: 16px !important;
+        left: auto !important;
+        top: auto !important;
+      }
+      #pb-avatar {
+        width: 64px !important;
+        height: 64px !important;
+      }
+      #pb-avatar svg {
+        width: 44px !important;
+        height: 44px !important;
+      }
+      #pb-panel {
+        position: fixed !important;
+        bottom: 0 !important;
+        right: 0 !important;
+        left: 0 !important;
+        top: auto !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        height: 80vh !important;
+        max-height: 80vh !important;
+        border-radius: 20px 20px 0 0 !important;
+        transform: translateY(100%) !important;
+        transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
+        box-shadow: 0 -8px 32px rgba(0,0,0,0.4) !important;
+      }
+      #pb-panel.pb-open {
+        transform: translateY(0) !important;
+      }
+      #pb-max-btn {
+        display: none !important;
+      }
+      /* Ensure popover is positioned cleanly above shortened companion on mobile */
+      #pb-first-visit-popover {
+        max-width: calc(100vw - 32px) !important;
+      }
+    }
 </style>
 
 <div id="pb-host">
@@ -886,7 +1125,7 @@
       <!-- Eye -->
       <g id="pb-eye" style="transform-origin: 24px 21px; animation: pbBlink 4s infinite ease-in-out;">
         <circle cx="24" cy="21" r="2" fill="#0A1420"/>
-        <circle cx="24.8" cy="20.2" r="0.6" fill="#ffffff"/>
+        <circle id="pb-eye-pupil" cx="24.8" cy="20.2" r="0.6" fill="#ffffff" style="transition: transform 0.1s ease-out;"/>
       </g>
       <!-- Smile mouth -->
       <path id="pb-mouth" d="M24 26.5 Q26.5 27.8 28.3 26.3" stroke="#0A1420" stroke-width="2.2" stroke-linecap="round" fill="none"/>
@@ -919,6 +1158,7 @@
       <button class="pb-tab-btn active" data-tab="generate">Generate</button>
       <button class="pb-tab-btn" data-tab="spotphish">Spot Phish</button>
       <button class="pb-tab-btn" data-tab="riskscore">Risk Score</button>
+      <button class="pb-tab-btn" data-tab="chat">Ask Lure</button>
     </div>
     <div class="pb-panel-actions">
       <button class="pb-icon-btn" id="pb-max-btn" title="Expand to page" aria-label="Expand">
@@ -951,7 +1191,7 @@
       <div class="skeleton-block" style="width:60%;height:12px;margin-bottom:8px;"></div>
       <div class="skeleton-block" style="width:70%;height:12px;"></div>
     </div>
-    <div class="pb-email-card" id="pb-email-card">
+    <div class="pb-email-card" id="pb-card">
       <div class="pb-chrome">
         <div class="pb-chrome-dots">
           <span style="background:var(--danger);"></span>
@@ -988,7 +1228,7 @@
       <div class="pb-dialogue-icon">
         <i class="ti ti-target" style="color:var(--danger);font-size:0.9rem;" aria-hidden="true"></i>
       </div>
-      <div class="pb-bubble">
+      <div class="pb-bubble" id="stp-dialogue-text">
         Two emails below — one legit, one is a phish. <strong style="color:var(--primary);">Click the fake one.</strong>
       </div>
     </div>
@@ -1040,6 +1280,7 @@
     <div class="rs-result" id="rs-result">
       <div class="rs-gauge" id="rs-gauge">—</div>
       <div style="font-family:var(--mono);font-size:0.7rem;color:var(--text-secondary,#94A3B8);margin-bottom:14px;" id="rs-gauge-lbl"></div>
+      <div id="rs-gauge-reaction" style="font-size:0.7rem;color:var(--text-primary,#F0F4FF);margin-bottom:14px;line-height:1.3;"></div>
       <button class="pb-action-btn" onclick="rsReset()">
         <i class="ti ti-refresh" aria-hidden="true"></i> Start over
       </button>
@@ -1047,9 +1288,29 @@
     </div>
   </div>
 
-  <div class="pb-panel-footer">
-    <i class="ti ti-cpu" style="color:var(--primary);" aria-hidden="true"></i>
-    Lure &mdash; Powered by PhishSim AI Engine v2
+  <!-- TAB: Ask Lure (Chat) -->
+  <div class="pb-tab-panel" id="pb-tab-chat">
+    <div class="pb-chat-container">
+      <div class="pb-chat-messages" id="pb-chat-messages-list">
+        <!-- Messages will be dynamically rendered here -->
+      </div>
+      <div class="pb-chat-error" id="pb-chat-error-alert" style="display: none;"></div>
+      <div class="pb-chat-input-wrap">
+        <textarea id="pb-chat-input" placeholder="Ask Lure about phishing, email security..." maxlength="501"></textarea>
+        <button id="pb-chat-send-btn" title="Send message" type="button">
+          <i class="ti ti-send" aria-hidden="true"></i>
+        </button>
+      </div>
+      <div class="pb-chat-char-counter" id="pb-chat-char-counter">0 / 500</div>
+    </div>
+  </div>
+
+  <div class="pb-panel-footer" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+    <span style="display: flex; align-items: center; gap: 4px;">
+      <i class="ti ti-cpu" style="color:var(--primary);" aria-hidden="true"></i>
+      Lure &mdash; Powered by PhishSim AI Engine v2
+    </span>
+    <a href="#" id="pb-reset-visitor" style="font-size: 0.65rem; color: var(--text-secondary,#8CA0B3); text-decoration: none; opacity: 0.7; cursor: pointer; transition: opacity 0.2s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.7">Forget me</a>
   </div>
 </div>
 
@@ -1077,7 +1338,7 @@
           <button class="pb-chip" onclick="pbGen('hr_update',true)" style="color:var(--success,#34D399);border-color:color-mix(in srgb,var(--success,#34D399) 32%,transparent);">HR Update</button>
           <button class="pb-chip" onclick="pbGen('invoice',true)" style="color:var(--danger);border-color:color-mix(in srgb,var(--danger) 32%,transparent);">Urgent Invoice</button>
         </div>
-        <div class="pb-skeleton-wrap" id="pb-il-loader">
+        <div class="pb-skeleton-wrap" id="pb-il-gen-loader">
           <div class="skeleton-block" style="width:78%;height:12px;margin-bottom:8px;"></div>
           <div class="skeleton-block" style="width:60%;height:12px;margin-bottom:8px;"></div>
           <div class="skeleton-block" style="width:70%;height:12px;"></div>
@@ -1107,7 +1368,7 @@
           <div class="pb-dialogue-icon">
             <i class="ti ti-target" style="color:var(--danger);font-size:0.95rem;" aria-hidden="true"></i>
           </div>
-          <div class="pb-bubble">
+          <div class="pb-bubble" id="stp-il-dialogue-text">
             Two freshly generated emails below. One is legitimate, one is a phishing attempt. <strong style="color:var(--primary);">Click the fake one.</strong>
           </div>
         </div>
@@ -1180,6 +1441,239 @@
 <script>
   (function () {
     'use strict';
+
+    // ════════════════════════════════════════════════════════
+    // Ask Lure — Tab Voice Copy Variant Pools
+    // ════════════════════════════════════════════════════════
+    
+    // ── Generate Tab — Scenario selection quips (under ~15 words) ──
+    const generateCeoQuips = [
+      "Authority is a powerful drug. When the boss emails, people stop thinking.",
+      "Impersonating the CEO is a classic. Everyone wants to please the boss.",
+      "A quick word from the top can make anyone bypass security protocols."
+    ];
+    
+    const generateItQuips = [
+      "System alert! People click fast when they think their tech is broken.",
+      "Nothing spreads panic like a fake IT password reset request.",
+      "Fake update alerts are the perfect bait to drop malicious code."
+    ];
+    
+    const generateHrQuips = [
+      "Curiosity about policy updates or pay reviews gets them every time.",
+      "HR emails sound official and boring—the perfect cover for a trap.",
+      "An update on benefits is hard to ignore. Click first, ask later!"
+    ];
+    
+    const generateInvoiceQuips = [
+      "Money talks, especially when a supplier demands urgent payment.",
+      "Fake invoices create panic in accounting. Panicked people make mistakes.",
+      "An unpaid bill is a classic way to bypass rational suspicion."
+    ];
+
+    // ── Generate Tab — Success line variants ──
+    const generateSuccessLines = [
+      "Lure formulated successfully. Review the indicators below!",
+      "Hook set! Check out the psychological triggers in this lure.",
+      "The perfect bait is ready. Inspect the red flags in the card below.",
+      "Lure crafted. See if you can spot all the threat indicators!",
+      "Bait is in the water. Examine the cues that make this email work."
+    ];
+
+    // ── Generate Tab — Error line variants ──
+    const generateErrorLines = [
+      "Formulation failed. Lure offline.",
+      "Engine failure. The AI couldn't craft this lure.",
+      "Lure offline. Something jammed in the AI generator."
+    ];
+
+    // ── Spot Phish Tab — Correct guess variants ──
+    const spotCorrectPool = [
+      "Spot on! You saw right through that. Typically, they use {tactic} to bypass your logic.",
+      "Sharp eyes! That was indeed the fake. Notice how it relied on {tactic}?",
+      "Correct! You didn't fall for the {tactic} angle. Keep that guard up!",
+      "Perfect! You caught the threat indicator. {tactic} is a classic social engineering trick.",
+      "Got it! A real attacker would use {tactic} just like that to sneak past."
+    ];
+
+    // ── Spot Phish Tab — Incorrect guess variants ──
+    const spotIncorrectPool = [
+      "Not quite! That was a legitimate email. Look closer at the urgency indicators next time.",
+      "Ah, that one slipped by! The other mail was the phish. Don't worry, defense is a practice.",
+      "Incorrect. The real threat used a sneakier layout. Look out for unexpected requests next round!",
+      "Missed it! Phishing can look incredibly ordinary. Compare the sender domains next time.",
+      "Wrong choice, but a good lesson. The fake email relied on subtle cues. Keep training!"
+    ];
+
+    // ── Risk Score Tab — High risk score variants ──
+    const riskHighPool = [
+      "Ouch! That's a target-rich environment. Attackers are salivating at those odds.",
+      "Danger zone! With numbers like that, one bad click could lock down the whole ship.",
+      "Yikes! You're swimming in shark-infested waters with no cage. Time to train!",
+      "Critical exposure. Your team needs interactive training before a real attacker tests them."
+    ];
+
+    // ── Risk Score Tab — Medium risk score variants ──
+    const riskMedPool = [
+      "Moderate waters. You have some nets cast, but a few clever fish could still slip through.",
+      "Decent start, but complacency is a slow killer. Keep sharpening those defenses.",
+      "Not terrible, but not secure either. A determined attacker would find a way in.",
+      "Halfway there. Regular simulation training would turn those soft spots into armor."
+    ];
+
+    // ── Risk Score Tab — Low risk score variants ──
+    const riskLowPool = [
+      "Impressive! You've built a strong harbor. Even the sneakiest lures will struggle here.",
+      "Smooth sailing! High hygiene makes phishing a tough sell. Don't let your guard down.",
+      "Excellent defense posture. You've trained well, but remember, the sea never stops churning.",
+      "Looking sharp! Low exposure is hard-earned. Keep running simulations to stay alert."
+    ];
+
+    // ── Index Tracking to prevent repeats ──
+    const lastShownIndices = {
+      ceo_fraud: -1,
+      it_alert: -1,
+      hr_update: -1,
+      invoice: -1,
+      generate_success: -1,
+      generate_error: -1,
+      spot_correct: -1,
+      spot_incorrect: -1,
+      risk_high: -1,
+      risk_med: -1,
+      risk_low: -1
+    };
+
+    /* ================================================================
+       Visitor Profile & Persistence Layer (100% Client-side)
+       
+       Schema ('lure_visitor_profile' in localStorage):
+       {
+         visitCount: number,             // Increment once per browser session
+         hasCompletedTour: boolean,      // True if a tour was completed
+         lastScenarioUsed: string|null,  // Last generated scenario (e.g. 'ceo_fraud')
+         lastVisitTimestamp: number      // Epoch timestamp of last session
+       }
+       ================================================================ */
+    const PROFILE_KEY = 'lure_visitor_profile';
+    
+    let visitorProfile = {
+      visitCount: 0,
+      hasCompletedTour: false,
+      lastScenarioUsed: null,
+      lastVisitTimestamp: Date.now()
+    };
+
+    function loadVisitorProfile() {
+      try {
+        const stored = localStorage.getItem(PROFILE_KEY);
+        if (stored) {
+          visitorProfile = JSON.parse(stored);
+        }
+      } catch (e) {
+        console.error("Failed to parse visitor profile:", e);
+      }
+    }
+
+    function saveVisitorProfile() {
+      try {
+        localStorage.setItem(PROFILE_KEY, JSON.stringify(visitorProfile));
+      } catch (e) {
+        console.error("Failed to save visitor profile:", e);
+      }
+    }
+
+    function initVisitorProfile() {
+      loadVisitorProfile();
+      
+      const isNewSession = !sessionStorage.getItem('lure_session_counted');
+      if (isNewSession) {
+        visitorProfile.visitCount = (visitorProfile.visitCount || 0) + 1;
+        visitorProfile.lastVisitTimestamp = Date.now();
+        sessionStorage.setItem('lure_session_counted', 'true');
+        saveVisitorProfile();
+      }
+    }
+
+    initVisitorProfile();
+
+    // Eye pupil following cursor logic (throttled via requestAnimationFrame)
+    (function() {
+      const pupil = document.getElementById('pb-eye-pupil');
+      const avatar = document.getElementById('pb-avatar');
+      if (!pupil || !avatar) return;
+      
+      let animationFrameId = null;
+      
+      function onMouseMove(e) {
+        if (animationFrameId) return;
+        
+        animationFrameId = requestAnimationFrame(() => {
+          animationFrameId = null;
+          
+          const rect = avatar.getBoundingClientRect();
+          const avatarCenterX = rect.left + rect.width / 2;
+          const avatarCenterY = rect.top + rect.height / 2;
+          
+          const distX = e.clientX - avatarCenterX;
+          const distY = e.clientY - avatarCenterY;
+          const distance = Math.hypot(distX, distY);
+          
+          if (distance < 150 && distance > 0) {
+            // Shift pupil slightly, max 0.8px in SVG space
+            const maxShift = 0.8;
+            const factor = maxShift / distance;
+            const dx = distX * factor;
+            const dy = distY * factor;
+            pupil.style.transform = `translate(${dx}px, ${dy}px)`;
+          } else {
+            pupil.style.transform = 'translate(0px, 0px)';
+          }
+        });
+      }
+      
+      window.addEventListener('mousemove', onMouseMove, { passive: true });
+    })();
+
+    function getRandomVariant(pool, poolKey) {
+      if (!pool || pool.length === 0) return '';
+      if (pool.length === 1) return pool[0];
+      
+      let index;
+      const lastIndex = lastShownIndices[poolKey];
+      do {
+        index = Math.floor(Math.random() * pool.length);
+      } while (index === lastIndex);
+      
+      lastShownIndices[poolKey] = index;
+      return pool[index];
+    }
+
+    // Helper: Staged narration for loading states
+    function startLoadingNarration(el, stages, delay = 800, maxDuration = 6000, longWaitMsg = "Still working, taking a bit longer...") {
+      if (!el || !stages || stages.length === 0) return () => {};
+      let currentStage = 0;
+      el.textContent = stages[currentStage];
+      
+      const intervalId = setInterval(() => {
+        currentStage++;
+        if (currentStage < stages.length) {
+          el.textContent = stages[currentStage];
+        } else {
+          clearInterval(intervalId);
+        }
+      }, delay);
+
+      const timeoutId = setTimeout(() => {
+        clearInterval(intervalId);
+        el.textContent = longWaitMsg;
+      }, maxDuration);
+
+      return () => {
+        clearInterval(intervalId);
+        clearTimeout(timeoutId);
+      };
+    }
 
     // Helper: Esc html content
     function esc(s) {
@@ -1262,6 +1756,30 @@
       
       // Mark first visit popover dismissed when panel is explicitly opened
       localStorage.setItem('first_visit_popover_dismissed', 'true');
+
+      // Customize greeting dialogue if Lure is idle (not currently generating)
+      const dialogue = document.getElementById('pb-dialogue-text');
+      if (dialogue && !_busy) {
+        loadVisitorProfile();
+        if (visitorProfile.visitCount > 1) {
+          if (!visitorProfile.hasCompletedTour) {
+            dialogue.textContent = "Welcome back! Let's take the walkthrough, or pick a scenario below.";
+          } else if (visitorProfile.lastScenarioUsed) {
+            const scenarioNames = {
+              'ceo_fraud': 'CEO Fraud',
+              'it_alert': 'IT Support Alert',
+              'hr_update': 'HR Policy Update',
+              'invoice': 'Fake Invoice'
+            };
+            const friendly = scenarioNames[visitorProfile.lastScenarioUsed] || 'custom';
+            dialogue.textContent = `Welcome back! We formulated a ${friendly} lure last time. Try a new one below!`;
+          } else {
+            dialogue.textContent = "Welcome back! Ready to formulate some high-conviction security lures?";
+          }
+        } else {
+          dialogue.textContent = "Pick a scenario and I'll generate a real AI phishing lure \ud83e\uddea right now, live.";
+        }
+      }
     }
 
     function closePanel() {
@@ -1314,15 +1832,52 @@
 
     avatar.addEventListener('click', () => {
       if (preventClick) return;
-      const dismissed = localStorage.getItem('first_visit_popover_dismissed') === 'true';
-      if (!dismissed) {
-        fvOpen ? closeFvPopover() : openFvPopover();
-      } else {
-        panelOpen ? closePanel() : openPanel();
-      }
+      
+      // Trigger squash-and-stretch animation
+      avatar.classList.add('pb-squash-active');
+      setTimeout(() => {
+        avatar.classList.remove('pb-squash-active');
+        
+        loadVisitorProfile();
+        const dismissed = localStorage.getItem('first_visit_popover_dismissed') === 'true';
+        if (!dismissed && visitorProfile.visitCount === 1) {
+          fvOpen ? closeFvPopover() : openFvPopover();
+        } else {
+          if (!dismissed) {
+            localStorage.setItem('first_visit_popover_dismissed', 'true');
+          }
+          panelOpen ? closePanel() : openPanel();
+        }
+      }, 180);
     });
 
     document.getElementById('pb-close-btn').addEventListener('click', closePanel);
+
+    const resetBtn = document.getElementById('pb-reset-visitor');
+    if (resetBtn) {
+      resetBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        localStorage.removeItem('lure_visitor_profile');
+        localStorage.removeItem('first_visit_popover_dismissed');
+        sessionStorage.removeItem('lure_session_counted');
+        
+        // Reset state
+        visitorProfile = {
+          visitCount: 1,
+          hasCompletedTour: false,
+          lastScenarioUsed: null,
+          lastVisitTimestamp: Date.now()
+        };
+        
+        const dialogue = document.getElementById('pb-dialogue-text');
+        if (dialogue) {
+          dialogue.textContent = "Pick a scenario and I'll generate a real AI phishing lure \ud83e\uddea right now, live.";
+        }
+        
+        closePanel();
+        openFvPopover();
+      });
+    }
 
     document.getElementById('pb-fv-walkthrough-btn').addEventListener('click', () => {
       localStorage.setItem('first_visit_popover_dismissed', 'true');
@@ -1546,17 +2101,33 @@
       // Set avatar status
       host.className = 'pb-active';
 
+      let stopNarration = null;
       if (dialogue && !isInline) {
         dialogue.style.opacity = '0.5';
-        dialogue.textContent = 'Generating custom security lure...';
+        let quip = '';
+        if (scenario === 'ceo_fraud') quip = getRandomVariant(generateCeoQuips, 'ceo_fraud');
+        else if (scenario === 'it_alert') quip = getRandomVariant(generateItQuips, 'it_alert');
+        else if (scenario === 'hr_update') quip = getRandomVariant(generateHrQuips, 'hr_update');
+        else if (scenario === 'invoice') quip = getRandomVariant(generateInvoiceQuips, 'invoice');
+        else quip = 'Generating custom security lure...';
+        
+        const stages = [
+          quip,
+          "Analyzing target profile...",
+          "Drafting message body...",
+          "Calibrating authority angle...",
+          "Polishing urgency triggers..."
+        ];
+        stopNarration = startLoadingNarration(dialogue, stages, 850, 6000, "Still crafting... a bit longer...");
       }
 
       function process(data) {
+        if (stopNarration) stopNarration();
         loader.style.display = 'none';
         host.className = 'pb-success';
         if (dialogue && !isInline) {
           dialogue.style.opacity = '1';
-          dialogue.textContent = 'Lure formulated successfully. Review the indicators below!';
+          dialogue.textContent = getRandomVariant(generateSuccessLines, 'generate_success');
         }
         _render(data, scenario, {
           sender: sender, subject: subject, body: body, card: card, meta: meta, tactic: tacticText,
@@ -1586,18 +2157,25 @@
           if (j && j.success) {
             // Save to cache
             _cache[scenario] = j;
+            
+            // Save last scenario to visitor profile
+            loadVisitorProfile();
+            visitorProfile.lastScenarioUsed = scenario;
+            saveVisitorProfile();
+
             process(j);
           } else {
             throw new Error(j.message || 'Lure formulation failed.');
           }
         })
         .catch(err => {
+          if (stopNarration) stopNarration();
           _busy = false;
           loader.style.display = 'none';
           host.className = 'pb-error';
           if (dialogue && !isInline) {
             dialogue.style.opacity = '1';
-            dialogue.textContent = 'Formulation failed. Lure offline.';
+            dialogue.textContent = getRandomVariant(generateErrorLines, 'generate_error');
           }
           errorMsg.style.display = 'block';
           errorMsg.textContent = err.message;
@@ -1606,39 +2184,55 @@
     };
 
     function _render(data, scenario, ids, $) {
-      $(ids.sender).textContent  = data.sender_display || '';
-      $(ids.subject).textContent = data.subject || '';
-      if ($(ids.tactic)) $(ids.tactic).innerHTML = 'Tactic: <strong>' + esc(data.phishing_tactic || '') + '</strong>';
-      $(ids.card).style.display  = 'block';
-      $(ids.meta).style.display  = 'flex';
-      repositionPanel(); // Adjust position on content reveal!
+      const getEl = id => {
+        if (!id) return null;
+        if (typeof id === 'string') return document.getElementById(id);
+        return id;
+      };
+      
+      const senderEl = getEl(ids.sender);
+      const subjectEl = getEl(ids.subject);
+      const tacticEl = getEl(ids.tactic);
+      const cardEl = getEl(ids.card);
+      const metaEl = getEl(ids.meta);
+      const bodyEl = getEl(ids.body);
+      const baitEl = getEl(ids.bait);
+      const barsEl = getEl(ids.bars);
+      
+      if (senderEl) senderEl.textContent = data.sender_display || '';
+      if (subjectEl) subjectEl.textContent = data.subject || '';
+      if (tacticEl) tacticEl.innerHTML = 'Tactic: <strong>' + esc(data.phishing_tactic || '') + '</strong>';
+      if (cardEl) cardEl.style.display = 'block';
+      if (metaEl) metaEl.style.display = 'flex';
+      repositionPanel();
 
       // Typewriter with red-flag annotation
-      const bodyEl = $(ids.body);
-      bodyEl.innerHTML = '';
-      const raw = data.body_text || '';
-      let idx = 0;
-      const spd = Math.max(5, Math.floor(1400 / Math.max(raw.length, 1)));
-      function tick() {
-        if (idx < raw.length) {
-          idx++;
-          bodyEl.innerHTML = annotate(raw.slice(0, idx));
-          bodyEl.scrollTop = bodyEl.scrollHeight;
-          setTimeout(tick, spd);
-        } else {
-          bodyEl.innerHTML = annotate(raw); // final pass
-          if (ids.bait && ids.bars && $(ids.bait)) {
-            if (data.bait_score) {
-              renderBait($(ids.bars), data.bait_score);
-              $(ids.bait).style.display = 'block';
-            } else {
-              $(ids.bait).style.display = 'none';
+      if (bodyEl) {
+        bodyEl.innerHTML = '';
+        const raw = data.body_text || '';
+        let idx = 0;
+        const spd = Math.max(5, Math.floor(1400 / Math.max(raw.length, 1)));
+        function tick() {
+          if (idx < raw.length) {
+            idx++;
+            bodyEl.innerHTML = annotate(raw.slice(0, idx));
+            bodyEl.scrollTop = bodyEl.scrollHeight;
+            setTimeout(tick, spd);
+          } else {
+            bodyEl.innerHTML = annotate(raw); // final pass
+            if (baitEl && barsEl) {
+              if (data.bait_score) {
+                renderBait(barsEl, data.bait_score);
+                baitEl.style.display = 'block';
+              } else {
+                baitEl.style.display = 'none';
+              }
             }
+            repositionPanel(); // Adjust position again after bait section shows/hides!
           }
-          repositionPanel(); // Adjust position again after bait section shows/hides!
         }
+        tick();
       }
-      tick();
     }
 
     // Lazy pre-warm trigger on hover/tap
@@ -1963,6 +2557,36 @@
       highlighter.style.width = (rect.width + 12) + 'px';
       highlighter.style.height = (rect.height + 12) + 'px';
 
+      const bubbleEl = document.getElementById('pb-wt-bubble');
+
+      // Mobile viewport override to prevent clipping/overlapping
+      if (window.innerWidth <= 768) {
+        const bubbleHeight = bubbleEl ? bubbleEl.offsetHeight : 160;
+        const targetIsNearBottom = rect.bottom > window.innerHeight / 2;
+        const margin = 10;
+        
+        let cardTop = targetIsNearBottom 
+          ? (window.scrollY + margin + 70) // Below navbar
+          : (window.scrollY + window.innerHeight - bubbleHeight - margin - 20); // Above footer
+          
+        let cardLeft = window.scrollX + (window.innerWidth - 340) / 2;
+        
+        if (bubbleEl) {
+          bubbleEl.classList.add('pb-mobile-no-arrow');
+        }
+        
+        host.style.setProperty('position', 'absolute', 'important');
+        host.style.setProperty('top', cardTop + 'px', 'important');
+        host.style.setProperty('left', cardLeft + 'px', 'important');
+        host.style.setProperty('bottom', 'auto', 'important');
+        host.style.setProperty('right', 'auto', 'important');
+        return;
+      } else {
+        if (bubbleEl) {
+          bubbleEl.classList.remove('pb-mobile-no-arrow');
+        }
+      }
+
       // Reposition Lure adjacent to the side with the most space
       const padding = 20;
       const margin = 20;
@@ -1971,7 +2595,6 @@
       const gap = 12;
       const hostWidth = mascotWidth + gap + bubbleWidth; // 462px
       
-      const bubbleEl = document.getElementById('pb-wt-bubble');
       const hostHeight = bubbleEl ? Math.max(bubbleEl.offsetHeight, 180) : 220;
 
       const viewportWidth = window.innerWidth;
@@ -2238,6 +2861,9 @@
     };
 
     window.finishWalkthrough = function() {
+      loadVisitorProfile();
+      visitorProfile.hasCompletedTour = true;
+      saveVisitorProfile();
       cleanupWalkthrough();
     };
 
@@ -2410,6 +3036,11 @@
       nextBtn.style.display = 'none';
       await updateGameStatus();
 
+      const dialogueEl = document.getElementById('stp-dialogue-text');
+      if (dialogueEl) {
+        dialogueEl.innerHTML = 'Two emails below — one legit, one is a phish. <strong style="color:var(--primary);">Click the fake one.</strong>';
+      }
+
       con.innerHTML = `
         <div class="pb-skeleton-wrap" style="display:block; width:100%;">
           <div class="skeleton-block" style="width:80%;height:10px;"></div>
@@ -2454,6 +3085,12 @@
               resEl.style.display = 'block';
               resEl.innerHTML = `<strong>CORRECT! That was a Phish!</strong><br>Tactic: ${esc(currentPhishTactic)}`;
               gameScoreCorrect++;
+
+              if (dialogueEl) {
+                const tacticName = currentPhishTactic ? currentPhishTactic.toLowerCase() : "suspicious cues";
+                const template = getRandomVariant(spotCorrectPool, 'spot_correct');
+                dialogueEl.innerHTML = template.replace('{tactic}', '<strong>' + esc(tacticName) + '</strong>');
+              }
             } else {
               box.classList.add('wrong');
               resEl.className = 'stp-result';
@@ -2461,6 +3098,10 @@
               resEl.style.background = 'var(--danger-dim)';
               resEl.style.color = 'var(--danger)';
               resEl.innerHTML = `<strong>INCORRECT! That was Legitimate!</strong><br>The other one was the phish.`;
+
+              if (dialogueEl) {
+                dialogueEl.innerHTML = getRandomVariant(spotIncorrectPool, 'spot_incorrect');
+              }
             }
             gameScoreTotal++;
             document.getElementById('stp-score').textContent = gameScoreCorrect;
@@ -2486,6 +3127,11 @@
       resEl.style.display = 'none';
       if (nextBtn) nextBtn.style.display = 'none';
       await updateInlineGameStatus();
+
+      const dialogueEl = document.getElementById('stp-il-dialogue-text');
+      if (dialogueEl) {
+        dialogueEl.innerHTML = 'Two freshly generated emails below. One is legitimate, one is a phishing attempt. <strong style="color:var(--primary);">Click the fake one.</strong>';
+      }
 
       con.innerHTML = `
         <div class="pb-skeleton-wrap" style="display:block; width:100%;">
@@ -2531,6 +3177,12 @@
               resEl.style.display = 'block';
               resEl.innerHTML = `<strong>CORRECT! That was a Phish!</strong><br>Tactic: ${esc(ilCurrentPhishTactic)}`;
               ilGameScoreCorrect++;
+
+              if (dialogueEl) {
+                const tacticName = ilCurrentPhishTactic ? ilCurrentPhishTactic.toLowerCase() : "suspicious cues";
+                const template = getRandomVariant(spotCorrectPool, 'spot_correct');
+                dialogueEl.innerHTML = template.replace('{tactic}', '<strong>' + esc(tacticName) + '</strong>');
+              }
             } else {
               box.classList.add('wrong');
               resEl.className = 'stp-result';
@@ -2538,6 +3190,10 @@
               resEl.style.background = 'var(--danger-dim)';
               resEl.style.color = 'var(--danger)';
               resEl.innerHTML = `<strong>INCORRECT! That was Legitimate!</strong><br>The other one was the phish.`;
+
+              if (dialogueEl) {
+                dialogueEl.innerHTML = getRandomVariant(spotIncorrectPool, 'spot_incorrect');
+              }
             }
             ilGameScoreTotal++;
             document.getElementById('stp-il-score').textContent = ilGameScoreCorrect;
@@ -2585,18 +3241,30 @@
       const label = pct >= 60 ? 'High exposure — simulations strongly recommended'
                   : pct >= 35 ? 'Moderate exposure — some controls in place'
                   :             'Lower exposure — good hygiene, keep it up';
+      
+      let reaction = '';
+      if (pct >= 60) {
+        reaction = getRandomVariant(riskHighPool, 'risk_high');
+      } else if (pct >= 35) {
+        reaction = getRandomVariant(riskMedPool, 'risk_med');
+      } else {
+        reaction = getRandomVariant(riskLowPool, 'risk_low');
+      }
+
       document.getElementById('rs-form').style.display = 'none';
       const res = document.getElementById('rs-result');
       res.style.display = 'block';
       document.getElementById('rs-gauge').style.color = color;
       document.getElementById('rs-gauge').textContent = pct + '%';
       document.getElementById('rs-gauge-lbl').textContent = label;
+      document.getElementById('rs-gauge-reaction').innerHTML = '🦈 Lure says: <em>"' + esc(reaction) + '"</em>';
       repositionPanel();
     };
 
     window.rsReset = function() {
       document.getElementById('rs-result').style.display = 'none';
       document.getElementById('rs-form').style.display = 'block';
+      document.getElementById('rs-gauge-reaction').textContent = '';
       document.querySelectorAll('.rs-opt').forEach(o => o.classList.remove('selected'));
       document.querySelectorAll('.rs-opt input').forEach(i => i.checked = false);
       repositionPanel();
@@ -2669,6 +3337,217 @@
       clearTimeout(window._lureSuccessTimer);
       host.className = (state === 'idle') ? '' : 'pb-' + state;
     };
+
+    /* ════════════════════════════════════════════════════════
+       Ask Lure Chat Controller
+       ════════════════════════════════════════════════════════ */
+    const chatInput = document.getElementById('pb-chat-input');
+    const chatSendBtn = document.getElementById('pb-chat-send-btn');
+    const chatMessagesList = document.getElementById('pb-chat-messages-list');
+    const chatErrorAlert = document.getElementById('pb-chat-error-alert');
+    const chatCharCounter = document.getElementById('pb-chat-char-counter');
+    const chatTabBtn = panel.querySelector('.pb-tab-btn[data-tab="chat"]');
+
+    let chatHistory = [];
+    let chatInitialized = false;
+
+    // Load from sessionStorage on init
+    function loadChatHistory() {
+      try {
+        const stored = sessionStorage.getItem('pb_chat_history');
+        if (stored) {
+          chatHistory = JSON.parse(stored);
+        }
+      } catch (e) {
+        console.error('Failed to load chat history', e);
+      }
+    }
+
+    function saveChatHistory() {
+      try {
+        sessionStorage.setItem('pb_chat_history', JSON.stringify(chatHistory));
+      } catch (e) {
+        console.error('Failed to save chat history', e);
+      }
+    }
+
+    function renderMessages() {
+      if (!chatMessagesList) return;
+      chatMessagesList.innerHTML = '';
+
+      // Always prepend the hardcoded welcome message
+      const welcomeRow = document.createElement('div');
+      welcomeRow.className = 'pb-chat-msg-row lure';
+      welcomeRow.innerHTML = `
+        <div class="pb-chat-bubble">Hi! I'm Lure, your AI security mascot. 🦈 Ask me anything about phishing, social engineering, or how to use PhishSim to train your defenses!</div>
+      `;
+      chatMessagesList.appendChild(welcomeRow);
+
+      chatHistory.forEach(msg => {
+        const row = document.createElement('div');
+        row.className = `pb-chat-msg-row ${msg.role === 'user' ? 'user' : 'lure'}`;
+        // Simple HTML sanitization to prevent XSS but keep formatting safe
+        const safeText = esc(msg.content);
+        row.innerHTML = `
+          <div class="pb-chat-bubble">${safeText}</div>
+        `;
+        chatMessagesList.appendChild(row);
+      });
+
+      // Scroll to bottom
+      chatMessagesList.scrollTop = chatMessagesList.scrollHeight;
+    }
+
+    function initChat() {
+      if (chatInitialized) return;
+      chatInitialized = true;
+      loadChatHistory();
+      renderMessages();
+    }
+
+    // Initialize when Chat tab is clicked
+    if (chatTabBtn) {
+      chatTabBtn.addEventListener('click', () => {
+        initChat();
+        // Focus the input
+        setTimeout(() => chatInput && chatInput.focus(), 100);
+      });
+    }
+
+    // Character counter and cap enforcement
+    if (chatInput) {
+      chatInput.addEventListener('input', () => {
+        const len = chatInput.value.length;
+        if (chatCharCounter) {
+          chatCharCounter.textContent = `${len} / 500`;
+          if (len > 500) {
+            chatCharCounter.style.color = 'var(--danger, #ef4444)';
+            chatSendBtn.disabled = true;
+            showChatError("Message exceeds the 500-character limit.");
+          } else {
+            chatCharCounter.style.color = 'var(--text-muted, #4A5568)';
+            chatSendBtn.disabled = false;
+            hideChatError();
+          }
+        }
+      });
+
+      // Handle Enter and Shift+Enter
+      chatInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          sendMessage();
+        }
+      });
+    }
+
+    if (chatSendBtn) {
+      chatSendBtn.addEventListener('click', sendMessage);
+    }
+
+    function showChatError(msg) {
+      if (chatErrorAlert) {
+        chatErrorAlert.textContent = msg;
+        chatErrorAlert.style.display = 'block';
+      }
+    }
+
+    function hideChatError() {
+      if (chatErrorAlert) {
+        chatErrorAlert.style.display = 'none';
+      }
+    }
+
+    async function sendMessage() {
+      if (!chatInput) return;
+      const text = chatInput.value.trim();
+      if (!text || text.length > 500 || chatSendBtn.disabled) return;
+
+      // Clear input and counter
+      chatInput.value = '';
+      if (chatCharCounter) chatCharCounter.textContent = '0 / 500';
+
+      // 1. Add user message
+      chatHistory.push({ role: 'user', content: text });
+      saveChatHistory();
+      renderMessages();
+
+      // 2. Add Typing indicator with loading text
+      const typingRow = document.createElement('div');
+      typingRow.className = 'pb-chat-msg-row lure';
+      typingRow.id = 'pb-chat-typing-indicator';
+      typingRow.innerHTML = `
+        <div class="pb-chat-bubble" style="display: flex; align-items: center; gap: 8px;">
+          <div class="pb-typing-indicator" style="flex-shrink: 0;">
+            <span class="pb-typing-dot"></span>
+            <span class="pb-typing-dot"></span>
+            <span class="pb-typing-dot"></span>
+          </div>
+          <span id="pb-chat-loading-text" style="font-size: 0.65rem; color: var(--text-secondary,#8CA0B3); font-family: var(--mono);">Lure is thinking...</span>
+        </div>
+      `;
+      chatMessagesList.appendChild(typingRow);
+      chatMessagesList.scrollTop = chatMessagesList.scrollHeight;
+
+      let stopChatNarration = null;
+      const loadingTextEl = document.getElementById('pb-chat-loading-text');
+      if (loadingTextEl) {
+        const chatStages = [
+          "Lure is thinking...",
+          "Drafting response..."
+        ];
+        stopChatNarration = startLoadingNarration(loadingTextEl, chatStages, 1200, 6000, "Lure is typing... (still processing)");
+      }
+
+      // Disable inputs during API call
+      chatInput.disabled = true;
+      chatSendBtn.disabled = true;
+      hideChatError();
+
+      // Flashing mascot active state
+      lureSetState('active');
+
+      try {
+        const response = await fetch('/api/lure-chat', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            message: text,
+            history: chatHistory.slice(0, -1) // pass history excluding the last message
+          })
+        });
+
+        const data = await response.json();
+        
+        // Remove typing indicator & stop narration
+        if (stopChatNarration) stopChatNarration();
+        const indicator = document.getElementById('pb-chat-typing-indicator');
+        if (indicator) indicator.remove();
+
+        if (response.ok && data.success) {
+          chatHistory.push({ role: 'assistant', content: data.reply });
+          saveChatHistory();
+          lureFlashSuccess();
+        } else {
+          showChatError(data.message || "Something went wrong. Please try again.");
+          lureSetState('idle');
+        }
+      } catch (e) {
+        console.error(e);
+        if (stopChatNarration) stopChatNarration();
+        const indicator = document.getElementById('pb-chat-typing-indicator');
+        if (indicator) indicator.remove();
+        showChatError("Network error. Unable to reach Lure.");
+        lureSetState('idle');
+      } finally {
+        chatInput.disabled = false;
+        chatSendBtn.disabled = false;
+        renderMessages();
+        chatInput.focus();
+      }
+    }
 
   })();
 </script>

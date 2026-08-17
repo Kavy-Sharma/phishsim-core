@@ -16,6 +16,7 @@
     rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.9/dist/purify.min.js"></script>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css', v='1.0.8-loading') }}">
   <style>
     :root {
@@ -8934,6 +8935,81 @@ ${body}
 
   {% include 'lure_bot.html' %}
 
+  <script>
+  /* ── Lure: Proactive triggers for homepage ── */
+  (function() {
+    'use strict';
+    
+    // Trigger 1: Scroll past sandbox trigger
+    const SCROLL_SESSION_KEY = 'lure_home_scroll_callout_shown';
+    const SCROLL_TIME_THRESHOLD = 20000; // 20s
+    const pageLoadTime = Date.now();
+    let scrolledPastTriggered = false;
+    let interacted = false;
+
+    // Track interactions with the sandbox
+    const sandbox = document.getElementById('threat-sandbox');
+    if (sandbox) {
+      sandbox.addEventListener('click', () => {
+        interacted = true;
+      }, { once: true });
+    }
+
+    // Scroll listener for Trigger 1
+    function checkScrollTrigger() {
+      if (scrolledPastTriggered || interacted || sessionStorage.getItem(SCROLL_SESSION_KEY)) return;
+      if (!sandbox || !window.lureShowCallout) return;
+      
+      const calloutEl = document.getElementById('pb-callout');
+      if (calloutEl && calloutEl.classList.contains('pb-show')) return; // another callout is showing
+
+      // Has 20s elapsed?
+      if (Date.now() - pageLoadTime < SCROLL_TIME_THRESHOLD) return;
+
+      // Has scrolled past sandbox?
+      const rect = sandbox.getBoundingClientRect();
+      if (rect.bottom < 0) {
+        scrolledPastTriggered = true;
+        sessionStorage.setItem(SCROLL_SESSION_KEY, '1');
+        window.lureShowCallout("Hey! You missed the Lure Lab above. Tap me to generate a live phishing test instantly!");
+      }
+    }
+
+    window.addEventListener('scroll', checkScrollTrigger, { passive: true });
+    // Also check on interval to see if they scrolled past already and 20s elapsed
+    setInterval(checkScrollTrigger, 1000);
+
+
+    // Trigger 3: Exit intent trigger
+    const EXIT_SESSION_KEY = 'lure_home_exit_callout_shown';
+    let clickedCTA = false;
+
+    // Track clicks on CTA buttons/links
+    document.addEventListener('click', e => {
+      const target = e.target.closest('a, button');
+      if (target) {
+        const href = target.getAttribute('href') || '';
+        if (href.includes('/signup') || href.includes('/dashboard') || href.includes('/demo-login') || target.classList.contains('btn-hero-primary')) {
+          clickedCTA = true;
+        }
+      }
+    });
+
+    document.addEventListener('mouseleave', e => {
+      // Check if mouse left top of viewport
+      if (e.clientY >= 20) return;
+      if (clickedCTA || sessionStorage.getItem(EXIT_SESSION_KEY)) return;
+      if (!window.lureShowCallout) return;
+
+      const calloutEl = document.getElementById('pb-callout');
+      if (calloutEl && calloutEl.classList.contains('pb-show')) return; // another callout is showing
+
+      sessionStorage.setItem(EXIT_SESSION_KEY, '1');
+      window.lureShowCallout("Leaving so soon? Try a free, 1-click test simulation before you go — no signup required.");
+    });
+
+  })();
+  </script>
 </body>
 
 </html>

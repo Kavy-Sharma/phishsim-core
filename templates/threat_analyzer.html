@@ -1316,4 +1316,59 @@ async function loadSharedReport(uuid) {
     if (r) loadSharedReport(r);
 })();
 </script>
+
+<script>
+/* ── Lure: Proactive callout for threat analyzer ── */
+(function() {
+  'use strict';
+  const SESSION_KEY = 'lure_ta_nudge_shown';
+  const WAIT_TIME = 25000; // 25s
+  let submitted = false;
+
+  // Track if user clicked the Analyze button
+  const analyzeBtn = document.getElementById('ta-analyze-btn');
+  if (analyzeBtn) {
+    analyzeBtn.addEventListener('click', () => {
+      submitted = true;
+    }, { once: true });
+  }
+
+  function maybeShowNudge() {
+    if (submitted || sessionStorage.getItem(SESSION_KEY)) return;
+    if (!window.lureShowCallout) return;
+
+    const calloutEl = document.getElementById('pb-callout');
+    if (calloutEl && calloutEl.classList.contains('pb-show')) return; // another callout is showing
+
+    sessionStorage.setItem(SESSION_KEY, '1');
+    window.lureShowCallout("Need a hand? Paste an email above, or click me to ask in the chat tab!");
+
+    // Add click handler to callout text to open the chat tab
+    const calloutText = document.getElementById('pb-callout-text');
+    if (calloutText) {
+      calloutText.style.cursor = 'pointer';
+      calloutText.addEventListener('click', function openLureChat() {
+        const panel = document.getElementById('pb-panel');
+        const avatar = document.getElementById('pb-avatar');
+        const fvPopover = document.getElementById('pb-first-visit-popover');
+        
+        if (fvPopover && fvPopover.classList.contains('pb-open')) {
+          const genBtn = document.getElementById('pb-fv-generate-btn');
+          if (genBtn) genBtn.click();
+        } else if (panel && !panel.classList.contains('pb-open')) {
+          if (avatar) avatar.click();
+        }
+        
+        const chatBtn = document.querySelector('#pb-panel .pb-tab-btn[data-tab="chat"]');
+        if (chatBtn) chatBtn.click();
+        
+        // Cleanup listener after click
+        calloutText.removeEventListener('click', openLureChat);
+      });
+    }
+  }
+
+  setTimeout(maybeShowNudge, WAIT_TIME);
+})();
+</script>
 {% endblock %}
