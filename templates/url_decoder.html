@@ -1583,6 +1583,18 @@ document.getElementById('url-input').addEventListener('keydown', e => {
         if (e.key === 'Escape' && _udOverlay && _udOverlay.classList.contains('active')) udCollapse();
     });
 
+    // Lure: proactive callout when idle
+    document.addEventListener('DOMContentLoaded', () => {
+      setTimeout(() => {
+        if (!sessionStorage.getItem('lure_url_callout_fired')) {
+          sessionStorage.setItem('lure_url_callout_fired', 'true');
+          if (window.lureShowCallout) {
+            window.lureShowCallout("Suspicious link in an email? Paste it above, and I'll decode it and check it against known threat feeds!");
+          }
+        }
+      }, 12000);
+    });
+
     {% if prefill_url %}
     window.addEventListener('DOMContentLoaded', () => {
         executeTrace();

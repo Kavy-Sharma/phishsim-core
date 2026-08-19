@@ -6,10 +6,10 @@
     - templates/home.html
 -->
 <!-- ═══════════════════════════════════════════════════════════
-     LURE — persistent avatar companion bot widget
-     States: idle / active / success / error
-     Exposed API: window.lureFlashSuccess(), window.lureSetState()
-     ═══════════════════════════════════════════════════════════ -->
+    LURE — persistent avatar companion bot widget
+    States: idle / active / success / error
+    Exposed API: window.lureFlashSuccess(), window.lureSetState()
+    ═══════════════════════════════════════════════════════════ -->
 <style>
     /* ── PhishBot container (the draggable host, not the panel) ── */
     #pb-host {
@@ -71,47 +71,69 @@
       transform: translateX(-50%) translateY(0);
     }
 
-    /* Idle bobbing animation on the SVG inside the avatar */
-    #pb-avatar svg {
+    /* Mascot Wrapper and Images */
+    #pb-avatar-wrap {
+      width: 65px;
+      height: 65px;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.1s ease-out;
+    }
+    #pb-avatar-inner {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       animation: pbBob 3s ease-in-out infinite;
     }
+    .pb-mascot-img {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      opacity: 0;
+      transition: opacity 0.25s ease-in-out;
+      pointer-events: none;
+      filter: drop-shadow(0 0 8px var(--primary-glow));
+    }
+    .pb-mascot-img.visible {
+      opacity: 1;
+    }
+
+    /* Active State Pulsing Glow Ring */
+    #pb-avatar-glow-ring {
+      position: absolute;
+      top: 5%;
+      left: 5%;
+      width: 90%;
+      height: 90%;
+      border-radius: 50%;
+      border: 2px solid color-mix(in srgb, var(--primary) 40%, transparent);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+      z-index: 0;
+    }
+    #pb-host.pb-active #pb-avatar-glow-ring {
+      opacity: 1;
+      animation: pbGlowRingPulse 1.5s infinite ease-in-out;
+    }
+    @keyframes pbGlowRingPulse {
+      0% { transform: scale(0.95); opacity: 0.3; box-shadow: 0 0 8px var(--primary), inset 0 0 8px var(--primary); }
+      50% { transform: scale(1.05); opacity: 0.8; box-shadow: 0 0 18px var(--primary), inset 0 0 12px var(--primary); }
+      100% { transform: scale(0.95); opacity: 0.3; box-shadow: 0 0 8px var(--primary), inset 0 0 8px var(--primary); }
+    }
+
+    /* Idle bobbing animation */
     @keyframes pbBob {
       0%, 100% { transform: translateY(0); }
       50% { transform: translateY(-3.5px); }
-    }
-
-    /* Eye blinking animation */
-    @keyframes pbBlink {
-      0%, 90%, 100% { transform: scaleY(1); }
-      95% { transform: scaleY(0.1); }
-    }
-
-    /* Stalk/Lure animations */
-    #pb-lure-group {
-      transform-origin: 22px 16px;
-      animation: pbWiggle 4s infinite ease-in-out;
-    }
-    @keyframes pbWiggle {
-      0%, 100% { transform: rotate(0deg); }
-      50% { transform: rotate(4deg); }
-    }
-
-    #pb-orb-glow {
-      animation: pbOrbPulse 2s infinite ease-in-out;
-      transition: stroke 0.35s ease;
-    }
-    @keyframes pbOrbPulse {
-      0%, 100% { transform: scale(1); opacity: 0.2; }
-      50% { transform: scale(1.3); opacity: 0.4; }
-    }
-    @keyframes pbOrbPulseFast {
-      0%, 100% { transform: scale(1); opacity: 0.35; }
-      50% { transform: scale(1.5); opacity: 0.65; }
-    }
-    @keyframes pbOrbSuccess {
-      0%   { transform: scale(1); opacity: 0.3; }
-      40%  { transform: scale(1.7); opacity: 0.7; }
-      100% { transform: scale(1); opacity: 0.3; }
     }
 
     /* Squash & Stretch transition micro-animation */
@@ -125,72 +147,68 @@
       animation: pbSquashStretch 0.18s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
     }
 
-    /* Happy bounce success animation */
+    /* Happy bounce success animation (rigid-body style) */
     @keyframes pbHappyBounce {
-      0%, 100% { transform: translateY(0); }
-      25% { transform: translateY(-16px); }
-      50% { transform: translateY(0); }
-      75% { transform: translateY(-8px); }
+      0% { transform: translateY(0) scale(1); }
+      25% { transform: translateY(-16px) scale(1.08, 0.92); }
+      50% { transform: translateY(0) scale(0.92, 1.08); }
+      75% { transform: translateY(-6px) scale(1.03, 0.97); }
+      100% { transform: translateY(0) scale(1); }
     }
-    #pb-host.pb-success #pb-avatar svg {
+    #pb-host.pb-success #pb-avatar-inner {
       animation: pbHappyBounce 0.45s ease-out 1;
     }
 
-    /* Shake error animation */
+    /* Shake error animation (rigid-body style) */
     @keyframes pbErrorShake {
       0%, 100% { transform: translateX(0); }
       20%, 60% { transform: translateX(-6px); }
       40%, 80% { transform: translateX(6px); }
     }
-    #pb-host.pb-error #pb-avatar svg {
-      animation: pbErrorShake 0.3s ease-in-out 1;
+    #pb-host.pb-error #pb-avatar-inner {
+      animation: pbErrorShake 0.35s ease-in-out 1;
     }
 
-    /* ── Orb fill/glow color transitions ── */
-    #pb-orb { transition: fill 0.3s ease; }
-
-    /* ── State: active — cyan orb spin (AI thinking) ── */
-    #pb-host.pb-active #pb-orb {
-      fill: var(--primary);
+    /* Walkthrough Spotlight, Swim and Bubbles CSS */
+    #pb-wt-highlighter {
+      box-shadow: 0 0 0 9999px rgba(4, 9, 20, 0.55), 0 0 20px rgba(6, 182, 212, 0.45) !important;
     }
-    #pb-host.pb-active #pb-orb-glow {
-      stroke: var(--primary);
-      animation: pbOrbPulseFast 0.75s infinite ease-in-out;
+    
+    @keyframes pbSwim {
+      0%, 100% { transform: rotate(0deg); }
+      25% { transform: rotate(-7deg); }
+      50% { transform: rotate(7deg); }
+      75% { transform: rotate(-7deg); }
     }
-    #pb-host.pb-active #pb-lure-group {
-      animation: pbWiggle 0.6s infinite ease-in-out;
-    }
-
-    /* ── State: success — green celebration flash ── */
-    #pb-host.pb-success #pb-orb {
-      fill: var(--success, #34D399);
-    }
-    #pb-host.pb-success #pb-orb-glow {
-      stroke: var(--success, #34D399);
-      animation: pbOrbSuccess 0.55s 3 ease-in-out;
-    }
-    #pb-host.pb-success #pb-avatar-body {
-      filter: brightness(1.15);
+    .pb-swim-active {
+      animation: pbSwim 0.6s ease-in-out infinite !important;
     }
 
-    /* ── State: error — red droop ── */
-    #pb-host.pb-error #pb-orb {
-      fill: var(--danger);
+    .pb-bubble-particle {
+      position: absolute;
+      border-radius: 50%;
+      background: color-mix(in srgb, var(--primary) 60%, #ffffff);
+      pointer-events: none;
+      z-index: 9998;
+      opacity: 0.7;
+      animation: pbBubbleFade 0.8s ease-out forwards;
     }
-    #pb-host.pb-error #pb-orb-glow {
-      stroke: var(--danger);
-      animation: pbOrbPulse 1.8s infinite ease-in-out;
+    @keyframes pbPulse {
+      0% { opacity: 0.6; transform: scale(0.98); }
+      100% { opacity: 1; transform: scale(1.02); }
     }
-    #pb-host.pb-error #pb-lure-group {
-      animation: none;
-      transform: rotate(-8deg);
+    @keyframes pbBubbleFade {
+      0% {
+        transform: translateY(0) scale(1);
+        opacity: 0.7;
+      }
+      100% {
+        transform: translateY(-24px) scale(0.4);
+        opacity: 0;
+      }
     }
-    #pb-host.pb-error #pb-mouth {
-      /* Frown — flip the smile arc via CSS filter (subtle) */
-      transform-origin: 26px 27px;
-      transform: scaleY(-0.7) translateY(-2px);
-      transition: transform 0.4s ease;
-    }
+
+    /* SVG-specific state properties removed */
 
     /* ── Proactive callout strip (near avatar, non-blocking) ── */
     #pb-callout {
@@ -754,14 +772,14 @@
 
     /* Walkthrough mode layout on the host */
     #pb-host.pb-walkthrough-mode {
-      position: absolute !important;
+      position: fixed !important;
       display: flex !important;
       align-items: center;
       gap: 12px;
       z-index: 20000 !important;
       width: auto !important;
       height: auto !important;
-      transition: top 0.65s cubic-bezier(0.25, 1, 0.5, 1), left 0.65s cubic-bezier(0.25, 1, 0.5, 1) !important;
+      transition: top 0.5s cubic-bezier(0.25, 1, 0.5, 1), left 0.5s cubic-bezier(0.25, 1, 0.5, 1) !important;
     }
     #pb-host.pb-walkthrough-mode.pb-direction-left {
       flex-direction: row-reverse !important;
@@ -1050,7 +1068,49 @@
         width: 64px !important;
         height: 64px !important;
       }
-      #pb-avatar svg {
+      #pb-avatar-wrap {
+        width: 44px !important;
+        height: 44px !important;
+      }
+      #pb-panel {
+        position: fixed !important;
+        bottom: 0 !important;
+        right: 0 !important;
+        left: 0 !important;
+        top: auto !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        height: 80vh !important;
+        max-height: 80vh !important;
+        border-radius: 20px 20px 0 0 !important;
+        transform: translateY(100%) !important;
+        transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
+        box-shadow: 0 -8px 32px rgba(0,0,0,0.4) !important;
+      }
+      #pb-panel.pb-open {
+        transform: translateY(0) !important;
+      }
+      #pb-max-btn {
+        display: none !important;
+      }
+      #pb-first-visit-popover {
+        max-width: calc(100vw - 32px) !important;
+      }
+
+      .pb-mobile-no-arrow::before {
+        display: none !important;
+      }
+      #pb-host {
+        bottom: 72px !important;
+        right: 16px !important;
+        left: auto !important;
+        top: auto !important;
+      }
+      #pb-avatar {
+        width: 64px !important;
+        height: 64px !important;
+      }
+      #pb-avatar-wrap {
         width: 44px !important;
         height: 44px !important;
       }
@@ -1091,9 +1151,9 @@
   <!-- First Visit Popover -->
   <div id="pb-first-visit-popover" role="dialog" aria-modal="false" aria-label="Welcome to Lure">
     <div class="pb-popover-title">Welcome to Lure AI Lab!</div>
-    <div class="pb-popover-text">Let's get started. Would you like a quick walkthrough of the social engineering sandbox, or do you want to start generating email lures right away?</div>
+    <div class="pb-popover-text">Ready to see how PhishSim works? Take our recommended "Getting Started" tour to walkthrough the sandbox, campaign setup, and live dashboard metrics.</div>
     <div class="pb-popover-actions">
-      <button class="pb-popover-btn primary" id="pb-fv-walkthrough-btn">Show me around</button>
+      <button class="pb-popover-btn primary" id="pb-fv-walkthrough-btn">Take recommended Tour</button>
       <button class="pb-popover-btn secondary" id="pb-fv-generate-btn">Just generate a lure</button>
     </div>
   </div>
@@ -1113,38 +1173,13 @@
     aria-label="Open Lure — AI Phishing Lure Lab"
     aria-expanded="false"
     aria-controls="pb-panel">
-    <svg width="65" height="65" viewBox="0 0 36 36" style="filter: drop-shadow(0 0 8px var(--primary-glow)); overflow: visible;">
-      <!-- Tail -->
-      <path id="pb-tail-fin" d="M8 24 L2 17 C1.5 20, 1.5 28, 2 31 Z" fill="color-mix(in srgb, var(--primary) 80%, #000000)"/>
-      <!-- Dorsal Fin -->
-      <path id="pb-dorsal-fin" d="M11 16 C12 11, 16 11, 17 16 Z" fill="color-mix(in srgb, var(--primary) 80%, #000000)"/>
-      <!-- Pectoral Fin -->
-      <path id="pb-pectoral-fin" d="M14 26 C11 26, 10 29, 12 30 C14 31, 16 28, 14 26 Z" fill="color-mix(in srgb, var(--primary) 80%, #000000)"/>
-      <!-- Body shape filled with primary teal -->
-      <ellipse id="pb-avatar-body" cx="18" cy="24" rx="11" ry="9" fill="var(--primary)"/>
-      <!-- Eye -->
-      <g id="pb-eye" style="transform-origin: 24px 21px; animation: pbBlink 4s infinite ease-in-out;">
-        <circle cx="24" cy="21" r="2" fill="#0A1420"/>
-        <circle id="pb-eye-pupil" cx="24.8" cy="20.2" r="0.6" fill="#ffffff" style="transition: transform 0.1s ease-out;"/>
-      </g>
-      <!-- Smile mouth -->
-      <path id="pb-mouth" d="M24 26.5 Q26.5 27.8 28.3 26.3" stroke="#0A1420" stroke-width="2.2" stroke-linecap="round" fill="none"/>
-      <defs>
-        <filter id="pbOrbGlow" x="-80%" y="-80%" width="260%" height="260%">
-          <feGaussianBlur in="SourceGraphic" stdDeviation="1.6" result="blur"/>
-          <feMerge>
-            <feMergeNode in="blur"/>
-            <feMergeNode in="SourceGraphic"/>
-          </feMerge>
-        </filter>
-      </defs>
-      <!-- Stalk & Orb -->
-      <g id="pb-lure-group">
-        <path d="M22 16 Q26 10 29 11" stroke="color-mix(in srgb, var(--primary) 80%, #000000)" stroke-width="2.6" stroke-linecap="round" fill="none"/>
-        <circle cx="29" cy="11" r="5" fill="none" stroke="var(--warning)" stroke-width="1.5" opacity="0.25" id="pb-orb-glow"/>
-        <circle cx="29" cy="11" r="2.8" fill="var(--warning)" id="pb-orb" filter="url(#pbOrbGlow)"/>
-      </g>
-    </svg>
+    <div id="pb-avatar-wrap">
+      <div id="pb-avatar-inner">
+        <div id="pb-avatar-glow-ring"></div>
+        <img id="pb-avatar-img-a" src="{{ url_for('static', filename='images/lure/lure_idle.png') }}" alt="" class="pb-mascot-img visible">
+        <img id="pb-avatar-img-b" src="{{ url_for('static', filename='images/lure/lure_idle.png') }}" alt="" class="pb-mascot-img">
+      </div>
+    </div>
   </button>
 </div>
 
@@ -1394,13 +1429,13 @@
           </p>
           
           <div class="pb-wt-guide-list">
-            <div class="pb-wt-guide-card" onclick="startWalkthrough('full_tour')">
+            <div class="pb-wt-guide-card" onclick="startWalkthrough('getting_started')" style="border-color: var(--primary); background: color-mix(in srgb, var(--primary) 6%, transparent);">
               <div class="pb-wt-guide-icon" style="color: var(--primary);"><i class="ti ti-compass"></i></div>
               <div class="pb-wt-guide-info">
-                <div class="pb-wt-guide-name">Full Platform Tour</div>
-                <div class="pb-wt-guide-desc">A complete walkthrough of all landing page modules, terminal, and sandbox clients.</div>
+                <div class="pb-wt-guide-name" style="font-weight: 700; color: var(--primary);">Getting Started (Recommended)</div>
+                <div class="pb-wt-guide-desc">The essential 9-step tour: sandbox playground, setting up campaigns, and live dashboard metrics.</div>
               </div>
-              <button class="pb-wt-guide-go"><i class="ti ti-arrow-right"></i></button>
+              <button class="pb-wt-guide-go" style="background: var(--primary); color: #000;"><i class="ti ti-arrow-right"></i></button>
             </div>
 
             <div class="pb-wt-guide-card" onclick="startWalkthrough('campaign_launch')">
@@ -1597,41 +1632,156 @@
 
     initVisitorProfile();
 
-    // Eye pupil following cursor logic (throttled via requestAnimationFrame)
+    // ── Mascot Images & Preloading ──
+    const mascotImages = {
+      idle: "{{ url_for('static', filename='images/lure/lure_idle.png') }}",
+      active: "{{ url_for('static', filename='images/lure/lure_thinking.png') }}",
+      success: "{{ url_for('static', filename='images/lure/lure_success.png') }}",
+      error: "{{ url_for('static', filename='images/lure/lure_error.png') }}",
+      blink: "{{ url_for('static', filename='images/lure/lure_blink.png') }}"
+    };
+
+    const preloadedImages = {};
+    for (const key in mascotImages) {
+      preloadedImages[key] = new Image();
+      preloadedImages[key].src = mascotImages[key];
+    }
+
+    // ── Mascot State & Crossfade Controller ──
+    let currentImageElement = document.getElementById('pb-avatar-img-a');
+    let hiddenImageElement = document.getElementById('pb-avatar-img-b');
+    let currentMascotState = 'idle';
+    let isBlinking = false;
+    let blinkTimeout = null;
+    let animationPlayingUntil = 0; // Timestamp safety to prevent blinking mid-animation
+
+    function setMascotImage(state) {
+      const url = mascotImages[state];
+      if (!url || !currentImageElement || !hiddenImageElement) return;
+
+      // Avoid unnecessary crossfade if target image is already set
+      if (currentImageElement.src === new URL(url, window.location.href).href) {
+        return;
+      }
+
+      hiddenImageElement.src = url;
+
+      const performCrossfade = () => {
+        hiddenImageElement.classList.add('visible');
+        currentImageElement.classList.remove('visible');
+
+        const temp = currentImageElement;
+        currentImageElement = hiddenImageElement;
+        hiddenImageElement = temp;
+      };
+
+      if (hiddenImageElement.complete) {
+        performCrossfade();
+      } else {
+        hiddenImageElement.onload = performCrossfade;
+      }
+    }
+
+    function changeMascotState(state) {
+      currentMascotState = state;
+
+      // Success or error states trigger one-shot animations
+      if (state === 'success' || state === 'error') {
+        if (blinkTimeout) {
+          clearTimeout(blinkTimeout);
+          blinkTimeout = null;
+        }
+        isBlinking = false;
+        animationPlayingUntil = Date.now() + 500; // Pause blink for 500ms
+      }
+
+      // If mid-blink, let the blink cycle end before updating visible state
+      if (!isBlinking) {
+        setMascotImage(state);
+      }
+    }
+
+    // ── Randomized Mascot Blinking ──
+    function scheduleNextBlink() {
+      if (blinkTimeout) clearTimeout(blinkTimeout);
+
+      const randomDelay = Math.random() * 4000 + 3000; // 3 to 7 seconds
+      blinkTimeout = setTimeout(() => {
+        // Skip blink if success/error animation is active
+        if (Date.now() < animationPlayingUntil) {
+          scheduleNextBlink();
+          return;
+        }
+
+        isBlinking = true;
+        setMascotImage('blink');
+
+        blinkTimeout = setTimeout(() => {
+          isBlinking = false;
+          setMascotImage(currentMascotState);
+          scheduleNextBlink();
+        }, 150); // Blink duration 150ms
+      }, randomDelay);
+    }
+
+    // Start blink loop once page is loaded
+    if (document.readyState === 'complete') {
+      scheduleNextBlink();
+    } else {
+      window.addEventListener('load', scheduleNextBlink);
+    }
+
+    // ── Sync Mascot Image with Class changes on #pb-host ──
+    const syncHost = document.getElementById('pb-host');
+    if (syncHost) {
+      const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+          if (mutation.attributeName === 'class') {
+            const className = syncHost.className;
+            let state = 'idle';
+            if (className.includes('pb-active')) state = 'active';
+            else if (className.includes('pb-success')) state = 'success';
+            else if (className.includes('pb-error')) state = 'error';
+            changeMascotState(state);
+          }
+        });
+      });
+      observer.observe(syncHost, { attributes: true });
+    }
+
+    // ── Cursor-Follow Mascot Tilt (replaces pupil movement) ──
     (function() {
-      const pupil = document.getElementById('pb-eye-pupil');
       const avatar = document.getElementById('pb-avatar');
-      if (!pupil || !avatar) return;
-      
+      const wrap = document.getElementById('pb-avatar-wrap');
+      if (!avatar || !wrap) return;
+
       let animationFrameId = null;
-      
+
       function onMouseMove(e) {
         if (animationFrameId) return;
-        
+
         animationFrameId = requestAnimationFrame(() => {
           animationFrameId = null;
-          
+
           const rect = avatar.getBoundingClientRect();
           const avatarCenterX = rect.left + rect.width / 2;
           const avatarCenterY = rect.top + rect.height / 2;
-          
+
           const distX = e.clientX - avatarCenterX;
           const distY = e.clientY - avatarCenterY;
           const distance = Math.hypot(distX, distY);
-          
+
           if (distance < 150 && distance > 0) {
-            // Shift pupil slightly, max 0.8px in SVG space
-            const maxShift = 0.8;
-            const factor = maxShift / distance;
-            const dx = distX * factor;
-            const dy = distY * factor;
-            pupil.style.transform = `translate(${dx}px, ${dy}px)`;
+            const maxTilt = 4.0; // max 4 degrees rotation
+            const proximityFactor = (150 - distance) / 150;
+            const angle = (distX / distance) * maxTilt * proximityFactor;
+            wrap.style.transform = `rotate(${angle.toFixed(2)}deg)`;
           } else {
-            pupil.style.transform = 'translate(0px, 0px)';
+            wrap.style.transform = 'rotate(0deg)';
           }
         });
       }
-      
+
       window.addEventListener('mousemove', onMouseMove, { passive: true });
     })();
 
@@ -1688,6 +1838,9 @@
 
     const host      = document.getElementById('pb-host');
     const avatar    = document.getElementById('pb-avatar');
+    if (host && host.parentNode !== document.body) {
+      document.body.appendChild(host);
+    }
     const panel     = document.getElementById('pb-panel');
     const teaser    = document.getElementById('pb-teaser');
     const fvPopover = document.getElementById('pb-first-visit-popover');
@@ -1696,6 +1849,8 @@
     let panelOpen = false;
     let fvOpen    = false;
     let expanded  = false;
+    let resizeHandler = null;
+    let scrollHandler = null;
 
     // Cache pre-warmed generator scenario
     const _cache = {};
@@ -2029,7 +2184,10 @@
       setTimeout(() => {
         const wtTabBtn = inlineSec.querySelector('.pb-tab-btn[data-tab="il-walkthrough"]');
         if (wtTabBtn) wtTabBtn.click();
-      }, 150);
+        if (typeof startWalkthrough === 'function') {
+          startWalkthrough('getting_started');
+        }
+      }, 250);
     }
 
     /* ── Generator API logic ── */
@@ -2252,241 +2410,64 @@
        Interactive Walkthrough Engine (Global & Cross-Page support)
        ================================================================ */
     const WALKTHROUGH_CONFIGS = {
-      full_tour: [
-        // ── #hero ────────────────────────────────────────────────────────────────
+      getting_started: [
         {
-          targetId: "hero",
-          title: "Interactive Terminal",
-          text: "Hi there! I'm Lure, your AI phishing co-pilot. Right here is my active terminal, where I can query target MX records, configure SPF settings, and fetch public OSINT threat vectors. It's the first step in seeing what a real attacker can find out about your network.",
+          targetId: "actual-terminal-wrapper",
+          title: "Simulate Like an Attacker",
+          text: "Welcome! I'm Lure, your AI phishing co-pilot. Right here is my active terminal, where I query domain MX records, analyze email safety, and scout public OSINT data so you can see exactly what an attacker sees before they launch.",
           path: "/"
         },
-        // ── #attack-chain ────────────────────────────────────────────────────────
         {
-          targetId: "attack-chain",
-          title: "Attack Lifecycle Visualized",
-          text: "Phishing is more than just a single email—it's a multi-stage kill chain. This visualizer breaks down the entire lifecycle I orchestrate, from the initial lure delivery, through credential harvesting, all the way to simulated data exfiltration.",
+          targetId: "threat-sandbox",
+          title: "The Threat Sandbox",
+          text: "This sandbox is your safe playground. Go ahead and test out our Generate and Spot Phish tabs right now — it's a completely free way to see how AI personalization makes phishing emails so dangerously believable.",
           path: "/"
         },
-        // ── #threat-sandbox (Tabs) ────────────────────────────────────────────────
-        {
-          targetId: "tab-ceo",
-          title: "Phishing Scenario Lab",
-          text: "Over here in the Threat Sandbox, you can direct my AI to draft different styles of phishing emails. We've got standard pretexts like CEO wire fraud, IT credential harvests, and urgent HR policies ready for you to experiment with.",
-          path: "/"
-        },
-        // ── #threat-sandbox (Email Preview) ──────────────────────────────────────
-        {
-          targetId: "mail-body",
-          title: "Fictional Live Lures",
-          text: "Take a look at this inbox preview. When you select a scenario, my engine crafts highly personalized body copy, complete with spoofed headers and convincing urgency cues designed to test your employees' vigilance.",
-          path: "/"
-        },
-        // ── #threat-sandbox (Telemetry Outcome) ──────────────────────────────────
-        {
-          targetId: "live-telemetry-container",
-          title: "Real-time Telemetry",
-          text: "The moment a recipient clicks our test link, I capture that interaction and log it right here in this telemetry panel. This lets your security team trace compromised paths in real time without exposing any actual credentials.",
-          path: "/"
-        },
-        // ── #capabilities ────────────────────────────────────────────────────────
-        {
-          targetId: "capabilities",
-          title: "Core Security Capabilities",
-          text: "These are my core security capabilities. Beyond drafting individual emails, I manage automated scheduling, target list ingestion, lookalike domain tracking, and custom employee training triggers all under one hood.",
-          path: "/"
-        },
-        // ── #global-threat-intel ─────────────────────────────────────────────────
-        {
-          targetId: "global-threat-intel",
-          title: "Global Threat Intelligence",
-          text: "To keep your simulations realistic, I actively monitor global threat feeds. This live map tracks emerging phishing campaigns worldwide, allowing me to inject real-world Tactics, Techniques, and Procedures into your drills.",
-          path: "/"
-        },
-        // ── #solutions ───────────────────────────────────────────────────────────
-        {
-          targetId: "solutions",
-          title: "Simulation Solutions",
-          text: "Whether you're in finance, retail, or healthcare, I can adjust my pretexts to match. I craft industry-specific lures that simulate the exact vendor invoice schemes and regulatory traps common to your sector.",
-          path: "/"
-        },
-        // ── #threat-intel-suite ──────────────────────────────────────────────────
-        {
-          targetId: "threat-intel-suite",
-          title: "Free Analyst Tools",
-          text: "I've also built a collection of analyst utilities here. From forensic header parsing to decoders for obfuscated redirect URLs, you're free to use all five of these security tools right now without creating an account.",
-          path: "/"
-        },
-        // ── #stats ───────────────────────────────────────────────────────────────
-        {
-          targetId: "stats",
-          title: "Proven Security Statistics",
-          text: "The numbers speak for themselves. By running regular simulation campaigns with me, our client organizations typically see employee reporting rates climb from under 5% to over 40% in just three months.",
-          path: "/"
-        },
-        // ── #join-beta ───────────────────────────────────────────────────────────
-        {
-          targetId: "join-beta",
-          title: "Domain Exposure Scanner",
-          text: "Curious what information about your company is already exposed? Enter your business domain in this audit form, and I'll perform a quick scan of public sources for leaked credentials and active threat vectors targeting you.",
-          path: "/"
-        },
-        // ── #pricing ─────────────────────────────────────────────────────────────
-        {
-          targetId: "pricing",
-          title: "Flexible Licensing Tiers",
-          text: "We keep pricing simple. Our Free tier lets you run basic simulations, while the Pro tier unlocks automated campaigns, advanced OSINT crawls for target discovery, custom landing pages, and comprehensive training reports.",
-          path: "/"
-        },
-        // ── #cta ─────────────────────────────────────────────────────────────────
-        {
-          targetId: "cta",
-          title: "Create Your Sandbox",
-          text: "We're at the end of the public homepage! You can sign up for a free account right here to start running live exercises against your domain, or launch the demo playground to check out the dashboard.",
-          path: "/"
-        },
-        // ── Transition Step ──────────────────────────────────────────────────────
-        {
-          targetId: "cta",
-          title: "Entering the Dashboard",
-          text: "Now that you've seen the public-facing features, let's step behind the curtain. I'm going to take you straight into the signed-in dashboard so you can see what managing a live simulation program looks like!",
-          path: "/",
-          redirectPath: "/dashboard?tour=1"
-        },
-        // ── Dashboard overview ───────────────────────────────────────────────────
-        {
-          targetId: "wt-dashboard-view",
-          title: "Dashboard Overview",
-          text: "Welcome to your Simulation Dashboard — this is my command center. The four KPI cards you see here show active campaigns, total employees in scope, your current average click rate, and your organization's overall Human Security Score. Everything updates in real time as simulations run.",
-          path: "/dashboard?tour=1"
-        },
-        // ── New campaign: name the campaign ─────────────────────────────────────
         {
           targetId: "campaign_name",
-          title: "Name Your Campaign",
-          text: "Every phishing exercise starts here. Give this campaign a name that maps to a training objective — for example 'Q3 Finance Phishing Test' — and enter your target domain. I use the domain to craft lure emails that look like they genuinely originated inside your organization.",
-          path: "/new-campaign?tour=1"
+          title: "Target Identity",
+          text: "First, give your campaign a clear name and set the target domain. Personalization is the key to a realistic simulation — we want these tests to look exactly like the real, context-aware pretexts your team faces daily.",
+          path: "/new-campaign"
         },
-        // ── New campaign: pick a scenario ────────────────────────────────────────
         {
           targetId: "wt-scenarios-container",
-          title: "Choose a Threat Scenario",
-          text: "This is where you direct my AI engine. Each scenario — CEO Fraud, IT Security Alert, HR Update, Invoice Request — maps to a real-world pretext I've been trained on. The scenario shapes the email subject, sender persona, urgency framing, and the credential-harvest landing page your employees will see.",
-          path: "/new-campaign?tour=1"
+          title: "Choosing Your Pretext",
+          text: "The scenario you pick sets the story for the email. I'll automatically draft body copy using this pretext — just like you saw in my Lure panel earlier, but fully automated for your entire team.",
+          path: "/new-campaign"
         },
-        // ── New campaign: Next button → upload step ──────────────────────────────
         {
-          targetId: "wt-next-btn",
-          title: "Proceed to Target Upload",
-          text: "Happy with your scenario? Hit Next and I'll carry your settings into Step 2, where you'll upload your employee roster. A precise target list is what separates a generic awareness exercise from a surgical simulation that identifies your highest-risk individuals by name and department.",
-          path: "/new-campaign?tour=1",
-          redirectPath: "/new-campaign/upload/0?tour=1"
+          targetId: "wt-delivery-grid",
+          title: "Delivery Control",
+          text: "How should we dispatch these emails? You can choose to run a local sandbox test, dispatch live emails via SMTP, or use Safe Send to redirect all mail safely to Mailtrap so you can review it without risk.",
+          path: "/new-campaign"
         },
-        // ── Upload step ──────────────────────────────────────────────────────────
         {
-          targetId: "section-csv",
-          title: "Upload Target Employees",
-          text: "Drop a CSV here with your employee names, emails, and departments and I'll map every lure to its recipient personally. Alternatively, switch to the OSINT tab and I'll crawl public sources to discover exposed addresses for your domain automatically — no spreadsheet required.",
-          path: "/new-campaign/upload/0?tour=1",
-          redirectPath: "/new-campaign/launch/0?tour=1"
+          targetId: "consent_confirmed",
+          title: "Ready for Launch",
+          text: "Confirm your authorization and hit Create. I'll take it from there — generating context-aware lures and preparing to track how your team interacts with them.",
+          path: "/new-campaign"
         },
-        // ── Launch step ──────────────────────────────────────────────────────────
         {
-          targetId: "launch-btn",
-          title: "Launch the Campaign",
-          text: "This is the moment of truth. Once you click Launch, I generate individualized phishing emails for every target, schedule delivery, and arm the tracking pixels and link intercepts that capture every open, click, and credential submission — all without impacting your production mail flow.",
-          path: "/new-campaign/launch/0?tour=1"
+          targetId: "wt-dashboard-view",
+          title: "Simulation Command Center",
+          text: "This is where your campaign results land live. You'll see real-time updates on emails sent, delivered, opened, and clicked so you can pinpoint where your team needs the most training.",
+          path: "/dashboard"
         },
-        // ── Campaign email inbox ─────────────────────────────────────────────────
         {
-          targetId: "wt-emails-inbox",
-          title: "Generated Email Inbox",
-          text: "Here's the dispatch queue for your campaign. Every email I generated is listed here — you can click any one to review its exact pretext, sender persona, and embedded tracking link before it lands in an employee's inbox. This audit view lets you catch anything that needs a tone adjustment.",
-          path: "/campaign-emails/0?tour=1"
+          targetId: "mainTrendChart",
+          title: "Tracking Click Rates",
+          text: "Keep an eye on this trend chart. A high click-rate means your team is falling for the pretexts — but don't worry, every failed test is a teachable moment to help them learn what red flags to spot.",
+          path: "/dashboard"
         },
-        // ── Reports demo overview ────────────────────────────────────────────────
         {
-          targetId: "sec-hero",
-          title: "AI Report Overview",
-          text: "After a campaign runs, I build a full intelligence brief here. This overview surfaces department-level risk rankings, interaction timelines, and training prioritization recommendations — the kind of data that turns raw click rates into an actionable security roadmap for your CISO.",
-          path: "/reports-demo"
-        },
-        // ── Detailed campaign report ─────────────────────────────────────────────
-        {
-          targetId: "wt-report-hero",
-          title: "Detailed Campaign Report",
-          text: "Drilling into a specific campaign reveals the full telemetry picture: who clicked, when, from what device, and how far through the credential-harvest flow they progressed. I correlate all of this into a precise Human Security Score so you can track resilience improvement campaign over campaign.",
-          path: "/campaign-report/0?tour=1"
-        },
-        // ── PDF export ───────────────────────────────────────────────────────────
-        {
-          targetId: "pdf-dl-btn",
-          title: "Export for Leadership",
-          text: "Security work needs to be visible to decision-makers. Hit this button and I'll render your campaign findings into a polished, board-ready PDF — complete with risk score breakdowns, department heat maps, and recommended training actions.",
-          path: "/campaign-report/0?tour=1"
-        },
-
-        // ════════════════════════════════════════════════════════════════════════
-        // Employee-perspective section: what happens when a link gets clicked
-        // ════════════════════════════════════════════════════════════════════════
-
-        // ── Fake credential-harvesting landing page ───────────────────────────
-        {
-          targetId: "login-form",
-          title: "The Credential Harvest Page",
-          text: "This is exactly what an employee sees the moment they click my link — a pixel-perfect clone of a legitimate corporate login page. I can mimic Microsoft, Google, Okta, and others. The goal isn't to actually steal credentials: it's to measure how many employees hand them over without questioning the URL or sender.",
-          path: "/fake-login-demo"
-        },
-        // ── Simulation reveal page ────────────────────────────────────────────
-        {
-          targetId: "warning-card-container",
-          title: "The Reveal — You Got Phished",
-          text: "The moment an employee submits the form, I redirect them here. This is my 'gotcha' reveal: I explain what just happened, which red flags they missed — urgency language, mismatched domains, generic greetings — and why a real attacker would now own their account. This micro-training moment is the most effective part of the entire simulation.",
-          path: "/simulated"
-        },
-        // ── Thank you for reporting page ──────────────────────────────────────
-        {
-          targetId: "thank-you-card-container",
-          title: "The Right Move — Threat Reported",
-          text: "When an employee spots the lure and reports it instead of clicking, they land here. I reward the behaviour with positive reinforcement and a Security Champion badge. Organizations that run regular simulations see report rates climb from under 5% to over 40% within three campaigns — because employees learn that reporting is celebrated, not ignored.",
-          path: "/reporting-demo"
-        },
-
-        // ════════════════════════════════════════════════════════════════════════
-        // Security analyst tools — all public, no login required
-        // ════════════════════════════════════════════════════════════════════════
-
-        // ── Email Header Analyzer ─────────────────────────────────────────────
-        {
-          targetId: "ha-card-container",
-          title: "Email Header Analyzer",
-          text: "Paste raw email headers here and I'll decode every hop the message traveled, flag authentication failures (SPF, DKIM, DMARC), and surface the true originating IP — the exact forensic workflow a SOC analyst runs to determine whether a suspicious email is malicious or benign.",
-          path: "/header-analyzer"
-        },
-        // ── Threat Analyzer ───────────────────────────────────────────────────
-        {
-          targetId: "ta-main-card",
-          title: "Phishing Threat Analyzer",
-          text: "Drop suspicious email body text or headers in here and I'll score it across twenty-plus phishing signals: urgency language, lookalike domains, credential-request patterns, and social-engineering cues. Security teams use this to triage reported emails in seconds rather than minutes.",
-          path: "/threat-analyzer"
-        },
-        // ── URL Decoder ───────────────────────────────────────────────────────
-        {
-          targetId: "ud-input-state",
-          title: "Phishing URL Decoder",
-          text: "Attackers hide malicious destinations behind redirect chains, base64 blobs, and URL-shorteners. Paste any suspicious link here and I'll unpack every redirect hop, resolve the final destination, and flag known threat-intel matches — without you ever having to actually visit the page.",
-          path: "/url-decoder"
-        },
-        // ── Password Breach Checker ───────────────────────────────────────────
-        {
-          targetId: "pb-vault-card",
-          title: "Password Breach Checker",
-          text: "Before you even run a simulation, it helps to know which employees are already compromised. This tool checks whether a password or email address appears in known breach datasets — using a k-anonymity hash so the actual credential never leaves the browser. That wraps the full platform tour — you've now seen every stage of the phishing lifecycle, from lure to lesson.",
-          path: "/password-breach"
+          targetId: "wt-dashboard-view",
+          title: "You're Ready!",
+          text: "That wraps up our tour! You're ready to create your first real campaign, or if you prefer, you can ask me questions in the Ask Lure tab. Let's make security a habit!",
+          path: "/dashboard"
         }
       ],
-
       campaign_launch: [
-        { targetId: "hero", title: "Terminal Queries", text: "First, let's look at my Sandbox Terminal. Here, you can type active security commands to query target email domains and analyze target vulnerabilities.", path: "/" },
+        { targetId: "actual-terminal-wrapper", title: "Terminal Queries", text: "First, let's look at my Sandbox Terminal. Here, you can type active security commands to query target email domains and analyze target vulnerabilities.", path: "/" },
         { targetId: "wt-create-campaign-btn", title: "Campaign Hub", text: "Ready to launch? We go to the Dashboard to create a campaign.", path: "/dashboard", redirectPath: "/new-campaign" },
         { targetId: "campaign-form", title: "Campaign Creator", text: "In this form, you configure targets and scenarios. Once launched, simulation results flow right back into the dashboard.", path: "/new-campaign" }
       ],
@@ -2505,147 +2486,354 @@
     let wtCurrentStep = 0;
     let wtSteps = [];
     let wtCurrentPage = 'full_tour';
+    let isFirstStep = true;
+    let gateListenersInitialized = false;
 
-    function repositionWalkthroughElements() {
+    function checkStepGate(stepIdx) {
+      if (wtCurrentPage !== 'getting_started') return true; // Gate only the getting_started recommended tour
+      
+      if (stepIdx === 0) {
+        // Step 1: Terminal query
+        const terminalBody = document.getElementById('terminal-body');
+        return !!(terminalBody && (terminalBody.textContent.includes('demo-corp.com') || terminalBody.textContent.includes('MX') || terminalBody.textContent.includes('SPF') || terminalBody.textContent.includes('DMARC') || terminalBody.children.length > 2));
+      }
+      if (stepIdx === 1) {
+        // Step 2: Sandbox generate
+        const emailCard = document.getElementById('pb-card');
+        return !!(emailCard && emailCard.style.display !== 'none');
+      }
+      if (stepIdx === 2) {
+        // Step 3: Campaign Name
+        const nameInput = document.getElementById('campaign_name');
+        return !!(nameInput && nameInput.value.trim().length >= 3);
+      }
+      if (stepIdx === 3) {
+        // Step 4: Scenario Selection
+        const scenarioChecked = document.querySelector('input[name="scenario"]:checked');
+        return !!scenarioChecked;
+      }
+      if (stepIdx === 4) {
+        // Step 5: Delivery Mode
+        const deliveryChecked = document.querySelector('input[name="delivery_mode"]:checked');
+        return !!deliveryChecked;
+      }
+      if (stepIdx === 5) {
+        // Step 6: Consent checkbox
+        const consentChecked = document.getElementById('consent_confirmed');
+        return !!(consentChecked && consentChecked.checked);
+      }
+      return true; // Steps 7, 8, 9 are not gated
+    }
+
+    function initGateListeners() {
+      if (gateListenersInitialized) return;
+      gateListenersInitialized = true;
+
+      // Watch terminal logs changes or general changes
+      setInterval(() => {
+        if (wtActive && wtCurrentPage === 'getting_started') {
+          updateWalkthroughGate();
+        }
+      }, 400);
+
+      // Event listener for inputs on campaign page
+      document.body.addEventListener('input', (e) => {
+        if (!wtActive || wtCurrentPage !== 'getting_started') return;
+        if (e.target.id === 'campaign_name' || e.target.id === 'company_domain') {
+          updateWalkthroughGate();
+        }
+      });
+
+      document.body.addEventListener('change', (e) => {
+        if (!wtActive || wtCurrentPage !== 'getting_started') return;
+        if (e.target.name === 'scenario' || e.target.name === 'delivery_mode' || e.target.id === 'consent_confirmed') {
+          updateWalkthroughGate();
+        }
+      });
+    }
+
+    function updateWalkthroughGate() {
+      const satisfiesGate = checkStepGate(wtCurrentStep);
+      const nextBtns = document.querySelectorAll('.pb-next-btn');
+      const gatePrompts = document.querySelectorAll('.pb-gate-prompt');
+      
+      nextBtns.forEach(nextBtn => {
+        if (satisfiesGate) {
+          nextBtn.removeAttribute('disabled');
+          nextBtn.classList.remove('pb-disabled');
+          nextBtn.style.opacity = '1';
+          nextBtn.style.cursor = 'pointer';
+        } else {
+          nextBtn.setAttribute('disabled', 'true');
+          nextBtn.classList.add('pb-disabled');
+          nextBtn.style.opacity = '0.4';
+          nextBtn.style.cursor = 'not-allowed';
+        }
+      });
+
+      gatePrompts.forEach(p => {
+        p.style.display = satisfiesGate ? 'none' : 'flex';
+      });
+    }
+
+    /* ── Walkthrough Helpers for Swimming and Particles ── */
+    function createBubbleParticle(x, y) {
+      const bubble = document.createElement('div');
+      bubble.className = 'pb-bubble-particle';
+      const size = Math.floor(Math.random() * 6) + 4;
+      bubble.style.width = size + 'px';
+      bubble.style.height = size + 'px';
+      const offsetX = (Math.random() - 0.5) * 12;
+      const offsetY = (Math.random() - 0.5) * 12;
+      bubble.style.left = (x - size / 2 + offsetX) + 'px';
+      bubble.style.top = (y - size / 2 + offsetY) + 'px';
+      document.body.appendChild(bubble);
+      setTimeout(() => { bubble.remove(); }, 800);
+    }
+
+    function swimMascot(targetLeft, targetTop, instant = false) {
+      const avatarEl = document.getElementById('pb-avatar');
+      if (!avatarEl || !host) return;
+
+      const currentLeft = parseFloat(host.style.left) || -999;
+      const currentTop  = parseFloat(host.style.top)  || -999;
+
+      // Snap without transition on first step or instant moves
+      if (instant || isFirstStep) {
+        isFirstStep = false;
+        host.style.setProperty('transition', 'none', 'important');
+        host.style.setProperty('position', 'fixed', 'important');
+        host.style.setProperty('bottom', 'auto', 'important');
+        host.style.setProperty('right', 'auto', 'important');
+        host.style.top  = targetTop  + 'px';
+        host.style.left = targetLeft + 'px';
+        void host.offsetWidth;
+        host.style.removeProperty('transition');
+        return;
+      }
+
+      if (Math.abs(currentLeft - targetLeft) < 4 && Math.abs(currentTop - targetTop) < 4) {
+        return;
+      }
+
+      avatarEl.classList.add('pb-swim-active');
+      // Allow CSS transition (set in .pb-walkthrough-mode)
+      host.style.setProperty('position', 'fixed', 'important');
+      host.style.setProperty('bottom', 'auto', 'important');
+      host.style.setProperty('right', 'auto', 'important');
+      host.style.top  = targetTop  + 'px';
+      host.style.left = targetLeft + 'px';
+
+      // Emit swim bubbles
+      const duration = 500;
+      const bubbleCount = 4;
+      for (let i = 0; i < bubbleCount; i++) {
+        setTimeout(() => {
+          if (!avatarEl.classList.contains('pb-swim-active')) return;
+          const rect = avatarEl.getBoundingClientRect();
+          createBubbleParticle(
+            rect.left + window.scrollX + rect.width  / 2,
+            rect.top  + window.scrollY + rect.height / 2
+          );
+        }, (duration / bubbleCount) * i);
+      }
+
+      setTimeout(() => { avatarEl.classList.remove('pb-swim-active'); }, duration);
+    }
+
+    function swimOffAndNavigate(path) {
+      const avatar = document.getElementById('pb-avatar');
+      const host = document.getElementById('pb-host');
+      if (!avatar || !host) {
+        window.location.href = path;
+        return;
+      }
+
+      const rect = host.getBoundingClientRect();
+      const hostCenterX = rect.left + rect.width / 2;
+      const hostCenterY = rect.top + rect.height / 2;
+
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
+
+      const distLeft = hostCenterX;
+      const distRight = viewportWidth - hostCenterX;
+      const distTop = hostCenterY;
+      const distBottom = viewportHeight - hostCenterY;
+
+      const minDist = Math.min(distLeft, distRight, distTop, distBottom);
+      let exitEdge = 'right';
+      let targetLeft = window.scrollX + viewportWidth + 150;
+      let targetTop = window.scrollY + rect.top;
+
+      if (minDist === distLeft) {
+        exitEdge = 'left';
+        targetLeft = window.scrollX - rect.width - 150;
+        targetTop = window.scrollY + rect.top;
+      } else if (minDist === distTop) {
+        exitEdge = 'top';
+        targetLeft = window.scrollX + rect.left;
+        targetTop = window.scrollY - rect.height - 150;
+      } else if (minDist === distBottom) {
+        exitEdge = 'bottom';
+        targetLeft = window.scrollX + rect.left;
+        targetTop = window.scrollY + viewportHeight + 150;
+      } else {
+        exitEdge = 'right';
+        targetLeft = window.scrollX + viewportWidth + 150;
+        targetTop = window.scrollY + rect.top;
+      }
+
+      localStorage.setItem('lure_wt_exit_edge', exitEdge);
+      avatar.classList.add('pb-swim-active');
+
+      host.style.setProperty('transition', 'top 0.4s cubic-bezier(0.25, 1, 0.5, 1), left 0.4s cubic-bezier(0.25, 1, 0.5, 1)', 'important');
+      host.style.setProperty('position', 'fixed', 'important');
+      host.style.top = targetTop + 'px';
+      host.style.left = targetLeft + 'px';
+
+      for (let i = 0; i < 3; i++) {
+        setTimeout(() => {
+          const r = avatar.getBoundingClientRect();
+          createBubbleParticle(r.left + window.scrollX + r.width / 2, r.top + window.scrollY + r.height / 2);
+        }, 100 * i);
+      }
+
+      setTimeout(() => {
+        window.location.href = path;
+      }, 350);
+    }
+
+    function repositionWalkthroughElements(isPageScroll = false) {
       if (!wtActive || wtCurrentStep < 0 || wtCurrentStep >= wtSteps.length) return;
       const step = wtSteps[wtCurrentStep];
-      const targetEl = document.getElementById(step.targetId);
-      
+
+      // Resolve the target element (dashboard empty-state override)
+      let currentTargetId = step.targetId;
+      const onDashboard = window.location.pathname.startsWith('/dashboard');
+      const emptyStateActive = document.getElementById('no-campaigns-card') &&
+            document.getElementById('no-campaigns-card').style.display !== 'none';
+      if (onDashboard && emptyStateActive) {
+        if (currentTargetId === 'wt-dashboard-view' || currentTargetId === 'mainTrendChart') {
+          currentTargetId = 'no-campaigns-card';
+        }
+      }
+
+      const targetEl = document.getElementById(currentTargetId);
       let highlighter = document.getElementById('pb-wt-highlighter');
+
+      // No target → fall back to bottom-right corner
       if (!targetEl) {
         if (highlighter) highlighter.style.display = 'none';
-        // Fallback: Float at the bottom-right corner if target is missing
         host.style.setProperty('position', 'fixed', 'important');
         host.style.setProperty('top', 'auto', 'important');
         host.style.setProperty('left', 'auto', 'important');
         host.style.setProperty('bottom', '24px', 'important');
         host.style.setProperty('right', '24px', 'important');
-        
         avatar.classList.remove('pb-face-left');
         host.classList.remove('pb-direction-left');
         host.classList.add('pb-direction-right');
         return;
       }
 
-      // Check path matching first
+      // Wrong page → hide and bail
       const currentPath = window.location.pathname.replace(/\/$/, '') || '/';
-      const targetPath = step.path.split('?')[0].replace(/\/$/, '') || '/';
+      const targetPath  = step.path.split('?')[0].replace(/\/$/, '') || '/';
       if (currentPath !== targetPath) {
         if (highlighter) highlighter.style.display = 'none';
         return;
       }
 
+      // ── Use getBoundingClientRect for viewport-relative positioning ──
+      // We already scrolled the element into view in tryHighlightAndPosition.
       const rect = targetEl.getBoundingClientRect();
-      
-      // Update/Create highlighter overlay
+
+      // Update highlighter (fixed, viewport-relative)
       if (!highlighter) {
         highlighter = document.createElement('div');
         highlighter.id = 'pb-wt-highlighter';
-        highlighter.style.position = 'absolute';
-        highlighter.style.pointerEvents = 'none';
-        highlighter.style.boxSizing = 'border-box';
-        highlighter.style.borderRadius = '12px';
-        highlighter.style.border = '3px solid var(--primary)';
-        highlighter.style.boxShadow = '0 0 20px rgba(6, 182, 212, 0.45)';
-        highlighter.style.zIndex = '9999';
-        highlighter.style.transition = 'all 0.15s ease-out';
+        highlighter.style.cssText = [
+          'position:fixed', 'pointer-events:none', 'box-sizing:border-box',
+          'border-radius:12px', 'border:2px solid var(--primary)',
+          'box-shadow:0 0 0 4px rgba(6,182,212,0.18),0 0 24px rgba(6,182,212,0.35)',
+          'z-index:19999', 'transition:all 0.2s ease-out'
+        ].join(';');
         document.body.appendChild(highlighter);
       }
       highlighter.style.display = 'block';
-      highlighter.style.top = (rect.top + window.scrollY - 6) + 'px';
-      highlighter.style.left = (rect.left + window.scrollX - 6) + 'px';
-      highlighter.style.width = (rect.width + 12) + 'px';
-      highlighter.style.height = (rect.height + 12) + 'px';
+      highlighter.style.position = 'fixed';
+      highlighter.style.top    = (rect.top    - 5) + 'px';
+      highlighter.style.left   = (rect.left   - 5) + 'px';
+      highlighter.style.width  = (rect.width  + 10) + 'px';
+      highlighter.style.height = (rect.height + 10) + 'px';
 
-      const bubbleEl = document.getElementById('pb-wt-bubble');
+      const vw        = window.innerWidth;
+      const vh        = window.innerHeight;
+      const margin    = 16;
+      const mascotW   = 110;
+      const bubbleW   = 320;
+      const gap       = 10;
+      const hostW     = mascotW + gap + bubbleW;   // ~440px
+      const bubbleEl  = document.getElementById('pb-wt-bubble');
+      const hostH     = bubbleEl ? Math.max(bubbleEl.offsetHeight, 160) : 200;
 
-      // Mobile viewport override to prevent clipping/overlapping
-      if (window.innerWidth <= 768) {
-        const bubbleHeight = bubbleEl ? bubbleEl.offsetHeight : 160;
-        const targetIsNearBottom = rect.bottom > window.innerHeight / 2;
-        const margin = 10;
-        
-        let cardTop = targetIsNearBottom 
-          ? (window.scrollY + margin + 70) // Below navbar
-          : (window.scrollY + window.innerHeight - bubbleHeight - margin - 20); // Above footer
-          
-        let cardLeft = window.scrollX + (window.innerWidth - 340) / 2;
-        
-        if (bubbleEl) {
-          bubbleEl.classList.add('pb-mobile-no-arrow');
-        }
-        
-        host.style.setProperty('position', 'absolute', 'important');
-        host.style.setProperty('top', cardTop + 'px', 'important');
-        host.style.setProperty('left', cardLeft + 'px', 'important');
-        host.style.setProperty('bottom', 'auto', 'important');
-        host.style.setProperty('right', 'auto', 'important');
+      // Mobile: stick below the element
+      if (vw <= 768) {
+        if (bubbleEl) bubbleEl.classList.add('pb-mobile-no-arrow');
+        const cardLeft = Math.max(margin, (vw - bubbleW) / 2);
+        const cardTop  = Math.min(rect.bottom + gap, vh - hostH - margin);
+        swimMascot(cardLeft, cardTop);
         return;
-      } else {
-        if (bubbleEl) {
-          bubbleEl.classList.remove('pb-mobile-no-arrow');
-        }
       }
+      if (bubbleEl) bubbleEl.classList.remove('pb-mobile-no-arrow');
 
-      // Reposition Lure adjacent to the side with the most space
-      const padding = 20;
-      const margin = 20;
-      const mascotWidth = 110;
-      const bubbleWidth = 340;
-      const gap = 12;
-      const hostWidth = mascotWidth + gap + bubbleWidth; // 462px
-      
-      const hostHeight = bubbleEl ? Math.max(bubbleEl.offsetHeight, 180) : 220;
+      // Compute available space on each side (viewport-relative)
+      const spaceRight  = vw - rect.right;
+      const spaceLeft   = rect.left;
+      const spaceBottom = vh - rect.bottom;
+      const spaceTop    = rect.top;
 
-      const viewportWidth = window.innerWidth;
-      const viewportHeight = window.innerHeight;
+      // Pick the side with the most room for the full host group
+      let bestSide = 'right';
+      let maxSpace = spaceRight;
 
-      // Space on four sides relative to the viewport
-      const spaceLeft = rect.left;
-      const spaceRight = viewportWidth - rect.right;
-      const spaceTop = rect.top;
-      const spaceBottom = viewportHeight - rect.bottom;
-
-      // Determine which side has the maximum free space
-      let bestSide = 'bottom';
-      let maxSpace = spaceBottom;
-
+      if (spaceLeft > maxSpace && spaceLeft >= hostW + margin) {
+        bestSide = 'left';
+        maxSpace = spaceLeft;
+      }
+      if (spaceBottom > maxSpace) {
+        bestSide = 'bottom';
+        maxSpace = spaceBottom;
+      }
       if (spaceTop > maxSpace) {
         bestSide = 'top';
         maxSpace = spaceTop;
       }
-      if (spaceRight > maxSpace && spaceRight > hostWidth) {
-        bestSide = 'right';
-        maxSpace = spaceRight;
-      }
-      if (spaceLeft > maxSpace && spaceLeft > hostWidth) {
-        bestSide = 'left';
-        maxSpace = spaceLeft;
-      }
+
+      // Force right if it fits (most common layout)
+      if (spaceRight >= hostW + margin) bestSide = 'right';
 
       let hostLeft = 0;
-      let hostTop = 0;
+      let hostTop  = 0;
 
       if (bestSide === 'right') {
-        hostLeft = rect.right + padding;
-        hostTop = rect.top + (rect.height - hostHeight) / 2;
+        hostLeft = rect.right + gap;
+        hostTop  = rect.top + (rect.height - hostH) / 2;
       } else if (bestSide === 'left') {
-        hostLeft = rect.left - hostWidth - padding;
-        hostTop = rect.top + (rect.height - hostHeight) / 2;
+        hostLeft = rect.left - hostW - gap;
+        hostTop  = rect.top + (rect.height - hostH) / 2;
       } else if (bestSide === 'top') {
-        hostLeft = rect.left + (rect.width - hostWidth) / 2;
-        hostTop = rect.top - hostHeight - padding;
-      } else { // bottom
-        hostLeft = rect.left + (rect.width - hostWidth) / 2;
-        hostTop = rect.bottom + padding;
+        hostLeft = rect.left + (rect.width - hostW) / 2;
+        hostTop  = rect.top - hostH - gap;
+      } else {
+        hostLeft = rect.left + (rect.width - hostW) / 2;
+        hostTop  = rect.bottom + gap;
       }
 
-      // Orientation of avatar face & bubble order
-      const targetCenter = rect.left + rect.width / 2;
-      const hostCenter = hostLeft + hostWidth / 2;
-      const shouldFaceLeft = targetCenter < hostCenter;
-
-      if (shouldFaceLeft) {
+      // Face direction
+      const targetCx = rect.left + rect.width / 2;
+      const hostCx   = hostLeft + hostW / 2;
+      if (targetCx < hostCx) {
         avatar.classList.add('pb-face-left');
         host.classList.remove('pb-direction-right');
         host.classList.add('pb-direction-left');
@@ -2655,29 +2843,17 @@
         host.classList.add('pb-direction-right');
       }
 
-      // Convert viewport coords to absolute page coords
-      let cardLeft = hostLeft + window.scrollX;
-      let cardTop = hostTop + window.scrollY;
+      // Clamp to viewport with margin
+      const cardLeft = Math.max(margin, Math.min(hostLeft, vw - hostW - margin));
+      const cardTop  = Math.max(margin, Math.min(hostTop,  vh - hostH - margin));
 
-      // Clamp coordinates to stay within the page boundaries
-      const minLeft = window.scrollX + margin;
-      const maxLeft = window.scrollX + viewportWidth - hostWidth - margin;
-      cardLeft = Math.max(minLeft, Math.min(cardLeft, maxLeft));
-
-      const minTop = window.scrollY + margin;
-      const maxTop = window.scrollY + viewportHeight - hostHeight - margin;
-      cardTop = Math.max(minTop, Math.min(cardTop, maxTop));
-
-      host.style.setProperty('position', 'absolute', 'important');
-      host.style.setProperty('top', cardTop + 'px', 'important');
-      host.style.setProperty('left', cardLeft + 'px', 'important');
-      host.style.setProperty('bottom', 'auto', 'important');
-      host.style.setProperty('right', 'auto', 'important');
+      swimMascot(cardLeft, cardTop, isPageScroll);
     }
 
     window.startWalkthrough = function(pageKey) {
       const config = WALKTHROUGH_CONFIGS[pageKey];
       if (!config || config.length === 0) return;
+      initGateListeners();
 
       wtSteps = config;
       wtCurrentStep = 0;
@@ -2698,7 +2874,10 @@
       const bubbleEl = document.getElementById('pb-wt-bubble');
       if (bubbleEl) bubbleEl.style.display = 'block';
 
-      window.addEventListener('resize', repositionWalkthroughElements);
+      resizeHandler = () => repositionWalkthroughElements(false);
+      scrollHandler = () => repositionWalkthroughElements(true);
+      window.addEventListener('resize', resizeHandler);
+      window.addEventListener('scroll', scrollHandler);
 
       // Check if we need to redirect immediately
       const currentPath = window.location.pathname.replace(/\/$/, '') || '/';
@@ -2711,92 +2890,181 @@
       }
     };
 
-    function renderWalkthroughStep() {
-      if (!wtActive || wtCurrentStep < 0 || wtCurrentStep >= wtSteps.length) return;
-
-      const step = wtSteps[wtCurrentStep];
-
-      // Check path matching first
-      const currentPath = window.location.pathname.replace(/\/$/, '') || '/';
-      const targetPath = step.path.split('?')[0].replace(/\/$/, '') || '/';
-      if (currentPath !== targetPath) {
-        window.location.href = step.path;
-        return;
-      }
-
-      // Remove any existing highlights
-      document.querySelectorAll('.pb-highlight-active').forEach(el => {
-        el.classList.remove('pb-highlight-active');
-      });
-
-      // Highlight the target section
-      const targetEl = document.getElementById(step.targetId);
-      if (targetEl) {
-        targetEl.classList.add('pb-highlight-active');
-        targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        
-        // Settle scroll, then calculate Lure position
-        setTimeout(() => {
-          repositionWalkthroughElements();
-        }, 500);
-      } else {
-        // Fallback for elements not currently visible/loaded on screen
-        repositionWalkthroughElements();
-      }
-
-      // Update the walkthrough speech bubble body
+    function renderBubbleContent(step, isSkipped = false) {
       const bubbleEl = document.getElementById('pb-wt-bubble');
-      if (bubbleEl) {
-        const isLastStep = (wtCurrentStep === wtSteps.length - 1);
-        bubbleEl.innerHTML = `
-          <div style="display:flex; flex-direction:column; gap:12px;">
-            <!-- Header title & counter -->
-            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom:6px;">
-              <span style="font-family:var(--sans); font-size:0.75rem; font-weight:700; color:var(--primary);">
+      if (!bubbleEl) return;
+
+      const isLastStep = (wtCurrentStep === wtSteps.length - 1);
+      
+      let dotsHtml = '<div style="display:flex; gap:4px; align-items:center; margin-top:4px;">';
+      for (let i = 0; i < wtSteps.length; i++) {
+        const isCurrent = (i === wtCurrentStep);
+        dotsHtml += `<span style="width:6px; height:6px; border-radius:50%; border:1px solid var(--primary); background:${isCurrent ? 'var(--primary)' : 'transparent'}; display:inline-block;"></span>`;
+      }
+      dotsHtml += '</div>';
+
+      const esc = (s) => (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+      // Gating instruction text overrides based on step index
+      let gatePromptText = "Complete the task on the screen to unlock the next step!";
+      if (wtCurrentPage === 'getting_started') {
+        if (wtCurrentStep === 0) gatePromptText = "Action Required: Type 'query demo-corp.com' and press Enter in the terminal!";
+        if (wtCurrentStep === 1) gatePromptText = "Action Required: Click 'CEO Fraud' or another pretext scenario above to generate an email!";
+        if (wtCurrentStep === 2) gatePromptText = "Action Required: Enter a campaign name (at least 3 characters) above!";
+        if (wtCurrentStep === 3) gatePromptText = "Action Required: Select one of the pretext cards above!";
+        if (wtCurrentStep === 4) gatePromptText = "Action Required: Select a delivery mode above (e.g. Sandbox Test)!";
+        if (wtCurrentStep === 5) gatePromptText = "Action Required: Check the 'Authorization Required' checkbox below!";
+      }
+
+      bubbleEl.innerHTML = `
+        <div style="display:flex; flex-direction:column; gap:12px;">
+          <!-- Header title & counter -->
+          <div style="display:flex; flex-direction:column; border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom:6px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
+              <span style="font-family:var(--sans); font-size:0.75rem; font-weight:700; color:${isSkipped ? 'var(--warning)' : 'var(--primary)'};">
                 ${esc(step.title)}
               </span>
               <span style="font-family:var(--mono); font-size:0.58rem; color:var(--text-secondary,#94A3B8);">
                 Step ${wtCurrentStep + 1} of ${wtSteps.length}
               </span>
             </div>
+            ${dotsHtml}
+          </div>
 
-            <!-- Dialogue bubble with speech text -->
-            <div style="display:flex; gap:12px; align-items:flex-start;">
-              <div style="flex:1;">
-                <p style="font-size:0.7rem; color:var(--text-primary,#F0F4FF); line-height:1.45; margin:0;">
-                  ${esc(step.text)}
-                </p>
-              </div>
-            </div>
-
-            <!-- Action buttons row -->
-            <div style="display:flex; flex-direction:column; gap:8px; margin-top:4px;">
-              <div style="display:flex; justify-content:space-between; gap:8px;">
-                <button class="pb-action-btn" onclick="prevWalkthroughStep()" ${wtCurrentStep === 0 ? 'disabled class="pb-disabled"' : ''} style="flex:1; padding:6px 10px; font-size:0.62rem; margin: 0;">
-                  <i class="ti ti-arrow-left"></i> Back
-                </button>
-                <button class="pb-action-btn" onclick="repeatWalkthroughStep()" style="flex:1; padding:6px 10px; font-size:0.62rem; margin: 0;">
-                  <i class="ti ti-refresh"></i> Repeat
-                </button>
-                <button class="pb-action-btn" onclick="nextWalkthroughStepBtn()" style="flex:2; padding:6px 10px; font-size:0.62rem; font-weight:bold; background:var(--primary); color:var(--text-inverse,#0A1420); margin: 0;">
-                  ${isLastStep ? 'Finish' : 'Next <i class="ti ti-arrow-right"></i>'}
-                </button>
-              </div>
-              <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid rgba(255,255,255,0.04); padding-top:6px; font-size:0.6rem;">
-                <button class="pb-action-btn" onclick="exitWalkthrough()" style="padding:2px 6px; font-size:0.58rem; background:transparent; opacity:0.6; margin: 0;">
-                  Skip All
-                </button>
-                <button class="pb-action-btn" onclick="nextWalkthroughStepBtn()" style="padding:2px 6px; font-size:0.58rem; background:transparent; opacity:0.6; margin: 0;">
-                  Skip Step
-                </button>
+          <!-- Dialogue bubble with speech text -->
+          <div style="display:flex; gap:12px; align-items:flex-start;">
+            <div style="flex:1;">
+              <p style="font-size:0.7rem; color:var(--text-primary,#F0F4FF); line-height:1.45; margin:0;">
+                ${esc(step.text)}
+              </p>
+              
+              <!-- Gate visual feedback badge -->
+              <div class="pb-gate-prompt" style="display:none; align-items:center; gap:6px; background:rgba(6, 182, 212, 0.08); border:1px dashed rgba(6, 182, 212, 0.35); padding:6px 8px; border-radius:6px; font-size:0.58rem; color:var(--primary); line-height:1.3; font-weight:600; margin-top:8px; animation: pbPulse 1.2s infinite alternate;">
+                <i class="ti ti-fingerprint" style="font-size:0.75rem; color:var(--primary);"></i>
+                <span>${esc(gatePromptText)}</span>
               </div>
             </div>
           </div>
-        `;
-      }
+
+          <!-- Action buttons row -->
+          <div style="display:flex; flex-direction:column; gap:8px; margin-top:4px;">
+            <div style="display:flex; justify-content:space-between; gap:8px;">
+              <button class="pb-action-btn" onclick="prevWalkthroughStep()" ${wtCurrentStep === 0 ? 'disabled class="pb-disabled"' : ''} style="flex:1; padding:6px 10px; font-size:0.62rem; margin: 0;">
+                <i class="ti ti-arrow-left"></i> Back
+              </button>
+              <button class="pb-action-btn" onclick="repeatWalkthroughStep()" style="flex:1; padding:6px 10px; font-size:0.62rem; margin: 0;">
+                <i class="ti ti-refresh"></i> Repeat
+              </button>
+              <button class="pb-action-btn pb-next-btn" onclick="nextWalkthroughStepBtn()" style="flex:2; padding:6px 10px; font-size:0.62rem; font-weight:bold; background:var(--primary); color:var(--text-inverse,#0A1420); margin: 0;">
+                ${isLastStep ? 'Finish' : 'Next <i class="ti ti-arrow-right"></i>'}
+              </button>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid rgba(255,255,255,0.04); padding-top:6px; font-size:0.6rem;">
+              <button class="pb-action-btn" onclick="exitWalkthrough()" style="padding:2px 6px; font-size:0.58rem; background:transparent; opacity:0.6; margin: 0;">
+                Skip All
+              </button>
+              <button class="pb-action-btn" onclick="nextWalkthroughStepBtn()" style="padding:2px 6px; font-size:0.58rem; background:transparent; opacity:0.6; margin: 0;">
+                Skip Step
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
     }
 
-    window.repeatWalkthroughStep = function() {
+    function renderWalkthroughStep() {
+      if (!wtActive || wtCurrentStep < 0 || wtCurrentStep >= wtSteps.length) return;
+      const step = wtSteps[wtCurrentStep];
+      
+      const bubbleEl = document.getElementById('pb-wt-bubble');
+      if (bubbleEl) bubbleEl.style.display = 'block';
+
+      // Remove any existing highlights
+      document.querySelectorAll('.pb-highlight-active').forEach(el => {
+        el.classList.remove('pb-highlight-active');
+      });
+
+      let searchAttempts = 0;
+      const maxSearchAttempts = 15; // 3 seconds total
+
+      function tryHighlightAndPosition() {
+        if (!wtActive || wtCurrentStep >= wtSteps.length) return;
+        const s = wtSteps[wtCurrentStep];
+        
+        let currentTargetId = s.targetId;
+        const onDashboard = window.location.pathname.startsWith('/dashboard');
+        const emptyStateActive = document.getElementById('no-campaigns-card') && document.getElementById('no-campaigns-card').style.display !== 'none';
+        
+        // Empty state redirect details override
+        if (onDashboard && emptyStateActive) {
+          if (currentTargetId === 'wt-dashboard-view' || currentTargetId === 'mainTrendChart') {
+            currentTargetId = 'no-campaigns-card';
+          }
+        }
+
+        const targetEl = document.getElementById(currentTargetId);
+
+        if (targetEl) {
+          document.querySelectorAll('.pb-highlight-active').forEach(el => {
+            el.classList.remove('pb-highlight-active');
+          });
+          targetEl.classList.add('pb-highlight-active');
+          // Scroll instantly, temporarily bypassing global smooth scrolling styles
+          const htmlStyle = document.documentElement.style;
+          const bodyStyle = document.body.style;
+          const originalHtmlScroll = htmlStyle.scrollBehavior;
+          const originalBodyScroll = bodyStyle.scrollBehavior;
+          
+          htmlStyle.scrollBehavior = 'auto';
+          bodyStyle.scrollBehavior = 'auto';
+          
+          targetEl.scrollIntoView({ behavior: 'auto', block: 'center' });
+          
+          // Force layout reflow to apply scroll change immediately
+          void targetEl.offsetHeight;
+          
+          htmlStyle.scrollBehavior = originalHtmlScroll;
+          bodyStyle.scrollBehavior = originalBodyScroll;
+          
+          // Reposition immediately using correct coordinates, with a safety layout delay
+          repositionWalkthroughElements();
+          setTimeout(repositionWalkthroughElements, 100);
+
+          if (onDashboard && emptyStateActive) {
+            let adaptedText = s.text;
+            let adaptedTitle = s.title;
+            if (wtCurrentStep === 6) {
+              adaptedTitle = "Dashboard is Ready";
+              adaptedText = "Once you launch a simulation, your campaign metrics will appear here. Right now, it's empty because you haven't started one yet!";
+            } else if (wtCurrentStep === 7) {
+              adaptedTitle = "Track Simulation Trends";
+              adaptedText = "This trend chart will graph your click-rates over time. Let's get you set up to create your first simulation campaign so you can see it in action!";
+            }
+            renderBubbleContent({ title: adaptedTitle, text: adaptedText }, false);
+          } else {
+            renderBubbleContent(s, false);
+          }
+          updateWalkthroughGate();
+        } else {
+          if (searchAttempts < maxSearchAttempts) {
+            searchAttempts++;
+            setTimeout(tryHighlightAndPosition, 200);
+          } else {
+            // Skinned skipped fallback state
+            repositionWalkthroughElements(); // handles null target
+            const skippedStep = {
+              title: `Scanning for ${s.title}...`,
+              text: `I couldn't find that section on the screen, but let's keep swimming! You can skip this step or hit Next to continue.`
+            };
+            renderBubbleContent(skippedStep, true);
+          }
+        }
+      }
+
+      tryHighlightAndPosition();
+    }
+
+        window.repeatWalkthroughStep = function() {
       if (!wtActive || wtCurrentStep < 0 || wtCurrentStep >= wtSteps.length) return;
       const step = wtSteps[wtCurrentStep];
       const targetEl = document.getElementById(step.targetId);
@@ -2804,10 +3072,8 @@
         targetEl.classList.remove('pb-highlight-active');
         void targetEl.offsetWidth; // force reflow
         targetEl.classList.add('pb-highlight-active');
-        targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        setTimeout(() => {
-          repositionWalkthroughElements();
-        }, 500);
+        targetEl.scrollIntoView({ behavior: 'auto', block: 'nearest' });
+        repositionWalkthroughElements();
       }
     };
 
@@ -2825,14 +3091,14 @@
 
       // Check if we need redirection
       if (step.redirectPath) {
-        window.location.href = step.redirectPath;
+        swimOffAndNavigate(step.redirectPath);
       } else {
         const nextStep = wtSteps[wtCurrentStep];
         const currentPath = window.location.pathname.replace(/\/$/, '') || '/';
         const targetPath = nextStep.path.split('?')[0].replace(/\/$/, '') || '/';
 
         if (currentPath !== targetPath) {
-          window.location.href = nextStep.path;
+          swimOffAndNavigate(nextStep.path);
         } else {
           renderWalkthroughStep();
         }
@@ -2849,7 +3115,7 @@
         const targetPath = prevStep.path.split('?')[0].replace(/\/$/, '') || '/';
 
         if (currentPath !== targetPath) {
-          window.location.href = prevStep.path;
+          swimOffAndNavigate(prevStep.path);
         } else {
           renderWalkthroughStep();
         }
@@ -2869,6 +3135,7 @@
 
     function cleanupWalkthrough() {
       wtActive = false;
+      isFirstStep = true;
       localStorage.removeItem('pb_wt_active');
       localStorage.removeItem('pb_wt_page_key');
       localStorage.removeItem('pb_wt_step_idx');
@@ -2899,14 +3166,19 @@
         bubbleEl.innerHTML = '';
       }
 
-      window.removeEventListener('resize', repositionWalkthroughElements);
+      if (resizeHandler) {
+        window.removeEventListener('resize', resizeHandler);
+      }
+      if (scrollHandler) {
+        window.removeEventListener('scroll', scrollHandler);
+      }
     }
 
     // Resume walkthrough logic on page load
     function resumeWalkthroughOnLoad() {
       const active = localStorage.getItem('pb_wt_active') === 'true';
       if (active) {
-        const pageKey = localStorage.getItem('pb_wt_page_key') || 'full_tour';
+        const pageKey = localStorage.getItem('pb_wt_page_key') || 'getting_started';
         const stepIdx = parseInt(localStorage.getItem('pb_wt_step_idx') || '0', 10);
         
         wtCurrentPage = pageKey;
@@ -2914,18 +3186,53 @@
         wtCurrentStep = stepIdx;
         wtActive = true;
         
-        expanded = true;
-        inlineSec.classList.add('pb-walkthrough-active');
-        inlineSec.style.display = 'block';
+        expanded = false;
+        inlineSec.classList.remove('pb-walkthrough-active');
+        inlineSec.style.display = 'none';
+        host.classList.add('pb-walkthrough-mode');
+        
+        const bubbleEl = document.getElementById('pb-wt-bubble');
+        if (bubbleEl) bubbleEl.style.display = 'block';
 
-        // Ensure walkthrough tab panel is active
-        document.querySelectorAll('#pb-inline-section .pb-inline-tab-panel').forEach(p => p.classList.remove('active'));
-        const wtTab = document.getElementById('pb-tab-il-walkthrough');
-        if (wtTab) wtTab.classList.add('active');
+        resizeHandler = () => repositionWalkthroughElements(false);
+        scrollHandler = () => repositionWalkthroughElements(true);
+        window.addEventListener('resize', resizeHandler);
+        window.addEventListener('scroll', scrollHandler);
+        initGateListeners();
 
-        window.addEventListener('resize', repositionWalkthroughElements);
-
-        renderWalkthroughStep();
+        const exitEdge = localStorage.getItem('lure_wt_exit_edge');
+        if (exitEdge) {
+          localStorage.removeItem('lure_wt_exit_edge');
+          const viewportWidth = window.innerWidth;
+          const viewportHeight = window.innerHeight;
+          let startLeft = viewportWidth + 150;
+          let startTop = viewportHeight / 2;
+          
+          if (exitEdge === 'left') {
+            startLeft = -450;
+            startTop = viewportHeight / 2;
+          } else if (exitEdge === 'top') {
+            startLeft = viewportWidth / 2;
+            startTop = -350;
+          } else if (exitEdge === 'bottom') {
+            startLeft = viewportWidth / 2;
+            startTop = viewportHeight + 150;
+          }
+          
+          host.style.setProperty('position', 'fixed', 'important');
+          host.style.left = startLeft + 'px';
+          host.style.top = startTop + 'px';
+          host.style.setProperty('bottom', 'auto', 'important');
+          host.style.setProperty('right', 'auto', 'important');
+          host.style.transition = 'none';
+          
+          setTimeout(() => {
+            host.style.transition = '';
+            renderWalkthroughStep();
+          }, 100);
+        } else {
+          renderWalkthroughStep();
+        }
       }
     }
 

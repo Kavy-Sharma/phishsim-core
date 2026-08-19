@@ -2064,6 +2064,18 @@ function renderForensicResults(data) {
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape' && _haOverlay && _haOverlay.classList.contains('active')) haCollapse();
     });
+
+    // Lure: proactive callout when idle
+    document.addEventListener('DOMContentLoaded', () => {
+      setTimeout(() => {
+        if (!sessionStorage.getItem('lure_header_callout_fired')) {
+          sessionStorage.setItem('lure_header_callout_fired', 'true');
+          if (window.lureShowCallout) {
+            window.lureShowCallout("Analyzing a suspicious email? Paste the raw headers above, and I'll help you extract the routing path!");
+          }
+        }
+      }, 12000);
+    });
 })();
 </script>
 {% endblock %}
