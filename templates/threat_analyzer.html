@@ -1371,4 +1371,35 @@ async function loadSharedReport(uuid) {
   setTimeout(maybeShowNudge, WAIT_TIME);
 })();
 </script>
+
+<script>
+/* ── Lure: Proactive tour offer trigger ── */
+(function() {
+  'use strict';
+  const TOUR_NAME = 'tool_threat_analyzer';
+  const SESSION_KEY = 'pb_proactive_' + TOUR_NAME;
+
+  function maybeShowProactiveOffer() {
+    if (!window.lureShowCallout) return;
+    if (typeof window.lureIsWalkthroughActive === 'function' && window.lureIsWalkthroughActive()) return;
+    if (typeof window.lureIsCalloutShowing === 'function' && window.lureIsCalloutShowing()) return;
+    if (typeof window.lureHasCompletedTour === 'function' && window.lureHasCompletedTour(TOUR_NAME)) return;
+    if (sessionStorage.getItem(SESSION_KEY)) return;
+
+    sessionStorage.setItem(SESSION_KEY, '1');
+    window.lureShowCallout(
+      "Want a quick tour? I can show you how I analyze email bodies for threat indicators! Click here to start.",
+      TOUR_NAME
+    );
+  }
+
+  if (document.readyState === 'complete') {
+    setTimeout(maybeShowProactiveOffer, 2500);
+  } else {
+    window.addEventListener('load', function() {
+      setTimeout(maybeShowProactiveOffer, 2500);
+    });
+  }
+})();
+</script>
 {% endblock %}

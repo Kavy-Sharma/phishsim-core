@@ -24,13 +24,22 @@ SYSTEM_PROMPT = (
     "  - Campaign Simulator: Launch and track phishing tests.\n"
 )
 
-def generate_lure_chat_response(message: str, history: list) -> str:
+def generate_lure_chat_response(message: str, history: list, page_context: str = None, page_description: str = None) -> str:
     """
     Generates a response from the Lure chatbot, incorporating conversation history
     and enforcing system prompt rules.
     """
     # 1. Start with the system persona prompt
-    messages = [{"role": "system", "content": SYSTEM_PROMPT}]
+    prompt = SYSTEM_PROMPT
+    if page_context and page_description:
+        prompt += (
+            f"\nThe user is currently on PhishSim's {page_context} page ({page_description}). "
+            "Lean toward answering questions related to this page/feature when relevant, and feel free to "
+            "proactively mention what's useful about this specific page if it fits naturally — but you can "
+            "still help with questions about any other part of PhishSim if asked, this is not a restriction, "
+            "just where your attention leans by default."
+        )
+    messages = [{"role": "system", "content": prompt}]
 
     # 2. Add last 6 messages from history to keep it fast and relevant
     trimmed_history = history[-6:]

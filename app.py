@@ -2176,6 +2176,10 @@ def logout():
             flash("Demo ended successfully. Your temporary data has been cleared.", "success")
         except Exception as e:
             print(f"Demo logout cleanup failed: {e}")
+            
+    completed_tour = request.args.get("completed_tour")
+    if completed_tour:
+        return redirect(url_for("home", completed_tour="true"))
     return redirect(url_for("home"))
 
 @app.route("/threat-analyzer")
@@ -2361,6 +2365,8 @@ def lure_chat_api():
     data = request.get_json(silent=True) or {}
     message = data.get("message", "").strip()
     history = data.get("history", [])
+    page_context = data.get("page_context", "")
+    page_description = data.get("page_description", "")
 
     if not message:
         return jsonify({"success": False, "message": "Message is required."}), 400
@@ -2368,10 +2374,26 @@ def lure_chat_api():
     if len(message) > 500:
         return jsonify({"success": False, "message": "Message exceeds the 500-character limit."}), 400
 
+    # Sanitize and length-cap optional context fields
+    if page_context:
+        page_context = str(page_context)[:100].strip() or None
+    else:
+        page_context = None
+
+    if page_description:
+        page_description = str(page_description)[:300].strip() or None
+    else:
+        page_description = None
+
     # 3. Call chatbot generator
     try:
         from ai_engine.lure_chat import generate_lure_chat_response
-        reply = generate_lure_chat_response(message, history)
+        reply = generate_lure_chat_response(
+            message, 
+            history, 
+            page_context=page_context, 
+            page_description=page_description
+        )
         
         # Record successful message
         sess_history.append(now)
