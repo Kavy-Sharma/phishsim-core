@@ -38,10 +38,10 @@
       transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
     /* Subtle bounce on hover */
-    #pb-avatar:hover {
+    #pb-avatar:not(.pb-in-header):hover {
       transform: translateY(-4px) scale(1.06);
     }
-    #pb-avatar:active {
+    #pb-avatar:not(.pb-in-header):active {
       transform: translateY(0) scale(0.96);
     }
     #pb-avatar.pb-transitioning {
@@ -53,9 +53,6 @@
     }
     #pb-avatar.pb-in-header #pb-avatar-inner {
       animation: none !important;
-    }
-    #pb-avatar.pb-in-header:hover {
-      transform: none !important;
     }
     #pb-avatar.pb-in-header:hover::after {
       opacity: 0 !important;
@@ -190,6 +187,7 @@
     /* Walkthrough Spotlight, Swim and Bubbles CSS */
     #pb-wt-highlighter {
       box-shadow: 0 0 0 9999px rgba(4, 9, 20, 0.55), 0 0 20px rgba(6, 182, 212, 0.45) !important;
+      z-index: 1000000 !important;
     }
     
     @keyframes pbSwim {
@@ -375,14 +373,19 @@
       opacity: 0;
       transform: translateY(16px) scale(0.97);
       pointer-events: none;
-      will-change: transform, opacity, width, height, top, left;
+      will-change: transform, opacity, width, height, left, top;
+      transition:
+        opacity 0.3s ease,
+        transform 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    }
+    #pb-panel.pb-size-transitioning {
       transition:
         opacity 0.3s ease,
         transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
         width 0.35s cubic-bezier(0.16, 1, 0.3, 1),
         height 0.35s cubic-bezier(0.16, 1, 0.3, 1),
-        top 0.35s cubic-bezier(0.16, 1, 0.3, 1),
         left 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+        top 0.35s cubic-bezier(0.16, 1, 0.3, 1),
         border-radius 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
     }
     #pb-panel.pb-content-transitioning {
@@ -499,9 +502,10 @@
     }
     .pb-panel-tabs {
       display: flex;
-      gap: 3px;
+      gap: 6px;
       flex: 1;
       justify-content: center;
+      align-items: center;
     }
     .pb-tab-btn {
       font-family: var(--mono, 'JetBrains Mono', monospace);
@@ -509,13 +513,26 @@
       font-weight: 700;
       letter-spacing: 0.06em;
       text-transform: uppercase;
-      padding: 5px 9px;
-      border-radius: 6px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      width: 32px;
+      height: 32px;
+      padding: 0;
+      border-radius: 8px;
       border: 1px solid transparent;
       cursor: pointer;
       color: var(--text-secondary, #94A3B8);
       background: transparent;
       transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .pb-tab-btn i {
+      font-size: 0.85rem;
+      display: inline-block;
+    }
+    .pb-tab-text {
+      display: none; /* Hide text label in normal mode to prevent overflow */
     }
     .pb-tab-btn:hover { color: var(--primary); background: var(--primary-dim); }
     .pb-tab-btn.active {
@@ -814,10 +831,10 @@
       display: flex !important;
       align-items: center;
       gap: 12px;
-      z-index: 20005 !important;
+      z-index: 1000005 !important;
       width: auto !important;
       height: auto !important;
-      transition: top 0.5s cubic-bezier(0.25, 1, 0.5, 1), left 0.5s cubic-bezier(0.25, 1, 0.5, 1) !important;
+      transition: top 1.2s cubic-bezier(0.25, 1, 0.5, 1), left 1.2s cubic-bezier(0.25, 1, 0.5, 1) !important;
     }
     #pb-host.pb-walkthrough-mode.pb-direction-left {
       flex-direction: row-reverse !important;
@@ -826,7 +843,7 @@
       flex-direction: row !important;
     }
     
-    #pb-avatar.pb-face-left {
+    #pb-avatar.pb-face-left .pb-mascot-img {
       transform: scaleX(-1) !important;
     }
 
@@ -839,19 +856,43 @@
     #pb-wt-bubble {
       width: 340px;
       max-width: 90vw;
-      background: var(--bg-elevated, #121D35);
-      border: 1px solid var(--primary);
+      background: #0b1329 !important; /* Locked dark theme background */
+      border: 1.5px solid var(--primary) !important;
       border-radius: 16px;
       padding: 16px;
       box-sizing: border-box;
       box-shadow: 
         0 20px 50px rgba(0,0,0,0.65),
-        0 0 0 1px color-mix(in srgb, var(--primary) 8%, transparent),
-        0 0 30px color-mix(in srgb, var(--primary) 15%, transparent);
-      backdrop-filter: blur(20px);
-      color: var(--text-primary, #F0F4FF);
+        0 0 0 1px rgba(6, 182, 212, 0.1),
+        0 0 30px rgba(6, 182, 212, 0.15) !important;
+      backdrop-filter: blur(20px) !important;
+      color: #f8fafc !important; /* Locked light text */
       animation: pbCardPop 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
       position: relative;
+    }
+    #pb-wt-bubble .pb-action-btn {
+      background: rgba(6, 182, 212, 0.15) !important;
+      border: 1px solid rgba(6, 182, 212, 0.35) !important;
+      color: var(--primary) !important;
+    }
+    #pb-wt-bubble .pb-action-btn:hover {
+      background: rgba(6, 182, 212, 0.25) !important;
+      box-shadow: 0 0 12px rgba(6, 182, 212, 0.3) !important;
+    }
+    #pb-wt-bubble .pb-next-btn {
+      background: var(--primary) !important;
+      color: #0c1424 !important;
+    }
+    #pb-wt-bubble .pb-next-btn:hover {
+      background: color-mix(in srgb, var(--primary) 85%, white) !important;
+      box-shadow: 0 0 14px rgba(6, 182, 212, 0.4) !important;
+    }
+    #pb-wt-bubble .pb-disabled, #pb-wt-bubble button:disabled {
+      opacity: 0.35 !important;
+      cursor: not-allowed !important;
+      background: rgba(255, 255, 255, 0.05) !important;
+      border-color: rgba(255, 255, 255, 0.1) !important;
+      color: rgba(255, 255, 255, 0.3) !important;
     }
 
     #pb-wt-bubble::before {
@@ -864,16 +905,19 @@
     }
     #pb-host.pb-direction-left #pb-wt-bubble::before {
       right: 100%;
-      border-right-color: var(--primary);
+      border-right-color: var(--primary) !important;
     }
     #pb-host.pb-direction-right #pb-wt-bubble::before {
       left: 100%;
-      border-left-color: var(--primary);
+      border-left-color: var(--primary) !important;
     }
 
     @keyframes pbCardPop {
       from { transform: scale(0.9) translateY(20px); opacity: 0; }
       to { transform: scale(1) translateY(0); opacity: 1; }
+    }
+    @keyframes pbSpin {
+      to { transform: rotate(360deg); }
     }
 
     /* Walkthrough Selection Guide List Styles */
@@ -947,6 +991,16 @@
     }
     #pb-tab-chat.active {
       display: flex;
+    }
+    .pb-chat-layout-wrapper {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      min-height: 0;
+      width: 100%;
+    }
+    .pb-chat-sidebar-reference {
+      display: none;
     }
     .pb-chat-container {
       display: flex;
@@ -1184,15 +1238,32 @@
     /* Maximized desktop panel state styles */
     #pb-panel.pb-panel-maximized {
       z-index: 10000000 !important;
-      width: 90vw !important;
       max-width: 1100px !important;
-      height: 90vh !important;
       max-height: 850px !important;
-      top: 50% !important;
-      left: 50% !important;
-      transform: translate(-50%, -50%) !important;
-      border-radius: 20px !important;
-      box-shadow: 0 40px 100px rgba(0, 0, 0, 0.8), 0 0 0 1px color-mix(in srgb, var(--primary) 15%, transparent) !important;
+      transform: none !important;
+      border-radius: 24px !important;
+      background: linear-gradient(135deg, rgba(10, 18, 36, 0.88), rgba(15, 23, 42, 0.82)) !important;
+      backdrop-filter: blur(32px) saturate(180%) !important;
+      border: 1px solid rgba(56, 189, 248, 0.16) !important;
+      box-shadow: 0 40px 100px rgba(0, 0, 0, 0.85), 0 0 80px rgba(56, 189, 248, 0.08) !important;
+    }
+    #pb-panel.pb-panel-maximized #pb-drag-handle {
+      cursor: default !important;
+      background: transparent !important;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+    }
+    #pb-panel::-webkit-scrollbar,
+    #pb-panel.pb-panel-maximized .pb-panel-content-area::-webkit-scrollbar {
+      width: 6px;
+    }
+    #pb-panel::-webkit-scrollbar-thumb,
+    #pb-panel.pb-panel-maximized .pb-panel-content-area::-webkit-scrollbar-thumb {
+      background: rgba(56, 189, 248, 0.2);
+      border-radius: 10px;
+    }
+    #pb-panel::-webkit-scrollbar-thumb:hover,
+    #pb-panel.pb-panel-maximized .pb-panel-content-area::-webkit-scrollbar-thumb:hover {
+      background: rgba(56, 189, 248, 0.4);
     }
 
     /* Mobile override for maximized panel */
@@ -1216,13 +1287,16 @@
       height: 100% !important;
       overflow-y: auto !important;
     }
+    #pb-panel.pb-panel-maximized .pb-tab-panel:not(.active) {
+      display: none !important;
+    }
     #pb-panel.pb-panel-maximized #pb-tab-chat {
       height: 100% !important;
     }
 
     /* Two-column grid reflow for maximized Generate tab */
     @media (min-width: 769px) {
-      #pb-panel.pb-panel-maximized #pb-tab-generate {
+      #pb-panel.pb-panel-maximized #pb-tab-generate.active {
         display: grid !important;
         grid-template-columns: 1.2fr 1fr !important;
         grid-template-rows: auto auto auto auto !important;
@@ -1394,8 +1468,9 @@
     }
     .pb-sidebar-tab-btn.active {
       color: var(--primary) !important;
-      background: color-mix(in srgb, var(--primary) 10%, transparent) !important;
-      border-left-color: var(--primary) !important;
+      background: color-mix(in srgb, var(--primary) 12%, transparent) !important;
+      border-left: none !important;
+      box-shadow: 0 0 15px color-mix(in srgb, var(--primary) 20%, transparent) !important;
     }
 
     /* ── Tab Content Reflows when Maximized ── */
@@ -1407,14 +1482,14 @@
     .pb-chip-desc {
       display: none;
     }
-    #pb-panel.pb-panel-maximized #pb-tab-generate .pb-chips {
+    #pb-panel.pb-panel-maximized #pb-tab-generate.active .pb-chips {
       display: grid !important;
       grid-template-columns: repeat(2, 1fr) !important;
       gap: 12px !important;
       width: 100% !important;
       margin-bottom: 20px !important;
     }
-    #pb-panel.pb-panel-maximized #pb-tab-generate .pb-chip {
+    #pb-panel.pb-panel-maximized #pb-tab-generate.active .pb-chip {
       display: flex !important;
       flex-direction: column !important;
       align-items: flex-start !important;
@@ -1428,13 +1503,13 @@
       gap: 5px !important;
       width: 100% !important;
     }
-    #pb-panel.pb-panel-maximized #pb-tab-generate .pb-chip-title {
+    #pb-panel.pb-panel-maximized #pb-tab-generate.active .pb-chip-title {
       display: inline-block !important;
       font-size: 0.8rem !important;
       font-weight: 800 !important;
       font-family: var(--mono) !important;
     }
-    #pb-panel.pb-panel-maximized #pb-tab-generate .pb-chip-desc {
+    #pb-panel.pb-panel-maximized #pb-tab-generate.active .pb-chip-desc {
       display: block !important;
       font-size: 0.64rem !important;
       color: var(--text-secondary, #94A3B8) !important;
@@ -1443,49 +1518,271 @@
       font-family: var(--sans) !important;
     }
 
-    /* 2. Spot Phish comparison emails */
-    #pb-panel.pb-panel-maximized .stp-pair {
-      flex-direction: row !important;
-      gap: 18px !important;
-      margin-bottom: 16px !important;
-    }
-    #pb-panel.pb-panel-maximized .stp-box {
-      flex: 1 !important;
-      border-radius: 12px !important;
-    }
-    #pb-panel.pb-panel-maximized .stp-box-body {
-      max-height: 260px !important;
-      padding: 16px 20px !important;
-      font-size: 0.84rem !important;
-    }
-    #pb-panel.pb-panel-maximized .stp-box-header {
-      padding: 11px 16px !important;
-      font-size: 0.7rem !important;
-    }
+    /* ── Tab Content Reflows when Maximized (Desktop Only) ── */
+    @media (min-width: 769px) {
+      /* 2. Spot Phish comparison emails */
+      #pb-panel.pb-panel-maximized #pb-tab-spotphish.active {
+        display: grid !important;
+        grid-template-columns: 1fr 1.4fr !important;
+        gap: 24px !important;
+        padding: 24px 30px !important;
+        align-items: start !important;
+        height: 100% !important;
+        box-sizing: border-box !important;
+      }
+      #pb-panel.pb-panel-maximized #pb-tab-spotphish.active .pb-dialogue {
+        grid-column: 1 !important;
+      }
+      #pb-panel.pb-panel-maximized #pb-tab-spotphish.active .stp-score-row {
+        grid-column: 1 !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        background: rgba(255, 255, 255, 0.02) !important;
+        border: 1px solid rgba(255, 255, 255, 0.06) !important;
+        border-radius: 12px !important;
+        padding: 20px 24px !important;
+        gap: 12px !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+        margin-bottom: 16px !important;
+      }
+      #pb-panel.pb-panel-maximized #pb-tab-spotphish.active .stp-score-row div {
+        font-size: 0.85rem !important;
+        color: var(--text-secondary, #94A3B8) !important;
+      }
+      #pb-panel.pb-panel-maximized #pb-tab-spotphish.active #stp-score,
+      #pb-panel.pb-panel-maximized #pb-tab-spotphish.active #stp-total {
+        font-family: var(--mono) !important;
+        font-weight: 800 !important;
+        color: var(--primary) !important;
+        font-size: 1.6rem !important;
+      }
+      #pb-panel.pb-panel-maximized #pb-tab-spotphish.active #stp-limit-text {
+        font-size: 0.72rem !important;
+        color: var(--text-secondary, #94A3B8) !important;
+        font-family: var(--mono) !important;
+      }
+      #pb-panel.pb-panel-maximized #pb-tab-spotphish.active #stp-pair-container {
+        grid-column: 2 !important;
+        grid-row: 1 / span 5 !important;
+        display: flex !important;
+        flex-direction: row !important;
+        gap: 18px !important;
+        margin-bottom: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+      }
+      #pb-panel.pb-panel-maximized #pb-tab-spotphish.active .stp-box {
+        flex: 1 !important;
+        border-radius: 12px !important;
+        display: flex !important;
+        flex-direction: column !important;
+        height: 100% !important;
+        margin: 0 !important;
+        background: color-mix(in srgb, var(--primary) 2%, var(--bg-elevated,#121D35)) !important;
+      }
+      #pb-panel.pb-panel-maximized #pb-tab-spotphish.active .stp-box-header {
+        padding: 12px 16px !important;
+        font-size: 0.72rem !important;
+      }
+      #pb-panel.pb-panel-maximized #pb-tab-spotphish.active .stp-box-body {
+        flex: 1 !important;
+        max-height: none !important;
+        min-height: 280px !important;
+        padding: 20px 24px !important;
+        font-size: 0.88rem !important;
+        overflow-y: auto !important;
+      }
+      #pb-panel.pb-panel-maximized #pb-tab-spotphish.active .stp-result {
+        grid-column: 1 !important;
+        display: block !important;
+        margin-top: 10px !important;
+        font-size: 0.82rem !important;
+        padding: 14px !important;
+        border-radius: 8px !important;
+      }
+      #pb-panel.pb-panel-maximized #pb-tab-spotphish.active #stp-next-btn {
+        grid-column: 1 !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+        margin-top: 10px !important;
+      }
 
-    /* 3. Ask Lure chat messages max-width */
-    #pb-panel.pb-panel-maximized .pb-chat-bubble {
-      max-width: 72% !important;
-    }
+      /* 3. Ask Lure Chat split layout */
+      #pb-panel.pb-panel-maximized #pb-tab-chat.active {
+        display: block !important;
+        height: 100% !important;
+        box-sizing: border-box !important;
+      }
+      #pb-panel.pb-panel-maximized #pb-tab-chat.active .pb-chat-layout-wrapper {
+        display: grid !important;
+        grid-template-columns: 1.4fr 1fr !important;
+        gap: 24px !important;
+        height: 100% !important;
+        padding: 24px 30px !important;
+        box-sizing: border-box !important;
+      }
+      #pb-panel.pb-panel-maximized #pb-tab-chat.active .pb-chat-container {
+        display: flex !important;
+        flex-direction: column !important;
+        height: 100% !important;
+        gap: 12px !important;
+      }
+      #pb-panel.pb-panel-maximized #pb-tab-chat.active .pb-chat-messages {
+        flex: 1 !important;
+        gap: 14px !important;
+      }
+      #pb-panel.pb-panel-maximized #pb-tab-chat.active .pb-chat-bubble {
+        font-size: 0.85rem !important;
+        padding: 10px 16px !important;
+        line-height: 1.5 !important;
+        max-width: 78% !important;
+      }
+      #pb-panel.pb-panel-maximized #pb-tab-chat.active .pb-dialogue-icon {
+        width: 36px !important;
+        height: 36px !important;
+      }
+      #pb-panel.pb-panel-maximized #pb-tab-chat.active .pb-msg-avatar {
+        width: 34px !important;
+        height: 34px !important;
+      }
+      #pb-panel.pb-panel-maximized #pb-tab-chat.active .pb-chat-input-wrap {
+        padding: 10px 14px !important;
+        border-radius: 12px !important;
+      }
+      #pb-panel.pb-panel-maximized #pb-tab-chat.active #pb-chat-input {
+        font-size: 0.85rem !important;
+        height: 48px !important;
+      }
+      #pb-panel.pb-panel-maximized #pb-tab-chat.active .pb-chat-sidebar-reference {
+        display: flex !important;
+        flex-direction: column !important;
+        background: rgba(255, 255, 255, 0.02) !important;
+        border: 1px solid rgba(255, 255, 255, 0.06) !important;
+        border-radius: 16px !important;
+        padding: 24px !important;
+        gap: 16px !important;
+        height: 100% !important;
+        box-sizing: border-box !important;
+        overflow-y: auto !important;
+      }
+      .pb-ref-title {
+        font-family: var(--sans, sans-serif);
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--text-primary, #F0F4FF);
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .pb-ref-title i {
+        color: var(--primary);
+      }
+      .pb-ref-desc {
+        font-family: var(--sans, sans-serif);
+        font-size: 0.8rem;
+        line-height: 1.5;
+        color: var(--text-secondary, #94A3B8);
+        margin: 0;
+      }
+      .pb-ref-section {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .pb-ref-subtitle {
+        font-family: var(--mono, monospace);
+        font-size: 0.65rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--text-secondary, #94A3B8);
+        margin-bottom: 4px;
+      }
+      .pb-ref-prompt-btn {
+        display: flex !important;
+        align-items: center !important;
+        gap: 8px !important;
+        background: rgba(255, 255, 255, 0.02) !important;
+        border: 1px solid rgba(255, 255, 255, 0.06) !important;
+        border-radius: 10px !important;
+        padding: 12px 16px !important;
+        color: var(--text-primary, #F0F4FF) !important;
+        font-family: var(--sans, sans-serif) !important;
+        font-size: 0.82rem !important;
+        text-align: left !important;
+        cursor: pointer !important;
+        transition: all 0.2s ease !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+      }
+      .pb-ref-prompt-btn:hover {
+        background: rgba(56, 189, 248, 0.08) !important;
+        border-color: rgba(56, 189, 248, 0.25) !important;
+        color: var(--primary) !important;
+        transform: translateX(4px);
+      }
+      .pb-ref-prompt-btn i {
+        color: var(--primary);
+      }
 
-    /* 4. Centered Risk Score form */
-    #pb-panel.pb-panel-maximized #pb-tab-riskscore {
-      display: none;
-    }
-    #pb-panel.pb-panel-maximized #pb-tab-riskscore.active {
-      display: flex !important;
-      flex-direction: column !important;
-      align-items: center !important;
-      justify-content: center !important;
-      padding: 24px 30px !important;
-    }
-    #pb-panel.pb-panel-maximized #rs-form,
-    #pb-panel.pb-panel-maximized #rs-result {
-      width: 100% !important;
-      max-width: 540px !important;
-      margin: 0 auto !important;
-      text-align: left !important;
-    }
+      /* 4. Centered Risk Score form */
+      @keyframes rsFadeIn {
+        from { opacity: 0; transform: translateY(12px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      #rs-form, #rs-result {
+        animation: rsFadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      }
+
+      #pb-panel.pb-panel-maximized #pb-tab-riskscore {
+        display: none;
+      }
+      #pb-panel.pb-panel-maximized #pb-tab-riskscore.active {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: center !important;
+        padding: 24px 30px !important;
+        box-sizing: border-box !important;
+        height: 100% !important;
+      }
+      #pb-panel.pb-panel-maximized #pb-tab-riskscore.active #rs-form,
+      #pb-panel.pb-panel-maximized #pb-tab-riskscore.active #rs-result {
+        width: 100% !important;
+        max-width: 560px !important;
+        margin: 0 auto !important;
+        text-align: left !important;
+      }
+      #pb-panel.pb-panel-maximized #pb-tab-riskscore.active .rs-q-text {
+        font-size: 0.85rem !important;
+        margin-bottom: 10px !important;
+      }
+      #pb-panel.pb-panel-maximized #pb-tab-riskscore.active .rs-opt {
+        font-size: 0.82rem !important;
+        padding: 10px 14px !important;
+      }
+
+      /* 5. Maximized Tours Tab Grid Reflow */
+      #pb-panel.pb-panel-maximized #pb-tab-tours.active {
+        height: 100% !important;
+        display: flex !important;
+        box-sizing: border-box !important;
+        padding: 24px 30px !important;
+      }
+      #pb-panel.pb-panel-maximized #pb-tab-tours.active #pb-tab-tours-container {
+        max-width: 900px !important;
+        margin: 0 auto !important;
+        padding: 16px 20px !important;
+      }
+      #pb-panel.pb-panel-maximized #pb-tab-tours.active .pb-wt-guide-list,
+      #pb-inline-section .pb-wt-guide-list {
+        display: grid !important;
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 16px !important;
+      }
     }
 
     /* ── Tours Tab CSS ── */
@@ -1505,22 +1802,6 @@
       flex-direction: column;
       gap: 8px;
       width: 100%;
-    }
-    
-    /* ── Maximized Tours Tab Grid Reflow ── */
-    #pb-panel.pb-panel-maximized #pb-tab-tours {
-      height: 100% !important;
-    }
-    #pb-panel.pb-panel-maximized #pb-tab-tours-container {
-      max-width: 900px;
-      margin: 0 auto;
-      padding: 16px 20px;
-    }
-    #pb-panel.pb-panel-maximized #pb-tab-tours .pb-wt-guide-list,
-    #pb-inline-section .pb-wt-guide-list {
-      display: grid !important;
-      grid-template-columns: repeat(2, 1fr) !important;
-      gap: 14px !important;
     }
     
     /* Styling for the progress and completed badges */
@@ -1597,11 +1878,21 @@
       <div id="pb-header-avatar-placeholder" style="width: 24px; height: 24px; display: inline-flex; align-items: center; justify-content: center; position: relative; flex-shrink: 0; margin-right: 4px;"></div> Lure
     </div>
     <div class="pb-panel-tabs">
-      <button class="pb-tab-btn active" data-tab="generate">Generate</button>
-      <button class="pb-tab-btn" data-tab="spotphish">Spot Phish</button>
-      <button class="pb-tab-btn" data-tab="riskscore">Risk Score</button>
-      <button class="pb-tab-btn" data-tab="chat">Ask Lure</button>
-      <button class="pb-tab-btn" data-tab="tours">Tours</button>
+      <button class="pb-tab-btn active" data-tab="generate" title="Generate Lure">
+        <i class="ti ti-dna" aria-hidden="true"></i><span class="pb-tab-text">Generate</span>
+      </button>
+      <button class="pb-tab-btn" data-tab="spotphish" title="Spot the Phish">
+        <i class="ti ti-target" aria-hidden="true"></i><span class="pb-tab-text">Spot Phish</span>
+      </button>
+      <button class="pb-tab-btn" data-tab="riskscore" title="Risk Score Analyzer">
+        <i class="ti ti-chart-bar" aria-hidden="true"></i><span class="pb-tab-text">Risk Score</span>
+      </button>
+      <button class="pb-tab-btn" data-tab="chat" title="Ask Lure Co-Pilot">
+        <i class="ti ti-messages" aria-hidden="true"></i><span class="pb-tab-text">Ask Lure</span>
+      </button>
+      <button class="pb-tab-btn" data-tab="tours" title="Walkthrough Tours">
+        <i class="ti ti-compass" aria-hidden="true"></i><span class="pb-tab-text">Tours</span>
+      </button>
     </div>
     <div class="pb-panel-actions">
       <button class="pb-icon-btn" id="pb-max-btn" title="Expand to page" aria-label="Expand">
@@ -1766,19 +2057,38 @@
 
   <!-- TAB: Ask Lure (Chat) -->
   <div class="pb-tab-panel" id="pb-tab-chat">
-    <div class="pb-chat-container">
-      <div class="pb-chat-messages" id="pb-chat-messages-list">
-        <!-- Messages will be dynamically rendered here -->
+    <div class="pb-chat-layout-wrapper">
+      <div class="pb-chat-container">
+        <div class="pb-chat-messages" id="pb-chat-messages-list">
+          <!-- Messages will be dynamically rendered here -->
+        </div>
+        <div class="pb-chat-error" id="pb-chat-error-alert" style="display: none;"></div>
+        <div id="pb-chat-suggestions" class="pb-chat-suggestions-row" style="display: none;"></div>
+        <div class="pb-chat-input-wrap">
+          <textarea id="pb-chat-input" placeholder="Ask Lure about phishing, email security..." maxlength="501"></textarea>
+          <button id="pb-chat-send-btn" title="Send message" type="button">
+            <i class="ti ti-send" aria-hidden="true"></i>
+          </button>
+        </div>
+        <div class="pb-chat-char-counter" id="pb-chat-char-counter">0 / 500</div>
       </div>
-      <div class="pb-chat-error" id="pb-chat-error-alert" style="display: none;"></div>
-      <div id="pb-chat-suggestions" class="pb-chat-suggestions-row" style="display: none;"></div>
-      <div class="pb-chat-input-wrap">
-        <textarea id="pb-chat-input" placeholder="Ask Lure about phishing, email security..." maxlength="501"></textarea>
-        <button id="pb-chat-send-btn" title="Send message" type="button">
-          <i class="ti ti-send" aria-hidden="true"></i>
-        </button>
+      
+      <div class="pb-chat-sidebar-reference">
+        <h3 class="pb-ref-title"><i class="ti ti-shield-alert" aria-hidden="true"></i> Ask Lure Guide</h3>
+        <p class="pb-ref-desc">Lure AI can help you analyze email campaigns, design training materials, and understand mail transfer security protocols.</p>
+        <div class="pb-ref-section">
+          <div class="pb-ref-subtitle">Security Cheat Sheet:</div>
+          <button class="pb-ref-prompt-btn" onclick="triggerChatPrompt('Explain SPF, DKIM, and DMARC')" type="button">
+            <i class="ti ti-help" aria-hidden="true"></i> Explain SPF, DKIM, & DMARC
+          </button>
+          <button class="pb-ref-prompt-btn" onclick="triggerChatPrompt('How to write a high-conviction IT pretext')" type="button">
+            <i class="ti ti-help" aria-hidden="true"></i> How to write simulated pretexts
+          </button>
+          <button class="pb-ref-prompt-btn" onclick="triggerChatPrompt('What are common cognitive load triggers?')" type="button">
+            <i class="ti ti-help" aria-hidden="true"></i> Phishing Cognitive Triggers
+          </button>
+        </div>
       </div>
-      <div class="pb-chat-char-counter" id="pb-chat-char-counter">0 / 500</div>
     </div>
   </div>
 
@@ -2197,6 +2507,7 @@
     const syncHost = document.getElementById('pb-host');
     if (syncHost) {
       const observer = new MutationObserver((mutations) => {
+        if (typeof wtActive !== 'undefined' && wtActive) return;
         mutations.forEach((mutation) => {
           if (mutation.attributeName === 'class') {
             const className = syncHost.className;
@@ -2282,6 +2593,33 @@
       };
     }
 
+    function waitForElement(id, timeoutMs, callback) {
+      const el = document.getElementById(id);
+      if (el) {
+        callback(el);
+        return;
+      }
+
+      const observer = new MutationObserver((mutations, obs) => {
+        const target = document.getElementById(id);
+        if (target) {
+          obs.disconnect();
+          clearTimeout(timeout);
+          callback(target);
+        }
+      });
+
+      observer.observe(document.documentElement, {
+        childList: true,
+        subtree: true
+      });
+
+      const timeout = setTimeout(() => {
+        observer.disconnect();
+        callback(null);
+      }, timeoutMs);
+    }
+
     // Helper: Staged narration for loading states
     function startLoadingNarration(el, stages, delay = 800, maxDuration = 6000, longWaitMsg = "Still working, taking a bit longer...") {
       if (!el || !stages || stages.length === 0) return () => {};
@@ -2342,7 +2680,35 @@
     /* ── Positioning & Layout Clamping ── */
     function repositionPanel() {
       if (!panelOpen) return;
+
+      if (panel.classList.contains('pb-panel-maximized')) {
+        if (window.innerWidth > 768) {
+          const maxW = Math.min(1100, window.innerWidth * 0.9);
+          const maxH = Math.min(850, window.innerHeight * 0.9);
+          const maxLeft = (window.innerWidth - maxW) / 2;
+          const maxTop = (window.innerHeight - maxH) / 2;
+          panel.style.width = maxW + 'px';
+          panel.style.height = maxH + 'px';
+          panel.style.left = maxLeft + 'px';
+          panel.style.top = maxTop + 'px';
+        } else {
+          panel.style.width = '';
+          panel.style.height = '';
+          panel.style.left = '';
+          panel.style.top = '';
+        }
+        if (avatar.classList.contains('pb-in-header')) {
+          updateHeaderAvatarPosition(false);
+        }
+        return;
+      }
+      
+      // Temporarily clear avatar transform to measure its actual untranslated position
+      const prevTransform = avatar.style.transform;
+      avatar.style.transform = 'none';
       const avatarR = avatar.getBoundingClientRect();
+      avatar.style.transform = prevTransform;
+      
       const panelW  = panel.offsetWidth;
       const panelH  = panel.offsetHeight;
 
@@ -2375,20 +2741,74 @@
       const placeholder = document.getElementById('pb-header-avatar-placeholder');
       if (!placeholder) return;
       
-      const rectStart = host.getBoundingClientRect();
-      const rectTarget = placeholder.getBoundingClientRect();
+      // Temporarily clear avatar transform to get actual untranslated position
+      const prevTransform = avatar.style.transform;
+      avatar.style.transform = 'none';
+      const rectAvatar = avatar.getBoundingClientRect();
+      avatar.style.transform = prevTransform;
       
-      const dx = rectTarget.left - rectStart.left;
-      const dy = rectTarget.top - rectStart.top;
+      // Temporarily clear panel transform, transition, and set to target settled coordinates to get correct target bounds
+      const prevPanelTransform = panel.style.transform;
+      const prevPanelTransition = panel.style.transition;
+      const prevLeft = panel.style.left;
+      const prevTop = panel.style.top;
+      const prevWidth = panel.style.width;
+      const prevHeight = panel.style.height;
+
+      panel.style.transform = 'none';
+      panel.style.transition = 'none';
+
+      if (panel.classList.contains('pb-panel-maximized')) {
+        const maxW = Math.min(1100, window.innerWidth * 0.9);
+        const maxH = Math.min(850, window.innerHeight * 0.9);
+        panel.style.width = maxW + 'px';
+        panel.style.height = maxH + 'px';
+        panel.style.left = ((window.innerWidth - maxW) / 2) + 'px';
+        panel.style.top = ((window.innerHeight - maxH) / 2) + 'px';
+      } else {
+        const prevAvTransform = avatar.style.transform;
+        avatar.style.transform = 'none';
+        const avatarR = avatar.getBoundingClientRect();
+        avatar.style.transform = prevAvTransform;
+
+        const panelW = panel.offsetWidth;
+        const panelH = panel.offsetHeight;
+        let normalLeft = avatarR.left + (avatarR.width / 2) - (panelW / 2);
+        let normalTop = avatarR.top - panelH - 12;
+        const margin = 10;
+        normalLeft = Math.max(margin, Math.min(normalLeft, window.innerWidth - panelW - margin));
+        if (normalTop < margin) {
+          normalTop = avatarR.bottom + 12;
+        }
+        normalTop = Math.max(margin, Math.min(normalTop, window.innerHeight - panelH - margin));
+
+        panel.style.left = normalLeft + 'px';
+        panel.style.top = normalTop + 'px';
+      }
+
+      const rectTarget = placeholder.getBoundingClientRect();
+
+      // Restore original properties
+      panel.style.transform = prevPanelTransform;
+      panel.style.transition = prevPanelTransition;
+      panel.style.left = prevLeft;
+      panel.style.top = prevTop;
+      panel.style.width = prevWidth;
+      panel.style.height = prevHeight;
+      
+      const dx = rectTarget.left - rectAvatar.left;
+      const dy = rectTarget.top - rectAvatar.top;
       const scale = placeholder.offsetWidth / avatar.offsetWidth;
       
       if (animateSwim) {
         avatar.classList.add('pb-transitioning');
         avatarWrap.classList.add('pb-swim-active');
+        avatar.style.transform = `translate(${dx}px, ${dy}px) scale(${scale})`;
         setTimeout(() => {
           avatarWrap.classList.remove('pb-swim-active');
           avatar.classList.remove('pb-transitioning');
           avatar.classList.add('pb-in-header');
+          updateHeaderAvatarPosition(false); // Snap to final settled coordinates
         }, 450);
       } else {
         avatar.style.transition = 'none';
@@ -2397,8 +2817,6 @@
         avatar.style.transition = '';
         return;
       }
-      
-      avatar.style.transform = `translate(${dx}px, ${dy}px) scale(${scale})`;
     }
 
     function repositionFvPopover() {
@@ -2448,6 +2866,7 @@
 
       // 1. Fade out content immediately
       panel.classList.add('pb-content-transitioning');
+      panel.classList.add('pb-size-transitioning');
 
       // 2. Perform resize after the fade out completes (150ms)
       setTimeout(() => {
@@ -2550,6 +2969,7 @@
         // 3. Fade content back in after resize finishes (350ms)
         setTimeout(() => {
           panel.classList.remove('pb-content-transitioning');
+          panel.classList.remove('pb-size-transitioning');
           repositionPanel();
         }, 350);
       }, 150);
@@ -2589,6 +3009,11 @@
           panel.querySelectorAll('.pb-tab-panel').forEach(p => p.classList.remove('active'));
           const p = panel.querySelector(`#pb-tab-${lastTab}`);
           if (p) p.classList.add('active');
+          if (lastTab === 'spotphish') {
+            if (typeof window.stpRender === 'function') window.stpRender();
+          } else if (lastTab === 'tours') {
+            if (typeof renderToursList === 'function') renderToursList();
+          }
         }
       }
       
@@ -2843,6 +3268,7 @@
 
     function startDrag(e) {
       if (isMobile()) return;
+      if (panel.classList.contains('pb-panel-maximized')) return;
       if (e.target.closest('.pb-icon-btn') || e.target.closest('.pb-tab-btn')) return;
       
       const targetEl = e.currentTarget;
@@ -2921,7 +3347,9 @@
         const p = panel.querySelector(`#pb-tab-${tab}`);
         if (p) p.classList.add('active');
         if (tab === 'tours') {
-          renderToursList();
+          if (typeof renderToursList === 'function') renderToursList();
+        } else if (tab === 'spotphish') {
+          if (typeof window.stpRender === 'function') window.stpRender();
         }
         repositionPanel();
       });
@@ -2937,7 +3365,9 @@
         const p = inlineSec.querySelector(`#pb-tab-${tab}`);
         if (p) p.classList.add('active');
         if (tab === 'il-walkthrough') {
-          renderToursList();
+          if (typeof renderToursList === 'function') renderToursList();
+        } else if (tab === 'il-spotphish') {
+          if (typeof window.stpInlineRender === 'function') window.stpInlineRender();
         }
       });
     });
@@ -3205,49 +3635,200 @@
     /* ================================================================
        Interactive Walkthrough Engine (Global & Cross-Page support)
        ================================================================ */
+    // Helpers for automated step actions
+    function typeIntoInput(inputEl, text, callback) {
+      if (!inputEl) {
+        if (callback) callback();
+        return;
+      }
+      inputEl.value = '';
+      let index = 0;
+      const interval = setInterval(() => {
+        if (!wtActive) {
+          clearInterval(interval);
+          return;
+        }
+        if (index < text.length) {
+          inputEl.value += text[index];
+          inputEl.dispatchEvent(new Event('input', { bubbles: true }));
+          index++;
+        } else {
+          clearInterval(interval);
+          if (callback) callback();
+        }
+      }, 50);
+    }
+
+    function selectRadio(selector, callback) {
+      const radio = document.querySelector(selector);
+      if (radio) {
+        radio.click();
+        radio.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+      if (callback) setTimeout(callback, 300);
+    }
+
+    function checkCheckbox(id, checked, callback) {
+      const cb = document.getElementById(id);
+      if (cb) {
+        cb.checked = checked;
+        cb.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+      if (callback) setTimeout(callback, 300);
+    }
+
+    window.runStepAction = function() {
+      if (!wtActive || wtCurrentStep < 0 || wtCurrentStep >= wtSteps.length) return;
+      const step = wtSteps[wtCurrentStep];
+      if (step.action) {
+        changeMascotState('active');
+        step.action(() => {
+          changeMascotState('idle');
+          updateWalkthroughGate();
+        });
+      }
+    };
+
     const WALKTHROUGH_CONFIGS = {
       core_workflow: [
         {
           targetId: "campaign-form",
           title: "The Full Simulation Loop",
           text: "You've already seen how to configure a campaign. This time, let's follow one all the way from launch, to target reaction, to AI-generated reports and sharing results. Confirm your details and let's go!",
-          path: "/new-campaign"
+          path: "/new-campaign",
+          action: (cb) => {
+            const nameInput = document.getElementById('campaign_name');
+            if (nameInput) {
+              typeIntoInput(nameInput, "Enterprise Phishing Drill", () => {
+                selectRadio('#s1', () => {
+                  selectRadio('#d_local', () => {
+                    checkCheckbox('consent_confirmed', true, () => {
+                      setTimeout(() => {
+                        const launchBtn = document.getElementById('wt-create-campaign-btn');
+                        if (launchBtn) launchBtn.click();
+                        if (cb) cb();
+                      }, 500);
+                    });
+                  });
+                });
+              });
+            } else {
+              if (cb) cb();
+            }
+          }
         },
         {
           targetId: "campaigns-grid",
           title: "Tracking the Fleet",
           text: "Once campaigns launch, they appear right here on the dashboard. You can monitor overall open, click, and report rates at a glance. Let's look at the sent-emails inbox for our CEO Fraud Test.",
-          path: "/dashboard"
+          path: "/dashboard",
+          action: (cb) => {
+            const link = document.querySelector('a[href^="/campaign-emails/"]');
+            if (link) {
+              link.click();
+            } else {
+              window.location.href = '/campaign-emails/0';
+            }
+            if (cb) cb();
+          }
         },
         {
-          targetId: "wt-emails-inbox",
+          targetId: "wt-emails-viewer",
           title: "AI-Generated Inbox",
           text: "Here you inspect all generated simulation emails. Notice how each target gets a personalized message tailored to exploit human urgency. Let's see what happens if a target clicks the phishing link.",
-          path: "/campaign-emails/0"
+          path: "/campaign-emails/0",
+          action: (cb) => {
+            const evBody = document.getElementById('ev-body');
+            const link = evBody ? evBody.querySelector('a') : null;
+            if (link) {
+              link.click();
+            } else {
+              const previewBtn = document.getElementById('action-preview-link');
+              if (previewBtn) {
+                previewBtn.click();
+              } else {
+                window.location.href = '/fake-login-demo';
+              }
+            }
+            if (cb) cb();
+          }
         },
         {
           targetId: "login-form",
           title: "The Phishing Click Outcome",
           text: "When a recipient clicks the phishing link, they land here. This realistic fake Microsoft login form harvests credentials for educational purposes, teaching the user in the moment while logging a Click event.",
-          path: "/fake-login-demo"
+          path: "/fake-login-demo",
+          action: (cb) => {
+            const emailInput = document.getElementById('email-input');
+            if (emailInput) {
+              typeIntoInput(emailInput, "alex.rivera@demo-corp.com", () => {
+                setTimeout(() => {
+                  const form = document.getElementById('login-form');
+                  const submitBtn = form ? form.querySelector('.btn-next') : null;
+                  if (submitBtn) {
+                    submitBtn.click();
+                  } else if (cb) {
+                    cb();
+                  }
+                }, 400);
+              });
+            } else {
+              if (cb) cb();
+            }
+          }
         },
         {
           targetId: "thank-you-card-container",
           title: "The Active Reporting Outcome",
           text: "If instead the recipient reports the email using the PhishSim plug-in, they are redirected here. This reinforces the active defense habit, proving that employees can act as live sensors against real threats.",
-          path: "/reporting-demo"
+          path: "/reporting-demo",
+          action: (cb) => {
+            if (cb) cb();
+          }
         },
         {
           targetId: "wt-report-hero",
           title: "AI Campaign Report",
           text: "This is the payoff. The AI constructs an agentic report measuring your Human Security Score™, key vulnerabilities, and custom department remediation steps to help you mitigate high-risk hotspots.",
-          path: "/campaign-report/0"
+          path: "/campaign-report/0",
+          action: (cb) => {
+            window.scrollTo({ top: 400, behavior: 'smooth' });
+            setTimeout(() => {
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+              if (cb) cb();
+            }, 1500);
+          }
         },
         {
           targetId: "pdf-dl-btn",
           title: "Exporting for Leadership",
           text: "Export your reports to PDF or CSV with a single click to share progress with your leadership team and compliance auditors. You've completed the complete PhishSim simulation loop!",
-          path: "/campaign-report/0"
+          path: "/campaign-report/0",
+          action: (cb) => {
+            const btn = document.getElementById('pdf-dl-btn');
+            if (btn) btn.click();
+            if (cb) cb();
+          }
+        },
+        {
+          targetId: "attack-chain",
+          title: "Attack Visualizations",
+          text: "Take a look at this campaign attack chain. I'll help your security officers map how phishing templates, credential harvesters, and data breaches link together.",
+          path: "/",
+          action: (cb) => {
+            const el = document.getElementById('attack-chain');
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            if (cb) cb();
+          }
+        },
+        {
+          targetId: "sec-hero",
+          title: "Risk Profile Grading",
+          text: "We will track every interaction and report detailed risk grades to help you prioritize training for vulnerable departments.",
+          path: "/reports-demo",
+          action: (cb) => {
+            if (cb) cb();
+          }
         }
       ],
       getting_started: [
@@ -3255,37 +3836,62 @@
           targetId: "actual-terminal-wrapper",
           title: "Think Like the Threat",
           text: "I'm Lure, your AI security co-pilot. Ever wondered why phishing works so well? Attackers start by scouting public records and OSINT data—gathering the exact pieces they need to build trust before you even realize you're targeted.",
-          path: "/"
+          path: "/",
+          action: (cb) => {
+            if (window.runSuggestedCmd) {
+              window.runSuggestedCmd('osint demo-corp.com');
+            }
+            if (cb) cb();
+          }
         },
         {
           targetId: "threat-sandbox",
           title: "Inside the Hook",
           text: "Phishing succeeds because it's deeply personalized. In this Sandbox, you can safely generate lures and spot phishing emails to see how easily simple details can manipulate a person. Let's build a real campaign to see how this scales.",
-          path: "/"
+          path: "/",
+          action: (cb) => {
+            if (window.selectSandboxScenario) {
+              window.selectSandboxScenario('ceo');
+            }
+            if (cb) cb();
+          }
         },
         {
           targetId: "campaign_name",
           title: "Framing the Context",
           text: "To train a team effectively, the simulation has to feel real. Start by naming your campaign and choosing a target domain—this lets us customize the pretext so it mimics the actual, context-aware threats your staff faces daily.",
-          path: "/new-campaign"
+          path: "/new-campaign",
+          action: (cb) => {
+            const input = document.getElementById('campaign_name');
+            typeIntoInput(input, "Q3 Phishing Awareness Drill", cb);
+          }
         },
         {
           targetId: "wt-scenarios-container",
           title: "Crafting the Angle",
           text: "What story will get them to click? Select a scenario like CEO Wire Fraud or a routine IT alert. I'll automatically spin up context-specific email copy tailored to hook the target's attention naturally.",
-          path: "/new-campaign"
+          path: "/new-campaign",
+          action: (cb) => {
+            selectRadio('#s1', cb);
+          }
         },
         {
           targetId: "wt-delivery-grid",
           title: "Choosing the Path",
           text: "How do you want to test? You can run local sandboxed mock trials, dispatch live emails through SMTP, or choose Safe Send to route everything to Mailtrap so you can inspect your drafts with zero risk.",
-          path: "/new-campaign"
+          path: "/new-campaign",
+          action: (cb) => {
+            selectRadio('#d_local', cb);
+          }
         },
         {
           targetId: "consent_confirmed",
           title: "Cast the Line",
           text: "Ready to see who bites? Confirm your authorization and hit Create. I'll take care of the rest—dispatching the personalized lures and setting up the tracking to capture real engagement metrics.",
-          path: "/new-campaign"
+          path: "/new-campaign",
+          action: (cb) => {
+            checkCheckbox('consent_confirmed', true, cb);
+          }
         },
         {
           targetId: "wt-dashboard-view",
@@ -3316,33 +3922,181 @@
         { targetId: "campaign-form", title: "Injecting Targets", text: "To make these emails convincing, I can ingest CSV lists containing target names, departments, and titles to craft context-aware copy.", path: "/new-campaign" },
         { targetId: "pricing", title: "Scaling Simulation", text: "Once you are ready to deploy automated lures across your company, you can choose a subscription that scales to your target count.", path: "/" }
       ],
-      attack_analysis: [
-        { targetId: "attack-chain", title: "Attack Visualizations", text: "Take a look at this campaign attack chain. I'll help your security officers map how phishing templates, credential harvesters, and data breaches link together.", path: "/" },
-        { targetId: "sec-hero", title: "Risk Profile Grading", text: "We will track every interaction and report detailed risk grades to help you prioritize training for vulnerable departments.", path: "/reports-demo" }
-      ],
+
       tool_threat_analyzer: [
-        { targetId: "tab-body", title: "Threat Analyzer Tab", text: "Welcome to the Threat Analyzer! First, choose whether you want to paste a raw email body to audit its text, or headers to trace its headers. I'll search the text for phishing indicators.", path: "/threat-analyzer" },
-        { targetId: "ta-email-input", title: "Paste Raw Emails", text: "You can copy and paste any suspicious email copy here, or check out our preset forensic samples below to see what real-world CEO wire fraud or IT support alert pretexts look like.", path: "/threat-analyzer" },
-        { targetId: "ta-analyze-btn", title: "Analyzing Indicators", text: "Click here to trigger my forensic analysis. I'll parse the copy, measure language urgency, search for suspicious domains, and highlight threat factors.", path: "/threat-analyzer" },
-        { targetId: "ta-main-card", title: "Reading Results", text: "Once finished, I'll display the risk verdict badge, color-coded threat level score, and highlight exactly which phrases are dangerous right on the email card. Audit threat indicators with confidence!", path: "/threat-analyzer" }
+        {
+          targetId: "tab-body",
+          title: "Threat Analyzer Tab",
+          text: "Welcome to the Threat Analyzer! First, choose whether you want to paste a raw email body to audit its text, or headers to trace its headers. I'll search the text for phishing indicators.",
+          path: "/threat-analyzer"
+        },
+        {
+          targetId: "ta-email-input",
+          title: "Paste Raw Emails",
+          text: "You can copy and paste any suspicious email copy here, or check out our preset forensic samples below to see what real-world CEO wire fraud or IT support alert pretexts look like.",
+          path: "/threat-analyzer",
+          action: (cb) => {
+            if (typeof applyPreset === 'function') {
+              applyPreset('ceo-wire');
+            }
+            if (cb) cb();
+          }
+        },
+        {
+          targetId: "ta-analyze-btn",
+          title: "Analyzing Indicators",
+          text: "Click here to trigger my forensic analysis. I'll parse the copy, measure language urgency, search for suspicious domains, and highlight threat factors.",
+          path: "/threat-analyzer",
+          action: (cb) => {
+            const btn = document.getElementById('ta-analyze-btn');
+            if (btn) btn.click();
+            setTimeout(() => {
+              if (cb) cb();
+            }, 1800);
+          }
+        },
+        {
+          targetId: "ta-result-state",
+          title: "Reading Results",
+          text: "Once finished, I'll display the risk verdict badge, color-coded threat level score, and highlight exactly which phrases are dangerous right on the email card. Audit threat indicators with confidence!",
+          path: "/threat-analyzer"
+        }
       ],
       tool_header_analyzer: [
-        { targetId: "headers-input", title: "Ingesting Raw Headers", text: "Welcome! Here, paste the raw internet headers of any email you wish to audit. Raw headers contain the technical route records, sender authentication keys, and delivery timestamps.", path: "/header-analyzer" },
-        { targetId: "btn-preset-spf-fail", title: "Authentication Presets", text: "Need an example? Click one of my preset templates below, like this SPF authentication failure chip, to load real raw header content instantly.", path: "/header-analyzer" },
-        { targetId: "trace-btn", title: "Trace Hop Path", text: "Click Trace Route to run my parser. I'll dissect the headers, extract hop-by-hop records, verify domain alignment, and evaluate anti-spoofing compliance.", path: "/header-analyzer" },
-        { targetId: "ha-hop-stage", title: "Analyzing Hop Trails", text: "I'll display the hop sequence and trace security records like SPF, DKIM, and DMARC alignment status, plus highlight red flags to spot spoofed sender domains.", path: "/header-analyzer" }
+        {
+          targetId: "headers-input",
+          title: "Ingesting Raw Headers",
+          text: "Welcome! Here, paste the raw internet headers of any email you wish to audit. Raw headers contain the technical route records, sender authentication keys, and delivery timestamps.",
+          path: "/header-analyzer"
+        },
+        {
+          targetId: "btn-preset-spf-fail",
+          title: "Authentication Presets",
+          text: "Need an example? Click one of my preset templates below, like this SPF authentication failure chip, to load real raw header content instantly.",
+          path: "/header-analyzer",
+          action: (cb) => {
+            const btn = document.getElementById('btn-preset-spf-fail');
+            if (btn) btn.click();
+            if (cb) cb();
+          }
+        },
+        {
+          targetId: "trace-btn",
+          title: "Trace Hop Path",
+          text: "Click Trace Route to run my parser. I'll dissect the headers, extract hop-by-hop records, verify domain alignment, and evaluate anti-spoofing compliance.",
+          path: "/header-analyzer",
+          action: (cb) => {
+            const btn = document.getElementById('trace-btn');
+            if (btn) btn.click();
+            setTimeout(() => {
+              if (cb) cb();
+            }, 1800);
+          }
+        },
+        {
+          targetId: "ha-hop-stage",
+          title: "Analyzing Hop Trails",
+          text: "I'll display the hop sequence and trace security records like SPF, DKIM, and DMARC alignment status, plus highlight red flags to spot spoofed sender domains.",
+          path: "/header-analyzer"
+        }
       ],
       tool_url_decoder: [
-        { targetId: "url-input", title: "Inspect Suspicious URLs", text: "Welcome! Copy any suspicious hyperlink you receive in an email and paste it here. Attackers love using shorteners and multi-hop redirects to mask dangerous sites.", path: "/url-decoder" },
-        { targetId: "ud-input-body", title: "Redirect Presets", text: "Select one of my forensic samples below to see how I handle multi-hop redirect chains or links flagged by open threat feeds like URLhaus.", path: "/url-decoder" },
-        { targetId: "trace-btn", title: "Run Trace Query", text: "Click Trace Link to trace the URL hops safely. I'll trigger a head query, follow redirect loops, expand shorteners, and inspect safety reputations.", path: "/url-decoder" },
-        { targetId: "ud-chain-stage", title: "Visualizing Hops", text: "Once processed, I'll reveal every single redirect hop and display a simulated live browser preview so you can safely audit the final page without risk!", path: "/url-decoder" }
+        {
+          targetId: "url-input",
+          title: "Inspect Suspicious URLs",
+          text: "Welcome! Copy any suspicious hyperlink you receive in an email and paste it here. Attackers love using shorteners and multi-hop redirects to mask dangerous sites.",
+          path: "/url-decoder"
+        },
+        {
+          targetId: "ud-input-body",
+          title: "Redirect Presets",
+          text: "Select one of my forensic samples below to see how I handle multi-hop redirect chains or links flagged by open threat feeds like URLhaus.",
+          path: "/url-decoder",
+          action: (cb) => {
+            const btn = document.querySelector('.ud-presets-grid button:nth-child(2)');
+            if (btn) btn.click();
+            if (cb) cb();
+          }
+        },
+        {
+          targetId: "trace-btn",
+          title: "Run Trace Query",
+          text: "Click Trace Link to trace the URL hops safely. I'll trigger a head query, follow redirect loops, expand shorteners, and inspect safety reputations.",
+          path: "/url-decoder",
+          action: (cb) => {
+            const btn = document.getElementById('trace-btn');
+            if (btn) btn.click();
+            setTimeout(() => {
+              if (cb) cb();
+            }, 2200);
+          }
+        },
+        {
+          targetId: "ud-result-preview",
+          title: "Visualizing Hops",
+          text: "Once processed, I'll reveal every single redirect hop and display a simulated live browser preview so you can safely audit the final page without risk!",
+          path: "/url-decoder"
+        }
       ],
       tool_password_breach: [
-        { targetId: "btn-tab-pw", title: "Password Strength Audit", text: "Welcome! First, evaluate any password's local strength using my real-time entropy tracker to verify it meets secure guidelines.", path: "/password-breach" },
-        { targetId: "sec-audit-input-token", title: "Input Password", text: "Type a password here to test. I'll calculate characters, length, case variability, numeric complexity, and verify if it's too simple.", path: "/password-breach" },
-        { targetId: "btn-tab-email", title: "Email Leak Scanner", text: "Next, click over to my Email tab. Here, paste any email address to audit public databases of known credential leaks.", path: "/password-breach" },
-        { targetId: "pb-vault-card", title: "Audit Exposure Level", text: "Trigger the audit to inspect if the credentials have been compromised, letting you proactively update keys and maintain strong account security!", path: "/password-breach" }
+        {
+          targetId: "btn-tab-pw",
+          title: "Password Strength Audit",
+          text: "Welcome! First, evaluate any password's local strength using my real-time entropy tracker to verify it meets secure guidelines.",
+          path: "/password-breach"
+        },
+        {
+          targetId: "sec-audit-input-token",
+          title: "Input Password",
+          text: "Type a password here to test. I'll calculate characters, length, case variability, numeric complexity, and verify if it's too simple.",
+          path: "/password-breach",
+          action: (cb) => {
+            const input = document.getElementById('sec-audit-input-token');
+            if (input) {
+              typeIntoInput(input, "P@ssw0rd123!", () => {
+                setTimeout(() => {
+                  const btn = document.getElementById('pw-btn');
+                  if (btn) btn.click();
+                  if (cb) cb();
+                }, 300);
+              });
+            } else {
+              if (cb) cb();
+            }
+          }
+        },
+        {
+          targetId: "btn-tab-email",
+          title: "Email Leak Scanner",
+          text: "Next, click over to my Email tab. Here, paste any email address to audit public databases of known credential leaks.",
+          path: "/password-breach",
+          action: (cb) => {
+            const tabBtn = document.getElementById('btn-tab-email');
+            if (tabBtn) tabBtn.click();
+            setTimeout(() => {
+              const emailInput = document.getElementById('email-field');
+              if (emailInput) {
+                typeIntoInput(emailInput, "ceo@demo-corp.com", () => {
+                  setTimeout(() => {
+                    const scanBtn = document.getElementById('email-btn');
+                    if (scanBtn) scanBtn.click();
+                    setTimeout(() => {
+                      if (cb) cb();
+                    }, 2000);
+                  }, 300);
+                });
+              } else {
+                if (cb) cb();
+              }
+            }, 400);
+          }
+        },
+        {
+          targetId: "email-verdict-panel",
+          title: "Audit Exposure Level",
+          text: "Trigger the audit to inspect if the credentials have been compromised, letting you proactively update keys and maintain strong account security!",
+          path: "/password-breach"
+        }
       ]
     };
 
@@ -3353,6 +4107,18 @@
     let isFirstStep = true;
     let gateListenersInitialized = false;
     let gateIntervalId = null;
+    let lastGateSatisfiedState = false;
+
+    let lastScaledTargetEl = null;
+    let lastScaledTargetOriginalTransform = '';
+
+    function resetLastScaledTarget() {
+      if (lastScaledTargetEl) {
+        lastScaledTargetEl.style.transform = lastScaledTargetOriginalTransform;
+        lastScaledTargetEl.style.transition = '';
+        lastScaledTargetEl = null;
+      }
+    }
 
     function startGateInterval() {
       if (gateIntervalId) clearInterval(gateIntervalId);
@@ -3371,39 +4137,49 @@
     }
 
     function checkStepGate(stepIdx) {
-      if (wtCurrentPage !== 'getting_started') return true; // Gate only the getting_started recommended tour
-      
-      if (stepIdx === 0) {
-        // Step 1: Terminal query
-        const terminalBody = document.getElementById('terminal-body');
-        return !!(terminalBody && (terminalBody.textContent.includes('demo-corp.com') || terminalBody.textContent.includes('MX') || terminalBody.textContent.includes('SPF') || terminalBody.textContent.includes('DMARC') || terminalBody.children.length > 2));
+      if (wtCurrentPage === 'getting_started') {
+        if (stepIdx === 0) {
+          // Step 1: Terminal query
+          const terminalBody = document.getElementById('terminal-body');
+          return !!(terminalBody && (terminalBody.textContent.includes('demo-corp.com') || terminalBody.textContent.includes('MX') || terminalBody.textContent.includes('SPF') || terminalBody.textContent.includes('DMARC') || terminalBody.children.length > 2));
+        }
+        if (stepIdx === 1) {
+          // Step 2: Sandbox generate
+          const emailCard = document.getElementById('pb-card');
+          return !!(emailCard && emailCard.style.display !== 'none');
+        }
+        if (stepIdx === 2) {
+          // Step 3: Campaign Name
+          const nameInput = document.getElementById('campaign_name');
+          return !!(nameInput && nameInput.value.trim().length >= 3);
+        }
+        if (stepIdx === 3) {
+          // Step 4: Scenario Selection
+          const scenarioChecked = document.querySelector('input[name="scenario"]:checked');
+          return !!scenarioChecked;
+        }
+        if (stepIdx === 4) {
+          // Step 5: Delivery Mode
+          const deliveryChecked = document.querySelector('input[name="delivery_mode"]:checked');
+          return !!deliveryChecked;
+        }
+        if (stepIdx === 5) {
+          // Step 6: Consent checkbox
+          const consentChecked = document.getElementById('consent_confirmed');
+          return !!(consentChecked && consentChecked.checked);
+        }
       }
-      if (stepIdx === 1) {
-        // Step 2: Sandbox generate
-        const emailCard = document.getElementById('pb-card');
-        return !!(emailCard && emailCard.style.display !== 'none');
+      if (wtCurrentPage === 'core_workflow') {
+        if (stepIdx === 2) {
+          // Step 3 (Inbox): Gated until user clicks link and lands on /fake-login-demo
+          return false;
+        }
+        if (stepIdx === 3) {
+          // Step 4 (Login Form): Gated until user submits credentials and lands on /simulated
+          return false;
+        }
       }
-      if (stepIdx === 2) {
-        // Step 3: Campaign Name
-        const nameInput = document.getElementById('campaign_name');
-        return !!(nameInput && nameInput.value.trim().length >= 3);
-      }
-      if (stepIdx === 3) {
-        // Step 4: Scenario Selection
-        const scenarioChecked = document.querySelector('input[name="scenario"]:checked');
-        return !!scenarioChecked;
-      }
-      if (stepIdx === 4) {
-        // Step 5: Delivery Mode
-        const deliveryChecked = document.querySelector('input[name="delivery_mode"]:checked');
-        return !!deliveryChecked;
-      }
-      if (stepIdx === 5) {
-        // Step 6: Consent checkbox
-        const consentChecked = document.getElementById('consent_confirmed');
-        return !!(consentChecked && consentChecked.checked);
-      }
-      return true; // Steps 7, 8, 9 are not gated
+      return true; // Other steps are not gated
     }
 
     function initGateListeners() {
@@ -3430,6 +4206,16 @@
 
     function updateWalkthroughGate() {
       const satisfiesGate = checkStepGate(wtCurrentStep);
+      
+      // Payoff check: if gate state newly became satisfied
+      if (satisfiesGate && !lastGateSatisfiedState) {
+        changeMascotState('success');
+        setTimeout(() => {
+          if (wtActive) changeMascotState('idle');
+        }, 2000);
+      }
+      lastGateSatisfiedState = satisfiesGate;
+
       const nextBtns = document.querySelectorAll('.pb-next-btn');
       const gatePrompts = document.querySelectorAll('.pb-gate-prompt');
       
@@ -3474,9 +4260,8 @@
       const currentLeft = parseFloat(host.style.left) || -999;
       const currentTop  = parseFloat(host.style.top)  || -999;
 
-      // Snap without transition on first step or instant moves
-      if (instant || isFirstStep) {
-        isFirstStep = false;
+      // Snap without transition only if instant is explicitly true
+      if (instant) {
         host.style.setProperty('transition', 'none', 'important');
         host.style.setProperty('position', 'fixed', 'important');
         host.style.setProperty('bottom', 'auto', 'important');
@@ -3500,9 +4285,9 @@
       host.style.top  = targetTop  + 'px';
       host.style.left = targetLeft + 'px';
 
-      // Emit swim bubbles
-      const duration = 500;
-      const bubbleCount = 4;
+      // Emit swim bubbles slower
+      const duration = 1200;
+      const bubbleCount = 8;
       for (let i = 0; i < bubbleCount; i++) {
         setTimeout(() => {
           if (!avatarEl.classList.contains('pb-swim-active')) return;
@@ -3518,6 +4303,23 @@
     }
 
     function swimOffAndNavigate(path) {
+      // Show transition bubble text
+      const bubbleEl = document.getElementById('pb-wt-bubble');
+      if (bubbleEl) {
+        bubbleEl.innerHTML = `
+          <div style="display:flex; flex-direction:column; gap:10px; min-height:80px; justify-content:center; align-items:center; text-align:center;">
+            <span style="font-family:var(--sans); font-size:0.75rem; font-weight:700; color:var(--primary);">
+              Swimming to next section...
+            </span>
+            <p style="font-size:0.7rem; color:#f8fafc; line-height:1.45; margin:0;">
+              Hold tight! I'm moving to the next page to set up the next steps.
+            </p>
+            <div style="width:16px; height:16px; border:2px solid rgba(6,182,212,0.2); border-top-color:var(--primary); border-radius:50%; animation:pbSpin 0.8s linear infinite; margin-top:4px;"></div>
+          </div>
+        `;
+        repositionWalkthroughElements();
+      }
+
       const avatar = document.getElementById('pb-avatar');
       const host = document.getElementById('pb-host');
       if (!avatar || !host) {
@@ -3630,6 +4432,26 @@
       const targetEl = document.getElementById(currentTargetId);
       let highlighter = document.getElementById('pb-wt-highlighter');
 
+      // Prevent infinite layout feedback loop if target is mascot itself
+      if (currentTargetId === 'pb-avatar' || currentTargetId === 'pb-host') {
+        resetLastScaledTarget();
+        if (highlighter) highlighter.style.display = 'none';
+        host.style.setProperty('position', 'fixed', 'important');
+        host.style.setProperty('top', 'auto', 'important');
+        host.style.setProperty('left', 'auto', 'important');
+        host.style.setProperty('bottom', '24px', 'important');
+        host.style.setProperty('right', '24px', 'important');
+        avatar.classList.remove('pb-face-left');
+        host.classList.remove('pb-direction-left');
+        host.classList.add('pb-direction-right');
+        return;
+      }
+
+      // Revert previous target scaling if target changed
+      if (lastScaledTargetEl && lastScaledTargetEl !== targetEl) {
+        resetLastScaledTarget();
+      }
+
       // No target → fall back to bottom-right corner
       if (!targetEl) {
         if (highlighter) highlighter.style.display = 'none';
@@ -3654,9 +4476,37 @@
         return;
       }
 
-      const rect = targetEl.getBoundingClientRect();
+      let rect = targetEl.getBoundingClientRect();
       const currentScrollX = window.scrollX;
       const currentScrollY = window.scrollY;
+
+      const vw        = window.innerWidth;
+      const vh        = window.innerHeight;
+      const margin    = 16;
+      const mascotW   = 110;
+      const bubbleW   = 320;
+      const gap       = 10;
+      const hostW     = mascotW + gap + bubbleW;   // ~440px
+      const bubbleEl  = document.getElementById('pb-wt-bubble');
+      const hostH     = bubbleEl ? Math.max(bubbleEl.offsetHeight, 160) : 200;
+
+      // Calculate dynamic scaling for wide targets on narrow viewports
+      const totalWNeeded = rect.width + hostW + margin * 4;
+      if (vw > 768 && vw < totalWNeeded) {
+        const scale = Math.max(0.72, vw / totalWNeeded);
+        if (!lastScaledTargetEl) {
+          lastScaledTargetEl = targetEl;
+          lastScaledTargetOriginalTransform = targetEl.style.transform || '';
+        }
+        targetEl.style.transform = `scale(${scale})`;
+        targetEl.style.transformOrigin = 'center center';
+        targetEl.style.transition = 'transform 0.2s ease-out';
+        // Re-measure bounding box after scaling down
+        rect = targetEl.getBoundingClientRect();
+      } else if (lastScaledTargetEl === targetEl) {
+        resetLastScaledTarget();
+        rect = targetEl.getBoundingClientRect();
+      }
 
       // Layout caching optimization: bypass positioning if no coordinates/size/scroll changed
       if (
@@ -3685,7 +4535,7 @@
           'position:fixed', 'pointer-events:none', 'box-sizing:border-box',
           'border-radius:12px', 'border:2px solid var(--primary)',
           'box-shadow:0 0 0 4px rgba(6,182,212,0.18),0 0 24px rgba(6,182,212,0.35)',
-          'z-index:19999', 'transition:all 0.2s ease-out'
+          'z-index:1000000', 'transition:all 0.2s ease-out'
         ].join(';');
         document.body.appendChild(highlighter);
       }
@@ -3695,16 +4545,6 @@
       highlighter.style.left   = (rect.left   - 5) + 'px';
       highlighter.style.width  = (rect.width  + 10) + 'px';
       highlighter.style.height = (rect.height + 10) + 'px';
-
-      const vw        = window.innerWidth;
-      const vh        = window.innerHeight;
-      const margin    = 16;
-      const mascotW   = 110;
-      const bubbleW   = 320;
-      const gap       = 10;
-      const hostW     = mascotW + gap + bubbleW;   // ~440px
-      const bubbleEl  = document.getElementById('pb-wt-bubble');
-      const hostH     = bubbleEl ? Math.max(bubbleEl.offsetHeight, 160) : 200;
 
       // Mobile: stick below the element
       if (vw <= 768) {
@@ -3785,63 +4625,64 @@
         desc: "Follow the complete end-to-end simulation lifecycle: launch a campaign, trace target reactions, and review AI analytics reports.",
         icon: "ti ti-refresh",
         color: "var(--primary)",
-        category: "Core Simulator Tours"
+        category: "Core Simulator Tours",
+        tier: "flagship"
       },
       getting_started: {
         name: "Getting Started (Recommended)",
         desc: "The essential 9-step onboarding walkthrough covering the sandbox terminal, scenario formulation, and real-time dashboard analytics.",
         icon: "ti ti-compass",
         color: "var(--primary)",
-        category: "Core Simulator Tours"
+        category: "Core Simulator Tours",
+        tier: "start"
       },
       campaign_launch: {
         name: "Simulating Campaigns Guide",
         desc: "A 3-step walkthrough on executing security terminal queries and setting up active simulation campaigns.",
         icon: "ti ti-terminal-2",
         color: "var(--warning)",
-        category: "Feature Deep-Dives"
+        category: "Feature Deep-Dives",
+        tier: "standard"
       },
       lure_generation: {
         name: "AI Email Generation Guide",
         desc: "A 3-step tour showing how Lure drafts personalized phishing pretexts and calculates threat bait scores.",
         icon: "ti ti-mail",
         color: "var(--primary)",
-        category: "Feature Deep-Dives"
-      },
-      attack_analysis: {
-        name: "Attack Path & Risk Analyzer Guide",
-        desc: "A 2-step overview of attack path visualization mapping and organizational threat profile reporting.",
-        icon: "ti ti-git-commit",
-        color: "var(--danger)",
-        category: "Feature Deep-Dives"
+        category: "Feature Deep-Dives",
+        tier: "standard"
       },
       tool_threat_analyzer: {
         name: "Threat Analyzer Tour",
         desc: "A 4-step walkthrough of pasting and auditing raw email copy for phishing red flags.",
         icon: "ti ti-eye",
         color: "var(--warning)",
-        category: "Standalone Forensic Tools"
+        category: "Standalone Forensic Tools",
+        tier: "standard"
       },
       tool_header_analyzer: {
         name: "Header Analyzer Tour",
         desc: "A 4-step walkthrough of tracing technical email header hop paths and sender authentication records.",
         icon: "ti ti-route",
         color: "var(--primary)",
-        category: "Standalone Forensic Tools"
+        category: "Standalone Forensic Tools",
+        tier: "standard"
       },
       tool_url_decoder: {
         name: "URL Decoder Tour",
         desc: "A 4-step guide to decoding redirect loops, expanding short links, and rendering page previews.",
         icon: "ti ti-link",
         color: "var(--warning)",
-        category: "Standalone Forensic Tools"
+        category: "Standalone Forensic Tools",
+        tier: "standard"
       },
       tool_password_breach: {
         name: "Password & Leak Tour",
         desc: "A 4-step inspection of local password complexity and email address database leak scans.",
         icon: "ti ti-shield-lock",
         color: "var(--danger)",
-        category: "Standalone Forensic Tools"
+        category: "Standalone Forensic Tools",
+        tier: "standard"
       }
     };
 
@@ -3877,28 +4718,65 @@
           
           let badgeHtml = '';
           let cardStyle = '';
+          let nameStyle = 'font-weight: 600; color: var(--text-primary);';
+          let btnStyle = 'background: rgba(255,255,255,0.05); color: var(--text-primary); padding: 4px; border-radius: 4px; border: none; cursor: pointer;';
+          let progressBarHtml = '';
+          let tierBadgeHtml = '';
+
+          // Tier badge labeling
+          if (meta.tier === 'start') {
+            tierBadgeHtml = `<span style="font-size: 0.52rem; font-weight: 800; text-transform: uppercase; color: var(--primary); background: rgba(6,182,212,0.12); padding: 2px 5px; border-radius: 4px; border: 1px solid rgba(6,182,212,0.25); margin-left: 6px;">Start Here</span>`;
+          } else if (meta.tier === 'flagship') {
+            tierBadgeHtml = `<span style="font-size: 0.52rem; font-weight: 800; text-transform: uppercase; color: var(--primary); background: rgba(6,182,212,0.12); padding: 2px 5px; border-radius: 4px; border: 1px solid rgba(6,182,212,0.25); margin-left: 6px;">Flagship</span>`;
+          }
+
           if (isCompleted) {
             badgeHtml = `<span class="pb-tour-badge completed" style="font-size: 0.6rem; font-weight: 700; color: var(--success,#34D399); background: color-mix(in srgb, var(--success,#34D399) 10%, transparent); padding: 2px 6px; border-radius: 4px; border: 1px solid color-mix(in srgb, var(--success,#34D399) 20%, transparent); display: flex; align-items: center; gap: 3px; flex-shrink: 0;"><i class="ti ti-check"></i> Done</span>`;
+            cardStyle = `border-color: rgba(52, 211, 153, 0.35); background: color-mix(in srgb, var(--success,#34D399) 4%, transparent);`;
+            btnStyle = `background: rgba(52, 211, 153, 0.15); color: var(--success,#34D399); padding: 4px; border-radius: 4px; border: 1px solid rgba(52, 211, 153, 0.3); cursor: pointer;`;
+            progressBarHtml = `
+              <div style="width: 100%; height: 3px; background: rgba(255,255,255,0.05); border-radius: 2px; margin-top: 8px; overflow: hidden;">
+                <div style="width: 100%; height: 100%; background: var(--success,#34D399); border-radius: 2px;"></div>
+              </div>
+            `;
           } else if (isInProgress) {
             badgeHtml = `<span class="pb-tour-badge progress" style="font-size: 0.6rem; font-weight: 700; color: var(--warning); background: color-mix(in srgb, var(--warning) 10%, transparent); padding: 2px 6px; border-radius: 4px; border: 1px solid color-mix(in srgb, var(--warning) 20%, transparent); display: flex; align-items: center; gap: 3px; flex-shrink: 0;"><i class="ti ti-progress"></i> Step ${currentStep + 1}/${totalSteps}</span>`;
-          }
-          
-          if (key === 'getting_started') {
-            cardStyle = `border-color: var(--primary); background: color-mix(in srgb, var(--primary) 6%, transparent);`;
+            cardStyle = `border-color: rgba(245, 158, 11, 0.35); background: color-mix(in srgb, var(--warning) 4%, transparent);`;
+            btnStyle = `background: var(--warning); color: #000; padding: 4px; border-radius: 4px; border: none; cursor: pointer;`;
+            const progressPercent = Math.round(((currentStep + 1) / totalSteps) * 100);
+            progressBarHtml = `
+              <div style="width: 100%; height: 3px; background: rgba(255,255,255,0.08); border-radius: 2px; margin-top: 8px; overflow: hidden;">
+                <div style="width: ${progressPercent}%; height: 100%; background: var(--warning); border-radius: 2px; transition: width 0.3s ease;"></div>
+              </div>
+            `;
+          } else {
+            // Unstarted tier layouts
+            if (meta.tier === 'start') {
+              cardStyle = `border-color: var(--primary); background: color-mix(in srgb, var(--primary) 6%, transparent); box-shadow: 0 0 12px rgba(6,182,212,0.15);`;
+              nameStyle = `font-weight: 700; color: var(--primary);`;
+              btnStyle = `background: var(--primary); color: #000; padding: 4px; border-radius: 4px; border: none; cursor: pointer;`;
+            } else if (meta.tier === 'flagship') {
+              cardStyle = `border-color: rgba(6, 182, 212, 0.4); background: color-mix(in srgb, var(--primary) 3%, transparent);`;
+              nameStyle = `font-weight: 700; color: var(--text-primary);`;
+              btnStyle = `background: color-mix(in srgb, var(--primary) 85%, white); color: #000; padding: 4px; border-radius: 4px; border: none; cursor: pointer;`;
+            } else {
+              cardStyle = `border-color: rgba(255,255,255,0.06); background: rgba(255,255,255,0.02);`;
+            }
           }
           
           html += `
             <div class="pb-wt-guide-card" onclick="startWalkthrough('${key}')" style="${cardStyle}">
               <div class="pb-wt-guide-icon" style="color: ${meta.color};"><i class="${meta.icon}"></i></div>
               <div class="pb-wt-guide-info">
-                <div class="pb-wt-guide-name" style="${key === 'getting_started' ? 'font-weight:700; color:var(--primary);' : ''}">
-                  ${meta.name} (${totalSteps} steps)
+                <div class="pb-wt-guide-name" style="${nameStyle}">
+                  ${meta.name} (${totalSteps} steps) ${tierBadgeHtml}
                 </div>
                 <div class="pb-wt-guide-desc">${meta.desc}</div>
+                ${progressBarHtml}
               </div>
-              <div style="display:flex; align-items:center; gap:8px;">
+              <div style="display:flex; align-items:center; gap:8px; margin-left: 8px;">
                 ${badgeHtml}
-                <button class="pb-wt-guide-go" style="${key === 'getting_started' ? 'background: var(--primary); color: #000; padding: 4px; border-radius: 4px;' : ''}"><i class="ti ti-arrow-right"></i></button>
+                <button class="pb-wt-guide-go" style="${btnStyle}"><i class="ti ti-arrow-right"></i></button>
               </div>
             </div>
           `;
@@ -3935,6 +4813,25 @@
       }
       saveVisitorProfile();
       if (window.renderToursList) renderToursList();
+
+      // Close the panel if it is open and explicitly reset maximized state
+      if (panelOpen) {
+        closePanel();
+      }
+      panel.classList.remove('pb-panel-maximized');
+      const maxIcon = document.querySelector('#pb-max-btn i');
+      const maxBtn = document.getElementById('pb-max-btn');
+      if (maxIcon) {
+        maxIcon.className = 'ti ti-maximize';
+      }
+      if (maxBtn) {
+        maxBtn.setAttribute('title', 'Expand to page');
+        maxBtn.setAttribute('aria-label', 'Expand');
+      }
+      panel.style.width = '';
+      panel.style.height = '';
+      panel.style.top = '';
+      panel.style.left = '';
 
       // Close the takeover modal
       inlineSec.style.display = 'none';
@@ -4042,6 +4939,11 @@
               <button class="pb-action-btn" onclick="exitWalkthrough()" style="padding:2px 6px; font-size:0.58rem; background:transparent; opacity:0.6; margin: 0;">
                 Skip All
               </button>
+              ${step.action ? `
+                <button class="pb-action-btn" onclick="runStepAction()" style="padding:2px 6px; font-size:0.58rem; background:transparent; opacity:0.9; color:var(--primary); margin: 0; font-weight: bold;">
+                  <i class="ti ti-wand"></i> Let Lure do it
+                </button>
+              ` : ''}
               <button class="pb-action-btn" onclick="nextWalkthroughStepBtn()" style="padding:2px 6px; font-size:0.58rem; background:transparent; opacity:0.6; margin: 0;">
                 Skip Step
               </button>
@@ -4078,13 +4980,60 @@
       const bubbleEl = document.getElementById('pb-wt-bubble');
       if (bubbleEl) bubbleEl.style.display = 'block';
 
-      // Remove any existing highlights
-      document.querySelectorAll('.pb-highlight-active').forEach(el => {
-        el.classList.remove('pb-highlight-active');
-      });
+      function highlightAndPositionTarget(targetEl, s) {
 
-      let searchAttempts = 0;
-      const maxSearchAttempts = 15; // 3 seconds total
+        // Scroll instantly, temporarily bypassing global smooth scrolling styles
+        const htmlStyle = document.documentElement.style;
+        const bodyStyle = document.body.style;
+        const originalHtmlScroll = htmlStyle.scrollBehavior;
+        const originalBodyScroll = bodyStyle.scrollBehavior;
+        
+        htmlStyle.scrollBehavior = 'auto';
+        bodyStyle.scrollBehavior = 'auto';
+        
+        targetEl.scrollIntoView({ behavior: 'auto', block: 'center' });
+        
+        // Force layout reflow to apply scroll change immediately
+        void targetEl.offsetHeight;
+        
+        htmlStyle.scrollBehavior = originalHtmlScroll;
+        bodyStyle.scrollBehavior = originalBodyScroll;
+
+        // Render new content first!
+        const onDashboard = window.location.pathname.startsWith('/dashboard');
+        const emptyStateActive = document.getElementById('no-campaigns-card') && document.getElementById('no-campaigns-card').style.display !== 'none';
+
+        if (onDashboard && emptyStateActive) {
+          let adaptedText = s.text;
+          let adaptedTitle = s.title;
+          if (wtCurrentStep === 6) {
+            adaptedTitle = "Dashboard is Ready";
+            adaptedText = "Once you launch a simulation, your campaign metrics will appear here. Right now, it's empty because you haven't started one yet!";
+          } else if (wtCurrentStep === 7) {
+            adaptedTitle = "Track Simulation Trends";
+            adaptedText = "This trend chart will graph your click-rates over time. Let's get you set up to create your first simulation campaign so you can see it in action!";
+          }
+          renderBubbleContent({ title: adaptedTitle, text: adaptedText }, false);
+        } else {
+          renderBubbleContent(s, false);
+        }
+
+        // Initialize gate satisfied state for this step so we don't trigger newly-satisfied badge animations on initial step load
+        lastGateSatisfiedState = checkStepGate(wtCurrentStep);
+
+        // Reposition immediately using correct coordinates based on the new content size
+        repositionWalkthroughElements();
+
+        // Reveal the bubble!
+        if (bubbleEl) {
+          void bubbleEl.offsetHeight; // force layout
+          bubbleEl.style.opacity = '1';
+          bubbleEl.style.visibility = 'visible';
+          bubbleEl.style.pointerEvents = 'auto';
+        }
+
+        updateWalkthroughGate();
+      }
 
       function tryHighlightAndPosition() {
         if (!wtActive || wtCurrentStep >= wtSteps.length) return;
@@ -4101,78 +5050,81 @@
           }
         }
 
-        const targetEl = document.getElementById(currentTargetId);
+        // Hide bubble initially to prevent showing previous step in wrong size/position
+        if (bubbleEl) {
+          bubbleEl.style.opacity = '0';
+          bubbleEl.style.visibility = 'hidden';
+          bubbleEl.style.pointerEvents = 'none';
+        }
 
-        if (targetEl) {
-          document.querySelectorAll('.pb-highlight-active').forEach(el => {
-            el.classList.remove('pb-highlight-active');
-          });
-          targetEl.classList.add('pb-highlight-active');
-          // Scroll instantly, temporarily bypassing global smooth scrolling styles
-          const htmlStyle = document.documentElement.style;
-          const bodyStyle = document.body.style;
-          const originalHtmlScroll = htmlStyle.scrollBehavior;
-          const originalBodyScroll = bodyStyle.scrollBehavior;
-          
-          htmlStyle.scrollBehavior = 'auto';
-          bodyStyle.scrollBehavior = 'auto';
-          
-          targetEl.scrollIntoView({ behavior: 'auto', block: 'center' });
-          
-          // Force layout reflow to apply scroll change immediately
-          void targetEl.offsetHeight;
-          
-          htmlStyle.scrollBehavior = originalHtmlScroll;
-          bodyStyle.scrollBehavior = originalBodyScroll;
-          
-          // Reposition immediately using correct coordinates, with a safety layout delay
-          repositionWalkthroughElements();
-          setTimeout(repositionWalkthroughElements, 100);
-
-          if (onDashboard && emptyStateActive) {
-            let adaptedText = s.text;
-            let adaptedTitle = s.title;
-            if (wtCurrentStep === 6) {
-              adaptedTitle = "Dashboard is Ready";
-              adaptedText = "Once you launch a simulation, your campaign metrics will appear here. Right now, it's empty because you haven't started one yet!";
-            } else if (wtCurrentStep === 7) {
-              adaptedTitle = "Track Simulation Trends";
-              adaptedText = "This trend chart will graph your click-rates over time. Let's get you set up to create your first simulation campaign so you can see it in action!";
-            }
-            renderBubbleContent({ title: adaptedTitle, text: adaptedText }, false);
-          } else {
-            renderBubbleContent(s, false);
-          }
-          updateWalkthroughGate();
+        const instantTarget = document.getElementById(currentTargetId);
+        if (instantTarget) {
+          changeMascotState('idle');
+          highlightAndPositionTarget(instantTarget, s);
         } else {
-          if (searchAttempts < maxSearchAttempts) {
-            searchAttempts++;
-            setTimeout(tryHighlightAndPosition, 200);
-          } else {
-            // Skinned skipped fallback state
-            repositionWalkthroughElements(); // handles null target
-            const skippedStep = {
+          // Element not found immediately. Set mascot to active (thinking)
+          changeMascotState('active');
+
+          // Show a temporary "loading" bubble text after 800ms if still not loaded
+          const loadingTimer = setTimeout(() => {
+            if (!wtActive) return;
+            const loadingStep = {
               title: `Scanning for ${s.title}...`,
-              text: `I couldn't find that section on the screen, but let's keep swimming! You can skip this step or hit Next to continue.`
+              text: `Looks like this section is taking a second to load — give it a beat...`
             };
-            renderBubbleContent(skippedStep, true);
-          }
+            renderBubbleContent(loadingStep, false);
+            // Reposition and show the loading bubble
+            repositionWalkthroughElements();
+            if (bubbleEl) {
+              void bubbleEl.offsetHeight;
+              bubbleEl.style.opacity = '1';
+              bubbleEl.style.visibility = 'visible';
+              bubbleEl.style.pointerEvents = 'auto';
+            }
+          }, 800);
+
+          // Generous, configurable timeout (ceiling configurable, defaults to 6000ms)
+          const timeoutMs = window.LURE_WT_TIMEOUT || 6000;
+          waitForElement(currentTargetId, timeoutMs, (foundEl) => {
+            clearTimeout(loadingTimer);
+            if (!wtActive) return;
+
+            if (foundEl) {
+              changeMascotState('idle');
+              highlightAndPositionTarget(foundEl, s);
+            } else {
+              // Timed out. Set mascot to error (worried) and show confident copy
+              changeMascotState('error');
+              repositionWalkthroughElements(); // handles null target
+              const fallbackStep = {
+                title: `${s.title}`,
+                text: `Hmm, this section seems to be taking a while to appear. Let's keep swimming! You can skip this step or click Next to continue.`
+              };
+              renderBubbleContent(fallbackStep, true);
+              if (bubbleEl) {
+                void bubbleEl.offsetHeight;
+                bubbleEl.style.opacity = '1';
+                bubbleEl.style.visibility = 'visible';
+                bubbleEl.style.pointerEvents = 'auto';
+              }
+            }
+          });
         }
       }
 
       tryHighlightAndPosition();
     }
 
-        window.repeatWalkthroughStep = function() {
+    window.repeatWalkthroughStep = function() {
       if (!wtActive || wtCurrentStep < 0 || wtCurrentStep >= wtSteps.length) return;
       const step = wtSteps[wtCurrentStep];
       const targetEl = document.getElementById(step.targetId);
       if (targetEl) {
-        targetEl.classList.remove('pb-highlight-active');
-        void targetEl.offsetWidth; // force reflow
-        targetEl.classList.add('pb-highlight-active');
-        targetEl.scrollIntoView({ behavior: 'auto', block: 'nearest' });
+        targetEl.scrollIntoView({ behavior: 'auto', block: 'center' });
         repositionWalkthroughElements();
+      }
+      if (step.action) {
+        runStepAction();
       }
     };
 
@@ -4223,6 +5175,7 @@
 
     window.exitWalkthrough = function() {
       cleanupWalkthrough();
+      window.location.href = '/';
     };
 
     window.finishWalkthrough = function() {
@@ -4231,28 +5184,28 @@
       if (!visitorProfile.completedTours) {
         visitorProfile.completedTours = {};
       }
-      visitorProfile.completedTours[wtCurrentPage] = true;
+      const pageKey = wtCurrentPage; // cache page key before cleanup
+      visitorProfile.completedTours[pageKey] = true;
       if (visitorProfile.tourProgress) {
-        delete visitorProfile.tourProgress[wtCurrentPage];
+        delete visitorProfile.tourProgress[pageKey];
       }
       saveVisitorProfile();
       if (window.renderToursList) renderToursList();
+      
       cleanupWalkthrough();
-      if (wtCurrentPage === 'getting_started') {
-        window.location.href = '/logout?completed_tour=true';
-      }
+      
+      window.location.href = '/?completed_tour=true';
     };
 
     function cleanupWalkthrough() {
       wtActive = false;
       isFirstStep = true;
+      resetLastScaledTarget();
       localStorage.removeItem('pb_wt_active');
       localStorage.removeItem('pb_wt_page_key');
       localStorage.removeItem('pb_wt_step_idx');
       
-      document.querySelectorAll('.pb-highlight-active').forEach(el => {
-        el.classList.remove('pb-highlight-active');
-      });
+      // Highlighting managed via floating pb-wt-highlighter div only
 
       const highlighter = document.getElementById('pb-wt-highlighter');
       if (highlighter) highlighter.style.display = 'none';
@@ -4301,6 +5254,25 @@
         wtCurrentStep = stepIdx;
         wtActive = true;
 
+        // Auto-advance gating check for core_workflow
+        if (pageKey === 'core_workflow') {
+          const currentPath = window.location.pathname.replace(/\/$/, '') || '/';
+          if (stepIdx === 2 && currentPath === '/fake-login-demo') {
+            wtCurrentStep = 3;
+            localStorage.setItem('pb_wt_step_idx', '3');
+            // Trigger mascot success state payoff
+            changeMascotState('success');
+            setTimeout(() => {
+              if (wtActive) changeMascotState('idle');
+            }, 2000);
+          } else if (stepIdx === 3 && currentPath === '/simulated') {
+            wtCurrentStep = 4;
+            localStorage.setItem('pb_wt_step_idx', '4');
+            window.location.href = '/reporting-demo';
+            return;
+          }
+        }
+
         // Sync progress in profile
         loadVisitorProfile();
         if (!visitorProfile.tourProgress) {
@@ -4314,6 +5286,23 @@
         expanded = false;
         inlineSec.classList.remove('pb-walkthrough-active');
         inlineSec.style.display = 'none';
+
+        // Reset maximized state on resume
+        panel.classList.remove('pb-panel-maximized');
+        const maxIcon = document.querySelector('#pb-max-btn i');
+        const maxBtn = document.getElementById('pb-max-btn');
+        if (maxIcon) {
+          maxIcon.className = 'ti ti-maximize';
+        }
+        if (maxBtn) {
+          maxBtn.setAttribute('title', 'Expand to page');
+          maxBtn.setAttribute('aria-label', 'Expand');
+        }
+        panel.style.width = '';
+        panel.style.height = '';
+        panel.style.top = '';
+        panel.style.left = '';
+
         host.classList.add('pb-walkthrough-mode');
         
         const bubbleEl = document.getElementById('pb-wt-bubble');
@@ -4480,7 +5469,7 @@
 
       resEl.style.display = 'none';
       nextBtn.style.display = 'none';
-      await updateGameStatus();
+      updateGameStatus();
       updateMessageAvatar('pb-spotphish-avatar-container', 'idle');
 
       const dialogueEl = document.getElementById('stp-dialogue-text');
@@ -4575,7 +5564,7 @@
 
       resEl.style.display = 'none';
       if (nextBtn) nextBtn.style.display = 'none';
-      await updateInlineGameStatus();
+      updateInlineGameStatus();
       updateMessageAvatar('pb-spotphish-il-avatar-container', 'idle');
 
       const dialogueEl = document.getElementById('stp-il-dialogue-text');
@@ -4668,13 +5657,6 @@
       stpInlineRender();
     };
 
-    // Attach tab show triggers to bootstrap games
-    panel.querySelector('.pb-tab-btn[data-tab="spotphish"]').addEventListener('click', () => {
-      stpRender();
-    });
-    inlineSec.querySelector('.pb-tab-btn[data-tab="il-spotphish"]').addEventListener('click', () => {
-      stpInlineRender();
-    });
 
     /* ================================================================
        Risk Score calculations
@@ -4745,10 +5727,17 @@
     const calloutDismiss = document.getElementById('pb-callout-dismiss');
 
     let calloutTourCallback = null;
+    let calloutAutoDismissTimeout = null;
 
     function showCallout(message, tourName = null) {
       if (!calloutEl || !calloutText) return;
       calloutText.textContent = message;
+
+      // Clear any existing auto-dismiss timer
+      if (calloutAutoDismissTimeout) {
+        clearTimeout(calloutAutoDismissTimeout);
+        calloutAutoDismissTimeout = null;
+      }
 
       // Update click cursor and callback if tourName is provided
       calloutEl.style.cursor = tourName ? 'pointer' : 'default';
@@ -4770,15 +5759,31 @@
         unseenCalloutsCount++;
         updateAvatarBadge();
       }
+
+      // Auto dismiss exit-intent and other callouts after 6 seconds
+      calloutAutoDismissTimeout = setTimeout(() => {
+        hideCallout();
+      }, 6000);
     }
 
     function hideCallout() {
       if (!calloutEl) return;
+      if (calloutAutoDismissTimeout) {
+        clearTimeout(calloutAutoDismissTimeout);
+        calloutAutoDismissTimeout = null;
+      }
       calloutEl.classList.remove('pb-show');
       calloutEl.setAttribute('aria-hidden', 'true');
       calloutEl.style.cursor = 'default';
       calloutTourCallback = null;
     }
+
+    // Dismiss callout when mouse moves back down into the viewport
+    window.addEventListener('mousemove', (e) => {
+      if (calloutEl && calloutEl.classList.contains('pb-show') && e.clientY > 50) {
+        hideCallout();
+      }
+    }, { passive: true });
 
     if (calloutDismiss) {
       calloutDismiss.addEventListener('click', (e) => {
@@ -5098,6 +6103,13 @@
         }
       });
     }
+
+    window.triggerChatPrompt = function(q) {
+      if (chatInput) {
+        chatInput.value = q;
+        sendMessage();
+      }
+    };
 
     if (chatSendBtn) {
       chatSendBtn.addEventListener('click', sendMessage);

@@ -1054,9 +1054,11 @@ def scrape_company_cached(domain):
     from datetime import datetime, timedelta
     from osint.scraper import scrape_company
     
-    db = get_db_connection()
-    cursor = db.cursor(dictionary=True)
+    db = None
+    cursor = None
     try:
+        db = get_db_connection()
+        cursor = db.cursor(dictionary=True)
         ensure_osint_scan_cache_table(cursor)
         cursor.execute("SELECT profile_json, scraped_at FROM osint_scan_cache WHERE domain = %s", (domain,))
         row = cursor.fetchone()
@@ -1083,8 +1085,10 @@ def scrape_company_cached(domain):
         print(f"Database cache error for domain {domain}: {err}")
         return scrape_company(domain)
     finally:
-        cursor.close()
-        db.close()
+        if cursor:
+            cursor.close()
+        if db:
+            db.close()
 
 def get_public_stats(cursor):
     """Computes real simulation statistics from MySQL for the public home page."""
@@ -5437,7 +5441,7 @@ def get_certificate_data(tracking_token):
             email_prefix = data["recipient_email"].split("@")[0]
             recipient_name = " ".join(w.capitalize() for w in email_prefix.replace(".", " ").replace("_", " ").split())
             
-        action_date = data.get("action_date") or datetime.datetime.now()
+        action_date = data.get("action_date") or datetime.now()
         date_str = action_date.strftime("%B %d, %Y")
         
         return {
@@ -5461,6 +5465,9 @@ def view_certificate(tracking_token):
 @app.route("/click/<tracking_id>")
 def track_click(tracking_id):
     """Logs click then shows fake landing page if lock succeeds."""
+    if tracking_id and tracking_id.startswith("demo_track_"):
+        return redirect(url_for('fake_login_demo'))
+        
     try:
         db = get_db_connection()
         cursor = db.cursor(dictionary=True)
@@ -5963,7 +5970,7 @@ def campaign_report(campaign_id):
             hss_history = [52, 58, 62]
             hss_delta = 4
             brief_data = {
-                "date": datetime.datetime.utcnow().strftime("%B %d, %Y"),
+                "date": datetime.utcnow().strftime("%B %d, %Y"),
                 "company": "demo-corp.com",
                 "vector": "CEO Fraud",
                 "click_rate": 33.3,
