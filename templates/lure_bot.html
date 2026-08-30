@@ -44,6 +44,12 @@
     #pb-avatar:not(.pb-in-header):active {
       transform: translateY(0) scale(0.96);
     }
+    #pb-avatar.pb-panel-open-avatar {
+      transform: scale(0.72) !important;
+    }
+    #pb-avatar.pb-panel-open-avatar:hover {
+      transform: scale(0.8) !important;
+    }
     #pb-avatar.pb-transitioning {
       transition: transform 0.45s cubic-bezier(0.25, 1, 0.5, 1) !important;
     }
@@ -289,6 +295,20 @@
     }
     #pb-callout-dismiss:hover { color: var(--text-primary, #E8EDF2); }
 
+    #pb-callout.pb-callout-flagship {
+      background: color-mix(in srgb, var(--lure-gold) 10%, var(--bg-elevated, #121D35)) !important;
+      border-color: color-mix(in srgb, var(--lure-gold) 48%, transparent) !important;
+      box-shadow: 0 4px 18px var(--lure-gold-glow) !important;
+    }
+    #pb-callout.pb-callout-flagship::after {
+      background: color-mix(in srgb, var(--lure-gold) 10%, var(--bg-elevated, #121D35)) !important;
+      border-right-color: color-mix(in srgb, var(--lure-gold) 48%, transparent) !important;
+      border-bottom-color: color-mix(in srgb, var(--lure-gold) 48%, transparent) !important;
+    }
+    #pb-callout.pb-callout-flagship #pb-callout-label {
+      color: var(--lure-gold) !important;
+    }
+
     /* ── Teaser bubble (flies out left of avatar) ── */
     #pb-teaser {
       position: absolute;
@@ -353,16 +373,21 @@
     #pb-panel {
       position: fixed;
       z-index: 10002;
-      width: 380px;
+      width: 450px;
       max-width: 90vw;
-      height: auto;
+      height: 520px;
       max-height: 80vh;
       display: flex;
       flex-direction: column;
       overflow-y: auto;
       scrollbar-width: thin;
       scrollbar-color: color-mix(in srgb, var(--primary) 22%, transparent) transparent;
-      background: var(--bg-elevated, #121D35);
+      --lure-bg-base: var(--bg-surface, #0D1526);
+      --lure-bg-card: var(--bg-elevated, #172237);
+      --lure-bg-hover: color-mix(in srgb, var(--primary) 6%, var(--bg-elevated, #172237));
+      --lure-gold: color-mix(in srgb, var(--warning, #f59e0b) 85%, #fbbf24);
+      --lure-gold-glow: rgba(245, 158, 11, 0.15);
+      background: var(--lure-bg-base);
       border: 1px solid color-mix(in srgb, var(--primary) 22%, transparent);
       border-radius: 16px;
       box-shadow:
@@ -374,6 +399,9 @@
       transform: translateY(16px) scale(0.97);
       pointer-events: none;
       will-change: transform, opacity, width, height, left, top;
+      font-family: var(--sans, 'Space Grotesk', sans-serif);
+      font-size: 14px;
+      line-height: 1.6;
       transition:
         opacity 0.3s ease,
         transform 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
@@ -479,25 +507,25 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 13px 16px;
-      border-bottom: 1px solid color-mix(in srgb, var(--border-default,rgba(255,255,255,0.12)) 60%, transparent);
+      padding: 14px 18px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.07);
       cursor: move;
       position: sticky;
       top: 0;
-      background: var(--bg-elevated, #121D35);
+      background: rgba(13, 21, 38, 0.72);
+      backdrop-filter: blur(16px);
       z-index: 5;
       border-radius: 16px 16px 0 0;
       gap: 10px;
     }
     .pb-panel-title {
-      font-family: var(--mono, 'JetBrains Mono', monospace);
-      font-size: 0.78rem;
-      font-weight: 800;
-      color: var(--primary);
+      font-family: var(--sans, 'Space Grotesk', sans-serif);
+      font-size: 1.02rem;
+      font-weight: 700;
+      color: var(--text-primary, #F0F4FF);
       display: flex;
       align-items: center;
-      gap: 7px;
-      letter-spacing: 0.04em;
+      gap: 10px;
       flex-shrink: 0;
     }
     .pb-panel-tabs {
@@ -555,8 +583,14 @@
     .pb-icon-btn:hover { background: var(--primary-dim); color: var(--primary); }
 
     /* Tab panels */
-    .pb-tab-panel { display: none; padding: 18px 16px; }
-    .pb-tab-panel.active { display: block; }
+    /* Tab panels */
+    .pb-tab-panel { display: none; padding: 22px 20px; box-sizing: border-box; }
+    .pb-tab-panel.active {
+      display: block !important;
+      flex: 1 !important;
+      min-height: 0 !important;
+      overflow-y: auto !important;
+    }
 
     /* PhishBot dialogue row */
     .pb-dialogue {
@@ -575,33 +609,78 @@
       display: flex; align-items: center; justify-content: center;
     }
     .pb-bubble {
-      background: var(--primary-dim);
+      background: var(--lure-bg-card);
       border: 1px solid color-mix(in srgb, var(--primary) 16%, transparent);
       border-radius: 4px 12px 12px 12px;
-      padding: 8px 12px;
-      font-family: var(--mono, 'JetBrains Mono', monospace);
-      font-size: 0.69rem;
+      padding: 10px 14px;
+      font-family: var(--sans, 'Space Grotesk', sans-serif);
+      font-size: 14px;
       color: color-mix(in srgb, var(--text-primary,#F0F4FF) 82%, transparent);
-      line-height: 1.5;
+      line-height: 1.6;
       flex: 1;
       transition: opacity 0.2s;
     }
 
-    /* Scenario chips */
-    .pb-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
-    .pb-chip {
-      padding: 5px 13px;
-      border-radius: 100px;
-      font-size: 0.73rem;
-      font-weight: 600;
-      cursor: pointer;
-      border: 1px solid;
-      font-family: var(--sans, 'Space Grotesk', sans-serif);
-      background: transparent;
-      transition: filter 0.15s cubic-bezier(0.16, 1, 0.3, 1), transform 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+    /* Scenario cards layout */
+    .pb-chips {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 20px;
+      width: 100%;
     }
-    .pb-chip:hover  { filter: brightness(1.3); transform: translateY(-1px); }
-    .pb-chip.active { filter: brightness(1.4); box-shadow: 0 0 10px currentColor; }
+    .pb-chip {
+      display: flex;
+      flex-direction: row;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 14px 18px;
+      border-radius: 12px;
+      background: var(--lure-bg-card);
+      border: 1px solid color-mix(in srgb, var(--border-default, rgba(255,255,255,0.12)) 80%, transparent);
+      text-align: left;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      width: 100%;
+      box-sizing: border-box;
+      color: var(--text-primary);
+    }
+    .pb-chip:hover {
+      background: var(--lure-bg-hover);
+      border-color: var(--primary);
+      transform: translateY(-1.5px);
+    }
+    .pb-chip-icon-wrap {
+      font-size: 1.5rem;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .pb-chip-content-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      flex: 1;
+      min-width: 0;
+    }
+    .pb-chip-title {
+      font-family: var(--sans, 'Space Grotesk', sans-serif);
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: var(--text-primary, #F0F4FF);
+    }
+    .pb-chip-desc {
+      font-family: var(--sans, 'Space Grotesk', sans-serif);
+      font-size: 0.78rem;
+      color: var(--text-secondary, #8CA0B3);
+      line-height: 1.4;
+    }
     .pb-chip:disabled, .pb-chip.pb-disabled { opacity: 0.3; pointer-events: none; }
 
     /* Skeleton loader */
@@ -627,21 +706,78 @@
     }
     .pb-chrome-dots { display: flex; gap: 5px; }
     .pb-chrome-dots span { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
-    .pb-mail-header {
-      background: rgba(2,6,23,0.9);
-      border-bottom: 1px solid var(--border-subtle, rgba(255,255,255,0.05));
-      padding: 9px 13px;
-      font-family: var(--mono, 'JetBrains Mono', monospace);
-      font-size: 0.69rem;
-      display: flex; flex-direction: column; gap: 3px;
+    .pb-mail-header-inbox {
+      background: var(--lure-bg-card);
+      border-bottom: 1px solid var(--border-subtle, rgba(255,255,255,0.06));
+      padding: 14px 16px;
+      display: flex;
+      gap: 12px;
     }
-    .pb-mail-field { display: flex; align-items: baseline; }
-    .pb-mail-lbl {
-      color: color-mix(in srgb, var(--text-secondary,#94A3B8) 45%, transparent);
-      min-width: 56px;
+    .pb-inbox-avatar-col {
+      flex-shrink: 0;
+    }
+    .pb-inbox-avatar-circle {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: var(--primary-dim);
+      border: 1px solid color-mix(in srgb, var(--primary) 30%, transparent);
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.9rem;
       text-transform: uppercase;
-      letter-spacing: 0.06em;
-      font-size: 0.58rem;
+      font-family: var(--sans, 'Space Grotesk', sans-serif);
+    }
+    .pb-inbox-header-details {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      min-width: 0;
+    }
+    .pb-inbox-row-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+    .pb-inbox-sender-name {
+      font-family: var(--sans, 'Space Grotesk', sans-serif);
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--text-primary, #F0F4FF);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .pb-inbox-time {
+      font-family: var(--mono, monospace);
+      font-size: 0.65rem;
+      color: var(--text-muted, #4A5568);
+      flex-shrink: 0;
+    }
+    .pb-inbox-row-sub {
+      font-size: 0.72rem;
+      color: var(--text-secondary, #94A3B8);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .pb-inbox-lbl-to {
+      color: var(--text-muted, #4A5568);
+    }
+    .pb-inbox-subject-line {
+      font-family: var(--sans, 'Space Grotesk', sans-serif);
+      font-size: 0.92rem;
+      font-weight: 700;
+      color: var(--primary);
+      margin-top: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     .pb-mail-body {
       padding: 14px 16px;
@@ -735,33 +871,34 @@
     }
 
     /* ── Risk Score tab ── */
-    .rs-q-text { font-family: var(--mono); font-size: 0.73rem; color: var(--text-primary,#F0F4FF); margin-bottom: 7px; font-weight: 600; }
-    .rs-opts { display: flex; flex-direction: column; gap: 5px; margin-bottom: 14px; }
+    .rs-q-text { font-family: var(--sans, 'Space Grotesk', sans-serif); font-size: 13px; color: var(--text-primary,#F0F4FF); margin-bottom: 10px; font-weight: 600; }
+    .rs-opts { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
     .rs-opt {
-      display: flex; align-items: center; gap: 9px;
-      padding: 7px 11px;
-      border-radius: 7px; border: 1px solid var(--border-subtle,rgba(255,255,255,0.07));
-      cursor: pointer; font-family: var(--mono); font-size: 0.68rem;
+      display: flex; align-items: center; gap: 10px;
+      padding: 8px 12px;
+      border-radius: 8px; border: 1px solid var(--border-subtle,rgba(255,255,255,0.07));
+      cursor: pointer; font-family: var(--sans, 'Space Grotesk', sans-serif); font-size: 12.5px;
       color: var(--text-secondary,#94A3B8); transition: all 0.16s;
+      background: var(--lure-bg-card);
     }
-    .rs-opt:hover { background: var(--primary-dim); border-color: color-mix(in srgb, var(--primary) 22%, transparent); color: var(--text-primary,#F0F4FF); }
+    .rs-opt:hover { background: var(--lure-bg-hover); border-color: color-mix(in srgb, var(--primary) 22%, transparent); color: var(--text-primary,#F0F4FF); }
     .rs-opt.selected { background: var(--primary-dim); border-color: color-mix(in srgb, var(--primary) 32%, transparent); color: var(--primary); }
     .rs-opt input[type=radio] { display: none; }
-    .rs-radio { width: 13px; height: 13px; border-radius: 50%; border: 1.5px solid color-mix(in srgb, var(--primary) 45%, transparent); flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
-    .rs-opt.selected .rs-radio::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: var(--primary); display: block; }
+    .rs-radio { width: 14px; height: 14px; border-radius: 50%; border: 1.5px solid color-mix(in srgb, var(--primary) 45%, transparent); flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+    .rs-opt.selected .rs-radio::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--primary); display: block; }
     .rs-gauge { font-family: var(--mono); font-size: 3rem; font-weight: 900; line-height: 1; margin-bottom: 6px; }
     .rs-result { display: none; text-align: center; padding: 20px 0 6px; }
-    .rs-note { font-size: 0.59rem; color: var(--text-muted,#4A5568); font-style: italic; font-family: var(--sans); border-top: 1px solid var(--border-subtle,rgba(255,255,255,0.05)); padding-top: 10px; line-height: 1.5; margin-top: 12px; text-align: left; }
+    .rs-note { font-size: 0.72rem; color: var(--text-muted,#4A5568); font-style: italic; font-family: var(--sans); border-top: 1px solid var(--border-subtle,rgba(255,255,255,0.05)); padding-top: 12px; line-height: 1.6; margin-top: 16px; text-align: left; }
 
     /* Panel action button (CTA inline) */
     .pb-action-btn {
       display: inline-flex; align-items: center; gap: 6px;
-      margin-top: 10px; padding: 9px 18px;
-      border-radius: 9px;
+      margin-top: 10px; padding: 8px 16px;
+      border-radius: 8px;
       background: var(--primary-dim);
       border: 1px solid color-mix(in srgb, var(--primary) 28%, transparent);
       color: var(--primary);
-      font-family: var(--mono); font-size: 0.69rem; font-weight: 700;
+      font-family: var(--sans, 'Space Grotesk', sans-serif); font-size: 12.5px; font-weight: 600;
       cursor: pointer; transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
       outline: none;
     }
@@ -769,11 +906,15 @@
 
     /* Panel footer */
     .pb-panel-footer {
-      padding: 8px 16px 12px;
+      padding: 10px 16px;
       border-top: 1px solid var(--border-subtle, rgba(255,255,255,0.05));
-      display: flex; align-items: center; justify-content: center; gap: 5px;
+      display: flex; align-items: center; justify-content: space-between; gap: 5px;
       font-family: var(--mono); font-size: 0.57rem;
       color: var(--text-muted, #4A5568); letter-spacing: 0.04em;
+      background: rgba(13, 21, 38, 0.4);
+      flex-shrink: 0;
+      width: 100%;
+      box-sizing: border-box;
     }
 
     /* Maximised inline section -> Full-Screen takeover modal */
@@ -854,21 +995,33 @@
     }
 
     #pb-wt-bubble {
-      width: 340px;
+      width: 410px;
       max-width: 90vw;
-      background: #0b1329 !important; /* Locked dark theme background */
-      border: 1.5px solid var(--primary) !important;
+      background: var(--bg-elevated, #121D35) !important;
+      border: 1px solid rgba(255, 255, 255, 0.1) !important;
       border-radius: 16px;
       padding: 16px;
       box-sizing: border-box;
       box-shadow: 
         0 20px 50px rgba(0,0,0,0.65),
-        0 0 0 1px rgba(6, 182, 212, 0.1),
-        0 0 30px rgba(6, 182, 212, 0.15) !important;
+        0 0 0 1px rgba(255, 255, 255, 0.05) !important;
       backdrop-filter: blur(20px) !important;
-      color: #f8fafc !important; /* Locked light text */
+      color: var(--text-primary, #F0F4FF) !important;
       animation: pbCardPop 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
       position: relative;
+    }
+    #pb-wt-bubble,
+    #pb-wt-bubble button,
+    #pb-wt-bubble p,
+    #pb-wt-bubble span,
+    #pb-wt-bubble div {
+      font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+    }
+    #pb-wt-bubble.pb-wt-flagship {
+      border-color: rgba(245, 158, 11, 0.3) !important;
+      box-shadow: 
+        0 20px 50px rgba(0,0,0,0.65),
+        0 0 0 1px rgba(245, 158, 11, 0.15) !important;
     }
     #pb-wt-bubble .pb-action-btn {
       background: rgba(6, 182, 212, 0.15) !important;
@@ -879,13 +1032,30 @@
       background: rgba(6, 182, 212, 0.25) !important;
       box-shadow: 0 0 12px rgba(6, 182, 212, 0.3) !important;
     }
+    #pb-wt-bubble.pb-wt-flagship .pb-action-btn {
+      background: rgba(245, 158, 11, 0.15) !important;
+      border: 1px solid rgba(245, 158, 11, 0.35) !important;
+      color: var(--lure-gold) !important;
+    }
+    #pb-wt-bubble.pb-wt-flagship .pb-action-btn:hover {
+      background: rgba(245, 158, 11, 0.25) !important;
+      box-shadow: 0 0 12px var(--lure-gold-glow) !important;
+    }
     #pb-wt-bubble .pb-next-btn {
       background: var(--primary) !important;
-      color: #0c1424 !important;
+      color: var(--bg-base, #020617) !important;
     }
     #pb-wt-bubble .pb-next-btn:hover {
       background: color-mix(in srgb, var(--primary) 85%, white) !important;
       box-shadow: 0 0 14px rgba(6, 182, 212, 0.4) !important;
+    }
+    #pb-wt-bubble.pb-wt-flagship .pb-next-btn {
+      background: var(--lure-gold) !important;
+      color: var(--bg-base, #020617) !important;
+    }
+    #pb-wt-bubble.pb-wt-flagship .pb-next-btn:hover {
+      background: color-mix(in srgb, var(--lure-gold) 85%, white) !important;
+      box-shadow: 0 0 14px rgba(245, 158, 11, 0.4) !important;
     }
     #pb-wt-bubble .pb-disabled, #pb-wt-bubble button:disabled {
       opacity: 0.35 !important;
@@ -905,11 +1075,11 @@
     }
     #pb-host.pb-direction-left #pb-wt-bubble::before {
       right: 100%;
-      border-right-color: var(--primary) !important;
+      border-right-color: var(--bg-elevated, #121D35) !important;
     }
     #pb-host.pb-direction-right #pb-wt-bubble::before {
       left: 100%;
-      border-left-color: var(--primary) !important;
+      border-left-color: var(--bg-elevated, #121D35) !important;
     }
 
     @keyframes pbCardPop {
@@ -927,6 +1097,10 @@
       gap: 10px;
       max-width: 480px;
       margin: 0 auto;
+    }
+    .pb-tour-cat-header {
+      grid-column: 1 / -1 !important;
+      width: 100% !important;
     }
     .pb-wt-guide-card {
       display: flex;
@@ -985,7 +1159,7 @@
     #pb-tab-chat {
       display: none;
       flex-direction: column;
-      height: 380px;
+      height: 100%;
       box-sizing: border-box;
       padding: 12px 14px;
     }
@@ -1029,83 +1203,126 @@
     }
     .pb-chat-msg-row {
       display: flex;
+      flex-direction: column !important;
+      align-items: flex-start !important;
       width: 100%;
+      margin-bottom: 14px;
     }
-    .pb-chat-msg-row.user {
-      justify-content: flex-end;
-    }
-    .pb-chat-msg-row.lure {
-      justify-content: flex-start;
-      gap: 8px;
-      align-items: flex-start;
+    .pb-chat-messages .pb-dialogue-icon {
+      display: none !important;
     }
     .pb-chat-bubble {
-      max-width: 80%;
-      border-radius: 12px;
-      padding: 8px 12px;
-      font-size: 0.72rem;
-      line-height: 1.4;
+      font-family: var(--mono, 'JetBrains Mono', monospace) !important;
+      font-size: 13px !important;
+      line-height: 1.5;
       word-wrap: break-word;
       white-space: pre-wrap;
+      max-width: 100% !important;
+      padding: 0 !important;
+      background: transparent !important;
+      border: none !important;
+      border-radius: 0 !important;
     }
     .pb-chat-msg-row.user .pb-chat-bubble {
-      background: var(--bg-hover, rgba(255, 255, 255, 0.08));
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      color: var(--text-primary, #F0F4FF);
-      border-bottom-right-radius: 2px;
+      color: #38BDF8 !important;
     }
     .pb-chat-msg-row.lure .pb-chat-bubble {
-      background: color-mix(in srgb, var(--primary) 8%, var(--bg-elevated, #121D35));
-      border: 1px solid color-mix(in srgb, var(--primary) 28%, transparent);
-      color: var(--text-primary, #F0F4FF);
-      border-bottom-left-radius: 2px;
+      color: #A3E635 !important;
+    }
+    .pb-chat-msg-row.user::before {
+      content: 'visitor:~$ ';
+      font-family: var(--mono, 'JetBrains Mono', monospace) !important;
+      color: #38BDF8;
+      font-weight: bold;
+      font-size: 13px;
+      margin-bottom: 4px;
+    }
+    .pb-chat-msg-row.lure::before {
+      content: 'lure@sentinel:~$ ';
+      font-family: var(--mono, 'JetBrains Mono', monospace) !important;
+      color: #A3E635;
+      font-weight: bold;
+      font-size: 13px;
+      margin-bottom: 4px;
+    }
+
+    .pb-terminal-cursor {
+      display: inline-block;
+      width: 8px;
+      height: 15px;
+      background: #A3E635;
+      margin-left: 6px;
+      animation: pbTerminalCursorBlink 1s step-end infinite;
+      vertical-align: middle;
+    }
+    @keyframes pbTerminalCursorBlink {
+      from, to { background-color: transparent }
+      50% { background-color: #A3E635 }
     }
     .pb-chat-input-wrap {
       display: flex;
-      gap: 8px;
-      align-items: flex-end;
-      border: 1px solid var(--border-default, rgba(255,255,255,0.12));
-      border-radius: 10px;
-      padding: 6px 10px;
-      background: rgba(0, 0, 0, 0.2);
+      gap: 10px;
+      align-items: center;
+      border: none !important;
+      border-radius: 0 !important;
+      padding: 8px 0;
+      background: transparent !important;
+      box-shadow: none !important;
+      border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+      transition: none !important;
+    }
+    .pb-chat-input-wrap:focus-within {
+      background: transparent !important;
+      box-shadow: none !important;
     }
     .pb-chat-input-wrap textarea {
       flex: 1;
       background: transparent;
       border: none;
       outline: none;
-      color: var(--text-primary, #F0F4FF);
-      font-family: inherit;
-      font-size: 0.72rem;
+      color: #38BDF8 !important;
+      font-family: var(--mono, 'JetBrains Mono', monospace) !important;
+      font-size: 13px !important;
       resize: none;
-      max-height: 70px;
-      height: 20px;
-      line-height: 1.4;
-      padding: 0;
+      max-height: 80px;
+      height: 24px;
+      line-height: 1.5;
+      padding: 4px 0 0 0;
       box-sizing: border-box;
     }
     .pb-chat-input-wrap textarea::placeholder {
-      color: var(--text-muted, #4A5568);
+      color: rgba(56, 189, 248, 0.4) !important;
+      font-family: var(--mono, 'JetBrains Mono', monospace) !important;
+      font-size: 12px !important;
     }
     .pb-chat-input-wrap button {
-      background: transparent;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary), color-mix(in srgb, var(--primary) 70%, #000));
       border: none;
-      color: var(--primary);
+      color: #0D1526;
       cursor: pointer;
-      padding: 2px;
-      font-size: 0.9rem;
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: transform 0.2s, color 0.2s;
+      font-size: 0.95rem;
+      transition: transform 0.2s, filter 0.2s, opacity 0.2s;
+      flex-shrink: 0;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
     }
     .pb-chat-input-wrap button:hover:not(:disabled) {
-      color: var(--warning);
-      transform: scale(1.05);
+      filter: brightness(1.15);
+      transform: scale(1.06);
+    }
+    .pb-chat-input-wrap button:active:not(:disabled) {
+      transform: scale(0.95);
     }
     .pb-chat-input-wrap button:disabled {
+      background: rgba(255, 255, 255, 0.06);
       color: var(--text-muted, #4A5568);
       cursor: not-allowed;
+      box-shadow: none;
     }
     .pb-chat-char-counter {
       font-size: 0.55rem;
@@ -1400,6 +1617,41 @@
       width: 100%;
     }
 
+    @media (min-width: 769px) {
+      .pb-panel-body-wrapper {
+        display: flex !important;
+        flex-direction: row !important;
+        flex: 1 !important;
+        min-height: 0 !important;
+        height: calc(100% - 50px) !important;
+      }
+      .pb-panel-sidebar {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        width: 76px !important;
+        flex-shrink: 0 !important;
+        border-right: 1px solid color-mix(in srgb, var(--border-default,rgba(255,255,255,0.12)) 40%, transparent) !important;
+        background: color-mix(in srgb, var(--primary) 2%, transparent) !important;
+        padding-top: 16px !important;
+        gap: 14px !important;
+        box-sizing: border-box !important;
+        height: 100% !important;
+      }
+      .pb-panel-tabs {
+        display: none !important;
+      }
+      .pb-panel-content-area {
+        display: flex !important;
+        flex-direction: column !important;
+        flex: 1 !important;
+        min-width: 0 !important;
+        height: 100% !important;
+        overflow: hidden !important;
+        justify-content: space-between !important;
+      }
+    }
+
     /* ── Maximized states override ── */
     #pb-panel.pb-panel-maximized .pb-panel-tabs {
       display: none !important;
@@ -1415,7 +1667,7 @@
       display: flex !important;
       flex-direction: column !important;
       align-items: center !important;
-      width: 68px !important;
+      width: 76px !important;
       flex-shrink: 0 !important;
       border-right: 1px solid color-mix(in srgb, var(--border-default,rgba(255,255,255,0.12)) 40%, transparent) !important;
       background: color-mix(in srgb, var(--primary) 2%, transparent) !important;
@@ -1429,7 +1681,8 @@
       flex: 1 !important;
       min-width: 0 !important;
       height: 100% !important;
-      overflow-y: auto !important;
+      overflow: hidden !important;
+      justify-content: space-between !important;
     }
 
     /* Sidebar tab button styling */
@@ -1438,25 +1691,24 @@
       flex-direction: column !important;
       align-items: center !important;
       justify-content: center !important;
-      width: 58px !important;
-      height: 52px !important;
+      width: 76px !important;
+      height: 58px !important;
       border: none !important;
-      border-left: 2.5px solid transparent !important;
       background: transparent !important;
       color: var(--text-secondary, #94A3B8) !important;
       cursor: pointer !important;
       transition: all 0.2s ease !important;
       gap: 4px !important;
       box-sizing: border-box !important;
-      padding: 4px 0 !important;
+      padding: 6px 0 !important;
       outline: none !important;
     }
     .pb-sidebar-tab-btn i {
-      font-size: 1.15rem !important;
+      font-size: 1.25rem !important;
     }
     .pb-sidebar-tab-label {
-      font-size: 0.55rem !important;
-      font-family: var(--mono, 'JetBrains Mono', monospace) !important;
+      font-size: 0.6rem !important;
+      font-family: var(--sans, 'Space Grotesk', sans-serif) !important;
       text-transform: uppercase !important;
       letter-spacing: 0.04em !important;
       font-weight: 700 !important;
@@ -1769,19 +2021,71 @@
       #pb-panel.pb-panel-maximized #pb-tab-tours.active {
         height: 100% !important;
         display: flex !important;
+        flex-direction: column !important;
         box-sizing: border-box !important;
         padding: 24px 30px !important;
+        overflow-y: auto !important;
       }
       #pb-panel.pb-panel-maximized #pb-tab-tours.active #pb-tab-tours-container {
         max-width: 900px !important;
         margin: 0 auto !important;
         padding: 16px 20px !important;
+        width: 100% !important;
       }
       #pb-panel.pb-panel-maximized #pb-tab-tours.active .pb-wt-guide-list,
       #pb-inline-section .pb-wt-guide-list {
         display: grid !important;
         grid-template-columns: repeat(2, 1fr) !important;
-        gap: 16px !important;
+        gap: 20px !important;
+        width: 100% !important;
+        margin-top: 10px !important;
+      }
+      #pb-panel.pb-panel-maximized .pb-wt-guide-card {
+        padding: 20px !important;
+        background: rgba(255, 255, 255, 0.02) !important;
+        border: 1px solid rgba(255, 255, 255, 0.05) !important;
+        border-radius: 16px !important;
+        transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.2) !important;
+      }
+      #pb-panel.pb-panel-maximized .pb-wt-guide-card:hover {
+        background: rgba(255, 255, 255, 0.05) !important;
+        border-color: rgba(255, 255, 255, 0.12) !important;
+        transform: translateY(-2px) !important;
+        box-shadow: 0 12px 30px rgba(0,0,0,0.4), 0 0 20px rgba(255, 255, 255, 0.02) !important;
+      }
+      #pb-panel.pb-panel-maximized .pb-wt-guide-icon {
+        width: 44px !important;
+        height: 44px !important;
+        font-size: 1.4rem !important;
+        border-radius: 12px !important;
+      }
+      #pb-panel.pb-panel-maximized .pb-wt-guide-name {
+        font-size: 0.95rem !important;
+        margin-bottom: 4px !important;
+      }
+      #pb-panel.pb-panel-maximized .pb-wt-guide-desc {
+        font-size: 0.76rem !important;
+        line-height: 1.4 !important;
+      }
+      #pb-panel.pb-panel-maximized .pb-wt-guide-go {
+        width: 32px !important;
+        height: 32px !important;
+        font-size: 1rem !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+      }
+      #pb-panel.pb-panel-maximized .pb-tour-cat-header {
+        grid-column: 1 / -1 !important;
+        font-size: 0.78rem !important;
+        margin: 28px 0 12px 4px !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+        padding-bottom: 8px !important;
+        letter-spacing: 1px !important;
+        color: var(--text-primary, #F0F4FF) !important;
+        width: 100% !important;
+        text-align: left !important;
       }
     }
 
@@ -1789,7 +2093,7 @@
     #pb-tab-tours {
       display: none;
       flex-direction: column;
-      height: 380px;
+      height: 100%;
       box-sizing: border-box;
       padding: 12px 14px;
       overflow-y: auto;
@@ -1874,8 +2178,12 @@
 <!-- Lure Sidebar/Slide-up Panel -->
 <div id="pb-panel" role="dialog" aria-modal="true" aria-label="Lure AI Lure Lab" aria-hidden="true">
   <div class="pb-panel-header" id="pb-drag-handle">
-    <div class="pb-panel-title">
-      <div id="pb-header-avatar-placeholder" style="width: 24px; height: 24px; display: inline-flex; align-items: center; justify-content: center; position: relative; flex-shrink: 0; margin-right: 4px;"></div> Lure
+    <div class="pb-panel-title" style="display: flex; align-items: center; gap: 8px;">
+      <div class="pb-header-avatar-wrap" style="width: 28px; height: 28px; border-radius: 50%; border: 1.5px solid var(--primary); background: var(--lure-bg-card); display: inline-flex; align-items: center; justify-content: center; position: relative; flex-shrink: 0; box-shadow: 0 0 10px color-mix(in srgb, var(--primary) 30%, transparent); overflow: hidden;">
+        <img id="pb-header-avatar-img" src="{{ url_for('static', filename='images/lure/lure_idle.png') }}" alt="" style="width: 22px; height: 22px; object-fit: contain;">
+      </div>
+      <span style="font-weight: 700; color: var(--text-primary, #F0F4FF); letter-spacing: 0.5px;">Lure</span>
+      <span id="pb-personal-stats" style="font-family: var(--mono, monospace); font-size: 0.62rem; color: var(--text-muted, #4A5568); border-left: 1px solid rgba(255,255,255,0.1); padding-left: 8px; margin-left: 4px; display: inline-flex; align-items: center; gap: 6px;"></span>
     </div>
     <div class="pb-panel-tabs">
       <button class="pb-tab-btn active" data-tab="generate" title="Generate Lure">
@@ -1940,21 +2248,33 @@
       </div>
     </div>
     <div class="pb-chips">
-      <button class="pb-chip" onclick="pbGen('ceo_fraud')" style="color:var(--primary);border-color:color-mix(in srgb,var(--primary) 32%,transparent);">
-        <span class="pb-chip-title">🧬 CEO Fraud</span>
-        <span class="pb-chip-desc">Simulate high-authority urgency pretexts targeting finance and operations.</span>
+      <button class="pb-chip" onclick="pbGen('ceo_fraud')" style="color:var(--primary); border-color:color-mix(in srgb, var(--primary) 32%, transparent);">
+        <div class="pb-chip-icon-wrap">🧬</div>
+        <div class="pb-chip-content-wrap">
+          <span class="pb-chip-title">CEO Fraud</span>
+          <span class="pb-chip-desc">Simulate high-authority urgency pretexts targeting finance and operations.</span>
+        </div>
       </button>
-      <button class="pb-chip" onclick="pbGen('it_alert')" style="color:var(--warning);border-color:color-mix(in srgb,var(--warning) 32%,transparent);">
-        <span class="pb-chip-title">⚙️ IT Support Alert</span>
-        <span class="pb-chip-desc">Urgent security patches, system maintenance warnings, or password resets.</span>
+      <button class="pb-chip" onclick="pbGen('it_alert')" style="color:var(--warning); border-color:color-mix(in srgb, var(--warning) 32%, transparent);">
+        <div class="pb-chip-icon-wrap">⚙️</div>
+        <div class="pb-chip-content-wrap">
+          <span class="pb-chip-title">IT Support Alert</span>
+          <span class="pb-chip-desc">Urgent security patches, system maintenance warnings, or password resets.</span>
+        </div>
       </button>
-      <button class="pb-chip" onclick="pbGen('hr_update')" style="color:var(--success,#34D399);border-color:color-mix(in srgb,var(--success,#34D399) 32%,transparent);">
-        <span class="pb-chip-title">📋 HR Policy Update</span>
-        <span class="pb-chip-desc">Benefits updates, appraisal forms, or compliance training alerts.</span>
+      <button class="pb-chip" onclick="pbGen('hr_update')" style="color:var(--success,#34D399); border-color:color-mix(in srgb, var(--success,#34D399) 32%, transparent);">
+        <div class="pb-chip-icon-wrap">📋</div>
+        <div class="pb-chip-content-wrap">
+          <span class="pb-chip-title">HR Policy Update</span>
+          <span class="pb-chip-desc">Benefits updates, appraisal forms, or compliance training alerts.</span>
+        </div>
       </button>
-      <button class="pb-chip" onclick="pbGen('invoice')" style="color:var(--danger);border-color:color-mix(in srgb,var(--danger) 32%,transparent);">
-        <span class="pb-chip-title">💸 Urgent Invoice</span>
-        <span class="pb-chip-desc">Unpaid billing notifications, vendor charge disputes, or wire transfers.</span>
+      <button class="pb-chip" onclick="pbGen('invoice')" style="color:var(--danger); border-color:color-mix(in srgb, var(--danger) 32%, transparent);">
+        <div class="pb-chip-icon-wrap">💸</div>
+        <div class="pb-chip-content-wrap">
+          <span class="pb-chip-title">Urgent Invoice</span>
+          <span class="pb-chip-desc">Unpaid billing notifications, vendor charge disputes, or wire transfers.</span>
+        </div>
       </button>
     </div>
     <div class="pb-skeleton-wrap" id="pb-gen-loader">
@@ -1973,12 +2293,29 @@
           <i class="ti ti-mail" style="color:color-mix(in srgb,var(--primary) 45%,transparent);" aria-hidden="true"></i>
           Simulated Inbox &mdash; example-corp.test
         </div>
-        <div style="width:32px;"></div>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <button class="pb-icon-btn" onclick="pbCopyLure(false)" title="Copy email body" aria-label="Copy" style="width:22px; height:22px; font-size:0.72rem; border-radius:5px;">
+            <i class="ti ti-copy" aria-hidden="true"></i>
+          </button>
+          <button class="pb-icon-btn" onclick="pbDownloadLure(false)" title="Download as .eml" aria-label="Download" style="width:22px; height:22px; font-size:0.72rem; border-radius:5px;">
+            <i class="ti ti-download" aria-hidden="true"></i>
+          </button>
+        </div>
       </div>
-      <div class="pb-mail-header">
-        <div class="pb-mail-field"><span class="pb-mail-lbl">From</span><span id="pb-sender" style="color:var(--text-primary,#F0F4FF);"></span></div>
-        <div class="pb-mail-field"><span class="pb-mail-lbl">Subject</span><span id="pb-subject" style="color:var(--primary);font-weight:600;"></span></div>
-        <div class="pb-mail-field"><span class="pb-mail-lbl">To</span><span style="color:color-mix(in srgb,var(--text-secondary,#94A3B8) 45%,transparent);">jordan.ellis@example-corp.test</span></div>
+      <div class="pb-mail-header-inbox">
+        <div class="pb-inbox-avatar-col">
+          <div class="pb-inbox-avatar-circle" id="pb-inbox-avatar-initial">S</div>
+        </div>
+        <div class="pb-inbox-header-details">
+          <div class="pb-inbox-row-top">
+            <span class="pb-inbox-sender-name" id="pb-sender"></span>
+            <span class="pb-inbox-time">Just now</span>
+          </div>
+          <div class="pb-inbox-row-sub">
+            <span class="pb-inbox-lbl-to">To:</span> <span class="pb-inbox-to-val">jordan.ellis@example-corp.test</span>
+          </div>
+          <div class="pb-inbox-subject-line" id="pb-subject"></div>
+        </div>
       </div>
       <div class="pb-mail-body" id="pb-body"></div>
     </div>
@@ -2065,6 +2402,7 @@
         <div class="pb-chat-error" id="pb-chat-error-alert" style="display: none;"></div>
         <div id="pb-chat-suggestions" class="pb-chat-suggestions-row" style="display: none;"></div>
         <div class="pb-chat-input-wrap">
+          <span style="font-family: var(--mono, monospace); color: #38BDF8; font-weight: bold; font-size: 13px; margin-right: 4px; display: inline-flex; align-items: center; gap: 4px; user-select: none;">visitor:~$</span>
           <textarea id="pb-chat-input" placeholder="Ask Lure about phishing, email security..." maxlength="501"></textarea>
           <button id="pb-chat-send-btn" title="Send message" type="button">
             <i class="ti ti-send" aria-hidden="true"></i>
@@ -2095,8 +2433,8 @@
   <!-- TAB: Tours -->
   <div class="pb-tab-panel" id="pb-tab-tours">
     <div id="pb-tab-tours-container">
-      <h4 style="font-family:var(--mono); font-size:0.85rem; color:var(--text-primary,#F0F4FF); margin-bottom:6px; text-align: center;">Interactive Guided Tours</h4>
-      <p style="font-size:0.72rem; color:var(--text-secondary,#8CA0B3); text-align: center; margin-bottom:16px;">
+      <h4 style="font-family:var(--sans, 'Space Grotesk', sans-serif); font-size:18px; font-weight:600; color:var(--text-primary,#F0F4FF); margin-bottom:6px; text-align: center;">Interactive Guided Tours</h4>
+      <p style="font-family:var(--sans, 'Space Grotesk', sans-serif); font-size:14px; line-height:1.6; color:var(--text-secondary,#8CA0B3); text-align: center; margin-bottom:16px;">
         Select a specialized guide below, and I'll walk you through the platform step-by-step.
       </p>
       <div class="pb-wt-guide-list">
@@ -2105,7 +2443,7 @@
     </div>
   </div>
 
-  <div class="pb-panel-footer" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+  <div class="pb-panel-footer">
     <span style="display: flex; align-items: center; gap: 6px; flex-shrink: 0; white-space: nowrap;">
       <i class="ti ti-settings ti-spin" style="color:var(--primary); display: inline-block; flex-shrink: 0; margin-right: 4px;" aria-hidden="true"></i>
       Lure &mdash; Powered by PhishSim AI Engine v2
@@ -2149,7 +2487,14 @@
           <div class="pb-chrome">
             <div class="pb-chrome-dots"><span style="background:var(--danger);"></span><span style="background:var(--warning);"></span><span style="background:var(--success,#34D399);"></span></div>
             <div style="font-family:var(--mono);font-size:0.6rem;color:color-mix(in srgb,var(--text-secondary,#94A3B8) 45%,transparent);">Simulated Inbox — example-corp.test</div>
-            <div style="width:32px;"></div>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <button class="pb-icon-btn" onclick="pbCopyLure(true)" title="Copy email body" aria-label="Copy" style="width:22px; height:22px; font-size:0.72rem; border-radius:5px;">
+                <i class="ti ti-copy" aria-hidden="true"></i>
+              </button>
+              <button class="pb-icon-btn" onclick="pbDownloadLure(true)" title="Download as .eml" aria-label="Download" style="width:22px; height:22px; font-size:0.72rem; border-radius:5px;">
+                <i class="ti ti-download" aria-hidden="true"></i>
+              </button>
+            </div>
           </div>
           <div class="pb-mail-header">
             <div class="pb-mail-field"><span class="pb-mail-lbl">From</span><span id="pb-il-sender" style="color:var(--text-primary,#F0F4FF);"></span></div>
@@ -2188,8 +2533,8 @@
       <!-- TAB PANEL: Walkthrough selection list (Dynamic overlay) -->
       <div class="pb-inline-tab-panel" id="pb-tab-il-walkthrough" style="padding: 10px 0;">
         <div id="pb-wt-guide-picker" style="padding: 12px 10px;">
-          <h4 style="font-family:var(--mono); font-size:0.85rem; color:var(--text-primary,#F0F4FF); margin-bottom:6px; text-align: center;">Interactive Guided Tours</h4>
-          <p style="font-size:0.72rem; color:var(--text-secondary,#8CA0B3); text-align: center; margin-bottom:16px;">
+          <h4 style="font-family:var(--sans, 'Space Grotesk', sans-serif); font-size:18px; font-weight:600; color:var(--text-primary,#F0F4FF); margin-bottom:6px; text-align: center;">Interactive Guided Tours</h4>
+          <p style="font-family:var(--sans, 'Space Grotesk', sans-serif); font-size:14px; line-height:1.6; color:var(--text-secondary,#8CA0B3); text-align: center; margin-bottom:16px;">
             Select a specialized guide below, and I'll walk you through the platform step-by-step.
           </p>
           
@@ -2326,7 +2671,8 @@
       hasCompletedTour: false,
       completedTours: {},
       lastScenarioUsed: null,
-      lastVisitTimestamp: Date.now()
+      lastVisitTimestamp: Date.now(),
+      luresGeneratedCount: 0
     };
 
     function loadVisitorProfile() {
@@ -2361,7 +2707,19 @@
         sessionStorage.setItem('lure_session_counted', 'true');
         saveVisitorProfile();
       }
+      
+      updatePersonalStatsStrip();
     }
+
+    window.updatePersonalStatsStrip = function() {
+      loadVisitorProfile();
+      const lures = visitorProfile.luresGeneratedCount || 0;
+      const tours = Object.keys(visitorProfile.completedTours || {}).length;
+      const statsEl = document.getElementById('pb-personal-stats');
+      if (statsEl) {
+        statsEl.innerHTML = `Lures: ${lures} &bull; Tours: ${tours}`;
+      }
+    };
 
     initVisitorProfile();
 
@@ -2430,14 +2788,27 @@
       const url = mascotImages[state];
       if (!url || !currentImageElement || !hiddenImageElement) return;
 
+      const headerImg = document.getElementById('pb-header-avatar-img');
+      if (headerImg) {
+        headerImg.src = url;
+      }
+
       // Avoid unnecessary crossfade if target image is already set
       if (currentImageElement.src === new URL(url, window.location.href).href) {
+        hiddenImageElement.onload = null;
         return;
       }
 
+      hiddenImageElement.onload = null;
       hiddenImageElement.src = url;
 
       const performCrossfade = () => {
+        // Discard if loaded source does not match target state (resolves async load race condition)
+        const expectedUrl = new URL(mascotImages[currentMascotState], window.location.href).href;
+        if (hiddenImageElement.src !== expectedUrl) {
+          return;
+        }
+
         hiddenImageElement.classList.add('visible');
         currentImageElement.classList.remove('visible');
 
@@ -2735,88 +3106,8 @@
       }
     }
 
-    /* ── Animate Avatar into/out of Panel Header ── */
     function updateHeaderAvatarPosition(animateSwim = false) {
-      if (!panelOpen) return;
-      const placeholder = document.getElementById('pb-header-avatar-placeholder');
-      if (!placeholder) return;
-      
-      // Temporarily clear avatar transform to get actual untranslated position
-      const prevTransform = avatar.style.transform;
-      avatar.style.transform = 'none';
-      const rectAvatar = avatar.getBoundingClientRect();
-      avatar.style.transform = prevTransform;
-      
-      // Temporarily clear panel transform, transition, and set to target settled coordinates to get correct target bounds
-      const prevPanelTransform = panel.style.transform;
-      const prevPanelTransition = panel.style.transition;
-      const prevLeft = panel.style.left;
-      const prevTop = panel.style.top;
-      const prevWidth = panel.style.width;
-      const prevHeight = panel.style.height;
-
-      panel.style.transform = 'none';
-      panel.style.transition = 'none';
-
-      if (panel.classList.contains('pb-panel-maximized')) {
-        const maxW = Math.min(1100, window.innerWidth * 0.9);
-        const maxH = Math.min(850, window.innerHeight * 0.9);
-        panel.style.width = maxW + 'px';
-        panel.style.height = maxH + 'px';
-        panel.style.left = ((window.innerWidth - maxW) / 2) + 'px';
-        panel.style.top = ((window.innerHeight - maxH) / 2) + 'px';
-      } else {
-        const prevAvTransform = avatar.style.transform;
-        avatar.style.transform = 'none';
-        const avatarR = avatar.getBoundingClientRect();
-        avatar.style.transform = prevAvTransform;
-
-        const panelW = panel.offsetWidth;
-        const panelH = panel.offsetHeight;
-        let normalLeft = avatarR.left + (avatarR.width / 2) - (panelW / 2);
-        let normalTop = avatarR.top - panelH - 12;
-        const margin = 10;
-        normalLeft = Math.max(margin, Math.min(normalLeft, window.innerWidth - panelW - margin));
-        if (normalTop < margin) {
-          normalTop = avatarR.bottom + 12;
-        }
-        normalTop = Math.max(margin, Math.min(normalTop, window.innerHeight - panelH - margin));
-
-        panel.style.left = normalLeft + 'px';
-        panel.style.top = normalTop + 'px';
-      }
-
-      const rectTarget = placeholder.getBoundingClientRect();
-
-      // Restore original properties
-      panel.style.transform = prevPanelTransform;
-      panel.style.transition = prevPanelTransition;
-      panel.style.left = prevLeft;
-      panel.style.top = prevTop;
-      panel.style.width = prevWidth;
-      panel.style.height = prevHeight;
-      
-      const dx = rectTarget.left - rectAvatar.left;
-      const dy = rectTarget.top - rectAvatar.top;
-      const scale = placeholder.offsetWidth / avatar.offsetWidth;
-      
-      if (animateSwim) {
-        avatar.classList.add('pb-transitioning');
-        avatarWrap.classList.add('pb-swim-active');
-        avatar.style.transform = `translate(${dx}px, ${dy}px) scale(${scale})`;
-        setTimeout(() => {
-          avatarWrap.classList.remove('pb-swim-active');
-          avatar.classList.remove('pb-transitioning');
-          avatar.classList.add('pb-in-header');
-          updateHeaderAvatarPosition(false); // Snap to final settled coordinates
-        }, 450);
-      } else {
-        avatar.style.transition = 'none';
-        avatar.style.transform = `translate(${dx}px, ${dy}px) scale(${scale})`;
-        void avatar.offsetWidth; // force reflow
-        avatar.style.transition = '';
-        return;
-      }
+      // Stub - mascot remains in the corner!
     }
 
     function repositionFvPopover() {
@@ -2917,7 +3208,7 @@
           panel.style.height = '';
 
           const avatarR = avatar.getBoundingClientRect();
-          const normalW = 380;
+          const normalW = 450;
           let normalLeft = avatarR.left + (avatarR.width / 2) - (normalW / 2);
           const margin = 10;
           normalLeft = Math.max(margin, Math.min(normalLeft, window.innerWidth - normalW - margin));
@@ -3021,8 +3312,7 @@
       repositionPanel();
       avatar.setAttribute('aria-expanded', 'true');
       
-      // Animate swim into header
-      updateHeaderAvatarPosition(true);
+      avatar.classList.add('pb-panel-open-avatar');
       
 
       
@@ -3063,18 +3353,8 @@
       panel.classList.remove('pb-open');
       avatar.setAttribute('aria-expanded', 'false');
       
-      // Animate swim back out to docked position
-      avatar.classList.remove('pb-in-header');
-      avatar.classList.add('pb-transitioning');
-      avatarWrap.classList.add('pb-swim-active');
-      avatar.style.transform = 'none';
-      
-      setTimeout(() => {
-        avatar.classList.remove('pb-transitioning');
-        avatarWrap.classList.remove('pb-swim-active');
-        // Resume blinking
-        scheduleNextBlink();
-      }, 450);
+      avatar.classList.remove('pb-panel-open-avatar');
+      scheduleNextBlink();
       
       if (typeof resetIdleFidgetTimer === 'function') {
         resetIdleFidgetTimer();
@@ -3348,6 +3628,9 @@
         if (p) p.classList.add('active');
         if (tab === 'tours') {
           if (typeof renderToursList === 'function') renderToursList();
+          if (!panel.classList.contains('pb-panel-maximized')) {
+            toggleMaximize();
+          }
         } else if (tab === 'spotphish') {
           if (typeof window.stpRender === 'function') window.stpRender();
         }
@@ -3401,8 +3684,11 @@
 
     function openWalkthroughDirectly() {
       openPanel();
+      if (!panel.classList.contains('pb-panel-maximized')) {
+        toggleMaximize();
+      }
       setTimeout(() => {
-        const toursBtn = panel.querySelector('.pb-tab-btn[data-tab="tours"]');
+        const toursBtn = panel.querySelector('.pb-tab-btn[data-tab="tours"]') || panel.querySelector('.pb-sidebar-tab-btn[data-tab="tours"]');
         if (toursBtn) toursBtn.click();
       }, 50);
     }
@@ -3474,7 +3760,7 @@
       loader.style.display = 'block';
 
       // Set avatar status
-      host.className = 'pb-active';
+      setHostState({ visual: 'active' });
       if (!isInline) {
         updateMessageAvatar('pb-gen-avatar-container', 'active');
       }
@@ -3502,7 +3788,7 @@
       function process(data) {
         if (stopNarration) stopNarration();
         loader.style.display = 'none';
-        host.className = 'pb-success';
+        setHostState({ visual: 'success' });
         if (!isInline) {
           updateMessageAvatar('pb-gen-avatar-container', 'success', 2500);
         }
@@ -3510,6 +3796,19 @@
           dialogue.style.opacity = '1';
           dialogue.textContent = getRandomVariant(generateSuccessLines, 'generate_success');
         }
+
+        const senderName = data.sender_display || data.sender_name || 'IT';
+        const initialEl = document.getElementById('pb-inbox-avatar-initial');
+        if (initialEl) {
+          initialEl.textContent = senderName.trim().charAt(0).toUpperCase();
+        }
+
+        // Increment lures generated stat
+        loadVisitorProfile();
+        visitorProfile.luresGeneratedCount = (visitorProfile.luresGeneratedCount || 0) + 1;
+        saveVisitorProfile();
+        if (window.updatePersonalStatsStrip) window.updatePersonalStatsStrip();
+
         _render(data, scenario, {
           sender: sender, subject: subject, body: body, card: card, meta: meta, tactic: tacticText,
           bait: baitSect, bars: scoreBars
@@ -3553,7 +3852,7 @@
           if (stopNarration) stopNarration();
           _busy = false;
           loader.style.display = 'none';
-          host.className = 'pb-error';
+          setHostState({ visual: 'error' });
           if (!isInline) {
             updateMessageAvatar('pb-gen-avatar-container', 'error', 2500);
           }
@@ -3565,6 +3864,46 @@
           errorMsg.textContent = err.message;
           if (isInline) repositionPanel();
         });
+    };
+
+    window.pbCopyLure = function(isInline = false) {
+      const prefix = isInline ? 'pb-il-' : 'pb-';
+      const bodyEl = document.getElementById(prefix + 'body');
+      if (!bodyEl || !bodyEl.textContent) return;
+      navigator.clipboard.writeText(bodyEl.textContent).then(() => {
+        const selector = `[onclick="pbCopyLure(${isInline})"] i`;
+        const btn = document.querySelector(selector);
+        if (btn) {
+          btn.className = 'ti ti-check';
+          setTimeout(() => {
+            btn.className = 'ti ti-copy';
+          }, 2000);
+        }
+      }).catch(err => {
+        console.error('Failed to copy text: ', err);
+      });
+    };
+
+    window.pbDownloadLure = function(isInline = false) {
+      const prefix = isInline ? 'pb-il-' : 'pb-';
+      const sender = document.getElementById(prefix + 'sender')?.textContent || 'sender@example-corp.test';
+      const subject = document.getElementById(prefix + 'subject')?.textContent || 'Phishing Simulation Lure';
+      const bodyEl = document.getElementById(prefix + 'body');
+      if (!bodyEl) return;
+      const body = bodyEl.textContent || '';
+      
+      const emlContent = `From: ${sender}\nTo: jordan.ellis@example-corp.test\nSubject: ${subject}\nMIME-Version: 1.0\nContent-Type: text/plain; charset=utf-8\n\n${body}`;
+      
+      const blob = new Blob([emlContent], { type: 'message/rfc822' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const safeSubject = subject.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+      a.download = `lure_${safeSubject || 'simulation'}.eml`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
     };
 
     function _render(data, scenario, ids, $) {
@@ -3720,7 +4059,7 @@
         {
           targetId: "campaigns-grid",
           title: "Tracking the Fleet",
-          text: "Once campaigns launch, they appear right here on the dashboard. You can monitor overall open, click, and report rates at a glance. Let's look at the sent-emails inbox for our CEO Fraud Test.",
+          text: "Let's keep an eye on our new campaign! It shows up right here on your main dashboard. From here, you can track opens and clicks in real time. Let's click the email link below to check out the message inbox.",
           path: "/dashboard",
           action: (cb) => {
             const link = document.querySelector('a[href^="/campaign-emails/"]');
@@ -3735,7 +4074,7 @@
         {
           targetId: "wt-emails-viewer",
           title: "AI-Generated Inbox",
-          text: "Here you inspect all generated simulation emails. Notice how each target gets a personalized message tailored to exploit human urgency. Let's see what happens if a target clicks the phishing link.",
+          text: "This is where we inspect the simulation emails. Note how each message is personalized to feel urgent and natural to the recipient. To see how a user might fall for it, let's check out what happens when they click the phishing link.",
           path: "/campaign-emails/0",
           action: (cb) => {
             const evBody = document.getElementById('ev-body');
@@ -3756,7 +4095,7 @@
         {
           targetId: "login-form",
           title: "The Phishing Click Outcome",
-          text: "When a recipient clicks the phishing link, they land here. This realistic fake Microsoft login form harvests credentials for educational purposes, teaching the user in the moment while logging a Click event.",
+          text: "If a recipient clicks the link, they land on this page. It mimics a standard Microsoft login form to capture credentials safely for training. It gives us a clear click event while showing them a safe teaching moment.",
           path: "/fake-login-demo",
           action: (cb) => {
             const emailInput = document.getElementById('email-input');
@@ -3780,29 +4119,19 @@
         {
           targetId: "thank-you-card-container",
           title: "The Active Reporting Outcome",
-          text: "If instead the recipient reports the email using the PhishSim plug-in, they are redirected here. This reinforces the active defense habit, proving that employees can act as live sensors against real threats.",
-          path: "/reporting-demo",
-          action: (cb) => {
-            if (cb) cb();
-          }
+          text: "If they spot the test and report it using our plug-in, they'll see this screen instead! This positive reinforcement helps build a strong reporting habit, turning your team into active sensors.",
+          path: "/reporting-demo"
         },
         {
           targetId: "wt-report-hero",
           title: "AI Campaign Report",
-          text: "This is the payoff. The AI constructs an agentic report measuring your Human Security Score™, key vulnerabilities, and custom department remediation steps to help you mitigate high-risk hotspots.",
-          path: "/campaign-report/0",
-          action: (cb) => {
-            window.scrollTo({ top: 400, behavior: 'smooth' });
-            setTimeout(() => {
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-              if (cb) cb();
-            }, 1500);
-          }
+          text: "Here's our simulation summary! The AI constructs a comprehensive report detailing your team's Human Security Score, vulnerabilities, and targeted training tips to help you patch risk areas.",
+          path: "/campaign-report/0"
         },
         {
           targetId: "pdf-dl-btn",
           title: "Exporting for Leadership",
-          text: "Export your reports to PDF or CSV with a single click to share progress with your leadership team and compliance auditors. You've completed the complete PhishSim simulation loop!",
+          text: "You can easily export this report to share your progress with leadership or compliance officers. And that's it — you've completed the full simulation loop! Excellent job.",
           path: "/campaign-report/0",
           action: (cb) => {
             const btn = document.getElementById('pdf-dl-btn');
@@ -3813,29 +4142,21 @@
         {
           targetId: "attack-chain",
           title: "Attack Visualizations",
-          text: "Take a look at this campaign attack chain. I'll help your security officers map how phishing templates, credential harvesters, and data breaches link together.",
-          path: "/",
-          action: (cb) => {
-            const el = document.getElementById('attack-chain');
-            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            if (cb) cb();
-          }
+          text: "Here is the attack chain map. It helps security teams visualize how phishing templates, login forms, and target actions link together to assess risk.",
+          path: "/"
         },
         {
           targetId: "sec-hero",
           title: "Risk Profile Grading",
-          text: "We will track every interaction and report detailed risk grades to help you prioritize training for vulnerable departments.",
-          path: "/reports-demo",
-          action: (cb) => {
-            if (cb) cb();
-          }
+          text: "We'll keep tracking these telemetry signals to grade risk and help you tailor security training where it's needed most.",
+          path: "/reports-demo"
         }
       ],
       getting_started: [
         {
           targetId: "actual-terminal-wrapper",
           title: "Think Like the Threat",
-          text: "I'm Lure, your AI security co-pilot. Ever wondered why phishing works so well? Attackers start by scouting public records and OSINT data—gathering the exact pieces they need to build trust before you even realize you're targeted.",
+          text: "Hi! I'm Lure, your AI security co-pilot. Ever wondered why phishing is so effective? It starts with intelligence gathering. Attackers research public info to build trust. Let's run a quick scan on a domain to see what they find!",
           path: "/",
           action: (cb) => {
             if (window.runSuggestedCmd) {
@@ -3847,7 +4168,7 @@
         {
           targetId: "threat-sandbox",
           title: "Inside the Hook",
-          text: "Phishing succeeds because it's deeply personalized. In this Sandbox, you can safely generate lures and spot phishing emails to see how easily simple details can manipulate a person. Let's build a real campaign to see how this scales.",
+          text: "Phishing works because it's tailored to the victim. In this sandbox, you can safely generate pretexts and see how simple details trigger clicks. Let's select a scenario to see it in action!",
           path: "/",
           action: (cb) => {
             if (window.selectSandboxScenario) {
@@ -3859,81 +4180,68 @@
         {
           targetId: "campaign_name",
           title: "Framing the Context",
-          text: "To train a team effectively, the simulation has to feel real. Start by naming your campaign and choosing a target domain—this lets us customize the pretext so it mimics the actual, context-aware threats your staff faces daily.",
-          path: "/new-campaign",
-          action: (cb) => {
-            const input = document.getElementById('campaign_name');
-            typeIntoInput(input, "Q3 Phishing Awareness Drill", cb);
-          }
+          text: "To train your team effectively, simulation campaigns need to feel realistic. Let's give our campaign a name and target domain so we can customize the email context naturally.",
+          path: "/new-campaign"
         },
         {
           targetId: "wt-scenarios-container",
           title: "Crafting the Angle",
-          text: "What story will get them to click? Select a scenario like CEO Wire Fraud or a routine IT alert. I'll automatically spin up context-specific email copy tailored to hook the target's attention naturally.",
-          path: "/new-campaign",
-          action: (cb) => {
-            selectRadio('#s1', cb);
-          }
+          text: "What angle makes the most sense? Choose a scenario, like an IT alert or CEO message, and I'll generate custom email copy tailored to catch a target's attention.",
+          path: "/new-campaign"
         },
         {
           targetId: "wt-delivery-grid",
           title: "Choosing the Path",
-          text: "How do you want to test? You can run local sandboxed mock trials, dispatch live emails through SMTP, or choose Safe Send to route everything to Mailtrap so you can inspect your drafts with zero risk.",
-          path: "/new-campaign",
-          action: (cb) => {
-            selectRadio('#d_local', cb);
-          }
+          text: "Now choose how to send it. You can run a local test, send live emails, or use Safe Send to route everything to Mailtrap so you can review drafts without sending anything to targets.",
+          path: "/new-campaign"
         },
         {
           targetId: "consent_confirmed",
           title: "Cast the Line",
-          text: "Ready to see who bites? Confirm your authorization and hit Create. I'll take care of the rest—dispatching the personalized lures and setting up the tracking to capture real engagement metrics.",
-          path: "/new-campaign",
-          action: (cb) => {
-            checkCheckbox('consent_confirmed', true, cb);
-          }
+          text: "Ready to start? Confirm your authorization and click create. I'll handle the rest — sending the lures and tracking employee interactions.",
+          path: "/new-campaign"
         },
         {
           targetId: "wt-dashboard-view",
           title: "Reading the Signals",
-          text: "Here is where the data reveals itself. Your dashboard reports live open and click rates, showing you exactly how many targets fell for the pretext so you can measure your organization's true exposure.",
+          text: "This is where your campaign data live streams. You'll see real-time open and click rates, giving you a clear picture of your team's current exposure.",
           path: "/dashboard"
         },
         {
           targetId: "mainTrendChart",
           title: "Charting Progress",
-          text: "Notice the click-rate trend line? A high click rate isn't a failure—it's a diagnostic signal. The goal is to see this line slope downward over time as security habits strengthen and red flags become obvious.",
+          text: "See the trend line here? A high initial click rate is simply a diagnostic starting point. The goal is to watch this line decline as security training builds lasting habits.",
           path: "/dashboard"
         },
         {
           targetId: "wt-dashboard-view",
           title: "Where Next?",
-          text: "Our onboarding tour is complete! Now you are ready to explore: why not launch your first simulated campaign, ask me a technical question in the Ask Lure tab, or test our standalone Header Analyzer?",
+          text: "And we are done with the tour! You are now ready to explore. Feel free to launch a real simulation, check the Ask Lure terminal, or test our forensics tools. Happy testing!",
           path: "/dashboard"
         }
       ],
       campaign_launch: [
-        { targetId: "actual-terminal-wrapper", title: "Terminal Queries", text: "First, let's look at my Sandbox Terminal. Here, you can type active security commands to query target email domains and analyze target vulnerabilities.", path: "/" },
-        { targetId: "wt-create-campaign-btn", title: "Campaign Hub", text: "Ready to launch? We go to the Dashboard to create a campaign.", path: "/dashboard", redirectPath: "/new-campaign" },
-        { targetId: "campaign-form", title: "Campaign Creator", text: "In this form, you configure targets and scenarios. Once launched, simulation results flow right back into the dashboard.", path: "/new-campaign" }
+        { targetId: "actual-terminal-wrapper", title: "Terminal Queries", text: "Welcome! Let's start with the Sandbox Terminal. This is where you can run security commands to check target domains for vulnerabilities.", path: "/" },
+        { targetId: "wt-create-campaign-btn", title: "Campaign Hub", text: "Ready to launch a drill? Let's open the Campaign Creator page.", path: "/dashboard", redirectPath: "/new-campaign" },
+        { targetId: "campaign-form", title: "Campaign Creator", text: "Use this form to configure your targets and scenario themes. Once created, all simulation metrics will stream back to your dashboard.", path: "/new-campaign" }
       ],
       lure_generation: [
-        { targetId: "pb-avatar", title: "Formulating Lures", text: "This is my AI Lure Generator! I write personalized phishing emails on the fly based on threat scenarios you select.", path: "/" },
-        { targetId: "campaign-form", title: "Injecting Targets", text: "To make these emails convincing, I can ingest CSV lists containing target names, departments, and titles to craft context-aware copy.", path: "/new-campaign" },
-        { targetId: "pricing", title: "Scaling Simulation", text: "Once you are ready to deploy automated lures across your company, you can choose a subscription that scales to your target count.", path: "/" }
+        { targetId: "pb-avatar", title: "Formulating Lures", text: "This is my AI Lure Generator! I can write custom, highly personalized phishing lures on the fly using the scenarios you select.", path: "/" },
+        { targetId: "campaign-form", title: "Injecting Targets", text: "To make the emails feel authentic, we can upload CSV lists of targets. This helps me customize titles and department details for context.", path: "/new-campaign" },
+        { targetId: "pricing", title: "Scaling Simulation", text: "When you're ready to deploy simulations across your company, you can choose a subscription that matches your team's size.", path: "/" }
       ],
 
       tool_threat_analyzer: [
         {
           targetId: "tab-body",
           title: "Threat Analyzer Tab",
-          text: "Welcome to the Threat Analyzer! First, choose whether you want to paste a raw email body to audit its text, or headers to trace its headers. I'll search the text for phishing indicators.",
+          text: "Welcome to the Threat Analyzer! Let's choose whether to audit a raw email body or raw headers. I'll scan the text to identify phishing indicators.",
           path: "/threat-analyzer"
         },
         {
           targetId: "ta-email-input",
           title: "Paste Raw Emails",
-          text: "You can copy and paste any suspicious email copy here, or check out our preset forensic samples below to see what real-world CEO wire fraud or IT support alert pretexts look like.",
+          text: "You can paste any suspicious email text here, or try one of our preset forensic samples below to see how the analyzer works.",
           path: "/threat-analyzer",
           action: (cb) => {
             if (typeof applyPreset === 'function') {
@@ -3945,7 +4253,7 @@
         {
           targetId: "ta-analyze-btn",
           title: "Analyzing Indicators",
-          text: "Click here to trigger my forensic analysis. I'll parse the copy, measure language urgency, search for suspicious domains, and highlight threat factors.",
+          text: "Click analyze to run the forensic audit. I'll scan the text, evaluate language urgency, check links, and flag threat factors.",
           path: "/threat-analyzer",
           action: (cb) => {
             const btn = document.getElementById('ta-analyze-btn');
@@ -3958,7 +4266,7 @@
         {
           targetId: "ta-result-state",
           title: "Reading Results",
-          text: "Once finished, I'll display the risk verdict badge, color-coded threat level score, and highlight exactly which phrases are dangerous right on the email card. Audit threat indicators with confidence!",
+          text: "When the scan completes, you'll see a risk rating, threat level score, and highlighted phrases showing you exactly what is suspicious. Audit emails with confidence!",
           path: "/threat-analyzer"
         }
       ],
@@ -3966,13 +4274,13 @@
         {
           targetId: "headers-input",
           title: "Ingesting Raw Headers",
-          text: "Welcome! Here, paste the raw internet headers of any email you wish to audit. Raw headers contain the technical route records, sender authentication keys, and delivery timestamps.",
+          text: "Welcome! Paste the raw internet headers of any email you want to inspect. Headers contain route records, authentication keys, and delivery stamps.",
           path: "/header-analyzer"
         },
         {
           targetId: "btn-preset-spf-fail",
           title: "Authentication Presets",
-          text: "Need an example? Click one of my preset templates below, like this SPF authentication failure chip, to load real raw header content instantly.",
+          text: "To see it in action, click one of our preset templates below to load a sample header, like this SPF failure record.",
           path: "/header-analyzer",
           action: (cb) => {
             const btn = document.getElementById('btn-preset-spf-fail');
@@ -3983,7 +4291,7 @@
         {
           targetId: "trace-btn",
           title: "Trace Hop Path",
-          text: "Click Trace Route to run my parser. I'll dissect the headers, extract hop-by-hop records, verify domain alignment, and evaluate anti-spoofing compliance.",
+          text: "Click trace route to parse the details. I'll extract delivery hops, check domain alignment, and verify authentication records.",
           path: "/header-analyzer",
           action: (cb) => {
             const btn = document.getElementById('trace-btn');
@@ -3996,7 +4304,7 @@
         {
           targetId: "ha-hop-stage",
           title: "Analyzing Hop Trails",
-          text: "I'll display the hop sequence and trace security records like SPF, DKIM, and DMARC alignment status, plus highlight red flags to spot spoofed sender domains.",
+          text: "I'll map out the hop path and highlight DMARC, DKIM, or SPF status along with any red flags to help you spot spoofed senders.",
           path: "/header-analyzer"
         }
       ],
@@ -4004,13 +4312,13 @@
         {
           targetId: "url-input",
           title: "Inspect Suspicious URLs",
-          text: "Welcome! Copy any suspicious hyperlink you receive in an email and paste it here. Attackers love using shorteners and multi-hop redirects to mask dangerous sites.",
+          text: "Welcome! Paste any suspicious hyperlink here to inspect it. Attackers often use shorteners or redirects to hide final destinations.",
           path: "/url-decoder"
         },
         {
           targetId: "ud-input-body",
           title: "Redirect Presets",
-          text: "Select one of my forensic samples below to see how I handle multi-hop redirect chains or links flagged by open threat feeds like URLhaus.",
+          text: "Select one of our preset samples to see how I follow multi-hop redirect chains and check URL safety reputations.",
           path: "/url-decoder",
           action: (cb) => {
             const btn = document.querySelector('.ud-presets-grid button:nth-child(2)');
@@ -4021,7 +4329,7 @@
         {
           targetId: "trace-btn",
           title: "Run Trace Query",
-          text: "Click Trace Link to trace the URL hops safely. I'll trigger a head query, follow redirect loops, expand shorteners, and inspect safety reputations.",
+          text: "Click trace link to safely scan the URL. I'll expand short links, trace redirect loops, and evaluate safety ratings.",
           path: "/url-decoder",
           action: (cb) => {
             const btn = document.getElementById('trace-btn');
@@ -4034,7 +4342,7 @@
         {
           targetId: "ud-result-preview",
           title: "Visualizing Hops",
-          text: "Once processed, I'll reveal every single redirect hop and display a simulated live browser preview so you can safely audit the final page without risk!",
+          text: "When processed, I'll list all hops and render a secure live browser preview so you can check the landing page safely without risk!",
           path: "/url-decoder"
         }
       ],
@@ -4042,13 +4350,13 @@
         {
           targetId: "btn-tab-pw",
           title: "Password Strength Audit",
-          text: "Welcome! First, evaluate any password's local strength using my real-time entropy tracker to verify it meets secure guidelines.",
+          text: "Welcome! Let's start by auditing a password's local strength using my real-time entropy tracker.",
           path: "/password-breach"
         },
         {
           targetId: "sec-audit-input-token",
           title: "Input Password",
-          text: "Type a password here to test. I'll calculate characters, length, case variability, numeric complexity, and verify if it's too simple.",
+          text: "Type any password here to test it. I'll calculate its length, characters, case complexity, and check if it's too common.",
           path: "/password-breach",
           action: (cb) => {
             const input = document.getElementById('sec-audit-input-token');
@@ -4068,7 +4376,7 @@
         {
           targetId: "btn-tab-email",
           title: "Email Leak Scanner",
-          text: "Next, click over to my Email tab. Here, paste any email address to audit public databases of known credential leaks.",
+          text: "Next, let's head over to the Email Leak tab. You can paste any email address to scan databases of public leaks.",
           path: "/password-breach",
           action: (cb) => {
             const tabBtn = document.getElementById('btn-tab-email');
@@ -4094,7 +4402,7 @@
         {
           targetId: "email-verdict-panel",
           title: "Audit Exposure Level",
-          text: "Trigger the audit to inspect if the credentials have been compromised, letting you proactively update keys and maintain strong account security!",
+          text: "When the scan finishes, you'll see a list of leaks where this email was compromised, helping you proactively secure compromised accounts!",
           path: "/password-breach"
         }
       ]
@@ -4144,9 +4452,9 @@
           return !!(terminalBody && (terminalBody.textContent.includes('demo-corp.com') || terminalBody.textContent.includes('MX') || terminalBody.textContent.includes('SPF') || terminalBody.textContent.includes('DMARC') || terminalBody.children.length > 2));
         }
         if (stepIdx === 1) {
-          // Step 2: Sandbox generate
-          const emailCard = document.getElementById('pb-card');
-          return !!(emailCard && emailCard.style.display !== 'none');
+          // Step 2: Sandbox generate (check homepage threat-sandbox mail-body visibility)
+          const mailBody = document.getElementById('mail-body');
+          return !!(mailBody && mailBody.style.display !== 'none' && mailBody.innerHTML.trim().length > 0);
         }
         if (stepIdx === 2) {
           // Step 3: Campaign Name
@@ -4442,8 +4750,7 @@
         host.style.setProperty('bottom', '24px', 'important');
         host.style.setProperty('right', '24px', 'important');
         avatar.classList.remove('pb-face-left');
-        host.classList.remove('pb-direction-left');
-        host.classList.add('pb-direction-right');
+        setHostState({ tourDirection: 'right' });
         return;
       }
 
@@ -4461,8 +4768,7 @@
         host.style.setProperty('bottom', '24px', 'important');
         host.style.setProperty('right', '24px', 'important');
         avatar.classList.remove('pb-face-left');
-        host.classList.remove('pb-direction-left');
-        host.classList.add('pb-direction-right');
+        setHostState({ tourDirection: 'right' });
         return;
       }
 
@@ -4484,9 +4790,9 @@
       const vh        = window.innerHeight;
       const margin    = 16;
       const mascotW   = 110;
-      const bubbleW   = 320;
+      const bubbleW   = 410;
       const gap       = 10;
-      const hostW     = mascotW + gap + bubbleW;   // ~440px
+      const hostW     = mascotW + gap + bubbleW;   // ~530px
       const bubbleEl  = document.getElementById('pb-wt-bubble');
       const hostH     = bubbleEl ? Math.max(bubbleEl.offsetHeight, 160) : 200;
 
@@ -4604,12 +4910,10 @@
       const hostCx   = hostLeft + hostW / 2;
       if (targetCx < hostCx) {
         avatar.classList.add('pb-face-left');
-        host.classList.remove('pb-direction-right');
-        host.classList.add('pb-direction-left');
+        setHostState({ tourDirection: 'left' });
       } else {
         avatar.classList.remove('pb-face-left');
-        host.classList.remove('pb-direction-left');
-        host.classList.add('pb-direction-right');
+        setHostState({ tourDirection: 'right' });
       }
 
       // Clamp to viewport with margin
@@ -4624,7 +4928,7 @@
         name: "The Full Simulation Loop (Flagship)",
         desc: "Follow the complete end-to-end simulation lifecycle: launch a campaign, trace target reactions, and review AI analytics reports.",
         icon: "ti ti-refresh",
-        color: "var(--primary)",
+        color: "var(--lure-gold)",
         category: "Core Simulator Tours",
         tier: "flagship"
       },
@@ -4702,7 +5006,7 @@
       
       categories.forEach(cat => {
         // Add category header
-        html += `<div style="font-family:var(--mono); font-size:0.65rem; color:var(--text-secondary,#8CA0B3); text-transform:uppercase; margin: 16px 0 6px 4px; letter-spacing:0.5px;">${cat}</div>`;
+        html += `<div class="pb-tour-cat-header" style="font-family:var(--mono); font-size:0.65rem; color:var(--text-secondary,#8CA0B3); text-transform:uppercase; margin: 16px 0 6px 4px; letter-spacing:0.5px;">${cat}</div>`;
         
         // Find tours in this category
         for (const key in TOUR_METADATA) {
@@ -4727,26 +5031,27 @@
           if (meta.tier === 'start') {
             tierBadgeHtml = `<span style="font-size: 0.52rem; font-weight: 800; text-transform: uppercase; color: var(--primary); background: rgba(6,182,212,0.12); padding: 2px 5px; border-radius: 4px; border: 1px solid rgba(6,182,212,0.25); margin-left: 6px;">Start Here</span>`;
           } else if (meta.tier === 'flagship') {
-            tierBadgeHtml = `<span style="font-size: 0.52rem; font-weight: 800; text-transform: uppercase; color: var(--primary); background: rgba(6,182,212,0.12); padding: 2px 5px; border-radius: 4px; border: 1px solid rgba(6,182,212,0.25); margin-left: 6px;">Flagship</span>`;
+            tierBadgeHtml = `<span style="font-size: 0.52rem; font-weight: 800; text-transform: uppercase; color: var(--lure-gold); background: rgba(245,158,11,0.12); padding: 2px 5px; border-radius: 4px; border: 1px solid rgba(245,158,11,0.25); margin-left: 6px;">Flagship</span>`;
           }
 
           if (isCompleted) {
-            badgeHtml = `<span class="pb-tour-badge completed" style="font-size: 0.6rem; font-weight: 700; color: var(--success,#34D399); background: color-mix(in srgb, var(--success,#34D399) 10%, transparent); padding: 2px 6px; border-radius: 4px; border: 1px solid color-mix(in srgb, var(--success,#34D399) 20%, transparent); display: flex; align-items: center; gap: 3px; flex-shrink: 0;"><i class="ti ti-check"></i> Done</span>`;
-            cardStyle = `border-color: rgba(52, 211, 153, 0.35); background: color-mix(in srgb, var(--success,#34D399) 4%, transparent);`;
-            btnStyle = `background: rgba(52, 211, 153, 0.15); color: var(--success,#34D399); padding: 4px; border-radius: 4px; border: 1px solid rgba(52, 211, 153, 0.3); cursor: pointer;`;
+            badgeHtml = `<span class="pb-tour-badge completed" style="font-size: 0.6rem; font-weight: 700; color: var(--lure-gold); background: color-mix(in srgb, var(--lure-gold) 10%, transparent); padding: 2px 6px; border-radius: 4px; border: 1px solid color-mix(in srgb, var(--lure-gold) 20%, transparent); display: flex; align-items: center; gap: 3px; flex-shrink: 0;"><i class="ti ti-trophy"></i> Done</span>`;
+            cardStyle = `border-color: var(--lure-gold); background: color-mix(in srgb, var(--lure-gold) 4%, transparent);`;
+            btnStyle = `background: rgba(245, 158, 11, 0.15); color: var(--lure-gold); padding: 4px; border-radius: 4px; border: 1px solid rgba(245, 158, 11, 0.3); cursor: pointer;`;
             progressBarHtml = `
               <div style="width: 100%; height: 3px; background: rgba(255,255,255,0.05); border-radius: 2px; margin-top: 8px; overflow: hidden;">
-                <div style="width: 100%; height: 100%; background: var(--success,#34D399); border-radius: 2px;"></div>
+                <div style="width: 100%; height: 100%; background: var(--lure-gold); border-radius: 2px;"></div>
               </div>
             `;
           } else if (isInProgress) {
-            badgeHtml = `<span class="pb-tour-badge progress" style="font-size: 0.6rem; font-weight: 700; color: var(--warning); background: color-mix(in srgb, var(--warning) 10%, transparent); padding: 2px 6px; border-radius: 4px; border: 1px solid color-mix(in srgb, var(--warning) 20%, transparent); display: flex; align-items: center; gap: 3px; flex-shrink: 0;"><i class="ti ti-progress"></i> Step ${currentStep + 1}/${totalSteps}</span>`;
-            cardStyle = `border-color: rgba(245, 158, 11, 0.35); background: color-mix(in srgb, var(--warning) 4%, transparent);`;
-            btnStyle = `background: var(--warning); color: #000; padding: 4px; border-radius: 4px; border: none; cursor: pointer;`;
+            const tourThemeColor = (key === 'core_workflow') ? 'var(--lure-gold)' : 'var(--warning)';
+            badgeHtml = `<span class="pb-tour-badge progress" style="font-size: 0.6rem; font-weight: 700; color: ${tourThemeColor}; background: color-mix(in srgb, ${tourThemeColor} 10%, transparent); padding: 2px 6px; border-radius: 4px; border: 1px solid color-mix(in srgb, ${tourThemeColor} 20%, transparent); display: flex; align-items: center; gap: 3px; flex-shrink: 0;"><i class="ti ti-progress"></i> Step ${currentStep + 1}/${totalSteps}</span>`;
+            cardStyle = `border-color: color-mix(in srgb, ${tourThemeColor} 35%, transparent); background: color-mix(in srgb, ${tourThemeColor} 4%, transparent);`;
+            btnStyle = `background: ${tourThemeColor}; color: #000; padding: 4px; border-radius: 4px; border: none; cursor: pointer;`;
             const progressPercent = Math.round(((currentStep + 1) / totalSteps) * 100);
             progressBarHtml = `
               <div style="width: 100%; height: 3px; background: rgba(255,255,255,0.08); border-radius: 2px; margin-top: 8px; overflow: hidden;">
-                <div style="width: ${progressPercent}%; height: 100%; background: var(--warning); border-radius: 2px; transition: width 0.3s ease;"></div>
+                <div style="width: ${progressPercent}%; height: 100%; background: ${tourThemeColor}; border-radius: 2px; transition: width 0.3s ease;"></div>
               </div>
             `;
           } else {
@@ -4756,9 +5061,9 @@
               nameStyle = `font-weight: 700; color: var(--primary);`;
               btnStyle = `background: var(--primary); color: #000; padding: 4px; border-radius: 4px; border: none; cursor: pointer;`;
             } else if (meta.tier === 'flagship') {
-              cardStyle = `border-color: rgba(6, 182, 212, 0.4); background: color-mix(in srgb, var(--primary) 3%, transparent);`;
-              nameStyle = `font-weight: 700; color: var(--text-primary);`;
-              btnStyle = `background: color-mix(in srgb, var(--primary) 85%, white); color: #000; padding: 4px; border-radius: 4px; border: none; cursor: pointer;`;
+              cardStyle = `border-color: color-mix(in srgb, var(--lure-gold) 40%, transparent); background: color-mix(in srgb, var(--lure-gold) 3%, transparent);`;
+              nameStyle = `font-weight: 700; color: var(--lure-gold);`;
+              btnStyle = `background: var(--lure-gold); color: #000; padding: 4px; border-radius: 4px; border: none; cursor: pointer;`;
             } else {
               cardStyle = `border-color: rgba(255,255,255,0.06); background: rgba(255,255,255,0.02);`;
             }
@@ -4838,29 +5143,17 @@
       expanded = false;
 
       // Prepare host walkthrough mode
-      host.classList.add('pb-walkthrough-mode');
+      setHostState({ tourMode: true });
       const bubbleEl = document.getElementById('pb-wt-bubble');
       if (bubbleEl) bubbleEl.style.display = 'block';
 
-      if (resizeHandler) {
-        window.removeEventListener('resize', resizeHandler);
-      }
-      if (scrollHandler) {
-        window.removeEventListener('scroll', scrollHandler, { capture: true });
-      }
-
-      resizeHandler = throttle(() => repositionWalkthroughElements(false));
-      scrollHandler = throttle(() => repositionWalkthroughElements(true));
-      window.addEventListener('resize', resizeHandler);
-      window.addEventListener('scroll', scrollHandler, { capture: true, passive: true });
-      startWtRepositionLoop();
-
-      // Check if we need to redirect immediately
+      // Immediate initialization/redirect handling (eliminates need to refresh)
+      const firstStep = wtSteps[0];
       const currentPath = window.location.pathname.replace(/\/$/, '') || '/';
-      const targetPath = config[0].path.split('?')[0].replace(/\/$/, '') || '/';
-
-      if (currentPath !== targetPath) {
-        window.location.href = config[0].path;
+      const targetPath = firstStep && firstStep.path ? firstStep.path.replace(/\/$/, '') || '/' : currentPath;
+      
+      if (targetPath !== currentPath) {
+        window.location.href = firstStep.path;
       } else {
         renderWalkthroughStep();
       }
@@ -4870,12 +5163,19 @@
       const bubbleEl = document.getElementById('pb-wt-bubble');
       if (!bubbleEl) return;
 
+      if (wtCurrentPage === 'core_workflow') {
+        bubbleEl.classList.add('pb-wt-flagship');
+      } else {
+        bubbleEl.classList.remove('pb-wt-flagship');
+      }
+
+      const wtThemeColor = (wtCurrentPage === 'core_workflow') ? 'var(--lure-gold)' : 'var(--primary)';
       const isLastStep = (wtCurrentStep === wtSteps.length - 1);
       
-      let dotsHtml = '<div style="display:flex; gap:4px; align-items:center; margin-top:4px;">';
+      let dotsHtml = '<div style="display:flex; gap:5px; align-items:center; margin-top:6px;">';
       for (let i = 0; i < wtSteps.length; i++) {
         const isCurrent = (i === wtCurrentStep);
-        dotsHtml += `<span style="width:6px; height:6px; border-radius:50%; border:1px solid var(--primary); background:${isCurrent ? 'var(--primary)' : 'transparent'}; display:inline-block;"></span>`;
+        dotsHtml += `<span style="width:6px; height:6px; border-radius:50%; border:1px solid ${wtThemeColor}; background:${isCurrent ? wtThemeColor : 'transparent'}; display:inline-block;"></span>`;
       }
       dotsHtml += '</div>';
 
@@ -4897,10 +5197,10 @@
           <!-- Header title & counter -->
           <div style="display:flex; flex-direction:column; border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom:6px;">
             <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
-              <span style="font-family:var(--sans); font-size:0.75rem; font-weight:700; color:${isSkipped ? 'var(--warning)' : 'var(--primary)'};">
+              <span style="font-family: inherit; font-size:13px; font-weight:700; color:${isSkipped ? 'var(--warning)' : wtThemeColor};">
                 ${esc(step.title)}
               </span>
-              <span style="font-family:var(--mono); font-size:0.58rem; color:var(--text-secondary,#94A3B8);">
+              <span style="font-family:var(--mono); font-size:9.5px; color:var(--text-secondary,#94A3B8); font-weight:500;">
                 Step ${wtCurrentStep + 1} of ${wtSteps.length}
               </span>
             </div>
@@ -4910,14 +5210,14 @@
           <!-- Dialogue bubble with speech text -->
           <div style="display:flex; gap:12px; align-items:flex-start;">
             <div style="flex:1;">
-              <p style="font-size:0.7rem; color:var(--text-primary,#F0F4FF); line-height:1.45; margin:0;">
+              <p style="font-size:12px; color:var(--text-primary,#F0F4FF); line-height:1.5; margin:0; font-family: inherit;">
                 ${esc(step.text)}
               </p>
               
               <!-- Gate visual feedback badge -->
-              <div class="pb-gate-prompt" style="display:none; align-items:center; gap:6px; background:rgba(6, 182, 212, 0.08); border:1px dashed rgba(6, 182, 212, 0.35); padding:6px 8px; border-radius:6px; font-size:0.58rem; color:var(--primary); line-height:1.3; font-weight:600; margin-top:8px; animation: pbPulse 1.2s infinite alternate;">
-                <i class="ti ti-fingerprint" style="font-size:0.75rem; color:var(--primary);"></i>
-                <span>${esc(gatePromptText)}</span>
+              <div class="pb-gate-prompt" style="display:none; align-items:center; gap:8px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); padding:8px 12px; border-radius:8px; font-size:11px; color:var(--text-secondary,#94A3B8); line-height:1.4; margin-top:10px;">
+                <i class="ti ti-lock" style="font-size:0.95rem; color:${wtThemeColor};"></i>
+                <span style="font-weight: 500;">${esc(gatePromptText)}</span>
               </div>
             </div>
           </div>
@@ -4925,26 +5225,26 @@
           <!-- Action buttons row -->
           <div style="display:flex; flex-direction:column; gap:8px; margin-top:4px;">
             <div style="display:flex; justify-content:space-between; gap:8px;">
-              <button class="pb-action-btn" onclick="prevWalkthroughStep()" ${wtCurrentStep === 0 ? 'disabled class="pb-disabled"' : ''} style="flex:1; padding:6px 10px; font-size:0.62rem; margin: 0;">
+              <button class="pb-action-btn" onclick="prevWalkthroughStep()" ${wtCurrentStep === 0 ? 'disabled class="pb-disabled"' : ''} style="flex:1; padding:6px 10px; font-size:11.5px; margin: 0; font-family: inherit; font-weight: 500;">
                 <i class="ti ti-arrow-left"></i> Back
               </button>
-              <button class="pb-action-btn" onclick="repeatWalkthroughStep()" style="flex:1; padding:6px 10px; font-size:0.62rem; margin: 0;">
+              <button class="pb-action-btn" onclick="repeatWalkthroughStep()" style="flex:1; padding:6px 10px; font-size:11.5px; margin: 0; font-family: inherit; font-weight: 500;">
                 <i class="ti ti-refresh"></i> Repeat
               </button>
-              <button class="pb-action-btn pb-next-btn" onclick="nextWalkthroughStepBtn()" style="flex:2; padding:6px 10px; font-size:0.62rem; font-weight:bold; background:var(--primary); color:var(--text-inverse,#0A1420); margin: 0;">
+              <button class="pb-action-btn pb-next-btn" onclick="nextWalkthroughStepBtn()" style="flex:2; padding:6px 10px; font-size:11.5px; font-weight:bold; background:${wtThemeColor}; color:var(--bg-base,#020617); margin: 0; font-family: inherit;">
                 ${isLastStep ? 'Finish' : 'Next <i class="ti ti-arrow-right"></i>'}
               </button>
             </div>
-            <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid rgba(255,255,255,0.04); padding-top:6px; font-size:0.6rem;">
-              <button class="pb-action-btn" onclick="exitWalkthrough()" style="padding:2px 6px; font-size:0.58rem; background:transparent; opacity:0.6; margin: 0;">
+            <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid rgba(255,255,255,0.04); padding-top:6px; font-size:10.5px; font-family: inherit;">
+              <button class="pb-action-btn" onclick="exitWalkthrough()" style="padding:2px 6px; font-size:10.5px; background:transparent; opacity:0.6; margin: 0; border: none !important;">
                 Skip All
               </button>
               ${step.action ? `
-                <button class="pb-action-btn" onclick="runStepAction()" style="padding:2px 6px; font-size:0.58rem; background:transparent; opacity:0.9; color:var(--primary); margin: 0; font-weight: bold;">
+                <button class="pb-action-btn" onclick="runStepAction()" style="padding:2px 6px; font-size:10.5px; background:transparent; opacity:0.9; color:${wtThemeColor}; margin: 0; font-weight: bold; border: none !important;">
                   <i class="ti ti-wand"></i> Let Lure do it
                 </button>
               ` : ''}
-              <button class="pb-action-btn" onclick="nextWalkthroughStepBtn()" style="padding:2px 6px; font-size:0.58rem; background:transparent; opacity:0.6; margin: 0;">
+              <button class="pb-action-btn" onclick="nextWalkthroughStepBtn()" style="padding:2px 6px; font-size:10.5px; background:transparent; opacity:0.6; margin: 0; border: none !important;">
                 Skip Step
               </button>
             </div>
@@ -5191,7 +5491,9 @@
       }
       saveVisitorProfile();
       if (window.renderToursList) renderToursList();
+      if (window.updatePersonalStatsStrip) window.updatePersonalStatsStrip();
       
+      sessionStorage.setItem('last_completed_tour', pageKey);
       cleanupWalkthrough();
       
       window.location.href = '/?completed_tour=true';
@@ -5211,9 +5513,7 @@
       if (highlighter) highlighter.style.display = 'none';
 
       // Restore host position and classes
-      host.classList.remove('pb-walkthrough-mode');
-      host.classList.remove('pb-direction-left');
-      host.classList.remove('pb-direction-right');
+      setHostState({ tourMode: false, tourDirection: null });
       avatar.classList.remove('pb-face-left');
 
       host.style.removeProperty('position');
@@ -5303,7 +5603,7 @@
         panel.style.top = '';
         panel.style.left = '';
 
-        host.classList.add('pb-walkthrough-mode');
+        setHostState({ tourMode: true });
         
         const bubbleEl = document.getElementById('pb-wt-bubble');
         if (bubbleEl) bubbleEl.style.display = 'block';
@@ -5825,20 +6125,70 @@
        window.lureSetState(state) — sets orb to any named
        state: 'idle' | 'active' | 'success' | 'error'
        ════════════════════════════════════════════════════════ */
+    const hostState = {
+      visual: 'idle',
+      tourMode: false,
+      tourDirection: null
+    };
+    let hostStateRevertTimer = null;
+
+    function setHostState(updates) {
+      if (!host) return;
+
+      // Cancel any pending revert timer if a new visual state is explicitly specified
+      if (updates.visual !== undefined && !updates._isRevert) {
+        clearTimeout(hostStateRevertTimer);
+        hostStateRevertTimer = null;
+      }
+
+      // Update state fields
+      if (updates.visual !== undefined) {
+        hostState.visual = updates.visual;
+        if (typeof changeMascotState === 'function') {
+          changeMascotState(updates.visual);
+        }
+      }
+      if (updates.tourMode !== undefined) {
+        hostState.tourMode = !!updates.tourMode;
+      }
+      if (updates.tourDirection !== undefined) {
+        hostState.tourDirection = updates.tourDirection;
+      }
+
+      // Compose final class name list
+      const classes = [];
+      if (hostState.visual && hostState.visual !== 'idle') {
+        classes.push('pb-' + hostState.visual);
+      }
+      if (hostState.tourMode) {
+        classes.push('pb-walkthrough-mode');
+      }
+      if (hostState.tourDirection === 'left') {
+        classes.push('pb-direction-left');
+      } else if (hostState.tourDirection === 'right') {
+        classes.push('pb-direction-right');
+      }
+
+      host.className = classes.join(' ');
+
+      if (updates.visual !== undefined && typeof resetIdleFidgetTimer === 'function') {
+        resetIdleFidgetTimer();
+      }
+    }
+
     window.lureFlashSuccess = function () {
-      host.className = 'pb-success';
-      clearTimeout(window._lureSuccessTimer);
-      window._lureSuccessTimer = setTimeout(function () {
-        host.className = '';
-        if (typeof resetIdleFidgetTimer === 'function') resetIdleFidgetTimer();
+      setHostState({ visual: 'success' });
+      hostStateRevertTimer = setTimeout(function () {
+        setHostState({ visual: 'idle', _isRevert: true });
       }, 2200);
-      if (typeof resetIdleFidgetTimer === 'function') resetIdleFidgetTimer();
     };
 
     window.lureSetState = function (state) {
-      clearTimeout(window._lureSuccessTimer);
-      host.className = (state === 'idle') ? '' : 'pb-' + state;
-      if (typeof resetIdleFidgetTimer === 'function') resetIdleFidgetTimer();
+      setHostState({ visual: state });
+    };
+
+    window.lureIsIdle = function () {
+      return hostState.visual === 'idle';
     };
 
     /* ════════════════════════════════════════════════════════
@@ -6148,14 +6498,8 @@
       typingRow.className = 'pb-chat-msg-row lure';
       typingRow.id = 'pb-chat-typing-indicator';
       typingRow.innerHTML = `
-        <div class="pb-dialogue-icon">${getLureAvatarHtml('active')}</div>
-        <div class="pb-chat-bubble" style="display: flex; align-items: center; gap: 8px;">
-          <div class="pb-typing-indicator" style="flex-shrink: 0;">
-            <span class="pb-typing-dot"></span>
-            <span class="pb-typing-dot"></span>
-            <span class="pb-typing-dot"></span>
-          </div>
-          <span id="pb-chat-loading-text" style="font-size: 0.65rem; color: var(--text-secondary,#8CA0B3); font-family: var(--mono);">Lure is thinking...</span>
+        <div class="pb-chat-bubble" style="display: inline-block;">
+          <span id="pb-chat-loading-text">Lure is thinking...</span><span class="pb-terminal-cursor"></span>
         </div>
       `;
       chatMessagesList.appendChild(typingRow);
@@ -6230,7 +6574,39 @@
       const urlParams = new URLSearchParams(window.location.search);
       if (urlParams.get('completed_tour') === 'true') {
         window.history.replaceState({}, document.title, window.location.pathname);
+        const lastTour = sessionStorage.getItem('last_completed_tour') || 'getting_started';
+        sessionStorage.removeItem('last_completed_tour');
+        
         setTimeout(() => {
+          let ackMsg = "Fantastic job! You've successfully completed the security tour.";
+          if (lastTour === 'core_workflow') {
+            ackMsg = "Outstanding! You've mastered the Full Simulation Loop flagship walkthrough. Your security sentinel is fully prepared!";
+          } else if (lastTour === 'getting_started') {
+            ackMsg = "Perfect! The essential sandbox onboarding tour is complete. You're ready to draft custom pretexts!";
+          } else if (lastTour === 'campaign_launch') {
+            ackMsg = "Excellent! You've learned how to launch active campaigns and trace target reactions.";
+          } else if (lastTour === 'lure_generation') {
+            ackMsg = "Awesome! You've completed the AI lure generation and threat bait score guide.";
+          } else if (lastTour === 'tool_threat_analyzer') {
+            ackMsg = "Terrific! You've completed the Threat Analyzer Tour. Ready to audit raw email copy!";
+          } else if (lastTour === 'tool_header_analyzer') {
+            ackMsg = "Great! You've completed the Header Analyzer Tour. Tracing hop paths and authentication is now active.";
+          } else if (lastTour === 'tool_url_decoder') {
+            ackMsg = "Excellent! The URL Decoder Tour is complete. Ready to expand redirects and check link feeds.";
+          } else if (lastTour === 'tool_password_breach') {
+            ackMsg = "Well done! You've completed the Password & Leak Scan Tour. Your credentials scanning is active.";
+          }
+          
+          const calloutEl = document.getElementById('pb-callout');
+          if (calloutEl) {
+            if (lastTour === 'core_workflow') {
+              calloutEl.classList.add('pb-callout-flagship');
+            } else {
+              calloutEl.classList.remove('pb-callout-flagship');
+            }
+          }
+          
+          showCallout(ackMsg);
           showTourCompletedPopover();
         }, 500);
       }
@@ -6274,7 +6650,7 @@
 
     function playIdleFidget() {
       const isWtActive = typeof window.lureIsWalkthroughActive === 'function' ? window.lureIsWalkthroughActive() : false;
-      const isIdleState = !host.className || host.className === '';
+      const isIdleState = typeof window.lureIsIdle === 'function' ? window.lureIsIdle() : true;
       
       if (!panelOpen && !isWtActive && isIdleState && !isHoveringAvatar) {
         if (avatarWrap) {
