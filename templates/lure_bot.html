@@ -11,6 +11,45 @@
     Exposed API: window.lureFlashSuccess(), window.lureSetState()
     ═══════════════════════════════════════════════════════════ -->
 <style>
+    :root {
+      /* Semantic color tokens mapped to site design system */
+      --lure-primary: var(--app-primary);
+      --lure-primary-hover: var(--primary-hover);
+      --lure-primary-dim: var(--primary-dim, rgba(45, 212, 191, 0.15));
+      --lure-primary-glow: var(--primary-glow, rgba(45, 212, 191, 0.25));
+
+      --lure-success: var(--success, var(--lure-success));
+      --lure-success-dim: var(--success-dim, rgba(52, 211, 153, 0.15));
+      --lure-warning: var(--app-warning);
+      --lure-warning-dim: var(--warning-dim, rgba(245, 166, 35, 0.15));
+      --lure-error: var(--app-danger);
+      --lure-error-dim: var(--danger-dim, rgba(244, 63, 94, 0.15));
+
+      --lure-text-primary: var(--text-primary, var(--lure-text-primary));
+      --lure-text-secondary: var(--text-secondary, var(--lure-text-secondary));
+      --lure-text-muted: var(--text-muted, var(--lure-text-muted));
+      --lure-text-inverse: var(--text-inverse, var(--lure-bg-base));
+
+      --lure-bg-base: var(--bg-base, var(--lure-bg-base));
+      --lure-bg-surface: var(--bg-surface);
+      --lure-bg-elevated: var(--bg-elevated);
+      --lure-bg-card: var(--bg-surface);
+
+      --lure-border-subtle: var(--border-subtle, rgba(255, 255, 255, 0.06));
+      --lure-border-default: var(--border-default);
+      
+      --lure-gold: var(--lure-warning);
+      --lure-gold-glow: rgba(245, 158, 11, 0.15);
+
+      /* Typographic scale */
+      --lure-font-xs: 11px;
+      --lure-font-sm: 12px;
+      --lure-font-md: 13px;
+      --lure-font-lg: 14px;
+      --lure-font-xl: 16px;
+      --lure-font-2xl: 18px;
+      --lure-font-3xl: 20px;
+    }
     /* ── PhishBot container (the draggable host, not the panel) ── */
     #pb-host {
       position: fixed;
@@ -71,12 +110,12 @@
       top: -28px;
       left: 50%;
       transform: translateX(-50%) translateY(4px);
-      background: var(--bg-elevated, #121D35);
+      background: var(--bg-elevated, var(--lure-bg-elevated));
       border: 1px solid color-mix(in srgb, var(--primary) 30%, transparent);
       border-radius: 6px;
       padding: 3px 8px;
       font-family: var(--mono, 'JetBrains Mono', monospace);
-      font-size: 0.58rem;
+      font-size: var(--lure-font-xs);
       font-weight: 700;
       color: var(--primary);
       letter-spacing: 0.06em;
@@ -212,7 +251,7 @@
     .pb-bubble-particle {
       position: absolute;
       border-radius: 50%;
-      background: color-mix(in srgb, var(--primary) 60%, #ffffff);
+      background: color-mix(in srgb, var(--primary) 60%, var(--lure-text-primary));
       pointer-events: none;
       z-index: 9998;
       opacity: 0.7;
@@ -241,13 +280,13 @@
       right: 84px;
       bottom: 10px;
       width: 240px;
-      background: color-mix(in srgb, var(--warning) 8%, var(--bg-elevated, #121D35));
+      background: color-mix(in srgb, var(--warning) 8%, var(--bg-elevated, var(--lure-bg-elevated)));
       border: 1px solid color-mix(in srgb, var(--warning) 38%, transparent);
       border-radius: 12px;
       padding: 10px 12px;
       font-family: var(--mono, 'JetBrains Mono', monospace);
-      font-size: 0.65rem;
-      color: var(--text-primary, #E8EDF2);
+      font-size: var(--lure-font-xs);
+      color: var(--text-primary, var(--lure-text-primary));
       line-height: 1.42;
       box-shadow: 0 10px 30px rgba(0,0,0,0.45);
       pointer-events: auto;
@@ -267,13 +306,13 @@
       bottom: 16px;
       width: 10px;
       height: 10px;
-      background: color-mix(in srgb, var(--warning) 10%, var(--bg-elevated, #121D35));
+      background: color-mix(in srgb, var(--warning) 10%, var(--bg-elevated, var(--lure-bg-elevated)));
       border-right: 1px solid color-mix(in srgb, var(--warning) 38%, transparent);
       border-bottom: 1px solid color-mix(in srgb, var(--warning) 38%, transparent);
       transform: rotate(-45deg);
     }
     #pb-callout-label {
-      font-size: 0.55rem;
+      font-size: var(--lure-font-xs);
       font-weight: 800;
       text-transform: uppercase;
       letter-spacing: 0.07em;
@@ -286,22 +325,22 @@
       right: 8px;
       background: none;
       border: none;
-      color: var(--text-muted, #4A5568);
+      color: var(--text-muted, var(--lure-text-muted));
       cursor: pointer;
-      font-size: 0.75rem;
+      font-size: var(--lure-font-sm);
       line-height: 1;
       padding: 0;
       transition: color 0.15s;
     }
-    #pb-callout-dismiss:hover { color: var(--text-primary, #E8EDF2); }
+    #pb-callout-dismiss:hover { color: var(--text-primary, var(--lure-text-primary)); }
 
     #pb-callout.pb-callout-flagship {
-      background: color-mix(in srgb, var(--lure-gold) 10%, var(--bg-elevated, #121D35)) !important;
+      background: color-mix(in srgb, var(--lure-gold) 10%, var(--bg-elevated, var(--lure-bg-elevated))) !important;
       border-color: color-mix(in srgb, var(--lure-gold) 48%, transparent) !important;
       box-shadow: 0 4px 18px var(--lure-gold-glow) !important;
     }
     #pb-callout.pb-callout-flagship::after {
-      background: color-mix(in srgb, var(--lure-gold) 10%, var(--bg-elevated, #121D35)) !important;
+      background: color-mix(in srgb, var(--lure-gold) 10%, var(--bg-elevated, var(--lure-bg-elevated))) !important;
       border-right-color: color-mix(in srgb, var(--lure-gold) 48%, transparent) !important;
       border-bottom-color: color-mix(in srgb, var(--lure-gold) 48%, transparent) !important;
     }
@@ -315,7 +354,7 @@
       right: 122px;
       bottom: 12px;
       width: 250px;
-      background: var(--bg-elevated, #121D35);
+      background: var(--bg-elevated, var(--lure-bg-elevated));
       border: 1px solid color-mix(in srgb, var(--primary) 35%, transparent);
       border-radius: 12px;
       padding: 11px 13px;
@@ -341,14 +380,14 @@
       bottom: 18px;
       width: 10px;
       height: 10px;
-      background: var(--bg-elevated, #121D35);
+      background: var(--bg-elevated, var(--lure-bg-elevated));
       border-right: 1px solid color-mix(in srgb, var(--primary) 35%, transparent);
       border-bottom: 1px solid color-mix(in srgb, var(--primary) 35%, transparent);
       transform: rotate(-45deg);
     }
     #pb-teaser-label {
       font-family: var(--mono, 'JetBrains Mono', monospace);
-      font-size: 0.58rem;
+      font-size: var(--lure-font-xs);
       font-weight: 800;
       color: var(--primary);
       text-transform: uppercase;
@@ -356,15 +395,15 @@
       margin-bottom: 3px;
     }
     #pb-teaser-msg {
-      font-size: 0.72rem;
-      color: var(--text-primary, #E8EDF2);
+      font-size: var(--lure-font-sm);
+      color: var(--text-primary, var(--lure-text-primary));
       line-height: 1.35;
       margin-bottom: 4px;
       font-weight: 500;
     }
     #pb-teaser-cta {
-      font-size: 0.58rem;
-      color: var(--text-muted, #4A5568);
+      font-size: var(--lure-font-xs);
+      color: var(--text-muted, var(--lure-text-muted));
       text-transform: uppercase;
       letter-spacing: 0.04em;
     }
@@ -382,10 +421,10 @@
       overflow-y: auto;
       scrollbar-width: thin;
       scrollbar-color: color-mix(in srgb, var(--primary) 22%, transparent) transparent;
-      --lure-bg-base: var(--bg-surface, #0D1526);
-      --lure-bg-card: var(--bg-elevated, #172237);
-      --lure-bg-hover: color-mix(in srgb, var(--primary) 6%, var(--bg-elevated, #172237));
-      --lure-gold: color-mix(in srgb, var(--warning, #f59e0b) 85%, #fbbf24);
+      --lure-bg-base: var(--bg-surface, var(--lure-bg-base));
+      --lure-bg-card: var(--bg-elevated, var(--lure-bg-card));
+      --lure-bg-hover: color-mix(in srgb, var(--primary) 6%, var(--bg-elevated, var(--lure-bg-card)));
+      --lure-gold: color-mix(in srgb, var(--warning, var(--lure-warning)) 85%, var(--lure-warning));
       --lure-gold-glow: rgba(245, 158, 11, 0.15);
       background: var(--lure-bg-base);
       border: 1px solid color-mix(in srgb, var(--primary) 22%, transparent);
@@ -400,7 +439,7 @@
       pointer-events: none;
       will-change: transform, opacity, width, height, left, top;
       font-family: var(--sans, 'Space Grotesk', sans-serif);
-      font-size: 14px;
+      font-size: var(--lure-font-lg);
       line-height: 1.6;
       transition:
         opacity 0.3s ease,
@@ -436,7 +475,7 @@
       position: fixed;
       z-index: 10002;
       width: 320px;
-      background: var(--bg-elevated, #121D35);
+      background: var(--bg-elevated, var(--lure-bg-elevated));
       border: 1px solid color-mix(in srgb, var(--primary) 30%, transparent);
       border-radius: 16px;
       padding: 18px;
@@ -457,14 +496,14 @@
     }
     .pb-popover-title {
       font-family: var(--font-sans, sans-serif);
-      font-size: 0.95rem;
+      font-size: var(--lure-font-xl);
       font-weight: 700;
-      color: var(--text-primary, #E8EDF2);
+      color: var(--text-primary, var(--lure-text-primary));
       margin-bottom: 6px;
     }
     .pb-popover-text {
-      font-size: 0.8rem;
-      color: var(--text-secondary, #8CA0B3);
+      font-size: var(--lure-font-md);
+      color: var(--text-secondary, var(--lure-text-secondary));
       line-height: 1.4;
       margin-bottom: 16px;
     }
@@ -476,7 +515,7 @@
     .pb-popover-btn {
       width: 100%;
       padding: 8px 12px;
-      font-size: 0.78rem;
+      font-size: var(--lure-font-sm);
       font-weight: 600;
       border-radius: 8px;
       cursor: pointer;
@@ -487,7 +526,7 @@
     }
     .pb-popover-btn.primary {
       background: var(--primary);
-      color: var(--text-inverse, #0A1420);
+      color: var(--text-inverse, var(--lure-bg-base));
     }
     .pb-popover-btn.primary:hover {
       background: var(--primary-hover);
@@ -495,7 +534,7 @@
     }
     .pb-popover-btn.secondary {
       background: rgba(255, 255, 255, 0.05);
-      color: var(--text-primary, #E8EDF2);
+      color: var(--text-primary, var(--lure-text-primary));
       border: 1px solid rgba(255, 255, 255, 0.1);
     }
     .pb-popover-btn.secondary:hover {
@@ -520,9 +559,9 @@
     }
     .pb-panel-title {
       font-family: var(--sans, 'Space Grotesk', sans-serif);
-      font-size: 1.02rem;
+      font-size: var(--lure-font-xl);
       font-weight: 700;
-      color: var(--text-primary, #F0F4FF);
+      color: var(--text-primary, var(--lure-text-primary));
       display: flex;
       align-items: center;
       gap: 10px;
@@ -537,7 +576,7 @@
     }
     .pb-tab-btn {
       font-family: var(--mono, 'JetBrains Mono', monospace);
-      font-size: 0.6rem;
+      font-size: var(--lure-font-xs);
       font-weight: 700;
       letter-spacing: 0.06em;
       text-transform: uppercase;
@@ -551,12 +590,12 @@
       border-radius: 8px;
       border: 1px solid transparent;
       cursor: pointer;
-      color: var(--text-secondary, #94A3B8);
+      color: var(--text-secondary, var(--lure-text-secondary));
       background: transparent;
       transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
     }
     .pb-tab-btn i {
-      font-size: 0.85rem;
+      font-size: var(--lure-font-lg);
       display: inline-block;
     }
     .pb-tab-text {
@@ -574,10 +613,10 @@
       border-radius: 7px;
       border: 1px solid color-mix(in srgb, var(--border-default,rgba(255,255,255,0.12)) 70%, transparent);
       background: var(--primary-dim);
-      color: var(--text-secondary, #94A3B8);
+      color: var(--text-secondary, var(--lure-text-secondary));
       cursor: pointer;
       display: flex; align-items: center; justify-content: center;
-      font-size: 0.85rem;
+      font-size: var(--lure-font-lg);
       transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
     }
     .pb-icon-btn:hover { background: var(--primary-dim); color: var(--primary); }
@@ -614,8 +653,8 @@
       border-radius: 4px 12px 12px 12px;
       padding: 10px 14px;
       font-family: var(--sans, 'Space Grotesk', sans-serif);
-      font-size: 14px;
-      color: color-mix(in srgb, var(--text-primary,#F0F4FF) 82%, transparent);
+      font-size: var(--lure-font-lg);
+      color: color-mix(in srgb, var(--text-primary,var(--lure-text-primary)) 82%, transparent);
       line-height: 1.6;
       flex: 1;
       transition: opacity 0.2s;
@@ -651,7 +690,7 @@
       transform: translateY(-1.5px);
     }
     .pb-chip-icon-wrap {
-      font-size: 1.5rem;
+      font-size: var(--lure-font-3xl);
       flex-shrink: 0;
       display: flex;
       align-items: center;
@@ -671,14 +710,14 @@
     }
     .pb-chip-title {
       font-family: var(--sans, 'Space Grotesk', sans-serif);
-      font-size: 0.88rem;
+      font-size: var(--lure-font-lg);
       font-weight: 700;
-      color: var(--text-primary, #F0F4FF);
+      color: var(--text-primary, var(--lure-text-primary));
     }
     .pb-chip-desc {
       font-family: var(--sans, 'Space Grotesk', sans-serif);
-      font-size: 0.78rem;
-      color: var(--text-secondary, #8CA0B3);
+      font-size: var(--lure-font-sm);
+      color: var(--text-secondary, var(--lure-text-secondary));
       line-height: 1.4;
     }
     .pb-chip:disabled, .pb-chip.pb-disabled { opacity: 0.3; pointer-events: none; }
@@ -697,7 +736,7 @@
       margin-bottom: 10px;
     }
     .pb-chrome {
-      background: color-mix(in srgb, var(--bg-elevated,#121D35) 85%, transparent);
+      background: color-mix(in srgb, var(--bg-elevated,var(--lure-bg-elevated)) 85%, transparent);
       border-bottom: 1px solid var(--border-subtle, rgba(255,255,255,0.06));
       padding: 7px 11px;
       display: flex;
@@ -727,7 +766,7 @@
       align-items: center;
       justify-content: center;
       font-weight: 700;
-      font-size: 0.9rem;
+      font-size: var(--lure-font-lg);
       text-transform: uppercase;
       font-family: var(--sans, 'Space Grotesk', sans-serif);
     }
@@ -746,32 +785,32 @@
     }
     .pb-inbox-sender-name {
       font-family: var(--sans, 'Space Grotesk', sans-serif);
-      font-size: 0.88rem;
+      font-size: var(--lure-font-lg);
       font-weight: 600;
-      color: var(--text-primary, #F0F4FF);
+      color: var(--text-primary, var(--lure-text-primary));
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
     .pb-inbox-time {
       font-family: var(--mono, monospace);
-      font-size: 0.65rem;
-      color: var(--text-muted, #4A5568);
+      font-size: var(--lure-font-xs);
+      color: var(--text-muted, var(--lure-text-muted));
       flex-shrink: 0;
     }
     .pb-inbox-row-sub {
-      font-size: 0.72rem;
-      color: var(--text-secondary, #94A3B8);
+      font-size: var(--lure-font-sm);
+      color: var(--text-secondary, var(--lure-text-secondary));
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
     .pb-inbox-lbl-to {
-      color: var(--text-muted, #4A5568);
+      color: var(--text-muted, var(--lure-text-muted));
     }
     .pb-inbox-subject-line {
       font-family: var(--sans, 'Space Grotesk', sans-serif);
-      font-size: 0.92rem;
+      font-size: var(--lure-font-lg);
       font-weight: 700;
       color: var(--primary);
       margin-top: 4px;
@@ -781,11 +820,11 @@
     }
     .pb-mail-body {
       padding: 14px 16px;
-      background: #fff;
-      color: #1e293b;
+      background: var(--bg-surface);
+      color: var(--text-primary);
       font-family: Georgia, serif;
-      font-size: 0.84rem;
-      line-height: 1.7;
+      font-size: var(--lure-font-lg);
+      line-height: 1.6;
       max-height: 190px;
       overflow-y: auto;
       white-space: pre-wrap;
@@ -804,14 +843,14 @@
       bottom: 115%;
       left: 50%;
       transform: translateX(-50%);
-      background: #020617;
+      background: var(--lure-bg-base);
       border: 1px solid color-mix(in srgb, var(--danger) 35%, transparent);
       border-radius: 7px;
       padding: 7px 10px;
       width: 190px;
       font-family: var(--mono, 'JetBrains Mono', monospace);
-      font-size: 0.61rem;
-      color: #fca5a5;
+      font-size: var(--lure-font-xs);
+      color: var(--app-danger);
       z-index: 10010;
       line-height: 1.4;
       white-space: normal;
@@ -821,22 +860,22 @@
 
     /* Bait score */
     .pb-bait-section { display: none; padding: 12px 0 4px; border-top: 1px solid var(--border-subtle, rgba(255,255,255,0.05)); }
-    .pb-bait-lbl { font-family: var(--mono); font-size: 0.6rem; font-weight: 800; letter-spacing: 0.1em; color: color-mix(in srgb, var(--primary) 60%, transparent); text-transform: uppercase; margin-bottom: 9px; }
+    .pb-bait-lbl { font-family: var(--mono); font-size: var(--lure-font-xs); font-weight: 800; letter-spacing: 0.1em; color: color-mix(in srgb, var(--primary) 60%, transparent); text-transform: uppercase; margin-bottom: 9px; }
     .pb-score-bars { display: flex; flex-direction: column; gap: 6px; }
     .pb-score-row { display: flex; align-items: center; gap: 9px; }
-    .pb-score-name { font-family: var(--mono); font-size: 0.6rem; color: var(--text-secondary,#94A3B8); min-width: 96px; }
+    .pb-score-name { font-family: var(--mono); font-size: var(--lure-font-xs); color: var(--text-secondary,var(--lure-text-secondary)); min-width: 96px; }
     .pb-score-track { flex:1; height: 4px; background: var(--border-subtle, rgba(255,255,255,0.06)); border-radius: 100px; overflow: hidden; }
     .pb-score-fill  { height: 100%; border-radius: 100px; width: 0; transition: width 0.85s cubic-bezier(0.16,1,0.3,1); }
-    .pb-score-num   { font-family: var(--mono); font-size: 0.6rem; color: var(--text-secondary,#94A3B8); min-width: 22px; text-align: right; }
+    .pb-score-num   { font-family: var(--mono); font-size: var(--lure-font-xs); color: var(--text-secondary,var(--lure-text-secondary)); min-width: 22px; text-align: right; }
 
     /* Meta + error */
     .pb-meta  { display: none; margin-top: 9px; flex-direction: column; gap: 4px; }
-    .pb-tactic { font-size: 0.7rem; color: var(--warning); font-weight: 600; font-family: var(--mono); }
-    .pb-disc   { font-size: 0.6rem; color: var(--text-muted, #4A5568); font-style: italic; }
+    .pb-tactic { font-size: var(--lure-font-xs); color: var(--warning); font-weight: 600; font-family: var(--mono); }
+    .pb-disc   { font-size: var(--lure-font-xs); color: var(--text-muted, var(--lure-text-muted)); font-style: italic; }
     .pb-error-msg {
       display: none;
       color: var(--danger);
-      font-size: 0.7rem;
+      font-size: var(--lure-font-xs);
       font-family: var(--mono);
       margin-top: 9px;
       padding: 9px 11px;
@@ -846,7 +885,7 @@
     }
 
     /* ── Spot the Phish tab ── */
-    .stp-intro { font-family: var(--mono); font-size: 0.68rem; color: var(--text-secondary,#94A3B8); margin-bottom: 14px; line-height: 1.5; }
+    .stp-intro { font-family: var(--mono); font-size: var(--lure-font-xs); color: var(--text-secondary,var(--lure-text-secondary)); margin-bottom: 14px; line-height: 1.5; }
     .stp-pair { display: flex; flex-direction: column; gap: 9px; }
     .stp-box {
       border: 1px solid var(--border-subtle, rgba(255,255,255,0.07));
@@ -855,15 +894,15 @@
     }
     .stp-box:hover { border-color: color-mix(in srgb, var(--primary) 40%, transparent); }
     .stp-box.correct { border-color: var(--danger) !important; box-shadow: 0 0 10px color-mix(in srgb, var(--danger) 14%, transparent) !important; }
-    .stp-box.wrong   { border-color: var(--success,#34D399) !important; }
+    .stp-box.wrong   { border-color: var(--success,var(--lure-success)) !important; }
     .stp-box-chrome  { background: rgba(255,255,255,0.02); border-bottom: 1px solid var(--border-subtle, rgba(255,255,255,0.05)); padding: 6px 11px; display: flex; gap: 5px; }
     .stp-box-chrome span { width: 6px; height: 6px; border-radius: 50%; }
-    .stp-box-header { padding: 8px 12px; background: rgba(2,6,23,0.78); border-bottom: 1px solid var(--border-subtle,rgba(255,255,255,0.04)); font-family: var(--mono); font-size: 0.65rem; display: flex; flex-direction: column; gap: 3px; }
-    .stp-box-body { padding: 10px 13px; background: #fff; color: #1e293b; font-family: Georgia,serif; font-size: 0.78rem; line-height: 1.6; max-height: 88px; overflow: hidden; }
-    .stp-lbl { font-size: 0.58rem; text-transform: uppercase; letter-spacing: 0.06em; color: color-mix(in srgb, var(--text-secondary,#94A3B8) 50%, transparent); min-width: 52px; }
-    .stp-result { display: none; margin-top: 10px; padding: 11px; border-radius: 7px; font-family: var(--mono); font-size: 0.68rem; line-height: 1.5; }
-    .stp-result.phish { background: var(--danger-dim,rgba(248,113,113,0.08)); border: 1px solid color-mix(in srgb, var(--danger) 22%, transparent); color: #fca5a5; }
-    .stp-score-row { font-family: var(--mono); font-size: 0.62rem; color: var(--text-secondary,#94A3B8); margin-bottom: 8px; }
+    .stp-box-header { padding: 8px 12px; background: rgba(2,6,23,0.78); border-bottom: 1px solid var(--border-subtle,rgba(255,255,255,0.04)); font-family: var(--mono); font-size: var(--lure-font-xs); display: flex; flex-direction: column; gap: 3px; }
+    .stp-box-body { padding: 10px 13px; background: var(--bg-surface); color: var(--text-primary); font-family: Georgia,serif; font-size: var(--lure-font-lg); line-height: 1.6; max-height: 88px; overflow: hidden; }
+    .stp-lbl { font-size: var(--lure-font-xs); text-transform: uppercase; letter-spacing: 0.06em; color: color-mix(in srgb, var(--text-secondary,var(--lure-text-secondary)) 50%, transparent); min-width: 52px; }
+    .stp-result { display: none; margin-top: 10px; padding: 11px; border-radius: 7px; font-family: var(--mono); font-size: var(--lure-font-lg); line-height: 1.6; }
+    .stp-result.phish { background: var(--danger-dim); border: 1px solid color-mix(in srgb, var(--app-danger) 22%, transparent); color: var(--app-danger); }
+    .stp-score-row { font-family: var(--mono); font-size: var(--lure-font-xs); color: var(--text-secondary,var(--lure-text-secondary)); margin-bottom: 8px; }
 
     @media (min-width: 480px) {
       .stp-pair { flex-direction: row; }
@@ -871,24 +910,24 @@
     }
 
     /* ── Risk Score tab ── */
-    .rs-q-text { font-family: var(--sans, 'Space Grotesk', sans-serif); font-size: 13px; color: var(--text-primary,#F0F4FF); margin-bottom: 10px; font-weight: 600; }
+    .rs-q-text { font-family: var(--sans, 'Space Grotesk', sans-serif); font-size: var(--lure-font-lg); color: var(--text-primary,var(--lure-text-primary)); margin-bottom: 10px; font-weight: 600; line-height: 1.6; }
     .rs-opts { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
     .rs-opt {
       display: flex; align-items: center; gap: 10px;
       padding: 8px 12px;
       border-radius: 8px; border: 1px solid var(--border-subtle,rgba(255,255,255,0.07));
-      cursor: pointer; font-family: var(--sans, 'Space Grotesk', sans-serif); font-size: 12.5px;
-      color: var(--text-secondary,#94A3B8); transition: all 0.16s;
+      cursor: pointer; font-family: var(--sans, 'Space Grotesk', sans-serif); font-size: var(--lure-font-sm);
+      color: var(--text-secondary,var(--lure-text-secondary)); transition: all 0.16s;
       background: var(--lure-bg-card);
     }
-    .rs-opt:hover { background: var(--lure-bg-hover); border-color: color-mix(in srgb, var(--primary) 22%, transparent); color: var(--text-primary,#F0F4FF); }
+    .rs-opt:hover { background: var(--lure-bg-hover); border-color: color-mix(in srgb, var(--primary) 22%, transparent); color: var(--text-primary,var(--lure-text-primary)); }
     .rs-opt.selected { background: var(--primary-dim); border-color: color-mix(in srgb, var(--primary) 32%, transparent); color: var(--primary); }
     .rs-opt input[type=radio] { display: none; }
     .rs-radio { width: 14px; height: 14px; border-radius: 50%; border: 1.5px solid color-mix(in srgb, var(--primary) 45%, transparent); flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
     .rs-opt.selected .rs-radio::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--primary); display: block; }
     .rs-gauge { font-family: var(--mono); font-size: 3rem; font-weight: 900; line-height: 1; margin-bottom: 6px; }
     .rs-result { display: none; text-align: center; padding: 20px 0 6px; }
-    .rs-note { font-size: 0.72rem; color: var(--text-muted,#4A5568); font-style: italic; font-family: var(--sans); border-top: 1px solid var(--border-subtle,rgba(255,255,255,0.05)); padding-top: 12px; line-height: 1.6; margin-top: 16px; text-align: left; }
+    .rs-note { font-size: var(--lure-font-sm); color: var(--text-muted,var(--lure-text-muted)); font-style: italic; font-family: var(--sans); border-top: 1px solid var(--border-subtle,rgba(255,255,255,0.05)); padding-top: 12px; line-height: 1.6; margin-top: 16px; text-align: left; }
 
     /* Panel action button (CTA inline) */
     .pb-action-btn {
@@ -898,7 +937,7 @@
       background: var(--primary-dim);
       border: 1px solid color-mix(in srgb, var(--primary) 28%, transparent);
       color: var(--primary);
-      font-family: var(--sans, 'Space Grotesk', sans-serif); font-size: 12.5px; font-weight: 600;
+      font-family: var(--sans, 'Space Grotesk', sans-serif); font-size: var(--lure-font-sm); font-weight: 600;
       cursor: pointer; transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
       outline: none;
     }
@@ -909,8 +948,8 @@
       padding: 10px 16px;
       border-top: 1px solid var(--border-subtle, rgba(255,255,255,0.05));
       display: flex; align-items: center; justify-content: space-between; gap: 5px;
-      font-family: var(--mono); font-size: 0.57rem;
-      color: var(--text-muted, #4A5568); letter-spacing: 0.04em;
+      font-family: var(--mono); font-size: var(--lure-font-xs);
+      color: var(--text-muted, var(--lure-text-muted)); letter-spacing: 0.04em;
       background: rgba(13, 21, 38, 0.4);
       flex-shrink: 0;
       width: 100%;
@@ -935,7 +974,7 @@
     #pb-inline-section .pb-inner-wrap {
       max-width: 760px;
       margin: 0 auto;
-      background: var(--bg-elevated, #121D35);
+      background: var(--bg-elevated, var(--lure-bg-elevated));
       border: 1px solid color-mix(in srgb, var(--primary) 20%, transparent);
       border-radius: 18px;
       overflow: hidden;
@@ -945,7 +984,7 @@
       display: flex; align-items: center; justify-content: space-between;
       padding: 14px 20px;
       border-bottom: 1px solid color-mix(in srgb, var(--border-default,rgba(255,255,255,0.12)) 60%, transparent);
-      background: var(--bg-elevated, #121D35);
+      background: var(--bg-elevated, var(--lure-bg-elevated));
     }
     #pb-inline-section .pb-inner-body { padding: 22px 20px; }
 
@@ -994,95 +1033,7 @@
       display: none !important;
     }
 
-    #pb-wt-bubble {
-      width: 410px;
-      max-width: 90vw;
-      background: var(--bg-elevated, #121D35) !important;
-      border: 1px solid rgba(255, 255, 255, 0.1) !important;
-      border-radius: 16px;
-      padding: 16px;
-      box-sizing: border-box;
-      box-shadow: 
-        0 20px 50px rgba(0,0,0,0.65),
-        0 0 0 1px rgba(255, 255, 255, 0.05) !important;
-      backdrop-filter: blur(20px) !important;
-      color: var(--text-primary, #F0F4FF) !important;
-      animation: pbCardPop 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-      position: relative;
-    }
-    #pb-wt-bubble,
-    #pb-wt-bubble button,
-    #pb-wt-bubble p,
-    #pb-wt-bubble span,
-    #pb-wt-bubble div {
-      font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
-    }
-    #pb-wt-bubble.pb-wt-flagship {
-      border-color: rgba(245, 158, 11, 0.3) !important;
-      box-shadow: 
-        0 20px 50px rgba(0,0,0,0.65),
-        0 0 0 1px rgba(245, 158, 11, 0.15) !important;
-    }
-    #pb-wt-bubble .pb-action-btn {
-      background: rgba(6, 182, 212, 0.15) !important;
-      border: 1px solid rgba(6, 182, 212, 0.35) !important;
-      color: var(--primary) !important;
-    }
-    #pb-wt-bubble .pb-action-btn:hover {
-      background: rgba(6, 182, 212, 0.25) !important;
-      box-shadow: 0 0 12px rgba(6, 182, 212, 0.3) !important;
-    }
-    #pb-wt-bubble.pb-wt-flagship .pb-action-btn {
-      background: rgba(245, 158, 11, 0.15) !important;
-      border: 1px solid rgba(245, 158, 11, 0.35) !important;
-      color: var(--lure-gold) !important;
-    }
-    #pb-wt-bubble.pb-wt-flagship .pb-action-btn:hover {
-      background: rgba(245, 158, 11, 0.25) !important;
-      box-shadow: 0 0 12px var(--lure-gold-glow) !important;
-    }
-    #pb-wt-bubble .pb-next-btn {
-      background: var(--primary) !important;
-      color: var(--bg-base, #020617) !important;
-    }
-    #pb-wt-bubble .pb-next-btn:hover {
-      background: color-mix(in srgb, var(--primary) 85%, white) !important;
-      box-shadow: 0 0 14px rgba(6, 182, 212, 0.4) !important;
-    }
-    #pb-wt-bubble.pb-wt-flagship .pb-next-btn {
-      background: var(--lure-gold) !important;
-      color: var(--bg-base, #020617) !important;
-    }
-    #pb-wt-bubble.pb-wt-flagship .pb-next-btn:hover {
-      background: color-mix(in srgb, var(--lure-gold) 85%, white) !important;
-      box-shadow: 0 0 14px rgba(245, 158, 11, 0.4) !important;
-    }
-    #pb-wt-bubble .pb-disabled, #pb-wt-bubble button:disabled {
-      opacity: 0.35 !important;
-      cursor: not-allowed !important;
-      background: rgba(255, 255, 255, 0.05) !important;
-      border-color: rgba(255, 255, 255, 0.1) !important;
-      color: rgba(255, 255, 255, 0.3) !important;
-    }
-
-    #pb-wt-bubble::before {
-      content: '';
-      position: absolute;
-      top: 50%;
-      transform: translateY(-50%);
-      border: 8px solid transparent;
-      pointer-events: none;
-    }
-    #pb-host.pb-direction-left #pb-wt-bubble::before {
-      right: 100%;
-      border-right-color: var(--bg-elevated, #121D35) !important;
-    }
-    #pb-host.pb-direction-right #pb-wt-bubble::before {
-      left: 100%;
-      border-left-color: var(--bg-elevated, #121D35) !important;
-    }
-
-    @keyframes pbCardPop {
+@keyframes pbCardPop {
       from { transform: scale(0.9) translateY(20px); opacity: 0; }
       to { transform: scale(1) translateY(0); opacity: 1; }
     }
@@ -1119,7 +1070,7 @@
       transform: translateY(-1px);
     }
     .pb-wt-guide-icon {
-      font-size: 1.1rem;
+      font-size: var(--lure-font-2xl);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -1133,21 +1084,21 @@
       text-align: left;
     }
     .pb-wt-guide-name {
-      font-size: 0.78rem;
+      font-size: var(--lure-font-sm);
       font-weight: 700;
-      color: var(--text-primary, #E8EDF2);
+      color: var(--text-primary, var(--lure-text-primary));
       margin-bottom: 2px;
     }
     .pb-wt-guide-desc {
-      font-size: 0.65rem;
-      color: var(--text-secondary, #8CA0B3);
+      font-size: var(--lure-font-xs);
+      color: var(--text-secondary, var(--lure-text-secondary));
       line-height: 1.3;
     }
     .pb-wt-guide-go {
       background: transparent;
       border: none;
-      color: var(--text-secondary, #8CA0B3);
-      font-size: 0.8rem;
+      color: var(--text-secondary, var(--lure-text-secondary));
+      font-size: var(--lure-font-md);
       cursor: pointer;
       transition: color 0.2s;
     }
@@ -1201,115 +1152,340 @@
       background: rgba(255, 255, 255, 0.1);
       border-radius: 2px;
     }
-    .pb-chat-msg-row {
+    /* ── Ask Lure Chat Redesign (Task 2) ────────────────────────── */
+    .pb-chat-header-meta {
       display: flex;
-      flex-direction: column !important;
-      align-items: flex-start !important;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 16px;
+      background: rgba(255, 255, 255, 0.02);
+      border-bottom: 1px solid var(--border-subtle, var(--lure-border-subtle));
+    }
+    .pb-chat-header-left {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+    }
+    .pb-chat-header-title {
+      font-family: var(--sans, 'Space Grotesk', sans-serif);
+      font-size: var(--lure-font-md);
+      font-weight: 700;
+      color: var(--text-primary, var(--lure-text-primary));
+      letter-spacing: -0.01em;
+    }
+    .pb-chat-header-subtitle {
+      font-size: var(--lure-font-xs);
+      color: var(--text-muted, var(--lure-text-muted));
+    }
+    .pb-chat-engine-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-family: var(--mono, monospace);
+      font-size: var(--lure-font-xs);
+      color: var(--text-secondary, var(--lure-text-secondary));
+      background: rgba(255, 255, 255, 0.04);
+      padding: 3px 8px;
+      border-radius: 6px;
+      border: 1px solid var(--border-subtle, var(--lure-border-subtle));
+    }
+    .pb-engine-status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--app-success);
+      box-shadow: 0 0 6px var(--app-success);
+      animation: pbEngineDotPulse 2s infinite ease-in-out;
+    }
+    @keyframes pbEngineDotPulse {
+      0%, 100% { opacity: 0.6; transform: scale(0.9); }
+      50% { opacity: 1; transform: scale(1.15); box-shadow: 0 0 9px var(--app-success); }
+    }
+
+    .pb-chat-msg-row {
+      display: flex !important;
+      gap: 10px;
+      margin-bottom: 16px;
       width: 100%;
-      margin-bottom: 14px;
+      box-sizing: border-box;
+    }
+    .pb-chat-msg-row.user {
+      flex-direction: row-reverse !important;
+      align-items: flex-start !important;
+    }
+    .pb-chat-msg-row.lure {
+      flex-direction: row !important;
+      align-items: flex-start !important;
     }
     .pb-chat-messages .pb-dialogue-icon {
-      display: none !important;
+      display: flex !important;
+      align-items: center;
+      justify-content: center;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border-subtle, var(--lure-border-subtle));
+      flex-shrink: 0;
+      overflow: hidden;
+      margin-top: 2px;
+    }
+    .pb-chat-bubble-container {
+      display: flex;
+      flex-direction: column;
+      max-width: 82%;
+    }
+    .pb-chat-msg-row.user .pb-chat-bubble-container {
+      align-items: flex-end;
+    }
+    .pb-chat-msg-row.lure .pb-chat-bubble-container {
+      align-items: flex-start;
     }
     .pb-chat-bubble {
-      font-family: var(--mono, 'JetBrains Mono', monospace) !important;
-      font-size: 13px !important;
-      line-height: 1.5;
+      font-family: var(--sans, 'Space Grotesk', sans-serif) !important;
+      font-size: var(--lure-font-lg) !important;
+      line-height: 1.6 !important;
       word-wrap: break-word;
       white-space: pre-wrap;
       max-width: 100% !important;
-      padding: 0 !important;
-      background: transparent !important;
-      border: none !important;
-      border-radius: 0 !important;
+      padding: 10px 14px !important;
+      border-radius: 14px !important;
+      box-sizing: border-box;
+      transition: all 0.2s ease;
     }
     .pb-chat-msg-row.user .pb-chat-bubble {
-      color: #38BDF8 !important;
+      background: var(--primary-dim, rgba(45, 212, 191, 0.15)) !important;
+      border: 1px solid var(--primary-glow, rgba(45, 212, 191, 0.25)) !important;
+      color: var(--text-primary, var(--lure-text-primary)) !important;
+      border-top-right-radius: 4px !important;
     }
     .pb-chat-msg-row.lure .pb-chat-bubble {
-      color: #A3E635 !important;
+      background: var(--bg-surface, rgba(255, 255, 255, 0.03)) !important;
+      border: 1px solid var(--border-subtle, var(--lure-border-subtle)) !important;
+      color: var(--text-primary, var(--lure-text-primary)) !important;
+      border-top-left-radius: 4px !important;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.15);
     }
-    .pb-chat-msg-row.user::before {
-      content: 'visitor:~$ ';
-      font-family: var(--mono, 'JetBrains Mono', monospace) !important;
-      color: #38BDF8;
-      font-weight: bold;
-      font-size: 13px;
-      margin-bottom: 4px;
-    }
-    .pb-chat-msg-row.lure::before {
-      content: 'lure@sentinel:~$ ';
-      font-family: var(--mono, 'JetBrains Mono', monospace) !important;
-      color: #A3E635;
-      font-weight: bold;
-      font-size: 13px;
-      margin-bottom: 4px;
+    .pb-chat-meta {
+      font-size: var(--lure-font-xs);
+      color: var(--text-muted, var(--lure-text-muted));
+      margin-top: 5px;
+      font-family: var(--sans, 'Space Grotesk', sans-serif);
     }
 
-    .pb-terminal-cursor {
-      display: inline-block;
-      width: 8px;
-      height: 15px;
-      background: #A3E635;
-      margin-left: 6px;
-      animation: pbTerminalCursorBlink 1s step-end infinite;
-      vertical-align: middle;
+    /* Inline Evidence Chips */
+    .pb-evidence-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 1px 7px;
+      border-radius: 6px;
+      font-size: 0.88em;
+      font-weight: 600;
+      line-height: 1.4;
+      vertical-align: baseline;
+      margin: 0 2px;
+      font-family: var(--mono, 'JetBrains Mono', monospace);
+      transition: all 0.15s ease;
     }
-    @keyframes pbTerminalCursorBlink {
-      from, to { background-color: transparent }
-      50% { background-color: #A3E635 }
+    .pb-evidence-chip i {
+      font-size: 1.05em;
     }
+    .pb-evidence-chip.pb-chip-protocol {
+      background: var(--info-dim);
+      border: 1px solid color-mix(in srgb, var(--app-info) 35%, transparent);
+      color: var(--app-info);
+    }
+    .pb-evidence-chip.pb-chip-technique {
+      background: var(--warning-dim);
+      border: 1px solid color-mix(in srgb, var(--app-warning) 35%, transparent);
+      color: var(--app-warning);
+    }
+    .pb-evidence-chip.pb-chip-stat {
+      background: var(--success-dim);
+      border: 1px solid color-mix(in srgb, var(--app-success) 35%, transparent);
+      color: var(--app-success);
+    }
+    .pb-code-snippet {
+      background: var(--bg-hover);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-primary);
+      font-family: var(--mono, monospace);
+      font-size: 0.88em;
+      padding: 1px 6px;
+      border-radius: 4px;
+    }
+
+    /* Suggested Follow-Up Pills */
+    .pb-chat-followups {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px;
+      margin-top: 8px;
+      margin-bottom: 2px;
+    }
+    .pb-followup-label {
+      font-size: var(--lure-font-xs);
+      font-weight: 600;
+      color: var(--text-muted, var(--lure-text-muted));
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      margin-right: 2px;
+    }
+    .pb-followup-label i {
+      color: var(--primary);
+    }
+    .pb-followup-pill {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border-subtle, var(--lure-border-subtle));
+      color: var(--text-secondary, var(--lure-text-secondary));
+      font-family: var(--sans, 'Space Grotesk', sans-serif);
+      font-size: var(--lure-font-xs);
+      font-weight: 500;
+      padding: 4px 10px;
+      border-radius: 16px;
+      cursor: pointer;
+      transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      text-align: left;
+      line-height: 1.3;
+    }
+    .pb-followup-pill:hover {
+      background: var(--primary-dim, rgba(45, 212, 191, 0.15));
+      border-color: var(--primary-glow, rgba(45, 212, 191, 0.35));
+      color: var(--primary);
+      transform: translateY(-1px);
+      box-shadow: 0 2px 8px var(--primary-glow);
+    }
+    .pb-followup-pill:active {
+      transform: scale(0.97);
+    }
+    .pb-followup-pill i {
+      font-size: 0.95em;
+      color: var(--primary);
+    }
+
+    /* Mascot Thinking Animation Language */
+    .pb-thinking-row .pb-thinking-mascot-container {
+      background: var(--primary-dim, rgba(45, 212, 191, 0.15));
+      border-color: var(--primary-glow, rgba(45, 212, 191, 0.35));
+    }
+    .pb-thinking-mascot-wrap {
+      animation: pbThinkingBob 1.8s infinite ease-in-out;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    @keyframes pbThinkingBob {
+      0%, 100% { transform: translateY(0) rotate(0deg); }
+      50% { transform: translateY(-3px) rotate(3deg); }
+    }
+    .pb-chat-thinking-bubble {
+      display: inline-flex !important;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 14px !important;
+      background: rgba(255, 255, 255, 0.04) !important;
+      border: 1px solid var(--primary-glow, rgba(45, 212, 191, 0.25)) !important;
+      box-shadow: 0 0 12px var(--primary-glow);
+      animation: pbThinkingGlow 2s infinite ease-in-out;
+    }
+    @keyframes pbThinkingGlow {
+      0%, 100% { border-color: rgba(45, 212, 191, 0.25); }
+      50% { border-color: rgba(45, 212, 191, 0.55); box-shadow: 0 0 16px rgba(45, 212, 191, 0.3); }
+    }
+    .pb-thinking-body {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .pb-thinking-radar {
+      position: relative;
+      width: 14px;
+      height: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .pb-radar-ring {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      border: 2px solid var(--primary);
+      opacity: 0.8;
+      animation: pbRadarWave 1.6s infinite cubic-bezier(0.215, 0.61, 0.355, 1);
+    }
+    .pb-radar-ring.delay {
+      animation-delay: 0.8s;
+    }
+    @keyframes pbRadarWave {
+      0% { transform: scale(0.2); opacity: 1; }
+      100% { transform: scale(1.6); opacity: 0; }
+    }
+    .pb-thinking-label {
+      font-size: var(--lure-font-xs);
+      color: var(--text-secondary, var(--lure-text-secondary));
+      font-weight: 500;
+    }
+
+    /* Modern Chat Input Area */
     .pb-chat-input-wrap {
       display: flex;
-      gap: 10px;
+      gap: 8px;
       align-items: center;
-      border: none !important;
-      border-radius: 0 !important;
-      padding: 8px 0;
-      background: transparent !important;
+      background: rgba(255, 255, 255, 0.03) !important;
+      border: 1px solid var(--border-subtle, var(--lure-border-subtle)) !important;
+      border-radius: 12px !important;
+      padding: 6px 10px 6px 12px !important;
       box-shadow: none !important;
-      border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
-      transition: none !important;
+      transition: all 0.2s ease !important;
+      margin-top: 8px;
     }
     .pb-chat-input-wrap:focus-within {
-      background: transparent !important;
-      box-shadow: none !important;
+      background: rgba(255, 255, 255, 0.05) !important;
+      border-color: var(--primary-glow, rgba(45, 212, 191, 0.45)) !important;
+      box-shadow: 0 0 14px var(--primary-glow, rgba(45, 212, 191, 0.2)) !important;
     }
     .pb-chat-input-wrap textarea {
       flex: 1;
       background: transparent;
       border: none;
       outline: none;
-      color: #38BDF8 !important;
-      font-family: var(--mono, 'JetBrains Mono', monospace) !important;
-      font-size: 13px !important;
+      color: var(--text-primary, var(--lure-text-primary)) !important;
+      font-family: var(--sans, 'Space Grotesk', sans-serif) !important;
+      font-size: var(--lure-font-lg) !important;
       resize: none;
       max-height: 80px;
-      height: 24px;
-      line-height: 1.5;
-      padding: 4px 0 0 0;
+      height: 32px;
+      line-height: 1.6;
+      padding: 6px 0 !important;
       box-sizing: border-box;
     }
     .pb-chat-input-wrap textarea::placeholder {
-      color: rgba(56, 189, 248, 0.4) !important;
-      font-family: var(--mono, 'JetBrains Mono', monospace) !important;
-      font-size: 12px !important;
+      color: var(--text-muted, var(--lure-text-muted)) !important;
+      font-family: var(--sans, 'Space Grotesk', sans-serif) !important;
+      font-size: var(--lure-font-sm) !important;
     }
     .pb-chat-input-wrap button {
       width: 32px;
       height: 32px;
       border-radius: 50%;
-      background: linear-gradient(135deg, var(--primary), color-mix(in srgb, var(--primary) 70%, #000));
+      background: linear-gradient(135deg, var(--primary), color-mix(in srgb, var(--primary) 70%, var(--text-inverse)));
       border: none;
-      color: #0D1526;
+      color: var(--text-inverse);
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 0.95rem;
+      font-size: var(--lure-font-xl);
       transition: transform 0.2s, filter 0.2s, opacity 0.2s;
       flex-shrink: 0;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
     }
     .pb-chat-input-wrap button:hover:not(:disabled) {
       filter: brightness(1.15);
@@ -1320,48 +1496,113 @@
     }
     .pb-chat-input-wrap button:disabled {
       background: rgba(255, 255, 255, 0.06);
-      color: var(--text-muted, #4A5568);
+      color: var(--text-muted, var(--lure-text-muted));
       cursor: not-allowed;
       box-shadow: none;
     }
     .pb-chat-char-counter {
-      font-size: 0.55rem;
-      color: var(--text-muted, #4A5568);
+      font-size: var(--lure-font-xs);
+      color: var(--text-muted, var(--lure-text-muted));
       text-align: right;
       margin-top: -4px;
     }
     .pb-chat-error {
-      background: rgba(239, 68, 68, 0.1);
-      border: 1px solid rgba(239, 68, 68, 0.3);
-      color: #f87171;
-      font-size: 0.65rem;
+      background: var(--danger-dim);
+      border: 1px solid color-mix(in srgb, var(--app-danger) 30%, transparent);
+      color: var(--app-danger);
+      font-size: var(--lure-font-xs);
       padding: 6px 10px;
       border-radius: 8px;
       text-align: center;
       margin-bottom: 4px;
     }
-    .pb-typing-indicator {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      padding: 4px 6px;
+
+    /* Light Theme Chat Overrides (Task 2 Parity) */
+    body.light-theme .pb-chat-header-meta {
+      background: rgba(0, 0, 0, 0.02);
+      border-bottom-color: rgba(0, 0, 0, 0.08);
     }
-    .pb-typing-dot {
-      width: 4px;
-      height: 4px;
-      background: var(--primary);
-      border-radius: 50%;
-      animation: pbTypingDotPulse 1.2s infinite ease-in-out;
+    body.light-theme .pb-chat-header-title {
+      color: var(--text-primary);
     }
-    .pb-typing-dot:nth-child(2) {
-      animation-delay: 0.2s;
+    body.light-theme .pb-chat-header-subtitle {
+      color: var(--text-secondary);
     }
-    .pb-typing-dot:nth-child(3) {
-      animation-delay: 0.4s;
+    body.light-theme .pb-chat-engine-tag {
+      background: rgba(0, 0, 0, 0.04);
+      border-color: rgba(0, 0, 0, 0.1);
+      color: var(--text-secondary);
     }
-    @keyframes pbTypingDotPulse {
-      0%, 100% { transform: scale(0.8); opacity: 0.4; }
-      50% { transform: scale(1.4); opacity: 1; }
+    body.light-theme .pb-chat-msg-row.lure .pb-chat-bubble {
+      background: var(--bg-surface) !important;
+      border: 1px solid var(--border-subtle) !important;
+      color: var(--text-primary) !important;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+    }
+    body.light-theme .pb-chat-msg-row.user .pb-chat-bubble {
+      background: var(--info-dim) !important;
+      border: 1px solid color-mix(in srgb, var(--app-info) 30%, transparent) !important;
+      color: var(--app-info) !important;
+    }
+    body.light-theme .pb-evidence-chip.pb-chip-protocol {
+      background: var(--info-dim);
+      border-color: color-mix(in srgb, var(--app-info) 30%, transparent);
+      color: var(--app-info);
+    }
+    body.light-theme .pb-evidence-chip.pb-chip-technique {
+      background: var(--warning-dim);
+      border-color: color-mix(in srgb, var(--app-warning) 30%, transparent);
+      color: var(--app-warning);
+    }
+    body.light-theme .pb-evidence-chip.pb-chip-stat {
+      background: var(--success-dim);
+      border-color: color-mix(in srgb, var(--app-success) 30%, transparent);
+      color: var(--app-success);
+    }
+    body.light-theme .pb-code-snippet {
+      background: var(--bg-elevated);
+      border-color: var(--border-default);
+      color: var(--text-primary);
+    }
+    body.light-theme .pb-followup-pill {
+      background: var(--bg-surface);
+      border-color: var(--border-subtle);
+      color: var(--text-secondary);
+    }
+    body.light-theme .pb-followup-pill:hover {
+      background: var(--primary-dim);
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+    body.light-theme .pb-chat-thinking-bubble {
+      background: var(--bg-surface) !important;
+      border-color: var(--primary) !important;
+      box-shadow: 0 0 12px rgba(45, 212, 191, 0.2);
+    }
+    body.light-theme .pb-thinking-label {
+      color: var(--text-secondary);
+    }
+    body.light-theme .pb-chat-input-wrap {
+      background: var(--bg-surface) !important;
+      border: 1px solid var(--border-subtle) !important;
+    }
+    body.light-theme .pb-chat-input-wrap:focus-within {
+      background: var(--bg-surface) !important;
+      border-color: var(--primary) !important;
+      box-shadow: 0 0 12px rgba(45, 212, 191, 0.2) !important;
+    }
+    body.light-theme .pb-chat-input-wrap textarea {
+      color: var(--text-primary) !important;
+    }
+    body.light-theme .pb-ref-prompt-btn {
+      background: var(--bg-surface) !important;
+      border: 1px solid var(--border-subtle) !important;
+      color: var(--text-primary) !important;
+    }
+    body.light-theme .pb-ref-prompt-btn:hover {
+      background: var(--primary-dim) !important;
+      border-color: var(--primary) !important;
+      color: var(--primary) !important;
     }
 
     /* Mobile responsive overrides (max-width: 768px) */
@@ -1535,16 +1776,16 @@
       position: absolute;
       top: 14px;
       right: 14px;
-      background: var(--warning, #F59E0B);
-      border: 1.5px solid var(--bg-elevated, #121D35);
+      background: var(--warning, var(--lure-warning));
+      border: 1.5px solid var(--bg-elevated, var(--lure-bg-elevated));
       border-radius: 50%;
       z-index: 10;
       display: none;
       align-items: center;
       justify-content: center;
-      font-size: 0.55rem;
+      font-size: var(--lure-font-xs);
       font-weight: bold;
-      color: #0A1420;
+      color: var(--lure-bg-base);
       box-shadow: 0 2px 6px rgba(0,0,0,0.4);
       pointer-events: none;
       transition: transform 0.2s ease;
@@ -1567,12 +1808,12 @@
       padding: 0 4px;
     }
     .pb-chat-suggestion-chip {
-      background: var(--bg-card, #1A243D);
+      background: var(--bg-card, var(--lure-bg-elevated));
       border: 1px solid color-mix(in srgb, var(--primary) 15%, transparent);
       border-radius: 12px;
       padding: 6px 12px;
-      font-size: 0.65rem;
-      color: var(--text-primary, #F0F4FF);
+      font-size: var(--lure-font-xs);
+      color: var(--text-primary, var(--lure-text-primary));
       cursor: pointer;
       transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
       white-space: nowrap;
@@ -1600,10 +1841,14 @@
       100% { transform: scale(1) rotate(0deg); }
     }
     
-    /* ── Body Wrapper and Sidebar layout ── */
+    /* ── Body Wrapper and Sidebar layout (Task 2d: Always-On Vertical Sidebar) ── */
     .pb-panel-body-wrapper {
-      display: block;
-      width: 100%;
+      display: flex !important;
+      flex-direction: row !important;
+      flex: 1 !important;
+      min-height: 0 !important;
+      height: calc(100% - 50px) !important;
+      width: 100% !important;
       transition: opacity 0.15s ease-in-out;
       opacity: 1;
     }
@@ -1611,45 +1856,29 @@
       opacity: 0 !important;
     }
     .pb-panel-sidebar {
-      display: none;
+      display: flex !important;
+      flex-direction: column !important;
+      align-items: center !important;
+      width: 76px !important;
+      flex-shrink: 0 !important;
+      border-right: 1px solid var(--lure-border-subtle) !important;
+      background: color-mix(in srgb, var(--lure-primary) 2%, transparent) !important;
+      padding-top: 16px !important;
+      gap: 14px !important;
+      box-sizing: border-box !important;
+      height: 100% !important;
+    }
+    .pb-panel-tabs {
+      display: none !important;
     }
     .pb-panel-content-area {
-      width: 100%;
-    }
-
-    @media (min-width: 769px) {
-      .pb-panel-body-wrapper {
-        display: flex !important;
-        flex-direction: row !important;
-        flex: 1 !important;
-        min-height: 0 !important;
-        height: calc(100% - 50px) !important;
-      }
-      .pb-panel-sidebar {
-        display: flex !important;
-        flex-direction: column !important;
-        align-items: center !important;
-        width: 76px !important;
-        flex-shrink: 0 !important;
-        border-right: 1px solid color-mix(in srgb, var(--border-default,rgba(255,255,255,0.12)) 40%, transparent) !important;
-        background: color-mix(in srgb, var(--primary) 2%, transparent) !important;
-        padding-top: 16px !important;
-        gap: 14px !important;
-        box-sizing: border-box !important;
-        height: 100% !important;
-      }
-      .pb-panel-tabs {
-        display: none !important;
-      }
-      .pb-panel-content-area {
-        display: flex !important;
-        flex-direction: column !important;
-        flex: 1 !important;
-        min-width: 0 !important;
-        height: 100% !important;
-        overflow: hidden !important;
-        justify-content: space-between !important;
-      }
+      display: flex !important;
+      flex-direction: column !important;
+      flex: 1 !important;
+      min-width: 0 !important;
+      height: 100% !important;
+      overflow: hidden !important;
+      justify-content: space-between !important;
     }
 
     /* ── Maximized states override ── */
@@ -1695,7 +1924,7 @@
       height: 58px !important;
       border: none !important;
       background: transparent !important;
-      color: var(--text-secondary, #94A3B8) !important;
+      color: var(--text-secondary, var(--lure-text-secondary)) !important;
       cursor: pointer !important;
       transition: all 0.2s ease !important;
       gap: 4px !important;
@@ -1704,10 +1933,10 @@
       outline: none !important;
     }
     .pb-sidebar-tab-btn i {
-      font-size: 1.25rem !important;
+      font-size: var(--lure-font-3xl) !important;
     }
     .pb-sidebar-tab-label {
-      font-size: 0.6rem !important;
+      font-size: var(--lure-font-xs) !important;
       font-family: var(--sans, 'Space Grotesk', sans-serif) !important;
       text-transform: uppercase !important;
       letter-spacing: 0.04em !important;
@@ -1748,7 +1977,7 @@
       justify-content: center !important;
       padding: 14px 18px !important;
       border-radius: 12px !important;
-      background: color-mix(in srgb, var(--primary) 4%, var(--bg-elevated,#121D35)) !important;
+      background: color-mix(in srgb, var(--primary) 4%, var(--bg-elevated,var(--lure-bg-elevated))) !important;
       border: 1px solid color-mix(in srgb, var(--primary) 15%, transparent) !important;
       text-align: left !important;
       height: auto !important;
@@ -1757,14 +1986,14 @@
     }
     #pb-panel.pb-panel-maximized #pb-tab-generate.active .pb-chip-title {
       display: inline-block !important;
-      font-size: 0.8rem !important;
+      font-size: var(--lure-font-md) !important;
       font-weight: 800 !important;
       font-family: var(--mono) !important;
     }
     #pb-panel.pb-panel-maximized #pb-tab-generate.active .pb-chip-desc {
       display: block !important;
-      font-size: 0.64rem !important;
-      color: var(--text-secondary, #94A3B8) !important;
+      font-size: var(--lure-font-xs) !important;
+      color: var(--text-secondary, var(--lure-text-secondary)) !important;
       font-weight: 400 !important;
       line-height: 1.35 !important;
       font-family: var(--sans) !important;
@@ -1800,19 +2029,19 @@
         margin-bottom: 16px !important;
       }
       #pb-panel.pb-panel-maximized #pb-tab-spotphish.active .stp-score-row div {
-        font-size: 0.85rem !important;
-        color: var(--text-secondary, #94A3B8) !important;
+        font-size: var(--lure-font-lg) !important;
+        color: var(--text-secondary, var(--lure-text-secondary)) !important;
       }
       #pb-panel.pb-panel-maximized #pb-tab-spotphish.active #stp-score,
       #pb-panel.pb-panel-maximized #pb-tab-spotphish.active #stp-total {
         font-family: var(--mono) !important;
         font-weight: 800 !important;
         color: var(--primary) !important;
-        font-size: 1.6rem !important;
+        font-size: var(--lure-font-3xl) !important;
       }
       #pb-panel.pb-panel-maximized #pb-tab-spotphish.active #stp-limit-text {
-        font-size: 0.72rem !important;
-        color: var(--text-secondary, #94A3B8) !important;
+        font-size: var(--lure-font-sm) !important;
+        color: var(--text-secondary, var(--lure-text-secondary)) !important;
         font-family: var(--mono) !important;
       }
       #pb-panel.pb-panel-maximized #pb-tab-spotphish.active #stp-pair-container {
@@ -1832,25 +2061,25 @@
         flex-direction: column !important;
         height: 100% !important;
         margin: 0 !important;
-        background: color-mix(in srgb, var(--primary) 2%, var(--bg-elevated,#121D35)) !important;
+        background: color-mix(in srgb, var(--primary) 2%, var(--bg-elevated,var(--lure-bg-elevated))) !important;
       }
       #pb-panel.pb-panel-maximized #pb-tab-spotphish.active .stp-box-header {
         padding: 12px 16px !important;
-        font-size: 0.72rem !important;
+        font-size: var(--lure-font-sm) !important;
       }
       #pb-panel.pb-panel-maximized #pb-tab-spotphish.active .stp-box-body {
         flex: 1 !important;
         max-height: none !important;
         min-height: 280px !important;
         padding: 20px 24px !important;
-        font-size: 0.88rem !important;
+        font-size: var(--lure-font-lg) !important;
         overflow-y: auto !important;
       }
       #pb-panel.pb-panel-maximized #pb-tab-spotphish.active .stp-result {
         grid-column: 1 !important;
         display: block !important;
         margin-top: 10px !important;
-        font-size: 0.82rem !important;
+        font-size: var(--lure-font-md) !important;
         padding: 14px !important;
         border-radius: 8px !important;
       }
@@ -1886,9 +2115,9 @@
         gap: 14px !important;
       }
       #pb-panel.pb-panel-maximized #pb-tab-chat.active .pb-chat-bubble {
-        font-size: 0.85rem !important;
+        font-size: var(--lure-font-lg) !important;
         padding: 10px 16px !important;
-        line-height: 1.5 !important;
+        line-height: 1.6 !important;
         max-width: 78% !important;
       }
       #pb-panel.pb-panel-maximized #pb-tab-chat.active .pb-dialogue-icon {
@@ -1904,7 +2133,7 @@
         border-radius: 12px !important;
       }
       #pb-panel.pb-panel-maximized #pb-tab-chat.active #pb-chat-input {
-        font-size: 0.85rem !important;
+        font-size: var(--lure-font-lg) !important;
         height: 48px !important;
       }
       #pb-panel.pb-panel-maximized #pb-tab-chat.active .pb-chat-sidebar-reference {
@@ -1921,9 +2150,9 @@
       }
       .pb-ref-title {
         font-family: var(--sans, sans-serif);
-        font-size: 1.1rem;
+        font-size: var(--lure-font-2xl);
         font-weight: 700;
-        color: var(--text-primary, #F0F4FF);
+        color: var(--text-primary, var(--lure-text-primary));
         margin: 0;
         display: flex;
         align-items: center;
@@ -1934,9 +2163,9 @@
       }
       .pb-ref-desc {
         font-family: var(--sans, sans-serif);
-        font-size: 0.8rem;
-        line-height: 1.5;
-        color: var(--text-secondary, #94A3B8);
+        font-size: var(--lure-font-lg);
+        line-height: 1.6;
+        color: var(--text-secondary, var(--lure-text-secondary));
         margin: 0;
       }
       .pb-ref-section {
@@ -1946,11 +2175,11 @@
       }
       .pb-ref-subtitle {
         font-family: var(--mono, monospace);
-        font-size: 0.65rem;
+        font-size: var(--lure-font-xs);
         font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.05em;
-        color: var(--text-secondary, #94A3B8);
+        color: var(--text-secondary, var(--lure-text-secondary));
         margin-bottom: 4px;
       }
       .pb-ref-prompt-btn {
@@ -1961,9 +2190,9 @@
         border: 1px solid rgba(255, 255, 255, 0.06) !important;
         border-radius: 10px !important;
         padding: 12px 16px !important;
-        color: var(--text-primary, #F0F4FF) !important;
+        color: var(--text-primary, var(--lure-text-primary)) !important;
         font-family: var(--sans, sans-serif) !important;
-        font-size: 0.82rem !important;
+        font-size: var(--lure-font-md) !important;
         text-align: left !important;
         cursor: pointer !important;
         transition: all 0.2s ease !important;
@@ -2009,15 +2238,15 @@
         text-align: left !important;
       }
       #pb-panel.pb-panel-maximized #pb-tab-riskscore.active .rs-q-text {
-        font-size: 0.85rem !important;
+        font-size: var(--lure-font-lg) !important;
         margin-bottom: 10px !important;
       }
       #pb-panel.pb-panel-maximized #pb-tab-riskscore.active .rs-opt {
-        font-size: 0.82rem !important;
+        font-size: var(--lure-font-md) !important;
         padding: 10px 14px !important;
       }
 
-      /* 5. Maximized Tours Tab Grid Reflow */
+      /* 5. Maximized Tours Tab — Single-Column Wide Layout */
       #pb-panel.pb-panel-maximized #pb-tab-tours.active {
         height: 100% !important;
         display: flex !important;
@@ -2026,66 +2255,25 @@
         padding: 24px 30px !important;
         overflow-y: auto !important;
       }
-      #pb-panel.pb-panel-maximized #pb-tab-tours.active #pb-tab-tours-container {
-        max-width: 900px !important;
+      #pb-panel.pb-panel-maximized #pb-tab-tours.active #pb-tab-tours-container,
+      #pb-panel.pb-panel-maximized #pb-tab-tours.active .pb-wt-guide-list {
+        max-width: 1150px !important;
         margin: 0 auto !important;
-        padding: 16px 20px !important;
-        width: 100% !important;
-      }
-      #pb-panel.pb-panel-maximized #pb-tab-tours.active .pb-wt-guide-list,
-      #pb-inline-section .pb-wt-guide-list {
-        display: grid !important;
-        grid-template-columns: repeat(2, 1fr) !important;
-        gap: 20px !important;
-        width: 100% !important;
-        margin-top: 10px !important;
+        padding: 16px 0 !important;
+        width: 96% !important;
       }
       #pb-panel.pb-panel-maximized .pb-wt-guide-card {
-        padding: 20px !important;
-        background: rgba(255, 255, 255, 0.02) !important;
-        border: 1px solid rgba(255, 255, 255, 0.05) !important;
-        border-radius: 16px !important;
-        transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.2) !important;
-      }
-      #pb-panel.pb-panel-maximized .pb-wt-guide-card:hover {
-        background: rgba(255, 255, 255, 0.05) !important;
-        border-color: rgba(255, 255, 255, 0.12) !important;
-        transform: translateY(-2px) !important;
-        box-shadow: 0 12px 30px rgba(0,0,0,0.4), 0 0 20px rgba(255, 255, 255, 0.02) !important;
-      }
-      #pb-panel.pb-panel-maximized .pb-wt-guide-icon {
-        width: 44px !important;
-        height: 44px !important;
-        font-size: 1.4rem !important;
+        padding: 16px 22px !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        justify-content: space-between !important;
         border-radius: 12px !important;
       }
-      #pb-panel.pb-panel-maximized .pb-wt-guide-name {
-        font-size: 0.95rem !important;
-        margin-bottom: 4px !important;
-      }
-      #pb-panel.pb-panel-maximized .pb-wt-guide-desc {
-        font-size: 0.76rem !important;
-        line-height: 1.4 !important;
-      }
-      #pb-panel.pb-panel-maximized .pb-wt-guide-go {
-        width: 32px !important;
-        height: 32px !important;
-        font-size: 1rem !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-      }
-      #pb-panel.pb-panel-maximized .pb-tour-cat-header {
-        grid-column: 1 / -1 !important;
-        font-size: 0.78rem !important;
-        margin: 28px 0 12px 4px !important;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
-        padding-bottom: 8px !important;
-        letter-spacing: 1px !important;
-        color: var(--text-primary, #F0F4FF) !important;
+      #pb-panel.pb-panel-maximized .pb-tour-cat-section {
         width: 100% !important;
-        text-align: left !important;
       }
     }
 
@@ -2115,21 +2303,850 @@
       gap: 4px;
       padding: 3px 8px;
       border-radius: 4px;
-      font-size: 0.6rem;
+      font-size: var(--lure-font-xs);
       font-weight: 700;
       font-family: var(--mono);
       text-transform: uppercase;
       letter-spacing: 0.02em;
     }
     .pb-tour-badge.completed {
-      color: var(--success,#34D399) !important;
-      background: color-mix(in srgb, var(--success,#34D399) 10%, transparent) !important;
-      border: 1px solid color-mix(in srgb, var(--success,#34D399) 20%, transparent) !important;
+      color: var(--success,var(--lure-success)) !important;
+      background: color-mix(in srgb, var(--success,var(--lure-success)) 10%, transparent) !important;
+      border: 1px solid color-mix(in srgb, var(--success,var(--lure-success)) 20%, transparent) !important;
     }
     .pb-tour-badge.progress {
       color: var(--warning) !important;
       background: color-mix(in srgb, var(--warning) 10%, transparent) !important;
       border: 1px solid color-mix(in srgb, var(--warning) 20%, transparent) !important;
+    }
+
+    /* ── Restructured and Responsive Tour Picker CSS (Task 1a & 1b) ── */
+    .pb-tour-cat-section {
+      display: flex;
+      flex-direction: column;
+      margin-bottom: 12px;
+      width: 100%;
+    }
+    
+    .pb-tour-cat-accordion-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 12px;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      user-select: none;
+      margin-bottom: 6px;
+    }
+    .pb-tour-cat-accordion-header:hover {
+      background: rgba(255, 255, 255, 0.04);
+      border-color: rgba(255, 255, 255, 0.1);
+    }
+    
+    .pb-tour-cat-header-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    
+    .pb-tour-cat-name {
+      font-family: var(--sans, 'Space Grotesk', sans-serif);
+      font-size: var(--lure-font-md);
+      font-weight: 700;
+      color: var(--text-primary, var(--lure-text-primary));
+      letter-spacing: 0.5px;
+    }
+    
+    .pb-tour-cat-count {
+      font-family: var(--mono, monospace);
+      font-size: var(--lure-font-xs);
+      color: var(--text-muted, var(--lure-text-secondary));
+      background: rgba(255, 255, 255, 0.05);
+      padding: 1px 6px;
+      border-radius: 4px;
+    }
+    
+    .pb-tour-cat-completion {
+      font-family: var(--mono, monospace);
+      font-size: var(--lure-font-xs);
+      color: var(--primary);
+      background: color-mix(in srgb, var(--primary) 10%, transparent);
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-weight: 600;
+    }
+    
+    .pb-tour-cat-chevron {
+      font-size: var(--lure-font-lg);
+      color: var(--text-secondary, var(--lure-text-secondary));
+      transition: transform 0.2s ease;
+    }
+    
+    .pb-tour-cat-body {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding: 4px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    
+    /* Responsive guide card styles */
+    .pb-wt-guide-card {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 12px;
+      padding: 12px 14px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      position: relative;
+      text-align: left;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .pb-wt-guide-card:hover {
+      background: rgba(255, 255, 255, 0.04);
+      border-color: rgba(255, 255, 255, 0.12);
+      transform: translateY(-1px);
+    }
+    
+    /* Card state modifiers */
+        .pb-wt-guide-card.completed {
+      border-color: var(--border-subtle, rgba(255, 255, 255, 0.08));
+      background: transparent;
+    }
+    .pb-wt-guide-card.flagship-completed {
+      border-color: color-mix(in srgb, var(--lure-gold) 40%, transparent) !important;
+      background: color-mix(in srgb, var(--lure-gold) 4%, transparent) !important;
+    }
+    
+    /* Tour completion badges: Muted checkmark for regular tours, Gold trophy for flagship core_workflow */
+    .pb-tour-badge.completed {
+      color: var(--text-secondary, var(--lure-text-secondary)) !important;
+      background: transparent !important;
+      border: 1px solid var(--border-default, rgba(255, 255, 255, 0.15)) !important;
+    }
+    .pb-tour-badge.flagship-completed {
+      color: var(--lure-gold) !important;
+      background: color-mix(in srgb, var(--lure-gold) 10%, transparent) !important;
+      border: 1px solid color-mix(in srgb, var(--lure-gold) 28%, transparent) !important;
+    }
+    .pb-wt-guide-card.in-progress {
+      border-color: color-mix(in srgb, var(--tour-theme-color) 35%, transparent);
+      background: color-mix(in srgb, var(--tour-theme-color) 4%, transparent);
+    }
+    .pb-wt-guide-card.tier-start {
+      border-color: var(--primary);
+      background: color-mix(in srgb, var(--primary) 6%, transparent);
+      box-shadow: 0 0 12px rgba(6,182,212,0.15);
+    }
+    .pb-wt-guide-card.tier-flagship {
+      border-color: color-mix(in srgb, var(--lure-gold) 40%, transparent);
+      background: color-mix(in srgb, var(--lure-gold) 3%, transparent);
+    }
+    
+    .pb-wt-guide-icon-wrap {
+      font-size: var(--lure-font-2xl);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 8px;
+      flex-shrink: 0;
+    }
+    
+    .pb-wt-guide-content {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    
+    .pb-wt-guide-title-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    
+    .pb-wt-guide-name {
+      font-size: var(--lure-font-sm);
+      font-weight: 600;
+      color: var(--text-primary, var(--lure-text-primary));
+    }
+    .pb-wt-guide-card.tier-start .pb-wt-guide-name {
+      font-weight: 700;
+      color: var(--primary);
+    }
+    .pb-wt-guide-card.tier-flagship .pb-wt-guide-name {
+      font-weight: 700;
+      color: var(--lure-gold);
+    }
+    
+    .pb-wt-guide-steps-count {
+      font-size: var(--lure-font-xs);
+      color: var(--text-muted, var(--lure-text-secondary));
+    }
+    
+    .pb-wt-guide-tier-badges {
+      display: inline-flex;
+      gap: 4px;
+    }
+    
+    .pb-tour-tier-badge {
+      font-size: var(--lure-font-xs);
+      font-weight: 800;
+      text-transform: uppercase;
+      padding: 2px 5px;
+      border-radius: 4px;
+      border: 1px solid transparent;
+      display: inline-block;
+    }
+    .pb-tour-tier-badge.tier-start {
+      color: var(--primary);
+      background: rgba(6,182,212,0.12);
+      border-color: rgba(6,182,212,0.25);
+    }
+    .pb-tour-tier-badge.tier-flagship {
+      color: var(--lure-gold);
+      background: rgba(245,158,11,0.12);
+      border-color: rgba(245,158,11,0.25);
+    }
+    
+    .pb-wt-guide-desc {
+      font-size: var(--lure-font-xs);
+      color: var(--text-secondary, var(--lure-text-secondary));
+      line-height: 1.3;
+    }
+    
+    .pb-wt-guide-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 4px;
+      flex-wrap: wrap;
+      width: 100%;
+    }
+    
+    .pb-wt-guide-progress-container {
+      flex: 1;
+      min-width: 120px;
+    }
+    
+    .pb-wt-guide-progress-bar {
+      width: 100%;
+      height: 3px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .pb-wt-guide-progress-fill {
+      height: 100%;
+      background: var(--tour-theme-color);
+      border-radius: 2px;
+      transition: width 0.3s ease;
+    }
+    .pb-wt-guide-card.completed .pb-wt-guide-progress-fill {
+      background: var(--text-muted, rgba(255, 255, 255, 0.2));
+    }
+    .pb-wt-guide-card.flagship-completed .pb-wt-guide-progress-fill {
+      background: var(--lure-gold) !important;
+    }
+    
+    .pb-wt-guide-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    
+    .pb-wt-guide-go {
+      background: rgba(255,255,255,0.05);
+      color: var(--text-secondary, var(--lure-text-secondary));
+      padding: 4px;
+      border-radius: 4px;
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: all 0.2s;
+      width: 24px;
+      height: 24px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: var(--lure-font-md);
+    }
+    .pb-wt-guide-card:hover .pb-wt-guide-go {
+      color: var(--primary);
+    }
+    .pb-wt-guide-card.completed .pb-wt-guide-go {
+      background: transparent !important;
+      color: var(--text-secondary, var(--lure-text-secondary)) !important;
+      border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.08)) !important;
+    }
+    .pb-wt-guide-card.flagship-completed .pb-wt-guide-go {
+      background: rgba(245, 158, 11, 0.15) !important;
+      color: var(--lure-gold) !important;
+      border: 1px solid rgba(245, 158, 11, 0.3) !important;
+    }
+    .pb-wt-guide-card.in-progress .pb-wt-guide-go {
+      background: var(--tour-theme-color);
+      color: var(--text-inverse);
+    }
+    .pb-wt-guide-card.tier-start .pb-wt-guide-go {
+      background: var(--primary);
+      color: var(--text-inverse);
+    }
+    .pb-wt-guide-card.tier-flagship .pb-wt-guide-go {
+      background: var(--lure-gold);
+      color: var(--text-inverse);
+    }
+    
+    /* Maximized Tour List & Broad Horizontal Rectangular Cards */
+    #pb-panel.pb-panel-maximized #pb-tab-tours.active .pb-wt-guide-list,
+    #pb-inline-section .pb-wt-guide-list {
+      display: flex !important;
+      flex-direction: column !important;
+      width: 100% !important;
+      max-width: 960px !important;
+      margin: 0 auto !important;
+      gap: 16px !important;
+      align-items: stretch !important;
+    }
+
+    #pb-panel.pb-panel-maximized #pb-tab-tours.active .pb-tour-cat-section,
+    #pb-inline-section .pb-tour-cat-section {
+      width: 100% !important;
+      max-width: 960px !important;
+      margin: 0 auto !important;
+    }
+
+    #pb-panel.pb-panel-maximized #pb-tab-tours.active .pb-tour-cat-body,
+    #pb-inline-section .pb-tour-cat-body {
+      display: flex !important;
+      flex-direction: column !important;
+      gap: 10px !important;
+      width: 100% !important;
+      align-items: stretch !important;
+      margin-top: 8px !important;
+    }
+    
+    /* Broad horizontal rectangular card styling in maximized view */
+    #pb-panel.pb-panel-maximized .pb-wt-guide-card,
+    #pb-inline-section .pb-wt-guide-card {
+      display: flex !important;
+      flex-direction: row !important;
+      align-items: center !important;
+      justify-content: space-between !important;
+      gap: 16px !important;
+      padding: 14px 20px !important;
+      background: rgba(255, 255, 255, 0.03) !important;
+      border: 1px solid rgba(255, 255, 255, 0.08) !important;
+      border-radius: 12px !important;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2) !important;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+      min-height: auto !important;
+      width: 100% !important;
+      box-sizing: border-box !important;
+    }
+    #pb-panel.pb-panel-maximized .pb-wt-guide-card:hover,
+    #pb-inline-section .pb-wt-guide-card:hover {
+      background: rgba(255, 255, 255, 0.05) !important;
+      border-color: rgba(255, 255, 255, 0.16) !important;
+      transform: translateY(-1px) !important;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.28) !important;
+    }
+    
+    #pb-panel.pb-panel-maximized .pb-wt-guide-card.tier-flagship,
+    #pb-inline-section .pb-wt-guide-card.tier-flagship {
+      border-color: color-mix(in srgb, var(--lure-gold) 35%, transparent) !important;
+      background: color-mix(in srgb, var(--lure-gold) 4%, transparent) !important;
+    }
+
+    #pb-panel.pb-panel-maximized .pb-wt-guide-icon-wrap,
+    #pb-inline-section .pb-wt-guide-icon-wrap {
+      width: 36px !important;
+      height: 36px !important;
+      font-size: var(--lure-font-2xl) !important;
+      border-radius: 10px !important;
+      flex-shrink: 0 !important;
+    }
+    
+    #pb-panel.pb-panel-maximized .pb-wt-guide-content,
+    #pb-inline-section .pb-wt-guide-content {
+      flex: 1 !important;
+      min-width: 0 !important;
+      display: flex !important;
+      flex-direction: column !important;
+      gap: 4px !important;
+    }
+
+    #pb-panel.pb-panel-maximized .pb-wt-guide-name,
+    #pb-inline-section .pb-wt-guide-name {
+      font-size: var(--lure-font-md) !important;
+      font-weight: 700 !important;
+    }
+
+    #pb-panel.pb-panel-maximized .pb-wt-guide-desc,
+    #pb-inline-section .pb-wt-guide-desc {
+      font-size: var(--lure-font-xs) !important;
+      color: var(--text-secondary) !important;
+      line-height: 1.4 !important;
+    }
+
+    #pb-panel.pb-panel-maximized .pb-wt-guide-actions,
+    #pb-inline-section .pb-wt-guide-actions {
+      display: flex !important;
+      align-items: center !important;
+      gap: 12px !important;
+      flex-shrink: 0 !important;
+    }
+
+    #pb-panel.pb-panel-maximized .pb-wt-guide-go,
+    #pb-inline-section .pb-wt-guide-go {
+      width: 30px !important;
+      height: 30px !important;
+      border-radius: 6px !important;
+      font-size: 15px !important;
+    }
+
+    /* ── Calm Premium Dialogue Bubble Rebuild (Linear/Notion/Arc Aesthetic) ── */
+    #pb-wt-bubble {
+      width: 410px !important;
+      max-width: min(420px, 92vw) !important;
+      background: var(--bg-elevated, var(--lure-bg-elevated)) !important;
+      border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.08)) !important;
+      border-radius: 12px !important;
+      padding: 16px 18px !important;
+      box-sizing: border-box;
+      box-shadow: 
+        0 12px 32px rgba(0, 0, 0, 0.38),
+        0 2px 6px rgba(0, 0, 0, 0.2),
+        0 0 0 1px rgba(255, 255, 255, 0.05) !important;
+      backdrop-filter: blur(24px) !important;
+      color: var(--text-primary, var(--lure-text-primary)) !important;
+      animation: pbCardPop 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      position: relative;
+      font-family: var(--sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif) !important;
+    }
+    
+    #pb-wt-bubble.pb-wt-flagship {
+      border-color: color-mix(in srgb, var(--lure-gold) 35%, transparent) !important;
+      box-shadow: 
+        0 12px 32px rgba(0, 0, 0, 0.38),
+        0 2px 6px rgba(0, 0, 0, 0.2),
+        0 0 0 1px color-mix(in srgb, var(--lure-gold) 20%, transparent) !important;
+    }
+
+    #pb-wt-bubble::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      border: 8px solid transparent;
+      pointer-events: none;
+    }
+    #pb-host.pb-direction-left #pb-wt-bubble::before {
+      right: 100%;
+      border-right-color: var(--bg-elevated, var(--lure-bg-elevated)) !important;
+    }
+    #pb-host.pb-direction-right #pb-wt-bubble::before {
+      left: 100%;
+      border-left-color: var(--bg-elevated, var(--lure-bg-elevated)) !important;
+    }
+
+    /* Light Theme Bubble Overrides — full text visibility guarantee */
+    body.light-theme #pb-wt-bubble {
+      background: #ffffff !important;
+      border: 1px solid rgba(0, 0, 0, 0.12) !important;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.1), 0 2px 6px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(0, 0, 0, 0.06) !important;
+      color: #1a1a2e !important;
+      backdrop-filter: none !important;
+    }
+    body.light-theme #pb-wt-bubble.pb-wt-flagship {
+      background: #fffdf5 !important;
+      border-color: color-mix(in srgb, var(--lure-gold) 45%, transparent) !important;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.1), 0 2px 6px rgba(0, 0, 0, 0.04), 0 0 0 1px color-mix(in srgb, var(--lure-gold) 25%, transparent) !important;
+    }
+    body.light-theme #pb-host.pb-direction-left #pb-wt-bubble::before {
+      border-right-color: #ffffff !important;
+    }
+    body.light-theme #pb-host.pb-direction-right #pb-wt-bubble::before {
+      border-left-color: #ffffff !important;
+    }
+    body.light-theme .pb-wt-bubble-container {
+      color: #1a1a2e !important;
+    }
+    body.light-theme .pb-wt-bubble-header {
+      border-bottom: 1px solid rgba(0, 0, 0, 0.1) !important;
+    }
+    body.light-theme .pb-wt-bubble-avatar-crop {
+      background: rgba(0, 0, 0, 0.04) !important;
+      border-color: rgba(0, 0, 0, 0.1) !important;
+    }
+    body.light-theme .pb-wt-bubble-title {
+      color: #1a1a2e !important;
+    }
+    body.light-theme .pb-wt-bubble-step-indicator {
+      color: #555577 !important;
+    }
+    body.light-theme .pb-wt-bubble-progress-bar {
+      background: rgba(0, 0, 0, 0.1) !important;
+    }
+    body.light-theme .pb-wt-bubble-text {
+      color: #1a1a2e !important;
+    }
+    body.light-theme .pb-gate-prompt {
+      background: rgba(245, 158, 11, 0.08) !important;
+      border: 1px solid rgba(245, 158, 11, 0.22) !important;
+      color: #6b4f00 !important;
+    }
+    body.light-theme .pb-wt-bubble-action-row {
+      border-top: 1px solid rgba(0, 0, 0, 0.1) !important;
+    }
+    body.light-theme .pb-wt-bubble-footer-actions {
+      border-top: 1px dashed rgba(0, 0, 0, 0.08) !important;
+    }
+    body.light-theme .pb-wt-bubble-swim-title {
+      color: #1a1a2e !important;
+    }
+    body.light-theme .pb-wt-bubble-swim-text {
+      color: #555577 !important;
+    }
+    /* Tour category accordion light-mode */
+    body.light-theme .pb-tour-cat-accordion-header {
+      background: rgba(0, 0, 0, 0.03) !important;
+      border-color: rgba(0, 0, 0, 0.08) !important;
+    }
+    body.light-theme .pb-tour-cat-accordion-header:hover {
+      background: rgba(0, 0, 0, 0.05) !important;
+    }
+    body.light-theme .pb-tour-cat-name {
+      color: var(--text-primary) !important;
+    }
+    body.light-theme .pb-tour-cat-count {
+      background: rgba(0, 0, 0, 0.06) !important;
+      color: var(--text-secondary) !important;
+    }
+    body.light-theme .pb-wt-guide-card {
+      background: rgba(0, 0, 0, 0.02) !important;
+      border-color: rgba(0, 0, 0, 0.08) !important;
+    }
+    body.light-theme .pb-wt-guide-card:hover {
+      background: rgba(0, 0, 0, 0.04) !important;
+      border-color: rgba(0, 0, 0, 0.15) !important;
+    }
+    body.light-theme .pb-wt-guide-name {
+      color: var(--text-primary) !important;
+    }
+    body.light-theme .pb-wt-guide-desc {
+      color: var(--text-secondary) !important;
+    }
+    
+    .pb-wt-bubble-container {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      width: 100%;
+    }
+    
+    .pb-wt-bubble-header {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      border-bottom: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.06));
+      padding-bottom: 10px;
+    }
+    
+    .pb-wt-bubble-header-top {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+    }
+    
+    .pb-wt-bubble-avatar-crop {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      overflow: hidden;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.08));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    
+    .pb-wt-bubble-avatar-img {
+      width: 18px;
+      height: 18px;
+      object-fit: contain;
+    }
+    
+    .pb-wt-bubble-title {
+      font-size: var(--lure-font-md);
+      font-weight: 600;
+      font-family: var(--sans, sans-serif);
+      flex: 1;
+      min-width: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    
+    .pb-wt-bubble-step-indicator {
+      font-family: var(--mono, monospace);
+      font-size: var(--lure-font-xs);
+      color: var(--text-muted, var(--lure-text-secondary));
+      font-weight: 500;
+      flex-shrink: 0;
+    }
+    
+    .pb-wt-bubble-progress-bar {
+      width: 100%;
+      height: 2px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 1px;
+      overflow: hidden;
+    }
+    
+    .pb-wt-bubble-progress-fill {
+      height: 100%;
+      border-radius: 1px;
+      transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    
+    .pb-wt-bubble-body {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding-top: 2px;
+    }
+    
+    .pb-wt-bubble-text {
+      font-size: var(--lure-font-lg) !important;
+      line-height: 1.6 !important;
+      color: var(--text-primary, var(--lure-text-primary)) !important;
+      margin: 0 !important;
+      font-family: var(--sans, sans-serif) !important;
+      font-weight: 400;
+    }
+    
+    .pb-gate-prompt {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      background: color-mix(in srgb, var(--warning) 6%, transparent);
+      border: 1px solid color-mix(in srgb, var(--warning) 20%, transparent);
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: var(--lure-font-xs);
+      color: var(--text-secondary, var(--lure-text-secondary));
+      line-height: 1.4;
+      margin-top: 6px;
+    }
+    
+    .pb-wt-bubble-action-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-top: 6px;
+      border-top: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.06));
+      padding-top: 12px;
+      width: 100%;
+    }
+    
+    .pb-wt-bubble-actions-left {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    
+    .pb-wt-bubble-actions-right {
+      display: flex;
+      align-items: center;
+    }
+    
+    /* ONE clearly primary button (visually dominant) */
+    .pb-wt-bubble-btn-primary,
+    #pb-wt-bubble .pb-next-btn {
+      padding: 7px 16px;
+      font-size: var(--lure-font-sm) !important;
+      font-weight: 700;
+      border-radius: 6px;
+      border: none !important;
+      cursor: pointer;
+      transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      color: var(--text-inverse) !important;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.22);
+    }
+    #pb-wt-bubble.pb-wt-flagship .pb-wt-bubble-btn-primary,
+    #pb-wt-bubble.pb-wt-flagship .pb-next-btn {
+      color: var(--text-inverse) !important;
+    }
+    .pb-wt-bubble-btn-primary:hover,
+    #pb-wt-bubble .pb-next-btn:hover {
+      filter: brightness(1.08);
+      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.28);
+      transform: translateY(-0.5px);
+    }
+    .pb-wt-bubble-btn-primary:disabled,
+    #pb-wt-bubble .pb-next-btn:disabled,
+    #pb-wt-bubble button:disabled {
+      opacity: 0.35 !important;
+      cursor: not-allowed !important;
+      filter: none !important;
+      transform: none !important;
+      box-shadow: none !important;
+    }
+    
+    /* Secondary/Quiet actions — styled Back (blue) and Repeat (primary tint) */
+    .pb-wt-bubble-btn-quiet {
+      background: color-mix(in srgb, var(--primary) 6%, rgba(255,255,255,0.04)) !important;
+      border: 1px solid color-mix(in srgb, var(--primary) 22%, transparent) !important;
+      color: var(--primary) !important;
+      font-size: var(--lure-font-xs) !important;
+      font-weight: 700;
+      padding: 5px 11px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255,255,255,0.06);
+      letter-spacing: 0.01em;
+    }
+    .pb-wt-bubble-btn-quiet i {
+      color: var(--primary);
+      font-size: 13px;
+      transition: transform 0.2s ease;
+    }
+    /* Back button — blue accent */
+    .pb-wt-bubble-btn-quiet:first-child {
+      background: color-mix(in srgb, var(--info, #38bdf8) 8%, rgba(255,255,255,0.03)) !important;
+      border-color: color-mix(in srgb, var(--info, #38bdf8) 25%, transparent) !important;
+      color: var(--info, #38bdf8) !important;
+    }
+    .pb-wt-bubble-btn-quiet:first-child i {
+      color: var(--info, #38bdf8);
+    }
+    .pb-wt-bubble-btn-quiet:hover {
+      filter: brightness(1.12);
+      transform: translateY(-0.5px);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255,255,255,0.08);
+    }
+    .pb-wt-bubble-btn-quiet:hover i {
+      transform: scale(1.12);
+    }
+    body.light-theme .pb-wt-bubble-btn-quiet {
+      background: color-mix(in srgb, var(--primary) 8%, rgba(0,0,0,0.02)) !important;
+      border: 1px solid color-mix(in srgb, var(--primary) 28%, transparent) !important;
+      color: var(--primary) !important;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+    }
+    body.light-theme .pb-wt-bubble-btn-quiet:first-child {
+      background: color-mix(in srgb, var(--info, #0ea5e9) 10%, rgba(0,0,0,0.02)) !important;
+      border-color: color-mix(in srgb, var(--info, #0ea5e9) 30%, transparent) !important;
+      color: var(--info, #0ea5e9) !important;
+    }
+    body.light-theme .pb-wt-bubble-btn-quiet:hover {
+      filter: brightness(1.08) !important;
+    }
+    .pb-wt-bubble-btn-quiet:disabled {
+      opacity: 0.28 !important;
+      cursor: not-allowed !important;
+      filter: none !important;
+      transform: none !important;
+      box-shadow: none !important;
+    }
+    
+    /* Conditional action button: visually secondary outline/tint style */
+    .pb-wt-bubble-btn-lure {
+      background: color-mix(in srgb, var(--primary) 8%, transparent) !important;
+      border: 1px solid color-mix(in srgb, var(--primary) 22%, transparent) !important;
+      color: var(--primary) !important;
+      font-size: var(--lure-font-xs) !important;
+      font-weight: 600;
+      padding: 4px 8px;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .pb-wt-bubble-btn-lure:hover {
+      background: color-mix(in srgb, var(--primary) 14%, transparent) !important;
+      border-color: color-mix(in srgb, var(--primary) 35%, transparent) !important;
+    }
+    
+    #pb-wt-bubble.pb-wt-flagship .pb-wt-bubble-btn-lure {
+      background: color-mix(in srgb, var(--lure-gold) 8%, transparent) !important;
+      border-color: color-mix(in srgb, var(--lure-gold) 22%, transparent) !important;
+      color: var(--lure-gold) !important;
+    }
+    #pb-wt-bubble.pb-wt-flagship .pb-wt-bubble-btn-lure:hover {
+      background: color-mix(in srgb, var(--lure-gold) 14%, transparent) !important;
+      border-color: color-mix(in srgb, var(--lure-gold) 35%, transparent) !important;
+    }
+    
+    .pb-wt-bubble-footer-actions {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 6px;
+      border-top: 1px dashed var(--border-subtle, rgba(255, 255, 255, 0.05));
+      padding-top: 6px;
+      width: 100%;
+    }
+    
+    /* Swimming transition styles */
+    .pb-wt-bubble-swim-msg {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      min-height: 80px;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      width: 100%;
+    }
+    .pb-wt-bubble-swim-title {
+      font-family: var(--sans, sans-serif);
+      font-size: var(--lure-font-sm);
+      font-weight: 700;
+      color: var(--primary);
+    }
+    .pb-wt-bubble-swim-text {
+      font-size: var(--lure-font-xs);
+      color: var(--text-primary, var(--lure-text-primary));
+      line-height: 1.45;
+      margin: 0;
+    }
+    .pb-wt-bubble-swim-spinner {
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(6, 182, 212, 0.2);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: pbSpin 0.8s linear infinite;
+      margin-top: 4px;
     }
 </style>
 
@@ -2182,26 +3199,10 @@
       <div class="pb-header-avatar-wrap" style="width: 28px; height: 28px; border-radius: 50%; border: 1.5px solid var(--primary); background: var(--lure-bg-card); display: inline-flex; align-items: center; justify-content: center; position: relative; flex-shrink: 0; box-shadow: 0 0 10px color-mix(in srgb, var(--primary) 30%, transparent); overflow: hidden;">
         <img id="pb-header-avatar-img" src="{{ url_for('static', filename='images/lure/lure_idle.png') }}" alt="" style="width: 22px; height: 22px; object-fit: contain;">
       </div>
-      <span style="font-weight: 700; color: var(--text-primary, #F0F4FF); letter-spacing: 0.5px;">Lure</span>
-      <span id="pb-personal-stats" style="font-family: var(--mono, monospace); font-size: 0.62rem; color: var(--text-muted, #4A5568); border-left: 1px solid rgba(255,255,255,0.1); padding-left: 8px; margin-left: 4px; display: inline-flex; align-items: center; gap: 6px;"></span>
+      <span style="font-weight: 700; color: var(--text-primary, var(--lure-text-primary)); letter-spacing: 0.5px;">Lure</span>
+      <span id="pb-personal-stats" style="font-family: var(--mono, monospace); font-size: var(--lure-font-xs); color: var(--text-muted, var(--lure-text-muted)); border-left: 1px solid rgba(255,255,255,0.1); padding-left: 8px; margin-left: 4px; display: inline-flex; align-items: center; gap: 6px;"></span>
     </div>
-    <div class="pb-panel-tabs">
-      <button class="pb-tab-btn active" data-tab="generate" title="Generate Lure">
-        <i class="ti ti-dna" aria-hidden="true"></i><span class="pb-tab-text">Generate</span>
-      </button>
-      <button class="pb-tab-btn" data-tab="spotphish" title="Spot the Phish">
-        <i class="ti ti-target" aria-hidden="true"></i><span class="pb-tab-text">Spot Phish</span>
-      </button>
-      <button class="pb-tab-btn" data-tab="riskscore" title="Risk Score Analyzer">
-        <i class="ti ti-chart-bar" aria-hidden="true"></i><span class="pb-tab-text">Risk Score</span>
-      </button>
-      <button class="pb-tab-btn" data-tab="chat" title="Ask Lure Co-Pilot">
-        <i class="ti ti-messages" aria-hidden="true"></i><span class="pb-tab-text">Ask Lure</span>
-      </button>
-      <button class="pb-tab-btn" data-tab="tours" title="Walkthrough Tours">
-        <i class="ti ti-compass" aria-hidden="true"></i><span class="pb-tab-text">Tours</span>
-      </button>
-    </div>
+    <!-- Horizontal tabs removed in favor of always-on vertical rail navigation -->
     <div class="pb-panel-actions">
       <button class="pb-icon-btn" id="pb-max-btn" title="Expand to page" aria-label="Expand">
         <i class="ti ti-maximize" aria-hidden="true"></i>
@@ -2262,7 +3263,7 @@
           <span class="pb-chip-desc">Urgent security patches, system maintenance warnings, or password resets.</span>
         </div>
       </button>
-      <button class="pb-chip" onclick="pbGen('hr_update')" style="color:var(--success,#34D399); border-color:color-mix(in srgb, var(--success,#34D399) 32%, transparent);">
+      <button class="pb-chip" onclick="pbGen('hr_update')" style="color:var(--success,var(--lure-success)); border-color:color-mix(in srgb, var(--success,var(--lure-success)) 32%, transparent);">
         <div class="pb-chip-icon-wrap">📋</div>
         <div class="pb-chip-content-wrap">
           <span class="pb-chip-title">HR Policy Update</span>
@@ -2287,17 +3288,17 @@
         <div class="pb-chrome-dots">
           <span style="background:var(--danger);"></span>
           <span style="background:var(--warning);"></span>
-          <span style="background:var(--success,#34D399);"></span>
+          <span style="background:var(--success,var(--lure-success));"></span>
         </div>
-        <div style="font-family:var(--mono);font-size:0.6rem;color:color-mix(in srgb,var(--text-secondary,#94A3B8) 45%,transparent);display:flex;align-items:center;gap:4px;">
+        <div style="font-family:var(--mono);font-size: var(--lure-font-xs);color:color-mix(in srgb,var(--text-secondary,var(--lure-text-secondary)) 45%,transparent);display:flex;align-items:center;gap:4px;">
           <i class="ti ti-mail" style="color:color-mix(in srgb,var(--primary) 45%,transparent);" aria-hidden="true"></i>
           Simulated Inbox &mdash; example-corp.test
         </div>
         <div style="display:flex; align-items:center; gap:8px;">
-          <button class="pb-icon-btn" onclick="pbCopyLure(false)" title="Copy email body" aria-label="Copy" style="width:22px; height:22px; font-size:0.72rem; border-radius:5px;">
+          <button class="pb-icon-btn" onclick="pbCopyLure(false)" title="Copy email body" aria-label="Copy" style="width:22px; height:22px; font-size: var(--lure-font-sm); border-radius:5px;">
             <i class="ti ti-copy" aria-hidden="true"></i>
           </button>
-          <button class="pb-icon-btn" onclick="pbDownloadLure(false)" title="Download as .eml" aria-label="Download" style="width:22px; height:22px; font-size:0.72rem; border-radius:5px;">
+          <button class="pb-icon-btn" onclick="pbDownloadLure(false)" title="Download as .eml" aria-label="Download" style="width:22px; height:22px; font-size: var(--lure-font-sm); border-radius:5px;">
             <i class="ti ti-download" aria-hidden="true"></i>
           </button>
         </div>
@@ -2340,7 +3341,7 @@
     </div>
     <div class="stp-score-row" style="display:flex; justify-content:space-between; align-items:center;">
       <div>Score: <span id="stp-score">0</span> / <span id="stp-total">0</span></div>
-      <div id="stp-limit-text" style="font-size:0.62rem; color:var(--text-secondary,#94A3B8);">Rounds Left Today: 3 / 3</div>
+      <div id="stp-limit-text" style="font-size: var(--lure-font-xs); color:var(--text-secondary,var(--lure-text-secondary));">Rounds Left Today: 3 / 3</div>
     </div>
     <div class="stp-pair" id="stp-pair-container"></div>
     <div class="stp-result" id="stp-result"></div>
@@ -2383,8 +3384,8 @@
     </div>
     <div class="rs-result" id="rs-result">
       <div class="rs-gauge" id="rs-gauge">—</div>
-      <div style="font-family:var(--mono);font-size:0.7rem;color:var(--text-secondary,#94A3B8);margin-bottom:14px;" id="rs-gauge-lbl"></div>
-      <div id="rs-gauge-reaction" style="font-size:0.7rem;color:var(--text-primary,#F0F4FF);margin-bottom:14px;line-height:1.3;"></div>
+      <div style="font-family:var(--mono);font-size: var(--lure-font-xs);color:var(--text-secondary,var(--lure-text-secondary));margin-bottom:14px;" id="rs-gauge-lbl"></div>
+      <div id="rs-gauge-reaction" style="font-size: var(--lure-font-xs);color:var(--text-primary,var(--lure-text-primary));margin-bottom:14px;line-height:1.3;"></div>
       <button class="pb-action-btn" onclick="rsReset()">
         <i class="ti ti-refresh" aria-hidden="true"></i> Start over
       </button>
@@ -2394,6 +3395,16 @@
 
   <!-- TAB: Ask Lure (Chat) -->
   <div class="pb-tab-panel" id="pb-tab-chat">
+    <div class="pb-chat-header-meta">
+      <div class="pb-chat-header-left">
+        <span class="pb-chat-header-title">Ask Lure</span>
+        <span class="pb-chat-header-subtitle">AI Security Assistant</span>
+      </div>
+      <div class="pb-chat-engine-tag">
+        <span class="pb-engine-status-dot"></span>
+        <span>AI Engine v2</span>
+      </div>
+    </div>
     <div class="pb-chat-layout-wrapper">
       <div class="pb-chat-container">
         <div class="pb-chat-messages" id="pb-chat-messages-list">
@@ -2402,9 +3413,8 @@
         <div class="pb-chat-error" id="pb-chat-error-alert" style="display: none;"></div>
         <div id="pb-chat-suggestions" class="pb-chat-suggestions-row" style="display: none;"></div>
         <div class="pb-chat-input-wrap">
-          <span style="font-family: var(--mono, monospace); color: #38BDF8; font-weight: bold; font-size: 13px; margin-right: 4px; display: inline-flex; align-items: center; gap: 4px; user-select: none;">visitor:~$</span>
-          <textarea id="pb-chat-input" placeholder="Ask Lure about phishing, email security..." maxlength="501"></textarea>
-          <button id="pb-chat-send-btn" title="Send message" type="button">
+          <textarea id="pb-chat-input" placeholder="Ask Lure about phishing, email security..." maxlength="501" aria-label="Ask Lure chat input"></textarea>
+          <button id="pb-chat-send-btn" title="Send message" type="button" aria-label="Send">
             <i class="ti ti-send" aria-hidden="true"></i>
           </button>
         </div>
@@ -2433,8 +3443,8 @@
   <!-- TAB: Tours -->
   <div class="pb-tab-panel" id="pb-tab-tours">
     <div id="pb-tab-tours-container">
-      <h4 style="font-family:var(--sans, 'Space Grotesk', sans-serif); font-size:18px; font-weight:600; color:var(--text-primary,#F0F4FF); margin-bottom:6px; text-align: center;">Interactive Guided Tours</h4>
-      <p style="font-family:var(--sans, 'Space Grotesk', sans-serif); font-size:14px; line-height:1.6; color:var(--text-secondary,#8CA0B3); text-align: center; margin-bottom:16px;">
+      <h4 style="font-family:var(--sans, 'Space Grotesk', sans-serif); font-size: var(--lure-font-2xl); font-weight:600; color:var(--text-primary,var(--lure-text-primary)); margin-bottom:6px; text-align: center;">Interactive Guided Tours</h4>
+      <p style="font-family:var(--sans, 'Space Grotesk', sans-serif); font-size: var(--lure-font-lg); line-height:1.6; color:var(--text-secondary,var(--lure-text-secondary)); text-align: center; margin-bottom:16px;">
         Select a specialized guide below, and I'll walk you through the platform step-by-step.
       </p>
       <div class="pb-wt-guide-list">
@@ -2448,7 +3458,7 @@
       <i class="ti ti-settings ti-spin" style="color:var(--primary); display: inline-block; flex-shrink: 0; margin-right: 4px;" aria-hidden="true"></i>
       Lure &mdash; Powered by PhishSim AI Engine v2
     </span>
-    <a href="#" id="pb-reset-visitor" style="font-size: 0.65rem; color: var(--text-secondary,#8CA0B3); text-decoration: none; opacity: 0.7; cursor: pointer; transition: opacity 0.2s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.7">Forget me</a>
+    <a href="#" id="pb-reset-visitor" style="font-size: var(--lure-font-xs); color: var(--text-secondary,var(--lure-text-secondary)); text-decoration: none; opacity: 0.7; cursor: pointer; transition: opacity 0.2s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.7">Forget me</a>
   </div>
     </div> <!-- .pb-panel-content-area -->
   </div> <!-- .pb-panel-body-wrapper -->
@@ -2475,7 +3485,7 @@
         <div class="pb-chips">
           <button class="pb-chip" onclick="pbGen('ceo_fraud',true)" style="color:var(--primary);border-color:color-mix(in srgb,var(--primary) 32%,transparent);">CEO Fraud</button>
           <button class="pb-chip" onclick="pbGen('it_alert',true)" style="color:var(--warning);border-color:color-mix(in srgb,var(--warning) 32%,transparent);">IT Alert</button>
-          <button class="pb-chip" onclick="pbGen('hr_update',true)" style="color:var(--success,#34D399);border-color:color-mix(in srgb,var(--success,#34D399) 32%,transparent);">HR Update</button>
+          <button class="pb-chip" onclick="pbGen('hr_update',true)" style="color:var(--success,var(--lure-success));border-color:color-mix(in srgb,var(--success,var(--lure-success)) 32%,transparent);">HR Update</button>
           <button class="pb-chip" onclick="pbGen('invoice',true)" style="color:var(--danger);border-color:color-mix(in srgb,var(--danger) 32%,transparent);">Urgent Invoice</button>
         </div>
         <div class="pb-skeleton-wrap" id="pb-il-gen-loader">
@@ -2485,19 +3495,19 @@
         </div>
         <div class="pb-email-card" id="pb-il-card">
           <div class="pb-chrome">
-            <div class="pb-chrome-dots"><span style="background:var(--danger);"></span><span style="background:var(--warning);"></span><span style="background:var(--success,#34D399);"></span></div>
-            <div style="font-family:var(--mono);font-size:0.6rem;color:color-mix(in srgb,var(--text-secondary,#94A3B8) 45%,transparent);">Simulated Inbox — example-corp.test</div>
+            <div class="pb-chrome-dots"><span style="background:var(--danger);"></span><span style="background:var(--warning);"></span><span style="background:var(--success,var(--lure-success));"></span></div>
+            <div style="font-family:var(--mono);font-size: var(--lure-font-xs);color:color-mix(in srgb,var(--text-secondary,var(--lure-text-secondary)) 45%,transparent);">Simulated Inbox — example-corp.test</div>
             <div style="display:flex; align-items:center; gap:8px;">
-              <button class="pb-icon-btn" onclick="pbCopyLure(true)" title="Copy email body" aria-label="Copy" style="width:22px; height:22px; font-size:0.72rem; border-radius:5px;">
+              <button class="pb-icon-btn" onclick="pbCopyLure(true)" title="Copy email body" aria-label="Copy" style="width:22px; height:22px; font-size: var(--lure-font-sm); border-radius:5px;">
                 <i class="ti ti-copy" aria-hidden="true"></i>
               </button>
-              <button class="pb-icon-btn" onclick="pbDownloadLure(true)" title="Download as .eml" aria-label="Download" style="width:22px; height:22px; font-size:0.72rem; border-radius:5px;">
+              <button class="pb-icon-btn" onclick="pbDownloadLure(true)" title="Download as .eml" aria-label="Download" style="width:22px; height:22px; font-size: var(--lure-font-sm); border-radius:5px;">
                 <i class="ti ti-download" aria-hidden="true"></i>
               </button>
             </div>
           </div>
           <div class="pb-mail-header">
-            <div class="pb-mail-field"><span class="pb-mail-lbl">From</span><span id="pb-il-sender" style="color:var(--text-primary,#F0F4FF);"></span></div>
+            <div class="pb-mail-field"><span class="pb-mail-lbl">From</span><span id="pb-il-sender" style="color:var(--text-primary,var(--lure-text-primary));"></span></div>
             <div class="pb-mail-field"><span class="pb-mail-lbl">Subject</span><span id="pb-il-subject" style="color:var(--primary);font-weight:600;"></span></div>
           </div>
           <div class="pb-mail-body" id="pb-il-body"></div>
@@ -2519,7 +3529,7 @@
         </div>
         <div class="stp-score-row" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
           <div>Score: <span id="stp-il-score">0</span> / <span id="stp-il-total">0</span></div>
-          <div id="stp-il-limit-text" style="font-size:0.62rem; color:var(--text-secondary,#94A3B8);">Rounds Left Today: 3 / 3</div>
+          <div id="stp-il-limit-text" style="font-size: var(--lure-font-xs); color:var(--text-secondary,var(--lure-text-secondary));">Rounds Left Today: 3 / 3</div>
         </div>
         <div class="stp-pair" id="stp-il-pair-container"></div>
         <div class="stp-result" id="stp-il-result" style="margin-top:12px; display:none;"></div>
@@ -2533,8 +3543,8 @@
       <!-- TAB PANEL: Walkthrough selection list (Dynamic overlay) -->
       <div class="pb-inline-tab-panel" id="pb-tab-il-walkthrough" style="padding: 10px 0;">
         <div id="pb-wt-guide-picker" style="padding: 12px 10px;">
-          <h4 style="font-family:var(--sans, 'Space Grotesk', sans-serif); font-size:18px; font-weight:600; color:var(--text-primary,#F0F4FF); margin-bottom:6px; text-align: center;">Interactive Guided Tours</h4>
-          <p style="font-family:var(--sans, 'Space Grotesk', sans-serif); font-size:14px; line-height:1.6; color:var(--text-secondary,#8CA0B3); text-align: center; margin-bottom:16px;">
+          <h4 style="font-family:var(--sans, 'Space Grotesk', sans-serif); font-size: var(--lure-font-2xl); font-weight:600; color:var(--text-primary,var(--lure-text-primary)); margin-bottom:6px; text-align: center;">Interactive Guided Tours</h4>
+          <p style="font-family:var(--sans, 'Space Grotesk', sans-serif); font-size: var(--lure-font-lg); line-height:1.6; color:var(--text-secondary,var(--lure-text-secondary)); text-align: center; margin-bottom:16px;">
             Select a specialized guide below, and I'll walk you through the platform step-by-step.
           </p>
           
@@ -3490,8 +4500,25 @@
     });
 
     document.addEventListener('click', e => {
-      if (panelOpen && !panel.contains(e.target) && !host.contains(e.target)) closePanel();
-      if (fvOpen && !fvPopover.contains(e.target) && !host.contains(e.target)) closeFvPopover();
+      const path = e.composedPath ? e.composedPath() : [];
+      const clickedInsidePanel = path.includes(panel) ||
+                                 (panel && panel.contains(e.target)) ||
+                                 path.some(n => n === panel || (n.id && n.id === 'pb-panel') || (n.classList && n.classList.contains && n.classList.contains('pb-panel'))) ||
+                                 (e.target && e.target.closest && e.target.closest('#pb-panel'));
+
+      const clickedInsideHost = path.includes(host) ||
+                                (host && host.contains(e.target)) ||
+                                path.some(n => n === host || (n.id && n.id === 'pb-host') || (n.classList && n.classList.contains && n.classList.contains('pb-host'))) ||
+                                (e.target && e.target.closest && e.target.closest('#pb-host'));
+
+      const clickedInsideFv = path.includes(fvPopover) || (fvPopover && fvPopover.contains(e.target));
+
+      // Guard: never close panel when clicking accordion headers, section containers, or their children
+      const clickedTourAccordion = path.some(n => n.classList && n.classList.contains && (n.classList.contains('pb-tour-cat-accordion-header') || n.classList.contains('pb-tour-cat-section') || n.classList.contains('pb-tour-cat-chevron'))) ||
+                                   (e.target && e.target.closest && (e.target.closest('.pb-tour-cat-accordion-header') || e.target.closest('.pb-tour-cat-section') || e.target.closest('[data-pb-no-close]')));
+      
+      if (panelOpen && !clickedInsidePanel && !clickedInsideHost && !clickedTourAccordion) closePanel();
+      if (fvOpen && !clickedInsideFv && !clickedInsideHost && !clickedTourAccordion) closeFvPopover();
     });
 
     document.addEventListener('keydown', e => {
@@ -3549,7 +4576,7 @@
     function startDrag(e) {
       if (isMobile()) return;
       if (panel.classList.contains('pb-panel-maximized')) return;
-      if (e.target.closest('.pb-icon-btn') || e.target.closest('.pb-tab-btn')) return;
+      if (e.target.closest('.pb-icon-btn') || e.target.closest('.pb-tab-btn') || e.target.closest('button')) return;
       
       const targetEl = e.currentTarget;
       targetEl.setPointerCapture && targetEl.setPointerCapture(e.pointerId);
@@ -3561,8 +4588,12 @@
         target:    targetEl,
         startX:    e.clientX,
         startY:    e.clientY,
+        origLeft:  hostR.left,
+        origTop:   hostR.top,
         origRight: window.innerWidth  - hostR.right,
         origBottom: window.innerHeight - hostR.bottom,
+        hostW:     hostR.width,
+        hostH:     hostR.height,
         hasMoved:  false
       };
     }
@@ -3578,24 +4609,39 @@
 
       if (!drag.hasMoved) return;
 
-      // Compute new right/bottom for the HOST
-      let newRight  = drag.origRight  + dx;
-      let newBottom = drag.origBottom + dy;
+      if (wtActive) {
+        window.wtUserDragged = true;
+        let newLeft = drag.origLeft - dx;
+        let newTop  = drag.origTop  - dy;
 
-      // Window-wide drag constraints (anywhere within the viewport with margin)
-      newRight = Math.max(newRight, DRAG_MARGIN);
-      newRight = Math.min(newRight, window.innerWidth - host.offsetWidth - DRAG_MARGIN);
+        newLeft = Math.max(DRAG_MARGIN, Math.min(newLeft, window.innerWidth - host.offsetWidth - DRAG_MARGIN));
+        newTop  = Math.max(DRAG_MARGIN, Math.min(newTop, window.innerHeight - host.offsetHeight - DRAG_MARGIN));
 
-      newBottom = Math.max(newBottom, DRAG_MARGIN);
-      newBottom = Math.min(newBottom, window.innerHeight - host.offsetHeight - DRAG_MARGIN);
+        host.style.setProperty('position', 'fixed', 'important');
+        host.style.setProperty('left', newLeft + 'px', 'important');
+        host.style.setProperty('top', newTop + 'px', 'important');
+        host.style.setProperty('right', 'auto', 'important');
+        host.style.setProperty('bottom', 'auto', 'important');
+      } else {
+        // Compute new right/bottom for the HOST in normal mode
+        let newRight  = drag.origRight  + dx;
+        let newBottom = drag.origBottom + dy;
 
-      host.style.right  = newRight  + 'px';
-      host.style.bottom = newBottom + 'px';
-      host.style.left   = 'auto';
-      host.style.top    = 'auto';
+        // Window-wide drag constraints (anywhere within the viewport with margin)
+        newRight = Math.max(newRight, DRAG_MARGIN);
+        newRight = Math.min(newRight, window.innerWidth - host.offsetWidth - DRAG_MARGIN);
 
-      if (panelOpen) repositionPanel();
-      if (fvOpen) repositionFvPopover();
+        newBottom = Math.max(newBottom, DRAG_MARGIN);
+        newBottom = Math.min(newBottom, window.innerHeight - host.offsetHeight - DRAG_MARGIN);
+
+        host.style.right  = newRight  + 'px';
+        host.style.bottom = newBottom + 'px';
+        host.style.left   = 'auto';
+        host.style.top    = 'auto';
+
+        if (panelOpen) repositionPanel();
+        if (fvOpen) repositionFvPopover();
+      }
     });
 
     document.addEventListener('pointerup', e => {
@@ -3633,6 +4679,8 @@
           }
         } else if (tab === 'spotphish') {
           if (typeof window.stpRender === 'function') window.stpRender();
+        } else if (tab === 'chat') {
+          if (typeof initChat === 'function') initChat();
         }
         repositionPanel();
       });
@@ -3713,7 +4761,7 @@
         row.innerHTML = `
           <div class="pb-score-name">${esc(labelText)}</div>
           <div class="pb-score-track">
-            <div class="pb-score-fill" style="width:0%; background:${val >= 75 ? 'var(--danger)' : val >= 45 ? 'var(--warning)' : 'var(--success,#34D399)'};"></div>
+            <div class="pb-score-fill" style="width:0%; background:${val >= 75 ? 'var(--danger)' : val >= 45 ? 'var(--warning)' : 'var(--success,var(--lure-success))'};"></div>
           </div>
           <div class="pb-score-num">${val}%</div>
         `;
@@ -4020,10 +5068,15 @@
       if (!wtActive || wtCurrentStep < 0 || wtCurrentStep >= wtSteps.length) return;
       const step = wtSteps[wtCurrentStep];
       if (step.action) {
+        const startTime = Date.now();
         changeMascotState('active');
         step.action(() => {
-          changeMascotState('idle');
-          updateWalkthroughGate();
+          const elapsed = Date.now() - startTime;
+          const delay = Math.max(0, 500 - elapsed);
+          setTimeout(() => {
+            changeMascotState('idle');
+            updateWalkthroughGate();
+          }, delay);
         });
       }
     };
@@ -4033,6 +5086,7 @@
         {
           targetId: "campaign-form",
           title: "The Full Simulation Loop",
+          assistRequired: true,
           text: "You've already seen how to configure a campaign. This time, let's follow one all the way from launch, to target reaction, to AI-generated reports and sharing results. Confirm your details and let's go!",
           path: "/new-campaign",
           action: (cb) => {
@@ -4074,17 +5128,19 @@
         {
           targetId: "wt-emails-viewer",
           title: "AI-Generated Inbox",
-          text: "This is where we inspect the simulation emails. Note how each message is personalized to feel urgent and natural to the recipient. To see how a user might fall for it, let's check out what happens when they click the phishing link.",
+          assistRequired: true,
+          text: "These are the simulation emails your targets receive. Look for the phishing link inside the email body and click it to simulate a target reaction! (Tip: You can drag me anywhere on screen if I am blocking your view of the link, or click 'Let Lure do it' below to auto-complete this step.)",
           path: "/campaign-emails/0",
           action: (cb) => {
+            sessionStorage.setItem('lure_followed_email_link', 'true');
             const evBody = document.getElementById('ev-body');
             const link = evBody ? evBody.querySelector('a') : null;
             if (link) {
-              link.click();
+              window.location.href = '/fake-login-demo';
             } else {
               const previewBtn = document.getElementById('action-preview-link');
               if (previewBtn) {
-                previewBtn.click();
+                window.location.href = '/fake-login-demo';
               } else {
                 window.location.href = '/fake-login-demo';
               }
@@ -4095,7 +5151,8 @@
         {
           targetId: "login-form",
           title: "The Phishing Click Outcome",
-          text: "If a recipient clicks the link, they land on this page. It mimics a standard Microsoft login form to capture credentials safely for training. It gives us a clear click event while showing them a safe teaching moment.",
+          assistRequired: true,
+          text: "When a target clicks the link, they land here — a convincing replica of a Microsoft login form. Enter any email and click 'Next' to simulate a credential submission. This records a click event while showing the target a safe awareness message.",
           path: "/fake-login-demo",
           action: (cb) => {
             const emailInput = document.getElementById('email-input');
@@ -4104,6 +5161,7 @@
                 setTimeout(() => {
                   const form = document.getElementById('login-form');
                   const submitBtn = form ? form.querySelector('.btn-next') : null;
+                  sessionStorage.setItem('lure_login_submitted', 'true');
                   if (submitBtn) {
                     submitBtn.click();
                   } else if (cb) {
@@ -4143,12 +5201,20 @@
           targetId: "attack-chain",
           title: "Attack Visualizations",
           text: "Here is the attack chain map. It helps security teams visualize how phishing templates, login forms, and target actions link together to assess risk.",
-          path: "/"
+          path: "/",
+          subTargets: [
+            { selector: '.chain-card[data-step="1"]', duration: 4500, title: "01. Reconnaissance", text: "The AI agent maps the target organization — domain infrastructure, employee directory, and public exposure." },
+            { selector: '.chain-card[data-step="2"]', duration: 4500, title: "02. Target Profiling", text: "Each employee receives an individual risk profile based on their role, seniority, and department footprint." },
+            { selector: '.chain-card[data-step="3"]', duration: 4500, title: "03. Email Generation", text: "AI crafts personalized phishing lures matching recipient tone and context — zero generic templates." },
+            { selector: '.chain-card[data-step="4"]', duration: 4500, title: "04. Campaign Launch", text: "Emails are safely dispatched with embedded simulation telemetry and unique tracking tokens." },
+            { selector: '.chain-card[data-step="5"]', duration: 4500, title: "05. Behavioral Tracking", text: "Opens, clicks, reports, and credential submissions are captured in real-time." },
+            { selector: '.chain-card[data-step="6"]', duration: 4500, title: "06. AI Risk Report", text: "The engine generates executive risk scoring, department heatmaps, and remediation guidance." }
+          ]
         },
         {
-          targetId: "sec-hero",
-          title: "Risk Profile Grading",
-          text: "We'll keep tracking these telemetry signals to grade risk and help you tailor security training where it's needed most.",
+          targetId: "wt-report-hero-demo",
+          title: "Tour Complete! 🎉",
+          text: "You've completed the full PhishSim AI simulation loop. From here, your Risk Profiles update automatically as you run more campaigns — watch the Human Security Score improve as your team gets trained!",
           path: "/reports-demo"
         }
       ],
@@ -4156,6 +5222,7 @@
         {
           targetId: "actual-terminal-wrapper",
           title: "Think Like the Threat",
+          assistRequired: true,
           text: "Hi! I'm Lure, your AI security co-pilot. Ever wondered why phishing is so effective? It starts with intelligence gathering. Attackers research public info to build trust. Let's run a quick scan on a domain to see what they find!",
           path: "/",
           action: (cb) => {
@@ -4356,6 +5423,7 @@
         {
           targetId: "sec-audit-input-token",
           title: "Input Password",
+          assistRequired: true,
           text: "Type any password here to test it. I'll calculate its length, characters, case complexity, and check if it's too common.",
           path: "/password-breach",
           action: (cb) => {
@@ -4376,6 +5444,7 @@
         {
           targetId: "btn-tab-email",
           title: "Email Leak Scanner",
+          assistRequired: true,
           text: "Next, let's head over to the Email Leak tab. You can paste any email address to scan databases of public leaks.",
           path: "/password-breach",
           action: (cb) => {
@@ -4417,6 +5486,11 @@
     let gateIntervalId = null;
     let lastGateSatisfiedState = false;
 
+    let wtSubTargetIndex = -1;
+    let wtSubTargetTimeout = null;
+    let wtActiveSubTargetEl = null;
+    let stepSettleUntil = 0;
+
     let lastScaledTargetEl = null;
     let lastScaledTargetOriginalTransform = '';
 
@@ -4428,11 +5502,74 @@
       }
     }
 
+    function stopSubTargetSequence() {
+      if (wtSubTargetTimeout) {
+        clearTimeout(wtSubTargetTimeout);
+        wtSubTargetTimeout = null;
+      }
+      wtSubTargetIndex = -1;
+      wtActiveSubTargetEl = null;
+    }
+
+    function startSubTargetSequence(step) {
+      stopSubTargetSequence();
+      if (!step || !step.subTargets || step.subTargets.length === 0) return;
+
+      function advanceSubTarget(idx) {
+        if (!wtActive || wtCurrentStep < 0 || wtCurrentStep >= wtSteps.length || wtSteps[wtCurrentStep] !== step) {
+          stopSubTargetSequence();
+          return;
+        }
+
+        if (idx >= step.subTargets.length) {
+          // Completed sequence: restore primary step focus
+          wtSubTargetIndex = -1;
+          wtActiveSubTargetEl = null;
+          renderBubbleContent(step, false);
+          repositionWalkthroughElements();
+          return;
+        }
+
+        wtSubTargetIndex = idx;
+        const item = step.subTargets[idx];
+        const selector = (typeof item === 'string') ? item : item.selector;
+        const el = document.querySelector(selector);
+        wtActiveSubTargetEl = el || null;
+
+        if (el) {
+          // Use smooth scrolling for sub-target transitions to reduce jitter
+          el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          // Settle buffer: wait for scroll to stabilize before repositioning
+          stepSettleUntil = Date.now() + 600;
+          if (typeof item === 'object' && (item.text || item.title)) {
+            renderBubbleContent({
+              title: item.title || step.title,
+              text: item.text || step.text
+            }, false);
+          }
+          // Delay repositioning to let scroll settle
+          setTimeout(() => {
+            if (wtActive) repositionWalkthroughElements();
+          }, 300);
+        }
+
+        const duration = (typeof item === 'object' && item.duration) ? item.duration : 2200;
+        wtSubTargetTimeout = setTimeout(() => {
+          advanceSubTarget(idx + 1);
+        }, duration);
+      }
+
+      advanceSubTarget(0);
+    }
+
     function startGateInterval() {
+      if (!wtActive) return; // Performance guard: only poll during active walkthrough
       if (gateIntervalId) clearInterval(gateIntervalId);
       gateIntervalId = setInterval(() => {
-        if (wtActive && wtCurrentPage === 'getting_started') {
+        if (wtActive) {
           updateWalkthroughGate();
+        } else {
+          stopGateInterval(); // Self-terminating guard
         }
       }, 400);
     }
@@ -4478,13 +5615,14 @@
         }
       }
       if (wtCurrentPage === 'core_workflow') {
+        const currentPath = window.location.pathname.replace(/\/$/, '') || '/';
         if (stepIdx === 2) {
           // Step 3 (Inbox): Gated until user clicks link and lands on /fake-login-demo
-          return false;
+          return currentPath === '/fake-login-demo' || sessionStorage.getItem('lure_followed_email_link') === 'true';
         }
         if (stepIdx === 3) {
-          // Step 4 (Login Form): Gated until user submits credentials and lands on /simulated
-          return false;
+          // Step 4 (Login Form): Gated until user submits credentials and lands on /simulated (or /reporting-demo)
+          return currentPath === '/simulated' || currentPath === '/reporting-demo' || sessionStorage.getItem('lure_login_submitted') === 'true';
         }
       }
       return true; // Other steps are not gated
@@ -4496,18 +5634,33 @@
       if (gateListenersInitialized) return;
       gateListenersInitialized = true;
 
-      // Event listener for inputs on campaign page
+      // Event listener for inputs across forms
       document.body.addEventListener('input', (e) => {
-        if (!wtActive || wtCurrentPage !== 'getting_started') return;
-        if (e.target.id === 'campaign_name' || e.target.id === 'company_domain') {
-          updateWalkthroughGate();
-        }
+        if (!wtActive) return;
+        updateWalkthroughGate();
       });
 
       document.body.addEventListener('change', (e) => {
-        if (!wtActive || wtCurrentPage !== 'getting_started') return;
-        if (e.target.name === 'scenario' || e.target.name === 'delivery_mode' || e.target.id === 'consent_confirmed') {
-          updateWalkthroughGate();
+        if (!wtActive) return;
+        updateWalkthroughGate();
+      });
+
+      // Submit listener for form gating (e.g. login-form)
+      document.body.addEventListener('submit', (e) => {
+        if (!wtActive) return;
+        if (e.target && e.target.id === 'login-form') {
+          sessionStorage.setItem('lure_login_submitted', 'true');
+        }
+        setTimeout(updateWalkthroughGate, 50);
+      });
+
+      // Click listener for tracking email link follow in core_workflow
+      document.body.addEventListener('click', (e) => {
+        if (!wtActive) return;
+        const link = e.target.closest('a');
+        if (link && (link.href.includes('/fake-login-demo') || link.href.includes('/click/') || link.id === 'action-preview-link')) {
+          sessionStorage.setItem('lure_followed_email_link', 'true');
+          setTimeout(updateWalkthroughGate, 50);
         }
       });
     }
@@ -4565,6 +5718,10 @@
       const avatarEl = document.getElementById('pb-avatar');
       if (!avatarEl || !host) return;
 
+      if (window.wtUserDragged && !instant) {
+        return; // Respect user manual placement
+      }
+
       const currentLeft = parseFloat(host.style.left) || -999;
       const currentTop  = parseFloat(host.style.top)  || -999;
 
@@ -4581,7 +5738,8 @@
         return;
       }
 
-      if (Math.abs(currentLeft - targetLeft) < 4 && Math.abs(currentTop - targetTop) < 4) {
+      // 18px deadband prevents micro-oscillation shaking
+      if (Math.abs(currentLeft - targetLeft) < 18 && Math.abs(currentTop - targetTop) < 18) {
         return;
       }
 
@@ -4615,14 +5773,14 @@
       const bubbleEl = document.getElementById('pb-wt-bubble');
       if (bubbleEl) {
         bubbleEl.innerHTML = `
-          <div style="display:flex; flex-direction:column; gap:10px; min-height:80px; justify-content:center; align-items:center; text-align:center;">
-            <span style="font-family:var(--sans); font-size:0.75rem; font-weight:700; color:var(--primary);">
+          <div class="pb-wt-bubble-swim-msg">
+            <span class="pb-wt-bubble-swim-title">
               Swimming to next section...
             </span>
-            <p style="font-size:0.7rem; color:#f8fafc; line-height:1.45; margin:0;">
+            <p class="pb-wt-bubble-swim-text">
               Hold tight! I'm moving to the next page to set up the next steps.
             </p>
-            <div style="width:16px; height:16px; border:2px solid rgba(6,182,212,0.2); border-top-color:var(--primary); border-radius:50%; animation:pbSpin 0.8s linear infinite; margin-top:4px;"></div>
+            <div class="pb-wt-bubble-swim-spinner"></div>
           </div>
         `;
         repositionWalkthroughElements();
@@ -4691,6 +5849,7 @@
     }
 
     let wtRepositionInterval = null;
+    let stepSettleUntil = 0;
     let lastTargetLeft = null;
     let lastTargetTop = null;
     let lastTargetWidth = null;
@@ -4699,12 +5858,15 @@
     let lastScrollY = null;
 
     function startWtRepositionLoop() {
+      if (!wtActive) return; // Performance guard: only run during active walkthrough
       if (wtRepositionInterval) clearInterval(wtRepositionInterval);
       wtRepositionInterval = setInterval(() => {
         if (wtActive) {
           repositionWalkthroughElements(true);
+        } else {
+          stopWtRepositionLoop(); // Self-terminating guard
         }
-      }, 250);
+      }, 350); // Slightly longer interval for better performance (was 250ms)
     }
 
     let unseenCalloutsCount = 0;
@@ -4724,20 +5886,25 @@
 
     function repositionWalkthroughElements(isPageScroll = false) {
       if (!wtActive || wtCurrentStep < 0 || wtCurrentStep >= wtSteps.length) return;
+      if (window.wtUserDragged) return; // User manually positioned mascot, respect their drag!
       const step = wtSteps[wtCurrentStep];
 
-      // Resolve the target element (dashboard empty-state override)
+      // Resolve the target element (sub-target override or dashboard empty-state override)
+      let targetEl = wtActiveSubTargetEl;
       let currentTargetId = step.targetId;
-      const onDashboard = window.location.pathname.startsWith('/dashboard');
-      const emptyStateActive = document.getElementById('no-campaigns-card') &&
-            document.getElementById('no-campaigns-card').style.display !== 'none';
-      if (onDashboard && emptyStateActive) {
-        if (currentTargetId === 'wt-dashboard-view' || currentTargetId === 'mainTrendChart') {
-          currentTargetId = 'no-campaigns-card';
+
+      if (!targetEl) {
+        const onDashboard = window.location.pathname.startsWith('/dashboard');
+        const emptyStateActive = document.getElementById('no-campaigns-card') &&
+              document.getElementById('no-campaigns-card').style.display !== 'none';
+        if (onDashboard && emptyStateActive) {
+          if (currentTargetId === 'wt-dashboard-view' || currentTargetId === 'mainTrendChart') {
+            currentTargetId = 'no-campaigns-card';
+          }
         }
+        targetEl = document.getElementById(currentTargetId);
       }
 
-      const targetEl = document.getElementById(currentTargetId);
       let highlighter = document.getElementById('pb-wt-highlighter');
 
       // Prevent infinite layout feedback loop if target is mascot itself
@@ -4789,40 +5956,31 @@
       const vw        = window.innerWidth;
       const vh        = window.innerHeight;
       const margin    = 16;
+      const gap       = 14;
       const mascotW   = 110;
-      const bubbleW   = 410;
-      const gap       = 10;
-      const hostW     = mascotW + gap + bubbleW;   // ~530px
       const bubbleEl  = document.getElementById('pb-wt-bubble');
+      const bubbleW   = bubbleEl ? Math.max(bubbleEl.offsetWidth, 360) : 410;
+      const hostW     = mascotW + 12 + bubbleW;   // ~530px
       const hostH     = bubbleEl ? Math.max(bubbleEl.offsetHeight, 160) : 200;
 
-      // Calculate dynamic scaling for wide targets on narrow viewports
-      const totalWNeeded = rect.width + hostW + margin * 4;
-      if (vw > 768 && vw < totalWNeeded) {
-        const scale = Math.max(0.72, vw / totalWNeeded);
-        if (!lastScaledTargetEl) {
-          lastScaledTargetEl = targetEl;
-          lastScaledTargetOriginalTransform = targetEl.style.transform || '';
-        }
-        targetEl.style.transform = `scale(${scale})`;
-        targetEl.style.transformOrigin = 'center center';
-        targetEl.style.transition = 'transform 0.2s ease-out';
-        // Re-measure bounding box after scaling down
-        rect = targetEl.getBoundingClientRect();
-      } else if (lastScaledTargetEl === targetEl) {
-        resetLastScaledTarget();
-        rect = targetEl.getBoundingClientRect();
+      // Animation settle check (Task 1c): ignore micro-jitters during load-in animations
+      const inSettleWindow = Date.now() < stepSettleUntil;
+      const posDeltaX = lastTargetLeft !== null ? Math.abs(rect.left - lastTargetLeft) : 999;
+      const posDeltaY = lastTargetTop !== null ? Math.abs(rect.top - lastTargetTop) : 999;
+      const sizeDeltaW = lastTargetWidth !== null ? Math.abs(rect.width - lastTargetWidth) : 999;
+      const sizeDeltaH = lastTargetHeight !== null ? Math.abs(rect.height - lastTargetHeight) : 999;
+      const scrollDeltaX = lastScrollX !== null ? Math.abs(currentScrollX - lastScrollX) : 999;
+      const scrollDeltaY = lastScrollY !== null ? Math.abs(currentScrollY - lastScrollY) : 999;
+
+      if (
+        posDeltaX < 4 && posDeltaY < 4 &&
+        sizeDeltaW < 4 && sizeDeltaH < 4 &&
+        scrollDeltaX === 0 && scrollDeltaY === 0
+      ) {
+        return;
       }
 
-      // Layout caching optimization: bypass positioning if no coordinates/size/scroll changed
-      if (
-        rect.left === lastTargetLeft &&
-        rect.top === lastTargetTop &&
-        rect.width === lastTargetWidth &&
-        rect.height === lastTargetHeight &&
-        currentScrollX === lastScrollX &&
-        currentScrollY === lastScrollY
-      ) {
+      if (inSettleWindow && !isPageScroll && posDeltaX < 8 && posDeltaY < 8 && sizeDeltaW < 8 && sizeDeltaH < 8) {
         return;
       }
 
@@ -4862,52 +6020,102 @@
       }
       if (bubbleEl) bubbleEl.classList.remove('pb-mobile-no-arrow');
 
-      // Compute available space on each side (viewport-relative)
-      const spaceRight  = vw - rect.right;
-      const spaceLeft   = rect.left;
-      const spaceBottom = vh - rect.bottom;
-      const spaceTop    = rect.top;
-
-      // Pick the side with the most room for the full host group
-      let bestSide = 'right';
-      let maxSpace = spaceRight;
-
-      if (spaceLeft > maxSpace && spaceLeft >= hostW + margin) {
-        bestSide = 'left';
-        maxSpace = spaceLeft;
-      }
-      if (spaceBottom > maxSpace) {
-        bestSide = 'bottom';
-        maxSpace = spaceBottom;
-      }
-      if (spaceTop > maxSpace) {
-        bestSide = 'top';
-        maxSpace = spaceTop;
+      // Helper to compute rectangular overlap area between host box and target rect (Task 1b)
+      function getOverlap(hx, hy) {
+        const overlapW = Math.max(0, Math.min(hx + hostW, rect.right) - Math.max(hx, rect.left));
+        const overlapH = Math.max(0, Math.min(hy + hostH, rect.bottom) - Math.max(hy, rect.top));
+        return overlapW * overlapH;
       }
 
-      // Force right if it fits (most common layout)
-      if (spaceRight >= hostW + margin) bestSide = 'right';
+      // Evaluate 4 candidate placements (Right, Left, Bottom, Top)
+      const candidates = [];
 
-      let hostLeft = 0;
-      let hostTop  = 0;
+      // 1. Right candidate
+      const rightX = rect.right + gap;
+      const rightY = Math.max(margin, Math.min(rect.top + (rect.height - hostH) / 2, vh - hostH - margin));
+      const rightFits = (rightX + hostW <= vw - margin);
+      candidates.push({
+        side: 'right',
+        x: rightX,
+        y: rightY,
+        fits: rightFits,
+        overlap: getOverlap(rightX, rightY),
+        freeSpace: vw - rect.right - hostW - margin
+      });
 
-      if (bestSide === 'right') {
-        hostLeft = rect.right + gap;
-        hostTop  = rect.top + (rect.height - hostH) / 2;
-      } else if (bestSide === 'left') {
-        hostLeft = rect.left - hostW - gap;
-        hostTop  = rect.top + (rect.height - hostH) / 2;
-      } else if (bestSide === 'top') {
-        hostLeft = rect.left + (rect.width - hostW) / 2;
-        hostTop  = rect.top - hostH - gap;
+      // 2. Left candidate
+      const leftX = rect.left - hostW - gap;
+      const leftY = Math.max(margin, Math.min(rect.top + (rect.height - hostH) / 2, vh - hostH - margin));
+      const leftFits = (leftX >= margin);
+      candidates.push({
+        side: 'left',
+        x: leftX,
+        y: leftY,
+        fits: leftFits,
+        overlap: getOverlap(leftX, leftY),
+        freeSpace: rect.left - hostW - margin
+      });
+
+      // 3. Bottom candidate
+      const bottomX = Math.max(margin, Math.min(rect.left + (rect.width - hostW) / 2, vw - hostW - margin));
+      const bottomY = rect.bottom + gap;
+      const bottomFits = (bottomY + hostH <= vh - margin);
+      candidates.push({
+        side: 'bottom',
+        x: bottomX,
+        y: bottomY,
+        fits: bottomFits,
+        overlap: getOverlap(bottomX, bottomY),
+        freeSpace: vh - rect.bottom - hostH - margin
+      });
+
+      // 4. Top candidate
+      const topX = Math.max(margin, Math.min(rect.left + (rect.width - hostW) / 2, vw - hostW - margin));
+      const topY = rect.top - hostH - gap;
+      const topFits = (topY >= margin);
+      candidates.push({
+        side: 'top',
+        x: topX,
+        y: topY,
+        fits: topFits,
+        overlap: getOverlap(topX, topY),
+        freeSpace: rect.top - hostH - margin
+      });
+
+      // Prefer candidate with zero overlap and best fit
+      let chosen = null;
+      const zeroOverlapCandidates = candidates.filter(c => c.fits && c.overlap === 0);
+
+      if (zeroOverlapCandidates.length > 0) {
+        // If target is wide (e.g. wt-report-hero or sec-hero), prefer bottom/top
+        const isWideTarget = rect.width > (vw * 0.55);
+        if (isWideTarget) {
+          const verticalZero = zeroOverlapCandidates.find(c => c.side === 'bottom' || c.side === 'top');
+          chosen = verticalZero || zeroOverlapCandidates[0];
+        } else {
+          // Standard preference: right -> left -> bottom -> top
+          const rightCand = zeroOverlapCandidates.find(c => c.side === 'right');
+          chosen = rightCand || zeroOverlapCandidates[0];
+        }
       } else {
-        hostLeft = rect.left + (rect.width - hostW) / 2;
-        hostTop  = rect.bottom + gap;
+        // Sort candidates by minimum overlap area, then by most free space
+        candidates.sort((a, b) => {
+          if (a.overlap !== b.overlap) return a.overlap - b.overlap;
+          return b.freeSpace - a.freeSpace;
+        });
+        chosen = candidates[0];
       }
 
-      // Face direction
+      let hostLeft = chosen.x;
+      let hostTop = chosen.y;
+
+      // Ensure final values are clamped within viewport margins
+      const cardLeft = Math.max(margin, Math.min(hostLeft, vw - hostW - margin));
+      const cardTop  = Math.max(margin, Math.min(hostTop,  vh - hostH - margin));
+
+      // Set facing direction and row order
       const targetCx = rect.left + rect.width / 2;
-      const hostCx   = hostLeft + hostW / 2;
+      const hostCx   = cardLeft + hostW / 2;
       if (targetCx < hostCx) {
         avatar.classList.add('pb-face-left');
         setHostState({ tourDirection: 'left' });
@@ -4915,10 +6123,6 @@
         avatar.classList.remove('pb-face-left');
         setHostState({ tourDirection: 'right' });
       }
-
-      // Clamp to viewport with margin
-      const cardLeft = Math.max(margin, Math.min(hostLeft, vw - hostW - margin));
-      const cardTop  = Math.max(margin, Math.min(hostTop,  vh - hostH - margin));
 
       swimMascot(cardLeft, cardTop);
     }
@@ -4990,6 +6194,46 @@
       }
     };
 
+    // ── Tour Picker Accordion State Manager (Task 1a) ──
+    if (!window.pbTourCategoriesState) {
+      window.pbTourCategoriesState = {
+        "Core Simulator Tours": true, // Expanded by default
+        "Feature Deep-Dives": false,
+        "Standalone Forensic Tools": false
+      };
+    }
+    
+    window.toggleTourCategory = function(catName, event) {
+      if (event) {
+        event.stopPropagation();
+        event.preventDefault();
+      }
+      if (!window.pbTourCategoriesState) {
+        window.pbTourCategoriesState = {
+          "Core Simulator Tours": true,
+          "Feature Deep-Dives": false,
+          "Standalone Forensic Tools": false
+        };
+      }
+      const newState = !window.pbTourCategoriesState[catName];
+      window.pbTourCategoriesState[catName] = newState;
+
+      const escapedCat = catName.replace(/"/g, '\\"');
+      const sections = document.querySelectorAll(`.pb-tour-cat-section[data-cat="${escapedCat}"]`);
+      sections.forEach(sec => {
+        const body = sec.querySelector('.pb-tour-cat-body');
+        const chevron = sec.querySelector('.pb-tour-cat-chevron');
+        if (body) {
+          body.style.display = newState ? 'flex' : 'none';
+          body.style.flexDirection = 'column';
+          body.style.width = '100%';
+        }
+        if (chevron) {
+          chevron.className = (newState ? 'ti ti-chevron-up' : 'ti ti-chevron-down') + ' pb-tour-cat-chevron';
+        }
+      });
+    };
+
     window.renderToursList = function() {
       const containers = document.querySelectorAll('.pb-wt-guide-list');
       if (containers.length === 0) return;
@@ -5005,8 +6249,29 @@
       let html = '';
       
       categories.forEach(cat => {
-        // Add category header
-        html += `<div class="pb-tour-cat-header" style="font-family:var(--mono); font-size:0.65rem; color:var(--text-secondary,#8CA0B3); text-transform:uppercase; margin: 16px 0 6px 4px; letter-spacing:0.5px;">${cat}</div>`;
+        // Calculate dynamic counts
+        const categoryToursKeys = Object.keys(TOUR_METADATA).filter(k => TOUR_METADATA[k].category === cat);
+        const totalCount = categoryToursKeys.length;
+        const completedCount = categoryToursKeys.filter(k => visitorProfile.completedTours && visitorProfile.completedTours[k]).length;
+        
+        const isExpanded = !!window.pbTourCategoriesState[cat];
+        const chevronClass = isExpanded ? 'ti ti-chevron-up' : 'ti ti-chevron-down';
+        
+        // Render Category Header Accordion Trigger
+        html += `
+          <div class="pb-tour-cat-section" data-cat="${cat}">
+            <div class="pb-tour-cat-accordion-header" onclick="toggleTourCategory('${cat}', event)">
+              <div class="pb-tour-cat-header-left">
+                <span class="pb-tour-cat-name">${cat}</span>
+                <span class="pb-tour-cat-count">${totalCount} ${totalCount === 1 ? 'tour' : 'tours'}</span>
+                <span class="pb-tour-cat-completion">${completedCount}/${totalCount} done</span>
+              </div>
+              <div class="pb-tour-cat-header-right">
+                <i class="${chevronClass} pb-tour-cat-chevron"></i>
+              </div>
+            </div>
+            <div class="pb-tour-cat-body" style="display: ${isExpanded ? 'flex' : 'none'}; flex-direction: column !important; gap: 12px !important; width: 100% !important;">
+        `;
         
         // Find tours in this category
         for (const key in TOUR_METADATA) {
@@ -5020,72 +6285,82 @@
           const currentStep = visitorProfile.tourProgress ? visitorProfile.tourProgress[key] : undefined;
           const isInProgress = !isCompleted && currentStep !== undefined && currentStep >= 0;
           
-          let badgeHtml = '';
-          let cardStyle = '';
-          let nameStyle = 'font-weight: 600; color: var(--text-primary);';
-          let btnStyle = 'background: rgba(255,255,255,0.05); color: var(--text-primary); padding: 4px; border-radius: 4px; border: none; cursor: pointer;';
+          let cardClass = 'pb-wt-guide-card';
+          let tourThemeColor = 'var(--primary)';
           let progressBarHtml = '';
           let tierBadgeHtml = '';
+          let badgeHtml = '';
 
           // Tier badge labeling
           if (meta.tier === 'start') {
-            tierBadgeHtml = `<span style="font-size: 0.52rem; font-weight: 800; text-transform: uppercase; color: var(--primary); background: rgba(6,182,212,0.12); padding: 2px 5px; border-radius: 4px; border: 1px solid rgba(6,182,212,0.25); margin-left: 6px;">Start Here</span>`;
+            tierBadgeHtml = `<span class="pb-tour-tier-badge tier-start">Start Here</span>`;
           } else if (meta.tier === 'flagship') {
-            tierBadgeHtml = `<span style="font-size: 0.52rem; font-weight: 800; text-transform: uppercase; color: var(--lure-gold); background: rgba(245,158,11,0.12); padding: 2px 5px; border-radius: 4px; border: 1px solid rgba(245,158,11,0.25); margin-left: 6px;">Flagship</span>`;
+            tierBadgeHtml = `<span class="pb-tour-tier-badge tier-flagship">Flagship</span>`;
           }
 
           if (isCompleted) {
-            badgeHtml = `<span class="pb-tour-badge completed" style="font-size: 0.6rem; font-weight: 700; color: var(--lure-gold); background: color-mix(in srgb, var(--lure-gold) 10%, transparent); padding: 2px 6px; border-radius: 4px; border: 1px solid color-mix(in srgb, var(--lure-gold) 20%, transparent); display: flex; align-items: center; gap: 3px; flex-shrink: 0;"><i class="ti ti-trophy"></i> Done</span>`;
-            cardStyle = `border-color: var(--lure-gold); background: color-mix(in srgb, var(--lure-gold) 4%, transparent);`;
-            btnStyle = `background: rgba(245, 158, 11, 0.15); color: var(--lure-gold); padding: 4px; border-radius: 4px; border: 1px solid rgba(245, 158, 11, 0.3); cursor: pointer;`;
+            if (key === 'core_workflow') {
+              cardClass += ' flagship-completed completed';
+              tourThemeColor = 'var(--lure-gold)';
+              badgeHtml = `<span class="pb-tour-badge flagship-completed"><i class="ti ti-trophy"></i> Done</span>`;
+            } else {
+              cardClass += ' completed';
+              tourThemeColor = 'var(--text-secondary)';
+              badgeHtml = `<span class="pb-tour-badge completed"><i class="ti ti-check"></i> Done</span>`;
+            }
             progressBarHtml = `
-              <div style="width: 100%; height: 3px; background: rgba(255,255,255,0.05); border-radius: 2px; margin-top: 8px; overflow: hidden;">
-                <div style="width: 100%; height: 100%; background: var(--lure-gold); border-radius: 2px;"></div>
+              <div class="pb-wt-guide-progress-bar">
+                <div class="pb-wt-guide-progress-fill" style="width: 100%;"></div>
               </div>
             `;
           } else if (isInProgress) {
-            const tourThemeColor = (key === 'core_workflow') ? 'var(--lure-gold)' : 'var(--warning)';
-            badgeHtml = `<span class="pb-tour-badge progress" style="font-size: 0.6rem; font-weight: 700; color: ${tourThemeColor}; background: color-mix(in srgb, ${tourThemeColor} 10%, transparent); padding: 2px 6px; border-radius: 4px; border: 1px solid color-mix(in srgb, ${tourThemeColor} 20%, transparent); display: flex; align-items: center; gap: 3px; flex-shrink: 0;"><i class="ti ti-progress"></i> Step ${currentStep + 1}/${totalSteps}</span>`;
-            cardStyle = `border-color: color-mix(in srgb, ${tourThemeColor} 35%, transparent); background: color-mix(in srgb, ${tourThemeColor} 4%, transparent);`;
-            btnStyle = `background: ${tourThemeColor}; color: #000; padding: 4px; border-radius: 4px; border: none; cursor: pointer;`;
+            cardClass += ' in-progress';
+            tourThemeColor = (key === 'core_workflow') ? 'var(--lure-gold)' : 'var(--warning)';
+            badgeHtml = `<span class="pb-tour-badge progress"><i class="ti ti-progress"></i> Step ${currentStep + 1}/${totalSteps}</span>`;
             const progressPercent = Math.round(((currentStep + 1) / totalSteps) * 100);
             progressBarHtml = `
-              <div style="width: 100%; height: 3px; background: rgba(255,255,255,0.08); border-radius: 2px; margin-top: 8px; overflow: hidden;">
-                <div style="width: ${progressPercent}%; height: 100%; background: ${tourThemeColor}; border-radius: 2px; transition: width 0.3s ease;"></div>
+              <div class="pb-wt-guide-progress-bar">
+                <div class="pb-wt-guide-progress-fill" style="width: ${progressPercent}%;"></div>
               </div>
             `;
           } else {
             // Unstarted tier layouts
             if (meta.tier === 'start') {
-              cardStyle = `border-color: var(--primary); background: color-mix(in srgb, var(--primary) 6%, transparent); box-shadow: 0 0 12px rgba(6,182,212,0.15);`;
-              nameStyle = `font-weight: 700; color: var(--primary);`;
-              btnStyle = `background: var(--primary); color: #000; padding: 4px; border-radius: 4px; border: none; cursor: pointer;`;
+              cardClass += ' tier-start';
+              tourThemeColor = 'var(--primary)';
             } else if (meta.tier === 'flagship') {
-              cardStyle = `border-color: color-mix(in srgb, var(--lure-gold) 40%, transparent); background: color-mix(in srgb, var(--lure-gold) 3%, transparent);`;
-              nameStyle = `font-weight: 700; color: var(--lure-gold);`;
-              btnStyle = `background: var(--lure-gold); color: #000; padding: 4px; border-radius: 4px; border: none; cursor: pointer;`;
-            } else {
-              cardStyle = `border-color: rgba(255,255,255,0.06); background: rgba(255,255,255,0.02);`;
+              cardClass += ' tier-flagship';
+              tourThemeColor = 'var(--lure-gold)';
             }
           }
           
           html += `
-            <div class="pb-wt-guide-card" onclick="startWalkthrough('${key}')" style="${cardStyle}">
-              <div class="pb-wt-guide-icon" style="color: ${meta.color};"><i class="${meta.icon}"></i></div>
-              <div class="pb-wt-guide-info">
-                <div class="pb-wt-guide-name" style="${nameStyle}">
-                  ${meta.name} (${totalSteps} steps) ${tierBadgeHtml}
+            <div class="${cardClass}" onclick="startWalkthrough('${key}')" style="--tour-color: ${meta.color}; --tour-theme-color: ${tourThemeColor};">
+              <div class="pb-wt-guide-icon-wrap" style="color: var(--tour-color);">
+                <i class="${meta.icon}"></i>
+              </div>
+              <div class="pb-wt-guide-content">
+                <div class="pb-wt-guide-title-row">
+                  <span class="pb-wt-guide-name">${meta.name}</span>
+                  <span class="pb-wt-guide-steps-count">(${totalSteps} steps)</span>
+                  <div class="pb-wt-guide-tier-badges">${tierBadgeHtml}</div>
                 </div>
-                <div class="pb-wt-guide-desc">${meta.desc}</div>
+                <p class="pb-wt-guide-desc">${meta.desc}</p>
                 ${progressBarHtml}
               </div>
-              <div style="display:flex; align-items:center; gap:8px; margin-left: 8px;">
+              <div class="pb-wt-guide-actions">
                 ${badgeHtml}
-                <button class="pb-wt-guide-go" style="${btnStyle}"><i class="ti ti-arrow-right"></i></button>
+                <button class="pb-wt-guide-go"><i class="ti ti-arrow-right"></i></button>
               </div>
             </div>
           `;
         }
+        
+        // Close category body & section
+        html += `
+            </div>
+          </div>
+        `;
       });
       
       containers.forEach(container => {
@@ -5094,6 +6369,7 @@
     };
 
     window.startWalkthrough = function(pageKey) {
+      window.wtUserDragged = false;
       const config = WALKTHROUGH_CONFIGS[pageKey];
       if (!config || config.length === 0) return;
       initGateListeners();
@@ -5172,13 +6448,7 @@
       const wtThemeColor = (wtCurrentPage === 'core_workflow') ? 'var(--lure-gold)' : 'var(--primary)';
       const isLastStep = (wtCurrentStep === wtSteps.length - 1);
       
-      let dotsHtml = '<div style="display:flex; gap:5px; align-items:center; margin-top:6px;">';
-      for (let i = 0; i < wtSteps.length; i++) {
-        const isCurrent = (i === wtCurrentStep);
-        dotsHtml += `<span style="width:6px; height:6px; border-radius:50%; border:1px solid ${wtThemeColor}; background:${isCurrent ? wtThemeColor : 'transparent'}; display:inline-block;"></span>`;
-      }
-      dotsHtml += '</div>';
-
+      const progressPercent = Math.round(((wtCurrentStep + 1) / wtSteps.length) * 100);
       const esc = (s) => (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
       // Gating instruction text overrides based on step index
@@ -5191,63 +6461,72 @@
         if (wtCurrentStep === 4) gatePromptText = "Action Required: Select a delivery mode above (e.g. Sandbox Test)!";
         if (wtCurrentStep === 5) gatePromptText = "Action Required: Check the 'Authorization Required' checkbox below!";
       }
+      if (wtCurrentPage === 'core_workflow') {
+        if (wtCurrentStep === 2) gatePromptText = "Action Required: Click the phishing link in the email to inspect the landing page!";
+        if (wtCurrentStep === 3) gatePromptText = "Action Required: Submit credentials in the login form to trigger the simulation outcome!";
+      }
+
+      const avatarSrc = mascotImages[currentMascotState] || mascotImages.idle;
 
       bubbleEl.innerHTML = `
-        <div style="display:flex; flex-direction:column; gap:12px;">
-          <!-- Header title & counter -->
-          <div style="display:flex; flex-direction:column; border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom:6px;">
-            <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
-              <span style="font-family: inherit; font-size:13px; font-weight:700; color:${isSkipped ? 'var(--warning)' : wtThemeColor};">
+        <div class="pb-wt-bubble-container">
+          <!-- Header: Mascot avatar + step title + thin horizontal progress bar -->
+          <div class="pb-wt-bubble-header">
+            <div class="pb-wt-bubble-header-top">
+              <div class="pb-wt-bubble-avatar-crop">
+                <img src="${avatarSrc}" alt="Lure" class="pb-wt-bubble-avatar-img">
+              </div>
+              <span class="pb-wt-bubble-title" style="color: ${isSkipped ? 'var(--warning)' : wtThemeColor};">
                 ${esc(step.title)}
               </span>
-              <span style="font-family:var(--mono); font-size:9.5px; color:var(--text-secondary,#94A3B8); font-weight:500;">
+              <span class="pb-wt-bubble-step-indicator">
                 Step ${wtCurrentStep + 1} of ${wtSteps.length}
               </span>
             </div>
-            ${dotsHtml}
+            <div class="pb-wt-bubble-progress-bar">
+              <div class="pb-wt-bubble-progress-fill" style="width: ${progressPercent}%; background: ${wtThemeColor};"></div>
+            </div>
           </div>
 
-          <!-- Dialogue bubble with speech text -->
-          <div style="display:flex; gap:12px; align-items:flex-start;">
-            <div style="flex:1;">
-              <p style="font-size:12px; color:var(--text-primary,#F0F4FF); line-height:1.5; margin:0; font-family: inherit;">
-                ${esc(step.text)}
-              </p>
-              
-              <!-- Gate visual feedback badge -->
-              <div class="pb-gate-prompt" style="display:none; align-items:center; gap:8px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); padding:8px 12px; border-radius:8px; font-size:11px; color:var(--text-secondary,#94A3B8); line-height:1.4; margin-top:10px;">
-                <i class="ti ti-lock" style="font-size:0.95rem; color:${wtThemeColor};"></i>
-                <span style="font-weight: 500;">${esc(gatePromptText)}</span>
-              </div>
+          <!-- Body text -->
+          <div class="pb-wt-bubble-body">
+            <p class="pb-wt-bubble-text">
+              ${esc(step.text)}
+            </p>
+            
+            <!-- Gate visual feedback badge -->
+            <div class="pb-gate-prompt">
+              <i class="ti ti-lock" style="color: ${wtThemeColor};"></i>
+              <span>${esc(gatePromptText)}</span>
             </div>
           </div>
 
           <!-- Action buttons row -->
-          <div style="display:flex; flex-direction:column; gap:8px; margin-top:4px;">
-            <div style="display:flex; justify-content:space-between; gap:8px;">
-              <button class="pb-action-btn" onclick="prevWalkthroughStep()" ${wtCurrentStep === 0 ? 'disabled class="pb-disabled"' : ''} style="flex:1; padding:6px 10px; font-size:11.5px; margin: 0; font-family: inherit; font-weight: 500;">
+          <div class="pb-wt-bubble-action-row">
+            <div class="pb-wt-bubble-actions-left">
+              <button class="pb-wt-bubble-btn-quiet" onclick="prevWalkthroughStep()" ${wtCurrentStep === 0 ? 'disabled' : ''}>
                 <i class="ti ti-arrow-left"></i> Back
               </button>
-              <button class="pb-action-btn" onclick="repeatWalkthroughStep()" style="flex:1; padding:6px 10px; font-size:11.5px; margin: 0; font-family: inherit; font-weight: 500;">
+              <button class="pb-wt-bubble-btn-quiet" onclick="repeatWalkthroughStep()">
                 <i class="ti ti-refresh"></i> Repeat
               </button>
-              <button class="pb-action-btn pb-next-btn" onclick="nextWalkthroughStepBtn()" style="flex:2; padding:6px 10px; font-size:11.5px; font-weight:bold; background:${wtThemeColor}; color:var(--bg-base,#020617); margin: 0; font-family: inherit;">
-                ${isLastStep ? 'Finish' : 'Next <i class="ti ti-arrow-right"></i>'}
-              </button>
-            </div>
-            <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid rgba(255,255,255,0.04); padding-top:6px; font-size:10.5px; font-family: inherit;">
-              <button class="pb-action-btn" onclick="exitWalkthrough()" style="padding:2px 6px; font-size:10.5px; background:transparent; opacity:0.6; margin: 0; border: none !important;">
-                Skip All
-              </button>
-              ${step.action ? `
-                <button class="pb-action-btn" onclick="runStepAction()" style="padding:2px 6px; font-size:10.5px; background:transparent; opacity:0.9; color:${wtThemeColor}; margin: 0; font-weight: bold; border: none !important;">
+              ${(step.action && step.assistRequired) ? `
+                <button class="pb-wt-bubble-btn-lure" onclick="runStepAction()">
                   <i class="ti ti-wand"></i> Let Lure do it
                 </button>
               ` : ''}
-              <button class="pb-action-btn" onclick="nextWalkthroughStepBtn()" style="padding:2px 6px; font-size:10.5px; background:transparent; opacity:0.6; margin: 0; border: none !important;">
-                Skip Step
+            </div>
+            <div class="pb-wt-bubble-actions-right">
+              <button class="pb-wt-bubble-btn-primary pb-next-btn" onclick="nextWalkthroughStepBtn()" style="background: ${wtThemeColor};">
+                ${isLastStep ? 'Finish' : 'Next <i class="ti ti-arrow-right"></i>'}
               </button>
             </div>
+          </div>
+          
+          <!-- Extra footer actions -->
+          <div class="pb-wt-bubble-footer-actions">
+            <button class="pb-wt-bubble-btn-quiet" onclick="exitWalkthrough()">Skip Tour</button>
+            <button class="pb-wt-bubble-btn-quiet" onclick="nextWalkthroughStepBtn()">Skip Step</button>
           </div>
         </div>
       `;
@@ -5255,6 +6534,10 @@
 
     function renderWalkthroughStep() {
       if (!wtActive || wtCurrentStep < 0 || wtCurrentStep >= wtSteps.length) return;
+
+      window.wtUserDragged = false;
+      stopSubTargetSequence();
+      stepSettleUntil = Date.now() + 1500;
 
       // Update progress in visitorProfile
       loadVisitorProfile();
@@ -5291,7 +6574,18 @@
         htmlStyle.scrollBehavior = 'auto';
         bodyStyle.scrollBehavior = 'auto';
         
-        targetEl.scrollIntoView({ behavior: 'auto', block: 'center' });
+        const targetRect = targetEl.getBoundingClientRect();
+        const vh = window.innerHeight;
+        const isTall = targetRect.height > vh * 0.45;
+
+        if (isTall) {
+          targetEl.scrollIntoView({ behavior: 'auto', block: 'start' });
+          if (window.scrollY > 80) {
+            window.scrollBy({ top: -60, behavior: 'auto' });
+          }
+        } else {
+          targetEl.scrollIntoView({ behavior: 'auto', block: 'center' });
+        }
         
         // Force layout reflow to apply scroll change immediately
         void targetEl.offsetHeight;
@@ -5333,6 +6627,11 @@
         }
 
         updateWalkthroughGate();
+
+        // If step has subTargets configured, kick off sequential highlighting
+        if (s.subTargets && s.subTargets.length > 0) {
+          startSubTargetSequence(s);
+        }
       }
 
       function tryHighlightAndPosition() {
@@ -5417,11 +6716,15 @@
 
     window.repeatWalkthroughStep = function() {
       if (!wtActive || wtCurrentStep < 0 || wtCurrentStep >= wtSteps.length) return;
+      stopSubTargetSequence();
       const step = wtSteps[wtCurrentStep];
       const targetEl = document.getElementById(step.targetId);
       if (targetEl) {
         targetEl.scrollIntoView({ behavior: 'auto', block: 'center' });
         repositionWalkthroughElements();
+      }
+      if (step.subTargets && step.subTargets.length > 0) {
+        startSubTargetSequence(step);
       }
       if (step.action) {
         runStepAction();
@@ -5429,6 +6732,7 @@
     };
 
     window.nextWalkthroughStepBtn = function() {
+      stopSubTargetSequence();
       if (wtCurrentStep === wtSteps.length - 1) {
         finishWalkthrough();
         return;
@@ -5457,6 +6761,7 @@
     };
 
     window.prevWalkthroughStep = function() {
+      stopSubTargetSequence();
       if (wtCurrentStep > 0) {
         wtCurrentStep--;
         localStorage.setItem('pb_wt_step_idx', wtCurrentStep.toString());
@@ -5502,6 +6807,7 @@
     function cleanupWalkthrough() {
       wtActive = false;
       isFirstStep = true;
+      stopSubTargetSequence();
       resetLastScaledTarget();
       localStorage.removeItem('pb_wt_active');
       localStorage.removeItem('pb_wt_page_key');
@@ -5703,7 +7009,7 @@
                 limitText.style.color = "var(--warning)";
               } else {
                 limitText.textContent = `Rounds Left Today: ${gameRoundsLeft} / 3`;
-                limitText.style.color = "var(--text-secondary, #94A3B8)";
+                limitText.style.color = "var(--text-secondary, var(--lure-text-secondary))";
               }
             }
             const nextBtn = document.getElementById("stp-next-btn");
@@ -5739,7 +7045,7 @@
                 limitText.style.color = "var(--warning)";
               } else {
                 limitText.textContent = `Rounds Left Today: ${ilGameRoundsLeft} / 3`;
-                limitText.style.color = "var(--text-secondary, #94A3B8)";
+                limitText.style.color = "var(--text-secondary, var(--lure-text-secondary))";
               }
             }
             const nextBtn = document.getElementById("stp-il-next-btn");
@@ -5788,7 +7094,7 @@
         const res = await fetch("/api/spot-the-phish/generate", { method: "POST" });
         if (res.status === 429) {
           const j = await res.json();
-          con.innerHTML = `<div style="color:var(--warning);font-size:0.7rem;text-align:center;">${esc(j.message)}</div>`;
+          con.innerHTML = `<div style="color:var(--warning);font-size: var(--lure-font-xs);text-align:center;">${esc(j.message)}</div>`;
           gameRoundsLeft = 0;
           await updateGameStatus();
           return;
@@ -5805,7 +7111,7 @@
           const box = document.createElement('div');
           box.className = 'stp-box';
           box.innerHTML = `
-            <div class="stp-box-chrome"><span style="background:#ef4444;"></span><span style="background:#f59e0b;"></span><span style="background:#10b981;"></span></div>
+            <div class="stp-box-chrome"><span style="background:var(--lure-error);"></span><span style="background:var(--lure-warning);"></span><span style="background:var(--lure-success);"></span></div>
             <div class="stp-box-header">
               <div><span class="stp-lbl">From:</span> ${esc(email.sender_display || email.sender)}</div>
               <div><span class="stp-lbl">Subject:</span> ${esc(email.subject)}</div>
@@ -5851,7 +7157,7 @@
         });
         gameActive = true;
       } catch (e) {
-        con.innerHTML = `<div style="color:var(--danger);font-size:0.7rem;">Failed to load game round.</div>`;
+        con.innerHTML = `<div style="color:var(--danger);font-size: var(--lure-font-xs);">Failed to load game round.</div>`;
       }
       repositionPanel();
     };
@@ -5883,7 +7189,7 @@
         const res = await fetch("/api/spot-the-phish/generate", { method: "POST" });
         if (res.status === 429) {
           const j = await res.json();
-          con.innerHTML = `<div style="color:var(--warning);font-size:0.7rem;text-align:center;">${esc(j.message)}</div>`;
+          con.innerHTML = `<div style="color:var(--warning);font-size: var(--lure-font-xs);text-align:center;">${esc(j.message)}</div>`;
           ilGameRoundsLeft = 0;
           await updateInlineGameStatus();
           return;
@@ -5900,7 +7206,7 @@
           const box = document.createElement('div');
           box.className = 'stp-box';
           box.innerHTML = `
-            <div class="stp-box-chrome"><span style="background:#ef4444;"></span><span style="background:#f59e0b;"></span><span style="background:#10b981;"></span></div>
+            <div class="stp-box-chrome"><span style="background:var(--lure-error);"></span><span style="background:var(--lure-warning);"></span><span style="background:var(--lure-success);"></span></div>
             <div class="stp-box-header">
               <div><span class="stp-lbl">From:</span> ${esc(email.sender_display || email.sender)}</div>
               <div><span class="stp-lbl">Subject:</span> ${esc(email.subject)}</div>
@@ -5945,7 +7251,7 @@
         });
         ilGameActive = true;
       } catch (e) {
-        con.innerHTML = `<div style="color:var(--danger);font-size:0.7rem;">Failed to load game round.</div>`;
+        con.innerHTML = `<div style="color:var(--danger);font-size: var(--lure-font-xs);">Failed to load game round.</div>`;
       }
     };
 
@@ -5972,7 +7278,7 @@
       }
       const raw   = +ind.value + +sz.value + +tr.value; // 0-9
       const pct   = Math.round(14 + raw * 8);            // 14-86%
-      const color = pct >= 60 ? 'var(--danger)' : pct >= 35 ? 'var(--warning)' : 'var(--success,#34D399)';
+      const color = pct >= 60 ? 'var(--danger)' : pct >= 35 ? 'var(--warning)' : 'var(--success,var(--lure-success))';
       const label = pct >= 60 ? 'High exposure — simulations strongly recommended'
                   : pct >= 35 ? 'Moderate exposure — some controls in place'
                   :             'Lower exposure — good hygiene, keep it up';
@@ -6174,13 +7480,17 @@
       if (updates.visual !== undefined && typeof resetIdleFidgetTimer === 'function') {
         resetIdleFidgetTimer();
       }
+
+      // CENTRAL REVERT TIMER (Task 2c): Auto-revert success and error visual states to idle
+      if (updates.visual === 'success' || updates.visual === 'error') {
+        hostStateRevertTimer = setTimeout(function () {
+          setHostState({ visual: 'idle', _isRevert: true });
+        }, 2200);
+      }
     }
 
     window.lureFlashSuccess = function () {
       setHostState({ visual: 'success' });
-      hostStateRevertTimer = setTimeout(function () {
-        setHostState({ visual: 'idle', _isRevert: true });
-      }, 2200);
     };
 
     window.lureSetState = function (state) {
@@ -6363,33 +7673,156 @@
       }
     }
 
+    /* ── Ask Lure Message Formatter & Chips (Task 2) ────────── */
+    function formatLureResponse(rawText) {
+      if (!rawText) return '';
+      let s = esc(rawText);
+
+      // 1. Markdown bold: **text** -> <strong>text</strong>
+      s = s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+
+      // 2. Markdown code: `code` -> <span class="pb-code-snippet">$1</span>
+      s = s.replace(/`([^`]+)`/g, '<span class="pb-code-snippet">$1</span>');
+
+      // 3. Protocols & Standards
+      const protocolKeywords = ['SPF', 'DKIM', 'DMARC', 'BIMI', 'MX Record', 'MX', 'STARTTLS', 'TLS 1.3', 'DNS TXT', 'DMARC Reject'];
+      protocolKeywords.forEach(proto => {
+        const escapedProto = proto.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const rx = new RegExp(`\\b(${escapedProto})\\b(?![^<]*>|[^<>]*<\\/span>)`, 'g');
+        s = s.replace(rx, '<span class="pb-evidence-chip pb-chip-protocol"><i class="ti ti-shield-check" aria-hidden="true"></i>$1</span>');
+      });
+
+      // 4. Threat Techniques & Concepts
+      const techniqueKeywords = [
+        'Spear Phishing', 'CEO Fraud', 'Business Email Compromise', 'Credential Harvesting',
+        'Pretexting', 'Typosquatting', 'Homograph Attack', 'MFA Fatigue', 'Session Hijacking',
+        'QR Phishing', 'Quishing', 'Safe Send'
+      ];
+      techniqueKeywords.forEach(tech => {
+        const escapedTech = tech.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const rx = new RegExp(`\\b(${escapedTech})\\b(?![^<]*>|[^<>]*<\\/span>)`, 'gi');
+        s = s.replace(rx, '<span class="pb-evidence-chip pb-chip-technique"><i class="ti ti-alert-triangle" aria-hidden="true"></i>$1</span>');
+      });
+
+      // 5. Numeric Stats & Key Metrics (e.g. 94%, 3.4%, 15 mins, 24 hours, 100%)
+      const statRx = /\b(\d+(?:\.\d+)?%\b|\b\d+\s*(?:mins|minutes|hours|days|sec|seconds)\b)(?![^<]*>|[^<>]*<\/span>)/gi;
+      s = s.replace(statRx, '<span class="pb-evidence-chip pb-chip-stat"><i class="ti ti-chart-bar" aria-hidden="true"></i>$1</span>');
+
+      return s;
+    }
+
+    function getFollowUpSuggestions(replyText, userText) {
+      const combined = ((replyText || '') + ' ' + (userText || '')).toLowerCase();
+      
+      if (combined.includes('spf') || combined.includes('dkim') || combined.includes('dmarc') || combined.includes('header') || combined.includes('authentication')) {
+        return [
+          "How does DKIM alignment work?",
+          "Show me an SPF fail record",
+          "Why do spoofed emails pass?"
+        ];
+      }
+      if (combined.includes('ceo') || combined.includes('pretext') || combined.includes('urgent') || combined.includes('invoice') || combined.includes('hr') || combined.includes('social engineering')) {
+        return [
+          "Why does urgency work so well?",
+          "How to write simulated pretexts?",
+          "What is spear phishing?"
+        ];
+      }
+      if (combined.includes('url') || combined.includes('link') || combined.includes('redirect') || combined.includes('shortener') || combined.includes('decoder') || combined.includes('domain')) {
+        return [
+          "Why decode redirect hops?",
+          "How to spot lookalike domains?",
+          "Are shortened URLs always risky?"
+        ];
+      }
+      if (combined.includes('password') || combined.includes('breach') || combined.includes('leak') || combined.includes('credential') || combined.includes('mfa')) {
+        return [
+          "What makes a password strong?",
+          "How do credential stuffing attacks work?",
+          "What if my email leaked?"
+        ];
+      }
+      if (combined.includes('campaign') || combined.includes('simulation') || combined.includes('drill') || combined.includes('click rate') || combined.includes('report')) {
+        return [
+          "How do I track employee clicks?",
+          "What is Safe Send mode?",
+          "How often should drills run?"
+        ];
+      }
+      
+      return [
+        "How do I spot this myself?",
+        "Show me a real example",
+        "What's the best defense?"
+      ];
+    }
+
     function renderMessages(isNewReply = false) {
       if (!chatMessagesList) return;
       chatMessagesList.innerHTML = '';
 
-      // Always prepend the hardcoded welcome message
-      const welcomeRow = document.createElement('div');
-      welcomeRow.className = 'pb-chat-msg-row lure';
-      welcomeRow.innerHTML = `
-        <div class="pb-dialogue-icon">${getLureAvatarHtml('idle')}</div>
-        <div class="pb-chat-bubble">Hi! I'm Lure, your AI security mascot. 🦈 Ask me anything about phishing, social engineering, or how to use PhishSim to train your defenses!</div>
-      `;
-      chatMessagesList.appendChild(welcomeRow);
+      if (chatHistory.length === 0) {
+        // Welcome message with initial suggested followups
+        const welcomeRow = document.createElement('div');
+        welcomeRow.className = 'pb-chat-msg-row lure';
+        const ctx = getPageContext();
+        const label = ctx.label || "generic";
+        const initialQuestions = contextSuggestions[label] || contextSuggestions["generic"];
+        const pills = initialQuestions.map(q => `<button type="button" class="pb-followup-pill" onclick="triggerChatPrompt('${esc(q).replace(/'/g, "\\'")}')"><i class="ti ti-sparkles" aria-hidden="true"></i>${esc(q)}</button>`).join('');
+        
+        welcomeRow.innerHTML = `
+          <div class="pb-dialogue-icon">${getLureAvatarHtml('idle')}</div>
+          <div class="pb-chat-bubble-container">
+            <div class="pb-chat-bubble">Hi! I'm Lure, your AI security mascot. 🦈 Ask me anything about phishing, social engineering, or how to use PhishSim to train your defenses!</div>
+            <div class="pb-chat-followups">
+              <span class="pb-followup-label"><i class="ti ti-sparkles" aria-hidden="true"></i> Suggested:</span>
+              ${pills}
+            </div>
+            <div class="pb-chat-meta">Lure AI</div>
+          </div>
+        `;
+        chatMessagesList.appendChild(welcomeRow);
+      }
 
       chatHistory.forEach((msg, idx) => {
         const row = document.createElement('div');
         row.className = `pb-chat-msg-row ${msg.role === 'user' ? 'user' : 'lure'}`;
-        // Simple HTML sanitization to prevent XSS but keep formatting safe
-        const safeText = esc(msg.content);
         if (msg.role === 'user') {
-          row.innerHTML = `<div class="pb-chat-bubble">${safeText}</div>`;
+          const safeUserText = esc(msg.content);
+          row.innerHTML = `
+            <div class="pb-chat-bubble-container">
+              <div class="pb-chat-bubble">${safeUserText}</div>
+              <div class="pb-chat-meta">You</div>
+            </div>
+          `;
         } else {
           // If this is the last message and isNewReply is true, show success state briefly
           const isLast = (idx === chatHistory.length - 1);
           const state = (isLast && isNewReply) ? 'success' : 'idle';
+          const formattedText = formatLureResponse(msg.content);
+
+          let followupsHtml = '';
+          if (isLast) {
+            const prevUserMsg = (idx > 0 && chatHistory[idx - 1].role === 'user') ? chatHistory[idx - 1].content : '';
+            const suggestions = getFollowUpSuggestions(msg.content, prevUserMsg);
+            if (suggestions && suggestions.length > 0) {
+              const pills = suggestions.map(q => `<button type="button" class="pb-followup-pill" onclick="triggerChatPrompt('${esc(q).replace(/'/g, "\\'")}')"><i class="ti ti-sparkles" aria-hidden="true"></i>${esc(q)}</button>`).join('');
+              followupsHtml = `
+                <div class="pb-chat-followups">
+                  <span class="pb-followup-label"><i class="ti ti-sparkles" aria-hidden="true"></i> Follow up:</span>
+                  ${pills}
+                </div>
+              `;
+            }
+          }
+
           row.innerHTML = `
             <div class="pb-dialogue-icon" ${isLast ? 'id="pb-chat-avatar-last"' : ''}>${getLureAvatarHtml(state)}</div>
-            <div class="pb-chat-bubble">${safeText}</div>
+            <div class="pb-chat-bubble-container">
+              <div class="pb-chat-bubble">${formattedText}</div>
+              ${followupsHtml}
+              <div class="pb-chat-meta">Lure AI</div>
+            </div>
           `;
         }
         chatMessagesList.appendChild(row);
@@ -6404,9 +7837,6 @@
         }, 2500);
       }
 
-      // Render suggestions
-      renderSuggestions();
-
       // Scroll to bottom
       chatMessagesList.scrollTop = chatMessagesList.scrollHeight;
     }
@@ -6419,13 +7849,16 @@
     }
 
     // Initialize when Chat tab is clicked
-    if (chatTabBtn) {
-      chatTabBtn.addEventListener('click', () => {
+    const chatTabButtons = panel.querySelectorAll('.pb-tab-btn[data-tab="chat"], .pb-sidebar-tab-btn[data-tab="chat"]');
+    chatTabButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
         initChat();
-        // Focus the input
         setTimeout(() => chatInput && chatInput.focus(), 100);
       });
-    }
+    });
+
+    // Eagerly initialize chat on load so initial state is immediately ready
+    initChat();
 
     // Character counter and cap enforcement
     if (chatInput) {
@@ -6434,11 +7867,11 @@
         if (chatCharCounter) {
           chatCharCounter.textContent = `${len} / 500`;
           if (len > 500) {
-            chatCharCounter.style.color = 'var(--danger, #ef4444)';
+            chatCharCounter.style.color = 'var(--danger, var(--lure-error))';
             chatSendBtn.disabled = true;
             showChatError("Message exceeds the 500-character limit.");
           } else {
-            chatCharCounter.style.color = 'var(--text-muted, #4A5568)';
+            chatCharCounter.style.color = 'var(--text-muted, var(--lure-text-muted))';
             chatSendBtn.disabled = false;
             hideChatError();
           }
@@ -6493,13 +7926,26 @@
       renderMessages();
       let isSuccessReply = false;
 
-      // 2. Add Typing indicator with loading text
+      // 2. Add Typing/Thinking indicator with animated mascot and wave rings
       const typingRow = document.createElement('div');
-      typingRow.className = 'pb-chat-msg-row lure';
+      typingRow.className = 'pb-chat-msg-row lure pb-thinking-row';
       typingRow.id = 'pb-chat-typing-indicator';
       typingRow.innerHTML = `
-        <div class="pb-chat-bubble" style="display: inline-block;">
-          <span id="pb-chat-loading-text">Lure is thinking...</span><span class="pb-terminal-cursor"></span>
+        <div class="pb-dialogue-icon pb-thinking-mascot-container">
+          <div class="pb-thinking-mascot-wrap">
+            ${getLureAvatarHtml('active')}
+          </div>
+        </div>
+        <div class="pb-chat-bubble-container">
+          <div class="pb-chat-bubble pb-chat-thinking-bubble">
+            <div class="pb-thinking-body">
+              <div class="pb-thinking-radar">
+                <span class="pb-radar-ring"></span>
+                <span class="pb-radar-ring delay"></span>
+              </div>
+              <span id="pb-chat-loading-text" class="pb-thinking-label">Lure is thinking...</span>
+            </div>
+          </div>
         </div>
       `;
       chatMessagesList.appendChild(typingRow);
@@ -6510,9 +7956,10 @@
       if (loadingTextEl) {
         const chatStages = [
           "Lure is thinking...",
+          "Analyzing security context...",
           "Drafting response..."
         ];
-        stopChatNarration = startLoadingNarration(loadingTextEl, chatStages, 1200, 6000, "Lure is typing... (still processing)");
+        stopChatNarration = startLoadingNarration(loadingTextEl, chatStages, 1100, 6000, "Lure is thinking... (still processing)");
       }
 
       // Disable inputs during API call

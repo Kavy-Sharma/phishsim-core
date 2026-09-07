@@ -819,7 +819,7 @@ window.topProgressBar = new TopProgressBar();
                 }
             }, { passive: true });
 
-            // Magnetic Button Pull logic
+            // Magnetic Button Pull logic (High-Performance RAF-Throttled)
             const btnSelectors = '.hero-new-btn, .btn-launch, .nc-submit, .pdf-btn, .upgrade-chip, .btn-upgrade, .btn-purple, .btn-primary, .checkout-btn, .btn-try-demo';
             let magneticButtons = [];
             
@@ -848,33 +848,40 @@ window.topProgressBar = new TopProgressBar();
             };
             
             updateMagneticButtons();
-            setInterval(updateMagneticButtons, 2000);
             
+            let magneticRafId = null;
             document.addEventListener('mousemove', (e) => {
+                if (magneticRafId) return;
                 const mouseX = e.clientX;
                 const mouseY = e.clientY;
                 
-                magneticButtons.forEach(item => {
-                    const rect = item.element.getBoundingClientRect();
-                    const btnX = rect.left + rect.width / 2;
-                    const btnY = rect.top + rect.height / 2;
-                    
-                    const dx = mouseX - btnX;
-                    const dy = mouseY - btnY;
-                    const distance = Math.sqrt(dx * dx + dy * dy);
-                    
-                    if (distance < 60) {
-                        const strength = 6;
-                        const factor = (1 - distance / 60) * strength;
-                        const pullX = (dx / (distance || 1)) * factor;
-                        const pullY = (dy / (distance || 1)) * factor;
-                        
-                        item.inner.style.transition = 'none';
-                        item.inner.style.transform = `translate(${pullX}px, ${pullY}px)`;
-                    } else {
-                        if (item.inner.style.transform && item.inner.style.transform !== 'translate(0px, 0px)') {
-                            item.inner.style.transition = 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)';
-                            item.inner.style.transform = 'translate(0px, 0px)';
+                magneticRafId = requestAnimationFrame(() => {
+                    magneticRafId = null;
+                    const hoveredBtn = e.target.closest(btnSelectors);
+                    if (!hoveredBtn) {
+                        magneticButtons.forEach(item => {
+                            if (item.inner.style.transform && item.inner.style.transform !== 'translate(0px, 0px)') {
+                                item.inner.style.transition = 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)';
+                                item.inner.style.transform = 'translate(0px, 0px)';
+                            }
+                        });
+                        return;
+                    }
+                    const matchedItem = magneticButtons.find(b => b.element === hoveredBtn);
+                    if (matchedItem) {
+                        const rect = matchedItem.element.getBoundingClientRect();
+                        const btnX = rect.left + rect.width / 2;
+                        const btnY = rect.top + rect.height / 2;
+                        const dx = mouseX - btnX;
+                        const dy = mouseY - btnY;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+                        if (distance < 60) {
+                            const strength = 6;
+                            const factor = (1 - distance / 60) * strength;
+                            const pullX = (dx / (distance || 1)) * factor;
+                            const pullY = (dy / (distance || 1)) * factor;
+                            matchedItem.inner.style.transition = 'none';
+                            matchedItem.inner.style.transform = `translate(${pullX}px, ${pullY}px)`;
                         }
                     }
                 });
@@ -972,16 +979,21 @@ window.topProgressBar = new TopProgressBar();
                     dot.style.opacity = "1";
                     hasMoved = true;
                 }
+                if (!dotRafActive) { dotRafActive = true; requestAnimationFrame(animateDot); }
             });
 
+            let dotRafActive = false;
             function animateDot() {
                 dotX += (mouseX - dotX) * speed;
                 dotY += (mouseY - dotY) * speed;
                 dot.style.left = `${dotX}px`;
                 dot.style.top = `${dotY}px`;
-                requestAnimationFrame(animateDot);
+                if (Math.abs(mouseX - dotX) > 0.5 || Math.abs(mouseY - dotY) > 0.5) {
+                    requestAnimationFrame(animateDot);
+                } else {
+                    dotRafActive = false;
+                }
             }
-            animateDot();
 
             // Hover effects on interactive elements
             const attachHoverEvents = () => {

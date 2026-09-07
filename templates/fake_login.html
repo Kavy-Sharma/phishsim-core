@@ -102,6 +102,16 @@
             40% { transform: scale(1); }
         }
     </style>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
+    <script>
+        (function() {
+            const savedTheme = localStorage.getItem('phishsim_theme') || 'dark';
+            if (savedTheme === 'light') {
+                document.documentElement.classList.add('light-theme');
+            }
+        })();
+    </script>
 </head>
 <body>
 
@@ -202,6 +212,14 @@
                 window.location.href = '/simulated?id=' + trackingId;
             });
         });
+    </script>
+        <script>
+        (function() {
+            const savedTheme = localStorage.getItem('phishsim_theme') || 'dark';
+            if (savedTheme === 'light') {
+                document.body.classList.add('light-theme');
+            }
+        })();
     </script>
     {% include 'lure_bot.html' %}
 </body>
