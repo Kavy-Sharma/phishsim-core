@@ -1,0 +1,370 @@
+﻿{% extends 'base.html' %}
+
+{% block title %}About — PhishSim AI{% endblock %}
+{% block og_title %}About PhishSim AI{% endblock %}
+{% block og_description %}How PhishSim AI was built, the tech behind the platform, and one real bug story from development.{% endblock %}
+
+{% block content %}
+<style>
+  /* About Page */
+  .about-page {
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 80px 24px 120px;
+  }
+  .about-eyebrow {
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--primary);
+    margin-bottom: 18px;
+  }
+  .about-page h1 {
+    font-family: 'Outfit', 'Space Grotesk', var(--font-sans), sans-serif;
+    font-size: clamp(2.2rem, 5vw, 3rem);
+    font-weight: 800;
+    color: var(--text-primary);
+    line-height: 1.18;
+    margin: 0 0 20px;
+    letter-spacing: -0.02em;
+  }
+  .about-lead {
+    font-size: 1.15rem;
+    line-height: 1.75;
+    color: var(--text-secondary);
+    margin-bottom: 56px;
+    border-bottom: 1px solid var(--border-subtle);
+    padding-bottom: 40px;
+  }
+  .about-section {
+    margin-bottom: 56px;
+  }
+  .about-section h2 {
+    font-family: 'Outfit', 'Space Grotesk', var(--font-sans), sans-serif;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0 0 18px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .about-section h2 .h2-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    background: color-mix(in srgb, var(--primary) 12%, transparent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    color: var(--primary);
+    flex-shrink: 0;
+  }
+  .about-section p {
+    font-size: 1rem;
+    line-height: 1.8;
+    color: var(--text-secondary);
+    margin: 0 0 16px;
+  }
+  .about-section p:last-child { margin-bottom: 0; }
+  .about-section code {
+    font-family: var(--font-mono);
+    font-size: 0.85em;
+    color: var(--primary);
+    background: color-mix(in srgb, var(--primary) 10%, transparent);
+    padding: 1px 5px;
+    border-radius: 4px;
+  }
+  /* Tech stack grid */
+  .stack-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 14px;
+    margin-top: 24px;
+  }
+  .stack-item {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: 10px;
+    padding: 16px 18px;
+    transition: border-color 0.2s, background 0.2s;
+  }
+  .stack-item:hover {
+    border-color: color-mix(in srgb, var(--primary) 30%, transparent);
+    background: color-mix(in srgb, var(--primary) 4%, var(--bg-surface));
+  }
+  .stack-item-label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--primary);
+    margin-bottom: 5px;
+  }
+  .stack-item-desc {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+  }
+  /* Bug story */
+  .story-block {
+    background: color-mix(in srgb, var(--bg-surface) 60%, transparent);
+    border: 1px solid var(--border-subtle);
+    border-left: 3px solid var(--primary);
+    border-radius: 10px;
+    padding: 28px 28px 24px;
+    margin-top: 24px;
+  }
+  .story-block p {
+    font-size: 0.97rem;
+    color: var(--text-secondary);
+    line-height: 1.8;
+    margin: 0 0 14px;
+  }
+  .story-block p:last-child { margin-bottom: 0; }
+  .story-block strong { color: var(--text-primary); font-weight: 600; }
+  .story-block code {
+    font-family: var(--font-mono);
+    font-size: 0.83em;
+    color: var(--primary);
+    background: color-mix(in srgb, var(--primary) 10%, transparent);
+    padding: 1px 5px;
+    border-radius: 4px;
+  }
+  /* Code compare */
+  .code-compare {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin: 20px 0;
+  }
+  @media (max-width: 640px) {
+    .code-compare { grid-template-columns: 1fr; }
+  }
+  .code-panel { border-radius: 8px; overflow: hidden; }
+  .code-panel-header {
+    padding: 7px 14px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .code-panel-header.bad {
+    background: color-mix(in srgb, #ef4444 14%, transparent);
+    color: #ef4444;
+    border: 1px solid color-mix(in srgb, #ef4444 25%, transparent);
+    border-bottom: none;
+  }
+  .code-panel-header.good {
+    background: color-mix(in srgb, #10b981 12%, transparent);
+    color: #10b981;
+    border: 1px solid color-mix(in srgb, #10b981 25%, transparent);
+    border-bottom: none;
+  }
+  .code-panel pre {
+    margin: 0;
+    padding: 14px 16px;
+    background: rgba(2, 6, 23, 0.7);
+    color: #94a3b8;
+    font-family: var(--font-mono);
+    font-size: 0.76rem;
+    line-height: 1.65;
+    overflow-x: auto;
+    border: 1px solid var(--border-subtle);
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+  }
+  .hl-bad  { color: #f87171; }
+  .hl-good { color: #34d399; }
+  .hl-dim  { color: #475569; }
+  .hl-key  { color: #93c5fd; }
+  /* Footer CTA */
+  .about-cta {
+    margin-top: 64px;
+    padding: 36px 32px;
+    background: color-mix(in srgb, var(--primary) 6%, var(--bg-surface));
+    border: 1px solid color-mix(in srgb, var(--primary) 18%, transparent);
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+  .about-cta-text h3 {
+    font-family: 'Outfit', 'Space Grotesk', sans-serif;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0 0 6px;
+  }
+  .about-cta-text p {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin: 0;
+    line-height: 1.5;
+  }
+  .about-cta-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+  @media (max-width: 600px) {
+    .about-page { padding: 48px 18px 80px; }
+    .about-cta { padding: 24px 20px; }
+  }
+</style>
+
+<main class="about-page">
+
+  <span class="about-eyebrow">About</span>
+  <h1>Built to make phishing visible.</h1>
+  <p class="about-lead">
+    PhishSim AI is a security awareness platform that runs simulated phishing campaigns against your own
+    organization — so your team encounters realistic attacks in a controlled environment before a real adversary
+    gets the chance. It generates personalized lure emails using an AI engine, tracks click and submission
+    behavior per recipient, and produces a risk report with department-level breakdowns. The goal isn't to
+    embarrass people who click. It's to give security teams actual data instead of checkbox compliance.
+  </p>
+
+  <section class="about-section">
+    <h2>
+      <span class="h2-icon"><i class="ti ti-shield"></i></span>
+      What the platform does
+    </h2>
+    <p>
+      You configure a campaign — target list, scenario type (CEO impersonation, IT credential harvest,
+      HR payroll, urgent invoice), urgency level. The AI engine generates a unique phishing email for each
+      recipient, referencing their name, department, and company context. Emails are dispatched through your
+      configured relay, and a tracking pixel plus unique link per recipient captures opens, clicks, and credential
+      submissions without storing any real credentials.
+    </p>
+    <p>
+      Once a campaign runs, the dashboard shows who clicked, who reported, who submitted — broken down by
+      department. The AI Risk Advisor cross-references that with OSINT signals (DMARC health, subdomain
+      exposure, breach data) to estimate actual organizational exposure. Spot the Phish and the email header
+      analyzer are standalone training tools that work without running a full campaign.
+    </p>
+    <p>
+      Everything that touches real user data is session-scoped and campaign-scoped. There's no persistent
+      credential storage, no cross-org data sharing, and the simulation landing pages are clearly marked
+      after the fact to close the loop for the recipient.
+    </p>
+  </section>
+
+  <section class="about-section">
+    <h2>
+      <span class="h2-icon"><i class="ti ti-cpu"></i></span>
+      Tech stack
+    </h2>
+    <p>
+      The backend is Flask. AI email generation calls OpenRouter's API, which proxies a pool of free-tier
+      language models — DeepSeek, Gemma, Llama, Mistral. The generation logic races the top-N models in
+      parallel threads and returns the first successful response, keeping latency down even when individual
+      models are slow or unavailable. Static fallback templates cover the case where the API key is missing
+      or all models fail.
+    </p>
+    <div class="stack-grid">
+      <div class="stack-item">
+        <div class="stack-item-label">Backend</div>
+        <div class="stack-item-desc">Flask · Python 3.12 · SQLite via SQLAlchemy</div>
+      </div>
+      <div class="stack-item">
+        <div class="stack-item-label">AI Engine</div>
+        <div class="stack-item-desc">OpenRouter API · dynamic free-model discovery · parallel race fallback</div>
+      </div>
+      <div class="stack-item">
+        <div class="stack-item-label">Frontend</div>
+        <div class="stack-item-desc">Vanilla JS · CSS custom properties · Tabler Icons · DOMPurify</div>
+      </div>
+      <div class="stack-item">
+        <div class="stack-item-label">Email delivery</div>
+        <div class="stack-item-desc">SMTP relay (user-configured) · per-recipient tracking tokens</div>
+      </div>
+      <div class="stack-item">
+        <div class="stack-item-label">OSINT signals</div>
+        <div class="stack-item-desc">DNS / MX / DMARC checks · HaveIBeenPwned API · subdomain enumeration</div>
+      </div>
+      <div class="stack-item">
+        <div class="stack-item-label">Auth</div>
+        <div class="stack-item-desc">Session-based · bcrypt passwords · optional TOTP 2FA · email verification</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="about-section">
+    <h2>
+      <span class="h2-icon"><i class="ti ti-bug"></i></span>
+      One real bug story
+    </h2>
+    <p>
+      The chatbot mascot, Lure, lives in a floating panel that can be in several states: idle, thinking,
+      success, error, tour mode, minimized. Each state applies different classes and glow styles to a single
+      host element, <code>#pb-host</code>.
+    </p>
+    <div class="story-block">
+      <p>
+        <strong>The bug:</strong> During walkthrough tour mode, the mascot would flash the wrong glow color
+        or get stuck on <code style="color: #f87171;">error</code> state even after the tour completed cleanly.
+        The root cause was that six different functions — <code>_doGenerate</code>,
+        <code>startTourMode</code>, <code>endTourMode</code>, the chat handler, the tab switcher, and the
+        success flash — were all writing directly to <code>host.className</code> independently.
+        Two of them would fire in quick succession during tour completion and stomp each other's state.
+      </p>
+      <div class="code-compare">
+        <div class="code-panel">
+          <div class="code-panel-header bad">Before — scattered direct writes</div>
+          <pre><span class="hl-dim">// in _doGenerate:</span>
+<span class="hl-bad">host.className = 'pb-success';</span>
+
+<span class="hl-dim">// in endTourMode (200ms later):</span>
+<span class="hl-bad">host.className = 'pb-idle';</span>
+
+<span class="hl-dim">// in success flash (300ms later):</span>
+<span class="hl-bad">host.className = 'pb-success';</span>
+<span class="hl-dim">// Race. Last write wins.</span></pre>
+        </div>
+        <div class="code-panel">
+          <div class="code-panel-header good">After — single setHostState()</div>
+          <pre><span class="hl-key">function</span> setHostState(visual, opts) {
+  <span class="hl-key">const</span> host = <span class="hl-good">getHostEl()</span>;
+  host.classList.remove(...ALL_STATES);
+  host.classList.add(<span class="hl-good">`pb-${visual}`</span>);
+  <span class="hl-key">if</span> (opts?.revertAfter) {
+    scheduleRevert(opts.revertAfter);
+  }
+}
+<span class="hl-dim">// One writer. No races.</span></pre>
+        </div>
+      </div>
+      <p>
+        Centralizing all state transitions through <code style="color: #34d399;">setHostState()</code>
+        meant one place to enforce transition logic — including a queued revert timer that cancels itself
+        if a new state is set before it fires. Every caller that previously wrote
+        <code>host.className = …</code> directly became a <code>setHostState(…)</code> call.
+        The tour-mode flicker disappeared, and success/error glows now always revert to idle correctly
+        regardless of what else is running concurrently.
+      </p>
+      <p>
+        The broader lesson wasn't surprising — direct DOM mutation scattered across unrelated functions
+        behaves fine until timing matters. A state machine with a single writer is worth the refactor cost
+        even in vanilla JS.
+      </p>
+    </div>
+  </section>
+
+  <div class="about-cta">
+    <div class="about-cta-text">
+      <h3>Try it without signing up.</h3>
+      <p>The live demo loads a pre-populated environment — campaigns, reports, risk scores. No account needed.</p>
+    </div>
+    <div class="about-cta-actions">
+      <a href="/demo-login" class="btn-get-started" style="white-space: nowrap;">Open Live Demo &rarr;</a>
+      <a href="/signup" class="btn-get-started" style="white-space: nowrap; background: transparent; border: 1px solid var(--border); color: var(--text-primary);">Create Account</a>
+    </div>
+  </div>
+
+</main>
+{% endblock %}

@@ -20,41 +20,25 @@
 
     <!-- Stats strip (4 bento cards) -->
     <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 2rem;">
-        <div class="skeleton-block"
-            style="height: 125px; border-radius: 12px; padding: 24px; box-sizing: border-box; margin: 0;">
-            <div class="skeleton-block"
-                style="width: 120px; height: 16px; margin-bottom: 12px; background: rgba(255,255,255,0.03);"></div>
-            <div class="skeleton-block"
-                style="width: 50px; height: 32px; margin-bottom: 12px; background: rgba(255,255,255,0.03);"></div>
-            <div class="skeleton-block"
-                style="width: 150px; height: 12px; margin: 0; background: rgba(255,255,255,0.03);"></div>
+        <div style="height: 125px; border-radius: 12px; padding: 20px; box-sizing: border-box; background: var(--bg-surface); border: 1px solid var(--border-subtle); display: flex; flex-direction: column; justify-content: space-between;">
+            <div class="skeleton-block" style="width: 120px; height: 16px;"></div>
+            <div class="skeleton-block" style="width: 50px; height: 32px;"></div>
+            <div class="skeleton-block" style="width: 140px; height: 12px;"></div>
         </div>
-        <div class="skeleton-block"
-            style="height: 125px; border-radius: 12px; padding: 24px; box-sizing: border-box; margin: 0;">
-            <div class="skeleton-block"
-                style="width: 130px; height: 16px; margin-bottom: 12px; background: rgba(255,255,255,0.03);"></div>
-            <div class="skeleton-block"
-                style="width: 60px; height: 32px; margin-bottom: 12px; background: rgba(255,255,255,0.03);"></div>
-            <div class="skeleton-block"
-                style="width: 120px; height: 12px; margin: 0; background: rgba(255,255,255,0.03);"></div>
+        <div style="height: 125px; border-radius: 12px; padding: 20px; box-sizing: border-box; background: var(--bg-surface); border: 1px solid var(--border-subtle); display: flex; flex-direction: column; justify-content: space-between;">
+            <div class="skeleton-block" style="width: 130px; height: 16px;"></div>
+            <div class="skeleton-block" style="width: 60px; height: 32px;"></div>
+            <div class="skeleton-block" style="width: 120px; height: 12px;"></div>
         </div>
-        <div class="skeleton-block"
-            style="height: 125px; border-radius: 12px; padding: 24px; box-sizing: border-box; margin: 0;">
-            <div class="skeleton-block"
-                style="width: 120px; height: 16px; margin-bottom: 12px; background: rgba(255,255,255,0.03);"></div>
-            <div class="skeleton-block"
-                style="width: 45px; height: 32px; margin-bottom: 12px; background: rgba(255,255,255,0.03);"></div>
-            <div class="skeleton-block"
-                style="width: 110px; height: 12px; margin: 0; background: rgba(255,255,255,0.03);"></div>
+        <div style="height: 125px; border-radius: 12px; padding: 20px; box-sizing: border-box; background: var(--bg-surface); border: 1px solid var(--border-subtle); display: flex; flex-direction: column; justify-content: space-between;">
+            <div class="skeleton-block" style="width: 120px; height: 16px;"></div>
+            <div class="skeleton-block" style="width: 45px; height: 32px;"></div>
+            <div class="skeleton-block" style="width: 110px; height: 12px;"></div>
         </div>
-        <div class="skeleton-block"
-            style="height: 125px; border-radius: 12px; padding: 24px; box-sizing: border-box; margin: 0;">
-            <div class="skeleton-block"
-                style="width: 110px; height: 16px; margin-bottom: 12px; background: rgba(255,255,255,0.03);"></div>
-            <div class="skeleton-block"
-                style="width: 60px; height: 32px; margin-bottom: 12px; background: rgba(255,255,255,0.03);"></div>
-            <div class="skeleton-block"
-                style="width: 130px; height: 12px; margin: 0; background: rgba(255,255,255,0.03);"></div>
+        <div style="height: 125px; border-radius: 12px; padding: 20px; box-sizing: border-box; background: var(--bg-surface); border: 1px solid var(--border-subtle); display: flex; flex-direction: column; justify-content: space-between;">
+            <div class="skeleton-block" style="width: 110px; height: 16px;"></div>
+            <div class="skeleton-block" style="width: 60px; height: 32px;"></div>
+            <div class="skeleton-block" style="width: 130px; height: 12px;"></div>
         </div>
     </div>
 
@@ -804,40 +788,40 @@
     <!-- 2. Bento Stats Strip (4 bento cards) -->
     <div class="stats-strip" id="wt-dashboard-view">
         <!-- Card 1: Active Campaigns -->
-        <div class="bento-card">
+        <div class="bento-card" data-tilt>
             <div>
                 <div class="stat-card-title">
                     <i class="ti ti-stack-2" style="color: var(--primary);"></i> Active Campaigns
                 </div>
-                <div class="stat-card-value" data-countup>{{ active_count }}</div>
+                <div class="stat-card-value" data-countup data-target="{{ active_count }}">{{ active_count }}</div>
             </div>
             <div class="stat-card-subtext">{{ scheduled_count }} scheduled · {{ running_count }} running</div>
         </div>
 
         <!-- Card 2: Employees Targeted -->
-        <div class="bento-card">
+        <div class="bento-card" data-tilt>
             <div>
                 <div class="stat-card-title">
                     <i class="ti ti-users" style="color: #a855f7;"></i> Employees Targeted
                 </div>
-                <div class="stat-card-value" data-countup>{{ targets_count }}</div>
+                <div class="stat-card-value" data-countup data-target="{{ targets_count }}">{{ targets_count }}</div>
             </div>
             <div class="stat-card-subtext">Across {{ dept_count_value }} departments</div>
         </div>
 
         <!-- Card 3: Avg Click Rate -->
-        <div class="bento-card">
+        <div class="bento-card" data-tilt>
             <div>
                 <div class="stat-card-title">
                     <i class="ti ti-alert-triangle" style="color: var(--warning);"></i> Avg Click Rate
                 </div>
-                <div class="stat-card-value" style="color: var(--warning);" data-countup data-countup-suffix="%">{{ click_rate }}</div>
+                <div class="stat-card-value" style="color: var(--warning);" data-countup data-target="{{ click_rate }}" data-suffix="%">{{ click_rate }}%</div>
             </div>
             <div class="stat-card-subtext">Industry avg: 28%</div>
         </div>
 
         <!-- Card 4: Human Security Score -->
-        <div class="bento-card" style="padding: 20px 24px;">
+        <div class="bento-card" style="padding: 20px 24px;" data-tilt>
             <div class="hss-card-content"
                 style="display: flex; align-items: center; justify-content: space-between; gap: 16px; width: 100%;">
                 <div style="display: flex; flex-direction: column; justify-content: center; height: 100%;">
@@ -866,7 +850,7 @@
                             stroke-dashoffset="{{ 169.64 - (169.64 * hss_score / 100) }}" stroke-linecap="round"
                             style="transition: stroke-dashoffset 1s ease-in-out;" />
                     </svg>
-                    <div class="hss-gauge-value" data-countup>{{ hss_score }}</div>
+                    <div class="hss-gauge-value" data-countup data-target="{{ hss_score }}">{{ hss_score }}</div>
                 </div>
             </div>
         </div>
@@ -1173,7 +1157,7 @@
             {% set reports = camp.reports or 0 %}
             {% set click_rate = (clicks / sent * 100) if sent > 0 else 0 %}
             {% set report_rate = (reports / sent * 100) if sent > 0 else 0 %}
-            <div class="campaign-grid-card camp-card" data-name="{{ camp.name }}" data-status="{{ camp.status }}"
+            <div class="campaign-grid-card camp-card" data-tilt data-name="{{ camp.name }}" data-status="{{ camp.status }}"
                 data-status-group="{% if camp.status in ('launched', 'launched_with_errors', 'launching') %}launched{% else %}{{ camp.status }}{% endif %}"
                 style="display: flex; flex-direction: column; justify-content: space-between; padding: 24px; border-radius: 16px; min-height: 380px; transition: all 0.3s ease;">
 
@@ -1435,7 +1419,7 @@
 
         <div class="empty-step-grid">
             <!-- Step 1 -->
-            <div class="empty-step-card">
+            <div class="empty-step-card" data-tilt>
                 <div class="step-num">Step 01</div>
                 <div style="font-size: 2rem; margin: 12px 0; color: #06b6d4;"><i class="ti ti-users-plus"></i></div>
                 <h4 class="step-title">Upload Targets</h4>
@@ -1443,7 +1427,7 @@
                     campaign distributions.</p>
             </div>
             <!-- Step 2 -->
-            <div class="empty-step-card">
+            <div class="empty-step-card" data-tilt>
                 <div class="step-num">Step 02</div>
                 <div style="font-size: 2rem; margin: 12px 0; color: #a855f7;"><i class="ti ti-template"></i></div>
                 <h4 class="step-title">Choose Scenario</h4>
@@ -1451,7 +1435,7 @@
                     functions (IT, HR, Finance).</p>
             </div>
             <!-- Step 3 -->
-            <div class="empty-step-card">
+            <div class="empty-step-card" data-tilt>
                 <div class="step-num">Step 03</div>
                 <div style="font-size: 2rem; margin: 12px 0; color: #10b981;"><i class="ti ti-rocket"></i></div>
                 <h4 class="step-title">Launch Simulation</h4>
@@ -2146,6 +2130,9 @@
 
             wrapper.classList.remove('active');
             filterCampaigns();
+            if (typeof showPremiumToast === 'function') {
+                showPremiumToast('Filter updated: ' + label, 'ti-filter');
+            }
         }
 
         document.addEventListener('click', () => {
@@ -2215,6 +2202,9 @@
         // ── Interactive Print & PDF Downloads ──────────────────────────────────
         function triggerPrintDashboard() {
             closeExportModal();
+            if (typeof showPremiumToast === 'function') {
+                showPremiumToast('Preparing printable executive summary...', 'ti-printer');
+            }
             setTimeout(() => {
                 window.print();
             }, 300);
@@ -2392,69 +2382,7 @@
        prefers-reduced-motion: skips animation if user prefers it.
        Targets elements with data-countup attribute.
        Optional data-countup-suffix appended after the number.
-    ─────────────────────────────────────────────────────────────── */
-    (function () {
-      'use strict';
-      const DURATION = 800; // ms
-      const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-      function easeOutCubic(t) {
-        return 1 - Math.pow(1 - t, 3);
-      }
-
-      function animateCountUp(el, target, suffix) {
-        if (reducedMotion) {
-          // Just show final value immediately
-          el.textContent = target + suffix;
-          return;
-        }
-        const start = performance.now();
-        function frame(now) {
-          const elapsed = now - start;
-          const progress = Math.min(elapsed / DURATION, 1);
-          const current = Math.round(easeOutCubic(progress) * target);
-          el.textContent = current + suffix;
-          if (progress < 1) {
-            requestAnimationFrame(frame);
-          } else {
-            el.textContent = target + suffix;
-          }
-        }
-        el.textContent = '0' + suffix;
-        requestAnimationFrame(frame);
-      }
-
-      function initCountUps() {
-        const els = document.querySelectorAll('[data-countup]');
-        els.forEach(function (el) {
-          const rawText = el.textContent.trim();
-          const suffix = el.getAttribute('data-countup-suffix') || '';
-          // Strip any existing suffix to get the bare number
-          const numStr = rawText.replace(suffix, '').trim();
-          const target = parseFloat(numStr);
-          if (isNaN(target)) return; // skip non-numeric (e.g. empty demo slots)
-          animateCountUp(el, target, suffix);
-        });
-      }
-
-      // Use IntersectionObserver so the animation fires when the
-      // stats strip scrolls into view (relevant for short viewports)
-      const strip = document.getElementById('wt-dashboard-view');
-      if (strip && 'IntersectionObserver' in window) {
-        const stripObserver = new IntersectionObserver(function (entries) {
-          entries.forEach(function (entry) {
-            if (entry.isIntersecting) {
-              initCountUps();
-              stripObserver.disconnect();
-            }
-          });
-        }, { threshold: 0.2 });
-        stripObserver.observe(strip);
-      } else {
-        // Fallback: just run on DOMContentLoaded
-        initCountUps();
-      }
-    })();
+    /* Countup behavior handled sitewide via shared window.initCountUpOnScroll utility in base.html */
     </script>
 
     <script>

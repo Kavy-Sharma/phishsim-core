@@ -297,22 +297,22 @@
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem;">
             <!-- Monitored Orgs -->
             <div class="stat-card-gold">
-                <div style="font-size: 2.2rem; font-weight: 800; color: var(--text-main); margin-bottom: 4px;" id="stat-orgs">0</div>
+                <div style="font-size: 2.2rem; font-weight: 800; color: var(--text-main); margin-bottom: 4px;" id="stat-orgs" data-countup data-target="{{ advisor.campaign_count or 0 }}">0</div>
                 <div style="font-family: var(--font-mono); font-size: 0.72rem; color: var(--pro-gold); text-transform: uppercase; letter-spacing: 0.8px;">Campaigns Analysed</div>
             </div>
             <!-- Employees Tracked -->
             <div class="stat-card-gold">
-                <div style="font-size: 2.2rem; font-weight: 800; color: var(--text-main); margin-bottom: 4px;" id="stat-employees">0</div>
+                <div style="font-size: 2.2rem; font-weight: 800; color: var(--text-main); margin-bottom: 4px;" id="stat-employees" data-countup data-target="{{ advisor.employees_tracked or 0 }}">0</div>
                 <div style="font-family: var(--font-mono); font-size: 0.72rem; color: var(--pro-gold); text-transform: uppercase; letter-spacing: 0.8px;">Employees Tracked</div>
             </div>
             <!-- Threat Detection Rate -->
             <div class="stat-card-gold">
-                <div style="font-size: 2.2rem; font-weight: 800; color: var(--text-main); margin-bottom: 4px;" id="stat-detection">0%</div>
+                <div style="font-size: 2.2rem; font-weight: 800; color: var(--text-main); margin-bottom: 4px;" id="stat-detection" data-countup data-target="{{ advisor.report_rate or 0 }}" data-suffix="%" data-decimals="1">0%</div>
                 <div style="font-family: var(--font-mono); font-size: 0.72rem; color: var(--pro-gold); text-transform: uppercase; letter-spacing: 0.8px;">Report Rate</div>
             </div>
             <!-- Mean Time to Alert -->
             <div class="stat-card-gold">
-                <div style="font-size: 2.2rem; font-weight: 800; color: var(--text-main); margin-bottom: 4px;" id="stat-time">0%</div>
+                <div style="font-size: 2.2rem; font-weight: 800; color: var(--text-main); margin-bottom: 4px;" id="stat-time" data-countup data-target="{{ advisor.click_rate or 0 }}" data-suffix="%" data-decimals="1">0%</div>
                 <div style="font-family: var(--font-mono); font-size: 0.72rem; color: var(--pro-gold); text-transform: uppercase; letter-spacing: 0.8px;">Click Exposure</div>
             </div>
         </div>
@@ -804,12 +804,43 @@
             <span id="lockdown-domain-badge" style="font-size:0.75rem; font-family:var(--font-mono); background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:4px; color:var(--text-muted);"></span>
         </h3>
         
-        <div id="lockdown-loading" style="display:flex; flex-direction:column; align-items:center; justify-content:center; padding:2rem 0; gap:12px;">
-            <div class="cyber-spinner"></div>
-            <span style="font-size:0.85rem; color:var(--text-muted); font-family:var(--font-mono);">Querying DNS over HTTPS...</span>
+        <div id="lockdown-loading" style="display:flex; flex-direction:column; padding:0.5rem 0 1rem; gap:14px;">
+            <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem;">
+                <div class="skeleton-block" style="width: 140px; height: 16px; margin-bottom: 12px;"></div>
+                <div class="skeleton-block" style="width: 100%; height: 28px; margin-bottom: 8px;"></div>
+                <div class="skeleton-block" style="width: 70%; height: 14px;"></div>
+            </div>
+            <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem;">
+                <div class="skeleton-block" style="width: 120px; height: 16px; margin-bottom: 12px;"></div>
+                <div class="skeleton-block" style="width: 100%; height: 28px; margin-bottom: 8px;"></div>
+                <div class="skeleton-block" style="width: 65%; height: 14px;"></div>
+            </div>
         </div>
 
         <div id="lockdown-results" style="display: none; margin-bottom: 1.5rem;">
+            <!-- Circular Arc Gauge Visual Anchor -->
+            <div id="lockdown-gauge-card" style="background: rgba(15,23,42,0.4); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.25rem; display: flex; align-items: center; justify-content: center; gap: 2rem; flex-wrap: wrap;">
+                <div style="position: relative; width: 120px; height: 120px; flex-shrink: 0; display: flex; align-items: center; justify-content: center;">
+                    <svg width="120" height="120" viewBox="0 0 120 120" style="transform: rotate(-90deg); overflow: visible;">
+                        <circle cx="60" cy="60" r="48" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="8" />
+                        <circle id="lockdown-score-circle" cx="60" cy="60" r="48" fill="none" stroke="var(--app-success, #10b981)" stroke-width="8" stroke-linecap="round" stroke-dasharray="301.6" stroke-dashoffset="301.6" style="transition: stroke-dashoffset 1.2s cubic-bezier(0.34, 1.56, 0.64, 1), stroke 0.4s ease;" />
+                    </svg>
+                    <div style="position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;">
+                        <div style="display: flex; align-items: baseline; gap: 1px;">
+                            <span id="lockdown-score-value" style="font-family: 'JetBrains Mono', var(--font-mono, monospace); font-size: 1.75rem; font-weight: 800; color: #fff; line-height: 1;">0</span>
+                            <span style="font-family: 'JetBrains Mono', var(--font-mono, monospace); font-size: 0.75rem; color: var(--text-muted); font-weight: 700;">%</span>
+                        </div>
+                        <span id="lockdown-score-label" style="font-size: 0.6rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--text-muted); margin-top: 2px;">SCORE</span>
+                    </div>
+                </div>
+
+                <div style="flex: 1; min-width: 200px;">
+                    <div style="font-size: 0.72rem; font-family: var(--font-mono); color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">Domain Security Rating</div>
+                    <h4 id="lockdown-score-title" style="font-size: 1.2rem; font-weight: 800; color: #fff; margin: 0 0 6px 0;">Analyzing Configuration...</h4>
+                    <p id="lockdown-score-subtext" style="font-size: 0.82rem; color: var(--text-muted); margin: 0; line-height: 1.4;">Domain authentication parameters checked against live HTTPS DNS resolvers.</p>
+                </div>
+            </div>
+
             <!-- SPF Section -->
             <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
@@ -860,8 +891,10 @@
 
         <!-- Tab Content 1: Active Decoys -->
         <div id="decoy-content-list">
-            <div id="decoy-list-loading" style="display:flex; justify-content:center; padding:1.5rem 0;">
-                <div class="cyber-spinner" style="width:24px; height:24px;"></div>
+            <div id="decoy-list-loading" style="display:flex; flex-direction:column; gap:10px; padding:1rem 0;">
+                <div class="skeleton-block" style="width:100%; height:34px; border-radius:6px;"></div>
+                <div class="skeleton-block" style="width:100%; height:34px; border-radius:6px;"></div>
+                <div class="skeleton-block" style="width:100%; height:34px; border-radius:6px;"></div>
             </div>
             
             <div id="decoy-list-empty" style="display:none; text-align:center; padding:1.5rem 0; color:var(--text-muted); font-size:0.85rem;">
@@ -1049,6 +1082,58 @@
                     verdict.style.border = '1px solid rgba(239,68,68,0.2)';
                     verdict.textContent = 'Weak domain configuration. Review the recommendations above and update your DNS records to lock down your domain.';
                 }
+
+                // Calculate Score & Trigger Arc Gauge Animation
+                let score = 0;
+                if (result.spf_status === 'present') score += 50;
+                if (result.dmarc_status === 'present') score += 50;
+
+                let strokeColor = 'var(--app-danger, #ef4444)';
+                let titleText = 'Domain Vulnerable';
+                let subtext = 'Missing critical DNS security records (SPF & DMARC). Domain is vulnerable to spoofing.';
+
+                if (score === 100) {
+                    strokeColor = 'var(--app-success, #10b981)';
+                    titleText = 'Fully Hardened Domain';
+                    subtext = 'Both SPF and DMARC records are active. Email domain spoofing protection is enforced.';
+                } else if (score === 50) {
+                    strokeColor = 'var(--warning, #f59e0b)';
+                    titleText = 'Partially Protected Domain';
+                    subtext = 'Partial domain protection active. Add missing DNS record to achieve full hardening.';
+                }
+
+                const circle = document.getElementById('lockdown-score-circle');
+                const scoreValEl = document.getElementById('lockdown-score-value');
+                const titleEl = document.getElementById('lockdown-score-title');
+                const subtextEl = document.getElementById('lockdown-score-subtext');
+
+                if (circle && scoreValEl) {
+                    circle.style.strokeDashoffset = '301.6';
+                    circle.style.stroke = strokeColor;
+                    scoreValEl.textContent = '0';
+                    scoreValEl.style.color = strokeColor;
+
+                    if (titleEl) titleEl.textContent = titleText;
+                    if (subtextEl) subtextEl.textContent = subtext;
+
+                    setTimeout(() => {
+                        const offset = 301.6 - (301.6 * (score / 100));
+                        circle.style.strokeDashoffset = offset.toFixed(1);
+
+                        const duration = 1200;
+                        const startTime = performance.now();
+                        function updateCount(now) {
+                            const elapsed = now - startTime;
+                            const progress = Math.min(elapsed / duration, 1);
+                            const easedProgress = 1 - Math.pow(1 - progress, 3);
+                            scoreValEl.textContent = Math.round(easedProgress * score);
+                            if (progress < 1) {
+                                requestAnimationFrame(updateCount);
+                            }
+                        }
+                        requestAnimationFrame(updateCount);
+                    }, 50);
+                }
             } else {
                 alert('DNS check failed: ' + result.error);
                 closeLockdownModal();
@@ -1182,8 +1267,9 @@
         const resultsDiv = document.getElementById('decoy-check-results');
         
         btn.disabled = true;
-        btn.innerHTML = `<div style="width:12px; height:12px; border:2px solid rgba(0,0,0,0.1); border-top-color:#000; border-radius:50%; animation: spin 1s infinite linear;"></div> Scanning...`;
-        resultsDiv.style.display = 'none';
+        btn.innerHTML = `<i class="ti ti-loader-2 spin" style="margin-right:4px;"></i> Scanning...`;
+        resultsDiv.style.display = 'block';
+        resultsDiv.innerHTML = `<div style="display:flex; flex-direction:column; gap:8px; padding:4px 0;"><div class="skeleton-block" style="width:200px; height:14px;"></div><div class="skeleton-block" style="width:100%; height:12px;"></div><div class="skeleton-block" style="width:75%; height:12px;"></div></div>`;
         
         try {
             const response = await fetch('/api/remediate/check-decoys', {

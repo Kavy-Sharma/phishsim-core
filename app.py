@@ -2170,6 +2170,10 @@ def terms():
 def privacy():
     return render_template("privacy.html")
 
+@app.route("/about")
+def about():
+    return render_template("about.html")
+
 @app.route("/logout")
 def logout():
     demo_user_id = session.get("user_id") if session.get("is_demo") else None
@@ -7548,6 +7552,14 @@ def ai_risk_advisor():
         last_run_row = cursor.fetchone()
         if last_run_row and last_run_row.get("last_run"):
             last_run_dt = last_run_row["last_run"]
+            if isinstance(last_run_dt, str):
+                try:
+                    last_run_dt = datetime.strptime(last_run_dt[:19], "%Y-%m-%d %H:%M:%S")
+                except Exception:
+                    try:
+                        last_run_dt = datetime.strptime(last_run_dt[:10], "%Y-%m-%d")
+                    except Exception:
+                        last_run_dt = datetime.now()
             days_since_last_campaign = (datetime.now() - last_run_dt).days
         else:
             days_since_last_campaign = 999

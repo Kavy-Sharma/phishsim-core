@@ -6,6 +6,19 @@
     <meta name="description" content="PhishSim AI - Advanced phishing simulation and training platform.">
     <title>{% block title %}PhishSim AI{% endblock %}</title>
     <meta name="csrf-token" content="{{ csrf_token() }}">
+
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:title" content="{% block og_title %}PhishSim AI — Security Awareness & Phishing Simulation Platform{% endblock %}">
+    <meta property="og:description" content="{% block og_description %}Autonomous AI-powered security awareness training, phishing lure generation, and threat analysis sandbox.{% endblock %}">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="{{ request.url if request else 'https://phishsim.ai' }}">
+    <meta property="og:image" content="{{ url_for('static', filename='images/og-social-preview.png', _external=True) }}">
+
+    <!-- Twitter Card Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{% block twitter_title %}PhishSim AI — Security Awareness & Phishing Simulation Platform{% endblock %}">
+    <meta name="twitter:description" content="{% block twitter_description %}Autonomous AI-powered security awareness training, phishing lure generation, and threat analysis sandbox.{% endblock %}">
+    <meta name="twitter:image" content="{{ url_for('static', filename='images/og-social-preview.png', _external=True) }}">
     
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -464,6 +477,134 @@ window.topProgressBar = new TopProgressBar();
         dismissSkeletonsAndProgressBar();
     });
 })();
+
+// ── Shared Sitewide Dynamic Toast Notification System ──
+function showPremiumToast(message, iconClass = 'fa-circle-check', duration = 4000) {
+    let container = document.querySelector('.toast-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.className = 'toast-container';
+        document.body.appendChild(container);
+    }
+    
+    const toast = document.createElement('div');
+    toast.className = 'premium-toast';
+    toast.style.cursor = 'grab';
+    toast.style.userSelect = 'none';
+    
+    let iconHTML = '';
+    const ic = (iconClass || '').toString().trim();
+    if (!ic || ic === 'success' || ic === 'check' || ic === 'fa-circle-check') {
+        iconHTML = '<i class="fas fa-circle-check toast-success-icon"></i>';
+    } else if (ic === 'danger' || ic === 'error' || ic === 'fa-circle-exclamation') {
+        iconHTML = '<i class="fas fa-circle-exclamation toast-success-icon" style="color:var(--danger, #ef4444);"></i>';
+    } else if (ic === 'warning' || ic === 'fa-triangle-exclamation') {
+        iconHTML = '<i class="fas fa-triangle-exclamation toast-success-icon" style="color:var(--warning, #f59e0b);"></i>';
+    } else if (ic.startsWith('ti-') || ic.startsWith('ti ')) {
+        iconHTML = `<i class="ti ${ic} toast-success-icon"></i>`;
+    } else if (ic.startsWith('fa-') || ic.startsWith('fas ') || ic.startsWith('far ')) {
+        const fullClass = ic.startsWith('fa') ? ic : 'fas ' + ic;
+        iconHTML = `<i class="${fullClass} toast-success-icon"></i>`;
+    } else {
+        iconHTML = `<i class="fas ${ic} toast-success-icon"></i>`;
+    }
+
+    toast.innerHTML = `
+        ${iconHTML}
+        <span>${message}</span>
+    `;
+    
+    container.appendChild(toast);
+    
+    if (window.attachDismissGesture) {
+        window.attachDismissGesture(toast);
+    }
+    
+    setTimeout(() => {
+        if (toast && toast.parentElement) {
+            toast.style.animation = 'none';
+            toast.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateY(-20px)';
+            setTimeout(() => {
+                if (toast && toast.parentElement) toast.remove();
+            }, 400);
+        }
+    }, duration);
+}
+window.showPremiumToast = showPremiumToast;
+window.showToast = showPremiumToast;
+
+// ── Shared Sitewide 3D Tilt Card Engine (Spring Physics) ──
+function init3DTiltCards() {
+    document.querySelectorAll('[data-tilt]').forEach(card => {
+        if (card.dataset.tiltInitialized) return;
+        card.dataset.tiltInitialized = 'true';
+
+        const isTerminal = card.classList.contains('terminal-wrapper');
+        const isBento = card.classList.contains('bento-card') || card.classList.contains('stat-card');
+        const maxStrength = isTerminal ? 2 : (isBento ? 8 : 12);
+        const maxScale = isTerminal ? 1.006 : (isBento ? 1.02 : 1.03);
+
+        let targetRotX = 0;
+        let targetRotY = 0;
+        let targetScale = 1;
+
+        let currentRotX = 0;
+        let currentRotY = 0;
+        let currentScale = 1;
+
+        const springStiffness = 0.08;
+        let animId = null;
+
+        function animate() {
+            currentRotX += (targetRotX - currentRotX) * springStiffness;
+            currentRotY += (targetRotY - currentRotY) * springStiffness;
+            currentScale += (targetScale - currentScale) * springStiffness;
+
+            card.style.transform = `perspective(1000px) rotateX(${currentRotX.toFixed(2)}deg) rotateY(${currentRotY.toFixed(2)}deg) scale3d(${currentScale.toFixed(3)},${currentScale.toFixed(3)},${currentScale.toFixed(3)})`;
+
+            const shadowOffsetX = -currentRotY * 1.5;
+            const shadowOffsetY = currentRotX * 1.5;
+            const shadowBlur = 20 + (currentScale - 1) * 300;
+
+            card.style.boxShadow = `${shadowOffsetX.toFixed(1)}px ${shadowOffsetY.toFixed(1)}px ${shadowBlur.toFixed(1)}px rgba(0,0,0,0.4), 0 0 12px color-mix(in srgb, var(--primary, #3b82f6) 4%, transparent)`;
+
+            if (Math.abs(targetRotX - currentRotX) > 0.01 || Math.abs(targetRotY - currentRotY) > 0.01 || Math.abs(targetScale - currentScale) > 0.001) {
+                animId = requestAnimationFrame(animate);
+            } else {
+                animId = null;
+            }
+        }
+
+        card.addEventListener('mousemove', e => {
+            const rect = card.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            const cx = rect.width / 2;
+            const cy = rect.height / 2;
+
+            targetRotX = ((y - cy) / cy) * -maxStrength;
+            targetRotY = ((x - cx) / cx) * maxStrength;
+            targetScale = maxScale;
+
+            if (!animId) {
+                animId = requestAnimationFrame(animate);
+            }
+        });
+
+        card.addEventListener('mouseleave', () => {
+            targetRotX = 0;
+            targetRotY = 0;
+            targetScale = 1;
+            if (!animId) {
+                animId = requestAnimationFrame(animate);
+            }
+        });
+    });
+}
+document.addEventListener('DOMContentLoaded', init3DTiltCards);
+window.init3DTiltCards = init3DTiltCards;
 </script>
 
 
@@ -654,16 +795,21 @@ window.topProgressBar = new TopProgressBar();
     <div class="theme-tooltip" id="theme-tooltip" style="display:none;"></div>
 
     {% if request.path not in ['/login', '/signup', '/forgot-password'] %}
-    {% with messages = get_flashed_messages() %}
+    {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
-    <div style="max-width: 1180px; margin: 1rem auto 0; padding: 0 1.5rem; position: relative; z-index: 10000;">
-        {% for message in messages %}
-        <div class="swipeable-alert" style="background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 10px; padding: 0.85rem 1.5rem; margin-bottom: 0.65rem; box-shadow: 0 12px 30px rgba(0,0,0,0.1); position: relative; display: flex; align-items: center; justify-content: space-between; transition: all 0.3s ease; cursor: grab; user-select: none;">
-            <span>{{ message }}</span>
-            <button onclick="this.parentElement.style.opacity='0'; this.parentElement.style.transform='translateY(-20px) scaleY(0)'; setTimeout(() => this.parentElement.remove(), 300)" style="background:none; border:none; color:var(--text-secondary); cursor:pointer; font-size:1.2rem; padding:0 0 0 10px; line-height:1; display:inline-flex; align-items:center;" title="Dismiss">&times;</button>
-        </div>
-        {% endfor %}
-    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            {% for category, message in messages %}
+                {% if category == 'error' or category == 'danger' %}
+                    showPremiumToast({{ message | tojson }}, 'fa-circle-exclamation');
+                {% elif category == 'warning' %}
+                    showPremiumToast({{ message | tojson }}, 'fa-triangle-exclamation');
+                {% else %}
+                    showPremiumToast({{ message | tojson }}, 'fa-circle-check');
+                {% endif %}
+            {% endfor %}
+        });
+    </script>
     {% endif %}
     {% endwith %}
     {% endif %}
@@ -719,6 +865,8 @@ window.topProgressBar = new TopProgressBar();
                     <a href="/terms" style="color: var(--text-muted); text-decoration: none; transition: color 0.2s;" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--text-muted)'">Terms</a>
                     <span style="margin: 0 8px; color: #334155;">|</span>
                     <a href="/privacy" style="color: var(--text-muted); text-decoration: none; transition: color 0.2s;" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--text-muted)'">Privacy</a>
+                    <span style="margin: 0 8px; color: #334155;">|</span>
+                    <a href="/about" style="color: var(--text-muted); text-decoration: none; transition: color 0.2s;" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--text-muted)'">About</a>
                 </p>
                 <div style="display: flex; gap: 1rem;">
                     <a href="https://github.com/Kavy-Sharma/phishsim-ai" target="_blank" rel="noopener noreferrer" style="color: #334155; font-size: 0.85rem; transition: color 0.2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#334155'"><i class="ti ti-brand-github"></i></a>
@@ -820,7 +968,7 @@ window.topProgressBar = new TopProgressBar();
             }, { passive: true });
 
             // Magnetic Button Pull logic (High-Performance RAF-Throttled)
-            const btnSelectors = '.hero-new-btn, .btn-launch, .nc-submit, .pdf-btn, .upgrade-chip, .btn-upgrade, .btn-purple, .btn-primary, .checkout-btn, .btn-try-demo';
+            const btnSelectors = '.hero-new-btn, .btn-launch, .nc-submit, .pdf-btn, .upgrade-chip, .btn-upgrade, .btn-purple, .btn-primary, .btn-primary-filled, .checkout-btn, .btn-try-demo, .btn-ghost';
             let magneticButtons = [];
             
             const updateMagneticButtons = () => {
@@ -846,6 +994,7 @@ window.topProgressBar = new TopProgressBar();
                     magneticButtons.push({ element: btn, inner: inner });
                 });
             };
+            window.updateMagneticButtons = updateMagneticButtons;
             
             updateMagneticButtons();
             
@@ -885,7 +1034,80 @@ window.topProgressBar = new TopProgressBar();
                         }
                     }
                 });
-            }, { passive: true });
+            // Shared Count-Up On Scroll Utility
+            (function() {
+                function initCountUp(el) {
+                    if (el.dataset.countupDone) return;
+                    el.dataset.countupDone = 'true';
+
+                    const rawTarget = el.getAttribute('data-target');
+                    const targetVal = rawTarget !== null ? parseFloat(rawTarget) : parseFloat(el.textContent.replace(/[^0-9.]/g, ''));
+                    if (isNaN(targetVal)) return;
+
+                    const prefix = el.getAttribute('data-prefix') || '';
+                    const suffix = el.getAttribute('data-suffix') || el.getAttribute('data-countup-suffix') || '';
+                    const decimals = parseInt(el.getAttribute('data-decimals') || '0', 10);
+                    const duration = parseInt(el.getAttribute('data-duration') || '1300', 10);
+
+                    const innerSpan = el.querySelector('span');
+                    const spanHtml = innerSpan ? innerSpan.outerHTML : '';
+
+                    const startTime = performance.now();
+                    const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);
+
+                    function tick(now) {
+                        const progress = Math.min((now - startTime) / duration, 1);
+                        const easedProgress = easeOutCubic(progress);
+                        const currentVal = (easedProgress * targetVal).toFixed(decimals);
+                        const formattedVal = decimals === 0 ? Math.round(easedProgress * targetVal).toLocaleString() : currentVal;
+
+                        if (innerSpan) {
+                            el.innerHTML = prefix + formattedVal + suffix + ' ' + spanHtml;
+                        } else {
+                            el.textContent = prefix + formattedVal + suffix;
+                        }
+
+                        if (progress < 1) {
+                            requestAnimationFrame(tick);
+                        } else {
+                            const finalVal = decimals === 0 ? Math.round(targetVal).toLocaleString() : targetVal.toFixed(decimals);
+                            if (innerSpan) {
+                                el.innerHTML = prefix + finalVal + suffix + ' ' + spanHtml;
+                            } else {
+                                el.textContent = prefix + finalVal + suffix;
+                            }
+                            el.classList.add('counted');
+                        }
+                    }
+
+                    requestAnimationFrame(tick);
+                }
+
+                window.initCountUpOnScroll = function(root) {
+                    const selector = '[data-countup], [data-target]';
+                    const elements = (root || document).querySelectorAll(selector);
+                    if (!elements.length) return;
+
+                    if ('IntersectionObserver' in window) {
+                        const observer = new IntersectionObserver((entries) => {
+                            entries.forEach((entry) => {
+                                if (entry.isIntersecting) {
+                                    initCountUp(entry.target);
+                                    observer.unobserve(entry.target);
+                                }
+                            });
+                        }, { threshold: 0.15 });
+
+                        elements.forEach((el) => observer.observe(el));
+                    } else {
+                        elements.forEach((el) => initCountUp(el));
+                    }
+                };
+
+                document.addEventListener('DOMContentLoaded', () => {
+                    window.initCountUpOnScroll();
+                });
+            })();
         });
     </script>
     {% if current_user and latest_active_campaign %}

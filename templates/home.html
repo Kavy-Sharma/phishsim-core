@@ -3171,17 +3171,6 @@
       overflow: hidden;
     }
 
-    .magnetic-inner {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: inherit;
-      width: 100%;
-      height: 100%;
-      pointer-events: none;
-      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-
     @keyframes hexRotate {
       0% {
         transform: rotate(0deg);
@@ -3330,6 +3319,37 @@
     }
 
     .spine-progress {}
+
+    #chain-mascot {
+      position: absolute;
+      z-index: 4;
+      width: 28px;
+      height: 28px;
+      margin-left: -14px;
+      margin-top: -14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      line-height: 1;
+      border-radius: 50%;
+      background: color-mix(in srgb, var(--accent-cyan, #38bdf8) 15%, transparent);
+      box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent-cyan, #38bdf8) 35%, transparent),
+                  0 0 14px color-mix(in srgb, var(--accent-cyan, #38bdf8) 40%, transparent);
+      pointer-events: none;
+      opacity: 0;
+      transition:
+        left   180ms cubic-bezier(0.25, 1, 0.5, 1),
+        top    180ms cubic-bezier(0.25, 1, 0.5, 1),
+        opacity 0.35s ease;
+      will-change: left, top;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      #chain-mascot {
+        transition: opacity 0.35s ease;
+      }
+    }
 
     .spine-node {
       transition: opacity 0.4s ease;
@@ -3548,6 +3568,28 @@
       .spine-progress {
         transition: none;
       }
+    }
+
+    /* Hero Section Custom Glowing Cursor Dot */
+    #hero.hero-custom-cursor,
+    #hero.hero-custom-cursor * {
+      cursor: none !important;
+    }
+
+    #hero-cursor-dot {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--accent-cyan, #38bdf8);
+      box-shadow: 0 0 12px var(--accent-cyan, #38bdf8), 0 0 24px rgba(56, 189, 248, 0.4);
+      pointer-events: none;
+      z-index: 99999;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      will-change: transform, opacity;
     }
   </style>
 </head>
@@ -3940,9 +3982,11 @@
         <circle class="spine-node" cx="80" cy="580" r="4.5" fill="var(--primary)" opacity="0" />
         <circle class="spine-node" cx="20" cy="740" r="4.5" fill="var(--primary)" opacity="0" />
         <circle class="spine-node" cx="80" cy="900" r="4.5" fill="var(--primary)" opacity="0" />
-        <circle class="spine-dot-progress" r="6" fill="#00f0ff" opacity="0"
-          style="filter: drop-shadow(0 0 6px #00f0ff);" />
+        <circle class="spine-dot-progress" r="0" opacity="0" />
       </svg>
+
+      <!-- Mascot travel marker (driven by JS updateSpine) -->
+      <div id="chain-mascot" aria-hidden="true">🎣</div>
 
       <div class="chain-card chain-card--left" data-step="1">
         <div class="card-connector card-connector--right"></div>
@@ -8019,15 +8063,36 @@ ${body}
         spineProgress.style.strokeDashoffset = totalLength * (1 - progress);
 
         let activeY = -1;
+        const mascot = document.getElementById('chain-mascot');
+
+        // Project SVG viewBox coords (0-100 x, 0-1050 y) to CSS pixel offsets
+        // The SVG is 160px wide, centered in chainBody via left:50%/translateX(-50%)
+        // chainBody has 900px max-width, padding 0 40px, so spine center = chainBody.offsetWidth / 2
         if (progressDot && totalLength > 0) {
           try {
             const point = spineProgress.getPointAtLength(totalLength * progress);
-            progressDot.setAttribute('cx', point.x);
-            progressDot.setAttribute('cy', point.y);
-            progressDot.setAttribute('opacity', progress > 0.01 && progress < 0.99 ? 1 : 0);
-            activeY = point.y;
-          } catch (e) {
+            // Keep legacy SVG dot hidden (now r=0)
             progressDot.setAttribute('opacity', 0);
+            activeY = point.y;
+
+            if (mascot) {
+              if (progress > 0.01 && progress < 0.99) {
+                // SVG viewBox: x in [0,100] → 160px wide spine centered in chainBody
+                const spineW = 160; // matches .chain-spine width
+                const spineH = 1050; // matches .attack-chain-body min-height and SVG viewBox height
+                const bodyW = chainBody.offsetWidth;
+                const spineLeft = (bodyW - spineW) / 2; // px offset of spine left edge inside body
+                const pxX = spineLeft + (point.x / 100) * spineW;
+                const pxY = (point.y / 1050) * spineH;
+                mascot.style.left = pxX + 'px';
+                mascot.style.top = pxY + 'px';
+                mascot.style.opacity = '1';
+              } else {
+                mascot.style.opacity = '0';
+              }
+            }
+          } catch (e) {
+            if (mascot) mascot.style.opacity = '0';
           }
         }
 
@@ -8076,56 +8141,7 @@ ${body}
     }, { threshold: 0.12 });
     revealEls.forEach(el => revealObs.observe(el));
 
-    /* ── COUNTUP ── */
-    const countEls = document.querySelectorAll('[data-countup]');
-    const countObs = new IntersectionObserver(entries => {
-      entries.forEach(e => {
-        if (!e.isIntersecting) return;
-        const card = e.target;
-        const target = +card.dataset.target;
-        const suffix = card.dataset.suffix || '';
-        const prefix = card.dataset.prefix || '';
-        const numEl = card.querySelector('.stat-num');
-        const spanContent = numEl.querySelector('span') ? numEl.querySelector('span').outerHTML : '';
-        let start = 0;
-        const duration = 1400;
-        const startTime = performance.now();
-        const tick = (now) => {
-          const progress = Math.min((now - startTime) / duration, 1);
-          const ease = 1 - Math.pow(1 - progress, 3);
-          const val = Math.round(ease * target);
-          numEl.innerHTML = prefix + val + spanContent;
-          if (progress < 1) requestAnimationFrame(tick);
-          else { numEl.innerHTML = prefix + target + spanContent; card.classList.add('counted'); }
-        };
-        requestAnimationFrame(tick);
-        countObs.unobserve(card);
-      });
-    }, { threshold: 0.4 });
-    countEls.forEach(el => countObs.observe(el));
-
-    /* ── HERO STAT COUNTUP ── */
-    const heroStats = document.querySelectorAll('.hero-stat-number');
-    const heroStatObs = new IntersectionObserver(entries => {
-      entries.forEach(e => {
-        if (!e.isIntersecting) return;
-        const el = e.target;
-        const target = +el.dataset.target;
-        const suffix = el.dataset.suffix || '';
-        const prefix = el.dataset.prefix || '';
-        let start = performance.now();
-        const tick = (now) => {
-          const p = Math.min((now - start) / 1200, 1);
-          const ease = 1 - Math.pow(1 - p, 3);
-          el.textContent = prefix + Math.round(ease * target) + suffix;
-          if (p < 1) requestAnimationFrame(tick);
-          else el.textContent = prefix + target + suffix;
-        };
-        requestAnimationFrame(tick);
-        heroStatObs.unobserve(el);
-      });
-    }, { threshold: 0.3 });
-    heroStats.forEach(el => heroStatObs.observe(el));
+    /* Countup behavior handled sitewide via shared window.initCountUpOnScroll utility in base.html */
 
 
     /* ── DYNAMIC GLOBAL THREAT INTELLIGENCE STREAM ── */
@@ -8692,67 +8708,6 @@ ${body}
       };
       attachHoverEvents();
       setInterval(attachHoverEvents, 2000);
-
-      // Magnetic Button Pull logic
-      const btnSelectors = '.btn-primary, .btn-try-demo, .btn-ghost';
-      let magneticButtons = [];
-
-      const updateMagneticButtons = () => {
-        magneticButtons = [];
-        document.querySelectorAll(btnSelectors).forEach(btn => {
-          let inner = btn.querySelector('.magnetic-inner');
-          if (!inner) {
-            inner = document.createElement('span');
-            inner.className = 'magnetic-inner';
-            inner.style.display = 'inline-flex';
-            inner.style.alignItems = 'center';
-            inner.style.justifyContent = 'center';
-            inner.style.gap = 'inherit';
-            inner.style.width = '100%';
-            inner.style.height = '100%';
-            inner.style.pointerEvents = 'none';
-            inner.style.transition = 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)';
-            while (btn.firstChild) {
-              inner.appendChild(btn.firstChild);
-            }
-            btn.appendChild(inner);
-          }
-          magneticButtons.push({ element: btn, inner: inner });
-        });
-      };
-
-      updateMagneticButtons();
-      setInterval(updateMagneticButtons, 2000);
-
-      document.addEventListener('mousemove', (e) => {
-        const mouseX = e.clientX;
-        const mouseY = e.clientY;
-
-        magneticButtons.forEach(item => {
-          const rect = item.element.getBoundingClientRect();
-          const btnX = rect.left + rect.width / 2;
-          const btnY = rect.top + rect.height / 2;
-
-          const dx = mouseX - btnX;
-          const dy = mouseY - btnY;
-          const distance = Math.sqrt(dx * dx + dy * dy);
-
-          if (distance < 60) {
-            const strength = 6;
-            const factor = (1 - distance / 60) * strength;
-            const pullX = (dx / (distance || 1)) * factor;
-            const pullY = (dy / (distance || 1)) * factor;
-
-            item.inner.style.transition = 'none';
-            item.inner.style.transform = `translate(${pullX}px, ${pullY}px)`;
-          } else {
-            if (item.inner.style.transform && item.inner.style.transform !== 'translate(0px, 0px)') {
-              item.inner.style.transition = 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)';
-              item.inner.style.transform = 'translate(0px, 0px)';
-            }
-          }
-        });
-      }, { passive: true });
     });
 
     // ── CURSOR-LOCAL LIQUID HEADING EFFECT ──────────────────────────────────────
@@ -9007,6 +8962,82 @@ ${body}
       sessionStorage.setItem(EXIT_SESSION_KEY, '1');
       window.lureShowCallout("Leaving so soon? Try a free, 1-click test simulation before you go — no signup required.");
     });
+
+    // Hero Section Custom Glowing Cursor Dot
+    (function initHeroCustomCursor() {
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+      const hero = document.getElementById('hero');
+      if (!hero) return;
+
+      let dot = document.getElementById('hero-cursor-dot');
+      if (!dot) {
+        dot = document.createElement('div');
+        dot.id = 'hero-cursor-dot';
+        document.body.appendChild(dot);
+      }
+
+      let mouseX = 0, mouseY = 0;
+      let dotX = 0, dotY = 0;
+      let isInside = false;
+      let animId = null;
+
+      function render() {
+        if (!isInside) {
+          dot.style.opacity = '0';
+          animId = null;
+          return;
+        }
+        dotX += (mouseX - dotX) * 0.15;
+        dotY += (mouseY - dotY) * 0.15;
+        dot.style.transform = `translate3d(${dotX}px, ${dotY}px, 0) translate(-50%, -50%)`;
+
+        if (isInside) {
+          animId = requestAnimationFrame(render);
+        }
+      }
+
+      window.addEventListener('mousemove', (e) => {
+        const rect = hero.getBoundingClientRect();
+        const inHero = (
+          e.clientX >= rect.left &&
+          e.clientX <= rect.right &&
+          e.clientY >= rect.top &&
+          e.clientY <= rect.bottom
+        );
+
+        if (inHero) {
+          mouseX = e.clientX;
+          mouseY = e.clientY;
+
+          if (!isInside) {
+            isInside = true;
+            hero.classList.add('hero-custom-cursor');
+            dot.style.opacity = '1';
+            dotX = mouseX;
+            dotY = mouseY;
+            dot.style.transform = `translate3d(${dotX}px, ${dotY}px, 0) translate(-50%, -50%)`;
+            if (!animId) {
+              animId = requestAnimationFrame(render);
+            }
+          }
+        } else {
+          if (isInside) {
+            isInside = false;
+            hero.classList.remove('hero-custom-cursor');
+            dot.style.opacity = '0';
+          }
+        }
+      }, { passive: true });
+
+      document.addEventListener('mouseleave', () => {
+        if (isInside) {
+          isInside = false;
+          hero.classList.remove('hero-custom-cursor');
+          dot.style.opacity = '0';
+        }
+      });
+    })();
 
   })();
   </script>

@@ -1,6 +1,57 @@
 {% extends 'base.html' %}
 {% block title %}AI Security Report — {{ campaign.name }}{% endblock %}
 {% block content %}
+<!-- CAMPAIGN REPORT SKELETON OVERLAY -->
+<div id="report-skeleton" class="skeleton-loader-overlay"
+    style="padding: clamp(2rem, 5vw, 6rem) clamp(1.5rem, 3vw, 3rem); width: min(100%, 1400px); margin: 0 auto; box-sizing: border-box;">
+    <!-- Topbar Skeleton -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 3.5rem; padding-bottom: 2rem; border-bottom: 1px solid var(--border-color, rgba(255,255,255,0.08));">
+        <div class="skeleton-block" style="width: 140px; height: 20px;"></div>
+        <div style="display: flex; gap: 12px;">
+            <div class="skeleton-block" style="width: 150px; height: 42px; border-radius: 12px;"></div>
+            <div class="skeleton-block" style="width: 150px; height: 42px; border-radius: 12px;"></div>
+        </div>
+    </div>
+    <!-- Hero Card Skeleton -->
+    <div style="display: flex; gap: 2.5rem; align-items: center; padding: 3.5rem 3rem; border-radius: 20px; background: rgba(15,23,42,0.3); border: 1px solid var(--border-color, rgba(255,255,255,0.08)); margin-bottom: 3rem; flex-wrap: wrap;">
+        <div style="flex: 1; min-width: 260px;">
+            <div class="skeleton-block" style="width: 140px; height: 26px; border-radius: 100px; margin-bottom: 1rem;"></div>
+            <div class="skeleton-block" style="width: min(420px, 90%); height: 38px; margin-bottom: 1rem;"></div>
+            <div class="skeleton-block" style="width: min(580px, 100%); height: 18px; margin-bottom: 8px;"></div>
+            <div class="skeleton-block" style="width: min(400px, 75%); height: 18px;"></div>
+        </div>
+        <div style="flex-shrink: 0; width: 170px; height: 170px; border-radius: 24px; background: rgba(15,23,42,0.6); border: 1px solid rgba(255,255,255,0.08); padding: 1.5rem; box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 12px;">
+            <div class="skeleton-block" style="width: 60px; height: 14px;"></div>
+            <div class="skeleton-block" style="width: 90px; height: 50px;"></div>
+            <div class="skeleton-block" style="width: 80px; height: 20px; border-radius: 100px;"></div>
+        </div>
+    </div>
+    <!-- 4 Stat Boxes Skeleton -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 2rem; margin-bottom: 3rem;">
+        <div style="background: rgba(15,23,42,0.3); border: 1px solid var(--border-color, rgba(255,255,255,0.08)); border-radius: 18px; padding: 2.2rem 1.8rem; display: flex; flex-direction: column; align-items: center; gap: 12px;">
+            <div class="skeleton-block" style="width: 70px; height: 40px;"></div>
+            <div class="skeleton-block" style="width: 110px; height: 14px;"></div>
+        </div>
+        <div style="background: rgba(15,23,42,0.3); border: 1px solid var(--border-color, rgba(255,255,255,0.08)); border-radius: 18px; padding: 2.2rem 1.8rem; display: flex; flex-direction: column; align-items: center; gap: 12px;">
+            <div class="skeleton-block" style="width: 70px; height: 40px;"></div>
+            <div class="skeleton-block" style="width: 110px; height: 14px;"></div>
+        </div>
+        <div style="background: rgba(15,23,42,0.3); border: 1px solid var(--border-color, rgba(255,255,255,0.08)); border-radius: 18px; padding: 2.2rem 1.8rem; display: flex; flex-direction: column; align-items: center; gap: 12px;">
+            <div class="skeleton-block" style="width: 70px; height: 40px;"></div>
+            <div class="skeleton-block" style="width: 110px; height: 14px;"></div>
+        </div>
+        <div style="background: rgba(15,23,42,0.3); border: 1px solid var(--border-color, rgba(255,255,255,0.08)); border-radius: 18px; padding: 2.2rem 1.8rem; display: flex; flex-direction: column; align-items: center; gap: 12px;">
+            <div class="skeleton-block" style="width: 70px; height: 40px;"></div>
+            <div class="skeleton-block" style="width: 110px; height: 14px;"></div>
+        </div>
+    </div>
+    <!-- Main Content Grid Skeleton -->
+    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem;">
+        <div class="skeleton-block" style="height: 380px; border-radius: 18px;"></div>
+        <div class="skeleton-block" style="height: 380px; border-radius: 18px;"></div>
+    </div>
+</div>
+
 <style>
 .report-page { max-width: 1400px; width: 100%; margin: 0 auto; padding: 6rem 2.5rem 6rem; box-sizing: border-box; }
 
@@ -448,44 +499,7 @@ body.light-theme .secondary-btn:hover {
     font-family: var(--font-mono);
 }
 
-/* Toast notifications */
-.toast-container {
-    position: fixed;
-    bottom: 24px;
-    right: 24px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    z-index: 9999;
-}
-.premium-toast {
-    background: rgba(15, 23, 42, 0.9);
-    border: 1px solid rgba(99, 102, 241, 0.3);
-    backdrop-filter: blur(10px);
-    padding: 12px 20px;
-    border-radius: 12px;
-    color: #fff;
-    font-family: var(--font-sans);
-    font-size: 0.85rem;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.5), 0 0 20px rgba(99, 102, 241, 0.15);
-    transform: translateY(100px);
-    opacity: 0;
-    animation: toastSlideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-    max-width: 380px;
-}
-@keyframes toastSlideIn {
-    to {
-        transform: translateY(0);
-        opacity: 1;
-    }
-}
-.toast-success-icon {
-    color: #4ade80;
-    font-size: 1.1rem;
-}
+
 
 /* Modal overlay and animation */
 .modal-overlay {
@@ -643,7 +657,7 @@ body.light-theme .brief-doc {
         {% set hss = report.hss %}
         <div class="hss-gauge hss-{{ hss.tier }}">
             <div class="hss-label-top">Security Score™</div>
-            <div class="hss-score" id="hss-number" data-target="{{ hss.score }}">0</div>
+            <div class="hss-score" id="hss-number" data-countup data-target="{{ hss.score }}">0</div>
             <div style="color:var(--text-muted); font-size:0.75rem; margin:4px 0;">/100</div>
             <div class="hss-tier-badge">{{ hss.label }}</div>
             
@@ -668,7 +682,7 @@ body.light-theme .brief-doc {
         <!-- Delivery Rate -->
         <div class="rstat-box">
             <div style="display: flex; align-items: center; justify-content: center; gap: 8px;">
-                <div class="rstat-num">{{ report.delivery_rate }}%</div>
+                <div class="rstat-num" data-countup data-target="{{ report.delivery_rate }}" data-suffix="%">{{ report.delivery_rate }}%</div>
                 <div class="sparkline-container" title="Last 3 campaigns: {{ sparklines.delivery[0] }}% -> {{ sparklines.delivery[1] }}% -> {{ sparklines.delivery[2] }}%">
                     {% for val in sparklines.delivery %}
                     <div class="sparkline-bar" style="height: {{ val }}%;"></div>
@@ -682,7 +696,7 @@ body.light-theme .brief-doc {
         <!-- Open Rate -->
         <div class="rstat-box">
             <div style="display: flex; align-items: center; justify-content: center; gap: 8px;">
-                <div class="rstat-num">{{ report.open_rate }}%</div>
+                <div class="rstat-num" data-countup data-target="{{ report.open_rate }}" data-suffix="%">{{ report.open_rate }}%</div>
                 <div class="sparkline-container" title="Last 3 campaigns: {{ sparklines.open[0] }}% -> {{ sparklines.open[1] }}% -> {{ sparklines.open[2] }}%">
                     {% for val in sparklines.open %}
                     <div class="sparkline-bar" style="height: {{ val }}%;"></div>
@@ -696,7 +710,7 @@ body.light-theme .brief-doc {
         <!-- Click Rate -->
         <div class="rstat-box">
             <div style="display: flex; align-items: center; justify-content: center; gap: 8px;">
-                <div class="rstat-num">{{ report.click_rate or 0 }}%</div>
+                <div class="rstat-num" data-countup data-target="{{ report.click_rate or 0 }}" data-suffix="%">{{ report.click_rate or 0 }}%</div>
                 <div class="sparkline-container" title="Last 3 campaigns: {{ sparklines.click[0] }}% -> {{ sparklines.click[1] }}% -> {{ sparklines.click[2] }}%">
                     {% for val in sparklines.click %}
                     <div class="sparkline-bar" style="height: {{ val }}%;"></div>
@@ -710,7 +724,7 @@ body.light-theme .brief-doc {
         <!-- Report Rate -->
         <div class="rstat-box">
             <div style="display: flex; align-items: center; justify-content: center; gap: 8px;">
-                <div class="rstat-num">{{ report.report_rate }}%</div>
+                <div class="rstat-num" data-countup data-target="{{ report.report_rate }}" data-suffix="%">{{ report.report_rate }}%</div>
                 <div class="sparkline-container" title="Last 3 campaigns: {{ sparklines.report[0] }}% -> {{ sparklines.report[1] }}% -> {{ sparklines.report[2] }}%">
                     {% for val in sparklines.report %}
                     <div class="sparkline-bar" style="height: {{ val }}%;"></div>
@@ -1676,6 +1690,7 @@ function handleDownload(btnId, url) {
             labelEl.textContent = ' Done!';
             btn.style.opacity = '1';
             btn.style.background = 'linear-gradient(135deg,#22c55e,#16a34a)';
+            showPremiumToast('Executive security report compiled and downloaded successfully!', 'fa-circle-check');
             setTimeout(() => {
                 iconEl.className = origIcon;
                 labelEl.textContent = origLabel;
@@ -1684,43 +1699,6 @@ function handleDownload(btnId, url) {
             }, 2500);
         }, 1200);
     }, 800);
-}
-
-// Dynamic toast notification system
-function showPremiumToast(message, iconClass = 'fa-circle-check') {
-    let container = document.querySelector('.toast-container');
-    if (!container) {
-        container = document.createElement('div');
-        container.className = 'toast-container';
-        document.body.appendChild(container);
-    }
-    
-    const toast = document.createElement('div');
-    toast.className = 'premium-toast';
-    toast.style.cursor = 'grab';
-    toast.style.userSelect = 'none';
-    toast.innerHTML = `
-        <i class="fas ${iconClass} toast-success-icon"></i>
-        <span>${message}</span>
-    `;
-    
-    container.appendChild(toast);
-    
-    if (window.attachDismissGesture) {
-        window.attachDismissGesture(toast);
-    }
-    
-    setTimeout(() => {
-        if (toast && toast.parentElement) {
-            toast.style.animation = 'none';
-            toast.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
-            toast.style.opacity = '0';
-            toast.style.transform = 'translateY(-20px)';
-            setTimeout(() => {
-                if (toast && toast.parentElement) toast.remove();
-            }, 500);
-        }
-    }, 4000);
 }
 
 function triggerTrainingToast(empName, empDept) {
