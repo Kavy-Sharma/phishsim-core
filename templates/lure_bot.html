@@ -290,12 +290,14 @@
       line-height: 1.42;
       box-shadow: 0 10px 30px rgba(0,0,0,0.45);
       pointer-events: auto;
+      display: none;
       opacity: 0;
       transform: translateX(8px) scale(0.97);
       transition: opacity 0.3s ease, transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
       z-index: 10001;
     }
     #pb-callout.pb-show {
+      display: block;
       opacity: 1;
       transform: translateX(0) scale(1);
     }
@@ -475,6 +477,8 @@
       position: fixed;
       z-index: 10002;
       width: 320px;
+      max-width: calc(100vw - 24px);
+      box-sizing: border-box;
       background: var(--bg-elevated, var(--lure-bg-elevated));
       border: 1px solid color-mix(in srgb, var(--primary) 30%, transparent);
       border-radius: 16px;
@@ -514,7 +518,13 @@
     }
     .pb-popover-btn {
       width: 100%;
-      padding: 8px 12px;
+      min-height: 40px;
+      box-sizing: border-box;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 10px 14px;
       font-size: var(--lure-font-sm);
       font-weight: 600;
       border-radius: 8px;
@@ -3677,6 +3687,8 @@
   (function () {
     'use strict';
 
+    const LURE_DEBUG = false;
+
     // ════════════════════════════════════════════════════════
     // Ask Lure — Tab Voice Copy Variant Pools
     // ════════════════════════════════════════════════════════
@@ -4475,7 +4487,7 @@
     }
 
     function closePanel() {
-      console.log('[DEBUG_CLOSE_PANEL_FIRED]', new Error().stack);
+      if (LURE_DEBUG) console.log('[DEBUG_CLOSE_PANEL_FIRED]', new Error().stack);
       panelOpen = false;
       panel.classList.remove('pb-open');
       avatar.setAttribute('aria-expanded', 'false');
@@ -4555,25 +4567,16 @@
     /* ── Click / Close hooks ── */
     let preventClick = false;
 
-    avatar.addEventListener('click', () => {
+    avatar.addEventListener('click', (e) => {
+      if (e) e.stopPropagation();
       if (preventClick) return;
       
       // Trigger squash-and-stretch animation
       avatar.classList.add('pb-squash-active');
       setTimeout(() => {
         avatar.classList.remove('pb-squash-active');
-        
-        loadVisitorProfile();
-        const dismissed = localStorage.getItem('first_visit_popover_dismissed') === 'true';
-        if (!dismissed && visitorProfile.visitCount === 1) {
-          fvOpen ? closeFvPopover() : openFvPopover();
-        } else {
-          if (!dismissed) {
-            localStorage.setItem('first_visit_popover_dismissed', 'true');
-          }
-          panelOpen ? closePanel() : openPanel();
-        }
-      }, 180);
+        panelOpen ? closePanel() : openPanel();
+      }, 120);
     });
 
     document.getElementById('pb-close-btn').addEventListener('click', closePanel);
@@ -4727,10 +4730,10 @@
 
     document.getElementById('pb-drag-handle').addEventListener('pointerdown', startDrag);
     avatar.addEventListener('pointerdown', startDrag);
-    // Also allow dragging from the bubble header during tour mode — the bubble is the
-    // most natural thing to grab when repositioning the mascot during a walkthrough,
-    // but it previously had no pointerdown listener, so hasMoved never fired and
-    // wtUserDragged was never set, causing snap-back on the next reposition tick.
+    document.getElementById('pb-drag-handle').addEventListener('mousedown', startDrag);
+    avatar.addEventListener('mousedown', startDrag);
+
+    // Also allow dragging from the bubble header during tour mode
     document.addEventListener('pointerdown', (e) => {
       const bubbleHeader = e.target.closest('.pb-wt-bubble-header');
       if (bubbleHeader && wtActive) {
@@ -4744,84 +4747,75 @@
       if (e.target.closest('.pb-icon-btn') || e.target.closest('.pb-tab-btn') || e.target.closest('button')) return;
       
       const targetEl = e.currentTarget;
-      targetEl.setPointerCapture && targetEl.setPointerCapture(e.pointerId);
-      e.preventDefault();
+      if (e.pointerId && targetEl.setPointerCapture) {
+        try { targetEl.setPointerCapture(e.pointerId); } catch(err) {}
+      }
 
       const hostR = host.getBoundingClientRect();
       drag = {
-        pointerId: e.pointerId,
+        pointerId: e.pointerId || null,
         target:    targetEl,
         startX:    e.clientX,
         startY:    e.clientY,
         origLeft:  hostR.left,
         origTop:   hostR.top,
-        origRight: window.innerWidth  - hostR.right,
-        origBottom: window.innerHeight - hostR.bottom,
-        hostW:     hostR.width,
-        hostH:     hostR.height,
         hasMoved:  false
       };
     }
 
-    document.addEventListener('pointermove', e => {
+    function onDragMove(e) {
       if (!drag || isMobile()) return;
-      const dx = drag.startX - e.clientX;
-      const dy = drag.startY - e.clientY;
+      const dx = e.clientX - drag.startX;
+      const dy = e.clientY - drag.startY;
 
       if (!drag.hasMoved && (Math.abs(dx) > 3 || Math.abs(dy) > 3)) {
         drag.hasMoved = true;
       }
 
       if (!drag.hasMoved) return;
+      if (e.cancelable) e.preventDefault();
 
       if (wtActive) {
         window.wtUserDragged = true;
-        console.log('[Lure drag] wtUserDragged SET true — dx:', (drag.startX - e.clientX).toFixed(1), 'dy:', (drag.startY - e.clientY).toFixed(1));
-        let newLeft = drag.origLeft - dx;
-        let newTop  = drag.origTop  - dy;
-
-        newLeft = Math.max(DRAG_MARGIN, Math.min(newLeft, window.innerWidth - host.offsetWidth - DRAG_MARGIN));
-        newTop  = Math.max(DRAG_MARGIN, Math.min(newTop, window.innerHeight - host.offsetHeight - DRAG_MARGIN));
-
-        host.style.setProperty('position', 'fixed', 'important');
-        host.style.setProperty('left', newLeft + 'px', 'important');
-        host.style.setProperty('top', newTop + 'px', 'important');
-        host.style.setProperty('right', 'auto', 'important');
-        host.style.setProperty('bottom', 'auto', 'important');
-      } else {
-        // Compute new right/bottom for the HOST in normal mode
-        let newRight  = drag.origRight  + dx;
-        let newBottom = drag.origBottom + dy;
-
-        // Window-wide drag constraints (anywhere within the viewport with margin)
-        newRight = Math.max(newRight, DRAG_MARGIN);
-        newRight = Math.min(newRight, window.innerWidth - host.offsetWidth - DRAG_MARGIN);
-
-        newBottom = Math.max(newBottom, DRAG_MARGIN);
-        newBottom = Math.min(newBottom, window.innerHeight - host.offsetHeight - DRAG_MARGIN);
-
-        host.style.right  = newRight  + 'px';
-        host.style.bottom = newBottom + 'px';
-        host.style.left   = 'auto';
-        host.style.top    = 'auto';
-
-        if (panelOpen) repositionPanel();
-        if (fvOpen) repositionFvPopover();
+        if (LURE_DEBUG) console.log('[Lure drag] wtUserDragged SET true — dx:', dx.toFixed(1), 'dy:', dy.toFixed(1));
       }
-    });
 
-    document.addEventListener('pointerup', e => {
+      let newLeft = drag.origLeft + dx;
+      let newTop  = drag.origTop  + dy;
+
+      newLeft = Math.max(DRAG_MARGIN, Math.min(newLeft, window.innerWidth - host.offsetWidth - DRAG_MARGIN));
+      newTop  = Math.max(DRAG_MARGIN, Math.min(newTop, window.innerHeight - host.offsetHeight - DRAG_MARGIN));
+
+      host.style.setProperty('position', 'fixed', 'important');
+      host.style.setProperty('left', newLeft + 'px', 'important');
+      host.style.setProperty('top', newTop + 'px', 'important');
+      host.style.setProperty('right', 'auto', 'important');
+      host.style.setProperty('bottom', 'auto', 'important');
+
+      if (panelOpen) repositionPanel();
+      if (fvOpen) repositionFvPopover();
+    }
+
+    function onDragEnd(e) {
       if (!drag) return;
-      if (drag.target) {
-        drag.target.releasePointerCapture && drag.target.releasePointerCapture(drag.pointerId);
+      const targetIsAvatar = drag.target === avatar || (drag.target && drag.target.closest && drag.target.closest('#pb-avatar'));
+      if (drag.pointerId && drag.target && drag.target.releasePointerCapture) {
+        try { drag.target.releasePointerCapture(drag.pointerId); } catch(err) {}
       }
       const wasDragged = drag.hasMoved;
       drag = null;
       if (wasDragged) {
         preventClick = true;
         setTimeout(() => { preventClick = false; }, 50);
+      } else if (targetIsAvatar && !preventClick) {
+        avatar.click();
       }
-    });
+    }
+
+    document.addEventListener('pointermove', onDragMove);
+    document.addEventListener('mousemove', onDragMove);
+    document.addEventListener('pointerup', onDragEnd);
+    document.addEventListener('mouseup', onDragEnd);
 
     /* ── Tabs (Floating Panel) ─────────────────────────────────── */
     panel.querySelectorAll('.pb-tab-btn, .pb-sidebar-tab-btn').forEach(btn => {
@@ -6027,7 +6021,6 @@
     }
 
     let wtRepositionInterval = null;
-    let stepSettleUntil = 0;
     let lastTargetLeft = null;
     let lastTargetTop = null;
     let lastTargetWidth = null;
@@ -6077,9 +6070,9 @@
 
     function repositionWalkthroughElements(isPageScroll = false) {
       if (!wtActive || wtCurrentStep < 0 || wtCurrentStep >= wtSteps.length) return;
-      console.log('[Lure reposition] tick — wtUserDragged:', window.wtUserDragged, '| isPageScroll:', isPageScroll, '| step:', wtCurrentStep);
+      if (LURE_DEBUG) console.log('[Lure reposition] tick — wtUserDragged:', window.wtUserDragged, '| isPageScroll:', isPageScroll, '| step:', wtCurrentStep);
       if (window.wtUserDragged) {
-        console.log('[Lure reposition] → SKIPPED (user dragged)');
+        if (LURE_DEBUG) console.log('[Lure reposition] → SKIPPED (user dragged)');
         return; // User manually positioned mascot, respect their drag!
       }
       const step = wtSteps[wtCurrentStep];
@@ -7585,6 +7578,10 @@
 
     function showCallout(message, tourName = null) {
       if (!calloutEl || !calloutText) return;
+      if (!message || typeof message !== 'string' || !message.trim()) {
+        hideCallout();
+        return;
+      }
       calloutText.textContent = message;
 
       // Clear any existing auto-dismiss timer

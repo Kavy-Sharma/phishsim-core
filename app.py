@@ -23,6 +23,7 @@ from concurrent.futures import ThreadPoolExecutor
 DIAGNOSTICS_EXECUTOR = ThreadPoolExecutor(max_workers=16)
 
 app = Flask(__name__)
+app.config['TEMPLATES_AUTO_RELOAD'] = True
 csrf = CSRFProtect(app)
 
 flask_secret_key = os.getenv("FLASK_SECRET_KEY")
@@ -448,9 +449,9 @@ def add_security_headers(response):
     response.headers.setdefault(
         "Content-Security-Policy",
         "default-src 'self'; "
-        "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
-        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; "
-        "font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net; "
+        "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; "
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; "
+        "font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; "
         "img-src 'self' data: https://*.google.com https://*.urlscan.io; "
         "connect-src 'self' https://api.pwnedpasswords.com https://emailrep.io https://dns.google https://rdap.org; "
         "frame-ancestors 'none';"
@@ -1418,7 +1419,7 @@ def home():
                 db.close()
             except Exception as e:
                 pass
-        
+    # Return rendered homepage template with live simulation stats
     return render_template("home.html", latest_simulation_time=latest_time_str, public_stats=stats_dict)
 
 
@@ -2490,6 +2491,69 @@ def api_threat_sandbox_generate():
         return jsonify(resp_data)
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
+
+
+@app.route("/api/public-sandbox/generate-custom", methods=["POST"])
+@csrf.exempt
+def api_public_sandbox_generate_custom():
+    """
+    DEMO-ONLY public endpoint for custom free-text scenarios.
+    Calls live AI generation (generate_phishing_email) with visitor-supplied scenario description.
+    Rate-limited to 3 requests / IP / 60 seconds.
+    """
+    if not check_rate_limit(get_remote_ip(), "public-sandbox-custom", 3, 60):
+        return jsonify({"success": False, "message": "Rate limit exceeded. Please wait 60 seconds before retrying."}), 429
+
+    raw_scenario = request.form.get("scenario_desc", "").strip()
+    if not raw_scenario:
+        return jsonify({"success": False, "message": "Scenario description is required."}), 400
+
+    import re, html
+    clean_scenario = html.escape(re.sub(r'[^\x20-\x7E]', '', raw_scenario))[:120]
+    if len(clean_scenario) < 3:
+        return jsonify({"success": False, "message": "Please enter a more descriptive scenario (at least 3 characters)."}), 400
+
+    placeholder_profile = {
+        "name": "Alex Morgan",
+        "email": "alex.morgan@demo-corp.example",
+        "department": "General Staff",
+        "company_name": "Demo Corp"
+    }
+
+    try:
+        from ai_engine.email_gen import generate_phishing_email, fallback_email
+        try:
+            res = generate_phishing_email(
+                employee_profile=placeholder_profile,
+                scenario=clean_scenario,
+                target_domain="demo-corp.example",
+                urgency_level="high",
+            )
+        except Exception as ai_err:
+            print(f"[public-sandbox-custom] AI generation failed, using fallback: {ai_err}")
+            res = fallback_email(placeholder_profile, "it_alert")
+            res["is_fallback"] = True
+
+        sender_name = res.get("sender_display") or res.get("sender_name") or "IT Support"
+        clean_name = re.sub(r'[^a-zA-Z0-9\.]', '', sender_name.lower().replace(" ", "."))
+        clean_name = re.sub(r'\.{2,}', '.', clean_name).strip('.') or "noreply"
+        sender_email = f"{clean_name}@demo-corp.example"
+
+        resp_data = {
+            "success": True,
+            "from": f"{sender_name} &lt;{sender_email}&gt;",
+            "subject": res.get("subject", ""),
+            "body": res.get("body_html", ""),
+            "educational_breakdown": res.get("educational_breakdown") or res.get("phishing_tactic") or "Unexpected urgent security request.",
+            "duration_ms": res.get("duration_ms", 0),
+            "is_ai_generated": not res.get("is_fallback", False),
+        }
+        if "bait_score" in res:
+            resp_data["bait_score"] = res["bait_score"]
+        return jsonify(resp_data)
+    except Exception as e:
+        print(f"[public-sandbox-custom] Exception: {e}")
+        return jsonify({"success": False, "message": "Generation failed. Please try again."}), 500
 
 
 @app.route("/api/spot-the-phish/status", methods=["GET"])

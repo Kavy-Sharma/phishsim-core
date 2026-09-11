@@ -96,6 +96,85 @@
       --scrollbar-thumb: #2D3F5F;
     }
 
+    /* ── Modern Cyber CTA Button (.lure-cta) ── */
+    .lure-cta, a.lure-cta {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      gap: 1.25rem;
+      padding: 0.4rem 0.4rem 0.4rem 1.75rem;
+      background: linear-gradient(180deg, #14192b, #0a0d18) !important;
+      border: 1px solid rgba(148, 163, 184, 0.15) !important;
+      border-radius: var(--radius-full, 9999px) !important;
+      cursor: pointer;
+      overflow: visible;
+      text-decoration: none !important;
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.06),
+        0 8px 24px rgba(0,0,0,0.45) !important;
+      transition: transform 0.25s cubic-bezier(0.16,1,0.3,1),
+                  box-shadow 0.25s cubic-bezier(0.16,1,0.3,1) !important;
+    }
+
+    .lure-cta-label {
+      font-family: 'JetBrains Mono', monospace !important;
+      font-size: 0.95rem !important;
+      font-weight: 700 !important;
+      letter-spacing: 0.12em !important;
+      color: #f1f5f9 !important;
+    }
+
+    .lure-cta-orb {
+      position: relative;
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: radial-gradient(circle at 35% 30%, #1a2138, #05070f 70%) !important;
+      box-shadow: 0 0 22px rgba(56, 189, 248, 0.45),
+                  0 0 0 1px rgba(56, 189, 248, 0.25) inset !important;
+    }
+
+    .lure-cta-ring {
+      position: absolute;
+      inset: -6px;
+      border-radius: 50%;
+      border: 1.5px dashed rgba(56, 189, 248, 0.55);
+      animation: lureRingSpin 6s linear infinite !important;
+    }
+
+    .lure-cta-chevrons {
+      color: #7dd3fc !important;
+      display: flex;
+      filter: drop-shadow(0 0 6px rgba(56, 189, 248, 0.7));
+      transition: transform 0.3s cubic-bezier(0.16,1,0.3,1);
+    }
+
+    @keyframes lureRingSpin {
+      to { transform: rotate(360deg); }
+    }
+
+    .lure-cta:hover {
+      transform: translateY(-2px) !important;
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.08),
+        0 12px 32px rgba(0,0,0,0.5) !important;
+    }
+
+    .lure-cta:hover .lure-cta-orb {
+      box-shadow: 0 0 32px rgba(56, 189, 248, 0.75),
+                  0 0 0 1px rgba(56, 189, 248, 0.4) inset !important;
+    }
+
+    .lure-cta:hover .lure-cta-chevrons {
+      transform: translateX(4px) !important;
+    }
+
+    .lure-cta:active {
+      transform: translateY(0) !important;
+    }
+
     :root[data-theme="light"] {
       /* === BACKGROUNDS === */
       --bg-base: #F5F7FF;
@@ -205,11 +284,13 @@
       text-align: center;
     }
 
-    /* ── TIMELINE SECTION ── */
+    /* ── TIMELINE SECTION ANCHOR ── */
     #attack-flow {
       position: relative;
-      background: #020617;
-      padding: 100px 0;
+      background: transparent !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      border: none !important;
     }
 
     .timeline-track-container {
@@ -2060,16 +2141,14 @@
 
 
 
-    /* ── ATTACK FLOW — Sticky Scrollytelling ── */
+    /* ── ATTACK FLOW — Sticky Scrollytelling Anchor ── */
     #attack-flow {
-      background:
-        linear-gradient(180deg, var(--bg-base), var(--bg-surface)),
-        radial-gradient(circle at 18% 28%, color-mix(in srgb, var(--primary) 12.0%, transparent), transparent 30%);
+      background: transparent !important;
       position: relative;
-      border-top: 1px solid var(--border);
-      overflow: clip;
-      margin-top: 80px;
-      padding-top: 60px;
+      border-top: none !important;
+      overflow: visible;
+      margin-top: 0 !important;
+      padding-top: 0 !important;
     }
 
     .scrolly-container {
@@ -3864,14 +3943,30 @@
       <p class="hero-descriptor">
         AI-powered phishing simulations. Real tactics. Measurable results.
       </p>
-      <div class="hero-actions">
+      <div class="hero-actions" style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
         {% if current_user %}
-        <a href="/dashboard" class="btn-primary btn-hero-primary">
-          Run a Free Simulation
+        <a href="/dashboard" class="lure-cta" style="text-decoration:none;">
+          <span class="lure-cta-label">RUN A FREE SIMULATION</span>
+          <span class="lure-cta-orb">
+            <span class="lure-cta-ring"></span>
+            <span class="lure-cta-chevrons">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                <path d="M8 5l7 7-7 7M13 5l7 7-7 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </span>
+          </span>
         </a>
         {% else %}
-        <a href="/signup" class="btn-primary btn-hero-primary">
-          Run a Free Simulation
+        <a href="/signup" class="lure-cta" style="text-decoration:none;">
+          <span class="lure-cta-label">GET STARTED</span>
+          <span class="lure-cta-orb">
+            <span class="lure-cta-ring"></span>
+            <span class="lure-cta-chevrons">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                <path d="M8 5l7 7-7 7M13 5l7 7-7 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </span>
+          </span>
         </a>
         {% endif %}
         <a href="/reports-demo" class="btn-ghost btn-hero-ghost">
@@ -4130,11 +4225,50 @@
               <div class="sandbox-tab-desc">Vendor billing change impersonation.</div>
             </div>
           </button>
+
+          <button class="sandbox-tab" onclick="selectSandboxScenario('custom')" id="tab-custom">
+            <div class="sandbox-tab-icon" style="color:var(--cyan);"><i class="ti ti-sparkles"></i></div>
+            <div style="text-align: left;">
+              <div class="sandbox-tab-title" style="display:flex; align-items:center; gap:6px;">
+                Custom AI Scenario
+                <span style="font-size:0.65rem; background:linear-gradient(90deg,var(--cyan),var(--primary)); color:#05070f; font-weight:800; padding:1px 6px; border-radius:10px; text-transform:uppercase;">Live AI</span>
+              </div>
+              <div class="sandbox-tab-desc">Type any scenario to generate a live AI lure.</div>
+            </div>
+          </button>
         </div>
 
         <!-- Right: Interactive Live Simulation Sandbox -->
         <div class="reveal"
           style="background: rgba(13,18,38,0.4); border: 1px solid var(--border); border-radius: 16px; padding: 1.5rem; display: flex; flex-direction: column; gap: 1.5rem;">
+
+          <!-- Custom Scenario Free-Text Input Card (Visible when Custom AI Scenario tab is active) -->
+          <div id="sandbox-custom-input-card" style="display: none; background: #020617; border: 1px solid rgba(56,189,248,0.25); border-radius: 12px; padding: 1.25rem; box-shadow: 0 10px 30px rgba(0,0,0,0.4);">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+              <label for="sandbox-custom-desc" style="font-family: var(--sans); font-size: 0.9rem; font-weight: 600; color: var(--white); display: flex; align-items: center; gap: 8px;">
+                <i class="ti ti-pencil" style="color: var(--cyan);"></i> Describe your custom scenario:
+              </label>
+              <span style="font-family: var(--mono); font-size: 0.72rem; color: var(--muted);" id="sandbox-custom-char-count">0 / 120</span>
+            </div>
+            <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+              <textarea id="sandbox-custom-desc" rows="2" maxlength="120" placeholder="e.g. IT password reset request, Urgent wire transfer approval, HR bonus policy update..." style="flex: 1; min-width: 260px; background: rgba(15,23,42,0.8); border: 1px solid rgba(148,163,184,0.2); border-radius: 8px; padding: 10px 14px; color: #f8fafc; font-family: var(--sans); font-size: 0.9rem; resize: none; outline: none; transition: border-color 0.2s, box-shadow 0.2s;" onfocus="this.style.borderColor='var(--cyan)'; this.style.boxShadow='0 0 12px rgba(56,189,248,0.25)'" onblur="this.style.borderColor='rgba(148,163,184,0.2)'; this.style.boxShadow='none'" oninput="document.getElementById('sandbox-custom-char-count').textContent = this.value.length + ' / 120'"></textarea>
+              
+              <button class="lure-cta" onclick="submitCustomSandboxScenario()" id="sandbox-custom-submit-btn" type="button">
+                <span class="lure-cta-label">GENERATE AI LURE</span>
+                <span class="lure-cta-orb">
+                  <span class="lure-cta-ring"></span>
+                  <span class="lure-cta-chevrons">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                      <path d="M8 5l7 7-7 7M13 5l7 7-7 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </span>
+                </span>
+              </button>
+            </div>
+            <div style="margin-top: 10px; font-size: 0.75rem; color: var(--muted); display: flex; align-items: center; gap: 6px;">
+              <i class="ti ti-lock" style="color: var(--cyan);"></i> Fictional demo persona (Alex Morgan @ Demo Corp) &bull; No real email sent
+            </div>
+          </div>
 
           <div class="sandbox-main-grid" style="display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 20px;">
             <!-- Mock Email Client Window -->
@@ -4171,7 +4305,16 @@
               </div>
 
               <!-- Mail HTML Body -->
-              <div id="sandbox-loader-container" style="display: none; padding: 24px 30px; min-height: 200px;"></div>
+              <div id="sandbox-loader-container" style="display: none; padding: 24px 30px; min-height: 200px;">
+                <div id="sandbox-thinking-loader" style="display: none; padding: 20px 10px; text-align: center; font-family: var(--sans);">
+                  <div class="lure-thinking-mascot" style="position: relative; width: 68px; height: 68px; margin: 0 auto 16px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #1e293b, #090d16 70%); border: 1.5px solid rgba(56, 189, 248, 0.4); display: grid; place-items: center; box-shadow: 0 0 30px rgba(56, 189, 248, 0.35);">
+                    <div style="position: absolute; inset: -8px; border-radius: 50%; border: 1.5px dashed rgba(56, 189, 248, 0.6); animation: lureRingSpin 4s linear infinite;"></div>
+                    <i class="ti ti-robot-face" style="font-size: 2rem; color: #38bdf8; filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.8));"></i>
+                  </div>
+                  <div id="sandbox-thinking-status" style="font-family: 'JetBrains Mono', monospace; font-size: 0.95rem; font-weight: 600; color: #38bdf8; min-height: 24px; transition: opacity 0.2s;">Profiling the target...</div>
+                  <div style="font-size: 0.78rem; color: var(--muted); margin-top: 6px;">OpenRouter Live AI Model &bull; Custom Scenario Engine</div>
+                </div>
+              </div>
               <div
                 style="padding: 24px 30px; min-height: 200px; background: #fff; color: #1e293b; font-family: sans-serif; font-size: 0.95rem; line-height: 1.6;"
                 id="mail-body">
@@ -4618,15 +4761,173 @@
       selectSandboxScenario(key, true);
     };
 
+    let customStatusInterval = null;
+
+    async function submitCustomSandboxScenario() {
+      const inputEl = document.getElementById('sandbox-custom-desc');
+      const rawVal = inputEl ? inputEl.value.trim() : '';
+
+      if (!rawVal || rawVal.length < 3) {
+        alert("Please enter a descriptive scenario (at least 3 characters).");
+        if (inputEl) inputEl.focus();
+        return;
+      }
+
+      const mailBody = document.getElementById('mail-body');
+      const loaderContainer = document.getElementById('sandbox-loader-container');
+      const thinkingLoader = document.getElementById('sandbox-thinking-loader');
+      const statusTextEl = document.getElementById('sandbox-thinking-status');
+
+      // 1. Hide mail body, show loader container & thinking mascot loader
+      mailBody.style.display = 'none';
+      loaderContainer.style.display = 'block';
+      if (thinkingLoader) thinkingLoader.style.display = 'block';
+
+      // Clear mail headers to show loading skeleton
+      document.getElementById('mail-from').innerHTML = '<span class="skeleton-block" style="display:inline-block; width:200px; height:14px; margin:0;"></span>';
+      document.getElementById('mail-subject').innerHTML = '<span class="skeleton-block" style="display:inline-block; width:300px; height:14px; margin:0;"></span>';
+
+      // Clear telemetry
+      if (activeTelemetryTimeout) clearTimeout(activeTelemetryTimeout);
+      const telemetryContainer = document.getElementById('live-telemetry-container');
+      if (telemetryContainer) telemetryContainer.innerHTML = '';
+      appendTelemetryLog(`[CUSTOM AI] Scenario: "${rawVal}"`);
+      appendTelemetryLog(`[SYSTEM] Dispatching prompt to OpenRouter live AI engine...`);
+
+      // 2. Start cycling status phrases every 2000ms
+      const phrases = [
+        "Profiling the target...",
+        "Drafting the hook...",
+        "Tuning the tone...",
+        "Polishing social engineering tactics...",
+        "Almost got it..."
+      ];
+      let phraseIndex = 0;
+      let secondsElapsed = 0;
+
+      if (statusTextEl) statusTextEl.textContent = phrases[0];
+
+      if (customStatusInterval) clearInterval(customStatusInterval);
+      customStatusInterval = setInterval(() => {
+        secondsElapsed += 2;
+        phraseIndex++;
+
+        if (secondsElapsed >= 15) {
+          if (statusTextEl) statusTextEl.innerHTML = "Free-tier AI is taking its time &mdash; hang tight...";
+          appendTelemetryLog("[AI ENGINE] Response taking >15s (Free-tier queue busy). Awaiting completion...");
+        } else if (phraseIndex < phrases.length) {
+          if (statusTextEl) {
+            statusTextEl.style.opacity = '0';
+            setTimeout(() => {
+              statusTextEl.textContent = phrases[phraseIndex];
+              statusTextEl.style.opacity = '1';
+            }, 150);
+          }
+          appendTelemetryLog(`[AI ENGINE] ${phrases[phraseIndex]}`);
+        }
+      }, 2000);
+
+      const fd = new FormData();
+      fd.append('scenario_desc', rawVal);
+
+      let success = false;
+      let fetchedData = null;
+      let errorMsg = null;
+
+      try {
+        const response = await fetch('/api/public-sandbox/generate-custom', {
+          method: 'POST',
+          body: fd
+        });
+
+        if (response.status === 429) {
+          throw new Error("Rate limit exceeded (max 3 custom generations / min). Please wait 60s.");
+        }
+
+        if (!response.ok) {
+          throw new Error("AI engine custom generation failed.");
+        }
+
+        const data = await response.json();
+        if (data.success) {
+          fetchedData = data;
+          success = true;
+        } else {
+          throw new Error(data.message || "Custom AI generation failed.");
+        }
+      } catch (err) {
+        errorMsg = err.message;
+        success = false;
+      } finally {
+        if (customStatusInterval) {
+          clearInterval(customStatusInterval);
+          customStatusInterval = null;
+        }
+      }
+
+      if (thinkingLoader) thinkingLoader.style.display = 'none';
+      loaderContainer.style.display = 'none';
+      mailBody.style.display = 'block';
+
+      if (success && fetchedData) {
+        activeScenarioData = fetchedData;
+
+        document.getElementById('mail-from').innerHTML = DOMPurify.sanitize(fetchedData.from);
+        document.getElementById('mail-subject').innerHTML = DOMPurify.sanitize(fetchedData.subject) + `
+          <span style="font-size:0.68rem; background:linear-gradient(90deg,var(--cyan),var(--primary)); color:#05070f; font-weight:800; padding:2px 8px; border-radius:10px; text-transform:uppercase; margin-left:8px; vertical-align:middle;">Live AI</span>
+        `;
+
+        let bodyHtml = fetchedData.body;
+        bodyHtml = DOMPurify.sanitize(bodyHtml, {
+          ALLOWED_TAGS: ['p', 'br', 'a', 'b', 'strong', 'i', 'em', 'ul', 'ol', 'li', 'span', 'div', 'h1', 'h2', 'h3', 'h4'],
+          ALLOWED_ATTR: ['href']
+        });
+        bodyHtml = bodyHtml.replace(/href=['"]PHISHING_LINK['"]/g, `href="#" onclick="triggerSandboxCompromise(event, 'custom')"`);
+        mailBody.innerHTML = bodyHtml;
+
+        playTelemetryWalkthrough('custom', fetchedData);
+      } else {
+        document.getElementById('mail-from').innerHTML = 'N/A';
+        document.getElementById('mail-subject').innerHTML = 'Generation Error';
+
+        mailBody.innerHTML = `
+          <div style="color: var(--danger); padding: 30px 20px; text-align: center; font-family: sans-serif;">
+            <div style="font-size: 2rem; margin-bottom: 12px;">⚠️</div>
+            <div style="font-weight: bold; font-size: 1.1rem; margin-bottom: 8px;">Custom Generation Failed</div>
+            <div style="font-size: 0.9rem; color: #94a3b8; max-width: 400px; margin: 0 auto 16px;">${errorMsg || "Unable to generate custom AI lure."}</div>
+          </div>
+        `;
+        appendTelemetryLog(`[ERROR] ${errorMsg || "Custom generation failed."}`);
+      }
+    }
+
     async function selectSandboxScenario(key, forceRegenerate = false) {
       // Update active tab styling
       document.querySelectorAll('.sandbox-tab').forEach(t => t.classList.remove('active'));
       const activeTab = document.getElementById(`tab-${key}`);
       if (activeTab) activeTab.classList.add('active');
 
+      // Toggle Custom Input card visibility
+      const customCard = document.getElementById('sandbox-custom-input-card');
+      if (customCard) {
+        if (key === 'custom') {
+          customCard.style.display = 'block';
+          const inputEl = document.getElementById('sandbox-custom-desc');
+          if (inputEl && !inputEl.value) inputEl.focus();
+        } else {
+          customCard.style.display = 'none';
+        }
+      }
+
       // Reset outcome panel
       document.getElementById('sandbox-compromise-panel').style.display = 'none';
       document.getElementById('sandbox-compromise-panel').classList.remove('show-panel');
+
+      // If switching to custom tab without submitting, keep current preview if any
+      if (key === 'custom' && !forceRegenerate) {
+        appendTelemetryLog(`[SYSTEM] Switched to Custom AI Scenario mode. Enter a prompt above and click GENERATE AI LURE.`);
+        return;
+      }
 
       // Clear telemetry loop timeout
       if (activeTelemetryTimeout) clearTimeout(activeTelemetryTimeout);
@@ -4682,7 +4983,9 @@
       // Start skeleton loading inside the sandbox loader
       const mailBody = document.getElementById('mail-body');
       const loaderContainer = document.getElementById('sandbox-loader-container');
+      const thinkingLoader = document.getElementById('sandbox-thinking-loader');
 
+      if (thinkingLoader) thinkingLoader.style.display = 'none';
       mailBody.style.display = 'none';
       loaderContainer.style.display = 'block';
 
@@ -5735,20 +6038,32 @@
     <h2 class="cta-title reveal">Ready to Find Your <em>Vulnerabilities</em>?</h2>
     <p class="cta-sub reveal">Set up your first phishing simulation in under 5 minutes. No credit card, no complicated
       setup — just a CSV and a company domain.</p>
-    <div class="cta-actions reveal">
+    <div class="cta-actions reveal" style="display: flex; align-items: center; justify-content: center; gap: 16px; flex-wrap: wrap;">
       {% if current_user %}
-      <a href="/dashboard" class="btn-primary">
-        <i class="ti ti-layout-dashboard" style="font-size:1.1rem; line-height:1;"></i>
-        Go to Dashboard
+      <a href="/dashboard" class="lure-cta" style="text-decoration:none;">
+        <span class="lure-cta-label">GO TO DASHBOARD</span>
+        <span class="lure-cta-orb">
+          <span class="lure-cta-ring"></span>
+          <span class="lure-cta-chevrons">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+              <path d="M8 5l7 7-7 7M13 5l7 7-7 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+        </span>
       </a>
       {% else %}
-      <a href="/demo-login" class="btn-primary">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M8 5v14l11-7z" />
-        </svg>
-        Try Live Demo
+      <a href="/signup" class="lure-cta" style="text-decoration:none;">
+        <span class="lure-cta-label">GET STARTED</span>
+        <span class="lure-cta-orb">
+          <span class="lure-cta-ring"></span>
+          <span class="lure-cta-chevrons">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+              <path d="M8 5l7 7-7 7M13 5l7 7-7 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+        </span>
       </a>
-      <a href="/signup" class="btn-ghost">Create Free Account</a>
+      <a href="/demo-login" class="btn-ghost">Try Live Demo</a>
       {% endif %}
     </div>
     <div
@@ -8676,13 +8991,15 @@ ${body}
           dot.style.opacity = "1";
           hasMoved = true;
         }
+        dot.style.left = `${mouseX}px`;
+        dot.style.top = `${mouseY}px`;
       });
 
       function animateDot() {
-        dotX += (mouseX - dotX) * speed;
-        dotY += (mouseY - dotY) * speed;
-        dot.style.left = `${dotX}px`;
-        dot.style.top = `${dotY}px`;
+        if (hasMoved) {
+          dot.style.left = `${mouseX}px`;
+          dot.style.top = `${mouseY}px`;
+        }
         requestAnimationFrame(animateDot);
       }
       animateDot();
