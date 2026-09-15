@@ -3,152 +3,698 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sign in to your account</title>
+    <title>Single Sign-On | Secure Authentication Portal</title>
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    
+    <!-- Fonts & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
+    
+    <!-- Main Styles -->
+    <link rel="stylesheet" href="/static/style.css">
+    
     <style>
+        :root {
+            --browser-bg: #0f172a;
+            --browser-bar-bg: #1e293b;
+            --browser-url-bg: #0f172a;
+            --browser-border: rgba(255, 255, 255, 0.08);
+            --card-bg: #1e293b;
+            --card-border: rgba(255, 255, 255, 0.1);
+            --text-main: #f8fafc;
+            --text-sub: #94a3b8;
+            --input-bg: #0f172a;
+            --input-border: rgba(255, 255, 255, 0.15);
+            --input-focus: #38bdf8;
+            --btn-bg: #0284c7;
+            --btn-hover: #0369a1;
+            --accent-glow: rgba(56, 189, 248, 0.25);
+        }
+
+        body.light-theme {
+            --browser-bg: #f1f5f9;
+            --browser-bar-bg: #e2e8f0;
+            --browser-url-bg: #ffffff;
+            --browser-border: #cbd5e1;
+            --card-bg: #ffffff;
+            --card-border: #cbd5e1;
+            --text-main: #0f172a;
+            --text-sub: #64748b;
+            --input-bg: #f8fafc;
+            --input-border: #cbd5e1;
+            --input-focus: #0284c7;
+            --btn-bg: #0284c7;
+            --btn-hover: #0369a1;
+            --accent-glow: rgba(2, 132, 199, 0.15);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
         body {
-            font-family: "Segoe UI", "Helvetica Neue", "Lucida Grande", "Roboto", "Ebrima", "Nirmala UI", "Gadugi", "Segoe Xbox Symbol", "Segoe UI Symbol", "Meiryo UI", "Khmer UI", "Tunga", "Lao UI", "Raavi", "Iskoola Pota", "Latha", "Leelawadee", "Microsoft YaHei UI", "Microsoft JhengHei UI", "Malgun Gothic", "Estrangelo Edessa", "Microsoft Himalaya", "Microsoft New Tai Lue", "Microsoft PhagsPa", "Microsoft Tai Le", "Microsoft Yi Baiti", "Mongolian Baiti", "MV Boli", "Myanmar Text", "Cambria Math";
-            background-color: #f3f2f1;
             margin: 0;
+            padding: 0;
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--browser-bg);
+            color: var(--text-main);
+            min-height: 100vh;
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
-            height: 100vh;
+            overflow-x: hidden;
+            padding: 20px 16px;
         }
-        .login-box {
-            background-color: white;
+
+        /* ── Simulated Browser Chrome Frame ── */
+        .fake-browser-viewport {
+            width: 100%;
+            max-width: 980px;
+            background: var(--card-bg);
+            border-radius: 14px;
+            box-shadow: 0 25px 70px rgba(0, 0, 0, 0.45), 0 0 0 1px var(--browser-border);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            margin: auto;
+            transition: all 0.3s ease;
+        }
+
+        /* ── Browser Window Header & Controls ── */
+        .browser-chrome-bar {
+            background: var(--browser-bar-bg);
+            border-bottom: 1px solid var(--browser-border);
+            padding: 10px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            user-select: none;
+        }
+
+        .browser-window-controls-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .browser-dots {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+        }
+
+        .dot-control {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        .dot-red { background: #ff5f56; border: 1px solid #e0443e; }
+        .dot-yellow { background: #ffbd2e; border: 1px solid #dea123; }
+        .dot-green { background: #27c93f; border: 1px solid #1aab29; }
+
+        .browser-tab-strip {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .browser-tab {
+            background: var(--card-bg);
+            border: 1px solid var(--browser-border);
+            border-bottom: none;
+            border-radius: 8px 8px 0 0;
+            padding: 6px 14px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            max-width: 280px;
+        }
+        .browser-tab i {
+            color: #38bdf8;
+            font-size: 14px;
+        }
+        .browser-tab-close {
+            color: var(--text-sub);
+            cursor: pointer;
+            margin-left: auto;
+            font-size: 12px;
+        }
+
+        /* Address Bar Row */
+        .browser-nav-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .browser-nav-btns {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            color: var(--text-sub);
+            font-size: 14px;
+        }
+        .nav-btn {
+            width: 26px;
+            height: 26px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .nav-btn:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--text-main);
+        }
+
+        .fake-address-bar {
+            flex: 1;
+            background: var(--browser-url-bg);
+            border: 1px solid var(--browser-border);
+            border-radius: 8px;
+            padding: 7px 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            color: var(--text-main);
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2);
+        }
+
+        .ssl-lock-icon {
+            color: #22c55e;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+        }
+
+        .fake-domain-text {
+            color: var(--text-main);
+            font-weight: 500;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .fake-domain-protocol {
+            color: #22c55e;
+            font-weight: 600;
+        }
+
+        .fake-domain-highlight {
+            color: #f59e0b;
+            font-weight: 700;
+        }
+
+        .security-badge-pill {
+            background: rgba(34, 197, 94, 0.12);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            color: #22c55e;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            flex-shrink: 0;
+        }
+
+        /* ── Page Content Area (Simulated SSO Canvas) ── */
+        .browser-viewport-body {
+            padding: 56px 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 520px;
+            background: radial-gradient(circle at 50% 0%, rgba(56, 189, 248, 0.05), transparent 70%);
+            position: relative;
+        }
+
+        /* ── Generic Enterprise SSO Login Card ── */
+        .sso-login-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
             width: 100%;
             max-width: 440px;
-            padding: 44px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+            padding: 38px 34px;
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.25);
             box-sizing: border-box;
+            position: relative;
+            z-index: 2;
         }
-        .logo {
-            height: 24px;
+
+        .sso-brand-header {
+            display: flex;
+            align-items: center;
+            gap: 14px;
             margin-bottom: 24px;
         }
-        h1 {
-            font-size: 24px;
-            color: #1b1b1b;
-            font-weight: 600;
-            margin-bottom: 16px;
-            margin-top: 0;
-        }
-        .input-group {
-            margin-bottom: 16px;
-        }
-        input[type="email"] {
-            width: 100%;
-            padding: 8px 0;
-            font-size: 15px;
-            border: none;
-            border-bottom: 1px solid #666;
-            outline: none;
-            box-sizing: border-box;
-        }
-        input[type="email"]:focus {
-            border-bottom: 2px solid #0067b8;
-        }
-        .no-account {
-            font-size: 13px;
-            margin-bottom: 32px;
-        }
-        .no-account a {
-            color: #0067b8;
-            text-decoration: none;
-        }
-        .no-account a:hover {
-            text-decoration: underline;
-        }
-        .action-row {
+
+        .sso-logo-shield {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #0284c7, #0369a1);
             display: flex;
-            justify-content: flex-end;
+            align-items: center;
+            justify-content: center;
+            color: #ffffff;
+            font-size: 24px;
+            box-shadow: 0 4px 14px var(--accent-glow);
+            flex-shrink: 0;
         }
-        .btn-next {
-            background-color: #0067b8;
-            color: white;
+
+        .sso-brand-title {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sso-org-name {
+            font-size: 19px;
+            font-weight: 700;
+            color: var(--text-main);
+            letter-spacing: -0.01em;
+            line-height: 1.2;
+        }
+
+        .sso-subtitle {
+            font-size: 12px;
+            color: var(--text-sub);
+            font-weight: 500;
+        }
+
+        .sso-prompt-heading {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--text-main);
+            margin: 0 0 6px 0;
+        }
+
+        .sso-prompt-desc {
+            font-size: 13px;
+            color: var(--text-sub);
+            margin: 0 0 24px 0;
+            line-height: 1.5;
+        }
+
+        /* Form Controls */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-wrapper i.input-icon {
+            position: absolute;
+            left: 14px;
+            color: var(--text-sub);
+            font-size: 18px;
+            pointer-events: none;
+        }
+
+        .form-control {
+            width: 100%;
+            background: var(--input-bg);
+            border: 1px solid var(--input-border);
+            border-radius: 8px;
+            padding: 12px 14px 12px 42px;
+            font-family: inherit;
+            font-size: 14px;
+            color: var(--text-main);
+            outline: none;
+            transition: all 0.2s ease;
+        }
+        .form-control:focus {
+            border-color: var(--input-focus);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+        .form-control::placeholder {
+            color: var(--text-sub);
+            opacity: 0.75;
+        }
+
+        .password-toggle-btn {
+            position: absolute;
+            right: 10px;
+            background: none;
             border: none;
-            padding: 10px 32px;
-            font-size: 15px;
+            color: var(--text-sub);
+            cursor: pointer;
+            padding: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            border-radius: 4px;
+        }
+        .password-toggle-btn:hover {
+            color: var(--text-main);
+        }
+
+        .form-options-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 26px;
+            font-size: 13px;
+        }
+
+        .remember-checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-sub);
+            cursor: pointer;
+            user-select: none;
+        }
+        .remember-checkbox-label input {
+            accent-color: var(--btn-bg);
+            width: 15px;
+            height: 15px;
             cursor: pointer;
         }
-        .btn-next:hover {
-            background-color: #005da6;
+
+        .forgot-link {
+            color: var(--btn-bg);
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.15s;
         }
+        .forgot-link:hover {
+            text-decoration: underline;
+            color: var(--btn-hover);
+        }
+
+        /* Submit Button */
+        .btn-sso-primary {
+            width: 100%;
+            background: var(--btn-bg);
+            color: #ffffff;
+            border: none;
+            border-radius: 8px;
+            padding: 13px;
+            font-family: inherit;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: 0 4px 14px var(--accent-glow);
+        }
+        .btn-sso-primary:hover {
+            background: var(--btn-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px var(--accent-glow);
+        }
+        .btn-sso-primary:active {
+            transform: translateY(0);
+        }
+
+        .sso-trust-footer {
+            margin-top: 26px;
+            padding-top: 18px;
+            border-top: 1px solid var(--card-border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            font-size: 12px;
+            color: var(--text-sub);
+        }
+
+        /* ── Subtle SIMULATION Indicator ── */
+        .simulation-watermark-badge {
+            position: fixed;
+            bottom: 16px;
+            right: 16px;
+            background: rgba(15, 23, 42, 0.75);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            backdrop-filter: blur(8px);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-sub);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            z-index: 9999;
+            opacity: 0.65;
+            transition: opacity 0.2s ease, transform 0.2s ease;
+            pointer-events: auto;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+        .simulation-watermark-badge:hover {
+            opacity: 0.95;
+            transform: translateY(-1px);
+        }
+        .sim-dot-pulse {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #f59e0b;
+            box-shadow: 0 0 6px #f59e0b;
+        }
+
+        /* ── Deliberate, Well-Paced Submission Transition Overlay ── */
         .loader-overlay {
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(255,255,255,0.8);
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(12px);
             display: none;
             justify-content: center;
             align-items: center;
             flex-direction: column;
-            z-index: 1000;
+            z-index: 10000;
+            opacity: 0;
+            transition: opacity 0.3s ease;
         }
-        .dots {
+        .loader-overlay.active {
             display: flex;
-            gap: 5px;
+            opacity: 1;
         }
-        .dot {
-            width: 8px; height: 8px;
-            background-color: #0067b8;
+
+        .auth-progress-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 36px 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+            max-width: 380px;
+            text-align: center;
+        }
+
+        .auth-spinner {
+            width: 46px;
+            height: 46px;
+            border: 3px solid rgba(56, 189, 248, 0.15);
+            border-top-color: #38bdf8;
             border-radius: 50%;
-            animation: bounce 1.4s infinite ease-in-out both;
+            animation: spin 0.8s linear infinite;
         }
-        .dot:nth-child(1) { animation-delay: -0.32s; }
-        .dot:nth-child(2) { animation-delay: -0.16s; }
-        @keyframes bounce {
-            0%, 80%, 100% { transform: scale(0); }
-            40% { transform: scale(1); }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .auth-status-title {
+            font-size: 17px;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .auth-status-subtitle {
+            font-size: 13px;
+            color: var(--text-sub);
+            line-height: 1.45;
+        }
+
+        .auth-progress-bar {
+            width: 100%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+        .auth-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #0284c7, #38bdf8);
+            width: 0%;
+            transition: width 1.6s cubic-bezier(0.25, 1, 0.5, 1);
         }
     </style>
-    <link rel="stylesheet" href="/static/style.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
-    <script>
-        (function() {
-            const savedTheme = localStorage.getItem('phishsim_theme') || 'dark';
-            if (savedTheme === 'light') {
-                document.documentElement.classList.add('light-theme');
-            }
-        })();
-    </script>
 </head>
 <body>
 
-    <div class="login-box">
-        <!-- SVG Microsoft Logo -->
-        <svg class="logo" viewBox="0 0 23 23" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <rect width="11" height="11" fill="#f25022"/>
-            <rect x="12" width="11" height="11" fill="#7fba00"/>
-            <rect y="12" width="11" height="11" fill="#00a4ef"/>
-            <rect x="12" y="12" width="11" height="11" fill="#ffb900"/>
-        </svg>
-        <h1>Sign in</h1>
-        <form id="login-form">
-            <div class="input-group">
-                <input type="email" id="email-input" placeholder="Email, phone, or Skype" required>
+    <!-- Controlled Security Simulation Environment Indicator -->
+    <!-- PhishSim AI Authorized Security Simulation Landing Page -->
+
+    <div class="fake-browser-viewport">
+        <!-- ── Fake Browser Chrome Bar ── -->
+        <div class="browser-chrome-bar">
+            <div class="browser-window-controls-row">
+                <div class="browser-dots">
+                    <span class="dot-control dot-red"></span>
+                    <span class="dot-control dot-yellow"></span>
+                    <span class="dot-control dot-green"></span>
+                </div>
+                <div class="browser-tab-strip">
+                    <div class="browser-tab">
+                        <i class="ti ti-shield-lock"></i>
+                        <span>Single Sign-On | Auth Portal</span>
+                        <span class="browser-tab-close">✕</span>
+                    </div>
+                </div>
+                <div style="width: 50px;"></div><!-- Balance spacer -->
             </div>
-            <div class="no-account">
-                No account? <a href="#">Create one!</a>
+
+            <div class="browser-nav-row">
+                <div class="browser-nav-btns">
+                    <span class="nav-btn" title="Back"><i class="ti ti-chevron-left"></i></span>
+                    <span class="nav-btn" title="Forward"><i class="ti ti-chevron-right"></i></span>
+                    <span class="nav-btn" title="Reload"><i class="ti ti-refresh"></i></span>
+                </div>
+                
+                <div class="fake-address-bar">
+                    <span class="ssl-lock-icon" title="Connection is encrypted (SSL/TLS)"><i class="ti ti-lock-check"></i></span>
+                    <span class="fake-domain-text" id="fake-url-text">
+                        <span class="fake-domain-protocol">https://</span>login.<span class="fake-domain-highlight">accounts-secure-verify.com</span>/auth/sso/login?client_id=corp_auth_v2
+                    </span>
+                    <span class="security-badge-pill"><i class="ti ti-shield-check"></i> HTTPS Encrypted</span>
+                </div>
             </div>
-            <div class="action-row">
-                <button type="submit" class="btn-next">Next</button>
+        </div>
+
+        <!-- ── Browser Canvas / SSO Login Form ── -->
+        <div class="browser-viewport-body">
+            <div class="sso-login-card">
+                <div class="sso-brand-header">
+                    <div class="sso-logo-shield">
+                        <i class="ti ti-shield-lock"></i>
+                    </div>
+                    <div class="sso-brand-title">
+                        <span class="sso-org-name">Enterprise SSO</span>
+                        <span class="sso-subtitle">Corporate Identity Gateway</span>
+                    </div>
+                </div>
+
+                <h1 class="sso-prompt-heading">Sign In</h1>
+                <p class="sso-prompt-desc">Use your organization credentials to access central corporate services.</p>
+
+                <form id="login-form">
+                    <div class="form-group">
+                        <label class="form-label" for="email-input">Organizational Email</label>
+                        <div class="input-wrapper">
+                            <i class="ti ti-mail input-icon"></i>
+                            <input type="email" id="email-input" class="form-control" placeholder="name@organization-domain.com" required autocomplete="username">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="password-input">Password</label>
+                        <div class="input-wrapper">
+                            <i class="ti ti-lock input-icon"></i>
+                            <input type="password" id="password-input" class="form-control" placeholder="••••••••••••" required autocomplete="current-password">
+                            <button type="button" class="password-toggle-btn" id="pw-toggle-btn" title="Toggle password visibility">
+                                <i class="ti ti-eye" id="pw-toggle-icon"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="form-options-row">
+                        <label class="remember-checkbox-label">
+                            <input type="checkbox" id="remember-me" checked>
+                            <span>Keep me signed in</span>
+                        </label>
+                        <a href="#" class="forgot-link" onclick="return false;">Forgot password?</a>
+                    </div>
+
+                    <button type="submit" class="btn-sso-primary btn-next" id="submit-sso-btn">
+                        <span>Sign In to Portal</span>
+                        <i class="ti ti-arrow-right"></i>
+                    </button>
+                </form>
+
+                <div class="sso-trust-footer">
+                    <i class="ti ti-lock"></i>
+                    <span>Protected by Enterprise Zero-Trust Identity Gateway</span>
+                </div>
             </div>
-        </form>
+        </div>
     </div>
 
-    <!-- Fake loader to make the wait feel natural -->
-    <div id="loader" class="loader-overlay">
-        <div class="dots">
-            <div class="dot"></div>
-            <div class="dot"></div>
-            <div class="dot"></div>
+    <!-- Subtle Simulation Indicator Badge (Ethical/Legal Protection) -->
+    <div class="simulation-watermark-badge" title="Authorized PhishSim AI Simulation Sandbox">
+        <span class="sim-dot-pulse"></span>
+        <span>PhishSim AI • Security Awareness Drill</span>
+    </div>
+
+    <!-- Paced Authentication Reveal Overlay -->
+    <div id="loader" class="loader-overlay" aria-live="polite">
+        <div class="auth-progress-card">
+            <div class="auth-spinner"></div>
+            <div class="auth-status-title" id="auth-status-title">Authenticating Credentials...</div>
+            <div class="auth-status-subtitle" id="auth-status-sub">Verifying organizational Single Sign-On policy...</div>
+            <div class="auth-progress-bar">
+                <div class="auth-progress-fill" id="auth-progress-fill"></div>
+            </div>
         </div>
-        <p style="margin-top: 15px; color: #666; font-family: 'Segoe UI', sans-serif;">Securing connection...</p>
     </div>
 
     <script>
-        // CSRF Fetch Interceptor for fake_login.html and lure_bot widget
+        // Password toggle logic
+        const pwInput = document.getElementById('password-input');
+        const pwToggleBtn = document.getElementById('pw-toggle-btn');
+        const pwToggleIcon = document.getElementById('pw-toggle-icon');
+
+        if (pwToggleBtn && pwInput) {
+            pwToggleBtn.addEventListener('click', () => {
+                const isPw = pwInput.type === 'password';
+                pwInput.type = isPw ? 'text' : 'password';
+                pwToggleIcon.className = isPw ? 'ti ti-eye-off' : 'ti ti-eye';
+            });
+        }
+
+        // CSRF Fetch Interceptor
         (function() {
             const nativeFetch = window.fetch.bind(window);
             window.fetch = (input, init) => {
@@ -187,14 +733,35 @@
             };
         })();
 
+        // Form Submission & Paced Transition Logic
         const form = document.getElementById('login-form');
         const loader = document.getElementById('loader');
+        const fillBar = document.getElementById('auth-progress-fill');
+        const statusSub = document.getElementById('auth-status-sub');
         const trackingId = "{{ tracking_id }}";
 
         form.addEventListener('submit', function(e) {
             e.preventDefault();
-            loader.style.display = 'flex';
             
+            // Show loader overlay
+            loader.classList.add('active');
+            
+            // Dynamic URL bar update for realistic immersion
+            const fakeUrlText = document.getElementById('fake-url-text');
+            if (fakeUrlText) {
+                fakeUrlText.innerHTML = '<span class="fake-domain-protocol">https://</span>login.<span class="fake-domain-highlight">accounts-secure-verify.com</span>/auth/sso/verifying_security_token...';
+            }
+
+            // Start smooth progress fill
+            setTimeout(() => {
+                if (fillBar) fillBar.style.width = '60%';
+            }, 100);
+
+            setTimeout(() => {
+                if (statusSub) statusSub.textContent = 'Recording simulation metrics & transferring token...';
+                if (fillBar) fillBar.style.width = '90%';
+            }, 900);
+
             fetch('/submit/' + trackingId, {
                 method: 'POST',
                 headers: {
@@ -204,16 +771,20 @@
             .then(res => res.json())
             .then(data => {
                 setTimeout(() => {
-                    window.location.href = data.redirect_url;
-                }, 1000);
+                    if (fillBar) fillBar.style.width = '100%';
+                    setTimeout(() => {
+                        window.location.href = data.redirect_url;
+                    }, 350);
+                }, 1600);
             })
             .catch(err => {
                 console.error("Submission failed:", err);
-                window.location.href = '/simulated?id=' + trackingId;
+                setTimeout(() => {
+                    window.location.href = '/simulated?id=' + trackingId;
+                }, 1600);
             });
         });
-    </script>
-        <script>
+
         (function() {
             const savedTheme = localStorage.getItem('phishsim_theme') || 'dark';
             if (savedTheme === 'light') {

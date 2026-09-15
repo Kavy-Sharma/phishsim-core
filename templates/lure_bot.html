@@ -2643,7 +2643,6 @@
 
     #pb-panel.pb-panel-maximized #pb-tab-tours.active .pb-tour-cat-body,
     #pb-inline-section .pb-tour-cat-body {
-      display: flex !important;
       flex-direction: column !important;
       gap: 10px !important;
       width: 100% !important;
@@ -3287,8 +3286,8 @@
     <div class="pb-popover-title">Welcome to Lure AI Lab!</div>
     <div class="pb-popover-text">Ready to see how PhishSim works? Take our recommended "Getting Started" tour to walkthrough the sandbox, campaign setup, and live dashboard metrics.</div>
     <div class="pb-popover-actions">
-      <button class="pb-popover-btn primary" id="pb-fv-walkthrough-btn">Take recommended Tour</button>
-      <button class="pb-popover-btn secondary" id="pb-fv-generate-btn">Just generate a lure</button>
+      <button class="pb-popover-btn primary" id="pb-fv-walkthrough-btn" onclick="chooseLureOnboarding('walkthrough')">Take recommended Tour</button>
+      <button class="pb-popover-btn secondary" id="pb-fv-generate-btn" onclick="chooseLureOnboarding('generate')">Just generate a lure</button>
     </div>
   </div>
 
@@ -4575,7 +4574,19 @@
       avatar.classList.add('pb-squash-active');
       setTimeout(() => {
         avatar.classList.remove('pb-squash-active');
-        panelOpen ? closePanel() : openPanel();
+        if (panelOpen) {
+          closePanel();
+        } else if (fvOpen) {
+          closeFvPopover();
+        } else {
+          const dismissed = localStorage.getItem('first_visit_popover_dismissed') === 'true';
+          const wtActiveNow = typeof wtActive !== 'undefined' && wtActive;
+          if (!dismissed && !wtActiveNow) {
+            openFvPopover();
+          } else {
+            openPanel();
+          }
+        }
       }, 120);
     });
 
@@ -5402,6 +5413,7 @@
         {
           targetId: "threat-sandbox",
           title: "Inside the Hook",
+          assistRequired: true,
           text: "Phishing works because it's tailored to the victim. In this sandbox, you can safely generate pretexts and see how simple details trigger clicks. Let's select a scenario to see it in action!",
           path: "/",
           action: (cb) => {
@@ -5414,26 +5426,55 @@
         {
           targetId: "campaign_name",
           title: "Framing the Context",
+          assistRequired: true,
           text: "To train your team effectively, simulation campaigns need to feel realistic. Let's give our campaign a name and target domain so we can customize the email context naturally.",
-          path: "/new-campaign"
+          path: "/new-campaign",
+          action: (cb) => {
+            const nameInput = document.getElementById('campaign_name');
+            if (nameInput) {
+              typeIntoInput(nameInput, "Q4 Security Awareness Drill", () => {
+                if (cb) cb();
+              });
+            } else {
+              if (cb) cb();
+            }
+          }
         },
         {
           targetId: "wt-scenarios-container",
           title: "Crafting the Angle",
+          assistRequired: true,
           text: "What angle makes the most sense? Choose a scenario, like an IT alert or CEO message, and I'll generate custom email copy tailored to catch a target's attention.",
-          path: "/new-campaign"
+          path: "/new-campaign",
+          action: (cb) => {
+            selectRadio('#s1', () => {
+              if (cb) cb();
+            });
+          }
         },
         {
           targetId: "wt-delivery-grid",
           title: "Choosing the Path",
+          assistRequired: true,
           text: "Now choose how to send it. You can run a local test, send live emails, or use Safe Send to route everything to Mailtrap so you can review drafts without sending anything to targets.",
-          path: "/new-campaign"
+          path: "/new-campaign",
+          action: (cb) => {
+            selectRadio('#d_local', () => {
+              if (cb) cb();
+            });
+          }
         },
         {
           targetId: "consent_confirmed",
           title: "Cast the Line",
+          assistRequired: true,
           text: "Ready to start? Confirm your authorization and click create. I'll handle the rest — sending the lures and tracking employee interactions.",
-          path: "/new-campaign"
+          path: "/new-campaign",
+          action: (cb) => {
+            checkCheckbox('consent_confirmed', true, () => {
+              if (cb) cb();
+            });
+          }
         },
         {
           targetId: "wt-dashboard-view",
@@ -5475,6 +5516,7 @@
         {
           targetId: "ta-email-input",
           title: "Paste Raw Emails",
+          assistRequired: true,
           text: "You can paste any suspicious email text here, or try one of our preset forensic samples below to see how the analyzer works.",
           path: "/threat-analyzer",
           action: (cb) => {
@@ -5487,6 +5529,7 @@
         {
           targetId: "ta-analyze-btn",
           title: "Analyzing Indicators",
+          assistRequired: true,
           text: "Click analyze to run the forensic audit. I'll scan the text, evaluate language urgency, check links, and flag threat factors.",
           path: "/threat-analyzer",
           action: (cb) => {
@@ -5514,6 +5557,7 @@
         {
           targetId: "btn-preset-spf-fail",
           title: "Authentication Presets",
+          assistRequired: true,
           text: "To see it in action, click one of our preset templates below to load a sample header, like this SPF failure record.",
           path: "/header-analyzer",
           action: (cb) => {
@@ -5525,6 +5569,7 @@
         {
           targetId: "trace-btn",
           title: "Trace Hop Path",
+          assistRequired: true,
           text: "Click trace route to parse the details. I'll extract delivery hops, check domain alignment, and verify authentication records.",
           path: "/header-analyzer",
           action: (cb) => {
@@ -5552,6 +5597,7 @@
         {
           targetId: "ud-input-body",
           title: "Redirect Presets",
+          assistRequired: true,
           text: "Select one of our preset samples to see how I follow multi-hop redirect chains and check URL safety reputations.",
           path: "/url-decoder",
           action: (cb) => {
@@ -5563,6 +5609,7 @@
         {
           targetId: "trace-btn",
           title: "Run Trace Query",
+          assistRequired: true,
           text: "Click trace link to safely scan the URL. I'll expand short links, trace redirect loops, and evaluate safety ratings.",
           path: "/url-decoder",
           action: (cb) => {
@@ -5643,7 +5690,6 @@
         }
       ]
     };
-
     let wtActive = false;
     let wtCurrentStep = 0;
     let wtSteps = [];
@@ -5652,6 +5698,49 @@
     let gateListenersInitialized = false;
     let gateIntervalId = null;
     let lastGateSatisfiedState = false;
+
+    function whenLayoutReady(callback) {
+      if (!callback) return;
+      const runDoubleRaf = () => {
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            callback();
+          });
+        });
+      };
+
+      if (document.fonts && document.fonts.ready) {
+        document.fonts.ready.then(runDoubleRaf).catch(runDoubleRaf);
+      } else {
+        runDoubleRaf();
+      }
+    }
+    window.whenLayoutReady = whenLayoutReady;
+
+    function isPathMatch(p1, p2) {
+      if (!p1 || !p2) return false;
+      const clean1 = p1.split('?')[0].replace(/\/$/, '') || '/';
+      const clean2 = p2.split('?')[0].replace(/\/$/, '') || '/';
+      return clean1 === clean2;
+    }
+    window.isPathMatch = isPathMatch;
+
+    window.switchTab = function(tabName) {
+      const targetBtn = panel.querySelector(`.pb-tab-btn[data-tab="${tabName}"], .pb-sidebar-tab-btn[data-tab="${tabName}"]`);
+      if (targetBtn) {
+        targetBtn.click();
+      }
+    };
+
+    window.chooseLureOnboarding = function(choice) {
+      localStorage.setItem('first_visit_popover_dismissed', 'true');
+      closeFvPopover();
+      if (choice === 'walkthrough' || choice === 'tour') {
+        openWalkthroughDirectly();
+      } else {
+        openPanel();
+      }
+    };
 
     let wtSubTargetIndex = -1;
     let wtSubTargetTimeout = null;
@@ -5704,9 +5793,9 @@
         wtActiveSubTargetEl = el || null;
 
         if (el) {
-          // Use smooth scrolling for sub-target transitions to centered card view
+          // Cinematic smooth scroll for sub-target cycling (e.g. attack-chain cards) — bypassing instant scroll path
           el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          // Settle buffer: wait for scroll to stabilize before repositioning
+          // Settle buffer: allow smooth scroll to animate smoothly before repositioning ticks
           stepSettleUntil = Date.now() + 600;
           if (typeof item === 'object' && (item.text || item.title)) {
             renderBubbleContent({
@@ -5714,7 +5803,7 @@
               text: item.text || step.text
             }, false);
           }
-          // Delay repositioning to let scroll settle
+          // Delay mascot/highlighter repositioning to let smooth scroll settle within the display window
           setTimeout(() => {
             if (wtActive) repositionWalkthroughElements();
           }, 300);
@@ -5790,6 +5879,46 @@
         if (stepIdx === 3) {
           // Step 4 (Login Form): Gated until user submits credentials and lands on /simulated (or /reporting-demo)
           return currentPath === '/simulated' || currentPath === '/reporting-demo' || sessionStorage.getItem('lure_login_submitted') === 'true';
+        }
+      }
+      if (wtCurrentPage === 'tool_threat_analyzer') {
+        if (stepIdx === 1) {
+          const input = document.getElementById('ta-email-input');
+          return !!(input && input.value.trim().length > 0);
+        }
+        if (stepIdx === 2) {
+          const res = document.getElementById('ta-result-state');
+          return !!(res && res.style.display !== 'none' && !res.classList.contains('d-none'));
+        }
+      }
+      if (wtCurrentPage === 'tool_header_analyzer') {
+        if (stepIdx === 1) {
+          const input = document.getElementById('headers-input');
+          return !!(input && input.value.trim().length > 0);
+        }
+        if (stepIdx === 2) {
+          const hopStage = document.getElementById('ha-hop-stage');
+          return !!(hopStage && hopStage.style.display !== 'none');
+        }
+      }
+      if (wtCurrentPage === 'tool_url_decoder') {
+        if (stepIdx === 1) {
+          const input = document.getElementById('url-input');
+          return !!(input && input.value.trim().length > 0);
+        }
+        if (stepIdx === 2) {
+          const preview = document.getElementById('ud-result-preview');
+          return !!(preview && preview.style.display !== 'none');
+        }
+      }
+      if (wtCurrentPage === 'tool_password_breach') {
+        if (stepIdx === 1) {
+          const input = document.getElementById('sec-audit-input-token');
+          return !!(input && input.value.trim().length > 0);
+        }
+        if (stepIdx === 2) {
+          const verdict = document.getElementById('email-verdict-panel');
+          return !!(verdict && verdict.style.display !== 'none');
         }
       }
       return true; // Other steps are not gated
@@ -6027,6 +6156,7 @@
     let lastTargetHeight = null;
     let lastScrollX = null;
     let lastScrollY = null;
+    let hasPositionedStep = false; // Ensures DOM is written at least once per step/load
     // Consecutive-stable counter: counts how many interval ticks the target rect has
     // been stable. DOM repositioning is deferred until >= STABLE_TICKS_REQUIRED.
     // This prevents the mascot/highlighter from chasing a target whose layout is
@@ -6065,6 +6195,7 @@
       lastTargetHeight = null;
       lastScrollX = null;
       lastScrollY = null;
+      hasPositionedStep = false;
       stableTickCount = 0;
     }
 
@@ -6151,8 +6282,9 @@
 
       const inSettleWindow = Date.now() < stepSettleUntil;
 
-      // ── Primary early-exit: nothing moved at all ──────────────────────────────
+      // ── Primary early-exit: nothing moved at all AND step has already been positioned ──
       if (
+        hasPositionedStep &&
         posDeltaX < 2 && posDeltaY < 2 &&
         sizeDeltaW < 2 && sizeDeltaH < 2 &&
         scrollDeltaX === 0 && scrollDeltaY === 0
@@ -6162,18 +6294,14 @@
         return;
       }
 
-      if (inSettleWindow && !isPageScroll && posDeltaX < 8 && posDeltaY < 8 && sizeDeltaW < 8 && sizeDeltaH < 8) {
+      if (hasPositionedStep && inSettleWindow && !isPageScroll && posDeltaX < 8 && posDeltaY < 8 && sizeDeltaW < 8 && sizeDeltaH < 8) {
         return;
       }
 
       // ── Consecutive-stable guard ──────────────────────────────────────────────
-      // The target's rect is changing this tick. Update the cache so we track the
-      // latest position, but if this is an interval tick (not a user scroll/resize)
-      // and the target hasn't been stable for STABLE_TICKS_REQUIRED consecutive
-      // ticks yet, defer the expensive DOM write until it stabilizes.
-      // This specifically prevents chasing wt-report-hero during its chart/count-up
-      // animation phase, where the rect shifts by large amounts across many ticks.
-      if (!isPageScroll && stableTickCount < STABLE_TICKS_REQUIRED) {
+      // If we haven't positioned this step yet, OR if lastTargetLeft is null,
+      // proceed immediately to DOM write. Otherwise, if target is moving, defer DOM write until stable.
+      if (hasPositionedStep && lastTargetLeft !== null && !isPageScroll && stableTickCount < STABLE_TICKS_REQUIRED) {
         // Target is still moving. Update cache only (no DOM writes).
         stableTickCount = 0; // movement seen — reset streak
         lastTargetLeft = rect.left;
@@ -6232,6 +6360,7 @@
         const cardLeft = Math.max(margin, (vw - bubbleW) / 2);
         const cardTop  = Math.min(rect.bottom + gap, vh - hostH - margin);
         swimMascot(cardLeft, cardTop);
+        hasPositionedStep = true;
         return;
       }
       if (bubbleEl) bubbleEl.classList.remove('pb-mobile-no-arrow');
@@ -6341,6 +6470,7 @@
       }
 
       swimMascot(cardLeft, cardTop);
+      hasPositionedStep = true;
     }
 
     const TOUR_METADATA = {
@@ -6420,6 +6550,7 @@
     }
     
     window.toggleTourCategory = function(catName, event) {
+      console.log("[DEBUG] toggleTourCategory fired for category:", catName);
       const ev = event || window.event;
       if (ev) {
         if (typeof ev.stopPropagation === 'function') ev.stopPropagation();
@@ -6441,7 +6572,7 @@
         const body = sec.querySelector('.pb-tour-cat-body');
         const chevron = sec.querySelector('.pb-tour-cat-chevron');
         if (body) {
-          body.style.display = newState ? 'flex' : 'none';
+          body.style.setProperty('display', newState ? 'flex' : 'none', 'important');
           body.style.flexDirection = 'column';
           body.style.width = '100%';
         }
@@ -6487,7 +6618,7 @@
                 <i class="${chevronClass} pb-tour-cat-chevron"></i>
               </div>
             </div>
-            <div class="pb-tour-cat-body" style="display: ${isExpanded ? 'flex' : 'none'}; flex-direction: column !important; gap: 12px !important; width: 100% !important;">
+            <div class="pb-tour-cat-body" style="display: ${isExpanded ? 'flex' : 'none'} !important; flex-direction: column !important; gap: 12px !important; width: 100% !important;">
         `;
         
         // Find tours in this category
@@ -6586,6 +6717,9 @@
     };
 
     window.startWalkthrough = function(pageKey) {
+      if (typeof pageKey !== 'string' || !WALKTHROUGH_CONFIGS[pageKey]) {
+        pageKey = 'getting_started';
+      }
       window.wtUserDragged = false;
       const config = WALKTHROUGH_CONFIGS[pageKey];
       if (!config || config.length === 0) return;
@@ -6797,6 +6931,7 @@
       lastTargetHeight = null;
       lastScrollX = null;
       lastScrollY = null;
+      hasPositionedStep = false;
       stableTickCount = 0; // Each new step must re-stabilize before interval commits a position
       
       const step = wtSteps[wtCurrentStep];
@@ -6857,6 +6992,7 @@
         lastGateSatisfiedState = checkStepGate(wtCurrentStep);
 
         // Reposition immediately using correct coordinates based on the new content size
+        hasPositionedStep = false;
         repositionWalkthroughElements();
 
         // Reveal the bubble!
@@ -6875,84 +7011,91 @@
         }
       }
 
-      function tryHighlightAndPosition() {
-        if (!wtActive || wtCurrentStep >= wtSteps.length) return;
-        const s = wtSteps[wtCurrentStep];
-        
-        let currentTargetId = s.targetId;
-        const onDashboard = window.location.pathname.startsWith('/dashboard');
-        const emptyStateActive = document.getElementById('no-campaigns-card') && document.getElementById('no-campaigns-card').style.display !== 'none';
-        
-        // Empty state redirect details override
-        if (onDashboard && emptyStateActive) {
-          if (currentTargetId === 'wt-dashboard-view' || currentTargetId === 'mainTrendChart') {
-            currentTargetId = 'no-campaigns-card';
-          }
+    function tryHighlightAndPosition() {
+      if (!wtActive || wtCurrentStep >= wtSteps.length) return;
+      const s = wtSteps[wtCurrentStep];
+      const bubbleEl = document.getElementById('pb-wt-bubble');
+      
+      let currentTargetId = s.targetId;
+      const onDashboard = window.location.pathname.startsWith('/dashboard');
+      const emptyStateActive = document.getElementById('no-campaigns-card') && document.getElementById('no-campaigns-card').style.display !== 'none';
+      
+      // Empty state redirect details override
+      if (onDashboard && emptyStateActive) {
+        if (currentTargetId === 'wt-dashboard-view' || currentTargetId === 'mainTrendChart') {
+          currentTargetId = 'no-campaigns-card';
         }
+      }
 
-        // Hide bubble initially to prevent showing previous step in wrong size/position
-        if (bubbleEl) {
-          bubbleEl.style.opacity = '0';
-          bubbleEl.style.visibility = 'hidden';
-          bubbleEl.style.pointerEvents = 'none';
-        }
+      // Hide bubble initially to prevent showing previous step in wrong size/position
+      if (bubbleEl) {
+        bubbleEl.style.opacity = '0';
+        bubbleEl.style.visibility = 'hidden';
+        bubbleEl.style.pointerEvents = 'none';
+      }
 
-        const instantTarget = document.getElementById(currentTargetId);
-        if (instantTarget) {
-          changeMascotState('idle');
+      const instantTarget = document.getElementById(currentTargetId);
+      if (instantTarget) {
+        changeMascotState('idle');
+        whenLayoutReady(() => {
+          if (!wtActive) return;
           highlightAndPositionTarget(instantTarget, s);
-        } else {
-          // Element not found immediately. Set mascot to active (thinking)
-          changeMascotState('active');
+        });
+      } else {
+        // Element not found immediately. Set mascot to active (thinking)
+        changeMascotState('active');
 
-          // Show a temporary "loading" bubble text after 800ms if still not loaded
-          const loadingTimer = setTimeout(() => {
-            if (!wtActive) return;
-            const loadingStep = {
-              title: `Scanning for ${s.title}...`,
-              text: `Looks like this section is taking a second to load — give it a beat...`
+        // Show a temporary "loading" bubble text after 800ms if still not loaded
+        const loadingTimer = setTimeout(() => {
+          if (!wtActive) return;
+          const loadingStep = {
+            title: `Scanning for ${s.title}...`,
+            text: `Looks like this section is taking a second to load — give it a beat...`
+          };
+          renderBubbleContent(loadingStep, false);
+          // Reposition and show the loading bubble
+          repositionWalkthroughElements();
+          if (bubbleEl) {
+            void bubbleEl.offsetHeight;
+            bubbleEl.style.opacity = '1';
+            bubbleEl.style.visibility = 'visible';
+            bubbleEl.style.pointerEvents = 'auto';
+          }
+        }, 800);
+
+        // Generous, configurable timeout (ceiling configurable, defaults to 6000ms)
+        const timeoutMs = window.LURE_WT_TIMEOUT || 6000;
+        waitForElement(currentTargetId, timeoutMs, (foundEl) => {
+          clearTimeout(loadingTimer);
+          if (!wtActive) return;
+
+          if (foundEl) {
+            changeMascotState('idle');
+            whenLayoutReady(() => {
+              if (!wtActive) return;
+              highlightAndPositionTarget(foundEl, s);
+            });
+          } else {
+            // Timed out. Set mascot to error (worried) and show confident copy
+            changeMascotState('error');
+            repositionWalkthroughElements(); // handles null target
+            const fallbackStep = {
+              title: `${s.title}`,
+              text: `Hmm, this section seems to be taking a while to appear. Let's keep swimming! You can skip this step or click Next to continue.`
             };
-            renderBubbleContent(loadingStep, false);
-            // Reposition and show the loading bubble
-            repositionWalkthroughElements();
+            renderBubbleContent(fallbackStep, true);
             if (bubbleEl) {
               void bubbleEl.offsetHeight;
               bubbleEl.style.opacity = '1';
               bubbleEl.style.visibility = 'visible';
               bubbleEl.style.pointerEvents = 'auto';
             }
-          }, 800);
-
-          // Generous, configurable timeout (ceiling configurable, defaults to 6000ms)
-          const timeoutMs = window.LURE_WT_TIMEOUT || 6000;
-          waitForElement(currentTargetId, timeoutMs, (foundEl) => {
-            clearTimeout(loadingTimer);
-            if (!wtActive) return;
-
-            if (foundEl) {
-              changeMascotState('idle');
-              highlightAndPositionTarget(foundEl, s);
-            } else {
-              // Timed out. Set mascot to error (worried) and show confident copy
-              changeMascotState('error');
-              repositionWalkthroughElements(); // handles null target
-              const fallbackStep = {
-                title: `${s.title}`,
-                text: `Hmm, this section seems to be taking a while to appear. Let's keep swimming! You can skip this step or click Next to continue.`
-              };
-              renderBubbleContent(fallbackStep, true);
-              if (bubbleEl) {
-                void bubbleEl.offsetHeight;
-                bubbleEl.style.opacity = '1';
-                bubbleEl.style.visibility = 'visible';
-                bubbleEl.style.pointerEvents = 'auto';
-              }
-            }
-          });
-        }
+          }
+        });
       }
+    }
 
-      tryHighlightAndPosition();
+    tryHighlightAndPosition();
     }
 
     window.repeatWalkthroughStep = function() {
@@ -7207,15 +7350,28 @@
       }
     }
 
-    if (document.readyState !== 'loading') {
-      resumeWalkthroughOnLoad();
-      if (window.renderToursList) renderToursList();
-    } else {
-      window.addEventListener('DOMContentLoaded', () => {
+    const initWalkthroughResume = () => {
+      whenLayoutReady(() => {
         resumeWalkthroughOnLoad();
         if (window.renderToursList) renderToursList();
       });
+    };
+
+    if (document.readyState === 'loading') {
+      window.addEventListener('DOMContentLoaded', initWalkthroughResume);
+    } else {
+      initWalkthroughResume();
     }
+
+    // Safety refresh after initial skeleton loaders fade out and layout cardEntrance settles
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        if (typeof wtActive !== 'undefined' && wtActive) {
+          hasPositionedStep = false;
+          repositionWalkthroughElements();
+        }
+      }, 350);
+    });
 
     /* ================================================================
        Spot the Phish Game Script (Inline/Overlay Mode support)

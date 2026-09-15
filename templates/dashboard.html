@@ -53,6 +53,26 @@
 </div>
 
 <style>
+    /* High-Performance Dashboard Tiles & Cards (Zero Cursor Latency) */
+    .campaign-grid-card, .camp-card {
+        will-change: transform;
+        transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.22s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.22s ease !important;
+    }
+    .campaign-grid-card:hover, .camp-card:hover {
+        transform: translateY(-4px) !important;
+        box-shadow: 0 16px 36px -8px rgba(0, 0, 0, 0.5), 0 0 25px rgba(0, 242, 254, 0.15) !important;
+        border-color: rgba(0, 242, 254, 0.35) !important;
+    }
+    .bento-card, .empty-step-card {
+        will-change: transform;
+        transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.22s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.22s ease !important;
+    }
+    .bento-card:hover, .empty-step-card:hover {
+        transform: translateY(-3px) !important;
+        box-shadow: 0 12px 28px -6px rgba(0, 0, 0, 0.4), 0 0 18px rgba(0, 242, 254, 0.12) !important;
+        border-color: rgba(0, 242, 254, 0.3) !important;
+    }
+
     .dash-page {
         padding: clamp(1rem, 2vw, 2rem) clamp(1.5rem, 3vw, 3rem);
         width: min(100%, 1500px);
@@ -670,28 +690,29 @@
         margin-top: 16px;
     }
 
-    /* Ensure custom grid card styling looks beautiful and consistent */
+    /* Ensure custom grid card styling looks beautiful and hardware-accelerated without lag */
     .campaign-grid-card {
         background: linear-gradient(145deg, rgba(15, 23, 42, 0.45) 0%, rgba(10, 15, 30, 0.65) 100%) !important;
         border: 1px solid rgba(255, 255, 255, 0.06) !important;
-        box-shadow: 0 8px 32px rgba(2, 6, 23, 0.35) !important;
-        transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+        box-shadow: 0 8px 24px rgba(2, 6, 23, 0.3) !important;
+        will-change: transform;
+        transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease, box-shadow 0.2s ease !important;
     }
 
     body.light-theme .campaign-grid-card {
         background: linear-gradient(145deg, #ffffff 0%, #f1f5f9 100%) !important;
         border-color: rgba(37, 99, 235, 0.1) !important;
-        box-shadow: 0 8px 12px color-mix(in srgb, var(--primary) 4%, transparent) !important;
+        box-shadow: 0 8px 12px rgba(13, 148, 136, 0.06) !important;
     }
 
     .campaign-grid-card:hover {
-        transform: translateY(-4px) !important;
+        transform: translateY(-3px) !important;
         border-color: var(--primary) !important;
-        box-shadow: 0 16px 20px color-mix(in srgb, var(--primary) 9%, transparent) !important;
+        box-shadow: 0 12px 24px rgba(45, 212, 191, 0.18) !important;
     }
 
     body.light-theme .campaign-grid-card:hover {
-        box-shadow: 0 16px 20px color-mix(in srgb, var(--primary) 8%, transparent) !important;
+        box-shadow: 0 12px 24px rgba(13, 148, 136, 0.15) !important;
     }
 
     body.light-theme .btn-primary-filled {
@@ -788,7 +809,7 @@
     <!-- 2. Bento Stats Strip (4 bento cards) -->
     <div class="stats-strip" id="wt-dashboard-view">
         <!-- Card 1: Active Campaigns -->
-        <div class="bento-card" data-tilt>
+        <div class="bento-card">
             <div>
                 <div class="stat-card-title">
                     <i class="ti ti-stack-2" style="color: var(--primary);"></i> Active Campaigns
@@ -799,7 +820,7 @@
         </div>
 
         <!-- Card 2: Employees Targeted -->
-        <div class="bento-card" data-tilt>
+        <div class="bento-card">
             <div>
                 <div class="stat-card-title">
                     <i class="ti ti-users" style="color: #a855f7;"></i> Employees Targeted
@@ -810,7 +831,7 @@
         </div>
 
         <!-- Card 3: Avg Click Rate -->
-        <div class="bento-card" data-tilt>
+        <div class="bento-card">
             <div>
                 <div class="stat-card-title">
                     <i class="ti ti-alert-triangle" style="color: var(--warning);"></i> Avg Click Rate
@@ -821,7 +842,7 @@
         </div>
 
         <!-- Card 4: Human Security Score -->
-        <div class="bento-card" style="padding: 20px 24px;" data-tilt>
+        <div class="bento-card" style="padding: 20px 24px;">
             <div class="hss-card-content"
                 style="display: flex; align-items: center; justify-content: space-between; gap: 16px; width: 100%;">
                 <div style="display: flex; flex-direction: column; justify-content: center; height: 100%;">
@@ -1157,9 +1178,9 @@
             {% set reports = camp.reports or 0 %}
             {% set click_rate = (clicks / sent * 100) if sent > 0 else 0 %}
             {% set report_rate = (reports / sent * 100) if sent > 0 else 0 %}
-            <div class="campaign-grid-card camp-card" data-tilt data-name="{{ camp.name }}" data-status="{{ camp.status }}"
+            <div class="campaign-grid-card camp-card" data-name="{{ camp.name }}" data-status="{{ camp.status }}"
                 data-status-group="{% if camp.status in ('launched', 'launched_with_errors', 'launching') %}launched{% else %}{{ camp.status }}{% endif %}"
-                style="display: flex; flex-direction: column; justify-content: space-between; padding: 24px; border-radius: 16px; min-height: 380px; transition: all 0.3s ease;">
+                style="display: flex; flex-direction: column; justify-content: space-between; padding: 24px; border-radius: 16px; min-height: 380px;">
 
                 <!-- Top Header Row -->
                 <div style="margin-bottom: 16px;">

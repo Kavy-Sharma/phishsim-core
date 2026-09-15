@@ -47,6 +47,19 @@
 
     <!-- Main Stylesheet -->
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css', v='1.0.9-lure-cta') }}">
+    <style>
+        ::view-transition-old(root),
+        ::view-transition-new(root) {
+            animation: none !important;
+            mix-blend-mode: normal !important;
+        }
+        ::view-transition-old(root) {
+            z-index: 1 !important;
+        }
+        ::view-transition-new(root) {
+            z-index: 999999 !important;
+        }
+    </style>
 </head>
 <body class="{% block body_class %}{% endblock %} {% if current_user %}has-hud-bar{% endif %}">
 
@@ -883,7 +896,13 @@ window.init3DTiltCards = init3DTiltCards;
             const tooltip = document.getElementById("theme-tooltip");
             let tooltipTimeout;
 
+            if (!toggle) {
+                console.warn("[PhishSim Theme] Theme toggle initialization aborted: #theme-toggle element not found on page.");
+                return;
+            }
+
             function showTooltip(text, isLight) {
+                if (!tooltip) return;
                 tooltip.textContent = text;
                 tooltip.style.background = isLight ? "rgba(255,255,255,0.95)" : "rgba(15,23,42,0.95)";
                 tooltip.style.color = isLight ? "#0f172a" : "#fff";
@@ -897,11 +916,13 @@ window.init3DTiltCards = init3DTiltCards;
                 const isLight = theme === "light";
                 document.documentElement.setAttribute("data-theme", theme);
                 body.classList.toggle("light-theme", isLight);
-                toggle.setAttribute("aria-label", isLight ? "Switch to dark mode" : "Switch to light mode");
-                toggle.setAttribute("title", isLight ? "Switch to dark mode" : "Switch to light mode");
+                if (toggle) {
+                    toggle.setAttribute("aria-label", isLight ? "Switch to dark mode" : "Switch to light mode");
+                    toggle.setAttribute("title", isLight ? "Switch to dark mode" : "Switch to light mode");
+                }
                 localStorage.setItem(storageKey, theme);
                 
-                if (showMsg) {
+                if (showMsg && tooltip) {
                     showTooltip(isLight ? "Light Mode" : "Dark Mode", isLight);
                 }
 
@@ -909,12 +930,8 @@ window.init3DTiltCards = init3DTiltCards;
                 window.dispatchEvent(new CustomEvent('theme-changed', { detail: { theme } }));
             }
 
-            const savedTheme = localStorage.getItem(storageKey);
+            const savedTheme = localStorage.getItem(storageKey) || localStorage.getItem("theme");
             applyTheme(savedTheme === "light" ? "light" : "dark", false);
-
-            toggle.addEventListener("click", function() {
-                applyTheme(body.classList.contains("light-theme") ? "dark" : "light", true);
-            });
         })();
     </script>
     <script>
@@ -1191,8 +1208,21 @@ window.init3DTiltCards = init3DTiltCards;
             let mouseY = window.innerHeight / 2;
             let dotX = mouseX;
             let dotY = mouseY;
-            const speed = 0.15;
+            const speed = 0.18;
             let hasMoved = false;
+            let dotRafActive = false;
+
+            function animateDot() {
+                dotX += (mouseX - dotX) * speed;
+                dotY += (mouseY - dotY) * speed;
+                dot.style.left = `${dotX}px`;
+                dot.style.top = `${dotY}px`;
+                if (Math.abs(mouseX - dotX) > 0.3 || Math.abs(mouseY - dotY) > 0.3) {
+                    requestAnimationFrame(animateDot);
+                } else {
+                    dotRafActive = false;
+                }
+            }
 
             document.addEventListener("mousemove", (e) => {
                 mouseX = e.clientX;
@@ -1203,56 +1233,44 @@ window.init3DTiltCards = init3DTiltCards;
                     dot.style.opacity = "1";
                     hasMoved = true;
                 }
-                if (!dotRafActive) { dotRafActive = true; requestAnimationFrame(animateDot); }
-            });
-
-            let dotRafActive = false;
-            function animateDot() {
-                dotX += (mouseX - dotX) * speed;
-                dotY += (mouseY - dotY) * speed;
-                dot.style.left = `${dotX}px`;
-                dot.style.top = `${dotY}px`;
-                if (Math.abs(mouseX - dotX) > 0.5 || Math.abs(mouseY - dotY) > 0.5) {
+                if (!dotRafActive) {
+                    dotRafActive = true;
                     requestAnimationFrame(animateDot);
-                } else {
-                    dotRafActive = false;
                 }
-            }
+            }, { passive: true });
 
-            // Hover effects on interactive elements
-            const attachHoverEvents = () => {
-                document.querySelectorAll("a, button, input, select, textarea, [role='button'], .custom-option, .delivery-label, .scenario-card-label, .theme-toggle, .weekday-btn, .dom-btn").forEach(el => {
-                    if (el.dataset.hasCursorHover) return;
-                    el.dataset.hasCursorHover = "true";
-                    el.addEventListener("mouseenter", () => {
-                        dot.style.width = "30px";
-                        dot.style.height = "30px";
-                        dot.style.borderColor = "#ff007f";
-                        dot.style.borderStyle = "dashed";
-                    });
-                    el.addEventListener("mouseleave", () => {
-                        dot.style.width = "18px";
-                        dot.style.height = "18px";
-                        dot.style.borderColor = "rgba(0, 240, 255, 0.7)";
-                        dot.style.borderStyle = "solid";
-                    });
-                });
-            };
-            attachHoverEvents();
-            setInterval(attachHoverEvents, 2000);
+            // High-performance event delegation for cursor hover state (replaces setInterval polling)
+            const selectorStr = "a, button, input, select, textarea, [role='button'], .custom-option, .delivery-label, .scenario-card-label, .theme-toggle, .weekday-btn, .dom-btn";
+            document.body.addEventListener("mouseover", (e) => {
+                if (e.target && e.target.closest(selectorStr)) {
+                    dot.style.width = "30px";
+                    dot.style.height = "30px";
+                    dot.style.borderColor = "#ff007f";
+                    dot.style.borderStyle = "dashed";
+                }
+            }, { passive: true });
+
+            document.body.addEventListener("mouseout", (e) => {
+                if (e.target && e.target.closest(selectorStr)) {
+                    dot.style.width = "18px";
+                    dot.style.height = "18px";
+                    dot.style.borderColor = "rgba(0, 240, 255, 0.7)";
+                    dot.style.borderStyle = "solid";
+                }
+            }, { passive: true });
         });
     </script>
     
-    <!-- Liquid Heading Effect Script -->
+    <!-- Liquid Heading Effect Script (RAF-Throttled) -->
     <script>
     (function() {
         const DARK_COLORS  = ['#06b6d4', '#00d2ff', '#3b82f6', '#00f0ff', '#8b5cf6', '#38bdf8', '#06b6d4'];
         const LIGHT_COLORS = ['#1d4ed8', '#2563eb', '#3b82f6', '#0284c7', '#4f46e5', '#2563eb', '#1d4ed8'];
-        const RADIUS = 120; // px — spread of the liquid spotlight
 
         function isLiquidTarget(el) {
-            const tag = el.tagName;
+            if (!el || !el.tagName) return false;
             if (el.classList.contains('hero-h1')) return false;
+            const tag = el.tagName;
             if (tag === 'H1' || tag === 'H2' || tag === 'H3') return true;
             if (el.classList.contains('liquid-text')) return true;
             return false;
@@ -1292,29 +1310,29 @@ window.init3DTiltCards = init3DTiltCards;
             el.style.removeProperty('background-size');
         }
 
+        let liquidRaf = null;
+        let lastLiquidEvent = null;
+
         document.addEventListener('mousemove', function(e) {
-            const target = e.target;
-            let el = target;
-            for (let i = 0; i < 4; i++) {
-                if (!el || el === document.body) break;
-                if (isLiquidTarget(el) && !isExcluded(el)) {
-                    const rect = el.getBoundingClientRect();
-                    const relX = e.clientX - rect.left;
-                    applyLiquid(el, relX, rect.width);
-                    return;
-                }
-                el = el.parentElement;
+            lastLiquidEvent = e;
+            if (!liquidRaf) {
+                liquidRaf = requestAnimationFrame(() => {
+                    liquidRaf = null;
+                    if (!lastLiquidEvent) return;
+                    let el = lastLiquidEvent.target;
+                    for (let i = 0; i < 4; i++) {
+                        if (!el || el === document.body) break;
+                        if (isLiquidTarget(el) && !isExcluded(el)) {
+                            const rect = el.getBoundingClientRect();
+                            const relX = lastLiquidEvent.clientX - rect.left;
+                            applyLiquid(el, relX, rect.width);
+                            return;
+                        }
+                        el = el.parentElement;
+                    }
+                });
             }
         }, { passive: true });
-
-        document.addEventListener('mouseleave', function(e) {
-            const activeEls = document.querySelectorAll('.liquid-active');
-            activeEls.forEach(function(el) {
-                if (!el.contains(e.relatedTarget)) {
-                    removeLiquid(el);
-                }
-            });
-        }, { passive: true, capture: true });
 
         document.addEventListener('mouseout', function(e) {
             const target = e.target;
@@ -1524,6 +1542,114 @@ window.init3DTiltCards = init3DTiltCards;
             });
         });
         tooltipObserver.observe(document.body, { childList: true, subtree: true });
+
+        // Sitewide Theme Accent Restorer
+        (function initSitewideAccentTheme() {
+            try {
+                const themeName = localStorage.getItem('phishsim_site_theme_accent');
+                if (!themeName) return;
+
+                let accentHex = '#00f2fe';
+                let hoverHex = '#38ef7d';
+                let dimRgba = 'rgba(0, 242, 254, 0.15)';
+                let glowRgba = 'rgba(0, 242, 254, 0.35)';
+
+                if (themeName === 'matrix') {
+                    accentHex = '#10b981';
+                    hoverHex = '#34d399';
+                    dimRgba = 'rgba(16, 185, 129, 0.15)';
+                    glowRgba = 'rgba(16, 185, 129, 0.35)';
+                } else if (themeName === 'amber') {
+                    accentHex = '#f59e0b';
+                    hoverHex = '#fbbf24';
+                    dimRgba = 'rgba(245, 158, 11, 0.15)';
+                    glowRgba = 'rgba(245, 158, 11, 0.35)';
+                } else if (themeName === 'violet') {
+                    accentHex = '#a855f7';
+                    hoverHex = '#c084fc';
+                    dimRgba = 'rgba(168, 85, 247, 0.15)';
+                    glowRgba = 'rgba(168, 85, 247, 0.35)';
+                }
+
+                const root = document.documentElement;
+                if (root) {
+                    root.style.setProperty('--primary', accentHex);
+                    root.style.setProperty('--primary-hover', hoverHex);
+                    root.style.setProperty('--primary-dim', dimRgba);
+                    root.style.setProperty('--primary-glow', glowRgba);
+                    root.style.setProperty('--cyan', accentHex);
+                    root.style.setProperty('--accent-color', accentHex);
+                    root.style.setProperty('--border-active', glowRgba);
+                }
+            } catch (e) {}
+        })();
+
+        // Global Theme Toggle with Silky Smooth Radial View Transition
+        (function initGlobalThemeToggle() {
+            function bindThemeToggle() {
+                const toggleBtn = document.getElementById('theme-toggle') || document.querySelector('.theme-toggle-pill') || document.querySelector('.theme-toggle');
+                if (!toggleBtn || toggleBtn.dataset.themeBound) return;
+                toggleBtn.dataset.themeBound = 'true';
+
+                toggleBtn.addEventListener('click', function (e) {
+                    const currentTheme = document.documentElement.getAttribute('data-theme') || 
+                                        (document.body.classList.contains('light-theme') ? 'light' : 'dark');
+                    const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+                    const isLight = newTheme === 'light';
+
+                    const rect = toggleBtn.getBoundingClientRect();
+                    const x = (e && e.clientX && e.clientX > 0) ? e.clientX : (rect.left + rect.width / 2);
+                    const y = (e && e.clientY && e.clientY > 0) ? e.clientY : (rect.top + rect.height / 2);
+                    
+                    const endRadius = Math.hypot(
+                        Math.max(x, window.innerWidth - x),
+                        Math.max(y, window.innerHeight - y)
+                    );
+
+                    const applyTheme = () => {
+                        document.documentElement.setAttribute('data-theme', newTheme);
+                        document.body.classList.toggle('light-theme', isLight);
+                        localStorage.setItem('phishsim-theme', newTheme);
+                        localStorage.setItem('theme', newTheme);
+                        toggleBtn.setAttribute('aria-label', isLight ? 'Switch to dark mode' : 'Switch to light mode');
+                        toggleBtn.setAttribute('title', isLight ? 'Switch to dark mode' : 'Switch to light mode');
+
+                        // Dispatch theme-changed event for dynamic components & charts
+                        window.dispatchEvent(new CustomEvent('theme-changed', { detail: { theme: newTheme } }));
+                    };
+
+                    if (!document.startViewTransition || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                        applyTheme();
+                        return;
+                    }
+
+                    const transition = document.startViewTransition(() => {
+                        applyTheme();
+                    });
+
+                    transition.ready.then(() => {
+                        const clipPath = [
+                            `circle(0px at ${x}px ${y}px)`,
+                            `circle(${endRadius}px at ${x}px ${y}px)`
+                        ];
+                        document.documentElement.animate(
+                            { clipPath: clipPath },
+                            {
+                                duration: 460,
+                                easing: 'cubic-bezier(0.16, 1, 0.3, 1)',
+                                pseudoElement: '::view-transition-new(root)'
+                            }
+                        );
+                    });
+                });
+            }
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', bindThemeToggle);
+            } else {
+                bindThemeToggle();
+            }
+        })();
     });
     </script>
 

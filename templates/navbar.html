@@ -1,76 +1,339 @@
 <style>
-/* Live Demo Navbar Pill styling overrides */
+/* Sitewide Unified Scrolled Navbar & Glassmorphism Animation Rules */
+.navbar {
+    position: sticky !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    height: 72px !important;
+    background: rgba(8, 14, 28, 0.75) !important;
+    backdrop-filter: blur(16px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(16px) saturate(180%) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+    z-index: 9999 !important;
+    transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    box-sizing: border-box !important;
+}
+
+.navbar.scrolled {
+    height: 62px !important;
+    background: rgba(5, 10, 20, 0.92) !important;
+    border-bottom-color: rgba(0, 242, 254, 0.3) !important;
+    box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.6), 0 0 24px rgba(0, 242, 254, 0.15) !important;
+}
+
+body.light-theme .navbar {
+    background: rgba(255, 255, 255, 0.85) !important;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important;
+}
+
+body.light-theme .navbar.scrolled {
+    background: rgba(255, 255, 255, 0.96) !important;
+    border-bottom-color: rgba(79, 70, 229, 0.25) !important;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 0 18px rgba(79, 70, 229, 0.12) !important;
+}
+
+.nav-container {
+    max-width: 1440px !important;
+    height: 100% !important;
+    margin: 0 auto !important;
+    padding: 0 32px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    box-sizing: border-box !important;
+}
+
+.nav-dropdown-menu {
+    transition: opacity 0.25s ease, transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.25s !important;
+}
+
+/* Futuristic Cyber Theme Toggle Switch */
+button.theme-toggle-pill,
+.theme-toggle-pill {
+    width: 56px !important;
+    height: 28px !important;
+    min-width: 56px !important;
+    min-height: 28px !important;
+    max-width: 56px !important;
+    max-height: 28px !important;
+    flex-shrink: 0 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    position: relative !important;
+    padding: 0 !important;
+    margin: 0 4px !important;
+    border-radius: 9999px !important;
+    cursor: pointer !important;
+    outline: none !important;
+    background: rgba(10, 15, 29, 0.95) !important;
+    border: 1.5px solid rgba(6, 182, 212, 0.45) !important;
+    box-shadow: 0 0 14px rgba(6, 182, 212, 0.25), inset 0 1px 4px rgba(0, 0, 0, 0.8) !important;
+    transition: all 0.3s ease !important;
+    overflow: hidden !important;
+}
+
+button.theme-toggle-pill::before,
+.theme-toggle-pill::before {
+    display: none !important;
+}
+
+button.theme-toggle-pill:hover,
+.theme-toggle-pill:hover {
+    border-color: rgba(6, 182, 212, 0.85) !important;
+    box-shadow: 0 0 18px rgba(6, 182, 212, 0.5), inset 0 1px 3px rgba(0, 0, 0, 0.8) !important;
+    transform: translateY(-1px) scale(1.03) !important;
+}
+
+.theme-track-icons {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding: 0 6px !important;
+    pointer-events: none !important;
+    z-index: 1 !important;
+}
+
+.theme-track-icons svg {
+    width: 12px !important;
+    height: 12px !important;
+    transition: opacity 0.3s ease !important;
+}
+
+.track-sun-icon {
+    color: rgba(245, 158, 11, 0.5) !important;
+    opacity: 0.6 !important;
+}
+
+.track-moon-icon {
+    color: rgba(6, 182, 212, 0.5) !important;
+    opacity: 0.8 !important;
+}
+
+.theme-toggle-thumb {
+    position: absolute !important;
+    top: 1px !important;
+    left: 2px !important;
+    width: 22px !important;
+    height: 22px !important;
+    border-radius: 50% !important;
+    background: radial-gradient(circle at 30% 30%, #22d3ee 0%, #3b82f6 100%) !important;
+    box-shadow: 0 0 12px rgba(6, 182, 212, 0.85) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    transform: translateX(26px) !important;
+    transition: transform 0.38s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.35s ease, box-shadow 0.35s ease !important;
+    z-index: 2 !important;
+}
+
+.theme-toggle-thumb svg {
+    width: 11px !important;
+    height: 11px !important;
+    color: #ffffff !important;
+    transition: transform 0.35s ease, opacity 0.25s ease !important;
+}
+
+.theme-toggle-thumb .moon-icon {
+    opacity: 1 !important;
+    transform: rotate(0deg) scale(1) !important;
+}
+
+.theme-toggle-thumb .sun-icon {
+    opacity: 0 !important;
+    transform: rotate(-180deg) scale(0.2) !important;
+    position: absolute !important;
+}
+
+body.light-theme button.theme-toggle-pill,
+body.light-theme .theme-toggle-pill {
+    background: rgba(241, 245, 249, 0.95) !important;
+    border-color: rgba(245, 158, 11, 0.45) !important;
+    box-shadow: 0 0 14px rgba(245, 158, 11, 0.25), inset 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+}
+
+body.light-theme .theme-track-icons .track-sun-icon {
+    opacity: 0.85 !important;
+    color: rgba(245, 158, 11, 0.8) !important;
+}
+
+body.light-theme .theme-track-icons .track-moon-icon {
+    opacity: 0.35 !important;
+    color: rgba(100, 116, 139, 0.5) !important;
+}
+
+body.light-theme .theme-toggle-thumb {
+    transform: translateX(0px) !important;
+    background: radial-gradient(circle at 30% 30%, #fde047 0%, #f59e0b 100%) !important;
+    box-shadow: 0 0 12px rgba(245, 158, 11, 0.85) !important;
+}
+
+body.light-theme .theme-toggle-thumb .moon-icon {
+    opacity: 0 !important;
+    transform: rotate(180deg) scale(0.2) !important;
+    position: absolute !important;
+}
+
+body.light-theme .theme-toggle-thumb .sun-icon {
+    opacity: 1 !important;
+    transform: rotate(0deg) scale(1) !important;
+}
+
+/* Live Demo Navbar Pill styling (Handcrafted Neon Gradient Border in website theme) */
 .nav-live-demo-pill {
     display: inline-flex !important;
     align-items: center !important;
-    gap: 6px !important;
-    background: rgba(52, 211, 153, 0.12) !important;
-    border: 1px solid rgba(52, 211, 153, 0.35) !important;
+    gap: 8px !important;
+    padding: 7px 18px !important;
+    background: linear-gradient(#080e1c, #080e1c) padding-box, linear-gradient(135deg, #00f2fe 0%, #34d399 50%, #6366f1 100%) border-box !important;
+    border: 2px solid transparent !important;
     border-radius: 9999px !important;
-    padding: 4px 12px !important;
-    font-family: 'JetBrains Mono', monospace !important;
-    font-size: 11px !important;
-    font-weight: 700 !important;
-    color: #34D399 !important;
+    font-family: 'Space Grotesk', sans-serif !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    color: #ffffff !important;
     text-decoration: none !important;
-    text-transform: uppercase !important;
-    letter-spacing: 0.05em !important;
-    transition: all 0.25s ease !important;
+    letter-spacing: 0.02em !important;
+    box-shadow: 0 0 16px rgba(0, 242, 254, 0.25), inset 0 1px 2px rgba(255, 255, 255, 0.15) !important;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
     line-height: 1.2 !important;
-    box-shadow: 0 0 10px rgba(52, 211, 153, 0.05) !important;
-    margin-left: 12px;
+    margin-left: 8px;
 }
 
 .nav-live-demo-pill:hover {
-    background: rgba(52, 211, 153, 0.22) !important;
-    border-color: rgba(52, 211, 153, 0.6) !important;
-    box-shadow: 0 0 15px rgba(52, 211, 153, 0.2) !important;
-    transform: translateY(-1px) !important;
-    color: #34D399 !important;
+    background: linear-gradient(#0f172a, #0f172a) padding-box, linear-gradient(135deg, #38ef7d 0%, #00f2fe 50%, #a855f7 100%) border-box !important;
+    box-shadow: 0 0 24px rgba(0, 242, 254, 0.45), inset 0 1px 2px rgba(255, 255, 255, 0.3) !important;
+    transform: translateY(-2px) scale(1.03) !important;
+    color: #ffffff !important;
+}
+
+.nav-live-demo-pill .live-icon {
+    font-size: 0.95rem !important;
+    color: #00f2fe !important;
+    filter: drop-shadow(0 0 6px rgba(0, 242, 254, 0.6)) !important;
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), color 0.3s ease !important;
+}
+
+.nav-live-demo-pill:hover .live-icon {
+    transform: scale(1.2) rotate(15deg) !important;
+    color: #38ef7d !important;
+    filter: drop-shadow(0 0 10px rgba(56, 239, 125, 0.8)) !important;
 }
 
 body.light-theme .nav-live-demo-pill {
-    background: rgba(5, 150, 105, 0.08) !important;
-    border-color: rgba(5, 150, 105, 0.3) !important;
-    color: #059669 !important;
+    background: linear-gradient(#ffffff, #ffffff) padding-box, linear-gradient(135deg, #4f46e5 0%, #06b6d4 50%, #10b981 100%) border-box !important;
+    color: #0f172a !important;
+    box-shadow: 0 0 16px rgba(79, 70, 229, 0.2) !important;
 }
 
 body.light-theme .nav-live-demo-pill:hover {
-    background: rgba(5, 150, 105, 0.15) !important;
-    border-color: rgba(5, 150, 105, 0.5) !important;
-    box-shadow: 0 0 12px rgba(5, 150, 105, 0.15) !important;
+    background: linear-gradient(#f8fafc, #f8fafc) padding-box, linear-gradient(135deg, #6366f1 0%, #00f2fe 100%) border-box !important;
+    box-shadow: 0 0 22px rgba(79, 70, 229, 0.35) !important;
+    color: #0f172a !important;
 }
 
-.nav-live-demo-pill .t-live-dot {
-    display: inline-block !important;
-    width: 6px !important;
-    height: 6px !important;
-    border-radius: 50% !important;
-    background: #34D399 !important;
-    animation: t-live-pulse 1.4s ease-in-out infinite !important;
+body.light-theme .nav-live-demo-pill .live-icon {
+    color: #4f46e5 !important;
 }
 
-body.light-theme .nav-live-demo-pill .t-live-dot {
-    background: #059669 !important;
+/* Page Context Badge for inside pages */
+.nav-page-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    background: rgba(45, 212, 191, 0.08);
+    border: 1px solid rgba(45, 212, 191, 0.25);
+    border-radius: 9999px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--primary);
+    letter-spacing: 0.01em;
+    backdrop-filter: blur(8px);
+    transition: all 0.3s ease;
+}
+
+.nav-page-badge i {
+    font-size: 0.95rem;
+    color: var(--primary);
+}
+
+body.light-theme .nav-page-badge {
+    background: rgba(13, 148, 136, 0.1);
+    border-color: rgba(13, 148, 136, 0.3);
+    color: var(--primary);
+}
+
+/* Page-specific navbar action button */
+.nav-page-action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    background: rgba(6, 182, 212, 0.1);
+    border: 1px solid rgba(6, 182, 212, 0.25);
+    border-radius: var(--radius-md);
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-primary);
+    text-decoration: none;
+    transition: all 0.25s ease;
+}
+
+.nav-page-action-btn:hover {
+    background: rgba(6, 182, 212, 0.2);
+    border-color: var(--primary);
+    transform: translateY(-1px);
+    color: var(--text-primary);
+}
+
+body.light-theme .nav-page-action-btn {
+    background: rgba(13, 148, 136, 0.08);
+    border-color: rgba(13, 148, 136, 0.22);
+    color: var(--text-primary);
+}
+
+body.light-theme .nav-page-action-btn:hover {
+    background: rgba(13, 148, 136, 0.16);
+    border-color: var(--primary);
+}
+
+@media (max-width: 992px) {
+    .nav-page-badge {
+        display: none;
+    }
+    .desktop-only-btn {
+        display: none !important;
+    }
 }
 
 @media (max-width: 768px) {
     .mobile-dropdown .nav-live-demo-pill {
         margin: 12px 24px !important;
-        font-size: 10px !important;
-        padding: 5px 10px !important;
+        font-size: 12px !important;
+        padding: 6px 14px !important;
     }
 }
 </style>
 
 <nav class="navbar" id="navbar">
     <div class="nav-container">
-        <div class="nav-left" style="display: flex; align-items: center; gap: 24px; height: 100%;">
+        <div class="nav-left" style="display: flex; align-items: center; gap: 20px; height: 100%;">
             <!-- Logo -->
-            <a href="/" class="brand-logo" style="display: inline-flex; align-items: center; gap: 8px; text-decoration: none;">
-                <span class="brand-name">PhishSim</span><span class="brand-domain">.ai</span>
-                <span class="logo-version-badge">v2.0</span>
-            </a>
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <a href="/" class="brand-logo" style="display: inline-flex; align-items: center; gap: 8px; text-decoration: none;">
+                    <span class="brand-name">PhishSim</span><span class="brand-domain">.ai</span>
+                    <span class="logo-version-badge">v2.0</span>
+                </a>
+            </div>
 
             <!-- Desktop Links -->
             <div class="nav-links">
@@ -81,49 +344,180 @@ body.light-theme .nav-live-demo-pill .t-live-dot {
                     {% if current_user.role == 'admin' %}
                         <a href="/admin" class="nav-link {% if request.path in ['/admin', '/users'] or request.path.startswith('/admin') %}active{% endif %}">Admin</a>
                     {% endif %}
+                    
+                    <!-- Solutions Dropdown -->
+                    <div class="nav-dropdown">
+                        <button class="nav-dropdown-trigger {% if request.path in ['/threat-analyzer', '/reports-demo', '/password-breach', '/solution-detail'] %}active{% endif %}">
+                            Solutions <i class="ti ti-chevron-down nav-caret"></i>
+                        </button>
+                        <div class="nav-dropdown-menu nav-dropdown-rich">
+                            <a href="{% if request.path == '/' %}#attack-chain{% else %}/#attack-chain{% endif %}" class="nav-dropdown-item">
+                                <div class="nav-item-icon icon-cyan"><i class="ti ti-target-arrow"></i></div>
+                                <div class="nav-item-content">
+                                    <span class="nav-item-title">AI Phishing Drills</span>
+                                    <span class="nav-item-desc">Automated, adaptive spear-phishing simulation</span>
+                                </div>
+                            </a>
+                            <a href="/threat-analyzer" class="nav-dropdown-item">
+                                <div class="nav-item-icon icon-purple"><i class="ti ti-shield-bolt"></i></div>
+                                <div class="nav-item-content">
+                                    <span class="nav-item-title">Threat Intelligence</span>
+                                    <span class="nav-item-desc">Real-time email & link payload analysis</span>
+                                </div>
+                            </a>
+                            <a href="/reports-demo" class="nav-dropdown-item">
+                                <div class="nav-item-icon icon-emerald"><i class="ti ti-chart-dots"></i></div>
+                                <div class="nav-item-content">
+                                    <span class="nav-item-title">Risk Analytics</span>
+                                    <span class="nav-item-desc">Human vulnerability metrics & report builder</span>
+                                </div>
+                            </a>
+                            <a href="/password-breach" class="nav-dropdown-item">
+                                <div class="nav-item-icon icon-amber"><i class="ti ti-key-off"></i></div>
+                                <div class="nav-item-content">
+                                    <span class="nav-item-title">Credential Guard</span>
+                                    <span class="nav-item-desc">Exposed password audit & breach check</span>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Tools Dropdown -->
                     <div class="nav-dropdown">
                         <button class="nav-dropdown-trigger {% if request.path in ['/threat-analyzer', '/header-analyzer', '/url-decoder', '/password-breach', '/ai-risk-advisor'] %}active{% endif %}">
-                            Tools <i class="ti ti-chevron-down" style="font-size: 0.8rem; vertical-align: middle;"></i>
+                            Tools <i class="ti ti-chevron-down nav-caret"></i>
                         </button>
-                        <div class="nav-dropdown-menu">
-                            <a href="/threat-analyzer"><i class="ti ti-heartbeat" style="color:#06b6d4;margin-right:6px;"></i>Threat Analyzer</a>
-                            <a href="/header-analyzer"><i class="ti ti-mail-search" style="color:#8b5cf6;margin-right:6px;"></i>Header Analyzer</a>
-                            <a href="/url-decoder"><i class="ti ti-link" style="color:#10b981;margin-right:6px;"></i>URL Decoder</a>
-                            <a href="/password-breach"><i class="ti ti-key" style="color:#f59e0b;margin-right:6px;"></i>Password Breach Check</a>
-                            <a href="/ai-risk-advisor" style="border-top: 1px solid var(--border-subtle); color: #fbbf24 !important; font-weight: 700; background: linear-gradient(90deg, rgba(245,158,11,0.06), transparent); display: flex !important; align-items: center; justify-content: space-between; gap: 8px;">
-                                <span style="display: inline-flex; align-items: center; gap: 6px;">
-                                    <i class="ti ti-crown" style="font-size: 0.95rem; color: #fbbf24;"></i> 
-                                    AI Risk Advisor
-                                </span>
-                                <span style="font-family: var(--font-mono); font-size: 0.55rem; font-weight: 900; background: linear-gradient(135deg, #fbbf24, #d97706); color: #000; padding: 1px 4px; border-radius: 3px; letter-spacing: 0.5px; line-height: 1.1;">PRO</span>
+                        <div class="nav-dropdown-menu nav-dropdown-rich">
+                            <a href="/threat-analyzer" class="nav-dropdown-item">
+                                <div class="nav-item-icon icon-cyan"><i class="ti ti-heartbeat"></i></div>
+                                <div class="nav-item-content">
+                                    <span class="nav-item-title">Threat Analyzer</span>
+                                    <span class="nav-item-desc">Scan suspicious emails & files</span>
+                                </div>
+                            </a>
+                            <a href="/header-analyzer" class="nav-dropdown-item">
+                                <div class="nav-item-icon icon-purple"><i class="ti ti-mail-search"></i></div>
+                                <div class="nav-item-content">
+                                    <span class="nav-item-title">Header Analyzer</span>
+                                    <span class="nav-item-desc">Inspect SPF, DKIM & mail hops</span>
+                                </div>
+                            </a>
+                            <a href="/url-decoder" class="nav-dropdown-item">
+                                <div class="nav-item-icon icon-emerald"><i class="ti ti-link"></i></div>
+                                <div class="nav-item-content">
+                                    <span class="nav-item-title">URL Decoder</span>
+                                    <span class="nav-item-desc">Safely unmask hidden links</span>
+                                </div>
+                            </a>
+                            <a href="/password-breach" class="nav-dropdown-item">
+                                <div class="nav-item-icon icon-amber"><i class="ti ti-key"></i></div>
+                                <div class="nav-item-content">
+                                    <span class="nav-item-title">Password Breach Check</span>
+                                    <span class="nav-item-desc">Search leaked credential bases</span>
+                                </div>
+                            </a>
+                            <a href="/ai-risk-advisor" class="nav-dropdown-item nav-item-featured">
+                                <div class="nav-item-icon icon-gold"><i class="ti ti-crown"></i></div>
+                                <div class="nav-item-content">
+                                    <div class="nav-item-title-row">
+                                        <span class="nav-item-title" style="color:#fbbf24;">AI Risk Advisor</span>
+                                        <span class="pro-badge">PRO</span>
+                                    </div>
+                                    <span class="nav-item-desc">24/7 AI security copilot</span>
+                                </div>
                             </a>
                         </div>
                     </div>
                 {% else %}
-                    <a href="{% if request.path == '/' %}#attack-chain{% else %}/#attack-chain{% endif %}" class="nav-link">How It Works</a>
-                    <a href="/about" class="nav-link {% if request.path == '/about' %}active{% endif %}">About</a>
+                    <!-- Guest Navigation Links -->
                     <div class="nav-dropdown">
-                        <button class="nav-dropdown-trigger {% if request.path in ['/threat-analyzer', '/header-analyzer', '/url-decoder', '/password-breach', '/ai-risk-advisor'] %}active{% endif %}">
-                            Tools <i class="ti ti-chevron-down" style="font-size: 0.8rem; vertical-align: middle;"></i>
+                        <button class="nav-dropdown-trigger {% if request.path in ['/threat-analyzer', '/reports-demo', '/password-breach', '/solution-detail'] %}active{% endif %}">
+                            Solutions <i class="ti ti-chevron-down nav-caret"></i>
                         </button>
-                        <div class="nav-dropdown-menu">
-                            <a href="/threat-analyzer"><i class="ti ti-heartbeat" style="color:#06b6d4;margin-right:6px;"></i>Threat Analyzer</a>
-                            <a href="/header-analyzer"><i class="ti ti-mail-search" style="color:#8b5cf6;margin-right:6px;"></i>Header Analyzer</a>
-                            <a href="/url-decoder"><i class="ti ti-link" style="color:#10b981;margin-right:6px;"></i>URL Decoder</a>
-                            <a href="/password-breach"><i class="ti ti-key" style="color:#f59e0b;margin-right:6px;"></i>Password Breach Check</a>
-                            <a href="/ai-risk-advisor" style="border-top: 1px solid var(--border-subtle); color: #fbbf24 !important; font-weight: 700; background: linear-gradient(90deg, rgba(245,158,11,0.06), transparent); display: flex !important; align-items: center; justify-content: space-between; gap: 8px;">
-                                <span style="display: inline-flex; align-items: center; gap: 6px;">
-                                    <i class="ti ti-crown" style="font-size: 0.95rem; color: #fbbf24;"></i> 
-                                    AI Risk Advisor
-                                </span>
-                                <span style="font-family: var(--font-mono); font-size: 0.55rem; font-weight: 900; background: linear-gradient(135deg, #fbbf24, #d97706); color: #000; padding: 1px 4px; border-radius: 3px; letter-spacing: 0.5px; line-height: 1.1;">PRO</span>
+                        <div class="nav-dropdown-menu nav-dropdown-rich">
+                            <a href="{% if request.path == '/' %}#attack-chain{% else %}/#attack-chain{% endif %}" class="nav-dropdown-item">
+                                <div class="nav-item-icon icon-cyan"><i class="ti ti-target-arrow"></i></div>
+                                <div class="nav-item-content">
+                                    <span class="nav-item-title">AI Phishing Drills</span>
+                                    <span class="nav-item-desc">Automated, adaptive spear-phishing simulation</span>
+                                </div>
+                            </a>
+                            <a href="/threat-analyzer" class="nav-dropdown-item">
+                                <div class="nav-item-icon icon-purple"><i class="ti ti-shield-bolt"></i></div>
+                                <div class="nav-item-content">
+                                    <span class="nav-item-title">Threat Intelligence</span>
+                                    <span class="nav-item-desc">Real-time email & link payload analysis</span>
+                                </div>
+                            </a>
+                            <a href="/reports-demo" class="nav-dropdown-item">
+                                <div class="nav-item-icon icon-emerald"><i class="ti ti-chart-dots"></i></div>
+                                <div class="nav-item-content">
+                                    <span class="nav-item-title">Risk Analytics</span>
+                                    <span class="nav-item-desc">Human vulnerability metrics & executive reporting</span>
+                                </div>
+                            </a>
+                            <a href="/password-breach" class="nav-dropdown-item">
+                                <div class="nav-item-icon icon-amber"><i class="ti ti-key-off"></i></div>
+                                <div class="nav-item-content">
+                                    <span class="nav-item-title">Credential Guard</span>
+                                    <span class="nav-item-desc">Exposed password audit & breach monitoring</span>
+                                </div>
                             </a>
                         </div>
                     </div>
+
+                    <div class="nav-dropdown">
+                        <button class="nav-dropdown-trigger {% if request.path in ['/threat-analyzer', '/header-analyzer', '/url-decoder', '/password-breach', '/ai-risk-advisor'] %}active{% endif %}">
+                            Tools <i class="ti ti-chevron-down nav-caret"></i>
+                        </button>
+                        <div class="nav-dropdown-menu nav-dropdown-rich">
+                            <a href="/threat-analyzer" class="nav-dropdown-item">
+                                <div class="nav-item-icon icon-cyan"><i class="ti ti-heartbeat"></i></div>
+                                <div class="nav-item-content">
+                                    <span class="nav-item-title">Threat Analyzer</span>
+                                    <span class="nav-item-desc">Scan suspicious emails & files</span>
+                                </div>
+                            </a>
+                            <a href="/header-analyzer" class="nav-dropdown-item">
+                                <div class="nav-item-icon icon-purple"><i class="ti ti-mail-search"></i></div>
+                                <div class="nav-item-content">
+                                    <span class="nav-item-title">Header Analyzer</span>
+                                    <span class="nav-item-desc">Inspect SPF, DKIM & mail hops</span>
+                                </div>
+                            </a>
+                            <a href="/url-decoder" class="nav-dropdown-item">
+                                <div class="nav-item-icon icon-emerald"><i class="ti ti-link"></i></div>
+                                <div class="nav-item-content">
+                                    <span class="nav-item-title">URL Decoder</span>
+                                    <span class="nav-item-desc">Safely unmask hidden links</span>
+                                </div>
+                            </a>
+                            <a href="/password-breach" class="nav-dropdown-item">
+                                <div class="nav-item-icon icon-amber"><i class="ti ti-key"></i></div>
+                                <div class="nav-item-content">
+                                    <span class="nav-item-title">Password Breach Check</span>
+                                    <span class="nav-item-desc">Search leaked credential bases</span>
+                                </div>
+                            </a>
+                            <a href="/ai-risk-advisor" class="nav-dropdown-item nav-item-featured">
+                                <div class="nav-item-icon icon-gold"><i class="ti ti-crown"></i></div>
+                                <div class="nav-item-content">
+                                    <div class="nav-item-title-row">
+                                        <span class="nav-item-title" style="color:#fbbf24;">AI Risk Advisor</span>
+                                        <span class="pro-badge">PRO</span>
+                                    </div>
+                                    <span class="nav-item-desc">24/7 AI security copilot</span>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+
+                    <a href="{% if request.path == '/' %}#attack-chain{% else %}/#attack-chain{% endif %}" class="nav-link">How It Works</a>
                     <a href="/#pricing" class="nav-link {% if request.path == '/#pricing' %}active{% endif %}">Pricing</a>
+                    <a href="/about" class="nav-link {% if request.path == '/about' %}active{% endif %}">About</a>
                     <a href="/demo-login" class="nav-live-demo-pill">
-                        <span class="t-live-dot"></span>
-                        Live Demo
+                        <i class="ti ti-sparkles live-icon"></i>
+                        <span>Live Demo</span>
                     </a>
                 {% endif %}
             </div>
@@ -131,9 +525,26 @@ body.light-theme .nav-live-demo-pill .t-live-dot {
 
         </div>
 
-        <div class="nav-right" style="display: flex; align-items: center; gap: 20px;">
-            <!-- Commom elements -->
+        <div class="nav-right" style="display: flex; align-items: center; gap: 16px;">
             {% if current_user %}
+                <!-- Contextual Page Quick Action Button -->
+                {% if request.path == '/dashboard' %}
+                    <a href="/new-campaign" class="nav-page-action-btn desktop-only-btn" title="Create New Phishing Campaign">
+                        <i class="ti ti-plus" style="color:var(--primary);"></i>
+                        <span>New Campaign</span>
+                    </a>
+                {% elif request.path in ['/new-campaign', '/new-campaign-launch', '/new-campaign-upload', '/simulated'] or request.path.startswith('/campaign') %}
+                    <a href="/reports-demo" class="nav-page-action-btn desktop-only-btn" title="View Vulnerability Reports">
+                        <i class="ti ti-chart-bar" style="color:var(--info);"></i>
+                        <span>View Reports</span>
+                    </a>
+                {% elif request.path in ['/threat-analyzer', '/header-analyzer', '/url-decoder', '/password-breach', '/ai-risk-advisor'] %}
+                    <a href="/dashboard" class="nav-page-action-btn desktop-only-btn" title="Back to Dashboard">
+                        <i class="ti ti-layout-dashboard" style="color:var(--primary);"></i>
+                        <span>Dashboard</span>
+                    </a>
+                {% endif %}
+
                 <!-- Billing Link -->
                 <a href="/billing" class="nav-billing-btn" title="Billing & Plans" style="font-size: 1.25rem; color: var(--text-secondary); text-decoration: none; display: inline-flex; align-items: center; justify-content: center; transition: color 0.2s;" onmouseover="this.style.color='var(--text-primary)';" onmouseout="this.style.color='var(--text-secondary)';">
                     <i class="ti ti-credit-card"></i>
@@ -149,10 +560,27 @@ body.light-theme .nav-live-demo-pill .t-live-dot {
                 <i class="ti ti-bell" style="font-size: 1.25rem; color: var(--text-secondary); cursor: pointer;" title="Notifications"></i>
             {% endif %}
 
-            <!-- Theme Toggle -->
-            <button type="button" class="theme-toggle-btn" id="theme-toggle" aria-label="Switch theme" title="Switch theme">
-                <svg class="sun-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
-                <svg class="moon-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+            <!-- Futuristic Cyber Theme Toggle Switch -->
+            <button type="button" class="theme-toggle-pill" id="theme-toggle" aria-label="Switch theme" title="Switch theme">
+                <span class="theme-track-icons">
+                    <svg class="track-sun-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="4"/>
+                        <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
+                    </svg>
+                    <svg class="track-moon-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+                    </svg>
+                </span>
+                <span class="theme-toggle-thumb">
+                    <svg class="moon-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" fill="currentColor" fill-opacity="0.25"/>
+                        <path d="M19 3v4M21 5h-4" stroke-width="1.8"/>
+                    </svg>
+                    <svg class="sun-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="4" fill="currentColor" fill-opacity="0.3"/>
+                        <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
+                    </svg>
+                </span>
             </button>
 
             {% if current_user %}
@@ -178,13 +606,12 @@ body.light-theme .nav-live-demo-pill .t-live-dot {
                     <a href="/login" id="wt-signin-link" class="nav-link" style="font-size: var(--text-sm); height: auto; border: none; padding: 0;">Sign In</a>
                 {% endif %}
                 {% if request.path != '/signup' %}
-                    <a href="/signup" id="wt-signup-btn" class="lure-cta" style="padding: 0.22rem 0.22rem 0.22rem 1.1rem; gap: 0.75rem; text-decoration: none;">
-                      <span class="lure-cta-label" style="font-size: 0.75rem; letter-spacing: 0.16em;">GET STARTED</span>
-                      <span class="lure-cta-orb" style="width: 32px; height: 32px;">
-                        <span class="lure-cta-ring" style="inset: -4px;"></span>
+                    <a href="/signup" id="wt-signup-btn" class="lure-cta lure-cta-compact">
+                      <span class="lure-cta-label">GET STARTED</span>
+                      <span class="lure-cta-orb">
                         <span class="lure-cta-chevrons">
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
-                            <path d="M8 5l7 7-7 7M13 5l7 7-7 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none">
+                            <path d="M8 5l7 7-7 7M13 5l7 7-7 7" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
                           </svg>
                         </span>
                       </span>
@@ -210,6 +637,9 @@ body.light-theme .nav-live-demo-pill .t-live-dot {
             {% if current_user.role == 'admin' %}
                 <a href="/admin" class="nav-link {% if request.path in ['/admin', '/users'] %}active{% endif %}" onclick="toggleMobileMenu()">Admin</a>
             {% endif %}
+            <div style="padding: 12px 24px; font-weight: 600; color: var(--text-primary); font-size: var(--text-sm); border-top: 1px solid var(--border-subtle); margin-top: 8px;">Solutions</div>
+            <a href="{% if request.path == '/' %}#attack-chain{% else %}/#attack-chain{% endif %}" class="nav-link" onclick="toggleMobileMenu()" style="padding-left: 36px;">AI Phishing Drills</a>
+            <a href="/reports-demo" class="nav-link" onclick="toggleMobileMenu()" style="padding-left: 36px;">Risk Analytics</a>
             <div style="padding: 12px 24px; font-weight: 600; color: var(--text-primary); font-size: var(--text-sm); border-top: 1px solid var(--border-subtle); margin-top: 8px;">Tools</div>
             <a href="/threat-analyzer" class="nav-link {% if request.path == '/threat-analyzer' %}active{% endif %}" onclick="toggleMobileMenu()" style="padding-left: 36px;">Threat Analyzer</a>
             <a href="/header-analyzer" class="nav-link {% if request.path == '/header-analyzer' %}active{% endif %}" onclick="toggleMobileMenu()" style="padding-left: 36px;">Header Analyzer</a>
@@ -222,19 +652,26 @@ body.light-theme .nav-live-demo-pill .t-live-dot {
             {% endif %}
             <a href="/logout" class="nav-link" onclick="toggleMobileMenu()" style="border-top: 1px solid var(--border-subtle); margin-top: 8px;">Logout</a>
         {% else %}
-            <a href="{% if request.path == '/' %}#attack-chain{% else %}/#attack-chain{% endif %}" class="nav-link" onclick="toggleMobileMenu()">How It Works</a>
-            <a href="/about" class="nav-link {% if request.path == '/about' %}active{% endif %}" onclick="toggleMobileMenu()">About</a>
-            <a href="/#pricing" class="nav-link" onclick="toggleMobileMenu()">Pricing</a>
-            <a href="/demo-login" class="nav-live-demo-pill" onclick="toggleMobileMenu()" style="margin: 8px 24px; display: inline-flex; align-self: flex-start; margin-left: 24px !important;">
-                <span class="t-live-dot"></span>
-                Live Demo
-            </a>
+            <div style="padding: 12px 24px; font-weight: 600; color: var(--text-primary); font-size: var(--text-sm);">Solutions</div>
+            <a href="{% if request.path == '/' %}#attack-chain{% else %}/#attack-chain{% endif %}" class="nav-link" onclick="toggleMobileMenu()" style="padding-left: 36px;">AI Phishing Drills</a>
+            <a href="/threat-analyzer" class="nav-link" onclick="toggleMobileMenu()" style="padding-left: 36px;">Threat Intelligence</a>
+            <a href="/reports-demo" class="nav-link" onclick="toggleMobileMenu()" style="padding-left: 36px;">Risk Analytics</a>
+            <a href="/password-breach" class="nav-link" onclick="toggleMobileMenu()" style="padding-left: 36px;">Credential Guard</a>
             <div style="padding: 12px 24px; font-weight: 600; color: var(--text-primary); font-size: var(--text-sm); border-top: 1px solid var(--border-subtle); margin-top: 8px;">Tools</div>
             <a href="/threat-analyzer" class="nav-link {% if request.path == '/threat-analyzer' %}active{% endif %}" onclick="toggleMobileMenu()" style="padding-left: 36px;">Threat Analyzer</a>
             <a href="/header-analyzer" class="nav-link {% if request.path == '/header-analyzer' %}active{% endif %}" onclick="toggleMobileMenu()" style="padding-left: 36px;">Header Analyzer</a>
             <a href="/url-decoder" class="nav-link {% if request.path == '/url-decoder' %}active{% endif %}" onclick="toggleMobileMenu()" style="padding-left: 36px;">URL Decoder</a>
             <a href="/password-breach" class="nav-link {% if request.path == '/password-breach' %}active{% endif %}" onclick="toggleMobileMenu()" style="padding-left: 36px;">Password Breach Check</a>
             <a href="/ai-risk-advisor" class="nav-link {% if request.path == '/ai-risk-advisor' %}active{% endif %}" onclick="toggleMobileMenu()" style="padding-left: 36px; color: #fbbf24 !important;">AI Risk Advisor</a>
+            <div style="border-top: 1px solid var(--border-subtle); margin-top: 8px; padding-top: 8px;">
+                <a href="{% if request.path == '/' %}#attack-chain{% else %}/#attack-chain{% endif %}" class="nav-link" onclick="toggleMobileMenu()">How It Works</a>
+                <a href="/#pricing" class="nav-link" onclick="toggleMobileMenu()">Pricing</a>
+                <a href="/about" class="nav-link {% if request.path == '/about' %}active{% endif %}" onclick="toggleMobileMenu()">About</a>
+            </div>
+            <a href="/demo-login" class="nav-live-demo-pill" onclick="toggleMobileMenu()" style="margin: 12px 24px; display: inline-flex; align-self: flex-start;">
+                <i class="ti ti-sparkles live-icon"></i>
+                <span>Live Demo</span>
+            </a>
             {% if request.path != '/login' %}
                 <a href="/login" class="nav-link" onclick="toggleMobileMenu()" style="border-top: 1px solid var(--border-subtle); margin-top: 8px;">Sign In</a>
             {% endif %}
@@ -288,4 +725,26 @@ function toggleMobileMenu() {
         }
     }
 }
+
+// Sitewide Unified Navbar Scroll Handler
+(function() {
+    function initNavbarScroll() {
+        const navbar = document.getElementById('navbar');
+        if (!navbar) return;
+        const updateScroll = () => {
+            if (window.scrollY > 40) {
+                navbar.classList.add('scrolled');
+            } else {
+                navbar.classList.remove('scrolled');
+            }
+        };
+        window.addEventListener('scroll', updateScroll, { passive: true });
+        updateScroll();
+    }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initNavbarScroll);
+    } else {
+        initNavbarScroll();
+    }
+})();
 </script>

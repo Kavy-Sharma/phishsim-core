@@ -3733,55 +3733,125 @@ main.auth-page .auth-footer-text a:hover {
 }
 
 /* Theme Switcher Button & Pulse Anim in Navbar */
-.theme-toggle-btn {
-    width: 40px !important;
-    height: 40px !important;
-    min-width: 40px !important;
-    min-height: 40px !important;
+.theme-toggle-btn, .theme-toggle-pill, button.theme-toggle-pill {
+    width: 54px !important;
+    height: 28px !important;
+    min-width: 54px !important;
+    min-height: 28px !important;
+    max-width: 54px !important;
+    max-height: 28px !important;
     flex-shrink: 0 !important;
     display: inline-flex !important;
     align-items: center !important;
-    justify-content: center !important;
-    background: var(--bg-elevated) !important;
-    border: 1px solid var(--border-default) !important;
-    border-radius: var(--radius-md) !important;
-    color: var(--text-secondary) !important;
-    cursor: pointer !important;
-    padding: 0 !important;
     position: relative !important;
+    padding: 0 !important;
+    border-radius: 9999px !important;
+    cursor: pointer !important;
+    outline: none !important;
+    background: linear-gradient(#090d16, #090d16) padding-box, linear-gradient(135deg, #00f2fe 0%, #4facfe 100%) border-box !important;
+    border: 2px solid transparent !important;
+    box-shadow: 0 0 12px rgba(0, 242, 254, 0.25), inset 0 1px 3px rgba(0, 0, 0, 0.8) !important;
+    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s ease, border-color 0.4s ease !important;
     overflow: hidden !important;
-    transition: all 0.2s ease !important;
 }
 
-.theme-toggle-btn:hover {
-    color: var(--text-primary) !important;
-    border-color: var(--primary) !important;
-    background: var(--bg-hover) !important;
-    box-shadow: 0 0 8px var(--primary-glow) !important;
+/* Light Mode Background Crossfade Overlay */
+.theme-toggle-pill::before, button.theme-toggle-pill::before {
+    content: '' !important;
+    position: absolute !important;
+    inset: -2px !important;
+    border-radius: 9999px !important;
+    background: linear-gradient(#fff5f2, #fff5f2) padding-box, linear-gradient(135deg, #ff416c 0%, #ff4b2b 50%, #8a2387 100%) border-box !important;
+    border: 2px solid transparent !important;
+    opacity: 0 !important;
+    transition: opacity 0.45s ease !important;
+    pointer-events: none !important;
 }
 
-.theme-toggle-btn svg {
-    width: 18px !important;
-    height: 18px !important;
-    transition: transform 0.3s ease, opacity 0.3s ease !important;
+.theme-toggle-btn:hover, .theme-toggle-pill:hover {
+    box-shadow: 0 0 16px rgba(0, 242, 254, 0.45), inset 0 1px 3px rgba(0, 0, 0, 0.8) !important;
+    transform: translateY(-1px) scale(1.03) !important;
 }
 
-/* Default state: Dark Theme (Show Sun icon) */
-.theme-toggle-btn .sun-icon {
+.theme-toggle-btn:active, .theme-toggle-pill:active {
+    transform: translateY(0) scale(0.95) !important;
+}
+
+/* Sliding Orb Thumb */
+.theme-toggle-thumb {
+    position: absolute !important;
+    top: 1px !important;
+    left: 1px !important;
+    width: 22px !important;
+    height: 22px !important;
+    border-radius: 50% !important;
+    background: radial-gradient(circle at 30% 30%, #38ef7d 0%, #00f2fe 40%, #0066ff 100%) !important;
+    box-shadow: 0 0 10px rgba(0, 242, 254, 0.7), inset 0 1px 2px rgba(255, 255, 255, 0.6) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    transform: translateX(26px) !important;
+    transition: transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.45s ease, box-shadow 0.45s ease !important;
+    z-index: 2 !important;
+}
+
+.theme-toggle-thumb svg {
+    position: absolute !important;
+    width: 13px !important;
+    height: 13px !important;
+    color: #ffffff !important;
+    transition: transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.35s ease !important;
+}
+
+/* Dark Mode Icon states (Thumb on right, Moon visible) */
+.theme-toggle-thumb .moon-icon {
     opacity: 1 !important;
     transform: rotate(0deg) scale(1) !important;
 }
-.theme-toggle-btn .moon-icon {
+.theme-toggle-thumb .sun-icon {
     opacity: 0 !important;
-    transform: rotate(90deg) scale(0) !important;
+    transform: rotate(-180deg) scale(0.2) !important;
 }
 
-/* Light Theme overrides (Show Moon icon) */
-body.light-theme .theme-toggle-btn .sun-icon {
-    opacity: 0 !important;
-    transform: rotate(-90deg) scale(0) !important;
+/* Light Theme Overrides */
+:root[data-theme="light"] .theme-toggle-pill::before,
+:root[data-theme="light"] button.theme-toggle-pill::before,
+body.light-theme .theme-toggle-pill::before,
+body.light-theme button.theme-toggle-pill::before {
+    opacity: 1 !important;
 }
-body.light-theme .theme-toggle-btn .moon-icon {
+
+:root[data-theme="light"] .theme-toggle-btn,
+:root[data-theme="light"] .theme-toggle-pill,
+:root[data-theme="light"] button.theme-toggle-pill,
+body.light-theme .theme-toggle-btn,
+body.light-theme .theme-toggle-pill,
+body.light-theme button.theme-toggle-pill {
+    box-shadow: 0 0 12px rgba(255, 65, 108, 0.25), inset 0 1px 2px rgba(255, 255, 255, 0.9) !important;
+}
+
+:root[data-theme="light"] .theme-toggle-btn:hover,
+:root[data-theme="light"] .theme-toggle-pill:hover,
+body.light-theme .theme-toggle-btn:hover,
+body.light-theme .theme-toggle-pill:hover {
+    box-shadow: 0 0 16px rgba(255, 65, 108, 0.45), inset 0 1px 2px rgba(255, 255, 255, 0.9) !important;
+}
+
+:root[data-theme="light"] .theme-toggle-thumb,
+body.light-theme .theme-toggle-thumb {
+    transform: translateX(0px) !important;
+    background: radial-gradient(circle at 30% 30%, #ffea85 0%, #ff7e5f 50%, #ff416c 100%) !important;
+    box-shadow: 0 0 10px rgba(255, 126, 95, 0.8), inset 0 1px 2px rgba(255, 255, 255, 0.8) !important;
+}
+
+:root[data-theme="light"] .theme-toggle-thumb .moon-icon,
+body.light-theme .theme-toggle-thumb .moon-icon {
+    opacity: 0 !important;
+    transform: rotate(180deg) scale(0.2) !important;
+}
+
+:root[data-theme="light"] .theme-toggle-thumb .sun-icon,
+body.light-theme .theme-toggle-thumb .sun-icon {
     opacity: 1 !important;
     transform: rotate(0deg) scale(1) !important;
 }
@@ -4317,17 +4387,43 @@ body {
     padding-top: 0 !important;
 }
 
+/* ── Full-Width Premium Cyber Navbar (Handcrafted, Non-Oval) ── */
 .navbar,
 .navbar.nav-scrolled {
-    height: 60px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 64px !important;
     position: sticky !important;
     top: 0 !important;
-    z-index: 100 !important;
-    background: rgba(6, 11, 24, 0.85) !important;
-    backdrop-filter: blur(16px) !important;
-    -webkit-backdrop-filter: blur(16px) !important;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
-    box-shadow: none !important;
+    left: 0 !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+    z-index: 1000 !important;
+    background: rgba(8, 14, 28, 0.88) !important;
+    backdrop-filter: blur(24px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4) !important;
+    transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease !important;
+}
+
+body.light-theme .navbar,
+body.light-theme .navbar.nav-scrolled {
+    background: rgba(255, 255, 255, 0.94) !important;
+    border-bottom: 1px solid rgba(15, 23, 42, 0.08) !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04) !important;
+}
+
+.nav-container {
+    max-width: 1380px !important;
+    margin: 0 auto !important;
+    width: 100% !important;
+    height: 100% !important;
+    padding: 0 32px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    box-sizing: border-box !important;
 }
 
 .brand-logo {
@@ -4365,46 +4461,270 @@ body {
     line-height: 1.4 !important;
 }
 
+/* Nav Item Pill States & Handcrafted Hover Effects */
+.nav-links {
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+}
+
 .nav-link,
 .nav-dropdown-trigger {
-    color: rgba(255, 255, 255, 0.6) !important;
+    position: relative !important;
+    color: rgba(255, 255, 255, 0.72) !important;
     font-family: 'Space Grotesk', sans-serif !important;
     font-size: 14px !important;
     font-weight: 500 !important;
     text-decoration: none !important;
-    transition: color 150ms ease !important;
+    padding: 7px 14px !important;
+    border-radius: 8px !important;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    cursor: pointer !important;
+    border: none !important;
+    background: transparent !important;
 }
 
 .nav-link:hover,
 .nav-dropdown-trigger:hover {
-    color: #F0F4FF !important;
-}
-
-.theme-toggle-btn {
-    width: 32px !important;
-    height: 32px !important;
-    min-width: 32px !important;
-    padding: 0 !important;
-    border: 1px solid rgba(255, 255, 255, 0.1) !important;
-    border-radius: 50% !important;
+    color: #ffffff !important;
     background: rgba(255, 255, 255, 0.06) !important;
-    box-shadow: none !important;
 }
 
-.theme-toggle-btn:hover {
-    border-color: rgba(255, 255, 255, 0.18) !important;
-    background: rgba(255, 255, 255, 0.1) !important;
-    box-shadow: none !important;
+.nav-link.active,
+.nav-dropdown-trigger.active {
+    color: #ffffff !important;
+    font-weight: 600 !important;
+    background: rgba(56, 189, 248, 0.12) !important;
+    border: 1px solid rgba(56, 189, 248, 0.2) !important;
 }
 
-.theme-toggle-btn svg {
-    width: 15px !important;
-    height: 15px !important;
+body.light-theme .nav-link,
+body.light-theme .nav-dropdown-trigger {
+    color: #475569 !important;
+}
+
+body.light-theme .nav-link:hover,
+body.light-theme .nav-dropdown-trigger:hover {
+    color: #0f172a !important;
+    background: rgba(99, 102, 241, 0.06) !important;
+}
+
+body.light-theme .nav-link.active,
+body.light-theme .nav-dropdown-trigger.active {
+    color: #4f46e5 !important;
+    background: rgba(99, 102, 241, 0.1) !important;
+    border: 1px solid rgba(99, 102, 241, 0.2) !important;
+}
+
+/* ── Web-Themed Rich Dropdown Menu Styling ── */
+.nav-dropdown {
+    position: relative !important;
+    padding-bottom: 6px !important;
+    margin-bottom: -6px !important;
+}
+
+.nav-dropdown::after {
+    content: '' !important;
+    position: absolute !important;
+    top: 100% !important;
+    left: 0 !important;
+    right: 0 !important;
+    height: 14px !important;
+    background: transparent !important;
+    pointer-events: auto !important;
+}
+
+.nav-caret {
+    font-size: 0.8rem !important;
+    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.nav-dropdown:hover .nav-caret {
+    transform: rotate(180deg) !important;
+}
+
+.nav-dropdown-menu {
+    position: absolute !important;
+    top: calc(100% + 4px) !important;
+    left: 0 !important;
+    min-width: 290px !important;
+    background: rgba(10, 16, 32, 0.96) !important;
+    backdrop-filter: blur(24px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
+    border: 1px solid rgba(56, 189, 248, 0.2) !important;
+    border-radius: 14px !important;
+    padding: 10px !important;
+    box-shadow: 0 20px 48px rgba(0, 0, 0, 0.75), 0 0 24px rgba(56, 189, 248, 0.08) !important;
+    display: none !important;
+    flex-direction: column !important;
+    gap: 4px !important;
+    z-index: 1050 !important;
+    overflow: hidden !important;
+    pointer-events: auto !important;
+}
+
+.nav-dropdown-menu::before {
+    content: '' !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    height: 2px !important;
+    background: linear-gradient(90deg, #00f2fe 0%, #6366f1 50%, #34d399 100%) !important;
+}
+
+.nav-dropdown:hover .nav-dropdown-menu,
+.nav-dropdown-menu.show {
+    display: flex !important;
+    animation: navDropFadeIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+}
+
+@keyframes navDropFadeIn {
+    from { opacity: 0; transform: translateY(8px) scale(0.98); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Rich Dropdown Item Styling */
+.nav-dropdown-item {
+    display: flex !important;
+    align-items: flex-start !important;
+    gap: 12px !important;
+    padding: 10px 12px !important;
+    border-radius: 10px !important;
+    text-decoration: none !important;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    background: transparent !important;
+}
+
+.nav-dropdown-item:hover {
+    background: rgba(255, 255, 255, 0.06) !important;
+    transform: translateX(4px) !important;
+}
+
+.nav-item-icon {
+    width: 34px !important;
+    height: 34px !important;
+    border-radius: 9px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 1.05rem !important;
+    flex-shrink: 0 !important;
+    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    margin-top: 1px !important;
+}
+
+.nav-dropdown-item:hover .nav-item-icon {
+    transform: scale(1.1) !important;
+}
+
+.icon-cyan {
+    background: rgba(6, 182, 212, 0.14) !important;
+    border: 1px solid rgba(6, 182, 212, 0.3) !important;
+    color: #06b6d4 !important;
+}
+
+.icon-purple {
+    background: rgba(168, 85, 247, 0.14) !important;
+    border: 1px solid rgba(168, 85, 247, 0.3) !important;
+    color: #a855f7 !important;
+}
+
+.icon-emerald {
+    background: rgba(52, 211, 153, 0.14) !important;
+    border: 1px solid rgba(52, 211, 153, 0.3) !important;
+    color: #34d399 !important;
+}
+
+.icon-amber {
+    background: rgba(245, 158, 11, 0.14) !important;
+    border: 1px solid rgba(245, 158, 11, 0.3) !important;
+    color: #fbbf24 !important;
+}
+
+.icon-gold {
+    background: linear-gradient(135deg, rgba(251, 191, 36, 0.25), rgba(217, 119, 6, 0.15)) !important;
+    border: 1px solid rgba(251, 191, 36, 0.45) !important;
+    color: #fbbf24 !important;
+    box-shadow: 0 0 10px rgba(251, 191, 36, 0.2) !important;
+}
+
+.nav-item-content {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 2px !important;
+    flex: 1 !important;
+}
+
+.nav-item-title-row {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 6px !important;
+}
+
+.nav-item-title {
+    font-family: 'Space Grotesk', sans-serif !important;
+    font-size: 13.5px !important;
+    font-weight: 600 !important;
+    color: #f8fafc !important;
+    line-height: 1.25 !important;
+    transition: color 0.18s ease !important;
+}
+
+.nav-dropdown-item:hover .nav-item-title {
+    color: #00f2fe !important;
+}
+
+.nav-item-desc {
+    font-family: 'Inter', sans-serif !important;
+    font-size: 11px !important;
+    color: #94a3b8 !important;
+    line-height: 1.35 !important;
+    font-weight: 400 !important;
+}
+
+.pro-badge {
+    font-family: 'JetBrains Mono', monospace !important;
+    font-size: 9px !important;
+    font-weight: 900 !important;
+    background: linear-gradient(135deg, #fbbf24, #d97706) !important;
+    color: #000000 !important;
+    padding: 1px 5px !important;
+    border-radius: 4px !important;
+    letter-spacing: 0.5px !important;
+    line-height: 1.1 !important;
+}
+
+/* Light Theme overrides for Dropdown */
+body.light-theme .nav-dropdown-menu {
+    background: rgba(255, 255, 255, 0.98) !important;
+    border: 1px solid rgba(99, 102, 241, 0.18) !important;
+    box-shadow: 0 20px 40px rgba(15, 23, 42, 0.12) !important;
+}
+
+body.light-theme .nav-item-title {
+    color: #0f172a !important;
+}
+
+body.light-theme .nav-item-desc {
+    color: #64748b !important;
+}
+
+body.light-theme .nav-dropdown-item:hover {
+    background: rgba(99, 102, 241, 0.06) !important;
+}
+
+body.light-theme .nav-dropdown-item:hover .nav-item-title {
+    color: #4f46e5 !important;
 }
 
 .nav-right > .nav-link {
     height: auto !important;
-    padding: 0 !important;
+    padding: 6px 12px !important;
     border: 0 !important;
     background: transparent !important;
     color: rgba(255, 255, 255, 0.7) !important;
@@ -4462,12 +4782,6 @@ body.light-theme .nav-dropdown-trigger {
 body.light-theme .nav-link:hover,
 body.light-theme .nav-dropdown-trigger:hover {
     color: #0F172A !important;
-}
-
-:root[data-theme="light"] .theme-toggle-btn,
-body.light-theme .theme-toggle-btn {
-    border-color: rgba(15, 23, 42, 0.1) !important;
-    background: rgba(15, 23, 42, 0.05) !important;
 }
 
 :root[data-theme="light"] .nav-right > .nav-link,
@@ -5412,4 +5726,54 @@ body.light-theme .lure-cta-orb {
 body.light-theme .lure-cta-chevrons {
   color: #ffffff !important;
 }
+
+/* ── Compact Variant for Navbar Placement (.lure-cta-compact) ── */
+.lure-cta-compact {
+  padding: 0.15rem 0.15rem 0.15rem 0.85rem !important;
+  gap: 0.5rem !important;
+}
+
+.lure-cta-compact .lure-cta-label {
+  font-size: 0.68rem !important;
+  letter-spacing: 0.12em !important;
+}
+
+.lure-cta-compact .lure-cta-orb {
+  width: 26px !important;
+  height: 26px !important;
+  box-shadow:
+    inset 0 1px 2px rgba(255, 255, 255, 0.4),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.6),
+    0 0 8px rgba(99, 102, 241, 0.4) !important;
+}
+
+.lure-cta-compact .lure-cta-ring {
+  display: none !important;
+}
+
+/* ── Radial Circular View Transition for Theme Toggle ── */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none !important;
+  mix-blend-mode: normal !important;
+}
+::view-transition-old(root) {
+  z-index: 1 !important;
+}
+::view-transition-new(root) {
+  z-index: 999999 !important;
+}
+
+.lure-cta-compact:hover .lure-cta-orb {
+  box-shadow:
+    inset 0 1px 3px rgba(255, 255, 255, 0.6),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.6),
+    0 0 14px rgba(99, 102, 241, 0.7) !important;
+  transform: scale(1.04) !important;
+}
+
+body.light-theme .lure-cta-compact .lure-cta-orb {
+  box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.6), 0 0 8px rgba(99, 102, 241, 0.35) !important;
+}
+
 
