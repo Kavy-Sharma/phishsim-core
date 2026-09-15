@@ -23,7 +23,7 @@
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
     
     <!-- Tabler Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
@@ -1261,7 +1261,72 @@ window.init3DTiltCards = init3DTiltCards;
         });
     </script>
     
-    <!-- Liquid Heading Effect Script (RAF-Throttled) -->
+    <!-- Sitewide SVG Liquid/Watery text hover effect filter -->
+    <svg style="position: absolute; width: 0; height: 0; pointer-events: none; overflow: hidden; display: block;" width="0" height="0" version="1.1" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <defs>
+        <filter id="liquid-filter" x="-20%" y="-20%" width="140%" height="140%">
+          <feTurbulence type="fractalNoise" baseFrequency="0.015 0.04" numOctaves="2" result="noise">
+            <animate attributeName="baseFrequency" dur="10s" values="0.015 0.04; 0.03 0.06; 0.015 0.04" repeatCount="indefinite" />
+          </feTurbulence>
+          <feDisplacementMap in="SourceGraphic" in2="noise" scale="4.5" xChannelSelector="R" yChannelSelector="G" />
+        </filter>
+      </defs>
+    </svg>
+
+    <style>
+    /* Sitewide Liquid Water Heading Hover Effect — .hero-h1 is deliberately excluded */
+    h1:not(.hero-h1), h2, h3, h4, h5, h6,
+    .liquid-text,
+    .section-title,
+    .card-title,
+    .page-title,
+    .heading-title,
+    .banner-title,
+    .modal-title {
+      position: relative;
+    }
+
+    h1.liquid-active,
+    h2.liquid-active,
+    h3.liquid-active,
+    h4.liquid-active,
+    h5.liquid-active,
+    h6.liquid-active,
+    .liquid-text.liquid-active,
+    .section-title.liquid-active,
+    .card-title.liquid-active,
+    .page-title.liquid-active,
+    .heading-title.liquid-active,
+    .banner-title.liquid-active,
+    .modal-title.liquid-active {
+      background-size: 300% 100% !important;
+      -webkit-background-clip: text !important;
+      -webkit-text-fill-color: transparent !important;
+      background-clip: text !important;
+      color: transparent !important;
+      text-shadow: none !important;
+      filter: url(#liquid-filter) !important;
+      will-change: background-position, filter;
+    }
+
+    body.light-theme h1.liquid-active,
+    body.light-theme h2.liquid-active,
+    body.light-theme h3.liquid-active,
+    body.light-theme h4.liquid-active,
+    body.light-theme h5.liquid-active,
+    body.light-theme h6.liquid-active,
+    body.light-theme .liquid-text.liquid-active,
+    body.light-theme .section-title.liquid-active,
+    body.light-theme .card-title.liquid-active,
+    body.light-theme .page-title.liquid-active,
+    body.light-theme .heading-title.liquid-active,
+    body.light-theme .banner-title.liquid-active,
+    body.light-theme .modal-title.liquid-active {
+      filter: url(#liquid-filter) !important;
+    }
+    </style>
+
+    <!-- Sitewide Liquid Heading Effect Script (RAF-Throttled) -->
     <script>
     (function() {
         const DARK_COLORS  = ['#06b6d4', '#00d2ff', '#3b82f6', '#00f0ff', '#8b5cf6', '#38bdf8', '#06b6d4'];
@@ -1269,15 +1334,29 @@ window.init3DTiltCards = init3DTiltCards;
 
         function isLiquidTarget(el) {
             if (!el || !el.tagName) return false;
+            // Deliberately exclude the main hero heading
             if (el.classList.contains('hero-h1')) return false;
-            const tag = el.tagName;
-            if (tag === 'H1' || tag === 'H2' || tag === 'H3') return true;
-            if (el.classList.contains('liquid-text')) return true;
+            const tag = el.tagName.toUpperCase();
+            if (['H1', 'H2', 'H3', 'H4', 'H5', 'H6'].includes(tag)) return true;
+            if (el.classList.contains('liquid-text') || 
+                el.classList.contains('section-title') || 
+                el.classList.contains('card-title') || 
+                el.classList.contains('page-title') ||
+                el.classList.contains('heading-title') ||
+                el.classList.contains('banner-title') ||
+                el.classList.contains('modal-title')) return true;
             return false;
         }
 
         function isExcluded(el) {
-            return el.closest('.nav-links, .nav-link, .brand-logo, button, .btn, .terminal-wrapper, code, pre');
+            if (!el || !el.closest) return true;
+            return el.closest(`
+                .nav-links, .nav-link, .brand-logo,
+                button, .btn, .action-btn, .pro-btn, .secondary-btn,
+                .terminal-wrapper, .terminal-body, .terminal,
+                code, pre, .monospace, .font-mono,
+                input, textarea, select, [role="button"]
+            `);
         }
 
         function applyLiquid(el, relX, relW) {
@@ -1286,17 +1365,17 @@ window.init3DTiltCards = init3DTiltCards;
 
             const frac = Math.max(0, Math.min(1, relX / relW));
             const pct = Math.round(frac * 100);
-            const activeRadius = Math.min(120, Math.max(30, relW * 0.35));
+            const activeRadius = Math.min(140, Math.max(40, relW * 0.4));
             const r   = Math.round((activeRadius / relW) * 100);
 
             const colorStop1 = colors[0];
             const colorStop2 = colors[Math.floor(colors.length / 2)];
             const colorStop3 = colors[colors.length - 1];
 
-            const bg = `radial-gradient(ellipse ${r * 2}% 200% at ${pct}% 50%,
+            const bg = `radial-gradient(ellipse ${r * 2}% 220% at ${pct}% 50%,
                 ${colorStop2} 0%,
-                ${colorStop1} 30%,
-                ${colorStop3} 60%,
+                ${colorStop1} 35%,
+                ${colorStop3} 70%,
                 transparent 100%)`;
 
             el.classList.add('liquid-active');
@@ -1350,7 +1429,109 @@ window.init3DTiltCards = init3DTiltCards;
         }, { passive: true });
     })();
     </script>
-    
+
+    <!-- Sitewide Water-Pond Ripple — canvas-based, multi-ring, physics-inspired -->
+    <script>
+    (function () {
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+        if (document.getElementById('water-ripple-canvas')) return; // guard for double-include
+
+        /* ── CANVAS SETUP ─────────────────────────────────────────────────── */
+        var cvs = document.createElement('canvas');
+        cvs.id = 'water-ripple-canvas';
+        cvs.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;'
+            + 'pointer-events:none;z-index:99998;';
+        document.body.appendChild(cvs);
+        var ctx = cvs.getContext('2d');
+
+        function resize() { cvs.width = window.innerWidth; cvs.height = window.innerHeight; }
+        resize();
+        window.addEventListener('resize', resize, { passive: true });
+
+        /* ── RING CONFIGS ─────────────────────────────────────────────────── *
+         * Each entry: [startDelay_ms, maxRadius_px, speed_px_ms, alpha0, lw0]
+         * Row 0 = inner "impact" ring — fast, bright, small
+         * Rows 1-3 = propagating wave rings — slower, dimmer, wider spread    */
+        var RINGS = [
+            [  0,  55, 0.22, 0.60, 2.4],
+            [ 65, 130, 0.16, 0.38, 1.7],
+            [150, 230, 0.11, 0.22, 1.1],
+            [260, 340, 0.07, 0.11, 0.7],
+        ];
+
+        var CYAN_RGB = '6,182,212'; // --app-cyan #06b6d4 decomposed
+
+        /* ── DROP STATE ───────────────────────────────────────────────────── */
+        var drops = [];
+        var rafId = null;
+
+        function spawnDrop(x, y) {
+            var t0 = performance.now();
+            drops.push({
+                x: x, y: y,
+                rings: RINGS.map(function (cfg) {
+                    return {
+                        startAt: t0 + cfg[0],
+                        maxR:    cfg[1],
+                        speed:   cfg[2],
+                        alpha0:  cfg[3],
+                        lw0:     cfg[4],
+                        r: 0, done: false
+                    };
+                })
+            });
+            if (!rafId) rafId = requestAnimationFrame(tick);
+        }
+
+        function tick(now) {
+            ctx.clearRect(0, 0, cvs.width, cvs.height);
+            var alive = false;
+
+            for (var d = drops.length - 1; d >= 0; d--) {
+                var drop = drops[d];
+                var dropAlive = false;
+
+                for (var i = 0; i < drop.rings.length; i++) {
+                    var ring = drop.rings[i];
+                    if (ring.done) continue;
+                    if (now < ring.startAt) { dropAlive = alive = true; continue; }
+
+                    var elapsed = now - ring.startAt;
+                    ring.r = elapsed * ring.speed;
+
+                    if (ring.r >= ring.maxR) { ring.done = true; continue; }
+
+                    var progress = ring.r / ring.maxR;
+                    /* opacity decays non-linearly — stays visible longer early on */
+                    var opacity  = ring.alpha0 * Math.pow(1 - progress, 1.6);
+                    /* line thins slightly as the wave travels outward */
+                    var lw = ring.lw0 * (1 - progress * 0.45);
+
+                    ctx.beginPath();
+                    ctx.arc(drop.x, drop.y, ring.r, 0, Math.PI * 2);
+                    ctx.strokeStyle = 'rgba(' + CYAN_RGB + ',' + opacity.toFixed(3) + ')';
+                    ctx.lineWidth = lw;
+                    ctx.stroke();
+
+                    dropAlive = alive = true;
+                }
+
+                if (!dropAlive) drops.splice(d, 1);
+            }
+
+            rafId = alive ? requestAnimationFrame(tick) : null;
+        }
+
+        /* ── CLICK LISTENER ───────────────────────────────────────────────── */
+        var SKIP = 'input,textarea,select,[contenteditable="true"]';
+        document.addEventListener('click', function (e) {
+            if (e.target.closest(SKIP))      return;
+            if (e.target.closest('#pb-panel')) return;
+            spawnDrop(e.clientX, e.clientY);
+        }, { passive: true });
+    })();
+    </script>
+
     <script>
     // Global swipe-to-dismiss gesture for notifications/alerts/HUDs/strips
     window.attachDismissGesture = function(element) {

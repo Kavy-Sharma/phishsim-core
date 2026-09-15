@@ -3677,11 +3677,15 @@
       box-shadow: 0 0 6px color-mix(in srgb, var(--primary) 10%, transparent);
     }
 
-    /* --- COLORFUL ANIMATED GRADIENT HEADINGS --- */
-    h1:not(.hero-h1),
-    h2:not(.hero-h1),
-    h3:not(.hero-h1),
-    .liquid-text {
+    /* --- COLORFUL ANIMATED GRADIENT HEADINGS & LIQUID WATER EFFECT --- */
+    h1:not(.hero-h1), h2, h3, h4, h5, h6,
+    .liquid-text,
+    .section-title,
+    .card-title,
+    .page-title,
+    .heading-title,
+    .banner-title,
+    .modal-title {
       position: relative;
     }
 
@@ -3689,21 +3693,40 @@
     h1.liquid-active,
     h2.liquid-active,
     h3.liquid-active,
-    .liquid-text.liquid-active {
-      /* background-image is set dynamically via JS inline style */
+    h4.liquid-active,
+    h5.liquid-active,
+    h6.liquid-active,
+    .liquid-text.liquid-active,
+    .section-title.liquid-active,
+    .card-title.liquid-active,
+    .page-title.liquid-active,
+    .heading-title.liquid-active,
+    .banner-title.liquid-active,
+    .modal-title.liquid-active {
       background-size: 300% 100% !important;
       -webkit-background-clip: text !important;
       -webkit-text-fill-color: transparent !important;
       background-clip: text !important;
       color: transparent !important;
       text-shadow: none !important;
+      filter: url(#liquid-filter) !important;
+      will-change: background-position, filter;
     }
 
     body.light-theme h1.liquid-active,
     body.light-theme h2.liquid-active,
     body.light-theme h3.liquid-active,
-    body.light-theme .liquid-text.liquid-active {
-      filter: none !important;
+    body.light-theme h4.liquid-active,
+    body.light-theme h5.liquid-active,
+    body.light-theme h6.liquid-active,
+    body.light-theme .liquid-text.liquid-active,
+    body.light-theme .section-title.liquid-active,
+    body.light-theme .card-title.liquid-active,
+    body.light-theme .page-title.liquid-active,
+    body.light-theme .heading-title.liquid-active,
+    body.light-theme .banner-title.liquid-active,
+    body.light-theme .modal-title.liquid-active {
+      filter: url(#liquid-filter) !important;
     }
 
     /* Exclude navigation links, buttons, text smaller than 1.2rem, and monospace terminal elements from liquid chrome */
@@ -4181,19 +4204,7 @@
     }
   </script>
 
-  <!-- SVG Liquid/Watery text hover effect filter -->
-  <svg style="position: absolute; width: 0; height: 0;" width="0" height="0" version="1.1"
-    xmlns="http://www.w3.org/2000/svg">
-    <defs>
-      <filter id="liquid-filter">
-        <feTurbulence type="fractalNoise" baseFrequency="0.015 0.04" numOctaves="3" result="noise">
-          <animate attributeName="baseFrequency" dur="10s" values="0.015 0.04; 0.035 0.07; 0.015 0.04"
-            repeatCount="indefinite" />
-        </feTurbulence>
-        <feDisplacementMap in="SourceGraphic" in2="noise" scale="6" xChannelSelector="R" yChannelSelector="G" />
-      </filter>
-    </defs>
-  </svg>
+
 
   <!-- ═══════════════════════════════════════════════════════════
      SKELETON LOADER & BRAND MOMENT OVERLAY
@@ -9912,50 +9923,54 @@ ${body}
     });
 
     // ── CURSOR-LOCAL LIQUID HEADING EFFECT ──────────────────────────────────────
-    // Instead of animating the whole heading, a liquid spotlight flows only where
-    // the mouse cursor is hovering inside the heading.
     (function () {
-      const DARK_COLORS = ['#06b6d4', '#00d2ff', '#3b82f6', '#00f0ff', '#8b5cf6', 'var(--primary)', '#06b6d4'];
+      const DARK_COLORS  = ['#06b6d4', '#00d2ff', '#3b82f6', '#00f0ff', '#8b5cf6', '#38bdf8', '#06b6d4'];
       const LIGHT_COLORS = ['#1d4ed8', '#2563eb', '#3b82f6', '#0284c7', '#4f46e5', '#2563eb', '#1d4ed8'];
-      const RADIUS = 120; // px — spread of the liquid spotlight
 
       function isLiquidTarget(el) {
-        // Only apply to h1/h2/h3 and .liquid-text
+        if (!el || !el.tagName) return false;
+        // Deliberately exclude the main hero heading
         if (el.classList.contains('hero-h1')) return false;
-        const tag = el.tagName;
-        if (tag === 'H1' || tag === 'H2' || tag === 'H3') return true;
-        if (el.classList.contains('liquid-text')) return true;
+        const tag = el.tagName.toUpperCase();
+        if (['H1', 'H2', 'H3', 'H4', 'H5', 'H6'].includes(tag)) return true;
+        if (el.classList.contains('liquid-text') || 
+            el.classList.contains('section-title') || 
+            el.classList.contains('card-title') || 
+            el.classList.contains('page-title') ||
+            el.classList.contains('heading-title') ||
+            el.classList.contains('banner-title') ||
+            el.classList.contains('modal-title')) return true;
         return false;
       }
 
       function isExcluded(el) {
-        // Exclude nav, buttons, mono elements
-        return el.closest('.nav-links, .nav-link, .brand-logo, button, .btn, .terminal-wrapper, code, pre');
+        if (!el || !el.closest) return true;
+        return el.closest(`
+            .nav-links, .nav-link, .brand-logo,
+            button, .btn, .action-btn, .pro-btn, .secondary-btn,
+            .terminal-wrapper, .terminal-body, .terminal,
+            code, pre, .monospace, .font-mono,
+            input, textarea, select, [role="button"]
+        `);
       }
 
       function applyLiquid(el, relX, relW) {
         const isLight = document.body.classList.contains('light-theme');
         const colors = isLight ? LIGHT_COLORS : DARK_COLORS;
 
-        // Cursor position as fraction (0–1) across the element width
         const frac = Math.max(0, Math.min(1, relX / relW));
-
-        // Build radial highlight: transparent outside RADIUS, liquid color in centre
-        // We overlay this on a base transparent gradient
         const pct = Math.round(frac * 100);
-        const activeRadius = Math.min(120, Math.max(30, relW * 0.35));
-        const r = Math.round((activeRadius / relW) * 100); // radius as % of element width
+        const activeRadius = Math.min(140, Math.max(40, relW * 0.4));
+        const r = Math.round((activeRadius / relW) * 100);
 
-        // Create a gradient that is centred on the cursor position
         const colorStop1 = colors[0];
         const colorStop2 = colors[Math.floor(colors.length / 2)];
         const colorStop3 = colors[colors.length - 1];
 
-        // Radial liquid mask: bright at cursor, fades out over RADIUS
-        const bg = `radial-gradient(ellipse ${r * 2}% 200% at ${pct}% 50%,
+        const bg = `radial-gradient(ellipse ${r * 2}% 220% at ${pct}% 50%,
             ${colorStop2} 0%,
-            ${colorStop1} 30%,
-            ${colorStop3} 60%,
+            ${colorStop1} 35%,
+            ${colorStop3} 70%,
             transparent 100%)`;
 
         el.classList.add('liquid-active');
@@ -9969,41 +9984,36 @@ ${body}
         el.style.removeProperty('background-size');
       }
 
+      let liquidRaf = null;
+      let lastLiquidEvent = null;
+
       document.addEventListener('mousemove', function (e) {
-        const target = e.target;
-        // Walk up a few levels to find the heading
-        let el = target;
-        for (let i = 0; i < 4; i++) {
-          if (!el || el === document.body) break;
-          if (isLiquidTarget(el) && !isExcluded(el)) {
-            const rect = el.getBoundingClientRect();
-            const relX = e.clientX - rect.left;
-            applyLiquid(el, relX, rect.width);
-            return;
-          }
-          el = el.parentElement;
+        lastLiquidEvent = e;
+        if (!liquidRaf) {
+          liquidRaf = requestAnimationFrame(() => {
+            liquidRaf = null;
+            if (!lastLiquidEvent) return;
+            let el = lastLiquidEvent.target;
+            for (let i = 0; i < 4; i++) {
+              if (!el || el === document.body) break;
+              if (isLiquidTarget(el) && !isExcluded(el)) {
+                const rect = el.getBoundingClientRect();
+                const relX = lastLiquidEvent.clientX - rect.left;
+                applyLiquid(el, relX, rect.width);
+                return;
+              }
+              el = el.parentElement;
+            }
+          });
         }
       }, { passive: true });
 
-      document.addEventListener('mouseleave', function (e) {
-        // Clean up any lingering active headings when mouse leaves a heading
-        const activeEls = document.querySelectorAll('.liquid-active');
-        activeEls.forEach(function (el) {
-          // Check if the relatedTarget is still inside this element
-          if (!el.contains(e.relatedTarget)) {
-            removeLiquid(el);
-          }
-        });
-      }, { passive: true, capture: true });
-
-      // Use event delegation for mouseleave on headings
       document.addEventListener('mouseout', function (e) {
         const target = e.target;
         let el = target;
         for (let i = 0; i < 4; i++) {
           if (!el || el === document.body) break;
           if (isLiquidTarget(el) && el.classList.contains('liquid-active')) {
-            // Only remove if we actually left the heading (not just moved to a child)
             if (!el.contains(e.relatedTarget)) {
               removeLiquid(el);
             }
@@ -10189,9 +10199,8 @@ ${body}
           animId = null;
           return;
         }
-        dotX += (mouseX - dotX) * 0.15;
-        dotY += (mouseY - dotY) * 0.15;
-        dot.style.transform = `translate3d(${dotX}px, ${dotY}px, 0) translate(-50%, -50%)`;
+        // Snap exactly to cursor — no lag, no second "ghost" dot
+        dot.style.transform = `translate3d(${mouseX}px, ${mouseY}px, 0) translate(-50%, -50%)`;
 
         if (isInside) {
           animId = requestAnimationFrame(render);
@@ -10242,6 +10251,84 @@ ${body}
 
   })();
   </script>
+
+  <!-- Water-Pond Ripple (home.html standalone — canvas-based, physics-inspired) -->
+  <script>
+  (function () {
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      if (document.getElementById('water-ripple-canvas')) return;
+
+      var cvs = document.createElement('canvas');
+      cvs.id = 'water-ripple-canvas';
+      cvs.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:99998;';
+      document.body.appendChild(cvs);
+      var ctx = cvs.getContext('2d');
+
+      function resize() { cvs.width = window.innerWidth; cvs.height = window.innerHeight; }
+      resize();
+      window.addEventListener('resize', resize, { passive: true });
+
+      /* [startDelay_ms, maxRadius_px, speed_px_ms, alpha0, lw0] */
+      var RINGS = [
+          [  0,  55, 0.22, 0.60, 2.4],
+          [ 65, 130, 0.16, 0.38, 1.7],
+          [150, 230, 0.11, 0.22, 1.1],
+          [260, 340, 0.07, 0.11, 0.7],
+      ];
+      var CYAN_RGB = '6,182,212';
+
+      var drops = [];
+      var rafId = null;
+
+      function spawnDrop(x, y) {
+          var t0 = performance.now();
+          drops.push({
+              x: x, y: y,
+              rings: RINGS.map(function (cfg) {
+                  return { startAt: t0 + cfg[0], maxR: cfg[1], speed: cfg[2],
+                           alpha0: cfg[3], lw0: cfg[4], r: 0, done: false };
+              })
+          });
+          if (!rafId) rafId = requestAnimationFrame(tick);
+      }
+
+      function tick(now) {
+          ctx.clearRect(0, 0, cvs.width, cvs.height);
+          var alive = false;
+          for (var d = drops.length - 1; d >= 0; d--) {
+              var drop = drops[d];
+              var dropAlive = false;
+              for (var i = 0; i < drop.rings.length; i++) {
+                  var ring = drop.rings[i];
+                  if (ring.done) continue;
+                  if (now < ring.startAt) { dropAlive = alive = true; continue; }
+                  var elapsed = now - ring.startAt;
+                  ring.r = elapsed * ring.speed;
+                  if (ring.r >= ring.maxR) { ring.done = true; continue; }
+                  var progress = ring.r / ring.maxR;
+                  var opacity = ring.alpha0 * Math.pow(1 - progress, 1.6);
+                  var lw = ring.lw0 * (1 - progress * 0.45);
+                  ctx.beginPath();
+                  ctx.arc(drop.x, drop.y, ring.r, 0, Math.PI * 2);
+                  ctx.strokeStyle = 'rgba(' + CYAN_RGB + ',' + opacity.toFixed(3) + ')';
+                  ctx.lineWidth = lw;
+                  ctx.stroke();
+                  dropAlive = alive = true;
+              }
+              if (!dropAlive) drops.splice(d, 1);
+          }
+          rafId = alive ? requestAnimationFrame(tick) : null;
+      }
+
+      var SKIP = 'input,textarea,select,[contenteditable="true"]';
+      document.addEventListener('click', function (e) {
+          if (e.target.closest(SKIP)) return;
+          if (e.target.closest('#pb-panel')) return;
+          spawnDrop(e.clientX, e.clientY);
+      }, { passive: true });
+  })();
+  </script>
+
 </body>
 
 </html>
