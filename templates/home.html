@@ -1,100 +1,25 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends 'base.html' %}
 
-<head>
+{% block title %}PhishSim AI - Agentic Phishing Simulator{% endblock %}
+{% block og_title %}PhishSim AI — Agentic Phishing Simulator{% endblock %}
+
+{% block extra_head %}
   <meta name="google-site-verification" content="ELvLqkebm4aw_A-8JlhjV5A9VmO1tprjJ-ABK6c-xhM" />
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
-  <link rel="alternate icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}">
-  <link rel="shortcut icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}">
-  <link rel="apple-touch-icon" href="{{ url_for('static', filename='favicon.png') }}">
-  <title>PhishSim AI - Agentic Phishing Simulator</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link
-    href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap"
-    rel="stylesheet">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.9/dist/purify.min.js"></script>
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css', v='1.0.8-loading') }}">
   <style>
-    :root {
-      /* Font scale variables */
-      --text-xs: 0.75rem;
-      --text-sm: 0.875rem;
-      --text-base: 1rem;
-      --text-lg: 1.125rem;
-      --text-xl: 1.25rem;
-      --text-2xl: 1.5rem;
-      --text-3xl: 1.875rem;
-      --text-4xl: 2.25rem;
-      --text-5xl: 3rem;
-      --text-6xl: 3.75rem;
 
-      /* Border radius variables */
-      --radius-sm: 6px;
-      --radius-md: 10px;
-      --radius-lg: 16px;
-      --radius-xl: 24px;
-      --radius-full: 9999px;
-
-      /* Font family variables */
-      --sans: 'Space Grotesk', sans-serif;
-      --mono: 'JetBrains Mono', monospace;
-
-      /* Maintain theme aliases for local styling overrides */
-      --bg: var(--bg-base);
-      --bg2: var(--bg-surface);
-      --bg3: var(--bg-elevated);
-      --surface: var(--bg-surface);
-      --surface2: var(--bg-elevated);
-      --border: var(--border-default);
-      --border2: var(--border-active);
-      --cyan: var(--primary);
-      --cyan2: var(--primary);
-      --blue: var(--info);
-      --blue2: var(--info);
-      --white: var(--text-primary);
-      --muted: var(--text-secondary);
-      --text-main: var(--text-primary);
-      --text-muted: var(--text-secondary);
-      --danger: var(--danger);
-      --success: var(--success);
-      --gauge-bg: rgba(255, 255, 255, 0.06);
-    }
-
-    :root,
-    :root[data-theme="dark"] {
-      /* === BACKGROUNDS === */
-      --bg-base: #020617;
-      --bg-surface: #0D1526;
-      --bg-elevated: #121D35;
-      --bg-input: #0A1020;
-      --bg-hover: #1A2540;
-
-      /* === BORDERS === */
-      --border-subtle: rgba(255, 255, 255, 0.06);
-      --border-default: rgba(255, 255, 255, 0.12);
-      --border-active: rgba(99, 179, 237, 0.4);
-
-
-
-
-
-
-      /* === TEXT === */
-      --text-primary: #F0F4FF;
-      --text-secondary: #94A3B8;
-      --text-muted: #4A5568;
-      --text-inverse: #080D1A;
-
-      /* === SPECIAL === */
-      --terminal-green: #4ADE80;
-      --terminal-bg: #050A14;
-      --scrollbar: #1A2540;
-      --scrollbar-thumb: #2D3F5F;
-    }
+  /* ── CONSOLIDATED DESIGN SYSTEM UTILITY CLASSES ── */
+  .section-sub-centered { font-size: 1.05rem; color: var(--text-secondary); max-width: 600px; margin: 0 auto; line-height: 1.6; }
+  .terminal-log-row { border-bottom: 1px solid var(--border-subtle); padding: 8px 0; color: var(--text-secondary); font-family: var(--font-mono); }
+  .status-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+  .status-dot-warning { background: var(--warning); }
+  .status-dot-danger { background: var(--danger); }
+  .status-dot-success { background: var(--success); }
+  .flex-center-gap { display: flex; align-items: center; gap: 8px; }
+  .glass-card-compact { background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-card); padding: 1.1rem; }
+  .divider-line { height: 1px; background: var(--border-subtle); margin-bottom: 2rem; }
+  .sandbox-input { background: var(--bg-input); border: 1px solid var(--border-default); border-radius: var(--radius-sm); padding: 10px 14px; color: var(--text-primary); font-family: var(--font-sans); }
+  .threat-alert-box { color: var(--danger); font-size: 0.95rem; text-align: left; border-left: 3px solid var(--danger); padding-left: 12px; background: var(--danger-dim); }
+  .mono-code-text { font-family: var(--font-mono); font-size: 0.82rem; line-height: 1.8; color: var(--text-secondary); }
 
     /* ── Modern Cyber CTA Button (.lure-cta) ── */
     .lure-cta, a.lure-cta {
@@ -173,37 +98,6 @@
 
     .lure-cta:active {
       transform: translateY(0) !important;
-    }
-
-    :root[data-theme="light"] {
-      /* === BACKGROUNDS === */
-      --bg-base: #F5F7FF;
-      --bg-surface: #FFFFFF;
-      --bg-elevated: #EEF2FF;
-      --bg-input: #FFFFFF;
-      --bg-hover: #E8EDFF;
-
-      /* === BORDERS === */
-      --border-subtle: rgba(0, 0, 0, 0.06);
-      --border-default: rgba(0, 0, 0, 0.12);
-      --border-active: rgba(14, 116, 200, 0.5);
-
-
-
-
-
-
-      /* === TEXT === */
-      --text-primary: #0F172A;
-      --text-secondary: #475569;
-      --text-muted: #94A3B8;
-      --text-inverse: #F0F4FF;
-
-      /* === SPECIAL === */
-      --terminal-green: #16A34A;
-      --terminal-bg: #F0FDF4;
-      --scrollbar: #E2E8F0;
-      --scrollbar-thumb: #CBD5E1;
     }
 
     /* Reset & Base Styles */
@@ -1125,10 +1019,7 @@
       background-image: linear-gradient(100deg, #0f172a 5%, #0e74c8 35%, #4f46e5 65%, #7c3aed 85%, #0f172a 100%);
     }
 
-    @keyframes hero-gradient-flow {
-      from {
-        background-position: 0% 50%;
-      }
+    /* Pruned continuous ambient animation for calm B2B aesthetics */
 
       to {
         background-position: 100% 50%;
@@ -1515,19 +1406,14 @@
       border-color: rgba(0, 240, 255, 0.85);
       box-shadow:
         0 0 0 1px rgba(255, 255, 255, 0.05) inset,
-        0 32px 100px rgba(0, 0, 0, 0.8),
-        0 0 80px rgba(0, 240, 255, 0.22);
+        0 32px 100px rgba(0, 0, 0, 0.8);
       animation: cyber-expand-pulse 1.5s ease-in-out infinite alternate;
     }
 
-    @keyframes cyber-expand-pulse {
-      0% {
-        box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.05) inset, 0 32px 100px rgba(0, 0, 0, 0.8), 0 0 80px rgba(0, 240, 255, 0.22);
-        border-color: rgba(0, 240, 255, 0.85);
-      }
+    /* Pruned continuous ambient animation for calm B2B aesthetics */
 
       100% {
-        box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.05) inset, 0 32px 100px rgba(0, 0, 0, 0.8), 0 0 100px rgba(255, 0, 127, 0.28);
+        box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.05) inset, 0 32px 100px rgba(0, 0, 0, 0.8);
         border-color: rgba(255, 0, 127, 0.8);
       }
     }
@@ -1567,8 +1453,7 @@
       transition: border-color 0.4s ease, box-shadow 0.4s ease;
     }
 
-    @keyframes termNavGradientShift {
-      0% { background-position: 0% 50%; }
+    /* Pruned continuous ambient animation for calm B2B aesthetics */
       50% { background-position: 100% 50%; }
       100% { background-position: 0% 50%; }
     }
@@ -3095,12 +2980,7 @@
     }
 
     /* Pricing Toggle Switch & Premium Pro Card hover overrides */
-    @keyframes proGlow {
-
-      0%,
-      100% {
-        box-shadow: 0 0 16px rgba(6, 182, 212, 0.03), inset 0 0 6px rgba(6, 182, 212, 0.03);
-      }
+    /* Pruned continuous ambient animation for calm B2B aesthetics */
 
       50% {
         box-shadow: 0 0 24px rgba(6, 182, 212, 0.07), inset 0 0 9px rgba(6, 182, 212, 0.06);
@@ -3762,10 +3642,7 @@
       overflow: hidden;
     }
 
-    @keyframes hexRotate {
-      0% {
-        transform: rotate(0deg);
-      }
+    /* Pruned continuous ambient animation for calm B2B aesthetics */
 
       100% {
         transform: rotate(360deg);
@@ -4183,29 +4060,9 @@
       will-change: transform, opacity;
     }
   </style>
-</head>
+{% endblock %}
 
-<body>
-
-  <script>
-    // Home is intentionally standalone rather than extending base.html; expose the
-    // same shared navigation progress contract used by every base-template page.
-    if (!window.topProgressBar) {
-      window.topProgressBar = new (class {
-        constructor() { this.el = document.createElement('div'); this.el.id = 'top-progress-bar'; document.body.appendChild(this.el); this.width = 0; }
-        start() { clearInterval(this.timer); this.width = 0; this.el.style.cssText = 'width:0%;opacity:1'; setTimeout(() => { if (!this.width) { this.width = 30; this.el.style.width = '30%'; } }, 40); this.timer = setInterval(() => { this.width = Math.min(90, this.width + Math.max(.2, (90 - this.width) * .05)); this.el.style.width = this.width + '%'; }, 150); }
-        done() { clearInterval(this.timer); this.width = 100; this.el.style.width = '100%'; setTimeout(() => { this.el.style.opacity = '0'; }, 160); }
-      })();
-      document.addEventListener('click', event => {
-        const link = event.target.closest('a[href]');
-        if (link && !link.target && !link.hasAttribute('download') && !link.href.startsWith('mailto:') && new URL(link.href).origin === location.origin && !link.hash) window.topProgressBar.start();
-      });
-      document.addEventListener('submit', event => { if (!event.defaultPrevented) window.topProgressBar.start(); });
-    }
-  </script>
-
-
-
+{% block content %}
   <!-- ═══════════════════════════════════════════════════════════
      SKELETON LOADER & BRAND MOMENT OVERLAY
      ═══════════════════════════════════════════════════════════ -->
@@ -4395,7 +4252,6 @@
   </script>
 
 
-  <div class="theme-tooltip" id="theme-tooltip" style="display:none;"></div>
 
   <!-- Floating Terminal Icon -->
   <button id="floating-terminal-icon" class="floating-terminal-icon" type="button" aria-label="Restore terminal"
@@ -4405,27 +4261,6 @@
     <span class="mini-terminal-line" aria-hidden="true"></span>
   </button>
 
-  {% with messages = get_flashed_messages() %}
-  {% if messages %}
-  <div class="flash-container">
-    {% for message in messages %}
-    <div class="flash-message swipeable-alert" style="cursor: grab; user-select: none;">
-      {{ message }}
-      <button type="button" class="close-alert-btn" onclick="this.parentElement.remove()"
-        style="background: none; border: none; color: inherit; font-size: 1.25rem; cursor: pointer; float: right; line-height: 1; margin-left: 10px;">&times;</button>
-    </div>
-    {% endfor %}
-  </div>
-  {% endif %}
-  {% endwith %}
-
-
-
-
-  <!-- ═══════════════════════════════════════════════════════════
-     UNIFIED NAVBAR INCLUDE
-     ═══════════════════════════════════════════════════════════ -->
-  {% include 'navbar.html' %}
 
 
   <canvas id="threat-map-canvas"></canvas>
@@ -5092,102 +4927,8 @@
   </style>
 
   <script>
-    // ── Tool Loading States HTML Generator ──
-    function createMiniLoaderHTML(toolType, id) {
-        if (toolType === 'threat') {
-            return `
-                <div class="skeleton-tool-preview ta-skeleton-preview" id="${id}-card" style="width: 100%; max-width: 800px; margin: 0 auto; padding: 24px; box-sizing: border-box;">
-                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 2rem; border-bottom: 1px solid var(--border-subtle); padding-bottom: 1.5rem;">
-                        <div style="display: flex; align-items: center; gap: 16px;">
-                            <div class="skeleton-block" style="width: 110px; height: 32px; border-radius: 6px;"></div>
-                            <div>
-                                <div class="skeleton-block" style="width: 60px; height: 32px; margin-bottom: 6px;"></div>
-                                <div class="skeleton-block" style="width: 100px; height: 12px;"></div>
-                            </div>
-                        </div>
-                        <div style="display: flex; gap: 10px;">
-                            <div class="skeleton-block" style="width: 80px; height: 32px; border-radius: 6px;"></div>
-                            <div class="skeleton-block" style="width: 80px; height: 32px; border-radius: 6px;"></div>
-                        </div>
-                    </div>
-                    
-                    <div style="display: flex; gap: 16px; margin-bottom: 1.5rem;">
-                        <div class="skeleton-block" style="width: 70px; height: 16px;"></div>
-                        <div class="skeleton-block" style="width: 70px; height: 16px;"></div>
-                        <div class="skeleton-block" style="width: 70px; height: 16px;"></div>
-                    </div>
+    // ── createMiniLoaderHTML and ToolMiniLoader are provided by base.html ──
 
-                    <div style="border: 1px solid var(--border-subtle); border-radius: 8px; padding: 20px; background: rgba(0,0,0,0.1); margin-bottom: 2rem;">
-                        <div class="skeleton-block" style="width: 95%; height: 16px; margin-bottom: 12px;"></div>
-                        <div class="skeleton-block" style="width: 40%; height: 16px; display: inline-block; margin-right: 10px;"></div>
-                        <div class="skeleton-block" style="width: 20%; height: 16px; display: inline-block; margin-bottom: 12px; opacity: 0.75;"></div>
-                        <div class="skeleton-block" style="width: 30%; height: 16px; display: inline-block; margin-bottom: 12px;"></div>
-                        <div class="skeleton-block" style="width: 88%; height: 16px; margin-bottom: 12px;"></div>
-                    </div>
-
-                    <div style="display: grid; grid-template-columns: 80px 1fr 2fr; gap: 24px; background: rgba(0,0,0,0.15); padding: 20px; border-radius: 8px;">
-                        <div class="skeleton-block" style="width: 72px; height: 72px; border-radius: 50%;"></div>
-                        <div>
-                            <div class="skeleton-block" style="width: 120px; height: 16px; margin-bottom: 12px;"></div>
-                            <div style="display: flex; gap: 8px;">
-                                <div class="skeleton-block" style="width: 50px; height: 20px; border-radius: 9999px;"></div>
-                                <div class="skeleton-block" style="width: 60px; height: 20px; border-radius: 9999px;"></div>
-                            </div>
-                        </div>
-                        <div>
-                            <div class="skeleton-block" style="width: 100px; height: 16px; margin-bottom: 12px;"></div>
-                            <div class="skeleton-block" style="width: 90%; height: 14px; margin-bottom: 8px;"></div>
-                            <div class="skeleton-block" style="width: 70%; height: 14px;"></div>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
-        return '';
-    }
-
-    // ── Shared Tool Mini-Loader Controller ──
-    class ToolMiniLoader {
-        constructor(containerId, toolType) {
-            this.container = document.getElementById(containerId);
-            this.toolType = toolType;
-            this.cardId = containerId + '-loader';
-        }
-
-        start() {
-            if (!this.container) return;
-            this.startedAt = performance.now();
-            window.startGlobalLoader?.();
-            this.container.innerHTML = createMiniLoaderHTML(this.toolType, this.cardId);
-            this.container.style.display = 'block';
-            
-            const card = document.getElementById(this.cardId + '-card');
-            setTimeout(() => {
-                if (card) card.classList.add('active');
-            }, 20);
-        }
-
-        stop(onComplete) {
-            const card = document.getElementById(this.cardId + '-card');
-            if (!card) {
-                this.container.style.display = 'none';
-                window.stopGlobalLoader?.();
-                onComplete?.();
-                return;
-            }
-            card.classList.remove('active');
-            card.classList.add('fade-out');
-            
-            const elapsed = performance.now() - this.startedAt;
-            const remaining = Math.max(0, 800 - elapsed);
-            
-            setTimeout(() => {
-                this.container.style.display = 'none';
-                window.stopGlobalLoader?.();
-                onComplete?.();
-            }, Math.max(300, remaining));
-        }
-    }
 
     const scenarioData = {
       ceo: {
@@ -6999,12 +6740,13 @@
       }, { passive: true });
     })();
 
-    /* ── THEME TOGGLE ── */
+    /* ── THEME TOGGLE (with ripple reveal animation) ── */
     (function () {
       const storageKey = 'phishsim-theme';
       const toggle = document.getElementById('theme-toggle');
       const tooltip = document.getElementById('theme-tooltip');
       let tipTimer;
+      let isAnimating = false;
 
       function showTip(text) {
         if (!tooltip) return;
@@ -7024,16 +6766,78 @@
         }
         localStorage.setItem(storageKey, theme);
         window.dispatchEvent(new CustomEvent('theme-changed', { detail: { theme } }));
-        if (announce) showTip(isLight ? 'Light Mode' : 'Dark Mode');
+        if (announce) showTip(isLight ? '☀ Light Mode' : '🌙 Dark Mode');
+      }
+
+      function triggerRipple(theme, fromEl) {
+        if (isAnimating) {
+          applyTheme(theme, true);
+          return;
+        }
+
+        // Get button center for ripple origin
+        const rect = fromEl.getBoundingClientRect();
+        const x = rect.left + rect.width / 2;
+        const y = rect.top + rect.height / 2;
+
+        // Calculate max radius to cover entire viewport
+        const endRadius = Math.hypot(
+          Math.max(x, window.innerWidth - x),
+          Math.max(y, window.innerHeight - y)
+        ) + 30;
+
+        const isLight = theme === 'light';
+
+        const ripple = document.createElement('div');
+        Object.assign(ripple.style, {
+          position: 'fixed',
+          top: '0',
+          left: '0',
+          width: '100vw',
+          height: '100vh',
+          background: isLight
+            ? 'radial-gradient(circle at ' + x + 'px ' + y + 'px, #f0f9ff 0%, #e0f2fe 40%, #bae6fd 100%)'
+            : 'radial-gradient(circle at ' + x + 'px ' + y + 'px, #0f172a 0%, #0a1628 40%, #060b18 100%)',
+          clipPath: `circle(0px at ${x}px ${y}px)`,
+          zIndex: '99999',
+          pointerEvents: 'none',
+          transition: 'clip-path 0.52s cubic-bezier(0.4, 0, 0.2, 1)',
+          willChange: 'clip-path',
+        });
+        document.body.appendChild(ripple);
+        isAnimating = true;
+
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            ripple.style.clipPath = `circle(${endRadius}px at ${x}px ${y}px)`;
+          });
+        });
+
+        // Apply theme at midpoint so it's hidden under ripple
+        setTimeout(() => {
+          applyTheme(theme, true);
+        }, 260);
+
+        // Fade ripple out after expansion
+        setTimeout(() => {
+          ripple.style.transition = 'opacity 0.18s ease';
+          ripple.style.opacity = '0';
+          setTimeout(() => {
+            ripple.remove();
+            isAnimating = false;
+          }, 180);
+        }, 480);
       }
 
       applyTheme(localStorage.getItem(storageKey) === 'light' ? 'light' : 'dark');
       if (toggle) {
         toggle.addEventListener('click', () => {
-          applyTheme(document.body.classList.contains('light-theme') ? 'dark' : 'light', true);
+          const nextTheme = document.body.classList.contains('light-theme') ? 'dark' : 'light';
+          triggerRipple(nextTheme, toggle);
         });
       }
     })();
+
 
     /* ── NEURAL THREAT MAP BACKGROUND ── */
     (function () {
@@ -7260,7 +7064,7 @@
       }
 
       function loop(timestamp) {
-        requestAnimationFrame(loop);
+        // NOTE: No requestAnimationFrame here — caller (runLoop) handles RAF scheduling
 
         if (!lastTime) lastTime = timestamp;
         const elapsed = timestamp - lastTime;
@@ -8288,7 +8092,7 @@ Authenticate with 'login' to access live features.
     const tBody = document.getElementById('terminal-body');
 
     // Real-time Ghost Suggestion & Syntax Validation
-    tInput.addEventListener('input', function () {
+    if (tInput) tInput.addEventListener('input', function () {
       playKeyClickSound();
       const val = this.value;
       const trimmed = val.trim();
@@ -8320,7 +8124,7 @@ Authenticate with 'login' to access live features.
       }
     });
 
-    tInput.addEventListener('keydown', function (e) {
+    if (tInput) tInput.addEventListener('keydown', function (e) {
       const val = this.value;
       const trimmed = val.trim();
       const match = trimmed ? availableCommands.find(c => c.startsWith(trimmed.toLowerCase())) : null;
@@ -8346,7 +8150,7 @@ Authenticate with 'login' to access live features.
       }
     });
 
-    tInput.addEventListener('keypress', function (e) {
+    if (tInput) tInput.addEventListener('keypress', function (e) {
       if (e.key === 'Enter') {
         const val = this.value;
         this.value = '';
@@ -9775,11 +9579,7 @@ ${body}
       transition: background 0.2s ease, box-shadow 0.2s ease;
     }
 
-    @keyframes rgb-glow-cycle {
-      0% {
-        background: radial-gradient(circle, #00f0ff 0%, #ff007f 100%);
-        box-shadow: 0 0 9px rgba(0, 240, 255, 0.38), 0 0 16px rgba(255, 0, 127, 0.25);
-      }
+    /* Pruned continuous ambient animation for calm B2B aesthetics */
 
       33% {
         background: radial-gradient(circle, #ff007f 0%, #eab308 100%);
@@ -9877,9 +9677,11 @@ ${body}
       let hasMoved = false;
       dot.style.opacity = "0";
 
+      let dotNeedsUpdate = false;
       document.addEventListener("mousemove", (e) => {
         mouseX = e.clientX;
         mouseY = e.clientY;
+        dotNeedsUpdate = true;
         if (!hasMoved) {
           dotX = mouseX;
           dotY = mouseY;
@@ -9891,9 +9693,11 @@ ${body}
       });
 
       function animateDot() {
-        if (hasMoved) {
+        // Only update when mouse has moved — skip idle frames
+        if (hasMoved && dotNeedsUpdate) {
           dot.style.left = `${mouseX}px`;
           dot.style.top = `${mouseY}px`;
+          dotNeedsUpdate = false;
         }
         requestAnimationFrame(animateDot);
       }
@@ -10024,8 +9828,10 @@ ${body}
       }, { passive: true });
     })();
   </script>
+{% endblock %}
 
-  <script>
+{% block extra_scripts %}
+<script>
     function togglePricingFrequency(checkbox) {
       const isAnnual = checkbox.checked;
       const priceVal = document.getElementById('pro-price-val');
@@ -10098,8 +9904,6 @@ ${body}
     });
   })();
   </script>
-
-  {% include 'lure_bot.html' %}
 
   <script>
   /* ── Lure: Proactive triggers for homepage ── */
@@ -10328,7 +10132,4 @@ ${body}
       }, { passive: true });
   })();
   </script>
-
-</body>
-
-</html>
+{% endblock %}

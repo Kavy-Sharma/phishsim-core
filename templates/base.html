@@ -23,7 +23,7 @@
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&family=Instrument+Serif:ital@0;1&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
     
     <!-- Tabler Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
@@ -60,6 +60,8 @@
             z-index: 999999 !important;
         }
     </style>
+    {% block head_extra %}{% endblock %}
+    {% block extra_head %}{% endblock %}
 </head>
 <body class="{% block body_class %}{% endblock %} {% if current_user %}has-hud-bar{% endif %}">
 
@@ -1837,6 +1839,8 @@ window.init3DTiltCards = init3DTiltCards;
     {% if request.path not in ['/login', '/signup', '/forgot-password'] %}
     {% include 'lure_bot.html' %}
     {% endif %}
+
+    {% block extra_scripts %}{% endblock %}
 
 </body>
 </html>

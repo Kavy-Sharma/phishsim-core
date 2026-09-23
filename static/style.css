@@ -1,4 +1,4 @@
-/* Design System Variables */
+/* Design System Variables — Refined B2B Cybersecurity Architecture */
 :root {
     /* Font scale variables */
     --text-xs: 0.75rem;
@@ -15,15 +15,19 @@
     /* Border radius variables */
     --radius-sm: 6px;
     --radius-md: 10px;
-    --radius-lg: 16px;
-    --radius-xl: 24px;
+    --radius-lg: 14px;
+    --radius-card: 14px;
+    --radius-xl: 20px;
     --radius-full: 9999px;
 
     /* Font family variables */
-    --font-sans: 'Space Grotesk', sans-serif;
-    --font-mono: 'JetBrains Mono', monospace;
+    --font-serif: 'Instrument Serif', Georgia, 'Times New Roman', serif;
+    --font-sans: 'Plus Jakarta Sans', 'Space Grotesk', system-ui, -apple-system, sans-serif;
+    --font-mono: 'IBM Plex Mono', 'JetBrains Mono', monospace;
 
-    --transition: all 0.3s ease;
+    /* Fluid easing for tactile cards */
+    --transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    --ease-tactile: cubic-bezier(0.16, 1, 0.3, 1);
 
     /* Default values mapping (Dark Mode default) */
     --bg-dark: var(--bg-surface);
@@ -39,44 +43,49 @@
 }
 
 :root, :root[data-theme="dark"] {
-  /* === BACKGROUNDS === */
-  --bg-base:        #0A1420;   /* page background */
-  --bg-surface:     #111D2E;   /* cards, panels, modals */
-  --bg-surface-raised:#16283D; /* elevated cards/modals */
-  --bg-elevated:    #16283D;   /* dropdowns, tooltips, secondary cards */
-  --bg-input:       #0A1420;   /* form inputs, textareas */
-  --bg-hover:       #16283D;   /* hover states on list items, nav items */
-  --bg-navbar:      rgba(17, 29, 46, 0.85);
+  /* === REFINED COLOR CANVAS (Midnight Slate / Warm Obsidian) === */
+  --bg-base:        #090C15;   /* Page background base */
+  --bg-surface:     #121826;   /* Bento grid cards & surface panels */
+  --bg-surface-raised:#182030; /* Elevated modals & cards */
+  --bg-elevated:    #182030;   /* Dropdowns & elevated containers */
+  --bg-input:       #0D121F;   /* Form inputs */
+  --bg-hover:       #1A2234;   /* Hover states */
+  --bg-navbar:      rgba(9, 12, 21, 0.85);
 
-  /* === BORDERS === */
-  --border-subtle:  rgba(255,255,255,0.06);   /* card outlines, dividers */
-  --border-default: #1F2F42;                  /* input borders, table rows */
-  --border-active:  rgba(45,212,191,0.4);     /* focused inputs, selected items */
+  /* === TACTILE GLASSMORPHISM BORDERS === */
+  --border-subtle:  rgba(255, 255, 255, 0.05); /* Low-opacity container outlines */
+  --border-default: rgba(255, 255, 255, 0.08); /* Input & card outlines */
+  --border-active:  rgba(245, 158, 11, 0.4);   /* Focused active rings */
 
-  /* === PRIMARY — Ocean Teal === */
-  --primary:        #2DD4BF;   /* primary buttons, key links, focus rings */
-  --primary-hover:  #5EEAD4;   /* hover states for primary elements */
-  --primary-dim:    rgba(45,212,191,0.15);    /* button backgrounds, tag fills */
-  --primary-glow:   rgba(45,212,191,0.25);    /* box-shadow glow on hover */
+  /* === PREMIUM ACCENTS & TACTICAL AMBER === */
+  --primary:        #F59E0B;   /* Tactical Amber primary accent */
+  --primary-hover:  #D97706;   /* Hover state */
+  --primary-dim:    rgba(245, 158, 11, 0.12); /* Subtle badge & tag fills */
+  --primary-glow:   rgba(245, 158, 11, 0.2);  /* Subtle accent glow */
 
-  /* === VERDICT SYSTEM (Distinct from Brand Primary) === */
-  --verdict-safe:          #34D399;           /* safe status, green verdict */
-  --verdict-safe-dim:      rgba(52,211,153,0.15);
-  --verdict-suspicious:    #F5A623;           /* suspicious status, amber verdict */
-  --verdict-suspicious-dim:rgba(245,166,35,0.15);
-  --verdict-critical:      #F43F5E;           /* phishing/critical threat verdict */
-  --verdict-critical-dim:  rgba(244,63,94,0.15);
+  /* Tactical Amber warning tint */
+  --amber:          #F59E0B;
+  --amber-dim:      rgba(245, 158, 11, 0.12);
+  --amber-glow:     rgba(245, 158, 11, 0.25);
 
-  /* === LEGACY & APP COMPATIBILITY ALIASES === */
+  /* === VERDICT SYSTEM === */
+  --verdict-safe:          #10B981;           /* Safe status */
+  --verdict-safe-dim:      rgba(16, 185, 129, 0.12);
+  --verdict-suspicious:    #F59E0B;           /* Tactical Amber warning */
+  --verdict-suspicious-dim:rgba(245, 158, 11, 0.15);
+  --verdict-critical:      #EF4444;           /* Critical threat verdict */
+  --verdict-critical-dim:  rgba(239, 68, 68, 0.15);
+
+  /* === LEGACY & APP ALIASES === */
   --danger:         var(--verdict-critical);
   --danger-dim:     var(--verdict-critical-dim);
-  --danger-glow:    rgba(244,63,94,0.2);
+  --danger-glow:    rgba(239, 68, 68, 0.2);
   --warning:        var(--verdict-suspicious);
   --warning-dim:    var(--verdict-suspicious-dim);
   --success:        var(--verdict-safe);
   --success-dim:    var(--verdict-safe-dim);
-  --info:           #818CF8;
-  --info-dim:       rgba(129,140,248,0.15);
+  --info:           #6366F1;
+  --info-dim:       rgba(99, 102, 241, 0.12);
 
   --app-success:    var(--success);
   --app-warning:    var(--warning);
@@ -85,57 +94,57 @@
   --app-primary:    var(--primary);
 
   /* === TEXT === */
-  --text-primary:   #E8EDF2;   /* headings, primary content */
-  --text-secondary: #8CA0B3;   /* body copy, descriptions */
-  --text-muted:     #64748B;   /* placeholders, disabled, timestamps */
-  --text-inverse:   #0A1420;   /* text on light/colored backgrounds */
+  --text-primary:   #F8FAFC;   /* Crisp white headings */
+  --text-secondary: #94A3B8;   /* Refined body text */
+  --text-muted:     #64748B;   /* Subtitles & metadata */
+  --text-inverse:   #090C15;   /* Text on light button fields */
 
   /* === SPECIAL === */
-  --terminal-green: #34D399;   /* terminal output text only */
-  --terminal-bg:    #060D17;   /* terminal window background */
-  --scrollbar:      #111D2E;
-  --scrollbar-thumb:#1F2F42;
+  --terminal-green: #10B981;
+  --terminal-bg:    #050811;
+  --scrollbar:      #090C15;
+  --scrollbar-thumb:#1E293B;
 }
 
 :root[data-theme="light"] {
   /* === BACKGROUNDS === */
-  --bg-base:        #F6F9FA;   /* page background */
-  --bg-surface:     #FFFFFF;   /* cards, panels */
-  --bg-surface-raised:#FFFFFF; /* elevated surfaces in light mode */
-  --bg-elevated:    #F1F5F9;   /* secondary cards, hover surfaces */
-  --bg-input:       #FFFFFF;   /* inputs */
-  --bg-hover:       #F1F5F9;   /* hover states */
-  --bg-navbar:      rgba(255, 255, 255, 0.85);
+  --bg-base:        #F8FAFC;
+  --bg-surface:     #FFFFFF;
+  --bg-surface-raised:#FFFFFF;
+  --bg-elevated:    #F1F5F9;
+  --bg-input:       #FFFFFF;
+  --bg-hover:       #F1F5F9;
+  --bg-navbar:      rgba(248, 250, 252, 0.85);
 
   /* === BORDERS === */
-  --border-subtle:  rgba(0,0,0,0.06);
+  --border-subtle:  rgba(0, 0, 0, 0.05);
   --border-default: #E2E8F0;
-  --border-active:  rgba(13,148,136,0.5);
+  --border-active:  rgba(245, 158, 11, 0.5);
 
-  /* === PRIMARY — Deep Teal === */
-  --primary:        #0D9488;
-  --primary-hover:  #0F766E;
-  --primary-dim:    rgba(13,148,136,0.12);
-  --primary-glow:   rgba(13,148,136,0.2);
+  /* === PRIMARY — Tactical Amber / Dark Slate === */
+  --primary:        #D97706;
+  --primary-hover:  #B45309;
+  --primary-dim:    rgba(217, 119, 6, 0.12);
+  --primary-glow:   rgba(217, 119, 6, 0.2);
 
   /* === VERDICT SYSTEM === */
   --verdict-safe:          #059669;
-  --verdict-safe-dim:      rgba(5,150,105,0.12);
-  --verdict-suspicious:    #B45309;
-  --verdict-suspicious-dim:rgba(180,83,9,0.12);
+  --verdict-safe-dim:      rgba(5, 150, 105, 0.12);
+  --verdict-suspicious:    #D97706;
+  --verdict-suspicious-dim:rgba(217, 119, 6, 0.12);
   --verdict-critical:      #DC2626;
-  --verdict-critical-dim:  rgba(220,38,38,0.12);
+  --verdict-critical-dim:  rgba(220, 38, 38, 0.12);
 
   /* === LEGACY COMPATIBILITY ALIASES === */
   --danger:         var(--verdict-critical);
   --danger-dim:     var(--verdict-critical-dim);
-  --danger-glow:    rgba(220,38,38,0.15);
+  --danger-glow:    rgba(220, 38, 38, 0.15);
   --warning:        var(--verdict-suspicious);
   --warning-dim:    var(--verdict-suspicious-dim);
   --success:        var(--verdict-safe);
   --success-dim:    var(--verdict-safe-dim);
   --info:           #4F46E5;
-  --info-dim:       rgba(79,70,229,0.1);
+  --info-dim:       rgba(79, 70, 229, 0.1);
 
   --app-success:    var(--success);
   --app-warning:    var(--warning);
@@ -146,8 +155,8 @@
   /* === TEXT === */
   --text-primary:   #0F172A;
   --text-secondary: #475569;
-  --text-muted:     #94A3B8;
-  --text-inverse:   #F6F9FA;
+  --text-muted:     #64748B;
+  --text-inverse:   #F8FAFC;
 
   /* === SPECIAL === */
   --terminal-green: #059669;
@@ -851,7 +860,7 @@ input[type="checkbox"] {
     box-shadow: 0 0 15px rgba(6, 182, 212, 0.2);
 }
 .hero-title {
-    font-family: 'Outfit', sans-serif;
+    font-family: 'Space Grotesk', var(--font-sans), sans-serif;
     font-size: 5.5rem;
     font-weight: 900;
     margin-bottom: 1.5rem;
@@ -871,7 +880,7 @@ input[type="checkbox"] {
     50% { opacity: 0; }
 }
 .hero-subtitle {
-    font-family: 'Outfit', sans-serif;
+    font-family: 'Space Grotesk', var(--font-sans), sans-serif;
     font-size: 1.25rem;
     color: var(--text-muted);
     max-width: 700px;
@@ -884,7 +893,7 @@ input[type="checkbox"] {
     justify-content: center;
 }
 .btn-primary-glow, .btn-outline-glow {
-    font-family: 'Outfit', sans-serif;
+    font-family: 'Space Grotesk', var(--font-sans), sans-serif;
     padding: 1rem 2.5rem;
     border-radius: 12px;
     font-weight: 700;
@@ -921,7 +930,7 @@ input[type="checkbox"] {
     background: linear-gradient(180deg, transparent, rgba(15, 23, 42, 0.8), transparent);
 }
 .section-title {
-    font-family: 'Outfit', sans-serif;
+    font-family: 'Space Grotesk', var(--font-sans), sans-serif;
     font-size: 3rem;
     font-weight: 900;
     margin-bottom: 1rem;
@@ -935,7 +944,7 @@ input[type="checkbox"] {
     position: relative;
     background: linear-gradient(90deg, #0f172a, #1e293b);
     color: #fff;
-    font-family: 'Outfit', sans-serif;
+    font-family: 'Space Grotesk', var(--font-sans), sans-serif;
     font-size: 1.1rem;
     font-weight: 700;
     border: 1px solid var(--accent-cyan);
@@ -1029,7 +1038,7 @@ input[type="checkbox"] {
     font-size: 1rem;
     margin-bottom: 0.5rem;
     color: #fff;
-    font-family: 'Outfit', sans-serif;
+    font-family: 'Space Grotesk', var(--font-sans), sans-serif;
 }
 .timeline-card p {
     font-size: 0.8rem;
@@ -1088,7 +1097,7 @@ input[type="checkbox"] {
     color: var(--accent-cyan);
 }
 .v-bar-title {
-    font-family: 'Outfit', sans-serif;
+    font-family: 'Space Grotesk', var(--font-sans), sans-serif;
     font-size: 1.1rem;
     margin: 0;
     transition: all 0.5s cubic-bezier(0.25, 1, 0.5, 1);
@@ -1293,7 +1302,7 @@ input[type="checkbox"] {
     position: absolute; top: 20px; right: 20px; font-size: 1.5rem; color: #64748b; cursor: pointer; transition: color 0.2s;
 }
 .modal-close:hover { color: #fff; }
-#modal-title { font-family: 'Outfit', sans-serif; font-size: 1.8rem; margin-bottom: 1rem; color: var(--accent-cyan); }
+#modal-title { font-family: 'Space Grotesk', var(--font-sans), sans-serif; font-size: 1.8rem; margin-bottom: 1rem; color: var(--accent-cyan); }
 #modal-text { color: #cbd5e1; line-height: 1.6; }
 
 /* --- Bento Grid --- */
@@ -1329,7 +1338,7 @@ input[type="checkbox"] {
 }
 .bento-item:hover::before { opacity: 1; }
 .bento-item i { font-size: 2.5rem; color: var(--accent-cyan); margin-bottom: 1.5rem; }
-.bento-item h3 { font-family: 'Outfit', sans-serif; font-size: 1.5rem; margin-bottom: 1rem; color: #fff; }
+.bento-item h3 { font-family: 'Space Grotesk', var(--font-sans), sans-serif; font-size: 1.5rem; margin-bottom: 1rem; color: #fff; }
 .bento-item p { color: #94a3b8; line-height: 1.6; font-size: 1.05rem; margin: 0; }
 
 .bento-large { grid-column: span 1; grid-row: span 2; display: flex; flex-direction: column; justify-content: center; }
@@ -1346,7 +1355,7 @@ input[type="checkbox"] {
     background: radial-gradient(circle at center, rgba(6, 182, 212, 0.1) 0%, #020617 70%);
     border-top: 1px solid rgba(255, 255, 255, 0.05);
 }
-.cta-title { font-size: 3.5rem; font-family: 'Outfit', sans-serif; color: #fff; margin-bottom: 1rem; }
+.cta-title { font-size: 3.5rem; font-family: 'Space Grotesk', var(--font-sans), sans-serif; color: #fff; margin-bottom: 1rem; }
 .cta-subtitle { font-size: 1.2rem; color: #94a3b8; max-width: 600px; margin: 0 auto 3rem auto; line-height: 1.6; }
 
 
@@ -5777,3 +5786,153 @@ body.light-theme .lure-cta-compact .lure-cta-orb {
 }
 
 
+
+
+/* ═════════════════════════════════════════════════════════════════
+   SOPHISTICATED TYPOGRAPHY, GLASSMORPHISM & CTA COMPONENT OVERRIDES
+   ═════════════════════════════════════════════════════════════════ */
+
+/* 1. SOPHISTICATED NARRATIVE TYPOGRAPHY */
+.hero-title,
+.section-title,
+.hero h1,
+.cta-title,
+.narrative-title,
+.serif-heading {
+    font-family: var(--font-serif);
+    font-weight: 400;
+    letter-spacing: -0.015em;
+    line-height: 1.15;
+}
+
+.hero-title em,
+.hero-title i,
+.section-title em,
+.section-title i,
+.serif-italic {
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-weight: 400;
+}
+
+/* 2. MONOSPACE TELEMETRY & TERMINAL STREAMS */
+.terminal-body,
+.telemetry-stream,
+.log-container,
+.analyzer-output,
+.ta-terminal,
+.code-block,
+pre,
+code {
+    font-family: var(--font-mono) !important;
+}
+
+/* 3. TACTILE GLASSMORPHISM CARDS (.bento-item, .feature-card, .cap-card) */
+.card,
+.panel,
+.bento-item,
+.feature-card,
+.cap-card,
+.v-bar,
+.timeline-card,
+.stat-box {
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-card);
+    transition: var(--transition);
+}
+
+.card:hover,
+.panel:hover,
+.bento-item:hover,
+.feature-card:hover,
+.cap-card:hover,
+.v-bar:hover,
+.timeline-card:hover {
+    transform: translateY(-3px);
+    border-color: rgba(255, 255, 255, 0.12);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+}
+
+/* Light mode card border override */
+body.light-theme .card:hover,
+body.light-theme .panel:hover,
+body.light-theme .bento-item:hover,
+body.light-theme .feature-card:hover,
+body.light-theme .cap-card:hover {
+    border-color: rgba(0, 0, 0, 0.12);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08);
+}
+
+/* 4. CLEAN CTA ACTION STYLES (Solid White Primary Fields) */
+.btn-primary,
+.btn-primary-action,
+.btn-primary-glow,
+.modern-cyber-btn {
+    background: #FFFFFF !important;
+    color: #090C15 !important;
+    border: 1px solid #FFFFFF !important;
+    font-family: var(--font-sans) !important;
+    font-weight: 600 !important;
+    border-radius: 8px !important;
+    padding: 0.75rem 1.75rem !important;
+    box-shadow: 0 2px 10px rgba(255, 255, 255, 0.12) !important;
+    transition: var(--transition) !important;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.btn-primary:hover,
+.btn-primary-action:hover,
+.btn-primary-glow:hover,
+.modern-cyber-btn:hover {
+    background: #F1F5F9 !important;
+    border-color: #F1F5F9 !important;
+    color: #090C15 !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 6px 20px rgba(255, 255, 255, 0.2) !important;
+}
+
+/* Light Mode Primary CTA Field */
+body.light-theme .btn-primary,
+body.light-theme .btn-primary-action,
+body.light-theme .btn-primary-glow,
+body.light-theme .modern-cyber-btn {
+    background: #090C15 !important;
+    color: #FFFFFF !important;
+    border: 1px solid #090C15 !important;
+}
+
+body.light-theme .btn-primary:hover,
+body.light-theme .btn-primary-action:hover,
+body.light-theme .btn-primary-glow:hover,
+body.light-theme .modern-cyber-btn:hover {
+    background: #1E293B !important;
+    border-color: #1E293B !important;
+    color: #FFFFFF !important;
+}
+
+/* Secondary CTA Field */
+.btn-secondary,
+.btn-outline-glow {
+    background: rgba(255, 255, 255, 0.04) !important;
+    color: #FFFFFF !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    font-family: var(--font-sans) !important;
+    font-weight: 600 !important;
+    border-radius: 8px !important;
+    padding: 0.75rem 1.75rem !important;
+    transition: var(--transition) !important;
+    backdrop-filter: blur(10px);
+}
+
+.btn-secondary:hover,
+.btn-outline-glow:hover {
+    background: rgba(255, 255, 255, 0.08) !important;
+    border-color: rgba(255, 255, 255, 0.25) !important;
+    color: #FFFFFF !important;
+}
