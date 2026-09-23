@@ -190,6 +190,29 @@
       100% { transform: scale(0.95); opacity: 0.3; box-shadow: 0 0 8px var(--primary), inset 0 0 8px var(--primary); }
     }
 
+    /* Open Transition Ring */
+    #pb-open-ring {
+      position: absolute;
+      inset: -4px;
+      border-radius: 50%;
+      border: 2px solid var(--warning);
+      opacity: 0;
+      pointer-events: none;
+    }
+    #pb-open-ring.pb-ring-fire {
+      animation: pbOpenRingExpand 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    @keyframes pbOpenRingExpand {
+      0% { transform: scale(1); opacity: 0.8; }
+      100% { transform: scale(2.4); opacity: 0; }
+    }
+
+    /* Panel Ambient Motion Drift */
+    @keyframes pbPanelDrift {
+      0%, 100% { background-position: 0% 0%; }
+      50% { background-position: 30% 20%; }
+    }
+
     /* Idle bobbing animation */
     @keyframes pbBob {
       0%, 100% { transform: translateY(0); }
@@ -248,14 +271,93 @@
       filter: drop-shadow(0 0 2px var(--primary-glow)) !important;
     }
 
-    .pb-bubble-particle {
-      position: absolute;
-      border-radius: 50%;
-      background: color-mix(in srgb, var(--primary) 60%, var(--lure-text-primary));
-      pointer-events: none;
-      z-index: 9998;
-      opacity: 0.7;
-      animation: pbBubbleFade 0.8s ease-out forwards;
+    /* Unified Speech Popover & Memory Banner CSS */
+    .pb-speech-popover {
+      position: fixed;
+      z-index: 10004;
+      width: 300px;
+      max-width: calc(100vw - 24px);
+      background: var(--bg-elevated, var(--lure-bg-card));
+      border: 1px solid color-mix(in srgb, var(--primary) 30%, transparent);
+      border-radius: 14px;
+      padding: 14px 16px;
+      font-family: var(--sans, 'Space Grotesk', sans-serif);
+      box-shadow: 0 16px 40px rgba(0,0,0,0.5), 0 0 0 1px color-mix(in srgb, var(--primary) 10%, transparent);
+      backdrop-filter: blur(20px);
+      transition: opacity 0.3s ease, transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .pb-popover-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 6px;
+    }
+    .pb-popover-label {
+      font-family: var(--mono, monospace);
+      font-size: var(--lure-font-xs);
+      font-weight: 800;
+      color: var(--primary);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    .pb-popover-dismiss-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted, var(--lure-text-muted));
+      cursor: pointer;
+      font-size: var(--lure-font-sm);
+      padding: 0;
+      transition: color 0.15s;
+    }
+    .pb-popover-dismiss-btn:hover { color: var(--text-primary); }
+    .pb-popover-title {
+      font-size: var(--lure-font-md);
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+    }
+    .pb-popover-text {
+      font-size: var(--lure-font-xs);
+      color: var(--text-secondary);
+      line-height: 1.45;
+    }
+    .pb-popover-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .pb-popover-btn {
+      font-size: var(--lure-font-xs);
+      font-weight: 700;
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      border: none;
+      transition: all 0.15s;
+    }
+    .pb-popover-btn.primary {
+      background: var(--primary);
+      color: var(--text-inverse);
+    }
+    .pb-popover-btn.secondary {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text-primary);
+      border: 1px solid var(--lure-border-subtle);
+    }
+    .pb-memory-banner {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: color-mix(in srgb, var(--primary) 10%, transparent);
+      border: 1px solid color-mix(in srgb, var(--primary) 28%, transparent);
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-family: var(--sans, sans-serif);
+      font-size: var(--lure-font-sm);
+      color: var(--primary);
+      margin-bottom: 12px;
+      font-weight: 600;
     }
     @keyframes pbPulse {
       0% { opacity: 0.6; transform: scale(0.98); }
@@ -429,12 +531,16 @@
       --lure-gold: color-mix(in srgb, var(--warning, var(--lure-warning)) 85%, var(--lure-warning));
       --lure-gold-glow: rgba(245, 158, 11, 0.15);
       background: var(--lure-bg-base);
+      background-image: radial-gradient(ellipse 140% 100% at 20% -10%, 
+        color-mix(in srgb, var(--primary) 5%, transparent), transparent 60%);
+      background-size: 200% 200%;
+      animation: pbPanelDrift 14s ease-in-out infinite;
       border: 1px solid color-mix(in srgb, var(--primary) 22%, transparent);
       border-radius: 16px;
       box-shadow:
-        0 36px 88px rgba(0,0,0,0.72),
-        0 0 0 1px color-mix(in srgb, var(--primary) 6%, transparent),
-        0 0 60px color-mix(in srgb, var(--primary) 8%, transparent);
+        0 30px 70px color-mix(in srgb, var(--primary) 14%, rgba(0,0,0,0.55)),
+        0 0 0 1px color-mix(in srgb, var(--primary) 10%, transparent),
+        0 0 80px color-mix(in srgb, var(--primary) 12%, transparent);
       backdrop-filter: blur(28px);
       opacity: 0;
       transform: translateY(16px) scale(0.97);
@@ -1259,7 +1365,7 @@
       white-space: pre-wrap;
       max-width: 100% !important;
       padding: 10px 14px !important;
-      border-radius: 14px !important;
+      border-radius: 18px !important;
       box-sizing: border-box;
       transition: all 0.2s ease;
     }
@@ -1267,13 +1373,13 @@
       background: var(--primary-dim, rgba(45, 212, 191, 0.15)) !important;
       border: 1px solid var(--primary-glow, rgba(45, 212, 191, 0.25)) !important;
       color: var(--text-primary, var(--lure-text-primary)) !important;
-      border-top-right-radius: 4px !important;
+      border-top-right-radius: 18px !important;
     }
     .pb-chat-msg-row.lure .pb-chat-bubble {
       background: var(--bg-surface, rgba(255, 255, 255, 0.03)) !important;
       border: 1px solid var(--border-subtle, var(--lure-border-subtle)) !important;
       color: var(--text-primary, var(--lure-text-primary)) !important;
-      border-top-left-radius: 4px !important;
+      border-top-left-radius: 18px !important;
       box-shadow: 0 4px 16px rgba(0,0,0,0.15);
     }
     .pb-chat-meta {
@@ -1403,6 +1509,9 @@
       border: 1px solid var(--primary-glow, rgba(45, 212, 191, 0.25)) !important;
       box-shadow: 0 0 12px var(--primary-glow);
       animation: pbThinkingGlow 2s infinite ease-in-out;
+    }
+    .pb-chat-bubble.pb-thinking {
+      animation: pbThinkingGlow 1.8s ease-in-out infinite;
     }
     @keyframes pbThinkingGlow {
       0%, 100% { border-color: rgba(45, 212, 191, 0.25); }
@@ -1960,17 +2069,17 @@
     }
     .pb-sidebar-tab-btn.active {
       color: #ffffff !important;
-      background: linear-gradient(90deg, rgba(56, 189, 248, 0.18), rgba(56, 189, 248, 0.04)) !important;
-      box-shadow: inset 4px 0 0 0 var(--primary, #38bdf8), 0 0 16px rgba(56, 189, 248, 0.25) !important;
+      background: linear-gradient(90deg, color-mix(in srgb, var(--warning) 18%, transparent), color-mix(in srgb, var(--warning) 4%, transparent)) !important;
+      box-shadow: inset 4px 0 0 0 var(--warning), 0 0 16px color-mix(in srgb, var(--warning) 25%, transparent) !important;
       border-left: none !important;
     }
     .pb-sidebar-tab-btn.active i {
-      color: var(--primary, #38bdf8) !important;
+      color: var(--warning) !important;
       transform: scale(1.12);
-      filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.5));
+      filter: drop-shadow(0 0 8px color-mix(in srgb, var(--warning) 50%, transparent));
     }
     .pb-sidebar-tab-btn.active .pb-sidebar-tab-label {
-      color: var(--primary, #38bdf8) !important;
+      color: var(--warning) !important;
       font-weight: 800 !important;
     }
 
@@ -3329,30 +3438,19 @@
 </style>
 
 <div id="pb-host">
-  <!-- Teaser bubble -->
-  <div id="pb-teaser" aria-hidden="true">
-    <div id="pb-teaser-msg"></div>
-  </div>
-
-  <!-- First Visit Popover -->
-  <div id="pb-first-visit-popover" role="dialog" aria-modal="false" aria-label="Welcome to Lure">
-    <div class="pb-popover-title">Welcome to Lure AI Lab!</div>
-    <div class="pb-popover-text">Ready to see how PhishSim works? Take our recommended "Getting Started" tour to walkthrough the sandbox, campaign setup, and live dashboard metrics.</div>
-    <div class="pb-popover-actions">
-      <button class="pb-popover-btn primary" id="pb-fv-walkthrough-btn" onclick="chooseLureOnboarding('walkthrough')">Take recommended Tour</button>
-      <button class="pb-popover-btn secondary" id="pb-fv-generate-btn" onclick="chooseLureOnboarding('generate')">Just generate a lure</button>
+  <!-- Unified Lure Speech Popover (First-visit, Insights, Teasers) -->
+  <div id="pb-speech-popover" class="pb-speech-popover" role="dialog" aria-live="polite" aria-hidden="true" style="display: none;">
+    <div class="pb-popover-header">
+      <span id="pb-popover-label" class="pb-popover-label">Lure</span>
+      <button id="pb-popover-dismiss" class="pb-popover-dismiss-btn" title="Dismiss" aria-label="Dismiss">✕</button>
     </div>
+    <div id="pb-popover-title" class="pb-popover-title" style="display:none;"></div>
+    <div id="pb-popover-text" class="pb-popover-text"></div>
+    <div id="pb-popover-actions" class="pb-popover-actions" style="display:none;"></div>
   </div>
 
   <!-- Walkthrough Speech Bubble -->
   <div id="pb-wt-bubble" style="display: none;"></div>
-
-  <!-- Proactive insight callout (non-blocking, near avatar) -->
-  <div id="pb-callout" aria-live="polite" role="status" aria-hidden="true">
-    <div id="pb-callout-label">Lure — Insight</div>
-    <button id="pb-callout-dismiss" title="Dismiss" aria-label="Dismiss insight">✕</button>
-    <div id="pb-callout-text"></div>
-  </div>
 
   <!-- Draggable Mascot Avatar Button -->
   <button id="pb-avatar" type="button"
@@ -3362,6 +3460,7 @@
     <div id="pb-avatar-wrap">
       <div id="pb-avatar-inner">
         <div id="pb-avatar-glow-ring"></div>
+        <div id="pb-open-ring"></div>
         <img id="pb-avatar-img-a" src="{{ url_for('static', filename='images/lure/lure_idle.png') }}" alt="" class="pb-mascot-img visible">
         <img id="pb-avatar-img-b" src="{{ url_for('static', filename='images/lure/lure_idle.png') }}" alt="" class="pb-mascot-img">
       </div>
@@ -3578,10 +3677,6 @@
         <span class="pb-chat-header-title">Ask Lure</span>
         <span class="pb-chat-header-subtitle">AI Security Assistant</span>
       </div>
-      <div class="pb-chat-engine-tag">
-        <span class="pb-engine-status-dot"></span>
-        <span>AI Engine v2</span>
-      </div>
     </div>
     <div class="pb-chat-layout-wrapper">
       <div class="pb-chat-container">
@@ -3632,9 +3727,8 @@
   </div>
 
   <div class="pb-panel-footer">
-    <span style="display: flex; align-items: center; gap: 6px; flex-shrink: 0; white-space: nowrap;">
-      <i class="ti ti-settings ti-spin" style="color:var(--primary); display: inline-block; flex-shrink: 0; margin-right: 4px;" aria-hidden="true"></i>
-      Lure &mdash; Powered by PhishSim AI Engine v2
+    <span style="font-size: var(--lure-font-xs); color: var(--text-secondary,var(--lure-text-secondary)); font-weight: 500;">
+      Lure AI &mdash; Always watching your back
     </span>
     <a href="#" id="pb-reset-visitor" style="font-size: var(--lure-font-xs); color: var(--text-secondary,var(--lure-text-secondary)); text-decoration: none; opacity: 0.7; cursor: pointer; transition: opacity 0.2s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.7">Forget me</a>
   </div>
@@ -3647,90 +3741,12 @@
   <div class="pb-inner-wrap">
     <div class="pb-inner-head">
       <div class="pb-panel-title"><i class="ti ti-mood-smile" aria-hidden="true"></i> Lure — AI Lure Lab</div>
-      <div class="pb-panel-tabs" style="margin-left: 20px;">
-        <button class="pb-inline-tab-btn pb-tab-btn active" data-tab="il-generate">Generate</button>
-        <button class="pb-inline-tab-btn pb-tab-btn" data-tab="il-spotphish">Spot Phish</button>
-        <button class="pb-inline-tab-btn pb-tab-btn" data-tab="il-walkthrough">How This Works</button>
-      </div>
       <button class="pb-icon-btn" id="pb-inline-collapse" aria-label="Collapse">
         <i class="ti ti-minimize" aria-hidden="true"></i>
       </button>
     </div>
-    <div class="pb-inner-body">
-      
-      <!-- TAB PANEL: Generate -->
-      <div class="pb-inline-tab-panel active" id="pb-tab-il-generate">
-        <div class="pb-chips">
-          <button class="pb-chip" onclick="pbGen('ceo_fraud',true)" style="color:var(--primary);border-color:color-mix(in srgb,var(--primary) 32%,transparent);">CEO Fraud</button>
-          <button class="pb-chip" onclick="pbGen('it_alert',true)" style="color:var(--warning);border-color:color-mix(in srgb,var(--warning) 32%,transparent);">IT Alert</button>
-          <button class="pb-chip" onclick="pbGen('hr_update',true)" style="color:var(--success,var(--lure-success));border-color:color-mix(in srgb,var(--success,var(--lure-success)) 32%,transparent);">HR Update</button>
-          <button class="pb-chip" onclick="pbGen('invoice',true)" style="color:var(--danger);border-color:color-mix(in srgb,var(--danger) 32%,transparent);">Urgent Invoice</button>
-        </div>
-        <div class="pb-skeleton-wrap" id="pb-il-gen-loader">
-          <div class="skeleton-block" style="width:78%;height:12px;margin-bottom:8px;"></div>
-          <div class="skeleton-block" style="width:60%;height:12px;margin-bottom:8px;"></div>
-          <div class="skeleton-block" style="width:70%;height:12px;"></div>
-        </div>
-        <div class="pb-email-card" id="pb-il-card">
-          <div class="pb-chrome">
-            <div class="pb-chrome-dots"><span style="background:var(--danger);"></span><span style="background:var(--warning);"></span><span style="background:var(--success,var(--lure-success));"></span></div>
-            <div style="font-family:var(--mono);font-size: var(--lure-font-xs);color:color-mix(in srgb,var(--text-secondary,var(--lure-text-secondary)) 45%,transparent);">Simulated Inbox — example-corp.test</div>
-            <div style="display:flex; align-items:center; gap:8px;">
-              <button class="pb-icon-btn" onclick="pbCopyLure(true)" title="Copy email body" aria-label="Copy" style="width:22px; height:22px; font-size: var(--lure-font-sm); border-radius:5px;">
-                <i class="ti ti-copy" aria-hidden="true"></i>
-              </button>
-              <button class="pb-icon-btn" onclick="pbDownloadLure(true)" title="Download as .eml" aria-label="Download" style="width:22px; height:22px; font-size: var(--lure-font-sm); border-radius:5px;">
-                <i class="ti ti-download" aria-hidden="true"></i>
-              </button>
-            </div>
-          </div>
-          <div class="pb-mail-header">
-            <div class="pb-mail-field"><span class="pb-mail-lbl">From</span><span id="pb-il-sender" style="color:var(--text-primary,var(--lure-text-primary));"></span></div>
-            <div class="pb-mail-field"><span class="pb-mail-lbl">Subject</span><span id="pb-il-subject" style="color:var(--primary);font-weight:600;"></span></div>
-          </div>
-          <div class="pb-mail-body" id="pb-il-body"></div>
-        </div>
-        <div class="pb-meta" id="pb-il-meta">
-          <div class="pb-tactic" id="pb-il-tactic"></div>
-          <div class="pb-disc">Fictional demo — Example Corp. Not a real target.</div>
-        </div>
-        <div class="pb-error-msg" id="pb-il-error"></div>
-      </div>
-
-      <!-- TAB PANEL: Spot Phish -->
-      <div class="pb-inline-tab-panel" id="pb-tab-il-spotphish">
-        <div class="pb-dialogue" style="margin-bottom: 12px;">
-          <div class="pb-dialogue-icon" id="pb-spotphish-il-avatar-container"></div>
-          <div class="pb-bubble" id="stp-il-dialogue-text">
-            Two freshly generated emails below. One is legitimate, one is a phishing attempt. <strong style="color:var(--primary);">Click the fake one.</strong>
-          </div>
-        </div>
-        <div class="stp-score-row" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-          <div>Score: <span id="stp-il-score">0</span> / <span id="stp-il-total">0</span></div>
-          <div id="stp-il-limit-text" style="font-size: var(--lure-font-xs); color:var(--text-secondary,var(--lure-text-secondary));">Rounds Left Today: 3 / 3</div>
-        </div>
-        <div class="stp-pair" id="stp-il-pair-container"></div>
-        <div class="stp-result" id="stp-il-result" style="margin-top:12px; display:none;"></div>
-        <div style="margin-top:12px; display:flex; justify-content:flex-end;">
-          <button class="pb-action-btn" id="stp-il-next-btn" style="display:none;" onclick="stpInlineNext()">
-            <i class="ti ti-arrow-right" aria-hidden="true"></i> Next Round
-          </button>
-        </div>
-      </div>
-
-      <!-- TAB PANEL: Walkthrough selection list (Dynamic overlay) -->
-      <div class="pb-inline-tab-panel" id="pb-tab-il-walkthrough" style="padding: 10px 0;">
-        <div id="pb-wt-guide-picker" style="padding: 12px 10px;">
-          <h4 style="font-family:var(--sans, 'Space Grotesk', sans-serif); font-size: var(--lure-font-2xl); font-weight:600; color:var(--text-primary,var(--lure-text-primary)); margin-bottom:6px; text-align: center;">Interactive Guided Tours</h4>
-          <p style="font-family:var(--sans, 'Space Grotesk', sans-serif); font-size: var(--lure-font-lg); line-height:1.6; color:var(--text-secondary,var(--lure-text-secondary)); text-align: center; margin-bottom:16px;">
-            Select a specialized guide below, and I'll walk you through the platform step-by-step.
-          </p>
-          
-          <div class="pb-wt-guide-list"></div>
-        </div>
-        <div id="pb-wt-step-container" style="display: none;"></div>
-      </div>
-
+    <div class="pb-inner-body" id="pb-inline-body">
+      <!-- #pb-panel-content-area is dynamically appended here on maximize -->
     </div>
   </div>
 </section>
@@ -4300,24 +4316,128 @@
       // Stub - mascot remains in the corner!
     }
 
-    function repositionFvPopover() {
-      if (!fvOpen) return;
-      const avatarR = avatar.getBoundingClientRect();
-      const popW    = fvPopover.offsetWidth;
-      const popH    = fvPopover.offsetHeight;
+    /* Unified Popover Queue System (Task 2) */
+    const popoverQueue = [];
+    let activePopover = null;
+    let popoverTimeout = null;
 
-      let left = avatarR.left + (avatarR.width / 2) - (popW / 2);
-      let top  = avatarR.top - popH - 12;
-
-      const margin = 10;
-      left = Math.max(margin, Math.min(left, window.innerWidth - popW - margin));
-      if (top < margin) {
-        top = avatarR.bottom + 12;
+    function showPopover(config) {
+      if (activePopover !== null) {
+        const isDuplicate = popoverQueue.some(item => item.type === config.type && item.message === config.message);
+        if (!isDuplicate) {
+          popoverQueue.push(config);
+        }
+        return;
       }
-      top = Math.max(margin, Math.min(top, window.innerHeight - popH - margin));
+      _displayPopover(config);
+    }
 
-      fvPopover.style.left = left + 'px';
-      fvPopover.style.top  = top + 'px';
+    function _displayPopover(config) {
+      const popoverEl = document.getElementById('pb-speech-popover');
+      const titleEl = document.getElementById('pb-popover-title');
+      const textEl = document.getElementById('pb-popover-text');
+      const actionsEl = document.getElementById('pb-popover-actions');
+      const labelEl = document.getElementById('pb-popover-label');
+      const dismissBtn = document.getElementById('pb-popover-dismiss');
+      if (!popoverEl || !textEl) return;
+
+      activePopover = config;
+      if (popoverTimeout) { clearTimeout(popoverTimeout); popoverTimeout = null; }
+
+      popoverEl.className = `pb-speech-popover pb-popover-${config.type || 'teaser'}`;
+
+      if (config.type === 'first-visit') {
+        if (labelEl) labelEl.textContent = 'Lure AI Lab';
+        if (titleEl) {
+          titleEl.textContent = config.title || 'Welcome to Lure AI Lab!';
+          titleEl.style.display = 'block';
+        }
+        textEl.textContent = config.message || 'Ready to see how PhishSim works? Take our recommended tour to walkthrough the platform.';
+        if (actionsEl) {
+          actionsEl.innerHTML = `
+            <button class="pb-popover-btn primary" onclick="chooseLureOnboarding('walkthrough')">Take recommended Tour</button>
+            <button class="pb-popover-btn secondary" onclick="chooseLureOnboarding('generate')">Just generate a lure</button>
+          `;
+          actionsEl.style.display = 'flex';
+        }
+      } else if (config.type === 'insight') {
+        if (labelEl) labelEl.textContent = 'Lure — Insight';
+        if (titleEl) {
+          if (config.title) {
+            titleEl.textContent = config.title;
+            titleEl.style.display = 'block';
+          } else {
+            titleEl.style.display = 'none';
+          }
+        }
+        textEl.textContent = config.message;
+        if (actionsEl) { actionsEl.style.display = 'none'; actionsEl.innerHTML = ''; }
+        
+        popoverEl.style.cursor = config.tourName ? 'pointer' : 'default';
+        popoverEl.onclick = (e) => {
+          if (e.target && (e.target.id === 'pb-popover-dismiss' || e.target.classList.contains('pb-popover-dismiss-btn'))) return;
+          if (config.tourName) {
+            hidePopover();
+            startWalkthrough(config.tourName);
+          }
+        };
+
+        const dur = config.duration || 6000;
+        popoverTimeout = setTimeout(hidePopover, dur);
+      } else {
+        // Teaser
+        if (labelEl) labelEl.textContent = 'Lure AI';
+        if (titleEl) titleEl.style.display = 'none';
+        textEl.textContent = config.message;
+        if (actionsEl) actionsEl.style.display = 'none';
+
+        const dur = config.duration || 5000;
+        popoverTimeout = setTimeout(hidePopover, dur);
+      }
+
+      if (dismissBtn) {
+        dismissBtn.onclick = (e) => {
+          e.stopPropagation();
+          hidePopover();
+        };
+      }
+
+      popoverEl.style.display = 'block';
+      popoverEl.setAttribute('aria-hidden', 'false');
+      repositionFvPopover();
+    }
+
+    function hidePopover() {
+      const popoverEl = document.getElementById('pb-speech-popover');
+      if (popoverTimeout) { clearTimeout(popoverTimeout); popoverTimeout = null; }
+      if (popoverEl) {
+        popoverEl.style.display = 'none';
+        popoverEl.setAttribute('aria-hidden', 'true');
+        popoverEl.onclick = null;
+      }
+      activePopover = null;
+
+      if (popoverQueue.length > 0) {
+        const nextConfig = popoverQueue.shift();
+        setTimeout(() => { _displayPopover(nextConfig); }, 300);
+      }
+    }
+
+    function openFvPopover() {
+      if (panelOpen) closePanel();
+      showPopover({ type: 'first-visit' });
+    }
+
+    function closeFvPopover() {
+      hidePopover();
+    }
+
+    function showCallout(msg, tourName) {
+      showPopover({ type: 'insight', message: msg, tourName: tourName });
+    }
+
+    function hideCallout() {
+      hidePopover();
     }
 
     function updateAvatarBadge() {
@@ -4341,123 +4461,38 @@
     }
 
     function toggleMaximize() {
-      const isMaximized = panel.classList.contains('pb-panel-maximized');
+      const isMaximized = inlineSec && inlineSec.style.display === 'flex';
+      const contentArea = document.querySelector('.pb-panel-content-area');
+      const inlineBody = document.getElementById('pb-inline-body');
+      const panelWrapper = document.querySelector('#pb-panel .pb-panel-body-wrapper');
       const maxIcon = document.querySelector('#pb-max-btn i');
       const maxBtn = document.getElementById('pb-max-btn');
 
-      // 1. Fade out content immediately
-      panel.classList.add('pb-content-transitioning');
-      panel.classList.add('pb-size-transitioning');
-
-      // 2. Perform resize after the fade out completes (150ms)
-      setTimeout(() => {
-        if (!isMaximized) {
-          // Capture normal bounds
-          const currHeight = panel.offsetHeight;
-          const currWidth = panel.offsetWidth;
-          const currRect = panel.getBoundingClientRect();
-
-          // Set inline styles so transition starts from here
-          panel.style.width = currWidth + 'px';
-          panel.style.height = currHeight + 'px';
-          panel.style.left = currRect.left + 'px';
-          panel.style.top = currRect.top + 'px';
-
-          void panel.offsetHeight; // reflow
-
-          // Maximize
-          panel.classList.add('pb-panel-maximized');
-
-          // Update button states
-          if (maxIcon) {
-            maxIcon.className = 'ti ti-minimize';
-          }
-          if (maxBtn) {
-            maxBtn.setAttribute('title', 'Collapse panel');
-            maxBtn.setAttribute('aria-label', 'Collapse');
-          }
-          
-          setTimeout(() => {
-            updateHeaderAvatarPosition(true);
-          }, 0);
-        } else {
-          // Capture current maximized size
-          const maxRect = panel.getBoundingClientRect();
-          panel.style.width = maxRect.width + 'px';
-          panel.style.height = maxRect.height + 'px';
-          panel.style.left = maxRect.left + 'px';
-          panel.style.top = maxRect.top + 'px';
-
-          void panel.offsetHeight; // reflow
-
-          // Collapse class
-          panel.classList.remove('pb-panel-maximized');
-
-          // Temporarily reset inline height/width to compute normal target size
-          panel.style.width = '';
-          panel.style.height = '';
-
-          const avatarR = avatar.getBoundingClientRect();
-          const normalW = 450;
-          let normalLeft = avatarR.left + (avatarR.width / 2) - (normalW / 2);
-          const margin = 10;
-          normalLeft = Math.max(margin, Math.min(normalLeft, window.innerWidth - normalW - margin));
-
-          const targetHeight = panel.offsetHeight;
-          let normalTop = avatarR.top - targetHeight - 12;
-          if (normalTop < margin) {
-            normalTop = avatarR.bottom + 12;
-          }
-          normalTop = Math.max(margin, Math.min(normalTop, window.innerHeight - targetHeight - margin));
-
-          // Reset to max size to start transition
-          panel.style.width = maxRect.width + 'px';
-          panel.style.height = maxRect.height + 'px';
-          panel.style.left = maxRect.left + 'px';
-          panel.style.top = maxRect.top + 'px';
-
-          void panel.offsetHeight; // reflow
-
-          // Animate back to normal size
-          panel.style.width = normalW + 'px';
-          panel.style.height = targetHeight + 'px';
-          panel.style.left = normalLeft + 'px';
-          panel.style.top = normalTop + 'px';
-          
-          setTimeout(() => {
-            updateHeaderAvatarPosition(true);
-          }, 0);
-
-          // Clean up inline styles once transition completes
-          setTimeout(() => {
-            if (!panel.classList.contains('pb-panel-maximized') && panelOpen) {
-              panel.style.width = '';
-              panel.style.height = '';
-              repositionPanel();
-            }
-          }, 350);
-
-          // Update button states
-          if (maxIcon) {
-            maxIcon.className = 'ti ti-maximize';
-          }
-          if (maxBtn) {
-            maxBtn.setAttribute('title', 'Expand to page');
-            maxBtn.setAttribute('aria-label', 'Expand');
-          }
+      if (!isMaximized) {
+        if (contentArea && inlineBody) {
+          inlineBody.appendChild(contentArea);
         }
-
-        // 3. Fade content back in after resize finishes (350ms)
-        setTimeout(() => {
-          panel.classList.remove('pb-content-transitioning');
-          panel.classList.remove('pb-size-transitioning');
-          repositionPanel();
-        }, 350);
-      }, 150);
+        panel.style.display = 'none';
+        panel.classList.remove('pb-open');
+        inlineSec.style.display = 'flex';
+        panelOpen = true;
+        if (maxIcon) maxIcon.className = 'ti ti-minimize';
+        if (maxBtn) maxBtn.setAttribute('title', 'Collapse panel');
+      } else {
+        if (contentArea && panelWrapper) {
+          panelWrapper.appendChild(contentArea);
+        }
+        inlineSec.style.display = 'none';
+        panel.style.display = '';
+        panel.classList.add('pb-open');
+        if (maxIcon) maxIcon.className = 'ti ti-maximize';
+        if (maxBtn) maxBtn.setAttribute('title', 'Expand to page');
+        repositionPanel();
+      }
     }
 
     function openPanel() {
-      if (fvOpen) closeFvPopover();
+      if (activePopover) hidePopover();
       
       if (panel._closeTimeout) {
         clearTimeout(panel._closeTimeout);
@@ -4599,21 +4634,18 @@
 
     // Teaser hover interaction
     avatar.addEventListener('pointerenter', () => {
-      // Lazy pre-warm trigger
       prewarmCeoFraud();
 
-      if (!panelOpen && !fvOpen) {
-        const msgEl = document.getElementById('pb-teaser-msg');
-        if (msgEl) {
-          const rand = LURE_TEASERS[Math.floor(Math.random() * LURE_TEASERS.length)];
-          msgEl.textContent = `"${rand}"`;
-        }
-        teaser.classList.add('pb-show');
+      if (!panelOpen && !activePopover) {
+        const rand = LURE_TEASERS[Math.floor(Math.random() * LURE_TEASERS.length)];
+        showPopover({ type: 'teaser', message: rand });
       }
     });
 
     avatar.addEventListener('pointerleave', () => {
-      teaser.classList.remove('pb-show');
+      if (activePopover && activePopover.type === 'teaser') {
+        hidePopover();
+      }
     });
 
     /* ── Click / Close hooks ── */
@@ -4629,8 +4661,8 @@
         avatar.classList.remove('pb-squash-active');
         if (panelOpen) {
           closePanel();
-        } else if (fvOpen) {
-          closeFvPopover();
+        } else if (activePopover) {
+          hidePopover();
         } else {
           const dismissed = localStorage.getItem('first_visit_popover_dismissed') === 'true';
           const wtActiveNow = typeof wtActive !== 'undefined' && wtActive;
@@ -4671,17 +4703,23 @@
       });
     }
 
-    document.getElementById('pb-fv-walkthrough-btn').addEventListener('click', () => {
-      localStorage.setItem('first_visit_popover_dismissed', 'true');
-      closeFvPopover();
-      openWalkthroughDirectly();
-    });
+    const fvBtn = document.getElementById('pb-fv-walkthrough-btn');
+    if (fvBtn) {
+      fvBtn.addEventListener('click', () => {
+        localStorage.setItem('first_visit_popover_dismissed', 'true');
+        closeFvPopover();
+        openWalkthroughDirectly();
+      });
+    }
 
-    document.getElementById('pb-fv-generate-btn').addEventListener('click', () => {
-      localStorage.setItem('first_visit_popover_dismissed', 'true');
-      closeFvPopover();
-      openPanel();
-    });
+    const fvGenBtn = document.getElementById('pb-fv-generate-btn');
+    if (fvGenBtn) {
+      fvGenBtn.addEventListener('click', () => {
+        localStorage.setItem('first_visit_popover_dismissed', 'true');
+        closeFvPopover();
+        openPanel();
+      });
+    }
 
     function isInsideWidgetEvent(e) {
       if (!e || !e.target) return false;
@@ -4928,30 +4966,11 @@
     });
 
     /* ── Maximize and Collapse handlers ── */
-    document.getElementById('pb-max-btn').addEventListener('click', () => {
-      // Toggle maximize in-place on the same panel
-      if (!panelOpen) {
-        // If closed, open directly as maximized
-        panel.classList.add('pb-panel-maximized');
-        const maxIcon = document.querySelector('#pb-max-btn i');
-        const maxBtn = document.getElementById('pb-max-btn');
-        if (maxIcon) {
-          maxIcon.className = 'ti ti-minimize';
-        }
-        if (maxBtn) {
-          maxBtn.setAttribute('title', 'Collapse panel');
-          maxBtn.setAttribute('aria-label', 'Collapse');
-        }
-        openPanel();
-      } else {
+    document.getElementById('pb-max-btn').addEventListener('click', toggleMaximize);
+    document.getElementById('pb-inline-collapse').addEventListener('click', () => {
+      if (inlineSec.style.display === 'flex') {
         toggleMaximize();
       }
-    });
-
-    document.getElementById('pb-inline-collapse').addEventListener('click', () => {
-      exitWalkthrough();
-      expanded = false;
-      inlineSec.style.display = 'none';
     });
 
     function openWalkthroughDirectly() {
@@ -7533,6 +7552,25 @@
         dialogueEl.innerHTML = 'Two emails below — one legit, one is a phish. <strong style="color:var(--primary);">Click the fake one.</strong>';
       }
 
+      // Memory continuity for Spot-the-Phish
+      const stpMem = JSON.parse(localStorage.getItem('lure_stp_memory') || 'null');
+      let memBanner = document.getElementById('stp-memory-banner');
+      if (stpMem && stpMem.total > 0) {
+        if (!memBanner) {
+          memBanner = document.createElement('div');
+          memBanner.id = 'stp-memory-banner';
+          memBanner.className = 'pb-memory-banner';
+          const dial = document.getElementById('stp-dialogue-text');
+          if (dial && dial.parentNode) {
+            dial.parentNode.insertBefore(memBanner, dial);
+          }
+        }
+        memBanner.innerHTML = `<i class="ti ti-history" aria-hidden="true"></i> Last round you got ${stpMem.score}/${stpMem.total} &mdash; let's beat it!`;
+        memBanner.style.display = 'flex';
+      } else if (memBanner) {
+        memBanner.style.display = 'none';
+      }
+
       con.innerHTML = `
         <div class="pb-skeleton-wrap" style="display:block; width:100%;">
           <div class="skeleton-block" style="width:80%;height:10px;"></div>
@@ -7598,6 +7636,7 @@
               }
             }
             gameScoreTotal++;
+            localStorage.setItem('lure_stp_memory', JSON.stringify({ score: gameScoreCorrect, total: gameScoreTotal }));
             document.getElementById('stp-score').textContent = gameScoreCorrect;
             document.getElementById('stp-total').textContent = gameScoreTotal;
             nextBtn.style.display = 'inline-flex';
@@ -7715,7 +7754,7 @@
 
 
     /* ================================================================
-       Risk Score calculations
+       Risk Score calculations & Memory (Task 4 & Task 5)
        ================================================================ */
     window.rsCalc = function() {
       const ind = document.querySelector('input[name="rs-ind"]:checked');
@@ -7733,14 +7772,26 @@
                   : pct >= 35 ? 'Moderate exposure — some controls in place'
                   :             'Lower exposure — good hygiene, keep it up';
       
-      let reaction = '';
-      if (pct >= 60) {
-        reaction = getRandomVariant(riskHighPool, 'risk_high');
-      } else if (pct >= 35) {
-        reaction = getRandomVariant(riskMedPool, 'risk_med');
+      const indVal = +ind.value;
+      const szVal  = +sz.value;
+      const trVal  = +tr.value;
+
+      let reasoning = '';
+      if (indVal === 3 && szVal === 3 && trVal >= 2) {
+        reasoning = "Finance & Banking at enterprise scale without regular simulation drills is precisely the high-yield profile threat actors target first.";
+      } else if (indVal === 2 && trVal >= 2) {
+        reasoning = "Healthcare and public sector infrastructure with infrequent training creates critical blind spots for spear-phishing and credential traps.";
+      } else if (trVal === 0) {
+        reasoning = "Quarterly phishing simulations establish strong security hygiene across your team, dramatically reducing credential harvesting success rates.";
+      } else if (szVal === 1 && trVal >= 2) {
+        reasoning = "Smaller organizations without routine simulation training are frequently targeted as entry vectors into larger partner supply chains.";
+      } else if (indVal === 1 && trVal >= 2) {
+        reasoning = "Tech and SaaS environments face constant automated phishing probes; annual training alone leaves employees vulnerable to novel pretexts.";
       } else {
-        reaction = getRandomVariant(riskLowPool, 'risk_low');
+        reasoning = "Infrequent training coupled with expanding attack surfaces makes employee credentials vulnerable to tailored social engineering.";
       }
+
+      localStorage.setItem('lure_rs_memory', JSON.stringify({ gauge: pct, label: label }));
 
       document.getElementById('rs-form').style.display = 'none';
       const res = document.getElementById('rs-result');
@@ -7750,7 +7801,7 @@
       document.getElementById('rs-gauge').style.color = color;
       document.getElementById('rs-gauge').textContent = pct + '%';
       document.getElementById('rs-gauge-lbl').textContent = label;
-      document.getElementById('rs-gauge-reaction').innerHTML = '🦈 Lure says: <em>"' + esc(reaction) + '"</em>';
+      document.getElementById('rs-gauge-reaction').innerHTML = '🦈 <strong>Lure Analysis:</strong> ' + esc(reasoning);
       repositionPanel();
     };
 
@@ -7762,6 +7813,23 @@
       document.querySelectorAll('.rs-opt input').forEach(i => i.checked = false);
       document.getElementById('rs-dialogue-text').textContent = "3 quick questions. I'll estimate your organisation's phishing exposure.";
       updateMessageAvatar('pb-riskscore-avatar-container', 'idle');
+
+      const rsMem = JSON.parse(localStorage.getItem('lure_rs_memory') || 'null');
+      if (rsMem && rsMem.gauge) {
+        const formEl = document.getElementById('rs-form');
+        if (formEl) {
+          let memBanner = document.getElementById('rs-memory-banner');
+          if (!memBanner) {
+            memBanner = document.createElement('div');
+            memBanner.id = 'rs-memory-banner';
+            memBanner.className = 'pb-memory-banner';
+            formEl.prepend(memBanner);
+          }
+          memBanner.innerHTML = `<i class="ti ti-history" aria-hidden="true"></i> Last time I estimated ${rsMem.gauge}% exposure &mdash; want to redo it?`;
+          memBanner.style.display = 'flex';
+        }
+      }
+
       repositionPanel();
     };
 
@@ -8391,7 +8459,7 @@
           </div>
         </div>
         <div class="pb-chat-bubble-container">
-          <div class="pb-chat-bubble pb-chat-thinking-bubble">
+          <div class="pb-chat-bubble pb-chat-thinking-bubble pb-thinking">
             <div class="pb-thinking-body">
               <div class="pb-thinking-radar">
                 <span class="pb-radar-ring"></span>
