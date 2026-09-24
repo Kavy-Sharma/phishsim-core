@@ -11,10 +11,10 @@
     max-width: 960px;
     margin: 0 auto;
     padding: 0 1.5rem 4rem;
-    --ta-urgency: #FCD34D;
-    --ta-authority: #F87171;
-    --ta-financial: #A78BFA;
-    --ta-credential: #22D3EE;
+    --ta-urgency: var(--warning);
+    --ta-authority: var(--danger);
+    --ta-financial: var(--primary);
+    --ta-credential: var(--primary);
 }
 
 /* ── Hero ─────────────────────────────────────────────────────── */
@@ -33,7 +33,7 @@
     text-transform: uppercase;
     color: var(--primary);
     background: var(--primary-dim);
-    border: 1px solid rgba(56,189,248,0.25);
+    border: 1px solid color-mix(in srgb, var(--primary) 25%, transparent);
     padding: 5px 12px;
     border-radius: var(--radius-full);
     margin-bottom: 1rem;
@@ -94,7 +94,7 @@
 .ta-tab.active {
     background: var(--primary-dim);
     color: var(--primary);
-    border: 1px solid rgba(56,189,248,0.25);
+    border: 1px solid color-mix(in srgb, var(--primary) 25%, transparent);
 }
 
 /* ── Main Card ────────────────────────────────────────────────── */
@@ -131,17 +131,17 @@
     align-items: center;
     justify-content: space-between;
     padding: 12px 18px;
-    background: linear-gradient(180deg, rgba(80, 20, 20, 0.95) 0%, rgba(48, 10, 10, 0.88) 100%);
-    border-bottom: 1px solid rgba(239, 68, 68, 0.22);
-    border-top: 2px solid rgba(239, 68, 68, 0.55);  /* red accent seam */
+    background: linear-gradient(180deg, color-mix(in srgb, var(--danger) 18%, rgba(0,0,0,0.85)) 0%, color-mix(in srgb, var(--danger) 8%, rgba(0,0,0,0.92)) 100%);
+    border-bottom: 1px solid color-mix(in srgb, var(--danger) 22%, transparent);
+    border-top: 2px solid color-mix(in srgb, var(--danger) 55%, transparent);  /* red accent seam */
     border-radius: var(--radius-lg) var(--radius-lg) 0 0;
 }
 .ta-dots { display: flex; gap: 6px; }
 .ta-dot { width: 12px; height: 12px; border-radius: 50%; cursor: pointer; transition: transform 0.12s ease, filter 0.12s ease; }
 .ta-dot:hover { transform: scale(1.25); filter: brightness(1.2); }
-.ta-dot.red   { background: #FF5F57; }
-.ta-dot.amber { background: #FFBD2E; }
-.ta-dot.green { background: #28C941; }
+.ta-dot.red   { background: var(--danger); }
+.ta-dot.amber { background: var(--warning); }
+.ta-dot.green { background: var(--success); }
 .ta-terminal-label {
     font-family: var(--font-mono);
     font-size: 0.68rem;
@@ -214,7 +214,7 @@
 .ta-phish-feed {
     font-family: var(--font-mono);
     font-size: 0.78rem;
-    color: #f87171;
+    color: var(--danger);
     text-align: center;
     letter-spacing: 0.03em;
     opacity: 0;
@@ -368,7 +368,7 @@ body.light-theme .ta-expand-close:hover { background: rgba(0,0,0,0.1); color: #0
     justify-content: center;
     gap: 10px;
     padding: 14px 24px;
-    background-color: #f87171;          /* danger red — this is a threat scanner */
+    background-color: var(--danger);          /* danger red — this is a threat scanner */
     border: 1px solid rgba(255, 255, 255, 0.25);
     border-bottom: 3px solid rgba(0, 0, 0, 0.45);
     border-radius: var(--radius-lg);
@@ -378,7 +378,7 @@ body.light-theme .ta-expand-close:hover { background: rgba(0,0,0,0.1); color: #0
     color: #020617;
     letter-spacing: 0.05em;
     cursor: pointer;
-    box-shadow: 0 4px 18px rgba(248, 113, 113, 0.38), inset 0 1px 0 rgba(255,255,255,0.2);
+    box-shadow: 0 4px 18px color-mix(in srgb, var(--danger) 38%, transparent), inset 0 1px 0 rgba(255,255,255,0.2);
     transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
     overflow: hidden;
@@ -390,14 +390,14 @@ body.light-theme .ta-expand-close:hover { background: rgba(0,0,0,0.1); color: #0
     position: absolute;
     inset: 0;
     border-radius: inherit;
-    background-image: linear-gradient(135deg, #fca5a5 0%, #ef4444 100%);
+    background-image: linear-gradient(135deg, color-mix(in srgb, var(--danger) 80%, #fff) 0%, var(--danger) 100%);
     z-index: -1;
     transition: opacity 0.15s ease;
 }
 .ta-analyze-btn:hover:not(:disabled) {
     transform: translateY(-2px);
     border-bottom-width: 4px;
-    box-shadow: 0 8px 24px rgba(248, 113, 113, 0.55), inset 0 1px 0 rgba(255,255,255,0.3);
+    box-shadow: 0 8px 24px color-mix(in srgb, var(--danger) 55%, transparent), inset 0 1px 0 rgba(255,255,255,0.3);
 }
 .ta-analyze-btn:hover:not(:disabled)::before {
     opacity: 1.0;
@@ -406,7 +406,7 @@ body.light-theme .ta-expand-close:hover { background: rgba(0,0,0,0.1); color: #0
 .ta-analyze-btn:active:not(:disabled) {
     transform: translateY(1px);
     border-bottom-width: 1px;
-    box-shadow: 0 2px 8px rgba(248, 113, 113, 0.25);
+    box-shadow: 0 2px 8px color-mix(in srgb, var(--danger) 25%, transparent);
 }
 .ta-analyze-btn:disabled {
     background-color: rgba(255, 255, 255, 0.06) !important;
@@ -419,14 +419,14 @@ body.light-theme .ta-expand-close:hover { background: rgba(0,0,0,0.1); color: #0
 }
 .ta-analyze-btn:disabled::before { opacity: 0 !important; }
 .ta-analyze-btn:focus-visible {
-    outline: 2px solid #f87171;
+    outline: 2px solid var(--danger);
     outline-offset: 3px;
-    box-shadow: 0 0 0 4px rgba(248, 113, 113, 0.25);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--danger) 25%, transparent);
 }
 .ta-analyze-btn.scanning { animation: scanPulse 1s ease-in-out infinite; pointer-events: none; opacity: 0.85; }
 @keyframes scanPulse {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(248,113,113,0.45); }
-    50% { box-shadow: 0 0 0 10px rgba(248,113,113,0); }
+    0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--danger) 45%, transparent); }
+    50% { box-shadow: 0 0 0 10px color-mix(in srgb, var(--danger) 0%, transparent); }
 }
 
 /* ── Result Header ────────────────────────────────────────────── */
@@ -482,7 +482,7 @@ body.light-theme .ta-expand-close:hover { background: rgba(0,0,0,0.1); color: #0
     background: rgba(30, 41, 59, 0.95);
     color: var(--primary);
     border-color: var(--primary);
-    box-shadow: 0 4px 12px rgba(56, 189, 248, 0.15);
+    box-shadow: 0 4px 12px color-mix(in srgb, var(--primary) 15%, transparent);
 }
 .ta-btn-sm:active {
     transform: translateY(1px);
@@ -503,18 +503,26 @@ body.light-theme .ta-expand-close:hover { background: rgba(0,0,0,0.1); color: #0
 
 /* Annotation highlights */
 .ann {
-    border-radius: 3px;
-    padding: 1px 2px;
+    border-radius: 4px;
+    padding: 2px 6px;
+    margin: 0 1px;
     cursor: pointer;
     position: relative;
-    display: inline;
-    transition: filter 0.15s ease;
+    display: inline-block;
+    font-weight: 600;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
 }
-.ann:hover { filter: brightness(1.25); }
-.ann-urgency    { background: rgba(251,191,36,0.2);  border-bottom: 2px solid #FCD34D; color: #FDE68A; }
-.ann-authority  { background: rgba(248,113,113,0.18);border-bottom: 2px solid #F87171; color: #FCA5A5; }
-.ann-financial  { background: rgba(167,139,250,0.18);border-bottom: 2px solid #A78BFA; color: #C4B5FD; }
-.ann-credential { background: rgba(34,211,238,0.15); border-bottom: 2px solid #22D3EE; color: #67E8F9; }
+.ann:hover {
+    transform: translateY(-1px);
+    filter: brightness(1.25);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+.ann-urgency    { background: color-mix(in srgb, var(--warning) 22%, transparent);  border: 1px solid color-mix(in srgb, var(--warning) 50%, transparent); color: var(--warning); }
+.ann-authority  { background: color-mix(in srgb, var(--danger) 22%, transparent);   border: 1px solid color-mix(in srgb, var(--danger) 50%, transparent);  color: var(--danger); }
+.ann-financial  { background: color-mix(in srgb, var(--primary) 22%, transparent);  border: 1px solid color-mix(in srgb, var(--primary) 50%, transparent); color: var(--primary); }
+.ann-credential { background: color-mix(in srgb, var(--primary) 18%, transparent);  border: 1px solid color-mix(in srgb, var(--primary) 45%, transparent); color: var(--primary); }
 
 /* Tooltip Portal — rendered at body level to escape overflow:hidden */
 #ta-tt-portal {
@@ -579,10 +587,10 @@ body.light-theme #ta-tt-portal { box-shadow: 0 8px 24px rgba(0,0,0,0.15); }
 .ta-flag-pills { display: flex; flex-wrap: wrap; gap: 7px; }
 .ta-flag-pill { display: flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: var(--radius-full); font-family: var(--font-mono); font-size: 0.7rem; font-weight: 700; border: 1px solid; }
 .ta-flag-pill .pill-count { background: rgba(255,255,255,0.1); border-radius: 4px; padding: 1px 5px; font-size: 0.65rem; }
-.pill-urgency    { background: rgba(251,191,36,0.1);  border-color: rgba(252,211,77,0.3);  color: #FCD34D; }
-.pill-authority  { background: rgba(248,113,113,0.1); border-color: rgba(248,113,113,0.3); color: #F87171; }
-.pill-financial  { background: rgba(167,139,250,0.1); border-color: rgba(167,139,250,0.3); color: #A78BFA; }
-.pill-credential { background: rgba(34,211,238,0.12); border-color: rgba(34,211,238,0.3);  color: #22D3EE; }
+.pill-urgency    { background: color-mix(in srgb, var(--warning) 10%, transparent);  border-color: color-mix(in srgb, var(--warning) 30%, transparent);  color: var(--warning); }
+.pill-authority  { background: color-mix(in srgb, var(--danger) 10%, transparent); border-color: color-mix(in srgb, var(--danger) 30%, transparent); color: var(--danger); }
+.pill-financial  { background: color-mix(in srgb, var(--primary) 10%, transparent); border-color: color-mix(in srgb, var(--primary) 30%, transparent); color: var(--primary); }
+.pill-credential { background: color-mix(in srgb, var(--primary) 12%, transparent); border-color: color-mix(in srgb, var(--primary) 30%, transparent);  color: var(--primary); }
 
 .ta-recommendation { flex: 1; min-width: 220px; background: var(--bg-elevated); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 12px 15px; }
 .ta-rec-label { font-family: var(--font-mono); font-size: 0.6rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
@@ -646,38 +654,38 @@ body.light-theme #ta-tt-portal { box-shadow: 0 8px 24px rgba(0,0,0,0.15); }
    LIGHT THEME
    ══════════════════════════════════════════════════════════════ */
 body.light-theme {
-    --ta-urgency: #B45309;
-    --ta-authority: #DC2626;
-    --ta-financial: #6D28D9;
-    --ta-credential: #0891B2;
+    --ta-urgency: var(--warning);
+    --ta-authority: var(--danger);
+    --ta-financial: var(--primary);
+    --ta-credential: var(--primary);
 }
 body.light-theme .ta-card { box-shadow: 0 10px 40px rgba(0,0,0,0.08); }
 body.light-theme .ta-terminal-header {
-    background: linear-gradient(180deg, rgba(254, 242, 242, 0.95) 0%, rgba(254, 226, 226, 0.88) 100%);
-    border-color: rgba(239, 68, 68, 0.15);
-    border-top: 2px solid rgba(239, 68, 68, 0.4);
+    background: linear-gradient(180deg, color-mix(in srgb, var(--danger) 6%, #fff) 0%, color-mix(in srgb, var(--danger) 12%, #fff) 100%);
+    border-color: color-mix(in srgb, var(--danger) 15%, transparent);
+    border-top: 2px solid color-mix(in srgb, var(--danger) 40%, transparent);
 }
-body.light-theme .ann-urgency    { background: rgba(252,211,77,0.15);  color: #92400E; }
-body.light-theme .ann-authority  { background: rgba(248,113,113,0.12); color: #7F1D1D; }
-body.light-theme .ann-financial  { background: rgba(167,139,250,0.12); color: #4C1D95; }
-body.light-theme .ann-credential { background: rgba(34,211,238,0.1);   color: #164E63; }
+body.light-theme .ann-urgency    { background: color-mix(in srgb, var(--warning) 15%, transparent);  color: var(--warning); }
+body.light-theme .ann-authority  { background: color-mix(in srgb, var(--danger) 12%, transparent); color: var(--danger); }
+body.light-theme .ann-financial  { background: color-mix(in srgb, var(--primary) 12%, transparent); color: var(--primary); }
+body.light-theme .ann-credential { background: color-mix(in srgb, var(--primary) 10%, transparent);   color: var(--primary); }
 body.light-theme .ta-analyze-btn {
-    background-color: #dc2626 !important;   /* danger red in light mode — darker for contrast */
+    background-color: var(--danger) !important;   /* danger red in light mode — darker for contrast */
     color: #ffffff !important;
     border: 1px solid rgba(0, 0, 0, 0.12) !important;
     border-bottom: 3px solid rgba(0, 0, 0, 0.28) !important;
-    box-shadow: 0 4px 14px rgba(220, 38, 38, 0.3), inset 0 1px 0 rgba(255,255,255,0.25) !important;
+    box-shadow: 0 4px 14px color-mix(in srgb, var(--danger) 30%, transparent), inset 0 1px 0 rgba(255,255,255,0.25) !important;
 }
 body.light-theme .ta-analyze-btn::before {
-    background-image: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
+    background-image: linear-gradient(135deg, var(--danger) 0%, var(--danger) 100%);
 }
 body.light-theme .ta-analyze-btn:hover:not(:disabled) {
     border-bottom-width: 4px !important;
-    box-shadow: 0 8px 22px rgba(220, 38, 38, 0.42) !important;
+    box-shadow: 0 8px 22px color-mix(in srgb, var(--danger) 42%, transparent) !important;
 }
 body.light-theme .ta-analyze-btn:active:not(:disabled) {
     border-bottom-width: 1px !important;
-    box-shadow: 0 2px 6px rgba(220, 38, 38, 0.18) !important;
+    box-shadow: 0 2px 6px color-mix(in srgb, var(--danger) 18%, transparent) !important;
 }
 body.light-theme .ta-analyze-btn:disabled {
     background-color: #e2e8f0 !important;
@@ -689,9 +697,9 @@ body.light-theme .ta-analyze-btn:disabled {
     transform: none !important;
 }
 body.light-theme .ta-analyze-btn:focus-visible {
-    outline: 2px solid #dc2626;
+    outline: 2px solid var(--danger);
     outline-offset: 3px;
-    box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.2) !important;
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--danger) 20%, transparent) !important;
 }
 body.light-theme .ta-summary-strip, body.light-theme .ta-result-header { background: rgba(0,0,0,0.03); }
 body.light-theme .ta-legend { background: rgba(0,0,0,0.02); }
@@ -708,7 +716,7 @@ body.light-theme .ta-btn-sm:hover {
     background: #ffffff !important;
     color: var(--primary) !important;
     border-color: var(--primary) !important;
-    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.15) !important;
+    box-shadow: 0 4px 12px color-mix(in srgb, var(--primary) 15%, transparent) !important;
 }
 body.light-theme .ta-btn-sm:active {
     border-bottom-width: 1px !important;
@@ -760,19 +768,19 @@ body.light-theme .ta-btn-sm:active {
                 <div class="ta-presets-label">TRY A SAMPLE:</div>
                 <div class="ta-presets">
                     <button class="ta-preset-chip" id="preset-ceo-wire" onclick="applyPreset('ceo-wire')">
-                        <span class="chip-dot" style="background:#F87171"></span>CEO Wire Transfer
+                        <span class="chip-dot" style="background:var(--danger)"></span>CEO Wire Transfer
                     </button>
                     <button class="ta-preset-chip" id="preset-it-reset" onclick="applyPreset('it-reset')">
-                        <span class="chip-dot" style="background:#22D3EE"></span>IT Password Reset
+                        <span class="chip-dot" style="background:var(--primary)"></span>IT Password Reset
                     </button>
                     <button class="ta-preset-chip" id="preset-hr-policy" onclick="applyPreset('hr-policy')">
-                        <span class="chip-dot" style="background:#A78BFA"></span>HR Policy Phish
+                        <span class="chip-dot" style="background:var(--primary)"></span>HR Policy Phish
                     </button>
                     <button class="ta-preset-chip" id="preset-safe-invoice" onclick="applyPreset('safe-invoice')">
-                        <span class="chip-dot" style="background:#34D399"></span>Legitimate Invoice
+                        <span class="chip-dot" style="background:var(--success)"></span>Legitimate Invoice
                     </button>
                     <button class="ta-preset-chip" id="preset-safe-meeting" onclick="applyPreset('safe-meeting')">
-                        <span class="chip-dot" style="background:#34D399"></span>Meeting Invite
+                        <span class="chip-dot" style="background:var(--success)"></span>Meeting Invite
                     </button>
                 </div>
 
@@ -800,7 +808,7 @@ body.light-theme .ta-btn-sm:active {
                 <div class="ta-result-meta">
                     <span class="ta-verdict-badge" id="res-verdict-badge">—</span>
                     <div>
-                        <div class="ta-score-num" id="res-score-num" style="color:#34D399;">0</div>
+                        <div class="ta-score-num" id="res-score-num" style="color:var(--success);">0</div>
                         <div class="ta-score-label">threat score / 100</div>
                     </div>
                     <div style="font-family:var(--font-mono);font-size:0.68rem;color:var(--text-secondary);">
@@ -861,7 +869,7 @@ body.light-theme .ta-btn-sm:active {
                 <div class="ta-result-meta">
                     <span class="ta-verdict-badge" id="hdr-verdict-badge">—</span>
                     <div>
-                        <div class="ta-score-num" id="hdr-score-num" style="color:#34D399;">0</div>
+                        <div class="ta-score-num" id="hdr-score-num" style="color:var(--success);">0</div>
                         <div class="ta-score-label">header risk score</div>
                     </div>
                 </div>
@@ -1027,27 +1035,52 @@ function escHtml(s) {
 }
 
 function buildAnnotatedHtml(text, phrases) {
-    if (!phrases || phrases.length === 0) return escHtml(text);
-    const sorted = [...phrases].sort((a,b) => a.start - b.start);
-    // merge overlapping
-    const merged = [];
-    for (const p of sorted) {
-        if (merged.length && p.start < merged[merged.length-1].end) {
-            merged[merged.length-1].end = Math.max(merged[merged.length-1].end, p.end);
-        } else { merged.push({...p}); }
+    if (!text) return '';
+    const normText = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+    if (!phrases || phrases.length === 0) return escHtml(normText);
+
+    // Filter and adjust phrase start/end indices to guarantee exact match against normText
+    const adjustedPhrases = phrases.map(p => {
+        const item = { ...p };
+        if (item.phrase) {
+            const currentSlice = normText.slice(item.start, item.end);
+            if (currentSlice !== item.phrase) {
+                let idx = normText.indexOf(item.phrase, Math.max(0, item.start - 40));
+                if (idx === -1) idx = normText.indexOf(item.phrase);
+                if (idx !== -1) {
+                    item.start = idx;
+                    item.end = idx + item.phrase.length;
+                }
+            }
+        }
+        return item;
+    });
+
+    // Sort by start position ascending, length descending
+    adjustedPhrases.sort((a, b) => a.start - b.start || (b.end - b.start) - (a.end - a.start));
+
+    // Filter out overlapping phrase matches
+    const nonOverlapping = [];
+    let lastEnd = 0;
+    for (const p of adjustedPhrases) {
+        if (p.start >= lastEnd) {
+            nonOverlapping.push(p);
+            lastEnd = p.end;
+        }
     }
+
     let html = '', cursor = 0;
-    for (const p of merged) {
-        if (p.start > cursor) html += escHtml(text.slice(cursor, p.start));
+    for (const p of nonOverlapping) {
+        if (p.start > cursor) html += escHtml(normText.slice(cursor, p.start));
         const cat = p.category || 'urgency';
         const sev = p.severity || 'medium';
-        const phraseText = text.slice(p.start, p.end);
+        const phraseText = normText.slice(p.start, p.end);
         const reason = escHtml(p.reason || 'Social engineering indicator.');
         html += '<span class="ann ann-' + cat + '"' +
             ' data-tt-cat="' + cat + '"' +
-            ' data-tt-label="' + escHtml(CAT_LABELS[cat]||cat) + '"' +
-            ' data-tt-color="' + (CAT_COLORS[cat]||'var(--primary)') + '"' +
-            ' data-tt-icon="' + (CAT_ICONS[cat]||'ti-alert-circle') + '"' +
+            ' data-tt-label="' + escHtml(CAT_LABELS[cat] || cat) + '"' +
+            ' data-tt-color="' + (CAT_COLORS[cat] || 'var(--primary)') + '"' +
+            ' data-tt-icon="' + (CAT_ICONS[cat] || 'ti-alert-circle') + '"' +
             ' data-tt-reason="' + reason + '"' +
             ' data-tt-sev="' + sev + '"' +
             ' onmouseenter="showTooltip(this)" onmouseleave="hideAllTooltips()" onclick="showTooltip(this)" tabindex="0">' +
@@ -1055,7 +1088,7 @@ function buildAnnotatedHtml(text, phrases) {
             '</span>';
         cursor = p.end;
     }
-    if (cursor < text.length) html += escHtml(text.slice(cursor));
+    if (cursor < normText.length) html += escHtml(normText.slice(cursor));
     return html;
 }
 
@@ -1071,17 +1104,27 @@ function animateRing(score, color) {
     const iv = setInterval(() => { cur = Math.min(cur + step, score); numEl.textContent = cur; if (cur >= score) clearInterval(iv); }, 30);
 }
 
+/* ── Render Shared Verdict ────────────────────────────── */
+function renderVerdict(prefix, data) {
+    const badge = document.getElementById(prefix + '-verdict-badge');
+    if (badge) {
+        badge.textContent = data.verdict;
+        badge.className = 'ta-verdict-badge ' + (data.badge || 'success');
+    }
+    const scoreColor = data.badge === 'danger' ? 'var(--verdict-critical)' : data.badge === 'warning' ? 'var(--verdict-suspicious)' : 'var(--verdict-safe)';
+    const scoreNum = document.getElementById(prefix + '-score-num');
+    if (scoreNum) {
+        scoreNum.textContent = data.score;
+        scoreNum.style.color = scoreColor;
+    }
+    return scoreColor;
+}
+
 /* ── Render Body Results ──────────────────────────────── */
 function renderBodyResult(data) {
     document.getElementById('ta-annotated-email').innerHTML = buildAnnotatedHtml(_currentEmailText, data.phrases || []);
 
-    const badge = document.getElementById('res-verdict-badge');
-    badge.textContent = data.verdict;
-    badge.className = 'ta-verdict-badge ' + data.badge;
-
-    const scoreColor = data.badge === 'danger' ? 'var(--verdict-critical)' : data.badge === 'warning' ? 'var(--verdict-suspicious)' : 'var(--verdict-safe)';
-    document.getElementById('res-score-num').textContent = data.score;
-    document.getElementById('res-score-num').style.color = scoreColor;
+    const scoreColor = renderVerdict('res', data);
     document.getElementById('res-phrase-count').textContent = (data.phrases || []).length;
     document.getElementById('res-path-used').textContent = data.path_used === 'openrouter_llm' ? 'AI Analysis' : 'Heuristic Engine';
 
@@ -1110,12 +1153,7 @@ function renderBodyResult(data) {
 
 /* ── Render Header Results ────────────────────────────── */
 function renderHeadersResult(data) {
-    const badge = document.getElementById('hdr-verdict-badge');
-    badge.textContent = data.verdict;
-    badge.className = 'ta-verdict-badge ' + data.badge;
-    const scoreColor = data.badge === 'danger' ? 'var(--verdict-critical)' : data.badge === 'warning' ? 'var(--verdict-suspicious)' : 'var(--verdict-safe)';
-    document.getElementById('hdr-score-num').textContent = data.score;
-    document.getElementById('hdr-score-num').style.color = scoreColor;
+    renderVerdict('hdr', data);
     document.getElementById('hdr-rec-text').textContent = data.recommendation;
 
     const grid = document.getElementById('ta-headers-grid');

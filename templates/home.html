@@ -9676,8 +9676,11 @@ ${body}
 
     // ── CURSOR-LOCAL LIQUID HEADING EFFECT ──────────────────────────────────────
     (function () {
-      const DARK_COLORS  = ['#06b6d4', '#00d2ff', '#3b82f6', '#00f0ff', '#8b5cf6', '#38bdf8', '#06b6d4'];
-      const LIGHT_COLORS = ['#1d4ed8', '#2563eb', '#3b82f6', '#0284c7', '#4f46e5', '#2563eb', '#1d4ed8'];
+      function getAccentColors() {
+        const style = getComputedStyle(document.documentElement);
+        const primary = (style.getPropertyValue('--primary') || '#2DD4BF').trim();
+        return [primary, primary, primary, primary, primary];
+      }
 
       function isLiquidTarget(el) {
         if (!el || !el.tagName) return false;
@@ -9707,8 +9710,7 @@ ${body}
       }
 
       function applyLiquid(el, relX, relW) {
-        const isLight = document.body.classList.contains('light-theme');
-        const colors = isLight ? LIGHT_COLORS : DARK_COLORS;
+        const colors = getAccentColors();
 
         const frac = Math.max(0, Math.min(1, relX / relW));
         const pct = Math.round(frac * 100);
@@ -10027,7 +10029,18 @@ ${body}
           [150, 230, 0.11, 0.22, 1.1],
           [260, 340, 0.07, 0.11, 0.7],
       ];
-      var CYAN_RGB = '6,182,212';
+      function getPrimaryRgb() {
+        const p = (getComputedStyle(document.documentElement).getPropertyValue('--primary') || '#2DD4BF').trim();
+        if (p.startsWith('#')) {
+          let hex = p.replace('#', '');
+          if (hex.length === 3) hex = hex.split('').map(c => c + c).join('');
+          const r = parseInt(hex.substring(0, 2), 16);
+          const g = parseInt(hex.substring(2, 4), 16);
+          const b = parseInt(hex.substring(4, 6), 16);
+          return `${r},${g},${b}`;
+        }
+        return '45,212,191';
+      }
 
       var drops = [];
       var rafId = null;
@@ -10062,7 +10075,7 @@ ${body}
                   var lw = ring.lw0 * (1 - progress * 0.45);
                   ctx.beginPath();
                   ctx.arc(drop.x, drop.y, ring.r, 0, Math.PI * 2);
-                  ctx.strokeStyle = 'rgba(' + CYAN_RGB + ',' + opacity.toFixed(3) + ')';
+                  ctx.strokeStyle = 'rgba(' + getPrimaryRgb() + ',' + opacity.toFixed(3) + ')';
                   ctx.lineWidth = lw;
                   ctx.stroke();
                   dropAlive = alive = true;

@@ -2694,7 +2694,7 @@ def analyze_threat_api():
     if not check_rate_limit(get_remote_ip(), "analyze-threat", 5, 60):
         return jsonify({"success": False, "message": "Rate limit exceeded. Please wait 60 seconds before retrying."}), 429
         
-    email_text = request.form.get("email_text", "").strip()
+    email_text = request.form.get("email_text", "").replace("\r\n", "\n").replace("\r", "\n").strip()
     mode = request.form.get("mode", "body").strip().lower()
     
     if not email_text:

@@ -286,6 +286,38 @@
       backdrop-filter: blur(20px);
       transition: opacity 0.3s ease, transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
     }
+    .pb-speech-popover.pb-popover-teaser .pb-popover-header {
+      display: none !important;
+    }
+    .pb-speech-popover.pb-popover-teaser {
+      width: auto !important;
+      max-width: 280px !important;
+      padding: 10px 14px !important;
+      border-radius: 12px !important;
+      background: var(--bg-elevated, var(--lure-bg-card)) !important;
+      border: 1px solid color-mix(in srgb, var(--primary) 40%, transparent) !important;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45), 0 0 15px color-mix(in srgb, var(--primary) 20%, transparent) !important;
+      pointer-events: none !important;
+      position: fixed !important;
+    }
+    .pb-speech-popover.pb-popover-teaser::after {
+      content: '';
+      position: absolute;
+      right: -6px;
+      top: 50%;
+      transform: translateY(-50%) rotate(-45deg);
+      width: 10px;
+      height: 10px;
+      background: var(--bg-elevated, var(--lure-bg-card));
+      border-right: 1px solid color-mix(in srgb, var(--primary) 40%, transparent);
+      border-top: 1px solid color-mix(in srgb, var(--primary) 40%, transparent);
+    }
+    .pb-speech-popover.pb-popover-teaser #pb-popover-text {
+      font-size: var(--lure-font-sm) !important;
+      color: var(--text-primary) !important;
+      font-weight: 500 !important;
+      line-height: 1.4 !important;
+    }
     .pb-popover-header {
       display: flex;
       align-items: center;
@@ -2000,7 +2032,37 @@
       justify-content: space-between !important;
     }
 
-    /* ── Maximized states override ── */
+    /* ── Maximized states override (Redesigned Cybersecurity HUD Lab) ── */
+    #pb-panel.pb-panel-maximized {
+      position: fixed !important;
+      top: 16px !important;
+      left: 16px !important;
+      right: 16px !important;
+      bottom: 16px !important;
+      width: calc(100vw - 32px) !important;
+      height: calc(100vh - 32px) !important;
+      max-width: none !important;
+      max-height: none !important;
+      z-index: 10005 !important;
+      border-radius: 20px !important;
+      background: #080C16 !important;
+      background-image: 
+        radial-gradient(circle at 90% 10%, rgba(0, 242, 254, 0.08) 0%, transparent 45%),
+        radial-gradient(circle at 10% 90%, rgba(99, 102, 241, 0.06) 0%, transparent 50%),
+        linear-gradient(180deg, rgba(13, 18, 30, 0.95) 0%, rgba(8, 12, 22, 0.98) 100%) !important;
+      border: 1px solid color-mix(in srgb, var(--primary) 28%, transparent) !important;
+      box-shadow:
+        0 30px 90px rgba(0,0,0,0.9),
+        0 0 0 1px color-mix(in srgb, var(--primary) 25%, transparent),
+        0 0 70px color-mix(in srgb, var(--primary) 18%, transparent) !important;
+      backdrop-filter: blur(32px) !important;
+    }
+    #pb-panel.pb-panel-maximized .pb-panel-header {
+      padding: 16px 24px !important;
+      background: color-mix(in srgb, var(--bg-surface, #121826) 85%, transparent) !important;
+      border-bottom: 1px solid color-mix(in srgb, var(--primary) 18%, transparent) !important;
+      border-radius: 20px 20px 0 0 !important;
+    }
     #pb-panel.pb-panel-maximized .pb-panel-tabs {
       display: none !important;
     }
@@ -2009,19 +2071,33 @@
       flex-direction: row !important;
       flex: 1 !important;
       min-height: 0 !important;
-      height: calc(100% - 50px) !important; /* Header height is ~50px */
+      height: calc(100% - 60px) !important;
     }
     #pb-panel.pb-panel-maximized .pb-panel-sidebar {
       display: flex !important;
       flex-direction: column !important;
       align-items: center !important;
-      width: 76px !important;
+      width: 84px !important;
       flex-shrink: 0 !important;
-      border-right: 1px solid color-mix(in srgb, var(--border-default,rgba(255,255,255,0.12)) 40%, transparent) !important;
-      background: color-mix(in srgb, var(--primary) 2%, transparent) !important;
-      padding-top: 16px !important;
-      gap: 14px !important;
+      border-right: 1px solid color-mix(in srgb, var(--primary) 15%, transparent) !important;
+      background: color-mix(in srgb, var(--primary) 3%, rgba(9, 12, 22, 0.6)) !important;
+      padding-top: 20px !important;
+      gap: 16px !important;
       box-sizing: border-box !important;
+    }
+    #pb-panel.pb-panel-maximized .pb-sidebar-tab-btn.active {
+      color: var(--primary) !important;
+      background: color-mix(in srgb, var(--primary) 12%, transparent) !important;
+      border-left: 3px solid var(--primary) !important;
+      box-shadow: 0 0 20px color-mix(in srgb, var(--primary) 25%, transparent) !important;
+    }
+    #pb-panel.pb-panel-maximized .pb-sidebar-tab-btn.active i {
+      color: var(--primary) !important;
+      filter: drop-shadow(0 0 10px var(--primary-glow)) !important;
+    }
+    #pb-panel.pb-panel-maximized .pb-sidebar-tab-btn.active .pb-sidebar-tab-label {
+      color: var(--primary) !important;
+      font-weight: 800 !important;
     }
     #pb-panel.pb-panel-maximized .pb-panel-content-area {
       display: flex !important;
@@ -2029,9 +2105,14 @@
       flex: 1 !important;
       min-width: 0 !important;
       height: 100% !important;
-      overflow: hidden !important;
-      justify-content: space-between !important;
-      background: radial-gradient(circle at 85% 15%, rgba(56, 189, 248, 0.07) 0%, rgba(99, 102, 241, 0.03) 45%, transparent 75%) !important;
+      overflow-y: auto !important;
+      justify-content: flex-start !important;
+      padding: 0 !important;
+    }
+    #pb-panel.pb-panel-maximized .pb-tab-panel.active {
+      overflow-y: auto !important;
+      max-height: 100% !important;
+      flex: 1 !important;
     }
 
     /* Sidebar tab button styling */
@@ -3972,9 +4053,6 @@
       
       const riskCont = document.getElementById('pb-riskscore-avatar-container');
       if (riskCont) riskCont.innerHTML = getLureAvatarHtml('idle');
-      
-      const spotIlCont = document.getElementById('pb-spotphish-il-avatar-container');
-      if (spotIlCont) spotIlCont.innerHTML = getLureAvatarHtml('idle');
     }
     if (document.readyState === 'complete') {
       initDialogueAvatars();
@@ -4323,9 +4401,11 @@
 
     function showPopover(config) {
       if (activePopover !== null) {
-        const isDuplicate = popoverQueue.some(item => item.type === config.type && item.message === config.message);
-        if (!isDuplicate) {
-          popoverQueue.push(config);
+        if (config.type !== 'teaser') {
+          const isDuplicate = popoverQueue.some(item => item.type === config.type && item.message === config.message);
+          if (!isDuplicate) {
+            popoverQueue.push(config);
+          }
         }
         return;
       }
@@ -4415,12 +4495,50 @@
         popoverEl.setAttribute('aria-hidden', 'true');
         popoverEl.onclick = null;
       }
+      const wasTeaser = activePopover && activePopover.type === 'teaser';
       activePopover = null;
 
-      if (popoverQueue.length > 0) {
+      if (!wasTeaser && popoverQueue.length > 0) {
         const nextConfig = popoverQueue.shift();
         setTimeout(() => { _displayPopover(nextConfig); }, 300);
       }
+    }
+
+    function repositionFvPopover() {
+      const popoverEl = document.getElementById('pb-speech-popover');
+      if (!popoverEl || popoverEl.style.display === 'none') return;
+      const host = document.getElementById('pb-host');
+      if (!host) return;
+
+      const hostR = host.getBoundingClientRect();
+      const popW = popoverEl.offsetWidth || 260;
+      const popH = popoverEl.offsetHeight || 60;
+
+      let left, top;
+      const isTeaser = popoverEl.classList.contains('pb-popover-teaser');
+
+      if (isTeaser) {
+        // Position beside avatar mascot (to the left of host avatar)
+        left = hostR.left - popW - 14;
+        top  = hostR.top + (hostR.height / 2) - (popH / 2);
+        if (left < 12) {
+          left = hostR.right + 14;
+        }
+      } else {
+        left = hostR.left + (hostR.width / 2) - (popW / 2);
+        top  = hostR.top - popH - 12;
+      }
+
+      const margin = 12;
+      left = Math.max(margin, Math.min(left, window.innerWidth - popW - margin));
+      if (!isTeaser && top < margin) {
+        top = hostR.bottom + 12;
+      }
+      top = Math.max(margin, Math.min(top, window.innerHeight - popH - margin));
+
+      popoverEl.style.position = 'fixed';
+      popoverEl.style.left = left + 'px';
+      popoverEl.style.top = top + 'px';
     }
 
     function openFvPopover() {
@@ -4461,32 +4579,31 @@
     }
 
     function toggleMaximize() {
-      const isMaximized = inlineSec && inlineSec.style.display === 'flex';
-      const contentArea = document.querySelector('.pb-panel-content-area');
-      const inlineBody = document.getElementById('pb-inline-body');
-      const panelWrapper = document.querySelector('#pb-panel .pb-panel-body-wrapper');
+      const isMaximized = panel.classList.contains('pb-panel-maximized');
       const maxIcon = document.querySelector('#pb-max-btn i');
       const maxBtn = document.getElementById('pb-max-btn');
 
       if (!isMaximized) {
-        if (contentArea && inlineBody) {
-          inlineBody.appendChild(contentArea);
-        }
-        panel.style.display = 'none';
-        panel.classList.remove('pb-open');
-        inlineSec.style.display = 'flex';
+        panel.style.width = '';
+        panel.style.height = '';
+        panel.style.top = '';
+        panel.style.left = '';
+        panel.style.right = '';
+        panel.style.bottom = '';
+        panel.classList.add('pb-panel-maximized');
         panelOpen = true;
         if (maxIcon) maxIcon.className = 'ti ti-minimize';
-        if (maxBtn) maxBtn.setAttribute('title', 'Collapse panel');
-      } else {
-        if (contentArea && panelWrapper) {
-          panelWrapper.appendChild(contentArea);
+        if (maxBtn) {
+          maxBtn.setAttribute('title', 'Collapse panel');
+          maxBtn.setAttribute('aria-label', 'Collapse');
         }
-        inlineSec.style.display = 'none';
-        panel.style.display = '';
-        panel.classList.add('pb-open');
+      } else {
+        panel.classList.remove('pb-panel-maximized');
         if (maxIcon) maxIcon.className = 'ti ti-maximize';
-        if (maxBtn) maxBtn.setAttribute('title', 'Expand to page');
+        if (maxBtn) {
+          maxBtn.setAttribute('title', 'Expand to page');
+          maxBtn.setAttribute('aria-label', 'Expand');
+        }
         repositionPanel();
       }
     }
@@ -4612,17 +4729,7 @@
       }, 350);
     }
 
-    function openFvPopover() {
-      if (panelOpen) closePanel();
-      fvOpen = true;
-      fvPopover.classList.add('pb-open');
-      repositionFvPopover();
-    }
 
-    function closeFvPopover() {
-      fvOpen = false;
-      fvPopover.classList.remove('pb-open');
-    }
 
     const LURE_TEASERS = [
       "Want a tour? I'd love to show you around.",
@@ -4633,7 +4740,7 @@
     ];
 
     // Teaser hover interaction
-    avatar.addEventListener('pointerenter', () => {
+    avatar.addEventListener('mouseenter', () => {
       prewarmCeoFraud();
 
       if (!panelOpen && !activePopover) {
@@ -4642,7 +4749,7 @@
       }
     });
 
-    avatar.addEventListener('pointerleave', () => {
+    avatar.addEventListener('mouseleave', () => {
       if (activePopover && activePopover.type === 'teaser') {
         hidePopover();
       }
@@ -4661,9 +4768,8 @@
         avatar.classList.remove('pb-squash-active');
         if (panelOpen) {
           closePanel();
-        } else if (activePopover) {
-          hidePopover();
         } else {
+          if (activePopover) hidePopover();
           const dismissed = localStorage.getItem('first_visit_popover_dismissed') === 'true';
           const wtActiveNow = typeof wtActive !== 'undefined' && wtActive;
           if (!dismissed && !wtActiveNow) {
@@ -4676,6 +4782,22 @@
     });
 
     document.getElementById('pb-close-btn').addEventListener('click', closePanel);
+    
+    const maxBtnElement = document.getElementById('pb-max-btn');
+    if (maxBtnElement) {
+      maxBtnElement.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleMaximize();
+      });
+    }
+
+    const inlineCollapseBtn = document.getElementById('pb-inline-collapse');
+    if (inlineCollapseBtn) {
+      inlineCollapseBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleMaximize();
+      });
+    }
 
     const resetBtn = document.getElementById('pb-reset-visitor');
     if (resetBtn) {
@@ -4830,18 +4952,34 @@
 
     function isMobile() { return window.innerWidth <= 768; }
 
-    document.getElementById('pb-drag-handle').addEventListener('pointerdown', startDrag);
-    avatar.addEventListener('pointerdown', startDrag);
-    document.getElementById('pb-drag-handle').addEventListener('mousedown', startDrag);
-    avatar.addEventListener('mousedown', startDrag);
+    if (window.PointerEvent) {
+      document.getElementById('pb-drag-handle').addEventListener('pointerdown', startDrag);
+      avatar.addEventListener('pointerdown', startDrag);
+      document.addEventListener('pointermove', onDragMove);
+      document.addEventListener('pointerup', onDragEnd);
+    } else {
+      document.getElementById('pb-drag-handle').addEventListener('mousedown', startDrag);
+      avatar.addEventListener('mousedown', startDrag);
+      document.addEventListener('mousemove', onDragMove);
+      document.addEventListener('mouseup', onDragEnd);
+    }
 
     // Also allow dragging from the bubble header during tour mode
-    document.addEventListener('pointerdown', (e) => {
-      const bubbleHeader = e.target.closest('.pb-wt-bubble-header');
-      if (bubbleHeader && wtActive) {
-        startDrag.call({ currentTarget: host }, e);
-      }
-    });
+    if (window.PointerEvent) {
+      document.addEventListener('pointerdown', (e) => {
+        const bubbleHeader = e.target.closest('.pb-wt-bubble-header');
+        if (bubbleHeader && wtActive) {
+          startDrag.call({ currentTarget: host }, e);
+        }
+      });
+    } else {
+      document.addEventListener('mousedown', (e) => {
+        const bubbleHeader = e.target.closest('.pb-wt-bubble-header');
+        if (bubbleHeader && wtActive) {
+          startDrag.call({ currentTarget: host }, e);
+        }
+      });
+    }
 
     function startDrag(e) {
       if (isMobile()) return;
@@ -4900,7 +5038,6 @@
 
     function onDragEnd(e) {
       if (!drag) return;
-      const targetIsAvatar = drag.target === avatar || (drag.target && drag.target.closest && drag.target.closest('#pb-avatar'));
       if (drag.pointerId && drag.target && drag.target.releasePointerCapture) {
         try { drag.target.releasePointerCapture(drag.pointerId); } catch(err) {}
       }
@@ -4909,15 +5046,8 @@
       if (wasDragged) {
         preventClick = true;
         setTimeout(() => { preventClick = false; }, 50);
-      } else if (targetIsAvatar && !preventClick) {
-        avatar.click();
       }
     }
-
-    document.addEventListener('pointermove', onDragMove);
-    document.addEventListener('mousemove', onDragMove);
-    document.addEventListener('pointerup', onDragEnd);
-    document.addEventListener('mouseup', onDragEnd);
 
     /* ── Tabs (Floating Panel) ─────────────────────────────────── */
     panel.querySelectorAll('.pb-tab-btn, .pb-sidebar-tab-btn').forEach(btn => {
@@ -4959,8 +5089,6 @@
         if (p) p.classList.add('active');
         if (tab === 'il-walkthrough') {
           if (typeof renderToursList === 'function') renderToursList();
-        } else if (tab === 'il-spotphish') {
-          if (typeof window.stpInlineRender === 'function') window.stpInlineRender();
         }
       });
     });
@@ -7456,14 +7584,6 @@
     let gameScoreTotal = 0;
     let gameActive = false;
 
-    let ilGameRoundsLeft = 3;
-    let ilCorrectPhishIndex = null;
-    let ilCurrentPhishTactic = "";
-    let ilCurrentBaitScore = null;
-    let ilGameScoreCorrect = 0;
-    let ilGameScoreTotal = 0;
-    let ilGameActive = false;
-
     async function updateGameStatus() {
       try {
         const res = await fetch("/api/spot-the-phish/status");
@@ -7497,42 +7617,6 @@
         }
       } catch (e) {
         console.error("Failed to fetch game status", e);
-      }
-    }
-
-    async function updateInlineGameStatus() {
-      try {
-        const res = await fetch("/api/spot-the-phish/status");
-        if (res.ok) {
-          const j = await res.json();
-          if (j.success) {
-            ilGameRoundsLeft = j.rounds_left;
-            const limitText = document.getElementById("stp-il-limit-text");
-            if (limitText) {
-              if (ilGameRoundsLeft === 0) {
-                limitText.textContent = "0 rounds left today (Come back tomorrow)";
-                limitText.style.color = "var(--warning)";
-              } else {
-                limitText.textContent = `Rounds Left Today: ${ilGameRoundsLeft} / 3`;
-                limitText.style.color = "var(--text-secondary, var(--lure-text-secondary))";
-              }
-            }
-            const nextBtn = document.getElementById("stp-il-next-btn");
-            if (nextBtn) {
-              if (ilGameRoundsLeft === 0) {
-                nextBtn.textContent = "0 rounds left today";
-                nextBtn.disabled = true;
-                nextBtn.classList.add("pb-disabled");
-              } else {
-                nextBtn.textContent = "Next Round";
-                nextBtn.disabled = false;
-                nextBtn.classList.remove("pb-disabled");
-              }
-            }
-          }
-        }
-      } catch (e) {
-        console.error("Failed to fetch inline game status", e);
       }
     }
 
@@ -7651,105 +7735,8 @@
       repositionPanel();
     };
 
-    window.stpInlineRender = async function() {
-      const con = document.getElementById('stp-il-pair-container');
-      const resEl = document.getElementById('stp-il-result');
-      const nextBtn = document.getElementById('stp-il-next-btn');
-      if (!con) return;
-
-      resEl.style.display = 'none';
-      if (nextBtn) nextBtn.style.display = 'none';
-      updateInlineGameStatus();
-      updateMessageAvatar('pb-spotphish-il-avatar-container', 'idle');
-
-      const dialogueEl = document.getElementById('stp-il-dialogue-text');
-      if (dialogueEl) {
-        dialogueEl.innerHTML = 'Two freshly generated emails below. One is legitimate, one is a phishing attempt. <strong style="color:var(--primary);">Click the fake one.</strong>';
-      }
-
-      con.innerHTML = `
-        <div class="pb-skeleton-wrap" style="display:block; width:100%;">
-          <div class="skeleton-block" style="width:80%;height:10px;"></div>
-          <div class="skeleton-block" style="width:70%;height:10px;"></div>
-        </div>
-      `;
-
-      try {
-        const res = await fetch("/api/spot-the-phish/generate", { method: "POST" });
-        if (res.status === 429) {
-          const j = await res.json();
-          con.innerHTML = `<div style="color:var(--warning);font-size: var(--lure-font-xs);text-align:center;">${esc(j.message)}</div>`;
-          ilGameRoundsLeft = 0;
-          await updateInlineGameStatus();
-          return;
-        }
-        if (!res.ok) throw new Error("API failed");
-        const data = await res.json();
-        ilCorrectPhishIndex = data.phish_index;
-        ilCurrentPhishTactic = data.phish_tactic;
-        ilCurrentBaitScore = data.bait_score;
-        ilGameRoundsLeft = data.rounds_left;
-
-        con.innerHTML = '';
-        data.emails.forEach((email, index) => {
-          const box = document.createElement('div');
-          box.className = 'stp-box';
-          box.innerHTML = `
-            <div class="stp-box-chrome"><span style="background:var(--lure-error);"></span><span style="background:var(--lure-warning);"></span><span style="background:var(--lure-success);"></span></div>
-            <div class="stp-box-header">
-              <div><span class="stp-lbl">From:</span> ${esc(email.sender_display || email.sender)}</div>
-              <div><span class="stp-lbl">Subject:</span> ${esc(email.subject)}</div>
-            </div>
-            <div class="stp-box-body">${esc(email.body_text)}</div>
-          `;
-          box.addEventListener('click', () => {
-            if (!ilGameActive) return;
-            ilGameActive = false;
-            if (index === ilCorrectPhishIndex) {
-              box.classList.add('correct');
-              resEl.className = 'stp-result phish';
-              resEl.style.display = 'block';
-              resEl.innerHTML = `<strong>CORRECT! That was a Phish!</strong><br>Tactic: ${esc(ilCurrentPhishTactic)}`;
-              ilGameScoreCorrect++;
-              updateMessageAvatar('pb-spotphish-il-avatar-container', 'success', 2500);
-
-              if (dialogueEl) {
-                const tacticName = ilCurrentPhishTactic ? ilCurrentPhishTactic.toLowerCase() : "suspicious cues";
-                const template = getRandomVariant(spotCorrectPool, 'spot_correct');
-                dialogueEl.innerHTML = template.replace('{tactic}', '<strong>' + esc(tacticName) + '</strong>');
-              }
-            } else {
-              box.classList.add('wrong');
-              resEl.className = 'stp-result';
-              resEl.style.display = 'block';
-              resEl.style.background = 'var(--danger-dim)';
-              resEl.style.color = 'var(--danger)';
-              resEl.innerHTML = `<strong>INCORRECT! That was Legitimate!</strong><br>The other one was the phish.`;
-              updateMessageAvatar('pb-spotphish-il-avatar-container', 'error', 2500);
-
-              if (dialogueEl) {
-                dialogueEl.innerHTML = getRandomVariant(spotIncorrectPool, 'spot_incorrect');
-              }
-            }
-            ilGameScoreTotal++;
-            document.getElementById('stp-il-score').textContent = ilGameScoreCorrect;
-            document.getElementById('stp-il-total').textContent = ilGameScoreTotal;
-            if (nextBtn) nextBtn.style.display = 'inline-flex';
-          });
-          con.appendChild(box);
-        });
-        ilGameActive = true;
-      } catch (e) {
-        con.innerHTML = `<div style="color:var(--danger);font-size: var(--lure-font-xs);">Failed to load game round.</div>`;
-      }
-    };
-
     window.stpNext = function() {
       stpRender();
-    };
-
-    window.stpInlineNext = function() {
-      stpInlineRender();
     };
 
 
