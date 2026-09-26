@@ -142,18 +142,17 @@
 }
 .ha-minimized .ha-term-header { border-bottom: none; }
 /* DNS-hop animation stage */
+/* ── Minimized Terminal Interactive Navigator ──────────────────── */
 .ha-hop-stage {
-    display: flex !important; /* Keep display: flex always */
+    display: flex !important;
     max-height: 0;
     min-height: 0;
     opacity: 0;
     overflow: hidden;
-    padding: 0 2rem;
-    cursor: pointer;
+    padding: 0 1.5rem;
     align-items: center;
     justify-content: center;
     flex-direction: column;
-    gap: 1rem;
     position: relative;
     transition: max-height 0.4s cubic-bezier(0.16, 1, 0.3, 1), 
                 min-height 0.4s cubic-bezier(0.16, 1, 0.3, 1), 
@@ -161,33 +160,239 @@
                 padding 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .ha-minimized .ha-hop-stage {
-    max-height: 300px;
-    min-height: 160px;
+    max-height: 380px;
+    min-height: 200px;
     opacity: 1;
-    padding: 1.5rem 2rem;
+    padding: 1.25rem 1.75rem;
 }
-.ha-hop-svg { width: 280px; height: 70px; overflow: visible; }
-/* animated dots traveling path */
-.ha-hop-dot {
-    fill: var(--primary);
-    animation: haHopTravel 2.5s ease-in-out infinite;
+
+.ha-mini-nav-header {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+    font-family: 'JetBrains Mono', monospace;
 }
-.ha-hop-dot:nth-child(2) { animation-delay: 0.65s; fill: #a78bfa; }
-.ha-hop-dot:nth-child(3) { animation-delay: 1.3s; fill: #34d399; }
-.ha-hop-dot:nth-child(4) { animation-delay: 1.95s; fill: #f87171; }
-@keyframes haHopTravel {
-    0%   { opacity: 0; offset-distance: 0%; }
-    8%   { opacity: 1; }
-    92%  { opacity: 1; }
-    100% { opacity: 0; offset-distance: 100%; }
+.ha-mini-nav-title {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--primary);
+    letter-spacing: 0.08em;
+    display: flex;
+    align-items: center;
+    gap: 6px;
 }
-.ha-hop-restore-hint {
+.ha-mini-nav-status {
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: var(--accent-cyan, #06b6d4);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    letter-spacing: 0.05em;
+}
+.ha-mini-status-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #10b981;
+    box-shadow: 0 0 8px rgba(16, 185, 129, 0.6);
+}
+.ha-mini-restore-btn {
+    background: rgba(30, 41, 59, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 6px;
+    padding: 4px 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: var(--text-muted, #94a3b8);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.ha-mini-restore-btn:hover {
+    background: rgba(56, 189, 248, 0.15);
+    border-color: var(--primary);
+    color: #fff;
+    transform: translateY(-1px);
+}
+
+.ha-mini-route-container {
+    width: 100%;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.ha-mini-route-chain {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 10px 0;
+    width: 100%;
+}
+
+/* Route Node Button */
+.mini-route-node {
+    background: rgba(15, 23, 42, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: #e2e8f0;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    user-select: none;
+}
+.mini-route-node:hover, .mini-route-node.active {
+    transform: translateY(-2px);
+    border-color: var(--primary);
+    box-shadow: 0 4px 12px rgba(56, 189, 248, 0.2);
+    color: #fff;
+}
+.mini-route-node-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+/* Subtle Node States: healthy, warning, anomalous */
+.mini-route-node.state-healthy .mini-route-node-dot {
+    background: #10b981;
+    box-shadow: 0 0 6px rgba(16, 185, 129, 0.5);
+}
+.mini-route-node.state-warning {
+    border-color: rgba(245, 158, 11, 0.3);
+}
+.mini-route-node.state-warning .mini-route-node-dot {
+    background: #f59e0b;
+    box-shadow: 0 0 6px rgba(245, 158, 11, 0.6);
+}
+.mini-route-node.state-anomalous {
+    border-color: rgba(239, 68, 68, 0.4);
+}
+.mini-route-node.state-anomalous .mini-route-node-dot {
+    background: #ef4444;
+    box-shadow: 0 0 6px rgba(239, 68, 68, 0.7);
+}
+
+/* Connecting Line Link */
+.mini-route-line {
     font-family: 'JetBrains Mono', monospace;
     font-size: 0.62rem;
-    color: var(--text-muted, #64748b);
-    letter-spacing: 0.08em;
+    color: rgba(148, 163, 184, 0.5);
+    padding: 4px 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+    display: inline-flex;
+    align-items: center;
+    border-radius: 4px;
+}
+.mini-route-line:hover, .mini-route-line.active {
+    color: var(--accent-cyan, #06b6d4);
+    background: rgba(56, 189, 248, 0.08);
+}
+
+/* Popover Card */
+.ha-mini-popover {
+    position: relative;
+    margin-top: 10px;
+    z-index: 100;
+    width: 100%;
+    max-width: 380px;
+    background: rgba(15, 23, 42, 0.95);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(56, 189, 248, 0.3);
+    border-radius: 8px;
+    padding: 12px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.6), 0 0 15px rgba(56, 189, 248, 0.1);
+    animation: haFadeIn 0.2s ease;
+}
+.mini-popover-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding-bottom: 6px;
+    margin-bottom: 8px;
+    font-family: 'JetBrains Mono', monospace;
+}
+.mini-popover-title {
+    font-size: 0.68rem;
+    font-weight: 800;
+    color: var(--primary);
+    letter-spacing: 0.06em;
     text-transform: uppercase;
-    opacity: 0.5;
+}
+.mini-popover-close {
+    font-size: 1rem;
+    color: var(--text-muted, #94a3b8);
+    cursor: pointer;
+    line-height: 1;
+}
+.mini-popover-close:hover {
+    color: #fff;
+}
+.mini-popover-body {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.mini-popover-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.68rem;
+    gap: 8px;
+}
+.pop-label {
+    color: var(--text-muted, #64748b);
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    flex-shrink: 0;
+}
+.pop-val {
+    color: #e2e8f0;
+    font-weight: 500;
+    text-align: right;
+    word-break: break-all;
+}
+
+body.light-theme .ha-mini-popover {
+    background: rgba(255, 255, 255, 0.98);
+    border-color: rgba(56, 189, 248, 0.4);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+}
+body.light-theme .mini-route-node {
+    background: rgba(255, 255, 255, 0.8);
+    border-color: rgba(0, 0, 0, 0.1);
+    color: #1e293b;
+}
+body.light-theme .mini-route-node:hover {
+    background: #fff;
+    color: #0284c7;
+}
+body.light-theme .pop-label {
+    color: #64748b;
+}
+body.light-theme .pop-val {
+    color: #0f172a;
 }
 /* Expand overlay */
 .ha-expand-overlay {
@@ -280,6 +485,20 @@ body.light-theme .ha-expand-close:hover { background: rgba(0,0,0,0.1); color: #0
 .ha-input-stage {
     padding: 2.25rem;
 }
+.ha-console-prompt {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--accent-cyan, #06b6d4);
+    letter-spacing: 0.05em;
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.ha-prompt-symbol {
+    color: var(--primary);
+    font-weight: 800;
+}
 .ha-textarea {
     width: 100%;
     height: 250px;
@@ -306,21 +525,69 @@ body.light-theme .ha-expand-close:hover { background: rgba(0,0,0,0.1); color: #0
     color: #475569;
 }
 
-.ha-presets-section {
-    margin-bottom: 2rem;
+/* ── Live Structural Detection Bar ────────────────────────────── */
+.ha-structural-bar {
+    background: rgba(15, 23, 42, 0.5);
+    border: 1px solid rgba(56, 189, 248, 0.2);
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 1.5rem;
+    animation: haFadeIn 0.3s ease;
 }
-.ha-presets-title {
+@keyframes haFadeIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.ha-structural-title {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 0.72rem;
+    font-size: 0.65rem;
     font-weight: 700;
     color: var(--text-muted, #64748b);
-    letter-spacing: 0.05em;
-    margin-bottom: 0.75rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
 }
-.ha-preset-grid {
+.ha-structural-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+.ha-struct-chip {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 5px 12px;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+}
+.ha-struct-chip.chip-ok {
+    background: rgba(16, 185, 129, 0.1);
+    color: #34d399;
+    border: 1px solid rgba(16, 185, 129, 0.25);
+}
+.ha-struct-chip.chip-warn {
+    background: rgba(245, 158, 11, 0.1);
+    color: #fb923c;
+    border: 1px solid rgba(245, 158, 11, 0.25);
+}
+
+/* ── Sample Buttons & Presets Bar ─────────────────────────────── */
+.ha-preset-actions-bar {
+    margin-bottom: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.ha-sample-btns-group {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: 10px;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
 }
 .ha-preset-btn {
     background: rgba(30, 41, 59, 0.4);
@@ -338,6 +605,38 @@ body.light-theme .ha-expand-close:hover { background: rgba(0,0,0,0.1); color: #0
     align-items: center;
     gap: 8px;
 }
+.ha-preset-btn.sample-clean {
+    border-color: rgba(16, 185, 129, 0.3);
+    color: #34d399;
+    background: rgba(16, 185, 129, 0.06);
+    justify-content: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    font-weight: 700;
+}
+.ha-preset-btn.sample-clean:hover {
+    background: rgba(16, 185, 129, 0.16);
+    border-color: rgba(16, 185, 129, 0.5);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
+    color: #34d399;
+}
+.ha-preset-btn.sample-suspicious {
+    border-color: rgba(239, 68, 68, 0.3);
+    color: #f87171;
+    background: rgba(239, 68, 68, 0.06);
+    justify-content: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    font-weight: 700;
+}
+.ha-preset-btn.sample-suspicious:hover {
+    background: rgba(239, 68, 68, 0.16);
+    border-color: rgba(239, 68, 68, 0.5);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.15);
+    color: #f87171;
+}
 .ha-preset-btn:hover {
     background: rgba(30, 41, 59, 0.8);
     border-color: rgba(6, 182, 212, 0.3);
@@ -349,11 +648,46 @@ body.light-theme .ha-expand-close:hover { background: rgba(0,0,0,0.1); color: #0
     border-color: var(--accent-cyan, #06b6d4);
     color: var(--accent-cyan, #06b6d4);
 }
-.ha-preset-indicator {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    flex-shrink: 0;
+
+.ha-presets-more {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+.ha-presets-more-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: var(--text-muted, #64748b);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+.ha-preset-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+.ha-preset-pill {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 100px;
+    padding: 5px 14px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.75rem;
+    color: var(--text-muted, #94a3b8);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.ha-preset-pill:hover {
+    background: rgba(56, 189, 248, 0.1);
+    border-color: rgba(56, 189, 248, 0.3);
+    color: #fff;
+}
+.ha-preset-pill.active {
+    background: rgba(56, 189, 248, 0.15);
+    border-color: var(--primary);
+    color: var(--primary);
 }
 
 /* NOTE: global style.css sets background-image:none !important on all buttons.
@@ -421,34 +755,144 @@ body.light-theme .ha-expand-close:hover { background: rgba(0,0,0,0.1); color: #0
     box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.2);
 }
 
-/* ── Loading Stage ──────────────────────────────────────────── */
+/* Comprehensive Keyboard Focus Visible States */
+.ha-preset-btn:focus-visible,
+.ha-preset-pill:focus-visible,
+.ha-view-tab:focus-visible,
+.ha-replay-btn:focus-visible,
+.ha-reset-btn:focus-visible,
+.ha-mini-restore-btn:focus-visible,
+.ha-modal-btn:focus-visible,
+.mini-route-node:focus-visible,
+.ha-auth-card:focus-visible,
+.ha-intel-field-card:focus-visible,
+.ha-anomaly-card:focus-visible,
+.ha-intel-flow-step:focus-visible {
+    outline: 2px solid var(--primary, #38bdf8) !important;
+    outline-offset: 2px !important;
+    box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.25) !important;
+}
+
+/* ── Loading Stage / Forensic Decoding Sequence ────────────────── */
 .ha-loading-stage {
-    padding: 4rem 2rem;
+    padding: 2.5rem 1.5rem;
     text-align: center;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
 }
-.ha-loading-ring {
-    width: 64px;
-    height: 64px;
-    border: 3px solid rgba(56, 189, 248, 0.1);
-    border-radius: 50%;
-    border-top-color: var(--primary);
-    border-left-color: #6366f1;
-    animation: ha-spin 1s linear infinite;
-    margin-bottom: 2rem;
+.ha-decoding-card {
+    max-width: 640px;
+    width: 100%;
+    margin: 0 auto;
+    background: rgba(15, 23, 42, 0.75);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(56, 189, 248, 0.25);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.5), 0 0 30px rgba(56, 189, 248, 0.08);
+    text-align: left;
 }
-@keyframes ha-spin {
-    to { transform: rotate(360deg); }
+.ha-decoding-body {
+    padding: 1.5rem;
 }
-.ha-loading-text {
+.ha-decoding-terminal {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 0.85rem;
+    font-size: 0.8rem;
+    line-height: 1.85;
+    color: #cbd5e1;
+    min-height: 240px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    max-height: 320px;
+    overflow-y: auto;
+}
+.ha-decoding-line {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    opacity: 0;
+    transform: translateY(4px);
+    transition: opacity 0.18s ease, transform 0.18s ease;
+}
+.ha-decoding-line.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+.ha-decoding-line .step-prefix {
+    font-weight: 800;
+    width: 18px;
+    display: inline-block;
+    text-align: center;
+    flex-shrink: 0;
+}
+.ha-decoding-line.pending .step-prefix {
     color: var(--accent-cyan, #06b6d4);
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
+    animation: haPulseText 0.8s infinite alternate;
+}
+.ha-decoding-line.done .step-prefix {
+    color: #34d399;
+}
+.ha-decoding-line.done .step-text {
+    color: var(--text-muted, #94a3b8);
+}
+.ha-decoding-line.complete-header {
+    font-weight: 800;
+    color: var(--primary);
+    margin-top: 10px;
+    letter-spacing: 0.08em;
+}
+.ha-decoding-line.complete-success {
+    font-weight: 800;
+    color: #34d399;
+    letter-spacing: 0.08em;
+}
+
+@keyframes haPulseText {
+    from { opacity: 0.4; }
+    to { opacity: 1; }
+}
+
+.ha-decoding-progress-bar {
+    width: 100%;
+    height: 3px;
+    background: rgba(255, 255, 255, 0.06);
+    border-radius: 2px;
+    margin-top: 1.25rem;
+    overflow: hidden;
+}
+.ha-decoding-progress-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, var(--primary) 0%, var(--accent-cyan, #06b6d4) 50%, #34d399 100%);
+    transition: width 0.25s linear;
+}
+
+/* Light Theme Parity for Decoding Card */
+body.light-theme .ha-decoding-card {
+    background: rgba(255, 255, 255, 0.9);
+    border-color: rgba(56, 189, 248, 0.3);
+    box-shadow: 0 15px 35px -5px rgba(0, 0, 0, 0.08);
+}
+body.light-theme .ha-decoding-terminal {
+    color: #1e293b;
+}
+body.light-theme .ha-decoding-line.done .step-text {
+    color: #64748b;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ha-decoding-line {
+        transition: none !important;
+        animation: none !important;
+    }
+    .ha-decoding-progress-fill {
+        transition: none !important;
+    }
+}
     margin-bottom: 0.5rem;
 }
 .ha-loading-subtext {
@@ -461,13 +905,106 @@ body.light-theme .ha-expand-close:hover { background: rgba(0,0,0,0.1); color: #0
 /* Risk Score Header Strip */
 .ha-result-strip {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: space-between;
-    padding: 18px 24px;
-    background: rgba(0, 0, 0, 0.3);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    padding: 20px 24px;
+    background: rgba(0, 0, 0, 0.35);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     flex-wrap: wrap;
     gap: 16px;
+}
+.ha-summary-main {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.ha-summary-verdict-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+}
+.ha-hop-count-badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    font-weight: 800;
+    color: var(--accent-cyan, #06b6d4);
+    background: rgba(6, 182, 212, 0.08);
+    border: 1px solid rgba(6, 182, 212, 0.2);
+    padding: 5px 14px;
+    border-radius: 100px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    letter-spacing: 0.05em;
+}
+.ha-summary-auth-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 4px;
+}
+.ha-summary-pill {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    font-weight: 800;
+    padding: 4px 12px;
+    border-radius: 6px;
+    letter-spacing: 0.05em;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+.ha-summary-pill.pill-pass {
+    background: rgba(16, 185, 129, 0.1);
+    color: #34d399;
+    border: 1px solid rgba(16, 185, 129, 0.25);
+}
+.ha-summary-pill.pill-fail {
+    background: rgba(239, 68, 68, 0.1);
+    color: #f87171;
+    border: 1px solid rgba(239, 68, 68, 0.25);
+}
+.ha-summary-pill.pill-warn {
+    background: rgba(245, 158, 11, 0.1);
+    color: #fb923c;
+    border: 1px solid rgba(245, 158, 11, 0.25);
+}
+
+/* Dynamic Hop Timing Connectors */
+.ha-connector-link-wrap {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: var(--text-muted, #94a3b8);
+    cursor: pointer;
+    padding: 6px 12px;
+    border-radius: 6px;
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px dashed rgba(255, 255, 255, 0.12);
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    user-select: none;
+    margin: 0 4px;
+}
+.ha-connector-link-wrap:hover {
+    border-color: var(--primary);
+    color: #fff;
+    background: rgba(56, 189, 248, 0.12);
+    transform: translateY(-1px);
+}
+.ha-connector-time-badge.badge-unusual {
+    color: #fb923c;
+}
+.ha-connector.is-unusual .ha-connector-link-wrap {
+    border-color: rgba(245, 158, 11, 0.4);
+    background: rgba(245, 158, 11, 0.08);
+}
+.ha-transition-drawer {
+    width: 240px;
+    position: absolute;
+    margin-top: 8px;
+    z-index: 10;
 }
 .ha-verdict-info {
     display: flex;
@@ -631,6 +1168,7 @@ body.light-theme .ha-expand-close:hover { background: rgba(0,0,0,0.1); color: #0
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
+    align-self: center;
 }
 .ha-connector-svg {
     width: 100%;
@@ -893,43 +1431,1163 @@ body.light-theme .ha-expand-close:hover { background: rgba(0,0,0,0.1); color: #0
     transition: all 0.3s ease;
 }
 
-/* Auth table styling */
-.ha-auth-table {
-    width: 100%;
-    border-collapse: collapse;
+/* ── Redesigned 3-Column Interactive Auth Cards ────────────────── */
+.ha-auth-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.25rem;
 }
-.ha-auth-table tr {
-    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+
+@media (max-width: 992px) {
+    .ha-auth-cards-grid {
+        grid-template-columns: 1fr;
+    }
 }
-.ha-auth-table tr:last-child {
+
+.ha-auth-card {
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    padding: 1.25rem;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    height: 100%;
+}
+
+.ha-auth-card:hover {
+    background: rgba(30, 41, 59, 0.7);
+    border-color: rgba(56, 189, 248, 0.3);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+}
+
+.ha-auth-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.85rem;
+    padding-bottom: 0.6rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.ha-auth-card-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: #f8fafc;
+    letter-spacing: 0.05em;
+}
+
+.ha-auth-card-badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    font-weight: 800;
+    padding: 3px 8px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.badge-pass {
+    background: rgba(16, 185, 129, 0.15);
+    color: #10b981;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.15);
+}
+
+.badge-fail {
+    background: rgba(239, 68, 68, 0.15);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    box-shadow: 0 0 10px rgba(239, 68, 68, 0.15);
+}
+
+.badge-warn {
+    background: rgba(245, 158, 11, 0.15);
+    color: #f59e0b;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    box-shadow: 0 0 10px rgba(245, 158, 11, 0.15);
+}
+
+.ha-auth-key-val {
+    margin-bottom: 0.6rem;
+}
+
+.ha-auth-key-label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    color: var(--text-muted, #64748b);
+    display: block;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    margin-bottom: 2px;
+}
+
+.ha-auth-val-text {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--primary, #38bdf8);
+    word-break: break-all;
+}
+
+.ha-auth-card-desc {
+    font-size: 0.8rem;
+    color: var(--text-muted, #94a3b8);
+    line-height: 1.45;
+    margin-bottom: 1rem;
+    flex-grow: 1;
+}
+
+.ha-auth-why-btn {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--primary, #38bdf8);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    align-self: flex-start;
+    padding: 4px 8px;
+    background: rgba(56, 189, 248, 0.08);
+    border: 1px solid rgba(56, 189, 248, 0.2);
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.ha-auth-why-btn:hover {
+    background: rgba(56, 189, 248, 0.2);
+    color: #fff;
+}
+
+.ha-auth-why-btn i {
+    transition: transform 0.25s ease;
+}
+
+.ha-auth-card.expanded .ha-auth-why-btn i {
+    transform: rotate(180deg);
+}
+
+/* Expanded Detail Drawer Inside Cards */
+.ha-auth-detail-drawer {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px dashed rgba(255, 255, 255, 0.1);
+    font-size: 0.8rem;
+    color: #cbd5e1;
+    animation: haDrawerFade 0.25s ease-out forwards;
+}
+
+@keyframes haDrawerFade {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.ha-detail-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 6px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    gap: 12px;
+}
+
+.ha-detail-row:last-child {
     border-bottom: none;
 }
-.ha-auth-table td {
-    padding: 10px 6px;
-    font-size: 0.82rem;
-    vertical-align: top;
+
+.ha-detail-key {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--text-muted, #94a3b8);
+    text-transform: uppercase;
+    font-weight: 600;
 }
-.ha-auth-table td.auth-header-cell {
+
+.ha-detail-val {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    color: #f1f5f9;
+    text-align: right;
+    word-break: break-all;
+}
+
+/* DMARC Alignment Flow Diagram Visualizer */
+.ha-dmarc-vis-wrap {
+    background: rgba(10, 15, 29, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-top: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.ha-vis-node {
+    width: 100%;
+    text-align: center;
+    padding: 8px 12px;
+    border-radius: 6px;
+    background: rgba(30, 41, 59, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.ha-vis-node.vis-origin {
+    border-color: rgba(56, 189, 248, 0.3);
+    background: rgba(56, 189, 248, 0.05);
+}
+
+.ha-vis-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--text-muted, #64748b);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 700;
+}
+
+.ha-vis-domain {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #f8fafc;
+}
+
+.ha-vis-arrow {
+    color: var(--text-muted, #64748b);
+    font-size: 0.85rem;
+}
+
+.ha-vis-split-box {
+    display: flex;
+    width: 100%;
+    gap: 8px;
+    align-items: center;
+}
+
+.ha-vis-branch {
+    flex: 1;
+    padding: 8px;
+    border-radius: 6px;
+    text-align: center;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.ha-vis-branch.align-pass {
+    background: rgba(16, 185, 129, 0.08);
+    border-color: rgba(16, 185, 129, 0.25);
+}
+
+.ha-vis-branch.align-fail {
+    background: rgba(239, 68, 68, 0.08);
+    border-color: rgba(239, 68, 68, 0.25);
+}
+
+.ha-vis-branch-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--text-muted, #94a3b8);
+    text-transform: uppercase;
+}
+
+.ha-vis-branch-domain {
     font-family: 'JetBrains Mono', monospace;
     font-size: 0.75rem;
     font-weight: 700;
-    width: 80px;
-    white-space: nowrap;
+    color: #f8fafc;
+    word-break: break-all;
+    margin: 2px 0;
 }
-.ha-auth-status-label {
+
+.ha-vis-badge {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 0.6rem;
+    font-size: 0.65rem;
     font-weight: 800;
-    display: inline-block;
+}
+
+.align-pass .ha-vis-badge { color: #10b981; }
+.align-fail .ha-vis-badge { color: #ef4444; }
+
+.ha-vis-plus {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--text-muted, #64748b);
+    font-weight: 700;
+}
+
+.ha-vis-verdict {
+    width: 100%;
+    text-align: center;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.ha-vis-verdict.verdict-pass {
+    background: rgba(16, 185, 129, 0.12);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    color: #10b981;
+}
+
+.ha-vis-verdict.verdict-fail {
+    background: rgba(239, 68, 68, 0.12);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    color: #ef4444;
+}
+
+.ha-vis-verdict.verdict-warn {
+    background: rgba(245, 158, 11, 0.12);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    color: #f59e0b;
+}
+
+.ha-vis-verdict-title {
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    opacity: 0.8;
+}
+
+.ha-vis-verdict-val {
+    font-size: 0.8rem;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+}
+
+.ha-vis-mismatch-alert {
+    width: 100%;
+    background: rgba(239, 68, 68, 0.15);
+    border: 1px solid rgba(239, 68, 68, 0.35);
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-size: 0.75rem;
+    color: #fca5a5;
+    line-height: 1.4;
+    margin-top: 4px;
+}
+
+.ha-vis-mismatch-alert code {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 1px 4px;
+    border-radius: 3px;
+    color: #fff;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.ha-auth-why-text {
+    font-size: 0.76rem;
+    line-height: 1.45;
+    color: var(--text-muted, #94a3b8);
+    background: rgba(255, 255, 255, 0.02);
+    padding: 8px 10px;
+    border-radius: 6px;
+    margin-top: 8px;
+    width: 100%;
+}
+
+/* ── Domain Intel Identity Investigation Panel ──────────────────── */
+.ha-intel-investigation-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+/* Identity Flow Diagram (Top) */
+.ha-intel-flow-card {
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    padding: 1.25rem;
+}
+
+.ha-intel-flow-header {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--text-muted, #94a3b8);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.ha-intel-flow-diagram {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    gap: 12px;
+}
+
+@media (max-width: 768px) {
+    .ha-intel-flow-diagram {
+        flex-direction: column;
+    }
+}
+
+.ha-intel-flow-step {
+    flex: 1;
+    background: rgba(30, 41, 59, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    padding: 10px 14px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.ha-intel-flow-step:hover {
+    background: rgba(30, 41, 59, 0.8);
+    border-color: rgba(56, 189, 248, 0.4);
+    transform: translateY(-2px);
+}
+
+.ha-flow-step-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--text-muted, #64748b);
+    text-transform: uppercase;
+    font-weight: 700;
+    margin-bottom: 2px;
+}
+
+.ha-flow-step-domain {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #f8fafc;
+    word-break: break-all;
+}
+
+.ha-intel-flow-arrow {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    min-width: 90px;
+}
+
+.ha-intel-flow-arrow i {
+    font-size: 1rem;
+    color: var(--text-muted, #64748b);
+}
+
+.ha-rel-badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.62rem;
+    font-weight: 800;
     padding: 2px 6px;
     border-radius: 4px;
     text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.rel-aligned {
+    background: rgba(16, 185, 129, 0.15);
+    color: #10b981;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.rel-different {
+    background: rgba(245, 158, 11, 0.15);
+    color: #f59e0b;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.rel-failed {
+    background: rgba(239, 68, 68, 0.15);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+/* Grid for Domain Intel Fields */
+.ha-intel-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1rem;
+}
+
+.ha-intel-field-card {
+    background: rgba(15, 23, 42, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 8px;
+    padding: 12px 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 100%;
+}
+
+.ha-intel-field-card:hover {
+    background: rgba(30, 41, 59, 0.6);
+    border-color: rgba(56, 189, 248, 0.3);
+}
+
+.ha-intel-field-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+}
+
+.ha-intel-field-key {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.68rem;
+    color: var(--text-muted, #94a3b8);
+    text-transform: uppercase;
+    font-weight: 700;
+}
+
+.ha-intel-field-val {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #f1f5f9;
+    word-break: break-all;
+}
+
+.ha-intel-field-hint {
+    font-size: 0.7rem;
+    color: var(--primary, #38bdf8);
+    margin-top: 4px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* Compact Inspection Drawer */
+.ha-intel-inspect-drawer {
+    background: rgba(10, 15, 29, 0.85);
+    border: 1px solid rgba(56, 189, 248, 0.25);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-top: 0.5rem;
+    animation: haDrawerFade 0.25s ease-out forwards;
+}
+
+.ha-inspect-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    font-weight: 800;
+    color: var(--primary, #38bdf8);
+    margin-bottom: 0.75rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.ha-inspect-close {
+    cursor: pointer;
+    color: var(--text-muted, #94a3b8);
+}
+.ha-inspect-close:hover { color: #fff; }
+
+.ha-inspect-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+}
+
+@media (max-width: 600px) {
+    .ha-inspect-grid { grid-template-columns: 1fr; }
+}
+
+.ha-inspect-item {
+    background: rgba(30, 41, 59, 0.4);
+    padding: 8px 10px;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.ha-inspect-item-key {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--text-muted, #64748b);
+    text-transform: uppercase;
+}
+
+.ha-inspect-item-val {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #f8fafc;
+    word-break: break-all;
+}
+
+/* ── Security Anomalies / Red Flags Redesign ────────────────────── */
+/* ── View Mode Navigation Tabs ─────────────────────────────────── */
+.ha-view-mode-bar {
+    background: rgba(15, 23, 42, 0.6);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 8px 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.ha-view-tabs {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.ha-view-tab {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--text-muted, #94a3b8);
+    background: transparent;
+    border: 1px solid transparent;
+    padding: 6px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.ha-view-tab:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.ha-view-tab.active {
+    color: var(--primary, #38bdf8);
+    background: rgba(56, 189, 248, 0.12);
+    border-color: rgba(56, 189, 248, 0.3);
+    box-shadow: 0 0 12px rgba(56, 189, 248, 0.15);
+}
+
+/* ── Forensic Raw Header Code Viewer ──────────────────────────── */
+.ha-raw-viewer-container {
+    background: rgba(10, 15, 29, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    margin: 1.5rem 2.25rem;
+    overflow: hidden;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.ha-raw-viewer-header {
+    background: rgba(15, 23, 42, 0.8);
+    padding: 10px 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.ha-raw-viewer-title {
+    font-size: 0.78rem;
+    font-weight: 800;
+    color: var(--primary, #38bdf8);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    letter-spacing: 0.04em;
+}
+
+.ha-raw-viewer-meta {
+    font-size: 0.65rem;
+    color: var(--text-muted, #64748b);
+    text-transform: uppercase;
+}
+
+.ha-raw-viewer-body {
+    max-height: 520px;
+    overflow-y: auto;
+    overflow-x: auto;
+    padding: 10px 0;
+    background: rgba(2, 6, 23, 0.7);
+}
+
+.ha-raw-line {
+    display: flex;
+    align-items: flex-start;
+    padding: 4px 16px;
+    font-size: 0.8rem;
+    line-height: 1.5;
+    border-left: 3px solid transparent;
+    transition: background 0.15s ease;
+}
+
+.ha-raw-line:hover {
+    background: rgba(30, 41, 59, 0.5);
+}
+
+.ha-raw-line-num {
+    color: var(--text-muted, #475569);
+    min-width: 40px;
+    user-select: none;
+    font-size: 0.72rem;
+    text-align: right;
+    padding-right: 14px;
+}
+
+.ha-raw-line-content {
+    color: #cbd5e1;
+    word-break: break-all;
+    flex: 1;
+}
+
+/* Important Header Tag Badges */
+.ha-raw-line.is-important {
+    cursor: pointer;
+    background: rgba(30, 41, 59, 0.3);
+}
+
+.ha-raw-line.is-important:hover {
+    background: rgba(56, 189, 248, 0.12);
+    border-left-color: var(--primary, #38bdf8);
+}
+
+.ha-header-badge {
+    font-size: 0.62rem;
+    font-weight: 800;
+    padding: 1px 5px;
+    border-radius: 3px;
+    margin-right: 8px;
+    text-transform: uppercase;
+    display: inline-block;
+}
+
+/* ── Route Replay Controls & Live Status Overlay Banner ──────────── */
+.ha-diagram-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.ha-heading-text {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.ha-replay-controls-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.ha-replay-btn {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #fff;
+    background: linear-gradient(135deg, rgba(6, 182, 212, 0.25) 0%, rgba(59, 130, 246, 0.25) 100%);
+    border: 1px solid rgba(56, 189, 248, 0.4);
+    border-radius: 6px;
+    padding: 6px 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    box-shadow: 0 0 10px rgba(56, 189, 248, 0.15);
+}
+
+.ha-replay-btn:hover:not(:disabled) {
+    background: linear-gradient(135deg, rgba(6, 182, 212, 0.4) 0%, rgba(59, 130, 246, 0.4) 100%);
+    border-color: rgba(56, 189, 248, 0.7);
+    transform: translateY(-1px);
+    box-shadow: 0 0 15px rgba(56, 189, 248, 0.3);
+}
+
+.ha-replay-btn.secondary {
+    background: rgba(30, 41, 59, 0.6);
+    border-color: rgba(255, 255, 255, 0.12);
+    color: var(--text-muted, #94a3b8);
+    box-shadow: none;
+}
+
+.ha-replay-btn.secondary:hover {
+    background: rgba(30, 41, 59, 0.9);
+    color: #fff;
+    border-color: rgba(255, 255, 255, 0.25);
+}
+
+/* ── New Scan Confirmation Modal Overlay ───────────────────────── */
+.ha-results-blurred {
+    filter: blur(10px) brightness(0.55);
+    pointer-events: none;
+    user-select: none;
+    transition: filter 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.ha-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(2, 6, 23, 0.55);
+    z-index: 99999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    animation: haModalFadeIn 0.25s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes haModalFadeIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+.ha-modal-box {
+    background: rgba(15, 23, 42, 0.98);
+    border: 1px solid rgba(56, 189, 248, 0.4);
+    border-radius: 14px;
+    padding: 2rem 2.25rem;
+    max-width: 440px;
+    width: 90%;
+    text-align: center;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7), 0 0 40px rgba(56, 189, 248, 0.25);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    position: relative;
+    z-index: 100000;
+}
+
+.ha-modal-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: rgba(56, 189, 248, 0.1);
+    border: 1px solid rgba(56, 189, 248, 0.3);
+    color: var(--primary, #38bdf8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+}
+
+.ha-modal-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: #f8fafc;
+    letter-spacing: 0.05em;
+}
+
+.ha-modal-desc {
+    font-size: 0.85rem;
+    color: var(--text-muted, #94a3b8);
+    line-height: 1.4;
+}
+
+.ha-modal-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 8px;
+    width: 100%;
+    justify-content: center;
+}
+
+.ha-modal-btn {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    font-weight: 700;
+    padding: 8px 18px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex: 1;
+}
+
+.ha-modal-btn.btn-cancel {
+    background: rgba(30, 41, 59, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: var(--text-muted, #94a3b8);
+}
+
+.ha-modal-btn.btn-cancel:hover {
+    background: rgba(30, 41, 59, 0.9);
+    color: #fff;
+    border-color: rgba(255, 255, 255, 0.25);
+}
+
+.ha-modal-btn.btn-confirm {
+    background: linear-gradient(135deg, rgba(56, 189, 248, 0.25) 0%, rgba(59, 130, 246, 0.25) 100%);
+    border: 1px solid rgba(56, 189, 248, 0.5);
+    color: #38bdf8;
+    box-shadow: 0 0 12px rgba(56, 189, 248, 0.2);
+}
+
+.ha-modal-btn.btn-confirm:hover {
+    background: linear-gradient(135deg, rgba(56, 189, 248, 0.4) 0%, rgba(59, 130, 246, 0.4) 100%);
+    color: #fff;
+    border-color: rgba(56, 189, 248, 0.8);
+    transform: translateY(-1px);
+}
+
+/* Replay Live Banner */
+.ha-replay-banner {
+    background: rgba(10, 15, 29, 0.9);
+    border: 1px solid rgba(56, 189, 248, 0.3);
+    border-radius: 8px;
+    padding: 10px 16px;
+    margin: 1rem 2.25rem 0 2.25rem;
+    animation: haDrawerFade 0.25s ease-out forwards;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.ha-replay-step-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.ha-replay-badge {
+    background: rgba(56, 189, 248, 0.15);
+    color: #38bdf8;
+    border: 1px solid rgba(56, 189, 248, 0.3);
+    font-size: 0.7rem;
+    font-weight: 800;
+    padding: 2px 8px;
+    border-radius: 4px;
+}
+
+.ha-replay-host {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: #f8fafc;
+}
+
+.ha-replay-meta {
+    font-size: 0.75rem;
+    color: var(--text-muted, #94a3b8);
+    margin-left: auto;
+}
+
+.ha-replay-progress-track {
+    width: 100%;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.ha-replay-progress-bar {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #38bdf8, #818cf8);
+    transition: width 0.3s ease;
+}
+
+/* Active Replay Node & Line Highlight Animation */
+.ha-node-card.replay-active-node {
+    border-color: rgba(56, 189, 248, 1) !important;
+    box-shadow: 0 0 25px rgba(56, 189, 248, 0.6), inset 0 0 15px rgba(56, 189, 248, 0.2) !important;
+    transform: scale(1.05) translateY(-4px) !important;
+    transition: all 0.3s ease !important;
+}
+
+.ha-connector.replay-active-connector {
+    color: var(--primary, #38bdf8) !important;
+    text-shadow: 0 0 10px rgba(56, 189, 248, 0.8) !important;
+}
+
+.ha-connector.replay-active-connector .ha-connector-time-badge {
+    background: rgba(56, 189, 248, 0.25) !important;
+    border-color: rgba(56, 189, 248, 0.6) !important;
+    color: #fff !important;
+    box-shadow: 0 0 12px rgba(56, 189, 248, 0.4) !important;
+}
+
+.badge-hdr-identity {
+    background: rgba(245, 158, 11, 0.15);
+    color: #f59e0b;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.ha-hdr-name {
+    font-weight: 700;
+    color: #f8fafc;
+}
+
+.ha-hdr-val {
+    color: #94a3b8;
+}
+
+.ha-panel-summary-badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.68rem;
+    font-weight: 800;
+    padding: 2px 8px;
+    border-radius: 4px;
+    margin-left: 12px;
+    letter-spacing: 0.04em;
+}
+
+.summary-clean {
+    background: rgba(16, 185, 129, 0.12);
+    color: #10b981;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.summary-anomalies {
+    background: rgba(245, 158, 11, 0.12);
+    color: #f59e0b;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.ha-anomalies-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+}
+
+.ha-anomaly-card {
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    padding: 1rem 1.15rem;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    position: relative;
+}
+
+.ha-anomaly-card:hover {
+    background: rgba(30, 41, 59, 0.75);
+    border-color: rgba(56, 189, 248, 0.35);
+    transform: translateX(4px);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+}
+
+.ha-anomaly-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.ha-anomaly-sev-badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    font-weight: 800;
+    padding: 2px 7px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.badge-sev-critical {
+    background: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.4);
+}
+
+.badge-sev-high {
+    background: rgba(239, 68, 68, 0.15);
+    color: #f87171;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.badge-sev-medium {
+    background: rgba(245, 158, 11, 0.15);
+    color: #f59e0b;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.badge-sev-low {
+    background: rgba(56, 189, 248, 0.15);
+    color: #38bdf8;
+    border: 1px solid rgba(56, 189, 248, 0.3);
+}
+
+.ha-anomaly-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: #f8fafc;
+}
+
+.ha-anomaly-nav-hint {
+    margin-left: auto;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--primary, #38bdf8);
+    opacity: 0.8;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.ha-anomaly-card:hover .ha-anomaly-nav-hint {
+    opacity: 1;
+}
+
+.ha-anomaly-desc {
+    font-size: 0.8rem;
+    color: var(--text-muted, #94a3b8);
+    line-height: 1.45;
+}
+
+.ha-anomaly-evidence-box {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
     margin-top: 4px;
 }
-.cell-status-pass { background: rgba(16, 185, 129, 0.08); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.15); }
-.cell-status-fail { background: rgba(239, 68, 68, 0.08); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.15); }
-.cell-status-warn { background: rgba(245, 158, 11, 0.08); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.15); }
-.cell-status-info { background: rgba(56, 189, 248, 0.08); color: var(--primary); border: 1px solid rgba(56, 189, 248, 0.15); }
+
+.evidence-label {
+    font-size: 0.65rem;
+    color: var(--primary, #38bdf8);
+    text-transform: uppercase;
+    font-weight: 700;
+}
+
+.evidence-val {
+    color: #cbd5e1;
+    word-break: break-all;
+}
+
+/* Evidence Pulse/Glow Animation */
+@keyframes haEvidencePulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.8);
+        border-color: rgba(56, 189, 248, 1);
+    }
+    50% {
+        box-shadow: 0 0 25px 5px rgba(56, 189, 248, 0.6);
+        border-color: rgba(56, 189, 248, 1);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(56, 189, 248, 0);
+        border-color: rgba(255, 255, 255, 0.08);
+    }
+}
+
+.ha-evidence-glow {
+    animation: haEvidencePulse 2.5s ease-in-out forwards !important;
+}
 
 /* Intel row styling */
 .ha-intel-row {
@@ -1259,7 +2917,7 @@ body.light-theme .ha-action-btn:focus-visible {
             Forensic Routing Intel
         </div>
         <h1>Email <span>Routing Path</span> Analyzer</h1>
-        <p>Trace the cryptographic hop chain of any email from origin to recipient. Paste raw headers below to isolate relays, timestamps, and validation signals.</p>
+        <p>Trace the delivery path of an email from origin to recipient. Paste raw headers to reconstruct relays, timestamps, authentication, and identity signals.</p>
     </div>
 
     <!-- Main Card -->
@@ -1273,124 +2931,201 @@ body.light-theme .ha-action-btn:focus-visible {
                     <div class="ha-term-dot dot-y" id="ha-dot-amber" title="Minimize"></div>
                     <div class="ha-term-dot dot-g" id="ha-dot-green" title="Expand"></div>
                 </div>
-                <div class="ha-term-title">phishsim-terminal://header-decoder</div>
-                <div class="ha-term-status"><div class="ha-status-pulse"></div>STANDBY</div>
+                <div class="ha-term-title">PHISHSIM-TERMINAL://HEADER-DECODER</div>
+                <div class="ha-term-status"><div class="ha-status-pulse"></div>READY</div>
             </div>
-            
-            <textarea id="headers-input" class="ha-textarea"
-                placeholder="Paste full raw email headers here (including all Received, Authentication-Results, SPF, and DKIM lines)…"
-                spellcheck="false"></textarea>
 
-            <!-- Amber/minimize DNS-hop animation stage -->
-            <div class="ha-hop-stage" id="ha-hop-stage" onclick="haRestoreFromMinimize()" title="Click to restore">
-                <!-- Simple SVG animated mail-hop path -->
-                <svg class="ha-hop-svg" viewBox="0 0 280 70" xmlns="http://www.w3.org/2000/svg">
-                    <!-- Static path nodes -->
-                    <circle cx="20"  cy="35" r="10" fill="none" stroke="rgba(56,189,248,0.3)" stroke-width="1.5"/>
-                    <circle cx="90"  cy="20" r="10" fill="none" stroke="rgba(167,139,250,0.3)" stroke-width="1.5"/>
-                    <circle cx="160" cy="50" r="10" fill="none" stroke="rgba(52,211,153,0.3)" stroke-width="1.5"/>
-                    <circle cx="230" cy="25" r="10" fill="none" stroke="rgba(248,113,113,0.3)" stroke-width="1.5"/>
-                    <circle cx="265" cy="35" r="8"  fill="none" stroke="rgba(56,189,248,0.5)" stroke-width="1.5"/>
-                    <!-- Connecting dashes -->
-                    <polyline points="30,35 80,20" stroke="rgba(56,189,248,0.2)" stroke-width="1" stroke-dasharray="4 3" fill="none"/>
-                    <polyline points="100,20 150,50" stroke="rgba(167,139,250,0.2)" stroke-width="1" stroke-dasharray="4 3" fill="none"/>
-                    <polyline points="170,50 220,25" stroke="rgba(52,211,153,0.2)" stroke-width="1" stroke-dasharray="4 3" fill="none"/>
-                    <polyline points="240,25 258,33" stroke="rgba(248,113,113,0.2)" stroke-width="1" stroke-dasharray="4 3" fill="none"/>
-                    <!-- Traveling animated dots using offset-path on each circle -->
-                    <circle r="4" fill="var(--primary)" style="offset-path:path('M 20 35 L 90 20 L 160 50 L 230 25 L 265 35'); animation: haHopMove 2.8s ease-in-out infinite; opacity:0;"/>
-                    <circle r="3" fill="#a78bfa" style="offset-path:path('M 20 35 L 90 20 L 160 50 L 230 25 L 265 35'); animation: haHopMove 2.8s ease-in-out infinite; animation-delay:0.7s; opacity:0;"/>
-                    <circle r="3" fill="#34d399" style="offset-path:path('M 20 35 L 90 20 L 160 50 L 230 25 L 265 35'); animation: haHopMove 2.8s ease-in-out infinite; animation-delay:1.4s; opacity:0;"/>
-                    <circle r="2.5" fill="#f87171" style="offset-path:path('M 20 35 L 90 20 L 160 50 L 230 25 L 265 35'); animation: haHopMove 2.8s ease-in-out infinite; animation-delay:2.1s; opacity:0;"/>
-                </svg>
-                <!-- Labels -->
-                <div style="display:flex; gap:24px; font-family:'JetBrains Mono',monospace; font-size:0.6rem; color:rgba(100,116,139,0.7); letter-spacing:0.05em;">
-                    <span>SMTP-IN</span><span>RELAY-1</span><span>RELAY-2</span><span>SMTP-OUT</span><span>INBOX</span>
+            <!-- Minimized interactive route navigator stage -->
+            <div class="ha-hop-stage" id="ha-hop-stage">
+                <div class="ha-mini-nav-header">
+                    <div class="ha-mini-nav-title">
+                        <i class="ti ti-route-2"></i> PHISHSIM HEADER DECODER
+                    </div>
+                    <div class="ha-mini-nav-status">
+                        <span class="ha-mini-status-dot"></span> <span id="ha-mini-status-text">STANDBY</span>
+                    </div>
+                    <button class="ha-mini-restore-btn" onclick="haRestoreFromMinimize()" title="Restore Full Console">
+                        <i class="ti ti-maximize"></i> RESTORE CONSOLE
+                    </button>
                 </div>
-                <div class="ha-hop-restore-hint">&uarr; Click anywhere to restore</div>
+
+                <!-- Mini Route Chain Navigator -->
+                <div class="ha-mini-route-container">
+                    <div class="ha-mini-route-chain" id="ha-mini-route-chain">
+                        <!-- Dynamic interactive route nodes & line links inserted here -->
+                    </div>
+                    <!-- Detail Popover Card -->
+                    <div class="ha-mini-popover" id="ha-mini-popover" style="display: none;"></div>
+                </div>
             </div>
 
             <!-- Wrapper for smooth minimization transition -->
             <div class="ha-input-body" id="ha-input-body">
+                <div class="ha-console-prompt">
+                    <span class="ha-prompt-symbol">&gt;</span> awaiting header payload...
+                </div>
+
                 <textarea id="headers-input" class="ha-textarea"
-                    placeholder="Paste full raw email headers here (including all Received, Authentication-Results, SPF, and DKIM lines)…"
+                    placeholder="Paste raw email headers here."
                     spellcheck="false"></textarea>
 
-                <!-- Presets Grid (6 items) -->
-                <div class="ha-presets-section">
-                    <div class="ha-presets-title">Load Forensic Samples:</div>
-                    <div class="ha-preset-grid">
-                        <button class="ha-preset-btn" id="btn-preset-legit" onclick="loadPreset('legit')">
-                            <span class="ha-preset-indicator" style="background:#10b981"></span>
-                            Legit Gmail → Outlook
+                <!-- Live Structural Detection Bar -->
+                <div class="ha-structural-bar" id="ha-structural-detection" style="display: none;">
+                    <div class="ha-structural-title">
+                        <i class="ti ti-scan"></i> STRUCTURAL SIGNALS DETECTED
+                    </div>
+                    <div class="ha-structural-tags" id="ha-structural-tags"></div>
+                </div>
+
+                <!-- Presets & Sample Loader Section -->
+                <div class="ha-preset-actions-bar">
+                    <div class="ha-sample-btns-group">
+                        <button class="ha-preset-btn sample-clean" id="btn-preset-legit" onclick="loadPreset('legit')">
+                            <i class="ti ti-shield-check"></i> LOAD CLEAN SAMPLE
                         </button>
-                        <button class="ha-preset-btn" id="btn-preset-spf-fail" onclick="loadPreset('spf-fail')">
-                            <span class="ha-preset-indicator" style="background:#ef4444"></span>
-                            SPF Fail (Spoofed)
+                        <button class="ha-preset-btn sample-suspicious" id="btn-preset-spf-fail" onclick="loadPreset('spf-fail')">
+                            <i class="ti ti-alert-octagon"></i> LOAD SUSPICIOUS SAMPLE
                         </button>
-                        <button class="ha-preset-btn" id="btn-preset-no-dkim" onclick="loadPreset('no-dkim')">
-                            <span class="ha-preset-indicator" style="background:#f59e0b"></span>
-                            Missing DKIM
-                        </button>
-                        <button class="ha-preset-btn" id="btn-preset-no-dmarc" onclick="loadPreset('no-dmarc')">
-                            <span class="ha-preset-indicator" style="background:#f59e0b"></span>
-                            Missing DMARC
-                        </button>
-                        <button class="ha-preset-btn" id="btn-preset-reply-mismatch" onclick="loadPreset('reply-mismatch')">
-                            <span class="ha-preset-indicator" style="background:#ef4444"></span>
-                            Reply-To Mismatch
-                        </button>
-                        <button class="ha-preset-btn" id="btn-preset-newly-registered" onclick="loadPreset('newly-registered')">
-                            <span class="ha-preset-indicator" style="background:#ef4444"></span>
-                            Newly Registered Domain
-                        </button>
+                    </div>
+                    <div class="ha-presets-more">
+                        <span class="ha-presets-more-title">More Forensic Samples:</span>
+                        <div class="ha-preset-pills">
+                            <button class="ha-preset-pill" id="btn-preset-no-dkim" onclick="loadPreset('no-dkim')">Missing DKIM</button>
+                            <button class="ha-preset-pill" id="btn-preset-no-dmarc" onclick="loadPreset('no-dmarc')">Missing DMARC</button>
+                            <button class="ha-preset-pill" id="btn-preset-reply-mismatch" onclick="loadPreset('reply-mismatch')">Reply-To Mismatch</button>
+                            <button class="ha-preset-pill" id="btn-preset-newly-registered" onclick="loadPreset('newly-registered')">Newly Registered Domain</button>
+                        </div>
                     </div>
                 </div>
 
                 <button class="ha-action-btn" id="trace-btn" onclick="executeTrace()">
                     <i class="ti ti-binary"></i>
-                    TRACE ROUTING PIPELINE
+                    ANALYZE HEADERS
                 </button>
             </div>
         </div>
 
         <!-- LOADING STAGE -->
-        <div id="stage-loading" class="ha-loading-stage" style="display: none;"></div>
+        <div id="stage-loading" class="ha-loading-stage" style="display: none;">
+            <div class="ha-decoding-card">
+                <div class="ha-term-header">
+                    <div class="ha-term-dots">
+                        <div class="ha-term-dot dot-r"></div>
+                        <div class="ha-term-dot dot-y"></div>
+                        <div class="ha-term-dot dot-g"></div>
+                    </div>
+                    <div class="ha-term-title">PHISHSIM-TERMINAL://FORENSIC-DECODER</div>
+                    <div class="ha-term-status"><div class="ha-status-pulse"></div>DECODING</div>
+                </div>
+                <div class="ha-decoding-body">
+                    <div class="ha-decoding-terminal" id="ha-decoding-log">
+                        <!-- Dynamic forensic sequence lines populated here -->
+                    </div>
+                    <div class="ha-decoding-progress-bar">
+                        <div class="ha-decoding-progress-fill" id="ha-decoding-progress"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
         <!-- RESULTS STAGE -->
         <div id="stage-results" style="display: none;">
-            <!-- Verdict strip -->
+            <!-- Forensic Result Summary Strip -->
             <div class="ha-result-strip">
-                <div class="ha-verdict-info">
-                    <span class="ha-verdict-badge" id="result-verdict">—</span>
-                    <div class="ha-score-wrapper">
-                        <span class="ha-score-num" id="result-score">0</span>
-                        <span class="ha-score-label">risk index</span>
+                <div class="ha-summary-main">
+                    <div class="ha-summary-verdict-row">
+                        <span class="ha-verdict-badge" id="result-verdict">—</span>
+                        <div class="ha-score-wrapper">
+                            <span class="ha-score-num" id="result-score">0</span>
+                            <span class="ha-score-label">RISK INDEX</span>
+                        </div>
+                        <div class="ha-hop-count-badge" id="result-hop-count">
+                            <i class="ti ti-route"></i> <span id="result-hop-count-num">0</span> HOPS
+                        </div>
                     </div>
-                    <span class="ha-subject-text" id="result-subject"></span>
+                    <div class="ha-subject-text" id="result-subject"></div>
+                    <!-- Quick Authentication & Alignment Pills -->
+                    <div class="ha-summary-auth-pills" id="result-auth-pills">
+                        <span class="ha-summary-pill" id="pill-spf">SPF —</span>
+                        <span class="ha-summary-pill" id="pill-dkim">DKIM —</span>
+                        <span class="ha-summary-pill" id="pill-dmarc">DMARC —</span>
+                        <span class="ha-summary-pill" id="pill-alignment">ALIGNMENT —</span>
+                    </div>
                 </div>
-                <button class="ha-reset-btn" onclick="resetToInput()">
-                    <i class="ti ti-refresh"></i> New Scan
-                </button>
+                <div class="ha-summary-actions">
+                    <button class="ha-reset-btn" onclick="promptNewScanConfirmation()">
+                        <i class="ti ti-refresh"></i> NEW SCAN
+                    </button>
+                </div>
             </div>
 
-            <!-- Decorative routing-node strip that visually extends the routing path concept -->
-            <div class="ha-route-strip">
-                <span class="ha-route-strip-label">Decoded Route Trace</span>
-                <div class="ha-route-node node-ok">ORIGIN</div>
-                <div class="ha-route-connector"></div>
-                <div class="ha-route-node">HOP 01</div>
-                <div class="ha-route-connector"></div>
-                <div class="ha-route-node">HOP 02</div>
-                <div class="ha-route-connector"></div>
-                <div class="ha-route-node node-suspicious">MX TARGET</div>
+
+
+            <!-- View Mode Navigation Tabs Bar -->
+            <div class="ha-view-mode-bar">
+                <div class="ha-view-tabs">
+                    <button class="ha-view-tab active" id="tab-btn-route" onclick="switchResultViewTab('route')">
+                        <i class="ti ti-route-2"></i> ROUTE
+                    </button>
+                    <button class="ha-view-tab" id="tab-btn-auth" onclick="switchResultViewTab('auth')">
+                        <i class="ti ti-shield-check"></i> AUTHENTICATION
+                    </button>
+                    <button class="ha-view-tab" id="tab-btn-identity" onclick="switchResultViewTab('identity')">
+                        <i class="ti ti-database"></i> IDENTITY
+                    </button>
+                    <button class="ha-view-tab" id="tab-btn-raw" onclick="switchResultViewTab('raw')">
+                        <i class="ti ti-code"></i> RAW HEADERS
+                    </button>
+                </div>
             </div>
 
-            <!-- PRIMARY VISUAL: Real Routing Path Diagram -->
+            <!-- RAW HEADERS Forensic Inspector Panel -->
+            <div class="ha-raw-viewer-container" id="ha-raw-headers-panel" style="display: none;">
+                <div class="ha-raw-viewer-header">
+                    <div class="ha-raw-viewer-title">
+                        <i class="ti ti-terminal-2"></i> FORENSIC RAW HEADER INSPECTOR
+                    </div>
+                    <div class="ha-raw-viewer-meta">
+                        ORIGINAL UNMODIFIED PAYLOAD
+                    </div>
+                </div>
+                <div class="ha-raw-viewer-body" id="ha-raw-lines-container">
+                    <!-- Rendered line-by-line raw headers -->
+                </div>
+            </div>
+
+            <!-- PRIMARY VISUAL: Interactive Chronological Delivery Path -->
             <div class="ha-diagram-container">
                 <div class="ha-diagram-heading">
-                    <i class="ti ti-route-2"></i>
-                    Chronological Datalink Pipeline (Click nodes to inspect headers)
+                    <div class="ha-heading-text">
+                        <i class="ti ti-route-2"></i>
+                        Chronological Delivery Path (Click nodes or timing links for details)
+                    </div>
+                    <div class="ha-replay-controls-group">
+                        <button class="ha-replay-btn" id="btn-replay-route" onclick="triggerRouteReplay()">
+                            <i class="ti ti-player-play"></i> REPLAY ROUTE
+                        </button>
+                        <button class="ha-replay-btn secondary" id="btn-pause-replay" onclick="pauseRouteReplay()" style="display: none;">
+                            <i class="ti ti-player-pause"></i> PAUSE
+                        </button>
+                        <button class="ha-replay-btn secondary" id="btn-restart-replay" onclick="restartRouteReplay()" style="display: none;">
+                            <i class="ti ti-rotate-clockwise"></i> RESTART
+                        </button>
+                    </div>
                 </div>
+
+                <!-- Replay Live Status Overlay Banner -->
+                <div class="ha-replay-banner" id="replay-live-banner" style="display: none;">
+                    <div class="ha-replay-step-info">
+                        <span class="ha-replay-badge" id="replay-current-step">HOP 01</span>
+                        <span class="ha-replay-host" id="replay-current-host">relay.example.com</span>
+                        <span class="ha-replay-meta" id="replay-current-meta">09:04:04 UTC | ESMTP | +1.8s</span>
+                    </div>
+                    <div class="ha-replay-progress-track">
+                        <div class="ha-replay-progress-bar" id="replay-progress-fill"></div>
+                    </div>
+                </div>
+
                 <div class="ha-diagram-viewport">
                     <div class="ha-node-chain" id="node-chain-container">
                         <!-- Dynamic node flow gets inserted here -->
@@ -1401,42 +3136,43 @@ body.light-theme .ha-action-btn:focus-visible {
             <!-- Detailed Analysis Panels -->
             <div class="ha-grid-panels">
                 
-                <!-- Authentication Panel -->
-                <div class="ha-side-panel">
+                <!-- Authentication Panel (Full Width Grid Span) -->
+                <div class="ha-side-panel" style="grid-column: 1 / -1;">
                     <div class="ha-panel-head" onclick="togglePanelBody('auth-body')">
                         <i class="ti ti-shield-check"></i>
                         Authentication Decoded
                         <i class="ti ti-chevron-down ha-panel-arrow" id="auth-body-arrow"></i>
                     </div>
                     <div class="ha-panel-body" id="auth-body">
-                        <table class="ha-auth-table" id="auth-results-table">
-                            <!-- Dynamic rows -->
-                        </table>
-                    </div>
-                </div>
-
-                <!-- Domain Intel Panel -->
-                <div class="ha-side-panel">
-                    <div class="ha-panel-head" onclick="togglePanelBody('intel-body')">
-                        <i class="ti ti-database"></i>
-                        Domain Intelligence
-                        <i class="ti ti-chevron-down ha-panel-arrow" id="intel-body-arrow"></i>
-                    </div>
-                    <div class="ha-panel-body" id="intel-body">
-                        <div id="domain-intel-container">
-                            <!-- Dynamic items -->
+                        <div class="ha-auth-cards-grid" id="auth-cards-container">
+                            <!-- Dynamic interactive SPF, DKIM, and DMARC cards rendered via JS -->
                         </div>
                     </div>
                 </div>
 
-                <!-- Red Flags Panel (Full Width) -->
+                <!-- Domain Intel Panel (Full Width Grid Span) -->
+                <div class="ha-side-panel" style="grid-column: 1 / -1;">
+                    <div class="ha-panel-head" onclick="togglePanelBody('intel-body')">
+                        <i class="ti ti-database"></i>
+                        Identity & Domain Intelligence Panel
+                        <i class="ti ti-chevron-down ha-panel-arrow" id="intel-body-arrow"></i>
+                    </div>
+                    <div class="ha-panel-body" id="intel-body">
+                        <div id="domain-intel-container">
+                            <!-- Dynamic flow diagram, field grid, and drawers -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Red Flags Panel (Full Width - Collapsed By Default) -->
                 <div class="ha-side-panel" style="grid-column: 1 / -1;">
                     <div class="ha-panel-head" onclick="togglePanelBody('flags-body')">
                         <i class="ti ti-alert-octagon"></i>
-                        Security Anomalies / Red Flags
+                        <span>Security Anomalies / Red Flags</span>
+                        <span class="ha-panel-summary-badge" id="flags-header-summary">✓ NO HIGH-RISK ANOMALIES</span>
                         <i class="ti ti-chevron-down ha-panel-arrow" id="flags-body-arrow"></i>
                     </div>
-                    <div class="ha-panel-body" id="flags-body">
+                    <div class="ha-panel-body" id="flags-body" style="display: none;">
                         <div id="red-flags-container">
                             <!-- Dynamic flag list -->
                         </div>
@@ -1446,6 +3182,21 @@ body.light-theme .ha-action-btn:focus-visible {
             </div>
         </div>
 
+    </div>
+
+    <!-- New Scan Confirmation Modal Overlay (Positioned outside blurred result subtree) -->
+    <div class="ha-modal-overlay" id="ha-new-scan-modal" style="display: none;">
+        <div class="ha-modal-box">
+            <div class="ha-modal-icon">
+                <i class="ti ti-refresh" id="ha-modal-icon-i"></i>
+            </div>
+            <div class="ha-modal-title" id="ha-modal-title-text">START NEW INVESTIGATION?</div>
+            <div class="ha-modal-desc" id="ha-modal-desc-text">Your current analysis will be cleared.</div>
+            <div class="ha-modal-actions">
+                <button class="ha-modal-btn btn-cancel" onclick="window._haConfirmAction ? window._haConfirmAction(false) : closeNewScanConfirmation()">[ CANCEL ]</button>
+                <button class="ha-modal-btn btn-confirm" id="ha-modal-confirm-btn" onclick="window._haConfirmAction ? window._haConfirmAction(true) : confirmNewScan()">[ NEW SCAN ]</button>
+            </div>
+        </div>
     </div>
 
 </div>
@@ -1593,7 +3344,7 @@ Return-Path: <security@newly-registered-phish.com>`
 
 /* Preset loading handler */
 function loadPreset(key) {
-    document.querySelectorAll('.ha-preset-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.ha-preset-btn, .ha-preset-pill').forEach(btn => btn.classList.remove('active'));
     const activeBtn = document.getElementById('btn-preset-' + key);
     if (activeBtn) activeBtn.classList.add('active');
     
@@ -1602,6 +3353,74 @@ function loadPreset(key) {
     // Clear validation borders on preset select
     const textarea = document.getElementById('headers-input');
     textarea.style.borderColor = '';
+    
+    updateStructuralDetection();
+}
+
+/* Live Structural Detection Handler */
+function updateStructuralDetection() {
+    const textarea = document.getElementById('headers-input');
+    if (!textarea) return;
+    const raw = textarea.value;
+    const container = document.getElementById('ha-structural-detection');
+    const tagsBox = document.getElementById('ha-structural-tags');
+    if (!container || !tagsBox) return;
+
+    if (!raw || !raw.trim()) {
+        container.style.display = 'none';
+        tagsBox.innerHTML = '';
+        return;
+    }
+
+    container.style.display = 'block';
+
+    const hasFrom = /^From:\s*/im.test(raw);
+    const hasSubject = /^Subject:\s*/im.test(raw);
+
+    const receivedMatches = raw.match(/^Received:\s*/gim);
+    const receivedCount = receivedMatches ? receivedMatches.length : 0;
+
+    const hasAuthResults = /^Authentication-Results:\s*/im.test(raw);
+    const hasDkimSig = /^DKIM-Signature:\s*/im.test(raw);
+
+    let html = '';
+
+    // 1. From
+    if (hasFrom) {
+        html += `<span class="ha-struct-chip chip-ok"><i class="ti ti-check"></i> From detected</span>`;
+    } else {
+        html += `<span class="ha-struct-chip chip-warn"><i class="ti ti-alert-triangle"></i> From header not detected</span>`;
+    }
+
+    // 2. Subject
+    if (hasSubject) {
+        html += `<span class="ha-struct-chip chip-ok"><i class="ti ti-check"></i> Subject detected</span>`;
+    } else {
+        html += `<span class="ha-struct-chip chip-warn"><i class="ti ti-alert-triangle"></i> Subject header not detected</span>`;
+    }
+
+    // 3. Received count
+    if (receivedCount > 0) {
+        html += `<span class="ha-struct-chip chip-ok"><i class="ti ti-check"></i> Received &times;${receivedCount}</span>`;
+    } else {
+        html += `<span class="ha-struct-chip chip-warn"><i class="ti ti-alert-triangle"></i> No Received lines detected</span>`;
+    }
+
+    // 4. Authentication-Results
+    if (hasAuthResults) {
+        html += `<span class="ha-struct-chip chip-ok"><i class="ti ti-check"></i> Authentication-Results detected</span>`;
+    } else {
+        html += `<span class="ha-struct-chip chip-warn"><i class="ti ti-alert-triangle"></i> Authentication-Results not detected</span>`;
+    }
+
+    // 5. DKIM-Signature
+    if (hasDkimSig) {
+        html += `<span class="ha-struct-chip chip-ok"><i class="ti ti-check"></i> DKIM-Signature detected</span>`;
+    } else {
+        html += `<span class="ha-struct-chip chip-warn"><i class="ti ti-alert-triangle"></i> DKIM-Signature not detected</span>`;
+    }
+
+    tagsBox.innerHTML = html;
 }
 
 /* UI Stage togglers */
@@ -1611,12 +3430,140 @@ function showStage(stageId) {
     document.getElementById('stage-results').style.display = stageId === 'results' ? '' : 'none';
 }
 
+/* Website Alert Modal Helper */
+function askHeaderConfirm(title, desc, confirmBtnText, onConfirm) {
+    const modal = document.getElementById('ha-new-scan-modal');
+    const titleEl = document.getElementById('ha-modal-title-text');
+    const descEl = document.getElementById('ha-modal-desc-text');
+    const confirmBtn = document.getElementById('ha-modal-confirm-btn');
+    const cardContainer = document.getElementById('ha-card-container');
+    const resultsStage = document.getElementById('stage-results');
+
+    if (titleEl) titleEl.textContent = title || 'START NEW INVESTIGATION?';
+    if (descEl) descEl.textContent = desc || 'Your current analysis will be cleared.';
+    if (confirmBtn) confirmBtn.textContent = confirmBtnText || '[ NEW SCAN ]';
+
+    if (resultsStage && resultsStage.style.display !== 'none') {
+        resultsStage.classList.add('ha-results-blurred');
+    } else if (cardContainer) {
+        cardContainer.classList.add('ha-results-blurred');
+    }
+
+    window._haConfirmAction = function(confirmed) {
+        if (resultsStage) resultsStage.classList.remove('ha-results-blurred');
+        if (cardContainer) cardContainer.classList.remove('ha-results-blurred');
+        if (modal) modal.style.display = 'none';
+        if (confirmed && typeof onConfirm === 'function') {
+            onConfirm();
+        }
+    };
+
+    if (modal) modal.style.display = 'flex';
+}
+
+function promptNewScanConfirmation() {
+    askHeaderConfirm(
+        'START NEW INVESTIGATION?',
+        'Your current analysis will be cleared.',
+        '[ NEW SCAN ]',
+        function() {
+            resetToInput();
+        }
+    );
+}
+
+function closeNewScanConfirmation() {
+    if (window._haConfirmAction) {
+        window._haConfirmAction(false);
+    } else {
+        const resultsStage = document.getElementById('stage-results');
+        if (resultsStage) resultsStage.classList.remove('ha-results-blurred');
+        const modal = document.getElementById('ha-new-scan-modal');
+        if (modal) modal.style.display = 'none';
+    }
+}
+
+function confirmNewScan() {
+    if (window._haConfirmAction) {
+        window._haConfirmAction(true);
+    } else {
+        closeNewScanConfirmation();
+        resetToInput();
+    }
+}
+
 function resetToInput() {
-    showStage('input');
+    // 1. Stop any ongoing route replay
+    if (typeof stopRouteReplay === 'function') stopRouteReplay();
+
+    // 2. Clear result summary strip metrics
+    const verdictEl = document.getElementById('result-verdict');
+    const scoreEl = document.getElementById('result-score');
+    const subjectEl = document.getElementById('result-subject');
+    const hopCountEl = document.getElementById('result-hop-count-num');
     
-    // Clear styles from card container
+    if (verdictEl) { verdictEl.textContent = '—'; verdictEl.className = 'ha-verdict-badge'; }
+    if (scoreEl) { scoreEl.textContent = '0'; scoreEl.style.color = ''; }
+    if (subjectEl) subjectEl.textContent = '';
+    if (hopCountEl) hopCountEl.textContent = '0';
+
+    ['pill-spf', 'pill-dkim', 'pill-dmarc', 'pill-alignment'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.className = 'ha-summary-pill';
+            el.textContent = `${id.replace('pill-', '').toUpperCase()} —`;
+        }
+    });
+
+    // 3. Clear route visualization
+    const nodeContainer = document.getElementById('node-chain-container');
+    if (nodeContainer) nodeContainer.innerHTML = '';
+
+    const miniStage = document.getElementById('ha-hop-stage');
+    if (miniStage) miniStage.innerHTML = '';
+
+    // 4. Clear authentication cards
+    const authContainer = document.getElementById('auth-cards-container');
+    if (authContainer) authContainer.innerHTML = '';
+
+    // 5. Clear domain intelligence
+    const intelContainer = document.getElementById('domain-intel-container');
+    if (intelContainer) intelContainer.innerHTML = '';
+
+    // 6. Clear security anomaly state
+    const flagsContainer = document.getElementById('red-flags-container');
+    if (flagsContainer) flagsContainer.innerHTML = '';
+    
+    const summaryBadge = document.getElementById('flags-header-summary');
+    if (summaryBadge) {
+        summaryBadge.className = 'ha-panel-summary-badge summary-clean';
+        summaryBadge.innerHTML = '✓ NO HIGH-RISK ANOMALIES';
+    }
+    setCollapsiblePanelState('flags-body', false);
+
+    // 7. Clear global memory objects
+    window.lastAnalyzedData = null;
+    window.currentIntelData = null;
+
+    // 8. Reset View Mode tabs back to ROUTE
+    if (typeof switchResultViewTab === 'function') {
+        document.querySelectorAll('.ha-view-tab').forEach(btn => btn.classList.remove('active'));
+        const routeTab = document.getElementById('tab-btn-route');
+        if (routeTab) routeTab.classList.add('active');
+        const rawPanel = document.getElementById('ha-raw-headers-panel');
+        if (rawPanel) rawPanel.style.display = 'none';
+    }
+
+    // 9. Reset main card container & input stage
     const card = document.getElementById('ha-card-container');
-    card.className = 'ha-main-card';
+    if (card) card.className = 'ha-main-card';
+    
+    updateStructuralDetection();
+    showStage('input');
+
+    // 10. Focus input textarea smoothly
+    const textarea = document.getElementById('headers-input');
+    if (textarea) textarea.focus();
 }
 
 /* Technical Panels Collapsible state */
@@ -1678,6 +3625,80 @@ function getAuthBadgeLabel(status) {
     }[status] || status.toUpperCase();
 }
 
+const FORENSIC_DECODING_STEPS = [
+    "ingesting header payload...",
+    "parsing Received chain...",
+    "reconstructing delivery path...",
+    "decoding Authentication-Results...",
+    "evaluating SPF...",
+    "evaluating DKIM...",
+    "evaluating DMARC...",
+    "checking identity alignment...",
+    "calculating route timing...",
+    "generating forensic report..."
+];
+
+async function runForensicDecodingSequence(apiPromise) {
+    showStage('loading');
+    const logBox = document.getElementById('ha-decoding-log');
+    const progressBar = document.getElementById('ha-decoding-progress');
+    if (logBox) logBox.innerHTML = '';
+    if (progressBar) progressBar.style.width = '0%';
+
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const stepDelay = prefersReducedMotion ? 10 : 120; // ms per step
+
+    for (let i = 0; i < FORENSIC_DECODING_STEPS.length; i++) {
+        const stepText = FORENSIC_DECODING_STEPS[i];
+        
+        // Create pending step line
+        const lineEl = document.createElement('div');
+        lineEl.className = 'ha-decoding-line pending visible';
+        lineEl.innerHTML = `<span class="step-prefix">&gt;</span><span class="step-text">${escapeHTML(stepText)}</span>`;
+        logBox.appendChild(lineEl);
+
+        // Update progress bar
+        if (progressBar) {
+            const percent = Math.round(((i + 0.5) / (FORENSIC_DECODING_STEPS.length + 1)) * 100);
+            progressBar.style.width = percent + '%';
+        }
+
+        // Auto-scroll log box
+        logBox.scrollTop = logBox.scrollHeight;
+
+        if (!prefersReducedMotion) {
+            await new Promise(r => setTimeout(r, stepDelay));
+        }
+
+        // Transition current line to done checkmark ✓
+        lineEl.className = 'ha-decoding-line done visible';
+        lineEl.innerHTML = `<span class="step-prefix">&check;</span><span class="step-text">${escapeHTML(stepText.replace('...', ''))}</span>`;
+    }
+
+    // Await actual API data if still pending
+    const apiResult = await apiPromise;
+
+    if (progressBar) progressBar.style.width = '100%';
+
+    // Terminal completion lines
+    const decodedLine = document.createElement('div');
+    decodedLine.className = 'ha-decoding-line complete-header visible';
+    decodedLine.innerHTML = `<span class="step-prefix">&gt;</span><span>ROUTE DECODED</span>`;
+    logBox.appendChild(decodedLine);
+
+    const completeLine = document.createElement('div');
+    completeLine.className = 'ha-decoding-line complete-success visible';
+    completeLine.innerHTML = `<span class="step-prefix">&gt;</span><span>FORENSIC ANALYSIS COMPLETE</span>`;
+    logBox.appendChild(completeLine);
+
+    logBox.scrollTop = logBox.scrollHeight;
+
+    const pauseDelay = prefersReducedMotion ? 50 : 400;
+    await new Promise(r => setTimeout(r, pauseDelay));
+
+    return apiResult;
+}
+
 /* Trigger forensic traceback lookup */
 async function executeTrace() {
     const headersText = document.getElementById('headers-input').value.trim();
@@ -1689,48 +3710,30 @@ async function executeTrace() {
         return;
     }
 
-    const loader = new ToolMiniLoader('stage-loading', 'header');
-    loader.start();
+    const fd = new FormData();
+    fd.append('headers', headersText);
 
-    let isSuccess = false;
-    let parsedData = null;
+    const fetchPromise = fetch('/api/header-analyzer', {
+        method: 'POST',
+        body: fd
+    }).then(async res => {
+        if (!res.ok) {
+            const errData = await res.json().catch(() => ({}));
+            throw new Error(errData.message || 'Server error occurred');
+        }
+        const data = await res.json();
+        if (!data.success) {
+            throw new Error(data.message || 'Unknown parsing failure');
+        }
+        return data;
+    });
 
     try {
-        const fd = new FormData();
-        fd.append('headers', headersText);
-        
-        const response = await fetch('/api/header-analyzer', {
-            method: 'POST',
-            body: fd
-        });
-        
-        if (!response.ok) {
-            const errData = await response.json();
-            alert('Analysis failed: ' + (errData.message || 'Server error occurred'));
-            isSuccess = false;
-            return;
-        }
-
-        const data = await response.json();
-        if (data.success) {
-            parsedData = data;
-            isSuccess = true;
-        } else {
-            alert('Analysis failed: ' + (data.message || 'Unknown parsing failure'));
-            isSuccess = false;
-        }
-
+        const parsedData = await runForensicDecodingSequence(fetchPromise);
+        renderForensicResults(parsedData);
     } catch (err) {
-        alert('Forensic connection failure: ' + err.message);
-        isSuccess = false;
-    } finally {
-        loader.stop(() => {
-            if (isSuccess && parsedData) {
-                renderForensicResults(parsedData);
-            } else {
-                showStage('input');
-            }
-        });
+        alert('Analysis failed: ' + err.message);
+        showStage('input');
     }
 }
 
@@ -1757,7 +3760,7 @@ function drawHopsDiagram(hops, auth) {
     hops.forEach((hop, i) => {
         const isOrigin = (i === 0);
         const isDest = (i === hops.length - 1);
-        const trustClass = hop.trust || 'safe';
+        let trustClass = hop.trust || 'safe';
         
         // Host label formatting
         let hostLabel = 'Unknown Node';
@@ -1767,20 +3770,24 @@ function drawHopsDiagram(hops, auth) {
             hostLabel = hop.by;
         }
 
+        // Timestamp formatting
+        let timestampText = hop.timestamp || (hop.ts ? new Date(hop.ts * 1000).toUTCString().replace(' GMT', ' UTC') : '');
+
         // Timing delay format
         let deltaHtml = '';
         if (i > 0 && hop.delta !== undefined && hop.delta !== null) {
             const absSec = Math.abs(hop.delta);
             let timeString = absSec + 's';
             if (absSec >= 3600) {
-                timeString = Math.round(absSec / 3600) + 'h';
+                timeString = (absSec / 3600).toFixed(1) + 'h';
             } else if (absSec >= 60) {
-                timeString = Math.round(absSec / 60) + 'm';
+                timeString = (absSec / 60).toFixed(1) + 'm';
             }
             const isSlow = absSec > 300;
+            if (isSlow) trustClass = 'warn';
             deltaHtml = `
                 <div class="ha-node-time ${isSlow ? 'slow' : ''}">
-                    <i class="ti ti-clock"></i> +${timeString}
+                    <i class="ti ti-clock"></i> +${timeString} ${isSlow ? '(UNUSUAL DELAY)' : ''}
                 </div>`;
         }
 
@@ -1823,17 +3830,18 @@ function drawHopsDiagram(hops, auth) {
             <div class="ha-node-card trust-${trustClass} ${isOrigin ? 'node-origin' : ''}" onclick="toggleNodeDrawer(${i})">
                 <div class="ha-node-dot trust-${trustClass}"></div>
                 <div class="ha-node-badge">
-                    ${isOrigin ? '◉ Origin Host' : (isDest ? '🏁 Recipient MX' : `⚡ Relay Hop ${String(i).padStart(2, '0')}`)}
+                    ${isOrigin ? 'ORIGIN' : (isDest ? 'MX TARGET' : `HOP ${String(i).padStart(2, '0')}`)}
                 </div>
                 <div class="ha-node-host" title="${escapeHTML(hostLabel)}">
                     ${escapeHTML(hostLabel.length > 25 ? hostLabel.substring(0, 23) + '…' : hostLabel)}
                 </div>
                 ${ipBadgeHtml}
+                ${timestampText ? `<div class="ha-node-time"><i class="ti ti-clock"></i> ${escapeHTML(timestampText)}</div>` : ''}
                 ${deltaHtml}
                 ${clusterHtml}
             </div>
             <div class="ha-node-label-indicator status-${trustClass}">
-                ${trustClass === 'safe' ? '🟢 secure link' : (trustClass === 'warn' ? '🟡 suspect link' : '🔴 danger link')}
+                ${trustClass === 'safe' ? '🟢 healthy' : (trustClass === 'warn' ? '🟡 warning' : '🔴 anomalous')}
             </div>
             
             <!-- Click inspector drawer -->
@@ -1846,18 +3854,47 @@ function drawHopsDiagram(hops, auth) {
 
         container.appendChild(nodeDiv);
 
-        // Add animated datalink connectors
+        // Add interactive connectors with timing and transition drawer
         if (i < hops.length - 1) {
             const nextHop = hops[i + 1];
-            const nextTrust = nextHop.trust || 'safe';
             
+            let timeLabel = '';
+            let isUnusual = false;
+            if (nextHop.delta !== undefined && nextHop.delta !== null && Math.abs(nextHop.delta) > 0) {
+                const absSec = Math.abs(nextHop.delta);
+                if (absSec >= 3600) {
+                    timeLabel = `${(absSec / 3600).toFixed(1)}h`;
+                } else if (absSec >= 60) {
+                    timeLabel = `${(absSec / 60).toFixed(1)}m`;
+                } else {
+                    timeLabel = `${absSec.toFixed(1)}s`;
+                }
+                if (absSec > 300) {
+                    isUnusual = true;
+                }
+            }
+
             const connectorDiv = document.createElement('div');
-            connectorDiv.className = 'ha-connector';
+            connectorDiv.className = `ha-connector ${isUnusual ? 'is-unusual' : ''}`;
+            
+            let delayBadge = timeLabel 
+                ? `<span class="ha-connector-time-badge ${isUnusual ? 'badge-unusual' : ''}">${isUnusual ? '⚠ UNUSUAL DELAY ' : ''}── ${timeLabel} ──&gt;</span>` 
+                : '──&gt;';
+
+            const nextHostLabel = nextHop.from && nextHop.from !== 'unknown' ? nextHop.from : (nextHop.by || 'Unknown');
+
             connectorDiv.innerHTML = `
-                <svg class="ha-connector-svg" viewBox="0 0 70 40">
-                    <path class="ha-connector-line line-${nextTrust}" d="M 0,20 L 60,20" />
-                    <polygon class="ha-connector-arrow head-${nextTrust}" points="56,15 68,20 56,25" />
-                </svg>
+                <div class="ha-connector-link-wrap" onclick="toggleTransitionDrawer(${i})" title="Click for transition details">
+                    ${delayBadge}
+                </div>
+                <!-- Transition Drawer -->
+                <div class="ha-drawer ha-transition-drawer" id="trans-drawer-${i}" style="display:none;">
+                    <div class="ha-drawer-raw-title">Transition Information</div>
+                    <div class="ha-intel-row"><div class="ha-intel-key">FROM</div><div class="ha-intel-val">${escapeHTML(hostLabel)}</div></div>
+                    <div class="ha-intel-row"><div class="ha-intel-key">TO</div><div class="ha-intel-val">${escapeHTML(nextHostLabel)}</div></div>
+                    ${timeLabel ? `<div class="ha-intel-row"><div class="ha-intel-key">DELAY</div><div class="ha-intel-val">${escapeHTML(timeLabel)} ${isUnusual ? '(UNUSUAL DELAY)' : ''}</div></div>` : ''}
+                    ${nextHop.raw && nextHop.raw.match(/with\s+([A-Za-z0-9\-]+)/i) ? `<div class="ha-intel-row"><div class="ha-intel-key">PROTOCOL</div><div class="ha-intel-val">${escapeHTML(nextHop.raw.match(/with\s+([A-Za-z0-9\-]+)/i)[1].toUpperCase())}</div></div>` : ''}
+                </div>
             `;
             container.appendChild(connectorDiv);
         }
@@ -1869,6 +3906,934 @@ function toggleNodeDrawer(idx) {
     if (drawer) {
         drawer.classList.toggle('show');
     }
+}
+
+function toggleTransitionDrawer(idx) {
+    const drawer = document.getElementById('trans-drawer-' + idx);
+    if (drawer) {
+        const isShown = drawer.style.display !== 'none';
+        document.querySelectorAll('.ha-transition-drawer').forEach(d => d.style.display = 'none');
+        drawer.style.display = isShown ? 'none' : 'flex';
+    }
+}
+
+/* Parse raw headers for DKIM details */
+function parseDKIMFromRaw(rawText) {
+    if (!rawText) return null;
+    const match = rawText.match(/DKIM-Signature:\s*([\s\S]+?)(?=\r?\n\S|\r?\n\r?\n|$)/i);
+    if (!match) return null;
+    const cleanSig = match[1].replace(/\r?\n\s+/g, ' ');
+    
+    const getTag = (t) => {
+        const m = cleanSig.match(new RegExp(`(?:^|;)\\s*${t}=([^;]+)`, 'i'));
+        return m ? m[1].trim() : null;
+    };
+
+    return {
+        domain: getTag('d'),
+        selector: getTag('s'),
+        algorithm: getTag('a'),
+        headers: getTag('h')
+    };
+}
+
+/* Render 3 Interactive Authentication Cards (SPF, DKIM, DMARC) */
+function renderAuthCards(data) {
+    const container = document.getElementById('auth-cards-container');
+    if (!container) return;
+    container.innerHTML = '';
+
+    const rawInput = document.getElementById('headers-input').value || '';
+    const dkimParsed = parseDKIMFromRaw(rawInput);
+
+    // 1. SPF DATA
+    const spfStatus = data.auth?.spf?.status || 'info';
+    const spfDetail = data.auth?.spf?.detail || 'No Received-SPF record found';
+    let envelopeDomain = data.from_domain && data.from_domain !== '(None)' ? data.from_domain : 'Unknown';
+    if (data.return_path && data.return_path !== '(None)') {
+        const m = data.return_path.match(/@([\w.\-]+)/);
+        if (m) envelopeDomain = m[1];
+    }
+
+    const spfBadgeClass = spfStatus === 'pass' ? 'badge-pass' : (spfStatus === 'fail' ? 'badge-fail' : 'badge-warn');
+    const spfBadgeLabel = spfStatus === 'pass' ? '✓ PASS' : (spfStatus === 'fail' ? '✗ FAIL' : '⚠ WARN');
+    const spfShortDesc = spfStatus === 'pass'
+        ? 'Sending IP is authorized in envelope domain DNS SPF record.'
+        : (spfStatus === 'fail'
+            ? 'Sending IP address is NOT authorized by envelope domain SPF.'
+            : 'SPF policy is soft-fail, neutral, or unverified.');
+
+    // 2. DKIM DATA
+    const dkimStatus = data.auth?.dkim?.status || 'info';
+    const dkimDetail = data.auth?.dkim?.detail || 'No DKIM signature verified';
+    const dkimSigningDomain = dkimParsed?.domain || (data.auth?.dkim?.status === 'pass' ? data.from_domain : 'Not signed');
+
+    const dkimBadgeClass = dkimStatus === 'pass' ? 'badge-pass' : (dkimStatus === 'fail' ? 'badge-fail' : 'badge-warn');
+    const dkimBadgeLabel = dkimStatus === 'pass' ? '✓ PASS' : (dkimStatus === 'fail' ? '✗ FAIL' : '⚠ WARN');
+    const dkimShortDesc = dkimStatus === 'pass'
+        ? 'Cryptographic signature verified and content unaltered.'
+        : (dkimStatus === 'fail'
+            ? 'Signature check failed — email content or headers modified.'
+            : 'No valid DKIM signature was verified by receiving server.');
+
+    // 3. DMARC & ALIGNMENT DATA
+    const dmarcStatus = data.auth?.dmarc?.status || 'info';
+    const fromDomain = data.from_domain && data.from_domain !== '(None)' ? data.from_domain : 'Unknown';
+    
+    // Check strict or relaxed alignment
+    const spfAligned = envelopeDomain !== 'Unknown' && fromDomain.toLowerCase() === envelopeDomain.toLowerCase();
+    const dkimAligned = dkimSigningDomain !== 'Not signed' && dkimSigningDomain !== 'Unknown' && fromDomain.toLowerCase() === dkimSigningDomain.toLowerCase();
+    const isAligned = (data.mismatch_status === 'pass' || (spfAligned || dkimAligned)) && dmarcStatus === 'pass';
+
+    const dmarcBadgeClass = dmarcStatus === 'pass' && isAligned ? 'badge-pass' : (dmarcStatus === 'fail' || !isAligned ? 'badge-fail' : 'badge-warn');
+    const dmarcBadgeLabel = dmarcStatus === 'pass' && isAligned ? '✓ PASS' : (dmarcStatus === 'fail' ? '✗ FAIL' : '⚠ ALIGNMENT FAIL');
+    const dmarcShortDesc = isAligned
+        ? 'Visible From domain matches authenticated SPF or DKIM domain.'
+        : 'DMARC alignment failed: From domain does NOT match SPF/DKIM.';
+
+    // Construct SPF Card HTML
+    const spfCardHtml = `
+        <div class="ha-auth-card" id="auth-card-spf" onclick="toggleAuthCardDetail('spf')">
+            <div class="ha-auth-card-header">
+                <div class="ha-auth-card-title">SPF</div>
+                <div class="ha-auth-card-badge ${spfBadgeClass}">${spfBadgeLabel}</div>
+            </div>
+            <div class="ha-auth-key-val">
+                <span class="ha-auth-key-label">Envelope domain</span>
+                <span class="ha-auth-val-text">${escapeHTML(envelopeDomain)}</span>
+            </div>
+            <div class="ha-auth-card-desc">${escapeHTML(spfShortDesc)}</div>
+            <div class="ha-auth-why-btn" onclick="event.stopPropagation(); toggleAuthCardDetail('spf')">
+                <span>[WHY?]</span> <i class="ti ti-chevron-down" id="spf-why-arrow"></i>
+            </div>
+            <div class="ha-auth-detail-drawer" id="spf-detail-drawer" style="display: none;">
+                <div class="ha-detail-row">
+                    <span class="ha-detail-key">SPF Status</span>
+                    <span class="ha-detail-val">${escapeHTML(spfStatus.toUpperCase())}</span>
+                </div>
+                <div class="ha-detail-row">
+                    <span class="ha-detail-key">Envelope Domain</span>
+                    <span class="ha-detail-val">${escapeHTML(envelopeDomain)}</span>
+                </div>
+                <div class="ha-detail-row">
+                    <span class="ha-detail-key">Header Log</span>
+                    <span class="ha-detail-val">${escapeHTML(spfDetail)}</span>
+                </div>
+                <div class="ha-auth-why-text">
+                    <strong>[WHY SPF MATTERS]:</strong> SPF (Sender Policy Framework) verifies that the IP transmitting this message is explicitly listed in DNS by <code>${escapeHTML(envelopeDomain)}</code>. An SPF fail indicates an unauthorized server sent this message.
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Construct DKIM Card HTML (Only show selector, algorithm, covered headers if they exist)
+    let dkimFieldsHtml = '';
+    if (dkimParsed?.domain) {
+        dkimFieldsHtml += `<div class="ha-detail-row"><span class="ha-detail-key">Signing Domain</span><span class="ha-detail-val">${escapeHTML(dkimParsed.domain)}</span></div>`;
+    }
+    if (dkimParsed?.selector) {
+        dkimFieldsHtml += `<div class="ha-detail-row"><span class="ha-detail-key">Selector</span><span class="ha-detail-val">${escapeHTML(dkimParsed.selector)}</span></div>`;
+    }
+    if (dkimParsed?.algorithm) {
+        dkimFieldsHtml += `<div class="ha-detail-row"><span class="ha-detail-key">Algorithm</span><span class="ha-detail-val">${escapeHTML(dkimParsed.algorithm)}</span></div>`;
+    }
+    if (dkimParsed?.headers) {
+        dkimFieldsHtml += `<div class="ha-detail-row"><span class="ha-detail-key">Covered Headers</span><span class="ha-detail-val">${escapeHTML(dkimParsed.headers)}</span></div>`;
+    }
+
+    const dkimCardHtml = `
+        <div class="ha-auth-card" id="auth-card-dkim" onclick="toggleAuthCardDetail('dkim')">
+            <div class="ha-auth-card-header">
+                <div class="ha-auth-card-title">DKIM</div>
+                <div class="ha-auth-card-badge ${dkimBadgeClass}">${dkimBadgeLabel}</div>
+            </div>
+            <div class="ha-auth-key-val">
+                <span class="ha-auth-key-label">Signing domain</span>
+                <span class="ha-auth-val-text">${escapeHTML(dkimSigningDomain)}</span>
+            </div>
+            <div class="ha-auth-card-desc">${escapeHTML(dkimShortDesc)}</div>
+            <div class="ha-auth-why-btn" onclick="event.stopPropagation(); toggleAuthCardDetail('dkim')">
+                <span>[WHY?]</span> <i class="ti ti-chevron-down" id="dkim-why-arrow"></i>
+            </div>
+            <div class="ha-auth-detail-drawer" id="dkim-detail-drawer" style="display: none;">
+                <div class="ha-detail-row">
+                    <span class="ha-detail-key">DKIM Verification</span>
+                    <span class="ha-detail-val">${escapeHTML(dkimDetail)}</span>
+                </div>
+                ${dkimFieldsHtml}
+                <div class="ha-auth-why-text">
+                    <strong>[WHY DKIM MATTERS]:</strong> DKIM attaches a public-key cryptographic signature to email headers and body. It proves the message originated from <code>${escapeHTML(dkimSigningDomain)}</code> and was not modified in transit.
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Construct DMARC Card HTML with Alignment Flow Diagram
+    let mismatchAlertHtml = '';
+    if (!isAligned && fromDomain !== 'Unknown') {
+        const mismatchDomain = (!spfAligned && envelopeDomain !== 'Unknown') ? envelopeDomain : dkimSigningDomain;
+        mismatchAlertHtml = `
+            <div class="ha-vis-mismatch-alert">
+                <i class="ti ti-alert-triangle"></i>
+                <strong>IDENTITY MISMATCH:</strong> Visible From domain <code>${escapeHTML(fromDomain)}</code> does not match authenticated domain <code>${escapeHTML(mismatchDomain)}</code>.
+            </div>
+        `;
+    }
+
+    const dmarcCardHtml = `
+        <div class="ha-auth-card" id="auth-card-dmarc" onclick="toggleAuthCardDetail('dmarc')">
+            <div class="ha-auth-card-header">
+                <div class="ha-auth-card-title">DMARC</div>
+                <div class="ha-auth-card-badge ${dmarcBadgeClass}">${dmarcBadgeLabel}</div>
+            </div>
+            <div class="ha-auth-key-val">
+                <span class="ha-auth-key-label">Alignment</span>
+                <span class="ha-auth-val-text">${isAligned ? 'PASS (ALIGNED)' : 'MISMATCH / FAIL'}</span>
+            </div>
+            <div class="ha-auth-card-desc">${escapeHTML(dmarcShortDesc)}</div>
+            <div class="ha-auth-why-btn" onclick="event.stopPropagation(); toggleAuthCardDetail('dmarc')">
+                <span>[WHY?]</span> <i class="ti ti-chevron-down" id="dmarc-why-arrow"></i>
+            </div>
+            <div class="ha-auth-detail-drawer" id="dmarc-detail-drawer" style="display: none;">
+                <div class="ha-dmarc-vis-wrap">
+                    <div class="ha-vis-node vis-origin">
+                        <div class="ha-vis-label">VISIBLE FROM HEADER</div>
+                        <div class="ha-vis-domain">${escapeHTML(fromDomain)}</div>
+                    </div>
+                    
+                    <div class="ha-vis-arrow">↓</div>
+                    
+                    <div class="ha-vis-split-box">
+                        <div class="ha-vis-branch ${spfAligned ? 'align-pass' : 'align-fail'}">
+                            <div class="ha-vis-branch-title">SPF ENVELOPE</div>
+                            <div class="ha-vis-branch-domain">${escapeHTML(envelopeDomain)}</div>
+                            <div class="ha-vis-badge">${spfAligned ? '✓ ALIGNED' : '✗ MISMATCH'}</div>
+                        </div>
+                        <div class="ha-vis-plus">+</div>
+                        <div class="ha-vis-branch ${dkimAligned ? 'align-pass' : 'align-fail'}">
+                            <div class="ha-vis-branch-title">DKIM SIGNING</div>
+                            <div class="ha-vis-branch-domain">${escapeHTML(dkimSigningDomain)}</div>
+                            <div class="ha-vis-badge">${dkimAligned ? '✓ ALIGNED' : '✗ MISMATCH'}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="ha-vis-arrow">↓</div>
+                    
+                    <div class="ha-vis-verdict ${isAligned ? 'verdict-pass' : (dmarcStatus === 'fail' ? 'verdict-fail' : 'verdict-warn')}">
+                        <div class="ha-vis-verdict-title">DMARC POLICY VERDICT</div>
+                        <div class="ha-vis-verdict-val">${isAligned ? 'PASSED & ALIGNED' : 'ALIGNMENT FAILED'}</div>
+                    </div>
+
+                    ${mismatchAlertHtml}
+
+                    <div class="ha-auth-why-text">
+                        <strong>[WHY DMARC MATTERS]:</strong> DMARC links the recipient-facing <code>From:</code> address with SPF and DKIM. Even if SPF or DKIM passes, DMARC rejects the email if the visible domain is spoofed.
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    container.innerHTML = spfCardHtml + dkimCardHtml + dmarcCardHtml;
+}
+
+function toggleAuthCardDetail(type) {
+    const card = document.getElementById('auth-card-' + type);
+    const drawer = document.getElementById(type + '-detail-drawer');
+    if (!card || !drawer) return;
+
+    const isHidden = drawer.style.display === 'none';
+    drawer.style.display = isHidden ? 'block' : 'none';
+    if (isHidden) {
+        card.classList.add('expanded');
+    } else {
+        card.classList.remove('expanded');
+    }
+}
+
+/* Render Domain Intelligence Identity Investigation Panel */
+function renderDomainIntelPanel(data) {
+    const container = document.getElementById('domain-intel-container');
+    if (!container) return;
+
+    // Data extraction
+    const senderAddr = data.from_hdr || 'None';
+    const fromDomain = data.from_domain && data.from_domain !== '(None)' ? data.from_domain : 'Unknown';
+    
+    // Return path domain
+    let returnPathAddr = data.return_path && data.return_path !== '(None)' ? data.return_path : 'None';
+    let returnDomain = 'Unknown';
+    if (returnPathAddr !== 'None') {
+        const m = returnPathAddr.match(/@([\w.\-]+)/);
+        if (m) returnDomain = m[1];
+    } else if (fromDomain !== 'Unknown') {
+        returnDomain = fromDomain; // fallback to envelope domain
+    }
+
+    // DKIM signing domain
+    const rawInput = document.getElementById('headers-input').value || '';
+    const dkimParsed = parseDKIMFromRaw(rawInput);
+    const dkimDomain = dkimParsed?.domain || (data.auth?.dkim?.status === 'pass' ? fromDomain : 'Not signed');
+
+    const domainAge = data.domain_age_label || 'Unable to verify';
+    const regDate = data.created_date || 'Unable to verify';
+    const replyTo = data.reply_to || 'None';
+    const mxRecords = data.mx_records || [];
+
+    // Relationship states logic:
+    // 1. VISIBLE FROM -> RETURN-PATH
+    let rel1Status = 'aligned';
+    let rel1Label = '✓ ALIGNED';
+    if (returnDomain === 'Unknown' || returnPathAddr === 'None') {
+        rel1Status = 'different';
+        rel1Label = '⚠ ABSENT';
+    } else if (fromDomain.toLowerCase() === returnDomain.toLowerCase()) {
+        rel1Status = 'aligned';
+        rel1Label = '✓ ALIGNED';
+    } else {
+        rel1Status = 'failed';
+        rel1Label = '✕ MISMATCH';
+    }
+
+    // 2. RETURN-PATH -> DKIM DOMAIN
+    let rel2Status = 'aligned';
+    let rel2Label = '✓ ALIGNED';
+    if (dkimDomain === 'Not signed' || dkimDomain === 'Unknown') {
+        rel2Status = 'different';
+        rel2Label = '⚠ NOT SIGNED';
+    } else if (returnDomain !== 'Unknown' && returnDomain.toLowerCase() === dkimDomain.toLowerCase()) {
+        rel2Status = 'aligned';
+        rel2Label = '✓ ALIGNED';
+    } else if (fromDomain !== 'Unknown' && fromDomain.toLowerCase() === dkimDomain.toLowerCase()) {
+        rel2Status = 'aligned';
+        rel2Label = '✓ ALIGNED';
+    } else {
+        rel2Status = 'failed';
+        rel2Label = '✕ MISMATCH';
+    }
+
+    container.innerHTML = `
+        <div class="ha-intel-investigation-wrap">
+            <!-- Top Identity Relationship Flow -->
+            <div class="ha-intel-flow-card">
+                <div class="ha-intel-flow-header">
+                    <i class="ti ti-sitemap"></i> Identity Relationship Chain
+                </div>
+                <div class="ha-intel-flow-diagram">
+                    <!-- VISIBLE FROM -->
+                    <div class="ha-intel-flow-step" onclick="openDomainInspector('${escapeHTML(fromDomain)}', 'From Header Domain')">
+                        <div class="ha-flow-step-label">VISIBLE FROM</div>
+                        <div class="ha-flow-step-domain">${escapeHTML(fromDomain)}</div>
+                    </div>
+
+                    <!-- CONNECTOR 1 -->
+                    <div class="ha-intel-flow-arrow">
+                        <span class="ha-rel-badge rel-${rel1Status}">${rel1Label}</span>
+                        <i class="ti ti-arrow-right d-none d-md-inline"></i>
+                        <i class="ti ti-arrow-down d-inline d-md-none"></i>
+                    </div>
+
+                    <!-- RETURN-PATH -->
+                    <div class="ha-intel-flow-step" onclick="openDomainInspector('${escapeHTML(returnDomain)}', 'Envelope Return-Path Domain')">
+                        <div class="ha-flow-step-label">RETURN-PATH</div>
+                        <div class="ha-flow-step-domain">${escapeHTML(returnDomain)}</div>
+                    </div>
+
+                    <!-- CONNECTOR 2 -->
+                    <div class="ha-intel-flow-arrow">
+                        <span class="ha-rel-badge rel-${rel2Status}">${rel2Label}</span>
+                        <i class="ti ti-arrow-right d-none d-md-inline"></i>
+                        <i class="ti ti-arrow-down d-inline d-md-none"></i>
+                    </div>
+
+                    <!-- DKIM DOMAIN -->
+                    <div class="ha-intel-flow-step" onclick="openDomainInspector('${escapeHTML(dkimDomain)}', 'DKIM Signing Domain')">
+                        <div class="ha-flow-step-label">DKIM DOMAIN</div>
+                        <div class="ha-flow-step-domain">${escapeHTML(dkimDomain)}</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Identity & Domain Fields Grid -->
+            <div class="ha-intel-grid">
+                <div class="ha-intel-field-card" onclick="openDomainInspector('${escapeHTML(fromDomain)}', 'Sender Identity')">
+                    <div class="ha-intel-field-header">
+                        <span class="ha-intel-field-key">SENDER ADDRESS</span>
+                        <i class="ti ti-external-link" style="font-size: 0.8rem; color: var(--primary);"></i>
+                    </div>
+                    <div class="ha-intel-field-val">${escapeHTML(senderAddr)}</div>
+                    <div class="ha-intel-field-hint"><i class="ti ti-click"></i> Click for domain inspection</div>
+                </div>
+
+                <div class="ha-intel-field-card" onclick="openDomainInspector('${escapeHTML(fromDomain)}', 'Envelope Domain')">
+                    <div class="ha-intel-field-header">
+                        <span class="ha-intel-field-key">ENVELOPE DOMAIN</span>
+                        <i class="ti ti-external-link" style="font-size: 0.8rem; color: var(--primary);"></i>
+                    </div>
+                    <div class="ha-intel-field-val">${escapeHTML(fromDomain)}</div>
+                    <div class="ha-intel-field-hint"><i class="ti ti-click"></i> Click for domain inspection</div>
+                </div>
+
+                <div class="ha-intel-field-card" onclick="toggleMXDrawer()">
+                    <div class="ha-intel-field-header">
+                        <span class="ha-intel-field-key">MX RECORDS</span>
+                        <i class="ti ti-chevron-down" id="mx-arrow-icon" style="font-size: 0.8rem; color: var(--primary);"></i>
+                    </div>
+                    <div class="ha-intel-field-val">${mxRecords.length > 0 ? `${mxRecords.length} MX Servers Configured` : 'No valid MX records found'}</div>
+                    <div class="ha-intel-field-hint"><i class="ti ti-click"></i> Click to expand MX record details</div>
+                </div>
+
+                <div class="ha-intel-field-card" onclick="openDomainInspector('${escapeHTML(fromDomain)}', 'Domain Age metrics')">
+                    <div class="ha-intel-field-header">
+                        <span class="ha-intel-field-key">DOMAIN AGE</span>
+                        <i class="ti ti-calendar" style="font-size: 0.8rem; color: var(--text-muted);"></i>
+                    </div>
+                    <div class="ha-intel-field-val">${escapeHTML(domainAge)}</div>
+                    <div class="ha-intel-field-hint"><i class="ti ti-info-circle"></i> RDAP registry calculated age</div>
+                </div>
+
+                <div class="ha-intel-field-card" onclick="openDomainInspector('${escapeHTML(fromDomain)}', 'Registration Date metrics')">
+                    <div class="ha-intel-field-header">
+                        <span class="ha-intel-field-key">REGISTRATION DATE</span>
+                        <i class="ti ti-calendar-event" style="font-size: 0.8rem; color: var(--text-muted);"></i>
+                    </div>
+                    <div class="ha-intel-field-val">${escapeHTML(regDate)}</div>
+                    <div class="ha-intel-field-hint"><i class="ti ti-info-circle"></i> Original WHOIS / RDAP date</div>
+                </div>
+
+                <div class="ha-intel-field-card" onclick="openDomainInspector('${escapeHTML(returnDomain)}', 'Return-Path Address')">
+                    <div class="ha-intel-field-header">
+                        <span class="ha-intel-field-key">RETURN-PATH</span>
+                        <i class="ti ti-external-link" style="font-size: 0.8rem; color: var(--primary);"></i>
+                    </div>
+                    <div class="ha-intel-field-val">${escapeHTML(returnPathAddr)}</div>
+                    <div class="ha-intel-field-hint"><i class="ti ti-click"></i> Click for envelope domain inspection</div>
+                </div>
+
+                <div class="ha-intel-field-card" onclick="openDomainInspector('${escapeHTML(replyTo.includes('@') ? replyTo.split('@')[1] : fromDomain)}', 'Reply-To Address')">
+                    <div class="ha-intel-field-header">
+                        <span class="ha-intel-field-key">REPLY-TO</span>
+                        <i class="ti ti-mail-forward" style="font-size: 0.8rem; color: var(--text-muted);"></i>
+                    </div>
+                    <div class="ha-intel-field-val">${escapeHTML(replyTo)}</div>
+                    <div class="ha-intel-field-hint"><i class="ti ti-click"></i> Target reply routing address</div>
+                </div>
+            </div>
+
+            <!-- MX Records Expandable Drawer -->
+            <div class="ha-intel-inspect-drawer" id="mx-records-drawer" style="display: none;">
+                <div class="ha-inspect-title">
+                    <span><i class="ti ti-server"></i> MX Records Configuration</span>
+                    <i class="ti ti-x ha-inspect-close" onclick="toggleMXDrawer()"></i>
+                </div>
+                ${mxRecords.length > 0 ? `
+                    <div style="display: flex; flex-direction: column; gap: 6px;">
+                        ${mxRecords.map((mx, idx) => `
+                            <div class="ha-detail-row">
+                                <span class="ha-detail-key">MX SERVER ${String(idx+1).padStart(2, '0')}</span>
+                                <span class="ha-detail-val" style="color: var(--primary);">${escapeHTML(mx)}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                ` : `
+                    <div style="font-size: 0.8rem; color: var(--text-muted);">No active MX records returned for domain ${escapeHTML(fromDomain)}.</div>
+                `}
+            </div>
+
+            <!-- Compact Domain Inspection Panel Drawer -->
+            <div class="ha-intel-inspect-drawer" id="domain-inspect-drawer" style="display: none;">
+                <div class="ha-inspect-title">
+                    <span id="inspect-drawer-heading"><i class="ti ti-search"></i> Domain Inspection Panel</span>
+                    <i class="ti ti-x ha-inspect-close" onclick="closeDomainInspector()"></i>
+                </div>
+                <div class="ha-inspect-grid">
+                    <div class="ha-inspect-item">
+                        <div class="ha-inspect-item-key">DOMAIN</div>
+                        <div class="ha-inspect-item-val" id="inspect-val-domain">—</div>
+                    </div>
+                    <div class="ha-inspect-item">
+                        <div class="ha-inspect-item-key">AGE</div>
+                        <div class="ha-inspect-item-val" id="inspect-val-age">—</div>
+                    </div>
+                    <div class="ha-inspect-item">
+                        <div class="ha-inspect-item-key">REGISTRATION DATE</div>
+                        <div class="ha-inspect-item-val" id="inspect-val-date">—</div>
+                    </div>
+                    <div class="ha-inspect-item">
+                        <div class="ha-inspect-item-key">RELATIONSHIP TO SENDER</div>
+                        <div class="ha-inspect-item-val" id="inspect-val-rel">—</div>
+                    </div>
+                    <div class="ha-inspect-item" style="grid-column: 1 / -1;">
+                        <div class="ha-inspect-item-key">MX RECORDS</div>
+                        <div class="ha-inspect-item-val" id="inspect-val-mx">—</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Store data globally for drawer access
+    window.currentIntelData = {
+        fromDomain: fromDomain,
+        returnDomain: returnDomain,
+        dkimDomain: dkimDomain,
+        domainAge: domainAge,
+        regDate: regDate,
+        mxRecords: mxRecords
+    };
+}
+
+function openDomainInspector(targetDomain, label) {
+    const drawer = document.getElementById('domain-inspect-drawer');
+    const heading = document.getElementById('inspect-drawer-heading');
+    if (!drawer || !window.currentIntelData) return;
+
+    const data = window.currentIntelData;
+    const domainToInspect = (targetDomain && targetDomain !== 'Unknown' && targetDomain !== 'None') ? targetDomain : data.fromDomain;
+
+    // Relationship determination
+    let relText = 'MATCHES VISIBLE FROM DOMAIN';
+    if (domainToInspect.toLowerCase() !== data.fromDomain.toLowerCase()) {
+        relText = `DIFFERENT FROM VISIBLE SENDER (${data.fromDomain})`;
+    }
+
+    heading.innerHTML = `<i class="ti ti-search"></i> Inspection: ${escapeHTML(domainToInspect)} (${escapeHTML(label || 'Domain')})`;
+    document.getElementById('inspect-val-domain').textContent = domainToInspect;
+    document.getElementById('inspect-val-age').textContent = data.domainAge;
+    document.getElementById('inspect-val-date').textContent = data.regDate;
+    document.getElementById('inspect-val-rel').textContent = relText;
+    document.getElementById('inspect-val-mx').textContent = data.mxRecords.length > 0 ? data.mxRecords.join(', ') : 'No valid MX records found';
+
+    // Hide MX drawer if open, show inspect drawer
+    const mxDrawer = document.getElementById('mx-records-drawer');
+    if (mxDrawer) mxDrawer.style.display = 'none';
+    drawer.style.display = 'block';
+}
+
+function closeDomainInspector() {
+    const drawer = document.getElementById('domain-inspect-drawer');
+    if (drawer) drawer.style.display = 'none';
+}
+
+function toggleMXDrawer() {
+    const mxDrawer = document.getElementById('mx-records-drawer');
+    const inspectDrawer = document.getElementById('domain-inspect-drawer');
+    const arrowIcon = document.getElementById('mx-arrow-icon');
+    if (!mxDrawer) return;
+
+    if (inspectDrawer) inspectDrawer.style.display = 'none';
+    const isHidden = mxDrawer.style.display === 'none';
+    mxDrawer.style.display = isHidden ? 'block' : 'none';
+    if (arrowIcon) {
+        arrowIcon.style.transform = isHidden ? 'rotate(180deg)' : 'rotate(0deg)';
+    }
+}
+
+/* Render Security Anomalies & Red Flags List */
+function renderSecurityAnomalies(data) {
+    const container = document.getElementById('red-flags-container');
+    const summaryBadge = document.getElementById('flags-header-summary');
+    if (!container) return;
+
+    const flags = data.red_flags || [];
+    const flagCount = flags.length;
+
+    // Header summary badge update
+    if (summaryBadge) {
+        if (flagCount === 0) {
+            summaryBadge.className = 'ha-panel-summary-badge summary-clean';
+            summaryBadge.innerHTML = '✓ NO HIGH-RISK ANOMALIES';
+        } else {
+            summaryBadge.className = 'ha-panel-summary-badge summary-anomalies';
+            summaryBadge.innerHTML = `⚠ ${flagCount} ${flagCount === 1 ? 'ANOMALY' : 'ANOMALIES'} DETECTED`;
+        }
+    }
+
+    container.innerHTML = '';
+
+    if (flagCount === 0) {
+        container.innerHTML = `
+            <div class="ha-clean-badge" style="padding: 1.5rem; text-align: center; color: #10b981; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem;">
+                <i class="ti ti-shield-check" style="font-size: 2rem; display: block; margin-bottom: 8px;"></i>
+                <strong>✓ NO HIGH-RISK ANOMALIES IDENTIFIED</strong><br>
+                <span style="font-size: 0.78rem; color: var(--text-muted, #94a3b8);">All authentication, routing, and identity checks passed baseline validation metrics.</span>
+            </div>`;
+        return;
+    }
+
+    const listDiv = document.createElement('div');
+    listDiv.className = 'ha-anomalies-list';
+
+    flags.forEach((flag, idx) => {
+        const sev = (flag.severity || 'medium').toLowerCase();
+        const title = flag.title || 'Security Anomaly';
+        const desc = flag.desc || flag.detail || 'Anomalous header configuration detected during inspection.';
+        
+        // Derive actual related evidence text from analysis data
+        let evidenceText = 'Header signature or domain metadata inspection payload.';
+        if (title.toLowerCase().includes('spf')) {
+            evidenceText = `Received-SPF result: ${data.auth?.spf?.detail || 'SPF check failed or missing'}`;
+        } else if (title.toLowerCase().includes('dkim')) {
+            evidenceText = `DKIM-Signature result: ${data.auth?.dkim?.detail || 'Signature unverified'}`;
+        } else if (title.toLowerCase().includes('dmarc')) {
+            evidenceText = `DMARC policy result: ${data.auth?.dmarc?.detail || 'DMARC alignment failed'}`;
+        } else if (title.toLowerCase().includes('reply-to') || title.toLowerCase().includes('mismatch')) {
+            evidenceText = `From domain (${data.from_domain || 'Unknown'}) vs Reply-To / Envelope (${data.reply_to || data.return_path || 'None'})`;
+        } else if (title.toLowerCase().includes('domain') || title.toLowerCase().includes('age')) {
+            evidenceText = `Domain age: ${data.domain_age_label || 'Unknown'} (Registered: ${data.created_date || 'Unknown'})`;
+        } else if (title.toLowerCase().includes('mx')) {
+            evidenceText = `MX records lookup returned ${data.mx_records ? data.mx_records.length : 0} mail servers for ${data.from_domain}`;
+        } else if (title.toLowerCase().includes('hop') || title.toLowerCase().includes('delay') || title.toLowerCase().includes('routing')) {
+            evidenceText = `Received delivery path hop count: ${data.hops ? data.hops.length : 0} hops parsed`;
+        }
+
+        const card = document.createElement('div');
+        card.className = `ha-anomaly-card`;
+        card.onclick = () => navigateAndHighlightEvidence(title);
+
+        card.innerHTML = `
+            <div class="ha-anomaly-header">
+                <span class="ha-anomaly-sev-badge badge-sev-${sev}">${sev.toUpperCase()}</span>
+                <span class="ha-anomaly-title">${escapeHTML(title)}</span>
+                <span class="ha-anomaly-nav-hint"><i class="ti ti-target"></i> Inspect Evidence</span>
+            </div>
+            <div class="ha-anomaly-desc">${escapeHTML(desc)}</div>
+            <div class="ha-anomaly-evidence-box">
+                <span class="evidence-label"><i class="ti ti-file-search"></i> Related Evidence:</span>
+                <span class="evidence-val">${escapeHTML(evidenceText)}</span>
+            </div>
+        `;
+        listDiv.appendChild(card);
+    });
+
+    container.appendChild(listDiv);
+}
+
+function navigateAndHighlightEvidence(title) {
+    const t = (title || '').toLowerCase();
+    let targetEl = null;
+
+    if (t.includes('spf')) {
+        setCollapsiblePanelState('auth-body', true);
+        targetEl = document.getElementById('auth-card-spf');
+        if (targetEl && typeof toggleAuthCardDetail === 'function') {
+            const drawer = document.getElementById('spf-detail-drawer');
+            if (drawer && drawer.style.display === 'none') toggleAuthCardDetail('spf');
+        }
+    } else if (t.includes('dkim')) {
+        setCollapsiblePanelState('auth-body', true);
+        targetEl = document.getElementById('auth-card-dkim');
+        if (targetEl && typeof toggleAuthCardDetail === 'function') {
+            const drawer = document.getElementById('dkim-detail-drawer');
+            if (drawer && drawer.style.display === 'none') toggleAuthCardDetail('dkim');
+        }
+    } else if (t.includes('dmarc')) {
+        setCollapsiblePanelState('auth-body', true);
+        targetEl = document.getElementById('auth-card-dmarc');
+        if (targetEl && typeof toggleAuthCardDetail === 'function') {
+            const drawer = document.getElementById('dmarc-detail-drawer');
+            if (drawer && drawer.style.display === 'none') toggleAuthCardDetail('dmarc');
+        }
+    } else if (t.includes('reply-to') || t.includes('mismatch')) {
+        setCollapsiblePanelState('intel-body', true);
+        targetEl = document.getElementById('domain-intel-container');
+    } else if (t.includes('domain') || t.includes('age') || t.includes('mx')) {
+        setCollapsiblePanelState('intel-body', true);
+        targetEl = document.getElementById('domain-intel-container');
+    } else if (t.includes('hop') || t.includes('delay') || t.includes('routing')) {
+        targetEl = document.getElementById('node-chain-container');
+    }
+
+    if (targetEl) {
+        targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        targetEl.classList.remove('ha-evidence-glow');
+        // Trigger reflow to restart CSS animation
+        void targetEl.offsetWidth;
+        targetEl.classList.add('ha-evidence-glow');
+        setTimeout(() => targetEl.classList.remove('ha-evidence-glow'), 3000);
+    }
+}
+
+/* Parse and render raw headers line-by-line with important header badges */
+function renderRawHeadersViewer() {
+    const container = document.getElementById('ha-raw-lines-container');
+    if (!container) return;
+
+    const rawText = document.getElementById('headers-input').value || '';
+    container.innerHTML = '';
+
+    if (!rawText.trim()) {
+        container.innerHTML = `<div style="padding: 1.5rem; text-align: center; color: var(--text-muted, #64748b);">No raw email headers available in buffer.</div>`;
+        return;
+    }
+
+    // Split headers into lines
+    const lines = rawText.split(/\r?\n/);
+    let hopCounter = 0;
+
+    lines.forEach((lineStr, idx) => {
+        const lineNumStr = String(idx + 1).padStart(2, '0');
+        const lineDiv = document.createElement('div');
+        lineDiv.className = 'ha-raw-line';
+
+        // Check if this line is an important header start
+        const headerMatch = lineStr.match(/^([A-Za-z0-9\-]+):\s*(.*)/);
+        
+        let isImportant = false;
+        let badgeHtml = '';
+        let headerName = '';
+        let headerVal = lineStr;
+        let headerType = null;
+
+        if (headerMatch) {
+            headerName = headerMatch[1];
+            headerVal = headerMatch[2];
+            const nameLower = headerName.toLowerCase();
+
+            if (nameLower === 'received') {
+                isImportant = true;
+                hopCounter++;
+                headerType = 'received';
+                badgeHtml = `<span class="ha-header-badge badge-hdr-received">HOP ${String(hopCounter).padStart(2, '0')}</span>`;
+            } else if (nameLower === 'authentication-results' || nameLower === 'received-spf') {
+                isImportant = true;
+                headerType = 'auth';
+                badgeHtml = `<span class="ha-header-badge badge-hdr-auth">AUTH</span>`;
+            } else if (nameLower === 'dkim-signature') {
+                isImportant = true;
+                headerType = 'dkim';
+                badgeHtml = `<span class="ha-header-badge badge-hdr-dkim">DKIM</span>`;
+            } else if (nameLower === 'from' || nameLower === 'return-path' || nameLower === 'reply-to' || nameLower === 'message-id') {
+                isImportant = true;
+                headerType = 'identity';
+                badgeHtml = `<span class="ha-header-badge badge-hdr-identity">${escapeHTML(headerName.toUpperCase())}</span>`;
+            }
+        }
+
+        if (isImportant) {
+            lineDiv.classList.add('is-important');
+            lineDiv.title = `Click to inspect ${headerName} evidence elsewhere`;
+            lineDiv.onclick = () => handleRawHeaderClick(headerType, headerName, hopCounter);
+        }
+
+        let contentHtml = '';
+        if (headerName) {
+            contentHtml = `${badgeHtml}<span class="ha-hdr-name">${escapeHTML(headerName)}:</span> <span class="ha-hdr-val">${escapeHTML(headerVal)}</span>`;
+        } else {
+            contentHtml = `<span class="ha-hdr-val">${escapeHTML(lineStr)}</span>`;
+        }
+
+        lineDiv.innerHTML = `
+            <span class="ha-raw-line-num">${lineNumStr}</span>
+            <span class="ha-raw-line-content">${contentHtml}</span>
+        `;
+        container.appendChild(lineDiv);
+    });
+}
+
+/* Handle clicking an important header in raw viewer */
+function handleRawHeaderClick(headerType, headerName, hopIndex) {
+    if (headerType === 'auth') {
+        switchResultViewTab('auth');
+        navigateAndHighlightEvidence('spf');
+    } else if (headerType === 'dkim') {
+        switchResultViewTab('auth');
+        navigateAndHighlightEvidence('dkim');
+    } else if (headerType === 'received') {
+        switchResultViewTab('route');
+        if (typeof toggleNodeDrawer === 'function') {
+            toggleNodeDrawer(Math.max(0, hopIndex - 1));
+        }
+        const nodeChain = document.getElementById('node-chain-container');
+        if (nodeChain) {
+            nodeChain.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            nodeChain.classList.add('ha-evidence-glow');
+            setTimeout(() => nodeChain.classList.remove('ha-evidence-glow'), 2500);
+        }
+    } else if (headerType === 'identity') {
+        switchResultViewTab('identity');
+        navigateAndHighlightEvidence(headerName);
+    }
+}
+
+/* View Mode Tab Switching */
+function switchResultViewTab(tabKey) {
+    document.querySelectorAll('.ha-view-tab').forEach(btn => btn.classList.remove('active'));
+    const targetBtn = document.getElementById('tab-btn-' + tabKey);
+    if (targetBtn) targetBtn.classList.add('active');
+
+    const rawPanel = document.getElementById('ha-raw-headers-panel');
+    
+    if (tabKey === 'raw') {
+        renderRawHeadersViewer();
+        if (rawPanel) {
+            rawPanel.style.display = 'block';
+            rawPanel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    } else {
+        if (rawPanel) rawPanel.style.display = 'none';
+
+        if (tabKey === 'route') {
+            const diagram = document.querySelector('.ha-diagram-container');
+            if (diagram) diagram.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } else if (tabKey === 'auth') {
+            setCollapsiblePanelState('auth-body', true);
+            const authCards = document.getElementById('auth-cards-container');
+            if (authCards) authCards.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } else if (tabKey === 'identity') {
+            setCollapsiblePanelState('intel-body', true);
+            const intelContainer = document.getElementById('domain-intel-container');
+            if (intelContainer) intelContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    }
+}
+
+/* ── ROUTE REPLAY Interactive Animation Engine ───────────────────── */
+window.replayState = {
+    active: false,
+    paused: false,
+    currentIndex: 0,
+    timerId: null
+};
+
+function triggerRouteReplay() {
+    const hops = window.lastAnalyzedData?.hops || [];
+    if (!hops || hops.length === 0) {
+        alert("No hop chain records available for route replay.");
+        return;
+    }
+
+    // Reset replay state
+    window.replayState.active = true;
+    window.replayState.paused = false;
+    window.replayState.currentIndex = 0;
+
+    // Show controls & banner
+    document.getElementById('btn-replay-route').style.display = 'none';
+    document.getElementById('btn-pause-replay').style.display = 'inline-flex';
+    document.getElementById('btn-pause-replay').innerHTML = '<i class="ti ti-player-pause"></i> PAUSE';
+    document.getElementById('btn-restart-replay').style.display = 'inline-flex';
+    document.getElementById('replay-live-banner').style.display = 'flex';
+
+    runReplayStep();
+}
+
+function pauseRouteReplay() {
+    const state = window.replayState;
+    const btn = document.getElementById('btn-pause-replay');
+    state.paused = !state.paused;
+
+    if (state.paused) {
+        if (state.timerId) clearTimeout(state.timerId);
+        btn.innerHTML = '<i class="ti ti-player-play"></i> RESUME';
+    } else {
+        btn.innerHTML = '<i class="ti ti-player-pause"></i> PAUSE';
+        runReplayStep();
+    }
+}
+
+function restartRouteReplay() {
+    const state = window.replayState;
+    if (state.timerId) clearTimeout(state.timerId);
+    state.currentIndex = 0;
+    state.paused = false;
+    document.getElementById('btn-pause-replay').innerHTML = '<i class="ti ti-player-pause"></i> PAUSE';
+    runReplayStep();
+}
+
+function stopRouteReplay() {
+    const state = window.replayState;
+    if (state.timerId) clearTimeout(state.timerId);
+    state.active = false;
+    state.paused = false;
+    state.currentIndex = 0;
+
+    // Restore buttons & banner
+    const playBtn = document.getElementById('btn-replay-route');
+    const pauseBtn = document.getElementById('btn-pause-replay');
+    const restartBtn = document.getElementById('btn-restart-replay');
+    const banner = document.getElementById('replay-live-banner');
+
+    if (playBtn) playBtn.style.display = 'inline-flex';
+    if (pauseBtn) pauseBtn.style.display = 'none';
+    if (restartBtn) restartBtn.style.display = 'none';
+    if (banner) banner.style.display = 'none';
+
+    // Clear node & connector replay active classes
+    document.querySelectorAll('.ha-node-card').forEach(n => n.classList.remove('replay-active-node'));
+    document.querySelectorAll('.ha-connector').forEach(c => c.classList.remove('replay-active-connector'));
+}
+
+async function runReplayStep() {
+    const state = window.replayState;
+    if (!state.active || state.paused) return;
+
+    const hops = window.lastAnalyzedData?.hops || [];
+    if (state.currentIndex >= hops.length) {
+        // Replay finished! Smoothly return to normal route view
+        setTimeout(() => {
+            stopRouteReplay();
+        }, 800);
+        return;
+    }
+
+    const i = state.currentIndex;
+    const hop = hops[i];
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const stepDuration = prefersReducedMotion ? 250 : 1200; // ms per step
+
+    // Clear previous node/connector highlights
+    document.querySelectorAll('.ha-node-card').forEach(n => n.classList.remove('replay-active-node'));
+    document.querySelectorAll('.ha-connector').forEach(c => c.classList.remove('replay-active-connector'));
+
+    // Highlight current node card
+    const nodeCards = document.querySelectorAll('.ha-node-card');
+    if (nodeCards[i]) {
+        nodeCards[i].classList.add('replay-active-node');
+        nodeCards[i].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    }
+
+    // Highlight connector leading to this node
+    if (i > 0) {
+        const connectors = document.querySelectorAll('.ha-connector');
+        if (connectors[i - 1]) {
+            connectors[i - 1].classList.add('replay-active-connector');
+        }
+    }
+
+    // Parse actual metadata for banner
+    let hostLabel = hop.from && hop.from !== 'unknown' ? hop.from : (hop.by && hop.by !== 'unknown' ? hop.by : 'Unknown Node');
+    let timestampText = hop.timestamp || (hop.ts ? new Date(hop.ts * 1000).toUTCString().replace(' GMT', ' UTC') : 'Timestamp N/A');
+    
+    let delayText = '';
+    if (i > 0 && hop.delta !== undefined && hop.delta !== null) {
+        const absSec = Math.abs(hop.delta);
+        let timeStr = absSec + 's';
+        if (absSec >= 3600) timeStr = (absSec / 3600).toFixed(1) + 'h';
+        else if (absSec >= 60) timeStr = (absSec / 60).toFixed(1) + 'm';
+        delayText = ` | +${timeStr} ${absSec > 300 ? '(UNUSUAL DELAY)' : ''}`;
+    }
+
+    let protoText = '';
+    if (hop.raw) {
+        const pm = hop.raw.match(/with\s+([A-Za-z0-9\-]+)/i);
+        if (pm) protoText = ` | ${pm[1].toUpperCase()}`;
+    }
+
+    // Update live status banner
+    const stepName = (i === 0) ? 'ORIGIN' : ((i === hops.length - 1) ? 'MX TARGET' : `HOP ${String(i).padStart(2, '0')}`);
+    document.getElementById('replay-current-step').textContent = stepName;
+    document.getElementById('replay-current-host').textContent = hostLabel;
+    document.getElementById('replay-current-meta').textContent = `${timestampText}${protoText}${delayText}`;
+    
+    const percent = Math.round(((i + 1) / hops.length) * 100);
+    document.getElementById('replay-progress-fill').style.width = percent + '%';
+
+    // Increment step & queue next step
+    state.currentIndex++;
+    state.timerId = setTimeout(() => {
+        runReplayStep();
+    }, stepDuration);
 }
 
 /* Populate result states in UI */
@@ -1886,7 +4851,6 @@ function renderForensicResults(data) {
     const scoreEl = document.getElementById('result-score');
     scoreEl.textContent = data.score || 0;
     
-    // Set score color based on verdict class using CSS variables
     if (data.verdict_class === 'danger') {
         scoreEl.style.color = 'var(--danger)';
     } else if (data.verdict_class === 'warning') {
@@ -1895,135 +4859,376 @@ function renderForensicResults(data) {
         scoreEl.style.color = 'var(--success)';
     }
 
+    // Hop Count
+    const hopCountEl = document.getElementById('result-hop-count-num');
+    if (hopCountEl) {
+        hopCountEl.textContent = data.hops ? data.hops.length : 0;
+    }
+
     // Subject lines
     const subjectEl = document.getElementById('result-subject');
     subjectEl.textContent = data.subject ? `Subject: "${data.subject}"` : 'No Subject Header Defined';
 
+    // Summary Auth & Alignment Pills
+    if (data.auth) {
+        const spfStatus = data.auth.spf?.status || 'info';
+        const dkimStatus = data.auth.dkim?.status || 'info';
+        const dmarcStatus = data.auth.dmarc?.status || 'info';
+        const alignStatus = (data.mismatch_status === 'fail' || data.return_path_mismatch) ? 'fail' : 'pass';
+
+        const updatePill = (id, label, status) => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            const symbol = status === 'pass' ? '✓' : (status === 'fail' ? '✗' : '⚠');
+            const pillClass = status === 'pass' ? 'pill-pass' : (status === 'fail' ? 'pill-fail' : 'pill-warn');
+            el.className = `ha-summary-pill ${pillClass}`;
+            el.textContent = `${label} ${symbol}`;
+        };
+
+        updatePill('pill-spf', 'SPF', spfStatus);
+        updatePill('pill-dkim', 'DKIM', dkimStatus);
+        updatePill('pill-dmarc', 'DMARC', dmarcStatus);
+        updatePill('pill-alignment', 'ALIGNMENT', alignStatus);
+    }
+
     // 1. Draw Routing graph
     drawHopsDiagram(data.hops || [], data.auth);
 
-    // 2. Populate Authentication Details Table
-    const authTable = document.getElementById('auth-results-table');
-    authTable.innerHTML = '';
-    
-    if (data.auth) {
-        const methods = [
-            { key: 'spf', label: 'SPF' },
-            { key: 'dkim', label: 'DKIM' },
-            { key: 'dmarc', label: 'DMARC' }
-        ];
-        
-        methods.forEach(m => {
-            const details = data.auth[m.key] || { status: 'info', detail: 'Verification metrics not generated.' };
-            const authClass = getAuthClass(details.status);
-            const badgeLabel = getAuthBadgeLabel(details.status);
-            
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td class="auth-header-cell">
-                    <strong>${m.label}</strong><br>
-                    <span class="ha-auth-status-label ${authClass}">${badgeLabel}</span>
-                </td>
-                <td style="color: var(--text-muted, #94a3b8); font-size: 0.8rem; line-height: 1.4;">
-                    ${escapeHTML(details.detail || '')}
-                </td>
-            `;
-            authTable.appendChild(tr);
-        });
-    }
+    // 2. Populate Interactive Authentication Cards
+    renderAuthCards(data);
 
-    // 3. Populate Domain Intelligence Rows
-    const intelContainer = document.getElementById('domain-intel-container');
-    intelContainer.innerHTML = '';
+    // 3. Populate Identity & Domain Intelligence Panel
+    renderDomainIntelPanel(data);
 
-    const intelItems = [
-        ['Sender Address', data.from_hdr || 'None'],
-        ['Envelope Domain', data.from_domain || 'None'],
-        ['MX Record Servers', data.mx_records && data.mx_records.length > 0 ? data.mx_records.join(', ') : 'No valid MX records found'],
-        ['Domain Registry Age', data.domain_age_label || 'Unable to verify'],
-        ['Registration Date', data.created_date || 'Unable to verify'],
-        ['Reply-To Address', data.reply_to || 'None'],
-        ['Return-Path Address', data.return_path || 'None']
-    ];
+    // 4. Populate Security Anomalies & Red Flags List
+    renderSecurityAnomalies(data);
 
-    intelItems.forEach(([key, val]) => {
-        const row = document.createElement('div');
-        row.className = 'ha-intel-row';
-        row.innerHTML = `
-            <div class="ha-intel-key">${escapeHTML(key)}</div>
-            <div class="ha-intel-val" title="${escapeHTML(val)}">
-                ${escapeHTML(val.length > 60 ? val.substring(0, 58) + '…' : val)}
-            </div>
-        `;
-        intelContainer.appendChild(row);
-    });
-
-    // 4. Populate Red Flags List
-    const flagsContainer = document.getElementById('red-flags-container');
-    flagsContainer.innerHTML = '';
-
-    if (!data.red_flags || data.red_flags.length === 0) {
-        flagsContainer.innerHTML = `
-            <div class="ha-clean-badge">
-                <i class="ti ti-shield-check" style="font-size: 1.6rem; display: block; margin-bottom: 6px;"></i>
-                No high-threat header anomalies or validation failures identified.
-            </div>`;
-    } else {
-        data.red_flags.forEach(flag => {
-            const sev = flag.severity || 'medium';
-            const badgeClass = `sev-badge-${sev}`;
-            
-            const flagRow = document.createElement('div');
-            flagRow.className = 'ha-flag-row';
-            flagRow.innerHTML = `
-                <span class="ha-flag-severity ${badgeClass}">${escapeHTML(sev)}</span>
-                <div>
-                    <div class="ha-flag-title">${escapeHTML(flag.title)}</div>
-                    <div class="ha-flag-detail">${escapeHTML(flag.detail)}</div>
-                </div>
-            `;
-            flagsContainer.appendChild(flagRow);
-        });
-    }
-
-    // Collapsible panel defaults based on findings
-    const hasFlags = (data.red_flags && data.red_flags.length > 0);
+    // Collapsible panel defaults (Red Flags collapsed by default per requirement)
     setCollapsiblePanelState('auth-body', true);          // Always expand Authentication
-    setCollapsiblePanelState('flags-body', hasFlags);     // Expand flags if any exist, collapse if clean
-    setCollapsiblePanelState('intel-body', !hasFlags);    // Expand intel if clean, collapse to avoid clutter if flags exist
+    setCollapsiblePanelState('flags-body', false);         // Collapsed by default per requirement
+    setCollapsiblePanelState('intel-body', true);          // Expand intel by default
+
+    // Store analyzed payload and update mini navigator
+    window.lastAnalyzedData = data;
+    renderMiniRouteNavigator();
 
     // Switch screen to results
     showStage('results');
 }
 
+/* ── Minimized Terminal Interactive Navigator logic ──────────────── */
+window.lastAnalyzedData = null;
+
+const DEFAULT_MINI_HOPS = [
+    {
+        name: "ORIGIN",
+        from: "mail-sender102.google.com",
+        by: "mx.enterprise.com",
+        ip: "209.85.128.102",
+        delta: 0,
+        raw: "Received: from mail-sender102.google.com ([209.85.128.102]) by mx.enterprise.com with ESMTPS; Mon, 15 Jan 2024 10:25:44 UTC",
+        trust: "healthy"
+    },
+    {
+        name: "RELAY 01",
+        from: "relay-01.google.com",
+        by: "relay-02.google.com",
+        ip: "209.85.128.110",
+        delta: 1.2,
+        raw: "Received: from relay-01.google.com by relay-02.google.com with ESMTP id g12so123; Mon, 15 Jan 2024 10:25:43 UTC",
+        trust: "healthy"
+    },
+    {
+        name: "RELAY 02",
+        from: "relay-02.google.com",
+        by: "smtp-out.enterprise.com",
+        ip: "198.51.100.42",
+        delta: 1.8,
+        raw: "Received: from relay-02.google.com by smtp-out.enterprise.com with ESMTPS; Mon, 15 Jan 2024 10:25:42 UTC",
+        trust: "healthy"
+    },
+    {
+        name: "SMTP OUT",
+        from: "smtp-out.enterprise.com",
+        by: "mx.destination.com",
+        ip: "198.51.100.99",
+        delta: 0.5,
+        raw: "Received: from smtp-out.enterprise.com by mx.destination.com with ESMTPS; Mon, 15 Jan 2024 10:25:41 UTC",
+        trust: "healthy"
+    },
+    {
+        name: "INBOX",
+        from: "mx.destination.com",
+        by: "inbox.destination.com",
+        ip: "10.0.1.5",
+        delta: 0.2,
+        raw: "Received: from mx.destination.com by inbox.destination.com with LMTPA; Mon, 15 Jan 2024 10:25:40 UTC",
+        trust: "healthy"
+    }
+];
+
+function extractHopMetadata(hop) {
+    if (!hop) return {};
+    const raw = hop.raw || '';
+    const meta = {};
+
+    // Host
+    if (hop.from && hop.from !== 'unknown') {
+        meta.host = hop.from;
+    } else if (hop.by && hop.by !== 'unknown') {
+        meta.host = hop.by;
+    } else if (hop.ip) {
+        meta.host = hop.ip;
+    }
+
+    // Time
+    if (hop.timestamp) {
+        meta.time = hop.timestamp;
+    } else if (hop.ts) {
+        try {
+            meta.time = new Date(hop.ts * 1000).toUTCString().replace(' GMT', ' UTC');
+        } catch (e) {}
+    } else if (raw.includes(';')) {
+        const parts = raw.split(';');
+        const datePart = parts[parts.length - 1].trim();
+        if (datePart && datePart.length > 5) {
+            meta.time = datePart;
+        }
+    }
+
+    // Protocol
+    const protoMatch = raw.match(/\bwith\s+([A-Za-z0-9\-]+)/i);
+    if (protoMatch && protoMatch[1]) {
+        meta.protocol = protoMatch[1].toUpperCase();
+    }
+
+    // TLS
+    const tlsMatch = raw.match(/\b(TLSv?1?\.[0-3]|TLS\s*1\.[0-3])\b/i);
+    if (tlsMatch && tlsMatch[1]) {
+        meta.tls = tlsMatch[1].toUpperCase();
+    } else if (/\b(ESMTPS|SMTPS)\b/i.test(raw) || meta.protocol === 'ESMTPS') {
+        meta.tls = 'TLS Encrypted';
+    }
+
+    // Delay
+    if (hop.delta !== undefined && hop.delta !== null && Math.abs(hop.delta) > 0) {
+        const absSec = Math.abs(hop.delta);
+        if (absSec >= 3600) {
+            meta.delay = `+${(absSec / 3600).toFixed(1)}h`;
+            meta.delayFull = `${(absSec / 3600).toFixed(1)} hours`;
+        } else if (absSec >= 60) {
+            meta.delay = `+${(absSec / 60).toFixed(1)}m`;
+            meta.delayFull = `${(absSec / 60).toFixed(1)} minutes`;
+        } else {
+            meta.delay = `+${absSec.toFixed(1)}s`;
+            meta.delayFull = `${absSec.toFixed(1)} seconds`;
+        }
+    }
+
+    // Trust state mapping: healthy, warning, anomalous
+    let trust = hop.trust || 'healthy';
+    if (trust === 'safe') trust = 'healthy';
+    if (trust === 'danger' || trust === 'fail') trust = 'anomalous';
+    if (hop.delta && Math.abs(hop.delta) > 300) trust = 'warning';
+    meta.trust = trust;
+
+    return meta;
+}
+
+function renderMiniRouteNavigator() {
+    const chainBox = document.getElementById('ha-mini-route-chain');
+    const statusText = document.getElementById('ha-mini-status-text');
+    if (!chainBox) return;
+
+    chainBox.innerHTML = '';
+    closeMiniPopover();
+
+    let hopsList = [];
+    let isAnalyzed = false;
+
+    if (window.lastAnalyzedData) {
+        hopsList = window.lastAnalyzedData.hops || [];
+        isAnalyzed = true;
+    } else {
+        hopsList = DEFAULT_MINI_HOPS;
+    }
+
+    if (statusText) {
+        statusText.textContent = isAnalyzed ? 'ANALYSIS COMPLETE' : 'STANDBY';
+    }
+
+    if (isAnalyzed && hopsList.length === 0) {
+        chainBox.innerHTML = `<div style="font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: var(--text-muted, #94a3b8); padding: 8px;">No standard 'Received' hop records isolated in email payload.</div>`;
+        return;
+    }
+
+    hopsList.forEach((hop, i) => {
+        const meta = extractHopMetadata(hop);
+        
+        let labelName = hop.name;
+        if (!labelName) {
+            if (i === 0) labelName = 'ORIGIN';
+            else if (i === hopsList.length - 1) labelName = 'INBOX';
+            else if (i === hopsList.length - 2 && hopsList.length > 3) labelName = 'SMTP OUT';
+            else labelName = `RELAY ${String(i).padStart(2, '0')}`;
+        }
+
+        // Render Node Button
+        const nodeBtn = document.createElement('div');
+        nodeBtn.className = `mini-route-node state-${meta.trust}`;
+        nodeBtn.id = `mini-node-${i}`;
+        nodeBtn.innerHTML = `<span class="mini-route-node-dot"></span><span>${escapeHTML(labelName)}</span>`;
+        nodeBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            showMiniNodePopover(i, labelName, meta);
+        });
+
+        chainBox.appendChild(nodeBtn);
+
+        // Render Connecting Line (if not last)
+        if (i < hopsList.length - 1) {
+            const nextHop = hopsList[i + 1];
+            const nextMeta = extractHopMetadata(nextHop);
+
+            const lineEl = document.createElement('div');
+            lineEl.className = 'mini-route-line';
+            lineEl.id = `mini-line-${i}`;
+            lineEl.innerHTML = '───';
+            lineEl.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const nextLabel = nextHop.name || (i + 1 === hopsList.length - 1 ? 'INBOX' : (i + 1 === hopsList.length - 2 && hopsList.length > 3 ? 'SMTP OUT' : `RELAY ${String(i+1).padStart(2, '0')}`));
+                showMiniLinePopover(i, labelName, nextLabel, nextMeta);
+            });
+
+            chainBox.appendChild(lineEl);
+        }
+    });
+}
+
+function showMiniNodePopover(index, name, meta) {
+    const popover = document.getElementById('ha-mini-popover');
+    if (!popover) return;
+
+    // Highlight active node
+    document.querySelectorAll('.mini-route-node, .mini-route-line').forEach(el => el.classList.remove('active'));
+    const activeNode = document.getElementById(`mini-node-${index}`);
+    if (activeNode) activeNode.classList.add('active');
+
+    let rowsHtml = '';
+
+    // ONLY show fields that actually exist
+    if (meta.host) {
+        rowsHtml += `<div class="mini-popover-row"><span class="pop-label">HOST</span><span class="pop-val">${escapeHTML(meta.host)}</span></div>`;
+    }
+    if (meta.time) {
+        rowsHtml += `<div class="mini-popover-row"><span class="pop-label">TIME</span><span class="pop-val">${escapeHTML(meta.time)}</span></div>`;
+    }
+    if (meta.protocol) {
+        rowsHtml += `<div class="mini-popover-row"><span class="pop-label">PROTOCOL</span><span class="pop-val">${escapeHTML(meta.protocol)}</span></div>`;
+    }
+    if (meta.tls) {
+        rowsHtml += `<div class="mini-popover-row"><span class="pop-label">TLS</span><span class="pop-val">${escapeHTML(meta.tls)}</span></div>`;
+    }
+    if (meta.delay) {
+        rowsHtml += `<div class="mini-popover-row"><span class="pop-label">DELAY</span><span class="pop-val">${escapeHTML(meta.delay)}</span></div>`;
+    }
+
+    popover.innerHTML = `
+        <div class="mini-popover-card">
+            <div class="mini-popover-header">
+                <span class="mini-popover-title">${escapeHTML(name)}</span>
+                <span class="mini-popover-close" onclick="closeMiniPopover()">&times;</span>
+            </div>
+            <div class="mini-popover-body">
+                ${rowsHtml || '<div class="mini-popover-row"><span class="pop-val">No extra hop details isolated.</span></div>'}
+            </div>
+        </div>
+    `;
+
+    popover.style.display = 'block';
+}
+
+function showMiniLinePopover(index, fromName, toName, nextMeta) {
+    const popover = document.getElementById('ha-mini-popover');
+    if (!popover) return;
+
+    // Highlight active line
+    document.querySelectorAll('.mini-route-node, .mini-route-line').forEach(el => el.classList.remove('active'));
+    const activeLine = document.getElementById(`mini-line-${index}`);
+    if (activeLine) activeLine.classList.add('active');
+
+    let rowsHtml = '';
+
+    if (fromName) {
+        rowsHtml += `<div class="mini-popover-row"><span class="pop-label">FROM</span><span class="pop-val">${escapeHTML(fromName)}</span></div>`;
+    }
+    if (toName) {
+        rowsHtml += `<div class="mini-popover-row"><span class="pop-label">TO</span><span class="pop-val">${escapeHTML(toName)}</span></div>`;
+    }
+    if (nextMeta.delayFull || nextMeta.delay) {
+        rowsHtml += `<div class="mini-popover-row"><span class="pop-label">DELAY</span><span class="pop-val">${escapeHTML(nextMeta.delayFull || nextMeta.delay)}</span></div>`;
+    }
+    if (nextMeta.protocol) {
+        rowsHtml += `<div class="mini-popover-row"><span class="pop-label">PROTOCOL</span><span class="pop-val">${escapeHTML(nextMeta.protocol)}</span></div>`;
+    }
+
+    popover.innerHTML = `
+        <div class="mini-popover-card">
+            <div class="mini-popover-header">
+                <span class="mini-popover-title">TRANSITION DELIVERABILITY</span>
+                <span class="mini-popover-close" onclick="closeMiniPopover()">&times;</span>
+            </div>
+            <div class="mini-popover-body">
+                ${rowsHtml || '<div class="mini-popover-row"><span class="pop-val">No line transition data.</span></div>'}
+            </div>
+        </div>
+    `;
+
+    popover.style.display = 'block';
+}
+
+function closeMiniPopover() {
+    const popover = document.getElementById('ha-mini-popover');
+    if (popover) popover.style.display = 'none';
+    document.querySelectorAll('.mini-route-node, .mini-route-line').forEach(el => el.classList.remove('active'));
+}
+
 /* ── Window Control Button Logic ─────────────────────────────── */
 (function() {
-    // Add @keyframes for offset-path motion (CSS anim inside SVG style attr)
-    const kfStyle = document.createElement('style');
-    kfStyle.textContent = `@keyframes haHopMove {
-        0%   { offset-distance:0%;   opacity:0; }
-        8%   { opacity:1; }
-        92%  { opacity:1; }
-        100% { offset-distance:100%; opacity:0; }
-    }`;
-    document.head.appendChild(kfStyle);
-
-    // RED — clear textarea + reset to input stage
+    // RED — clear textarea + reset to input stage using site custom alert modal
     document.getElementById('ha-dot-red').addEventListener('click', function() {
         const ta = document.getElementById('headers-input');
-        if (ta.value.trim().length > 0) {
-            if (!confirm('Clear current input and reset results?')) return;
+        if (ta.value.trim().length > 0 || window.lastAnalyzedData) {
+            askHeaderConfirm(
+                'CLEAR TERMINAL INPUT?',
+                'Are you sure you want to clear your header payload and reset the active forensic investigation?',
+                '[ CLEAR INPUT ]',
+                function() {
+                    ta.value = '';
+                    ta.style.borderColor = '';
+                    window.lastAnalyzedData = null;
+                    document.querySelectorAll('.ha-preset-btn.active').forEach(b => b.classList.remove('active'));
+                    resetToInput();
+                    renderMiniRouteNavigator();
+                }
+            );
+        } else {
+            ta.value = '';
+            ta.style.borderColor = '';
+            window.lastAnalyzedData = null;
+            document.querySelectorAll('.ha-preset-btn.active').forEach(b => b.classList.remove('active'));
+            resetToInput();
+            renderMiniRouteNavigator();
         }
-        ta.value = '';
-        ta.style.borderColor = '';
-        document.querySelectorAll('.ha-preset-btn.active').forEach(b => b.classList.remove('active'));
-        resetToInput();
     });
 
     // AMBER — minimize
     document.getElementById('ha-dot-amber').addEventListener('click', function() {
         const inputStage = document.getElementById('stage-input');
-        inputStage.classList.toggle('ha-minimized');
+        const isMin = inputStage.classList.toggle('ha-minimized');
+        if (isMin) {
+            renderMiniRouteNavigator();
+        }
     });
     window.haRestoreFromMinimize = function() {
         document.getElementById('stage-input').classList.remove('ha-minimized');
@@ -2065,8 +5270,19 @@ function renderForensicResults(data) {
         if (e.key === 'Escape' && _haOverlay && _haOverlay.classList.contains('active')) haCollapse();
     });
 
+    // Attach live structural detection listeners to textarea
+    const inputArea = document.getElementById('headers-input');
+    if (inputArea) {
+        inputArea.addEventListener('input', updateStructuralDetection);
+        inputArea.addEventListener('paste', function() {
+            setTimeout(updateStructuralDetection, 50);
+        });
+        updateStructuralDetection();
+    }
+
     // Lure: proactive callout when idle
     document.addEventListener('DOMContentLoaded', () => {
+      renderMiniRouteNavigator();
       setTimeout(() => {
         if (!sessionStorage.getItem('lure_header_callout_fired')) {
           sessionStorage.setItem('lure_header_callout_fired', 'true');

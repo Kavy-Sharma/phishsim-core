@@ -187,7 +187,7 @@ def get_remote_ip():
     return request.remote_addr
 
 def is_safe_ip(ip_str):
-    """Blocks loopback, link-local, private, multicast, unspecified, and reserved IPs."""
+    """Blocks loopback, link-local, private, multicast, unspecified, and non-global reserved IPs."""
     import ipaddress
     try:
         ip = ipaddress.ip_address(ip_str)
@@ -195,8 +195,8 @@ def is_safe_ip(ip_str):
             ip.is_loopback or 
             ip.is_link_local or 
             ip.is_multicast or 
-            ip.is_reserved or
-            ip.is_unspecified):
+            ip.is_unspecified or
+            (ip.is_reserved and not ip.is_global)):
             return False
         return True
     except ValueError:
@@ -219,7 +219,13 @@ def is_safe_url(url_str):
                 return True
                 
         # Resolve all DNS records
-        for info in socket.getaddrinfo(hostname, None):
+        try:
+            addr_info = socket.getaddrinfo(hostname, None)
+        except socket.gaierror:
+            # DNS resolution failed — return True to allow network request to report natural resolution error
+            return True
+
+        for info in addr_info:
             ip = info[4][0]
             if not is_safe_ip(ip):
                 return False
@@ -3007,6 +3013,44 @@ def analyze_threat_api():
         "path_used": "heuristic_engine",
         "mode": mode
     }
+
+
+# In-memory storage for shared threat analysis reports
+SAVED_THREAT_REPORTS = {}
+
+@app.route("/api/save-threat-report", methods=["POST"])
+@csrf.exempt
+def save_threat_report_api():
+    """Stores a threat report JSON object and returns a unique share UUID."""
+    import uuid, time
+    data = request.get_json(silent=True) or {}
+    report = data.get("report")
+    if not report or not isinstance(report, dict):
+        return jsonify({"success": False, "message": "Invalid report payload."}), 400
+
+    report_uuid = str(uuid.uuid4())
+    SAVED_THREAT_REPORTS[report_uuid] = {
+        "report": report,
+        "created_at": time.time()
+    }
+    
+    # Prune old reports if memory store grows over 500 items
+    if len(SAVED_THREAT_REPORTS) > 500:
+        now = time.time()
+        expired = [k for k, v in SAVED_THREAT_REPORTS.items() if now - v.get("created_at", 0) > 604800]
+        for k in expired:
+            SAVED_THREAT_REPORTS.pop(k, None)
+
+    return jsonify({"success": True, "uuid": report_uuid})
+
+@app.route("/api/threat-report/<report_uuid>", methods=["GET"])
+def get_threat_report_api(report_uuid):
+    """Retrieves a saved threat report JSON object by UUID."""
+    entry = SAVED_THREAT_REPORTS.get(report_uuid)
+    if not entry:
+        return jsonify({"success": False, "message": "Shared report not found or expired."}), 404
+
+    return jsonify({"success": True, "report": entry["report"]})
 
 
 @app.route("/profile")
@@ -8167,6 +8211,7 @@ def header_analyzer_api():
     })
 
 
+@csrf.exempt
 @app.route("/api/url-decoder", methods=["POST"])
 def url_decoder_api():
     """Follow redirect chain, check URLhaus and Google Safe Browsing and stream results."""
@@ -8306,12 +8351,6 @@ def url_decoder_api():
                                     return attr[1]
             except Exception as e:
                 print(f"[Warning] SSL check failed for {final_domain}: {e}")
-            if "google" in final_domain:
-                return "GTS CA 1C3"
-            elif "bit.ly" in final_domain:
-                return "DigiCert Global G2 TLS CA"
-            elif "apple" in final_domain:
-                return "Apple Public Cloud RSA CA"
             return "Unknown/None"
 
         future_uh = DIAGNOSTICS_EXECUTOR.submit(check_urlhaus)
@@ -8359,8 +8398,22 @@ def url_decoder_api():
             verdict = "LIKELY SAFE"
             verdict_color = "#10b981"
 
+        # Compute deterministic risk score and investigation ID
+        risk_score = 0
+        if verdict == "DANGEROUS" or urlhaus_verdict == "malicious" or urlscan_verdict == "malicious":
+            risk_score = max(88, urlscan_score)
+        elif verdict == "SUSPICIOUS":
+            risk_score = max(55, len(chain) * 12 + len(domain_flags) * 15)
+            risk_score = min(80, risk_score)
+        else:
+            risk_score = 15 if (domain_flags or redirect_count > 0) else 0
+
+        inv_id = f"TR-{secrets.token_hex(3).upper()}"
+
         summary = {
             "success": True,
+            "investigation_id": inv_id,
+            "risk_score": risk_score,
             "chain": chain,
             "redirect_count": redirect_count,
             "final_url": final_url,

@@ -3,24 +3,24 @@
 {% block content %}
 <style>
 /* ════════════════════════════════════════════════════════════════
-   THREAT ANALYZER — Inline Annotation Layout
-   All CSS variables from site :root — no custom overrides needed.
+   PHISHSIM AI THREAT ANALYZER — SOC EVIDENCE BOARD & CONSOLE
+   Aesthetic: 40% PhishSim Dark Identity | 40% SOC Analyst Console | 20% Email Forensics
    ════════════════════════════════════════════════════════════════ */
 
 .ta-page {
-    max-width: 960px;
+    max-width: 1120px;
     margin: 0 auto;
-    padding: 0 1.5rem 4rem;
+    padding: 1.25rem 1.5rem 4rem;
     --ta-urgency: var(--warning);
     --ta-authority: var(--danger);
     --ta-financial: var(--primary);
     --ta-credential: var(--primary);
 }
 
-/* ── Hero ─────────────────────────────────────────────────────── */
+/* ── Hero / Tightened Header ──────────────────────────────────── */
 .ta-hero {
     text-align: center;
-    padding: 2.5rem 0 2rem;
+    padding: 1.25rem 0 1.25rem;
 }
 .ta-eyebrow {
     display: inline-flex;
@@ -32,20 +32,20 @@
     letter-spacing: 0.12em;
     text-transform: uppercase;
     color: var(--primary);
-    background: var(--primary-dim);
-    border: 1px solid color-mix(in srgb, var(--primary) 25%, transparent);
-    padding: 5px 12px;
+    background: color-mix(in srgb, var(--primary) 12%, transparent);
+    border: 1px solid color-mix(in srgb, var(--primary) 28%, transparent);
+    padding: 4px 12px;
     border-radius: var(--radius-full);
-    margin-bottom: 1rem;
+    margin-bottom: 0.75rem;
 }
 .ta-hero h1 {
     font-family: var(--font-sans);
-    font-size: clamp(1.8rem, 4vw, 2.8rem);
+    font-size: clamp(1.7rem, 3.5vw, 2.4rem);
     font-weight: 800;
     color: var(--text-primary);
     letter-spacing: -0.02em;
     line-height: 1.15;
-    margin-bottom: 0.75rem;
+    margin-bottom: 0.5rem;
 }
 .ta-hero h1 span {
     background: linear-gradient(135deg, var(--primary) 0%, var(--info) 100%);
@@ -54,39 +54,41 @@
     background-clip: text;
 }
 .ta-hero p {
-    font-size: 1rem;
+    font-size: 0.92rem;
     color: var(--text-secondary);
-    max-width: 560px;
+    max-width: 580px;
     margin: 0 auto;
-    line-height: 1.6;
+    line-height: 1.5;
 }
 
 /* ── Mode Tabs ────────────────────────────────────────────────── */
-.ta-tabs {
+.ta-tabs-wrap {
     display: flex;
-    gap: 0;
-    background: var(--bg-surface);
+    justify-content: center;
+    margin-bottom: 1.25rem;
+}
+.ta-tabs {
+    display: inline-flex;
+    gap: 4px;
+    background: color-mix(in srgb, var(--bg-surface) 90%, #000);
     border: 1px solid var(--border-default);
     border-radius: var(--radius-md);
     padding: 4px;
-    margin-bottom: 1.5rem;
-    width: fit-content;
-    margin-left: auto;
-    margin-right: auto;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
 }
 .ta-tab {
     background: transparent;
-    border: none;
-    border-radius: 8px;
-    padding: 8px 20px;
+    border: 1px solid transparent;
+    border-radius: var(--radius-sm);
+    padding: 7px 18px;
     font-family: var(--font-mono);
-    font-size: 0.75rem;
+    font-size: 0.72rem;
     font-weight: 700;
     letter-spacing: 0.06em;
     text-transform: uppercase;
     color: var(--text-secondary);
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
     display: flex;
     align-items: center;
     gap: 7px;
@@ -94,70 +96,66 @@
 .ta-tab.active {
     background: var(--primary-dim);
     color: var(--primary);
-    border: 1px solid color-mix(in srgb, var(--primary) 25%, transparent);
+    border-color: color-mix(in srgb, var(--primary) 35%, transparent);
+    box-shadow: 0 0 12px color-mix(in srgb, var(--primary) 20%, transparent);
 }
 
-/* ── Main Card ────────────────────────────────────────────────── */
-.ta-card {
+/* ── Main Console Container ───────────────────────────────────── */
+.ta-console-card {
     background: var(--bg-surface);
     border: 1px solid var(--border-default);
     border-radius: var(--radius-lg);
     overflow: hidden;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-    /* Subtle annotation-color gradient top border — grounds the evidence board concept */
-    border-top: 2px solid transparent;
-    background-clip: padding-box;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.45);
     position: relative;
 }
-.ta-card::before {
+.ta-console-card::before {
     content: '';
     position: absolute;
-    top: -2px; left: 0; right: 0;
+    top: 0; left: 0; right: 0;
     height: 2px;
     background: linear-gradient(90deg,
-        var(--ta-urgency)  0%,
+        var(--ta-urgency) 0%,
         var(--ta-authority) 33%,
         var(--ta-financial) 66%,
         var(--ta-credential) 100%);
-    opacity: 0.7;
-    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-    pointer-events: none;
-    z-index: 1;
+    opacity: 0.8;
+    z-index: 2;
 }
 
-/* ── Terminal Input Header ────────────────────────────────────── */
+/* ── Terminal Console Input (State 1) ─────────────────────────── */
 .ta-terminal-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 12px 18px;
-    background: linear-gradient(180deg, color-mix(in srgb, var(--danger) 18%, rgba(0,0,0,0.85)) 0%, color-mix(in srgb, var(--danger) 8%, rgba(0,0,0,0.92)) 100%);
-    border-bottom: 1px solid color-mix(in srgb, var(--danger) 22%, transparent);
-    border-top: 2px solid color-mix(in srgb, var(--danger) 55%, transparent);  /* red accent seam */
-    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    padding: 10px 18px;
+    background: linear-gradient(180deg, color-mix(in srgb, var(--bg-surface-raised) 90%, #000) 0%, color-mix(in srgb, var(--bg-base) 95%, #000) 100%);
+    border-bottom: 1px solid var(--border-default);
 }
 .ta-dots { display: flex; gap: 6px; }
-.ta-dot { width: 12px; height: 12px; border-radius: 50%; cursor: pointer; transition: transform 0.12s ease, filter 0.12s ease; }
-.ta-dot:hover { transform: scale(1.25); filter: brightness(1.2); }
+.ta-dot { width: 11px; height: 11px; border-radius: 50%; cursor: pointer; transition: transform 0.12s ease; }
+.ta-dot:hover { transform: scale(1.2); }
 .ta-dot.red   { background: var(--danger); }
 .ta-dot.amber { background: var(--warning); }
 .ta-dot.green { background: var(--success); }
+
 .ta-terminal-label {
     font-family: var(--font-mono);
-    font-size: 0.68rem;
+    font-size: 0.7rem;
     color: var(--text-secondary);
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
+    letter-spacing: 0.06em;
 }
+.ta-terminal-label .prompt-cmd { color: var(--primary); font-weight: 700; }
+
 .ta-live-badge {
     display: flex;
     align-items: center;
-    gap: 5px;
+    gap: 6px;
     font-family: var(--font-mono);
-    font-size: 0.6rem;
+    font-size: 0.62rem;
     font-weight: 700;
     color: var(--success);
-    letter-spacing: 0.1em;
+    letter-spacing: 0.08em;
 }
 .ta-live-dot {
     width: 6px; height: 6px;
@@ -166,150 +164,17 @@
     animation: livePulse 1.8s ease-in-out infinite;
 }
 @keyframes livePulse {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.4; transform: scale(0.7); }
+    0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 0 6px var(--success); }
+    50% { opacity: 0.4; transform: scale(0.75); box-shadow: none; }
 }
 
-/* Smooth Minimization Collapse */
 .ta-input-body {
-    max-height: 800px;
-    opacity: 1;
-    overflow: hidden;
-    transition: max-height 0.4s cubic-bezier(0.16, 1, 0.3, 1), 
-                opacity 0.3s ease, 
-                padding 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    padding: 1.25rem 1.5rem 1.5rem;
 }
-.ta-minimized .ta-input-body {
-    max-height: 0 !important;
-    opacity: 0 !important;
-    padding-top: 0 !important;
-    padding-bottom: 0 !important;
-    pointer-events: none;
-}
-.ta-minimized .ta-terminal-header { border-bottom: none; border-radius: var(--radius-lg); }
-.ta-phish-stage {
-    display: flex !important; /* Keep display: flex always */
-    max-height: 0;
-    min-height: 0;
-    opacity: 0;
-    overflow: hidden;
-    padding: 0 2rem;
-    cursor: pointer;
-    position: relative;
-    align-items: center;
-    justify-content: center;
-    flex-direction: column;
-    gap: 1rem;
-    transition: max-height 0.4s cubic-bezier(0.16, 1, 0.3, 1), 
-                min-height 0.4s cubic-bezier(0.16, 1, 0.3, 1), 
-                opacity 0.3s ease, 
-                padding 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-}
-.ta-minimized .ta-phish-stage {
-    max-height: 300px;
-    min-height: 200px;
-    opacity: 1;
-    padding: 1.5rem 2rem;
-}
-.ta-phish-feed {
-    font-family: var(--font-mono);
-    font-size: 0.78rem;
-    color: var(--danger);
-    text-align: center;
-    letter-spacing: 0.03em;
-    opacity: 0;
-    animation: taPhishFade 4s ease-in-out infinite;
-    max-width: 360px;
-    line-height: 1.5;
-}
-@keyframes taPhishFade {
-    0%   { opacity: 0; transform: translateY(6px); }
-    15%  { opacity: 1; transform: translateY(0); }
-    80%  { opacity: 1; transform: translateY(0); }
-    100% { opacity: 0; transform: translateY(-6px); }
-}
-.ta-phish-restore-hint {
-    font-family: var(--font-mono);
-    font-size: 0.62rem;
-    color: var(--text-secondary);
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    opacity: 0.5;
-    margin-top: 0.5rem;
-}
-/* Expanded full-screen overlay */
-.ta-expand-overlay {
-    display: flex !important; /* Keep display: flex always */
-    position: fixed;
-    inset: 0;
-    z-index: 9000;
-    background: rgba(2, 6, 23, 0.95);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    flex-direction: column;
-    padding: 2rem;
-    box-sizing: border-box;
-    opacity: 0;
-    pointer-events: none;
-    transform: scale(1.03);
-    transition: opacity 0.32s ease, transform 0.32s cubic-bezier(0.16, 1, 0.3, 1);
-}
-.ta-expand-overlay.active {
-    opacity: 1;
-    pointer-events: auto;
-    transform: scale(1);
-}
-.ta-expand-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 1rem;
-    flex-shrink: 0;
-}
-.ta-expand-label {
-    font-family: var(--font-mono);
-    font-size: 0.72rem;
-    color: var(--text-secondary);
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-}
-.ta-expand-close {
-    background: rgba(255,255,255,0.08);
-    border: 1px solid rgba(255,255,255,0.12);
-    color: var(--text-secondary);
-    border-radius: 6px;
-    padding: 4px 10px;
-    font-family: var(--font-mono);
-    font-size: 0.72rem;
-    cursor: pointer;
-    transition: background 0.15s;
-}
-.ta-expand-close:hover { background: rgba(255,255,255,0.15); color: #fff; }
-.ta-expand-textarea {
-    flex: 1;
-    width: 100%;
-    background: var(--bg-input);
-    border: 1px solid var(--border-default);
-    border-radius: var(--radius-md);
-    padding: 1.25rem;
-    font-family: var(--font-mono);
-    font-size: 0.84rem;
-    color: var(--text-primary);
-    line-height: 1.65;
-    resize: none;
-    outline: none;
-    box-sizing: border-box;
-}
-.ta-expand-textarea:focus { border-color: var(--primary); }
-body.light-theme .ta-expand-overlay { background: rgba(248, 250, 255, 0.97); }
-body.light-theme .ta-expand-textarea { background: #fff; border-color: rgba(0,0,0,0.12); color: #0f172a; }
-body.light-theme .ta-expand-close { background: rgba(0,0,0,0.06); border-color: rgba(0,0,0,0.1); color: #475569; }
-body.light-theme .ta-expand-close:hover { background: rgba(0,0,0,0.1); color: #0f172a; }
-
-.ta-textarea-wrap { position: relative; margin-bottom: 1.25rem; }
+.ta-textarea-wrap { position: relative; margin-bottom: 1rem; }
 .ta-textarea {
     width: 100%;
-    min-height: 240px;
+    min-height: 200px;
     background: var(--bg-input);
     border: 1px solid var(--border-default);
     border-radius: var(--radius-md);
@@ -320,228 +185,951 @@ body.light-theme .ta-expand-close:hover { background: rgba(0,0,0,0.1); color: #0
     line-height: 1.65;
     resize: vertical;
     outline: none;
-    transition: border-color 0.2s;
+    transition: border-color 0.2s, box-shadow 0.2s;
     box-sizing: border-box;
 }
-.ta-textarea:focus { border-color: var(--border-active); }
+.ta-textarea:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 16px color-mix(in srgb, var(--primary) 18%, transparent);
+}
 .ta-textarea::placeholder { color: var(--text-muted); }
 
-/* ── Sample Presets ───────────────────────────────────────────── */
+/* Sample Presets Bar */
+.ta-presets-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 1.25rem;
+    flex-wrap: wrap;
+}
 .ta-presets-label {
     font-family: var(--font-mono);
-    font-size: 0.62rem;
+    font-size: 0.64rem;
     font-weight: 700;
-    letter-spacing: 0.1em;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
     color: var(--text-muted);
-    margin-bottom: 8px;
+    flex-shrink: 0;
 }
-.ta-presets { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 1.5rem; }
+.ta-presets-list { display: flex; flex-wrap: wrap; gap: 6px; flex: 1; }
 .ta-preset-chip {
-    background: transparent;
+    background: rgba(255, 255, 255, 0.03);
     border: 1px solid var(--border-default);
     border-radius: var(--radius-full);
-    padding: 5px 13px;
+    padding: 5px 12px;
     font-family: var(--font-mono);
     font-size: 0.68rem;
     font-weight: 600;
     color: var(--text-secondary);
     cursor: pointer;
-    transition: all 0.2s ease;
-    display: flex;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    display: inline-flex;
     align-items: center;
-    gap: 5px;
+    gap: 6px;
 }
-.ta-preset-chip:hover { background: var(--bg-hover); border-color: var(--primary); color: var(--primary); }
-.ta-preset-chip.active { background: var(--primary-dim); border-color: var(--primary); color: var(--primary); }
+.ta-preset-chip:hover {
+    background: var(--primary-dim);
+    border-color: color-mix(in srgb, var(--primary) 50%, transparent);
+    color: var(--primary);
+    transform: translateY(-1px);
+}
+.ta-preset-chip.active {
+    background: var(--primary-dim);
+    border-color: var(--primary);
+    color: var(--primary);
+}
 .ta-preset-chip .chip-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
 
-/* ── Analyze Button ───────────────────────────────────────────── */
-/* NOTE: global style.css rule sets background-image:none !important on all
-   button elements (liquid-chrome exclusion). We work around it by using
-   background-color for the actual fill and a ::before pseudo-element for
-   the gradient overlay — pseudo-elements are not buttons so they are safe. */
+/* Analyze Button */
 .ta-analyze-btn {
     width: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 10px;
-    padding: 14px 24px;
-    background-color: var(--danger);          /* danger red — this is a threat scanner */
-    border: 1px solid rgba(255, 255, 255, 0.25);
-    border-bottom: 3px solid rgba(0, 0, 0, 0.45);
-    border-radius: var(--radius-lg);
-    font-family: var(--font-sans);
-    font-size: 0.9rem;
-    font-weight: 700;
-    color: #020617;
-    letter-spacing: 0.05em;
+    padding: 13px 24px;
+    background: var(--primary);
+    border: 1px solid color-mix(in srgb, var(--primary) 60%, #fff);
+    border-radius: var(--radius-md);
+    font-family: var(--font-mono);
+    font-size: 0.88rem;
+    font-weight: 800;
+    color: #080C14;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
     cursor: pointer;
-    box-shadow: 0 4px 18px color-mix(in srgb, var(--danger) 38%, transparent), inset 0 1px 0 rgba(255,255,255,0.2);
-    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
-    position: relative;
-    overflow: hidden;
-    isolation: isolate;
-}
-/* Gradient overlay: light-red → danger-red — echoes the threat/urgency category colors */
-.ta-analyze-btn::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    background-image: linear-gradient(135deg, color-mix(in srgb, var(--danger) 80%, #fff) 0%, var(--danger) 100%);
-    z-index: -1;
-    transition: opacity 0.15s ease;
+    box-shadow: 0 4px 20px color-mix(in srgb, var(--primary) 35%, transparent);
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .ta-analyze-btn:hover:not(:disabled) {
     transform: translateY(-2px);
-    border-bottom-width: 4px;
-    box-shadow: 0 8px 24px color-mix(in srgb, var(--danger) 55%, transparent), inset 0 1px 0 rgba(255,255,255,0.3);
-}
-.ta-analyze-btn:hover:not(:disabled)::before {
-    opacity: 1.0;
+    box-shadow: 0 8px 28px color-mix(in srgb, var(--primary) 55%, transparent);
     filter: brightness(1.1);
 }
 .ta-analyze-btn:active:not(:disabled) {
-    transform: translateY(1px);
-    border-bottom-width: 1px;
-    box-shadow: 0 2px 8px color-mix(in srgb, var(--danger) 25%, transparent);
-}
-.ta-analyze-btn:disabled {
-    background-color: rgba(255, 255, 255, 0.06) !important;
-    color: rgba(255, 255, 255, 0.25) !important;
-    border-color: rgba(255, 255, 255, 0.08) !important;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
-    box-shadow: none !important;
-    cursor: not-allowed !important;
-    transform: none !important;
-}
-.ta-analyze-btn:disabled::before { opacity: 0 !important; }
-.ta-analyze-btn:focus-visible {
-    outline: 2px solid var(--danger);
-    outline-offset: 3px;
-    box-shadow: 0 0 0 4px color-mix(in srgb, var(--danger) 25%, transparent);
-}
-.ta-analyze-btn.scanning { animation: scanPulse 1s ease-in-out infinite; pointer-events: none; opacity: 0.85; }
-@keyframes scanPulse {
-    0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--danger) 45%, transparent); }
-    50% { box-shadow: 0 0 0 10px color-mix(in srgb, var(--danger) 0%, transparent); }
+    transform: translateY(0);
 }
 
-/* ── Result Header ────────────────────────────────────────────── */
-.ta-result-header {
+/* ── STATE 2 — Investigation Pipeline Loading ─────────────────── */
+.ta-pipeline-container {
+    padding: 3rem 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 280px;
+}
+.ta-pipeline-box {
+    width: 100%;
+    max-width: 500px;
+    background: color-mix(in srgb, var(--bg-surface-raised) 70%, #000);
+    border: 1px solid color-mix(in srgb, var(--primary) 25%, transparent);
+    border-radius: var(--radius-md);
+    padding: 1.5rem;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+.ta-pipeline-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: var(--primary);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 1.25rem;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border-subtle);
+}
+.ta-pipeline-steps { display: flex; flex-direction: column; gap: 10px; }
+.ta-step {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: color 0.3s ease;
+}
+.ta-step.active { color: var(--primary); font-weight: 700; }
+.ta-step.done { color: var(--success); }
+.ta-step .step-icon {
+    width: 18px;
+    height: 18px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    flex-shrink: 0;
+}
+.ta-step.active .step-icon { animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── STATE 3 — RESULT WORKSPACE ───────────────────────────────── */
+
+/* 1. Compact Threat Summary Header */
+.ta-summary-bar {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 14px 20px;
-    background: rgba(0,0,0,0.25);
-    border-bottom: 1px solid var(--border-subtle);
-    gap: 12px;
+    padding: 16px 24px;
+    background: linear-gradient(180deg, color-mix(in srgb, var(--bg-surface-raised) 90%, #000) 0%, rgba(10, 15, 26, 0.95) 100%);
+    border-bottom: 1px solid var(--border-default);
+    gap: 16px;
     flex-wrap: wrap;
 }
-.ta-result-meta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-.ta-verdict-badge {
+.ta-summary-left { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+.ta-verdict-pill {
     font-family: var(--font-mono);
-    font-size: 0.7rem;
+    font-size: 0.72rem;
     font-weight: 800;
     letter-spacing: 0.12em;
-    padding: 5px 14px;
+    padding: 6px 16px;
     border-radius: var(--radius-full);
     text-transform: uppercase;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
 }
-.ta-verdict-badge.danger  { background: var(--verdict-critical-dim);  color: var(--verdict-critical);  border: 1px solid var(--verdict-critical); }
-.ta-verdict-badge.warning { background: var(--verdict-suspicious-dim); color: var(--verdict-suspicious); border: 1px solid var(--verdict-suspicious); }
-.ta-verdict-badge.success { background: var(--verdict-safe-dim); color: var(--verdict-safe); border: 1px solid var(--verdict-safe); }
+.ta-verdict-pill.danger  { background: var(--verdict-critical-dim);  color: var(--verdict-critical);  border: 1px solid var(--verdict-critical); box-shadow: 0 0 16px var(--danger-glow); }
+.ta-verdict-pill.warning { background: var(--verdict-suspicious-dim); color: var(--verdict-suspicious); border: 1px solid var(--verdict-suspicious); box-shadow: 0 0 16px var(--warning-dim); }
+.ta-verdict-pill.success { background: var(--verdict-safe-dim); color: var(--verdict-safe); border: 1px solid var(--verdict-safe); box-shadow: 0 0 16px var(--success-dim); }
 
-.ta-score-num { font-family: var(--font-mono); font-size: 1.4rem; font-weight: 800; line-height: 1; }
-.ta-score-label { font-family: var(--font-mono); font-size: 0.62rem; font-weight: 600; color: var(--text-secondary); letter-spacing: 0.08em; text-transform: uppercase; }
-.ta-result-actions { display: flex; gap: 8px; }
+/* Threat Instrument Gauge */
+.ta-gauge-instrument {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.ta-gauge-svg-wrap {
+    position: relative;
+    width: 54px;
+    height: 54px;
+}
+.ta-gauge-svg { transform: rotate(-90deg); width: 54px; height: 54px; }
+.ta-gauge-bg { fill: none; stroke: rgba(255,255,255,0.08); stroke-width: 5; }
+.ta-gauge-fill {
+    fill: none;
+    stroke-width: 5;
+    stroke-linecap: round;
+    stroke-dasharray: 138.2;
+    stroke-dashoffset: 138.2;
+    transition: stroke-dashoffset 0.9s cubic-bezier(0.16, 1, 0.3, 1), stroke 0.4s ease;
+}
+.ta-gauge-text-wrap {
+    display: flex;
+    flex-direction: column;
+}
+.ta-gauge-val {
+    font-family: var(--font-mono);
+    font-size: 1.35rem;
+    font-weight: 800;
+    line-height: 1;
+}
+.ta-gauge-lbl {
+    font-family: var(--font-mono);
+    font-size: 0.58rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-top: 2px;
+}
+
+.ta-summary-meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+}
+.ta-engine-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: color-mix(in srgb, var(--primary) 10%, transparent);
+    border: 1px solid color-mix(in srgb, var(--primary) 25%, transparent);
+    color: var(--primary);
+    padding: 3px 10px;
+    border-radius: var(--radius-sm);
+    font-size: 0.65rem;
+    font-weight: 700;
+}
+.ta-summary-actions { display: flex; gap: 8px; }
 .ta-btn-sm {
     display: flex;
     align-items: center;
     gap: 6px;
     padding: 7px 14px;
-    background: rgba(30, 41, 59, 0.6);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-bottom: 2.5px solid rgba(0, 0, 0, 0.35);
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--border-default);
     border-radius: var(--radius-md);
     font-family: var(--font-mono);
     font-size: 0.68rem;
     font-weight: 700;
     color: var(--text-secondary);
     cursor: pointer;
-    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
     letter-spacing: 0.04em;
     text-transform: uppercase;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
 }
 .ta-btn-sm:hover {
-    transform: translateY(-1.5px);
-    border-bottom-width: 3.5px;
-    background: rgba(30, 41, 59, 0.95);
+    background: var(--primary-dim);
     color: var(--primary);
     border-color: var(--primary);
-    box-shadow: 0 4px 12px color-mix(in srgb, var(--primary) 15%, transparent);
-}
-.ta-btn-sm:active {
-    transform: translateY(1px);
-    border-bottom-width: 1px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    transform: translateY(-1px);
 }
 
-/* ── Annotated Email ──────────────────────────────────────────── */
-.ta-annotated-body { padding: 1.75rem 2rem; }
-.ta-annotated-email {
+/* 2. Main Two-Column Investigation Layout (55% / 45%) */
+.ta-investigation-workspace {
+    display: grid;
+    grid-template-columns: 1.15fr 0.85fr;
+    gap: 0;
+    border-bottom: 1px solid var(--border-default);
+}
+@media (max-width: 900px) {
+    .ta-investigation-workspace { grid-template-columns: 1fr; }
+}
+
+/* LEFT COLUMN — EMAIL EVIDENCE (55%) */
+.ta-col-evidence {
+    border-right: 1px solid var(--border-default);
+    display: flex;
+    flex-direction: column;
+}
+@media (max-width: 900px) {
+    .ta-col-evidence { border-right: none; border-bottom: 1px solid var(--border-default); }
+}
+
+.ta-col-header {
+    padding: 12px 18px;
+    background: color-mix(in srgb, var(--bg-surface-raised) 60%, transparent);
+    border-bottom: 1px solid var(--border-subtle);
     font-family: var(--font-mono);
-    font-size: 0.84rem;
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+/* Email Envelope Meta Fields */
+.ta-email-envelope {
+    padding: 14px 18px;
+    background: rgba(0, 0, 0, 0.2);
+    border-bottom: 1px solid var(--border-subtle);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-family: var(--font-mono);
+    font-size: 0.74rem;
+}
+.ta-env-row { display: flex; gap: 8px; line-height: 1.4; word-break: break-all; }
+.ta-env-lbl { color: var(--text-muted); font-weight: 700; width: 62px; flex-shrink: 0; }
+.ta-env-val { color: var(--text-primary); }
+.ta-env-val.subj { font-weight: 700; color: var(--primary); }
+
+.ta-evidence-body {
+    padding: 1.5rem 1.75rem;
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
     line-height: 1.8;
     color: var(--text-primary);
     white-space: pre-wrap;
     word-break: break-word;
+    flex: 1;
+    overflow-y: auto;
+    max-height: 540px;
 }
 
-/* Annotation highlights */
+/* Highlighted Annotation Phrases — Inline Highlighter Style */
 .ann {
-    border-radius: 4px;
-    padding: 2px 6px;
-    margin: 0 1px;
+    display: inline;
+    border-radius: 3px;
+    padding: 2px 5px;
+    margin: 0;
     cursor: pointer;
     position: relative;
-    display: inline-block;
     font-weight: 600;
-    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
     box-decoration-break: clone;
     -webkit-box-decoration-break: clone;
+    transition: background-color 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
+    line-height: 1.6;
 }
-.ann:hover {
-    transform: translateY(-1px);
+.ann:hover, .ann.highlight-active {
     filter: brightness(1.25);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+    border-radius: 3px;
 }
-.ann-urgency    { background: color-mix(in srgb, var(--warning) 22%, transparent);  border: 1px solid color-mix(in srgb, var(--warning) 50%, transparent); color: var(--warning); }
-.ann-authority  { background: color-mix(in srgb, var(--danger) 22%, transparent);   border: 1px solid color-mix(in srgb, var(--danger) 50%, transparent);  color: var(--danger); }
-.ann-financial  { background: color-mix(in srgb, var(--primary) 22%, transparent);  border: 1px solid color-mix(in srgb, var(--primary) 50%, transparent); color: var(--primary); }
-.ann-credential { background: color-mix(in srgb, var(--primary) 18%, transparent);  border: 1px solid color-mix(in srgb, var(--primary) 45%, transparent); color: var(--primary); }
+.ann-urgency    { background: color-mix(in srgb, var(--warning) 26%, transparent);  border-bottom: 2px solid var(--warning);  color: #FFFFFF; }
+.ann-authority  { background: color-mix(in srgb, var(--danger) 26%, transparent);   border-bottom: 2px solid var(--danger);   color: #FFFFFF; }
+.ann-financial  { background: color-mix(in srgb, var(--primary) 26%, transparent);  border-bottom: 2px solid var(--primary);  color: #FFFFFF; }
+.ann-credential { background: color-mix(in srgb, var(--primary) 22%, transparent);  border-bottom: 2px solid var(--primary);  color: #FFFFFF; }
 
-/* Tooltip Portal — rendered at body level to escape overflow:hidden */
+.ann-urgency:hover, .ann-urgency.highlight-active       { background: color-mix(in srgb, var(--warning) 45%, transparent); }
+.ann-authority:hover, .ann-authority.highlight-active     { background: color-mix(in srgb, var(--danger) 45%, transparent); }
+.ann-financial:hover, .ann-financial.highlight-active     { background: color-mix(in srgb, var(--primary) 45%, transparent); }
+.ann-credential:hover, .ann-credential.highlight-active   { background: color-mix(in srgb, var(--primary) 40%, transparent); }
+
+/* ── Interactive Security HUD (Minimized Terminal Console) ───── */
+.ta-hud-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 18px;
+    background: linear-gradient(180deg, color-mix(in srgb, var(--bg-surface-raised) 95%, #000) 0%, color-mix(in srgb, var(--bg-base) 98%, #000) 100%);
+    border-bottom: 1px solid var(--border-default);
+    gap: 16px;
+    min-height: 56px;
+    flex-wrap: wrap;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.ta-hud-left {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+.ta-hud-engine-btn {
+    background: transparent;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-align: left;
+    outline: none;
+    color: inherit;
+}
+.ta-hud-engine-btn:hover .ta-hud-title {
+    color: var(--primary);
+}
+.ta-hud-icon {
+    width: 32px; height: 32px;
+    border-radius: 6px;
+    background: color-mix(in srgb, var(--primary) 12%, transparent);
+    border: 1px solid color-mix(in srgb, var(--primary) 30%, transparent);
+    color: var(--primary);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+.ta-hud-engine-meta { display: flex; flex-direction: column; }
+.ta-hud-title {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    letter-spacing: 0.06em;
+    transition: color 0.15s ease;
+}
+.ta-hud-sub {
+    font-family: var(--font-mono);
+    font-size: 0.58rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    letter-spacing: 0.08em;
+}
+.ta-hud-live-pill {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    font-weight: 800;
+    color: var(--success);
+    background: color-mix(in srgb, var(--success) 12%, transparent);
+    border: 1px solid color-mix(in srgb, var(--success) 30%, transparent);
+    padding: 2px 8px;
+    border-radius: var(--radius-full);
+}
+
+/* Subtle Activity Waveform */
+.ta-hud-waveform {
+    width: 60px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    opacity: 0.7;
+}
+.ta-wave-svg { width: 100%; height: 100%; }
+.ta-wave-svg path {
+    stroke-dasharray: 100;
+    animation: wavePulse 2.5s linear infinite;
+}
+@keyframes wavePulse {
+    0% { stroke-dashoffset: 100; }
+    100% { stroke-dashoffset: 0; }
+}
+
+/* Middle Threat Chips */
+.ta-hud-chips-wrap {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    flex: 1;
+    justify-content: center;
+}
+.hud-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-full);
+    padding: 4px 11px;
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.hud-chip:hover {
+    background: var(--primary-dim);
+    border-color: var(--primary);
+    color: var(--primary);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px color-mix(in srgb, var(--primary) 20%, transparent);
+}
+.hud-chip.chip-urgency    { border-color: color-mix(in srgb, var(--warning) 40%, transparent); color: var(--warning); }
+.hud-chip.chip-authority  { border-color: color-mix(in srgb, var(--danger) 40%, transparent);  color: var(--danger); }
+.hud-chip.chip-credential { border-color: color-mix(in srgb, var(--primary) 40%, transparent); color: var(--primary); }
+.hud-chip.chip-financial  { border-color: color-mix(in srgb, var(--primary) 40%, transparent); color: var(--primary); }
+
+.hud-empty-tag {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    letter-spacing: 0.06em;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+/* Right Score & Expand Button */
+.ta-hud-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.ta-hud-score-badge {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    font-family: var(--font-mono);
+}
+.hud-score-val {
+    font-size: 1.1rem;
+    font-weight: 800;
+    line-height: 1;
+}
+.hud-score-lbl {
+    font-size: 0.55rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+.ta-hud-expand-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--primary-dim);
+    border: 1px solid color-mix(in srgb, var(--primary) 40%, transparent);
+    border-radius: var(--radius-md);
+    padding: 6px 14px;
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    font-weight: 800;
+    color: var(--primary);
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    letter-spacing: 0.06em;
+}
+.ta-hud-expand-btn:hover {
+    background: var(--primary);
+    color: #080C14;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px color-mix(in srgb, var(--primary) 40%, transparent);
+}
+
+/* Engine Status Popover */
+.ta-engine-popover {
+    position: fixed;
+    z-index: 9600;
+    width: 280px;
+    background: var(--bg-surface-raised);
+    border: 1px solid color-mix(in srgb, var(--primary) 40%, transparent);
+    border-radius: var(--radius-md);
+    padding: 14px 16px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.7);
+    backdrop-filter: blur(14px);
+    font-family: var(--font-mono);
+}
+.ta-engine-popover .pop-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.7rem;
+    font-weight: 800;
+    color: var(--primary);
+    letter-spacing: 0.08em;
+    padding-bottom: 8px;
+    margin-bottom: 10px;
+    border-bottom: 1px solid var(--border-subtle);
+}
+.ta-engine-popover .pop-header button {
+    background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 1rem;
+}
+.ta-engine-popover .pop-grid { display: flex; flex-direction: column; gap: 6px; font-size: 0.7rem; }
+.ta-engine-popover .pop-row { display: flex; justify-content: space-between; }
+.ta-engine-popover .pop-lbl { color: var(--text-muted); }
+.ta-engine-popover .pop-val { color: var(--text-primary); font-weight: 700; }
+.ta-engine-popover .pop-val.pass { color: var(--success); }
+
+/* ── Multi-Layered Expanded Terminal Console ─────────────────── */
+.ta-expanded-console {
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-surface);
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Integrated Engine Status Strip */
+.ta-engine-strip {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    background: color-mix(in srgb, var(--bg-surface-raised) 80%, #000);
+    border-bottom: 1px solid var(--border-subtle);
+    padding: 8px 18px;
+    gap: 8px;
+}
+@media (max-width: 768px) {
+    .ta-engine-strip { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 480px) {
+    .ta-engine-strip { grid-template-columns: repeat(2, 1fr); }
+}
+.ta-strip-col {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.ta-strip-lbl {
+    font-family: var(--font-mono);
+    font-size: 0.58rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    letter-spacing: 0.08em;
+}
+.ta-strip-val {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    font-weight: 800;
+    color: var(--primary);
+    letter-spacing: 0.04em;
+}
+
+/* Visual Analysis Pipeline Stage Tracker */
+.ta-pipeline-tracker {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(0, 0, 0, 0.25);
+    border-bottom: 1px solid var(--border-subtle);
+    padding: 8px 18px;
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    gap: 4px;
+    overflow-x: auto;
+}
+.ta-pipe-stage {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-weight: 700;
+    color: var(--text-muted);
+    padding: 3px 8px;
+    border-radius: var(--radius-sm);
+    transition: all 0.3s ease;
+    white-space: nowrap;
+}
+.ta-pipe-stage.done {
+    color: var(--success);
+    background: color-mix(in srgb, var(--success) 12%, transparent);
+}
+.ta-pipe-stage.active {
+    color: var(--primary);
+    background: color-mix(in srgb, var(--primary) 15%, transparent);
+    animation: pulseActive 1.2s ease-in-out infinite;
+}
+.ta-pipe-stage.pending {
+    color: var(--text-muted);
+    opacity: 0.6;
+}
+@keyframes pulseActive {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+.ta-pipe-arrow {
+    color: var(--text-muted);
+    font-size: 0.6rem;
+    opacity: 0.5;
+}
+
+/* Empty / Ready Hint Bar */
+.ta-ready-hint {
+    background: color-mix(in srgb, var(--primary) 8%, transparent);
+    border: 1px solid color-mix(in srgb, var(--primary) 20%, transparent);
+    border-radius: var(--radius-md);
+    padding: 8px 12px;
+    margin-bottom: 1rem;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--text-secondary);
+}
+.ta-ready-hint .prompt-user { color: var(--primary); font-weight: 700; }
+.ta-ready-hint .prompt-text { color: var(--success); font-weight: 700; }
+
+/* Inspector Grid in Expanded Console */
+.ta-inspector-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 1.25rem;
+}
+@media (max-width: 768px) {
+    .ta-inspector-grid { grid-template-columns: 1fr; }
+}
+.ta-ins-box {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.ta-ins-title {
+    font-family: var(--font-mono);
+    font-size: 0.64rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    text-transform: uppercase;
+}
+.ta-ins-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+.ta-ins-content {
+    font-family: var(--font-mono);
+    font-size: 0.74rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+.ta-ins-placeholder {
+    color: var(--text-muted);
+    font-size: 0.7rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* Expanded Terminal Height Mode */
+.ta-textarea {
+    transition: min-height 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+.ta-textarea.is-expanded {
+    min-height: 480px !important;
+}
+
+/* RIGHT COLUMN — THREAT INTELLIGENCE (45%) */
+.ta-col-intel {
+    padding: 0;
+    background: color-mix(in srgb, var(--bg-surface) 95%, #000);
+    display: flex;
+    flex-direction: column;
+}
+
+.ta-intel-content {
+    padding: 1.25rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    overflow-y: auto;
+    max-height: 600px;
+}
+
+/* Category Cards Grid */
+.ta-cat-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+}
+@media (max-width: 480px) {
+    .ta-cat-cards-grid { grid-template-columns: 1fr; }
+}
+.ta-cat-tile {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 10px 12px;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.ta-cat-tile:hover {
+    border-color: var(--primary);
+    transform: translateY(-1px);
+    background: color-mix(in srgb, var(--primary) 6%, var(--bg-elevated));
+}
+.ta-cat-tile-left { display: flex; align-items: center; gap: 8px; }
+.ta-cat-tile-icon {
+    width: 28px; height: 28px;
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.9rem;
+}
+.ta-cat-tile-name {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+.ta-cat-tile-count {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    font-weight: 800;
+    padding: 2px 7px;
+    border-radius: 4px;
+    background: rgba(255,255,255,0.06);
+    color: var(--text-secondary);
+}
+
+.cat-tile-urgency .ta-cat-tile-icon   { background: color-mix(in srgb, var(--warning) 15%, transparent); color: var(--warning); }
+.cat-tile-authority .ta-cat-tile-icon { background: color-mix(in srgb, var(--danger) 15%, transparent);  color: var(--danger); }
+.cat-tile-financial .ta-cat-tile-icon { background: color-mix(in srgb, var(--primary) 15%, transparent); color: var(--primary); }
+.cat-tile-credential .ta-cat-tile-icon{ background: color-mix(in srgb, var(--primary) 12%, transparent); color: var(--primary); }
+
+/* Threat Signals Progress Bar Meter */
+.ta-signal-meters {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 12px 14px;
+}
+.ta-meter-row { display: flex; flex-direction: column; gap: 4px; }
+.ta-meter-header { display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: 0.65rem; font-weight: 700; color: var(--text-secondary); }
+.ta-meter-track { height: 6px; background: rgba(255,255,255,0.06); border-radius: 99px; overflow: hidden; }
+.ta-meter-fill { height: 100%; border-radius: 99px; transition: width 0.8s ease-out; }
+
+/* Observed Indicators List */
+.ta-indicators-block {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 12px 14px;
+}
+.ta-block-title {
+    font-family: var(--font-mono);
+    font-size: 0.64rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+    display: flex; align-items: center; gap: 6px;
+}
+.ta-obs-list { display: flex; flex-direction: column; gap: 6px; }
+.ta-obs-item {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    line-height: 1.4;
+}
+.ta-obs-item i { color: var(--warning); margin-top: 2px; flex-shrink: 0; }
+
+/* 3. Analyst Summary Section (Bottom) */
+.ta-analyst-summary {
+    padding: 1.5rem 1.75rem;
+    background: color-mix(in srgb, var(--bg-surface-raised) 70%, #000);
+    border-top: 1px solid var(--border-default);
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+.ta-summary-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--primary);
+}
+.ta-summary-body {
+    display: grid;
+    grid-template-columns: 1.2fr 0.8fr;
+    gap: 1.25rem;
+}
+@media (max-width: 768px) {
+    .ta-summary-body { grid-template-columns: 1fr; }
+}
+.ta-sum-box {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 12px 16px;
+}
+.ta-sum-title {
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+}
+.ta-sum-text {
+    font-size: 0.84rem;
+    color: var(--text-secondary);
+    line-height: 1.55;
+}
+
+/* Raw Headers Forensic Table */
+.ta-headers-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 1.5rem 1.75rem;
+}
+.ta-header-row {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 12px 16px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+}
+.ta-hi-title { font-family: var(--font-mono); font-size: 0.75rem; font-weight: 700; color: var(--text-primary); margin-bottom: 4px; }
+.ta-hi-desc { font-size: 0.78rem; color: var(--text-secondary); line-height: 1.45; }
+.ta-sev-badge {
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-size: 0.58rem;
+    font-weight: 800;
+    padding: 3px 8px;
+    border-radius: var(--radius-full);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    flex-shrink: 0;
+}
+.ta-sev-critical { background: var(--danger-dim);  color: var(--danger); border: 1px solid var(--danger); }
+.ta-sev-high     { background: var(--warning-dim); color: var(--warning); border: 1px solid var(--warning); }
+.ta-sev-medium   { background: var(--info-dim);    color: var(--info); border: 1px solid var(--info); }
+.ta-sev-low      { background: var(--success-dim); color: var(--success); border: 1px solid var(--success); }
+
+/* Tooltip Portal */
 #ta-tt-portal {
     position: fixed;
     z-index: 9500;
     pointer-events: none;
     opacity: 0;
     transition: opacity 0.15s ease;
-    width: 260px;
+    width: 270px;
     max-width: min(90vw, 320px);
-    background: var(--bg-elevated);
-    border: 1px solid var(--border-default);
+    background: var(--bg-surface-raised);
+    border: 1px solid color-mix(in srgb, var(--primary) 35%, transparent);
     border-radius: var(--radius-md);
-    padding: 10px 14px;
-    box-shadow: 0 12px 30px rgba(0,0,0,0.4);
-    /* Caret — toggled between top/bottom via JS class */
+    padding: 12px 14px;
+    box-shadow: 0 16px 40px rgba(0,0,0,0.6);
+    backdrop-filter: blur(12px);
 }
-#ta-tt-portal.ta-tt-visible { opacity: 1; pointer-events: none; }
-/* Caret pointing down (tooltip above the phrase) */
+#ta-tt-portal.ta-tt-visible { opacity: 1; }
 #ta-tt-portal::after {
     content: '';
     position: absolute;
@@ -550,362 +1138,862 @@ body.light-theme .ta-expand-close:hover { background: rgba(0,0,0,0.1); color: #0
 #ta-tt-portal.tt-above::after {
     top: 100%; left: var(--tt-caret-left, 50%);
     transform: translateX(-50%);
-    border-top-color: var(--border-default);
+    border-top-color: color-mix(in srgb, var(--primary) 35%, transparent);
 }
 #ta-tt-portal.tt-below::after {
     bottom: 100%; left: var(--tt-caret-left, 50%);
     transform: translateX(-50%);
-    border-bottom-color: var(--border-default);
+    border-bottom-color: color-mix(in srgb, var(--primary) 35%, transparent);
 }
-body.light-theme #ta-tt-portal { box-shadow: 0 8px 24px rgba(0,0,0,0.15); }
-.ann-tt-cat { font-family: var(--font-mono); font-size: 0.62rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 5px; display: flex; align-items: center; gap: 6px; }
+.ann-tt-cat { font-family: var(--font-mono); font-size: 0.64rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 5px; display: flex; align-items: center; gap: 6px; }
 .ann-tt-reason { font-size: 0.78rem; color: var(--text-secondary); line-height: 1.45; font-family: var(--font-sans); }
-.ann-tt-sev { display: inline-block; font-family: var(--font-mono); font-size: 0.58rem; font-weight: 700; padding: 2px 7px; border-radius: var(--radius-full); margin-top: 7px; text-transform: uppercase; letter-spacing: 0.08em; }
-.sev-critical { background: var(--danger-dim);  color: var(--danger); }
-.sev-high     { background: var(--warning-dim); color: var(--warning); }
-.sev-medium   { background: var(--info-dim);    color: var(--info); }
-.sev-low      { background: var(--success-dim); color: var(--success); }
+.ann-tt-sev.sev-critical { background: var(--danger-dim);  color: var(--danger);  border: 1px solid var(--danger); }
+.ann-tt-sev.sev-high     { background: var(--warning-dim); color: var(--warning); border: 1px solid var(--warning); }
+.ann-tt-sev.sev-medium   { background: var(--info-dim);    color: var(--info);    border: 1px solid var(--info); }
+.ann-tt-sev.sev-low      { background: var(--success-dim); color: var(--success); border: 1px solid var(--success); }
 
-/* ── Summary Strip ────────────────────────────────────────────── */
-.ta-summary-strip {
-    display: flex;
-    align-items: flex-start;
-    gap: 1.25rem;
-    padding: 1.25rem 2rem;
-    border-top: 1px solid var(--border-subtle);
-    background: rgba(0,0,0,0.12);
-    flex-wrap: wrap;
+/* Maximized Console Mode */
+.ta-console-card.is-maximized {
+    position: fixed !important;
+    top: 15px !important;
+    left: 15px !important;
+    right: 15px !important;
+    bottom: 15px !important;
+    z-index: 9200 !important;
+    max-width: none !important;
+    height: calc(100vh - 30px) !important;
+    overflow-y: auto !important;
+    box-shadow: 0 30px 90px rgba(0,0,0,0.85) !important;
+    border-color: var(--primary) !important;
 }
-.ta-ring-wrap { flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: 4px; position: relative; }
-.ta-ring-svg { transform: rotate(-90deg); width: 72px; height: 72px; }
-.ta-ring-bg { fill: none; stroke: rgba(255,255,255,0.06); stroke-width: 6; }
-.ta-ring-fill { fill: none; stroke-width: 6; stroke-linecap: round; stroke-dasharray: 163.36; stroke-dashoffset: 163.36; transition: stroke-dashoffset 1s ease-out, stroke 0.5s ease; }
-.ta-ring-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
 
-.ta-flag-section { flex: 1; min-width: 200px; }
-.ta-flag-heading { font-family: var(--font-mono); font-size: 0.6rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px; }
-.ta-flag-pills { display: flex; flex-wrap: wrap; gap: 7px; }
-.ta-flag-pill { display: flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: var(--radius-full); font-family: var(--font-mono); font-size: 0.7rem; font-weight: 700; border: 1px solid; }
-.ta-flag-pill .pill-count { background: rgba(255,255,255,0.1); border-radius: 4px; padding: 1px 5px; font-size: 0.65rem; }
-.pill-urgency    { background: color-mix(in srgb, var(--warning) 10%, transparent);  border-color: color-mix(in srgb, var(--warning) 30%, transparent);  color: var(--warning); }
-.pill-authority  { background: color-mix(in srgb, var(--danger) 10%, transparent); border-color: color-mix(in srgb, var(--danger) 30%, transparent); color: var(--danger); }
-.pill-financial  { background: color-mix(in srgb, var(--primary) 10%, transparent); border-color: color-mix(in srgb, var(--primary) 30%, transparent); color: var(--primary); }
-.pill-credential { background: color-mix(in srgb, var(--primary) 12%, transparent); border-color: color-mix(in srgb, var(--primary) 30%, transparent);  color: var(--primary); }
+/* Custom PhishSim Confirm Modal */
+.ta-confirm-backdrop {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(4, 7, 13, 0.85);
+    backdrop-filter: blur(8px);
+    z-index: 9990;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+}
+.ta-confirm-box {
+    background: var(--bg-surface-raised);
+    border: 1px solid color-mix(in srgb, var(--primary) 35%, transparent);
+    border-radius: var(--radius-lg);
+    padding: 1.75rem;
+    max-width: 420px;
+    width: 100%;
+    text-align: center;
+    box-shadow: 0 25px 60px rgba(0,0,0,0.7);
+    animation: confirmPop 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes confirmPop {
+    0% { opacity: 0; transform: scale(0.92); }
+    100% { opacity: 1; transform: scale(1); }
+}
+.ta-confirm-icon {
+    width: 52px; height: 52px;
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--danger) 15%, transparent);
+    color: var(--danger);
+    font-size: 1.6rem;
+    display: inline-flex; align-items: center; justify-content: center;
+    margin: 0 auto 1rem;
+    border: 1px solid color-mix(in srgb, var(--danger) 30%, transparent);
+}
+.ta-confirm-title {
+    font-family: var(--font-sans);
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+}
+.ta-confirm-msg {
+    font-size: 0.86rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    margin-bottom: 1.5rem;
+}
+.ta-confirm-actions { display: flex; gap: 10px; justify-content: center; }
+.ta-confirm-btn {
+    padding: 9px 22px;
+    border-radius: var(--radius-md);
+    font-family: var(--font-mono);
+    font-size: 0.76rem;
+    font-weight: 800;
+    cursor: pointer;
+    letter-spacing: 0.06em;
+    transition: all 0.2s ease;
+}
+.ta-confirm-btn.cancel {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border-default);
+    color: var(--text-secondary);
+}
+.ta-confirm-btn.cancel:hover { background: rgba(255,255,255,0.1); color: var(--text-primary); }
+.ta-confirm-btn.confirm {
+    background: var(--danger);
+    border: 1px solid color-mix(in srgb, var(--danger) 60%, #fff);
+    color: #fff;
+    box-shadow: 0 4px 16px color-mix(in srgb, var(--danger) 40%, transparent);
+}
+.ta-confirm-btn.confirm:hover { filter: brightness(1.1); transform: translateY(-1px); }
 
-.ta-recommendation { flex: 1; min-width: 220px; background: var(--bg-elevated); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 12px 15px; }
-.ta-rec-label { font-family: var(--font-mono); font-size: 0.6rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
-.ta-rec-text { font-size: 0.82rem; color: var(--text-secondary); line-height: 1.5; max-width: 65ch; }
-
-/* ── Annotation Legend ────────────────────────────────────────── */
-.ta-legend { display: flex; flex-wrap: wrap; gap: 10px; padding: 10px 20px; border-bottom: 1px solid var(--border-subtle); background: rgba(0,0,0,0.08); }
-.ta-legend-item { display: flex; align-items: center; gap: 6px; font-family: var(--font-mono); font-size: 0.65rem; color: var(--text-secondary); font-weight: 600; }
-.ta-legend-swatch { width: 12px; height: 12px; border-radius: 2px; flex-shrink: 0; }
-.swatch-urgency    { background: var(--ta-urgency); }
-.swatch-authority  { background: var(--ta-authority); }
-.swatch-financial  { background: var(--ta-financial); }
-.swatch-credential { background: var(--ta-credential); }
-
-/* ── Headers Mode ─────────────────────────────────────────────── */
-.ta-headers-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; padding: 1.75rem 2rem; }
-.ta-header-indicator { background: var(--bg-elevated); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 14px 16px; }
-.ta-hi-title { font-family: var(--font-mono); font-size: 0.72rem; font-weight: 700; color: var(--text-primary); margin-bottom: 4px; }
-.ta-hi-desc { font-size: 0.75rem; color: var(--text-secondary); line-height: 1.4; max-width: 65ch; }
-.ta-sev-badge { display: inline-block; font-family: var(--font-mono); font-size: 0.58rem; font-weight: 700; padding: 2px 7px; border-radius: var(--radius-full); margin-top: 7px; text-transform: uppercase; letter-spacing: 0.08em; }
-.ta-sev-critical { background: var(--danger-dim);  color: var(--danger); }
-.ta-sev-high     { background: var(--warning-dim); color: var(--warning); }
-.ta-sev-medium   { background: var(--info-dim);    color: var(--info); }
-.ta-sev-low      { background: var(--success-dim); color: var(--success); }
-
-/* ── Loading ──────────────────────────────────────────────────── */
-.ta-loading { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 3.5rem 2rem; gap: 1rem; }
-.ta-spinner { width: 48px; height: 48px; border: 3px solid var(--border-subtle); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.9s linear infinite; }
-@keyframes spin { to { transform: rotate(360deg); } }
-.ta-loading-label { font-family: var(--font-mono); font-size: 0.78rem; color: var(--text-secondary); letter-spacing: 0.08em; text-transform: uppercase; animation: loadingFlicker 1.5s ease-in-out infinite; }
-@keyframes loadingFlicker { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
-
-/* ── Share Toast ──────────────────────────────────────────────── */
+/* Share Toast */
 .ta-share-toast {
     position: fixed;
     bottom: 24px;
     left: 50%;
     transform: translateX(-50%) translateY(80px);
-    background: var(--bg-elevated);
+    background: var(--bg-surface-raised);
     border: 1px solid var(--primary);
     border-radius: var(--radius-md);
-    padding: 12px 20px;
+    padding: 10px 18px;
     font-family: var(--font-mono);
     font-size: 0.75rem;
     color: var(--primary);
     z-index: 9999;
     transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
     pointer-events: none;
-    white-space: nowrap;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
 }
 .ta-share-toast.show { transform: translateX(-50%) translateY(0); }
 
-/* ── Responsive ───────────────────────────────────────────────── */
-@media (max-width: 640px) {
-    .ta-input-body, .ta-annotated-body { padding: 1.2rem 1rem; }
-    .ta-summary-strip { padding: 1rem; }
-    .ta-result-header { flex-direction: column; align-items: flex-start; }
+/* ════════════════════════════════════════════════════════════════
+   LIGHT MODE ADAPTATIONS ([data-theme="light"])
+   Ultra-Readable, Crisp, Premium B2B Cybersecurity Aesthetics
+   ════════════════════════════════════════════════════════════════ */
+
+[data-theme="light"] .ta-tabs {
+    background: #F1F5F9;
+    border-color: #E2E8F0;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.05);
 }
 
-/* ══════════════════════════════════════════════════════════════
-   LIGHT THEME
-   ══════════════════════════════════════════════════════════════ */
-body.light-theme {
-    --ta-urgency: var(--warning);
-    --ta-authority: var(--danger);
-    --ta-financial: var(--primary);
-    --ta-credential: var(--primary);
+[data-theme="light"] .ta-console-card {
+    background: #FFFFFF;
+    border-color: #E2E8F0;
+    box-shadow: 0 20px 50px rgba(15, 23, 42, 0.08);
 }
-body.light-theme .ta-card { box-shadow: 0 10px 40px rgba(0,0,0,0.08); }
-body.light-theme .ta-terminal-header {
-    background: linear-gradient(180deg, color-mix(in srgb, var(--danger) 6%, #fff) 0%, color-mix(in srgb, var(--danger) 12%, #fff) 100%);
-    border-color: color-mix(in srgb, var(--danger) 15%, transparent);
-    border-top: 2px solid color-mix(in srgb, var(--danger) 40%, transparent);
-}
-body.light-theme .ann-urgency    { background: color-mix(in srgb, var(--warning) 15%, transparent);  color: var(--warning); }
-body.light-theme .ann-authority  { background: color-mix(in srgb, var(--danger) 12%, transparent); color: var(--danger); }
-body.light-theme .ann-financial  { background: color-mix(in srgb, var(--primary) 12%, transparent); color: var(--primary); }
-body.light-theme .ann-credential { background: color-mix(in srgb, var(--primary) 10%, transparent);   color: var(--primary); }
-body.light-theme .ta-analyze-btn {
-    background-color: var(--danger) !important;   /* danger red in light mode — darker for contrast */
-    color: #ffffff !important;
-    border: 1px solid rgba(0, 0, 0, 0.12) !important;
-    border-bottom: 3px solid rgba(0, 0, 0, 0.28) !important;
-    box-shadow: 0 4px 14px color-mix(in srgb, var(--danger) 30%, transparent), inset 0 1px 0 rgba(255,255,255,0.25) !important;
-}
-body.light-theme .ta-analyze-btn::before {
-    background-image: linear-gradient(135deg, var(--danger) 0%, var(--danger) 100%);
-}
-body.light-theme .ta-analyze-btn:hover:not(:disabled) {
-    border-bottom-width: 4px !important;
-    box-shadow: 0 8px 22px color-mix(in srgb, var(--danger) 42%, transparent) !important;
-}
-body.light-theme .ta-analyze-btn:active:not(:disabled) {
-    border-bottom-width: 1px !important;
-    box-shadow: 0 2px 6px color-mix(in srgb, var(--danger) 18%, transparent) !important;
-}
-body.light-theme .ta-analyze-btn:disabled {
-    background-color: #e2e8f0 !important;
-    color: #94a3b8 !important;
-    border-color: #cbd5e1 !important;
-    border-bottom: 1px solid #cbd5e1 !important;
-    box-shadow: none !important;
-    cursor: not-allowed !important;
-    transform: none !important;
-}
-body.light-theme .ta-analyze-btn:focus-visible {
-    outline: 2px solid var(--danger);
-    outline-offset: 3px;
-    box-shadow: 0 0 0 4px color-mix(in srgb, var(--danger) 20%, transparent) !important;
-}
-body.light-theme .ta-summary-strip, body.light-theme .ta-result-header { background: rgba(0,0,0,0.03); }
-body.light-theme .ta-legend { background: rgba(0,0,0,0.02); }
-/* light-theme tooltip override is now on #ta-tt-portal (see tooltip portal CSS) */
 
-body.light-theme .ta-btn-sm {
-    background: rgba(255, 255, 255, 0.8) !important;
-    border: 1px solid rgba(0, 0, 0, 0.08) !important;
-    border-bottom: 2.5px solid rgba(0, 0, 0, 0.25) !important;
-    color: #475569 !important;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05) !important;
+[data-theme="light"] .ta-terminal-header {
+    background: linear-gradient(180deg, #F8FAFC 0%, #F1F5F9 100%);
+    border-bottom-color: #E2E8F0;
 }
-body.light-theme .ta-btn-sm:hover {
-    background: #ffffff !important;
-    color: var(--primary) !important;
-    border-color: var(--primary) !important;
-    box-shadow: 0 4px 12px color-mix(in srgb, var(--primary) 15%, transparent) !important;
+
+[data-theme="light"] .ta-terminal-label {
+    color: #475569;
 }
-body.light-theme .ta-btn-sm:active {
-    border-bottom-width: 1px !important;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03) !important;
+
+[data-theme="light"] .ta-textarea {
+    background: #FFFFFF;
+    border-color: #CBD5E1;
+    color: #0F172A;
+}
+
+[data-theme="light"] .ta-textarea:focus {
+    border-color: #0284C7;
+    box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
+}
+
+[data-theme="light"] .ta-textarea::placeholder {
+    color: #94A3B8;
+}
+
+[data-theme="light"] .ta-preset-chip {
+    background: #F1F5F9;
+    border-color: #E2E8F0;
+    color: #334155;
+}
+
+[data-theme="light"] .ta-preset-chip:hover {
+    background: rgba(2, 132, 199, 0.1);
+    border-color: #0284C7;
+    color: #0284C7;
+}
+
+[data-theme="light"] .ta-analyze-btn {
+    background: #0284C7;
+    border-color: #0369A1;
+    color: #FFFFFF;
+    box-shadow: 0 4px 18px rgba(2, 132, 199, 0.28);
+}
+
+[data-theme="light"] .ta-analyze-btn:hover:not(:disabled) {
+    background: #0369A1;
+    box-shadow: 0 8px 24px rgba(2, 132, 199, 0.38);
+}
+
+/* Loading Pipeline State in Light Mode */
+[data-theme="light"] .ta-pipeline-box {
+    background: #FFFFFF;
+    border-color: rgba(2, 132, 199, 0.3);
+    box-shadow: 0 15px 35px rgba(15, 23, 42, 0.08);
+}
+
+[data-theme="light"] .ta-pipeline-header {
+    border-bottom-color: #E2E8F0;
+}
+
+/* Results Workspace in Light Mode */
+[data-theme="light"] .ta-summary-bar {
+    background: linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%);
+    border-bottom-color: #E2E8F0;
+}
+
+[data-theme="light"] .ta-gauge-bg {
+    stroke: #E2E8F0;
+}
+
+[data-theme="light"] .ta-btn-sm {
+    background: #F1F5F9;
+    border-color: #CBD5E1;
+    color: #334155;
+}
+
+[data-theme="light"] .ta-btn-sm:hover {
+    background: rgba(2, 132, 199, 0.1);
+    border-color: #0284C7;
+    color: #0284C7;
+}
+
+[data-theme="light"] .ta-col-evidence {
+    border-right-color: #E2E8F0;
+}
+
+[data-theme="light"] .ta-col-header {
+    background: #F8FAFC;
+    border-bottom-color: #E2E8F0;
+    color: #64748B;
+}
+
+[data-theme="light"] .ta-email-envelope {
+    background: #F8FAFC;
+    border-bottom-color: #E2E8F0;
+}
+
+[data-theme="light"] .ta-env-lbl {
+    color: #64748B;
+}
+
+[data-theme="light"] .ta-env-val {
+    color: #0F172A;
+}
+
+[data-theme="light"] .ta-evidence-body {
+    color: #0F172A;
+}
+
+/* Highlighted Annotations in Light Mode */
+[data-theme="light"] .ann {
+    color: #0F172A;
+    font-weight: 700;
+}
+
+[data-theme="light"] .ann-urgency {
+    background: rgba(217, 119, 6, 0.18);
+    border-bottom: 2px solid #D97706;
+}
+[data-theme="light"] .ann-authority {
+    background: rgba(220, 38, 38, 0.18);
+    border-bottom: 2px solid #DC2626;
+}
+[data-theme="light"] .ann-financial {
+    background: rgba(2, 132, 199, 0.18);
+    border-bottom: 2px solid #0284C7;
+}
+[data-theme="light"] .ann-credential {
+    background: rgba(2, 132, 199, 0.16);
+    border-bottom: 2px solid #0284C7;
+}
+
+[data-theme="light"] .ann-urgency:hover, [data-theme="light"] .ann-urgency.highlight-active {
+    background: rgba(217, 119, 6, 0.32);
+}
+[data-theme="light"] .ann-authority:hover, [data-theme="light"] .ann-authority.highlight-active {
+    background: rgba(220, 38, 38, 0.32);
+}
+[data-theme="light"] .ann-financial:hover, [data-theme="light"] .ann-financial.highlight-active {
+    background: rgba(2, 132, 199, 0.32);
+}
+[data-theme="light"] .ann-credential:hover, [data-theme="light"] .ann-credential.highlight-active {
+    background: rgba(2, 132, 199, 0.3);
+}
+
+/* Interactive Security HUD in Light Mode */
+[data-theme="light"] .ta-hud-bar {
+    background: linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%);
+    border-bottom-color: #E2E8F0;
+}
+
+[data-theme="light"] .hud-chip {
+    background: #F1F5F9;
+    border-color: #E2E8F0;
+    color: #334155;
+}
+
+[data-theme="light"] .ta-col-intel {
+    background: #F8FAFC;
+}
+
+[data-theme="light"] .ta-cat-tile {
+    background: #FFFFFF;
+    border-color: #E2E8F0;
+}
+
+[data-theme="light"] .ta-cat-tile-name {
+    color: #0F172A;
+}
+
+[data-theme="light"] .ta-cat-tile-count {
+    background: #F1F5F9;
+    color: #475569;
+}
+
+[data-theme="light"] .ta-signal-meters,
+[data-theme="light"] .ta-indicators-block,
+[data-theme="light"] .ta-sum-box,
+[data-theme="light"] .ta-header-row {
+    background: #FFFFFF;
+    border-color: #E2E8F0;
+}
+
+[data-theme="light"] .ta-meter-track {
+    background: #E2E8F0;
+}
+
+[data-theme="light"] .ta-obs-item {
+    color: #334155;
+}
+
+[data-theme="light"] .ta-analyst-summary {
+    background: #F8FAFC;
+    border-top-color: #E2E8F0;
+}
+
+[data-theme="light"] .ta-sum-text,
+[data-theme="light"] .ta-hi-desc {
+    color: #334155;
+}
+
+[data-theme="light"] .ta-hi-title,
+[data-theme="light"] .ta-confirm-title {
+    color: #0F172A;
+}
+
+[data-theme="light"] #ta-tt-portal {
+    background: #FFFFFF;
+    border-color: rgba(2, 132, 199, 0.4);
+    box-shadow: 0 16px 40px rgba(15, 23, 42, 0.15);
+}
+
+[data-theme="light"] .ann-tt-reason {
+    color: #334155;
+}
+
+[data-theme="light"] .ta-confirm-backdrop {
+    background: rgba(15, 23, 42, 0.5);
+}
+
+[data-theme="light"] .ta-confirm-box {
+    background: #FFFFFF;
+    border-color: #E2E8F0;
+    box-shadow: 0 25px 60px rgba(15, 23, 42, 0.15);
+}
+
+[data-theme="light"] .ta-confirm-btn.cancel {
+    background: #F1F5F9;
+    border-color: #CBD5E1;
+    color: #334155;
+}
+
+[data-theme="light"] .ta-share-toast {
+    background: #FFFFFF;
+    border-color: #0284C7;
+    color: #0284C7;
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.15);
 }
 </style>
 
 <div class="ta-page">
 
-    <!-- Hero -->
+    <!-- HERO HEADER -->
     <div class="ta-hero">
         <div class="ta-eyebrow">
             <i class="ti ti-shield-search"></i>
             AI Threat Analysis
         </div>
         <h1>Email <span>Evidence Board</span></h1>
-        <p>Paste any email. Suspicious phrases are highlighted <em>directly in your text</em> — evidence in context, not abstract scores.</p>
+        <p>Paste any email. Suspicious phrases are highlighted directly in your text — evidence in context, not abstract scores.</p>
     </div>
 
-    <!-- Mode Tabs -->
-    <div class="ta-tabs">
-        <button class="ta-tab active" id="tab-body" onclick="switchMode('body')">
-            <i class="ti ti-mail"></i> Email Body
-        </button>
-        <button class="ta-tab" id="tab-headers" onclick="switchMode('headers')">
-            <i class="ti ti-code"></i> Raw Headers
-        </button>
+    <!-- MODE TABS SWITCHER -->
+    <div class="ta-tabs-wrap">
+        <div class="ta-tabs">
+            <button class="ta-tab active" id="tab-body" onclick="switchMode('body')">
+                <i class="ti ti-mail"></i> Email Body
+            </button>
+            <button class="ta-tab" id="tab-headers" onclick="switchMode('headers')">
+                <i class="ti ti-code"></i> Raw Headers
+            </button>
+        </div>
     </div>
 
-    <!-- Main Card -->
-    <div class="ta-card" id="ta-main-card">
+    <!-- MAIN CONSOLE CARD -->
+    <div class="ta-console-card" id="ta-main-card">
 
-        <!-- INPUT STATE -->
-        <div id="ta-input-state">
-            <div class="ta-terminal-header">
-                <div class="ta-dots">
-                    <div class="ta-dot red"   id="ta-dot-red"   title="Clear input"></div>
-                    <div class="ta-dot amber" id="ta-dot-amber" title="Minimize"></div>
-                    <div class="ta-dot green" id="ta-dot-green" title="Expand"></div>
-                </div>
-                <span class="ta-terminal-label" id="ta-terminal-label">agent@phishsim:~$ analyze --mode=body</span>
-                <div class="ta-live-badge"><div class="ta-live-dot"></div>LIVE</div>
-            </div>
-            <div class="ta-input-body">
-                <textarea id="ta-email-input" class="ta-textarea"
-                    placeholder="Paste the full email here — include From:, Subject:, and body…"
-                    spellcheck="false"></textarea>
-
-                <div class="ta-presets-label">TRY A SAMPLE:</div>
-                <div class="ta-presets">
-                    <button class="ta-preset-chip" id="preset-ceo-wire" onclick="applyPreset('ceo-wire')">
-                        <span class="chip-dot" style="background:var(--danger)"></span>CEO Wire Transfer
-                    </button>
-                    <button class="ta-preset-chip" id="preset-it-reset" onclick="applyPreset('it-reset')">
-                        <span class="chip-dot" style="background:var(--primary)"></span>IT Password Reset
-                    </button>
-                    <button class="ta-preset-chip" id="preset-hr-policy" onclick="applyPreset('hr-policy')">
-                        <span class="chip-dot" style="background:var(--primary)"></span>HR Policy Phish
-                    </button>
-                    <button class="ta-preset-chip" id="preset-safe-invoice" onclick="applyPreset('safe-invoice')">
-                        <span class="chip-dot" style="background:var(--success)"></span>Legitimate Invoice
-                    </button>
-                    <button class="ta-preset-chip" id="preset-safe-meeting" onclick="applyPreset('safe-meeting')">
-                        <span class="chip-dot" style="background:var(--success)"></span>Meeting Invite
-                    </button>
-                </div>
-
-                <button class="ta-analyze-btn" id="ta-analyze-btn" onclick="runAnalysis()">
-                    <i class="ti ti-scan"></i>
-                    <span id="ta-btn-label">ANALYZE EMAIL</span>
+        <!-- MINIMIZED STATE: INTERACTIVE SECURITY HUD -->
+        <div id="ta-minimized-hud" class="ta-hud-bar" style="display:none;">
+            <div class="ta-hud-left">
+                <button class="ta-hud-engine-btn" id="ta-hud-engine-trigger" onclick="toggleEnginePopover(event)">
+                    <span class="ta-hud-icon"><i class="ti ti-shield-search"></i></span>
+                    <div class="ta-hud-engine-meta">
+                        <div class="ta-hud-title">PHISHSIM ANALYSIS ENGINE</div>
+                        <div class="ta-hud-sub" id="hud-engine-name">HEURISTIC ENGINE</div>
+                    </div>
+                    <div class="ta-hud-live-pill" id="hud-live-pill">
+                        <span class="ta-live-dot"></span><span id="hud-live-txt">LIVE</span>
+                    </div>
                 </button>
+
+                <!-- Subtle Activity Waveform -->
+                <div class="ta-hud-waveform" title="Engine Activity Pulse">
+                    <svg viewBox="0 0 60 16" class="ta-wave-svg">
+                        <path d="M0,8 L15,8 L20,2 L25,14 L30,5 L35,11 L40,8 L60,8" fill="none" stroke="var(--primary)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </div>
             </div>
 
-            <!-- Amber/minimize animation stage (shown when minimized) -->
-            <div class="ta-phish-stage" id="ta-phish-stage" onclick="taRestoreFromMinimize()" title="Click to restore">
-                <div class="ta-phish-feed" id="ta-phish-feed"></div>
-                <div class="ta-phish-restore-hint">↑ Click anywhere to restore</div>
+            <!-- Middle: Threat Chips -->
+            <div class="ta-hud-chips-wrap" id="hud-chips-container">
+                <span class="hud-empty-tag"><i class="ti ti-shield-check"></i> READY FOR ANALYSIS</span>
+            </div>
+
+            <!-- Right: Threat Score & Expand Control -->
+            <div class="ta-hud-right">
+                <div class="ta-hud-score-badge" id="hud-score-badge" style="display:none;">
+                    <span class="hud-score-val" id="hud-score-num">0</span>
+                    <span class="hud-score-lbl" id="hud-score-verdict">READY</span>
+                </div>
+                
+                <button class="ta-hud-expand-btn" onclick="expandTerminal()" title="Expand terminal input console">
+                    <i class="ti ti-chevron-up"></i>
+                    <span>EXPAND TERMINAL</span>
+                </button>
             </div>
         </div>
 
-        <!-- Green expand overlay (portal: appended to body in JS, defined here for clarity) -->
+        <!-- STATE 1 & EXPANDED CONSOLE: DETAILED INVESTIGATION CONSOLE -->
+        <div id="ta-input-state" class="ta-expanded-console">
+            
+            <!-- 1. Terminal Header -->
+            <div class="ta-terminal-header">
+                <div class="ta-dots">
+                    <div class="ta-dot red" id="ta-dot-red" title="Clear input / Reset"></div>
+                    <div class="ta-dot amber" id="ta-dot-amber" title="Minimize to Threat HUD"></div>
+                    <div class="ta-dot green" id="ta-dot-green" title="Toggle Fullscreen Maximize"></div>
+                </div>
+                <div class="ta-terminal-label" id="ta-terminal-label">agent@phishsim:~$ <span class="prompt-cmd">analyze --mode=email</span></div>
+                <div class="ta-live-badge" onclick="toggleEnginePopover(event)" style="cursor:pointer;" title="View Engine Diagnostics"><div class="ta-live-dot"></div>LIVE ENGINE</div>
+            </div>
 
-        <!-- LOADING STATE -->
-        <div id="ta-loading-state" style="display:none;"></div>
+            <!-- Main Console Workspace -->
+            <div class="ta-input-body">
+                <div class="ta-textarea-wrap">
+                    <textarea id="ta-email-input" class="ta-textarea"
+                        placeholder="Paste full raw email text here — include From:, To:, Subject:, and message body..."
+                        spellcheck="false"></textarea>
+                </div>
 
-        <!-- RESULT STATE — BODY -->
+                <!-- Sample Presets Row -->
+                <div class="ta-presets-row">
+                    <div class="ta-presets-label">TRY SAMPLE PRESET:</div>
+                    <div class="ta-presets-list">
+                        <button class="ta-preset-chip" id="preset-ceo-wire" onclick="applyPreset('ceo-wire')">
+                            <span class="chip-dot" style="background:var(--danger)"></span>CEO Wire Transfer
+                        </button>
+                        <button class="ta-preset-chip" id="preset-it-reset" onclick="applyPreset('it-reset')">
+                            <span class="chip-dot" style="background:var(--primary)"></span>IT Password Reset
+                        </button>
+                        <button class="ta-preset-chip" id="preset-hr-policy" onclick="applyPreset('hr-policy')">
+                            <span class="chip-dot" style="background:var(--primary)"></span>HR Policy Phish
+                        </button>
+                        <button class="ta-preset-chip" id="preset-safe-invoice" onclick="applyPreset('safe-invoice')">
+                            <span class="chip-dot" style="background:var(--success)"></span>Legitimate Invoice
+                        </button>
+                        <button class="ta-preset-chip" id="preset-safe-meeting" onclick="applyPreset('safe-meeting')">
+                            <span class="chip-dot" style="background:var(--success)"></span>Meeting Invite
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Analyze Button -->
+                <button class="ta-analyze-btn" id="ta-analyze-btn" onclick="runAnalysis()">
+                    <i class="ti ti-scan"></i>
+                    <span id="ta-btn-label">ANALYZE EMAIL EVIDENCE</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- STATE 2: INVESTIGATION PIPELINE (LOADING STATE) -->
+        <div id="ta-loading-state" style="display:none;">
+            <div class="ta-pipeline-container">
+                <div class="ta-pipeline-box">
+                    <div class="ta-pipeline-header">
+                        <i class="ti ti-radar"></i> EXAMINING SECURITY EVIDENCE...
+                    </div>
+                    <div class="ta-pipeline-steps">
+                        <div class="ta-step" id="pipe-step-1"><span class="step-icon"><i class="ti ti-loader"></i></span> Parsing email structure & metadata</div>
+                        <div class="ta-step" id="pipe-step-2"><span class="step-icon"><i class="ti ti-circle-dashed"></i></span> Extracting forensic indicators</div>
+                        <div class="ta-step" id="pipe-step-3"><span class="step-icon"><i class="ti ti-circle-dashed"></i></span> Detecting urgency & coercion language</div>
+                        <div class="ta-step" id="pipe-step-4"><span class="step-icon"><i class="ti ti-circle-dashed"></i></span> Evaluating credential harvest patterns</div>
+                        <div class="ta-step" id="pipe-step-5"><span class="step-icon"><i class="ti ti-circle-dashed"></i></span> Verifying sender identity & domain alignment</div>
+                        <div class="ta-step" id="pipe-step-6"><span class="step-icon"><i class="ti ti-circle-dashed"></i></span> Building composite threat profile</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- STATE 3: RESULT STATE — BODY (Structured SOC Workspace) -->
         <div id="ta-result-state" style="display:none;">
-            <div class="ta-result-header">
-                <div class="ta-result-meta">
-                    <span class="ta-verdict-badge" id="res-verdict-badge">—</span>
-                    <div>
-                        <div class="ta-score-num" id="res-score-num" style="color:var(--success);">0</div>
-                        <div class="ta-score-label">threat score / 100</div>
+            
+            <!-- Compact Threat Summary Header Bar -->
+            <div class="ta-summary-bar">
+                <div class="ta-summary-left">
+                    <span class="ta-verdict-pill" id="res-verdict-badge">—</span>
+                    
+                    <div class="ta-gauge-instrument">
+                        <div class="ta-gauge-svg-wrap">
+                            <svg class="ta-gauge-svg" viewBox="0 0 54 54">
+                                <circle class="ta-gauge-bg" cx="27" cy="27" r="22"/>
+                                <circle class="ta-gauge-fill" id="res-gauge-fill" cx="27" cy="27" r="22"/>
+                            </svg>
+                        </div>
+                        <div class="ta-gauge-text-wrap">
+                            <div class="ta-gauge-val" id="res-score-num">0</div>
+                            <div class="ta-gauge-lbl">THREAT SCORE</div>
+                        </div>
                     </div>
-                    <div style="font-family:var(--font-mono);font-size:0.68rem;color:var(--text-secondary);">
-                        <span id="res-phrase-count">0</span> flags ·
-                        <span id="res-path-used" style="color:var(--primary)"></span>
+
+                    <div class="ta-summary-meta">
+                        <span class="ta-engine-chip" id="res-path-used"><i class="ti ti-cpu"></i> Heuristic Engine</span>
+                        <span><strong id="res-phrase-count" style="color:var(--text-primary)">0</strong> SIGNALS DETECTED</span>
                     </div>
                 </div>
-                <div class="ta-result-actions">
+
+                <div class="ta-summary-actions">
                     <button class="ta-btn-sm" onclick="shareReport()"><i class="ti ti-share"></i> Share</button>
-                    <button class="ta-btn-sm" onclick="resetToInput()"><i class="ti ti-arrow-back-up"></i> New</button>
+                    <button class="ta-btn-sm" onclick="resetToInput()"><i class="ti ti-arrow-back-up"></i> New Analysis</button>
                 </div>
             </div>
 
-            <div class="ta-legend">
-                <div class="ta-legend-item"><div class="ta-legend-swatch swatch-urgency"></div>Urgency</div>
-                <div class="ta-legend-item"><div class="ta-legend-swatch swatch-authority"></div>Authority</div>
-                <div class="ta-legend-item"><div class="ta-legend-swatch swatch-financial"></div>Financial</div>
-                <div class="ta-legend-item"><div class="ta-legend-swatch swatch-credential"></div>Credential</div>
-                <span style="font-family:var(--font-mono);font-size:0.62rem;color:var(--text-muted);margin-left:auto;">Hover or tap highlighted phrases for details</span>
-            </div>
+            <!-- Two-Column Main Investigation Workspace (55% / 45%) -->
+            <div class="ta-investigation-workspace">
+                
+                <!-- LEFT COLUMN — EMAIL EVIDENCE -->
+                <div class="ta-col-evidence">
+                    <div class="ta-col-header">
+                        <span><i class="ti ti-mail" style="color:var(--primary); margin-right:4px;"></i> EMAIL EVIDENCE BOARD</span>
+                        <span style="font-size:0.6rem;">EXAMINED CONTENT</span>
+                    </div>
 
-            <div class="ta-annotated-body">
-                <div class="ta-annotated-email" id="ta-annotated-email"></div>
-            </div>
+                    <!-- Envelope Fields -->
+                    <div class="ta-email-envelope" id="ta-envelope-box">
+                        <div class="ta-env-row"><span class="ta-env-lbl">FROM:</span><span class="ta-env-val" id="env-from">—</span></div>
+                        <div class="ta-env-row"><span class="ta-env-lbl">TO:</span><span class="ta-env-val" id="env-to">—</span></div>
+                        <div class="ta-env-row"><span class="ta-env-lbl">SUBJECT:</span><span class="ta-env-val subj" id="env-subject">—</span></div>
+                    </div>
 
-            <div class="ta-summary-strip">
-                <!-- Score ring -->
-                <div class="ta-ring-wrap">
-                    <svg class="ta-ring-svg" viewBox="0 0 72 72">
-                        <circle class="ta-ring-bg" cx="36" cy="36" r="26"/>
-                        <circle class="ta-ring-fill" id="ta-ring-fill" cx="36" cy="36" r="26"/>
-                    </svg>
-                    <div class="ta-ring-center">
-                        <span id="ring-score" style="font-family:var(--font-mono);font-size:1.1rem;font-weight:800;color:var(--text-primary);line-height:1;">0</span>
-                        <span style="font-family:var(--font-mono);font-size:0.5rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em;">/100</span>
+                    <!-- Highlighted Annotated Text Area -->
+                    <div class="ta-evidence-body">
+                        <div id="ta-annotated-email"></div>
                     </div>
                 </div>
 
-                <!-- Flag pills -->
-                <div class="ta-flag-section">
-                    <div class="ta-flag-heading"><i class="ti ti-flag"></i> Detected Categories</div>
-                    <div class="ta-flag-pills" id="ta-flag-pills">
-                        <span style="font-family:var(--font-mono);font-size:0.72rem;color:var(--text-muted);">No flags detected</span>
+                <!-- RIGHT COLUMN — THREAT INTELLIGENCE -->
+                <div class="ta-col-intel">
+                    <div class="ta-col-header">
+                        <span><i class="ti ti-shield-bolt" style="color:var(--primary); margin-right:4px;"></i> THREAT INTELLIGENCE</span>
+                        <span style="font-size:0.6rem;">SIGNALS & CATEGORIES</span>
+                    </div>
+
+                    <div class="ta-intel-content">
+                        <!-- Category Tiles Grid -->
+                        <div class="ta-cat-cards-grid" id="ta-cat-tiles-grid">
+                            <div class="ta-cat-tile cat-tile-urgency" data-cat="urgency">
+                                <div class="ta-cat-tile-left">
+                                    <div class="ta-cat-tile-icon"><i class="ti ti-clock-exclamation"></i></div>
+                                    <span class="ta-cat-tile-name">Urgency</span>
+                                </div>
+                                <span class="ta-cat-tile-count" id="cat-count-urgency">x0</span>
+                            </div>
+                            <div class="ta-cat-tile cat-tile-authority" data-cat="authority">
+                                <div class="ta-cat-tile-left">
+                                    <div class="ta-cat-tile-icon"><i class="ti ti-user-shield"></i></div>
+                                    <span class="ta-cat-tile-name">Authority</span>
+                                </div>
+                                <span class="ta-cat-tile-count" id="cat-count-authority">x0</span>
+                            </div>
+                            <div class="ta-cat-tile cat-tile-financial" data-cat="financial">
+                                <div class="ta-cat-tile-left">
+                                    <div class="ta-cat-tile-icon"><i class="ti ti-credit-card"></i></div>
+                                    <span class="ta-cat-tile-name">Financial</span>
+                                </div>
+                                <span class="ta-cat-tile-count" id="cat-count-financial">x0</span>
+                            </div>
+                            <div class="ta-cat-tile cat-tile-credential" data-cat="credential">
+                                <div class="ta-cat-tile-left">
+                                    <div class="ta-cat-tile-icon"><i class="ti ti-key"></i></div>
+                                    <span class="ta-cat-tile-name">Credential</span>
+                                </div>
+                                <span class="ta-cat-tile-count" id="cat-count-credential">x0</span>
+                            </div>
+                        </div>
+
+                        <!-- Threat Signal Meters -->
+                        <div class="ta-signal-meters" id="ta-signal-meters-box">
+                            <div class="ta-block-title"><i class="ti ti-chart-bar"></i> THREAT SIGNAL DISTRIBUTION</div>
+                            
+                            <div class="ta-meter-row">
+                                <div class="ta-meter-header"><span>CREDENTIAL HARVEST</span><span id="meter-val-credential">0%</span></div>
+                                <div class="ta-meter-track"><div class="ta-meter-fill" id="meter-bar-credential" style="width:0%; background:var(--primary);"></div></div>
+                            </div>
+                            <div class="ta-meter-row">
+                                <div class="ta-meter-header"><span>AUTHORITY IMPERSONATION</span><span id="meter-val-authority">0%</span></div>
+                                <div class="ta-meter-track"><div class="ta-meter-fill" id="meter-bar-authority" style="width:0%; background:var(--danger);"></div></div>
+                            </div>
+                            <div class="ta-meter-row">
+                                <div class="ta-meter-header"><span>ARTIFICIAL URGENCY</span><span id="meter-val-urgency">0%</span></div>
+                                <div class="ta-meter-track"><div class="ta-meter-fill" id="meter-bar-urgency" style="width:0%; background:var(--warning);"></div></div>
+                            </div>
+                            <div class="ta-meter-row">
+                                <div class="ta-meter-header"><span>FINANCIAL DISBURSEMENT</span><span id="meter-val-financial">0%</span></div>
+                                <div class="ta-meter-track"><div class="ta-meter-fill" id="meter-bar-financial" style="width:0%; background:var(--info);"></div></div>
+                            </div>
+                        </div>
+
+                        <!-- Observed Indicators -->
+                        <div class="ta-indicators-block">
+                            <div class="ta-block-title"><i class="ti ti-list-check"></i> OBSERVED SIGNALS</div>
+                            <div class="ta-obs-list" id="ta-observed-list">
+                                <div class="ta-obs-item"><i class="ti ti-check"></i><span>No critical threat indicators detected.</span></div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Recommendation -->
-                <div class="ta-recommendation">
-                    <div class="ta-rec-label"><i class="ti ti-shield"></i> Recommendation</div>
-                    <div class="ta-rec-text" id="ta-rec-text">—</div>
+            </div>
+
+            <!-- 3. Analyst Summary Box (Bottom) -->
+            <div class="ta-analyst-summary">
+                <div class="ta-summary-head">
+                    <i class="ti ti-file-text"></i> ANALYST SUMMARY & RECOMMENDATION
+                </div>
+                <div class="ta-summary-body">
+                    <div class="ta-sum-box">
+                        <div class="ta-sum-title">EXECUTIVE VERDICT</div>
+                        <div class="ta-sum-text" id="ta-summary-verdict-desc">—</div>
+                    </div>
+                    <div class="ta-sum-box">
+                        <div class="ta-sum-title">RECOMMENDED ACTION</div>
+                        <div class="ta-sum-text" id="ta-rec-text" style="color:var(--text-primary); font-weight:600;">—</div>
+                    </div>
                 </div>
             </div>
+
         </div>
 
         <!-- RESULT STATE — HEADERS -->
         <div id="ta-headers-result" style="display:none;">
-            <div class="ta-result-header">
-                <div class="ta-result-meta">
-                    <span class="ta-verdict-badge" id="hdr-verdict-badge">—</span>
-                    <div>
-                        <div class="ta-score-num" id="hdr-score-num" style="color:var(--success);">0</div>
-                        <div class="ta-score-label">header risk score</div>
+            <div class="ta-summary-bar">
+                <div class="ta-summary-left">
+                    <span class="ta-verdict-pill" id="hdr-verdict-badge">—</span>
+                    <div class="ta-gauge-instrument">
+                        <div class="ta-gauge-val" id="hdr-score-num" style="color:var(--success);">0</div>
+                        <div class="ta-gauge-lbl">HEADER RISK SCORE</div>
                     </div>
                 </div>
-                <button class="ta-btn-sm" onclick="resetToInput()"><i class="ti ti-arrow-back-up"></i> New</button>
+                <button class="ta-btn-sm" onclick="resetToInput()"><i class="ti ti-arrow-back-up"></i> New Analysis</button>
             </div>
+            
             <div class="ta-headers-grid" id="ta-headers-grid"></div>
-            <div class="ta-summary-strip" style="border-top:1px solid var(--border-subtle);">
-                <div class="ta-recommendation" style="flex:1;">
-                    <div class="ta-rec-label"><i class="ti ti-shield"></i> Recommendation</div>
-                    <div class="ta-rec-text" id="hdr-rec-text">—</div>
-                </div>
+            
+            <div class="ta-analyst-summary">
+                <div class="ta-summary-head"><i class="ti ti-shield"></i> HEADER INSPECTION RECOMMENDATION</div>
+                <div class="ta-sum-text" id="hdr-rec-text">—</div>
             </div>
         </div>
 
-    </div><!-- /ta-card -->
+    </div><!-- /ta-console-card -->
 </div><!-- /ta-page -->
 
-<div class="ta-share-toast" id="ta-share-toast"><i class="ti ti-check"></i> Share link copied!</div>
+<div class="ta-share-toast" id="ta-share-toast"><i class="ti ti-check"></i> Share report link copied to clipboard!</div>
+
+<!-- Custom PhishSim Confirm Modal -->
+<div id="ta-confirm-modal" class="ta-confirm-backdrop" style="display:none;">
+    <div class="ta-confirm-box">
+        <div class="ta-confirm-icon"><i class="ti ti-alert-triangle"></i></div>
+        <div class="ta-confirm-title" id="ta-confirm-title">Clear Terminal Input?</div>
+        <div class="ta-confirm-msg" id="ta-confirm-msg">This will clear all entered email text and reset the current security investigation report.</div>
+        <div class="ta-confirm-actions">
+            <button class="ta-confirm-btn cancel" onclick="_onConfirmAction(false)">CANCEL</button>
+            <button class="ta-confirm-btn confirm" onclick="_onConfirmAction(true)">CLEAR & RESET</button>
+        </div>
+    </div>
+</div>
+
+<!-- Engine Status Popover -->
+<div id="ta-engine-popover" class="ta-engine-popover" style="display:none;">
+    <div class="pop-header">
+        <span><i class="ti ti-cpu"></i> PHISHSIM ENGINE DIAGNOSTICS</span>
+        <button onclick="closeEnginePopover()">&times;</button>
+    </div>
+    <div class="pop-grid">
+        <div class="pop-row"><span class="pop-lbl">Engine:</span><span class="pop-val" id="pop-engine">Heuristic Engine</span></div>
+        <div class="pop-row"><span class="pop-lbl">Status:</span><span class="pop-val pass" id="pop-status">ACTIVE</span></div>
+        <div class="pop-row"><span class="pop-lbl">Signals:</span><span class="pop-val" id="pop-signals">0 Detected</span></div>
+        <div class="pop-row"><span class="pop-lbl">Mode:</span><span class="pop-val" id="pop-mode">Email Body</span></div>
+        <div class="pop-row"><span class="pop-lbl">Threat Score:</span><span class="pop-val" id="pop-score">N/A</span></div>
+    </div>
+</div>
 
 <script>
 /* ═══════════════════════════════════════════════════════
-   THREAT ANALYZER — FRONTEND LOGIC
+   PHISHSIM THREAT ANALYZER — FRONTEND CONTROLLER
    ═══════════════════════════════════════════════════════ */
 
 let _currentMode = 'body';
 let _currentResult = null;
 let _currentEmailText = '';
+let _isMinimized = false;
 
-/* ── Mode Switch ──────────────────────────────────────── */
+/* ── Mode Switcher ────────────────────────────────────── */
 function switchMode(mode) {
     _currentMode = mode;
     document.getElementById('tab-body').classList.toggle('active', mode === 'body');
     document.getElementById('tab-headers').classList.toggle('active', mode === 'headers');
-    document.getElementById('ta-terminal-label').textContent = 'agent@phishsim:~$ analyze --mode=' + mode;
+    document.getElementById('ta-terminal-label').innerHTML = 'agent@phishsim:~$ <span class="prompt-cmd">analyze --mode=' + (mode === 'body' ? 'email' : 'headers') + '</span>';
     resetToInput();
 }
+
+/* ── Terminal Minimizing & Interactive HUD Controls ────── */
+function minimizeTerminal() {
+    _isMinimized = true;
+    document.getElementById('ta-input-state').style.display = 'none';
+    document.getElementById('ta-minimized-hud').style.display = 'flex';
+    updateHudData();
+}
+
+function expandTerminal() {
+    _isMinimized = false;
+    document.getElementById('ta-minimized-hud').style.display = 'none';
+    document.getElementById('ta-input-state').style.display = 'block';
+}
+
+function updateHudData() {
+    const chipsWrap = document.getElementById('hud-chips-container');
+    const scoreBadge = document.getElementById('hud-score-badge');
+    const scoreNum = document.getElementById('hud-score-num');
+    const scoreVerdict = document.getElementById('hud-score-verdict');
+    const engineName = document.getElementById('hud-engine-name');
+
+    if (!_currentResult) {
+        if (chipsWrap) chipsWrap.innerHTML = '<span class="hud-empty-tag"><i class="ti ti-shield-check"></i> READY FOR ANALYSIS</span>';
+        if (scoreBadge) scoreBadge.style.display = 'none';
+        return;
+    }
+
+    if (engineName) {
+        engineName.textContent = _currentResult.path_used === 'openrouter_llm' ? 'AI NEURAL ENGINE' : 'HEURISTIC ENGINE';
+    }
+
+    // Render interactive threat signal chips
+    const counts = _currentResult.category_counts || {};
+    const catIcons  = { urgency: 'ti-clock-exclamation', authority: 'ti-user-shield', financial: 'ti-credit-card', credential: 'ti-key' };
+    const catLabels = { urgency: 'Urgency', authority: 'Authority', financial: 'Financial', credential: 'Credential' };
+
+    let chipsHtml = '';
+    Object.keys(counts).forEach(cat => {
+        const cnt = counts[cat];
+        if (cnt > 0) {
+            chipsHtml += `<button class="hud-chip chip-${cat}" onclick="onHudChipClick('${cat}')" title="Inspect ${cat} evidence in email">
+                <i class="ti ${catIcons[cat] || 'ti-alert-circle'}"></i>
+                <span>${catLabels[cat] || cat} ×${cnt}</span>
+            </button>`;
+        }
+    });
+
+    if (!chipsHtml) {
+        chipsHtml = '<span class="hud-empty-tag" style="color:var(--success)"><i class="ti ti-circle-check"></i> NO THREAT SIGNALS DETECTED</span>';
+    }
+
+    if (chipsWrap) chipsWrap.innerHTML = chipsHtml;
+
+    // Render threat score
+    if (scoreBadge && scoreNum && scoreVerdict) {
+        scoreBadge.style.display = 'flex';
+        scoreNum.textContent = _currentResult.score;
+        scoreVerdict.textContent = _currentResult.verdict;
+        const color = _currentResult.badge === 'danger' ? 'var(--danger)' : _currentResult.badge === 'warning' ? 'var(--warning)' : 'var(--success)';
+        scoreNum.style.color = color;
+        scoreVerdict.style.color = color;
+    }
+}
+
+function onHudChipClick(cat) {
+    // 1. Ensure result workspace is visible
+    if (_currentResult && document.getElementById('ta-result-state').style.display === 'none') {
+        renderBodyResult(_currentResult);
+    }
+    
+    // 2. Highlight matching phrase annotations in email text
+    document.querySelectorAll('.ann').forEach(el => el.classList.remove('highlight-active'));
+    const matches = document.querySelectorAll('.ann[data-cat="' + cat + '"]');
+    matches.forEach(el => el.classList.add('highlight-active'));
+
+    // 3. Scroll to first matching evidence annotation in email body
+    if (matches.length > 0) {
+        matches[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+        if (window.showTooltip) window.showTooltip(matches[0]);
+    }
+}
+
+/* ── Engine Status Popover ────────────────────────────── */
+function toggleEnginePopover(e) {
+    if (e) e.stopPropagation();
+    const pop = document.getElementById('ta-engine-popover');
+    if (!pop) return;
+    if (pop.style.display === 'block') {
+        pop.style.display = 'none';
+        return;
+    }
+    
+    document.getElementById('pop-engine').textContent = _currentResult ? (_currentResult.path_used === 'openrouter_llm' ? 'AI Neural Engine' : 'Heuristic Engine') : 'Heuristic Engine';
+    document.getElementById('pop-status').textContent = _currentResult ? 'ANALYSIS COMPLETE' : 'READY / LISTENING';
+    document.getElementById('pop-signals').textContent = _currentResult ? ((_currentResult.phrases || []).length + ' Detected') : '0 Detected';
+    document.getElementById('pop-mode').textContent = _currentMode === 'body' ? 'Email Body' : 'Raw Headers';
+    document.getElementById('pop-score').textContent = _currentResult ? (_currentResult.score + ' / 100 (' + _currentResult.verdict + ')') : 'N/A';
+
+    const trigger = e ? e.currentTarget : document.getElementById('ta-hud-engine-trigger');
+    const btnRect = trigger ? trigger.getBoundingClientRect() : { bottom: 100, left: 100 };
+    pop.style.top = (btnRect.bottom + 8) + 'px';
+    pop.style.left = Math.max(10, btnRect.left) + 'px';
+    pop.style.display = 'block';
+}
+
+function closeEnginePopover() {
+    const pop = document.getElementById('ta-engine-popover');
+    if (pop) pop.style.display = 'none';
+}
+
+document.addEventListener('click', (e) => {
+    if (!e.target.closest('#ta-engine-popover') && !e.target.closest('#ta-hud-engine-trigger') && !e.target.closest('.ta-live-badge')) {
+        closeEnginePopover();
+    }
+});
 
 /* ── Preset Samples ───────────────────────────────────── */
 const PRESETS = {
@@ -928,53 +2016,185 @@ function applyPreset(key) {
     resetToInput();
 }
 
-/* ── Reset ────────────────────────────────────────────── */
+/* ── Reset Input View ─────────────────────────────────── */
 function resetToInput() {
+    _isMinimized = false;
+    document.getElementById('ta-minimized-hud').style.display = 'none';
     document.getElementById('ta-input-state').style.display = '';
     document.getElementById('ta-loading-state').style.display = 'none';
     document.getElementById('ta-result-state').style.display = 'none';
     document.getElementById('ta-headers-result').style.display = 'none';
-    document.getElementById('ta-analyze-btn').classList.remove('scanning');
-    document.getElementById('ta-btn-label').textContent = 'ANALYZE EMAIL';
+    document.getElementById('ta-btn-label').textContent = 'ANALYZE EMAIL EVIDENCE';
+    updateHudData();
+    updateExpandedConsoleData();
+}
+
+/* ── Expanded Console Controller ──────────────────────── */
+function updateExpandedConsoleData() {
+    const promptLabel = document.getElementById('ta-terminal-label');
+    if (promptLabel) {
+        promptLabel.innerHTML = 'agent@phishsim:~$ <span class="prompt-cmd">analyze --mode=' + (_currentMode === 'body' ? 'body' : 'headers') + '</span>';
+    }
+
+    const statusVal = document.getElementById('exp-status-val');
+    const engineVal = document.getElementById('exp-engine-val');
+    const modeVal   = document.getElementById('exp-mode-val');
+    const sigVal    = document.getElementById('exp-signals-val');
+    const scoreVal  = document.getElementById('exp-score-val');
+    const sevVal    = document.getElementById('exp-sev-val');
+    const readyHint = document.getElementById('ta-ready-hint');
+    const insGrid   = document.getElementById('ta-expanded-inspector');
+
+    if (modeVal) modeVal.textContent = _currentMode === 'body' ? 'EMAIL BODY' : 'RAW HEADERS';
+
+    if (!_currentResult) {
+        if (statusVal) { statusVal.textContent = 'READY'; statusVal.style.color = 'var(--success)'; }
+        if (engineVal) engineVal.textContent = 'HEURISTIC ENGINE';
+        if (sigVal) sigVal.textContent = '0 DETECTED';
+        if (scoreVal) scoreVal.textContent = 'N/A';
+        if (sevVal) { sevVal.textContent = 'READY'; sevVal.style.color = 'var(--text-muted)'; }
+        if (readyHint) readyHint.style.display = 'block';
+        if (insGrid) insGrid.style.display = 'none';
+
+        setPipelineStage('ready');
+        return;
+    }
+
+    if (readyHint) readyHint.style.display = 'none';
+    if (insGrid) insGrid.style.display = 'grid';
+
+    if (statusVal) { statusVal.textContent = 'COMPLETE'; statusVal.style.color = 'var(--success)'; }
+    if (engineVal) engineVal.textContent = _currentResult.path_used === 'openrouter_llm' ? 'AI NEURAL ENGINE' : 'HEURISTIC ENGINE';
+    
+    const phrasesCount = (_currentResult.phrases || []).length;
+    if (sigVal) sigVal.textContent = phrasesCount + ' DETECTED';
+    if (scoreVal) {
+        scoreVal.textContent = _currentResult.score + ' / 100';
+        scoreVal.style.color = _currentResult.badge === 'danger' ? 'var(--danger)' : _currentResult.badge === 'warning' ? 'var(--warning)' : 'var(--success)';
+    }
+    if (sevVal) {
+        sevVal.textContent = _currentResult.verdict || 'SAFE';
+        sevVal.style.color = _currentResult.badge === 'danger' ? 'var(--danger)' : _currentResult.badge === 'warning' ? 'var(--warning)' : 'var(--success)';
+    }
+
+    setPipelineStage('complete');
+
+    // Populate detected chips in expanded inspector box
+    const insChipsWrap = document.getElementById('exp-detected-chips');
+    if (insChipsWrap) {
+        const counts = _currentResult.category_counts || {};
+        const catIcons = { urgency:'ti-clock-exclamation', authority:'ti-user-shield', financial:'ti-credit-card', credential:'ti-key' };
+        const catLabels = { urgency:'Urgency', authority:'Authority', financial:'Financial', credential:'Credential' };
+
+        let chipsHtml = '';
+        Object.keys(counts).forEach(cat => {
+            const cnt = counts[cat];
+            if (cnt > 0) {
+                chipsHtml += `<button class="hud-chip chip-${cat}" onclick="onHudChipClick('${cat}')">
+                    <i class="ti ${catIcons[cat] || 'ti-alert-circle'}"></i>
+                    <span>${catLabels[cat] || cat} ×${cnt}</span>
+                </button>`;
+            }
+        });
+        if (!chipsHtml) chipsHtml = '<span class="hud-empty-tag" style="color:var(--success)"><i class="ti ti-circle-check"></i> NO THREAT SIGNALS DETECTED</span>';
+        insChipsWrap.innerHTML = chipsHtml;
+    }
+}
+
+function setPipelineStage(state) {
+    const stages = ['email', 'parse', 'extract', 'detect', 'classify', 'verdict'];
+    stages.forEach((st, idx) => {
+        const el = document.getElementById('stage-' + st);
+        if (!el) return;
+        if (state === 'complete') {
+            el.className = 'ta-pipe-stage done';
+            el.innerHTML = '<span class="stage-dot">✓</span> ' + st.toUpperCase();
+        } else if (state === 'ready') {
+            if (idx === 0) {
+                el.className = 'ta-pipe-stage done';
+                el.innerHTML = '<span class="stage-dot">✓</span> EMAIL';
+            } else {
+                el.className = 'ta-pipe-stage pending';
+                el.innerHTML = '<span class="stage-dot">○</span> ' + st.toUpperCase();
+            }
+        }
+    });
+}
+
+function inspectEvidence(phrase, category, reason, severity) {
+    const insBox = document.getElementById('exp-evidence-detail');
+    if (!insBox) return;
+    const catLabels = { urgency:'Artificial Urgency', authority:'Authority Impersonation', financial:'Financial Ask', credential:'Credential Harvest' };
+    const sevColors = { critical:'var(--danger)', high:'var(--warning)', medium:'var(--warning)', low:'var(--success)' };
+    const sevVal = severity || 'medium';
+
+    insBox.innerHTML = `
+        <div style="font-weight:700; color:var(--text-primary); margin-bottom:4px;">"${escHtml(phrase)}"</div>
+        <div style="font-size:0.68rem; margin-bottom:4px;">
+            <span style="color:var(--primary); font-weight:700;">CATEGORY:</span> ${escHtml(catLabels[category] || category)}
+            &nbsp;|&nbsp;
+            <span style="color:${sevColors[sevVal] || 'var(--primary)'}; font-weight:700;">SEVERITY: ${sevVal.toUpperCase()}</span>
+        </div>
+        <div style="font-size:0.72rem; color:var(--text-secondary); line-height:1.4;">${escHtml(reason || 'Social engineering indicator.')}</div>
+    `;
+}
+
+function execConsoleCmd(cmd) {
+    if (cmd === 'status') {
+        const strip = document.querySelector('.ta-engine-strip');
+        if (strip) strip.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    } else if (cmd === 'signals') {
+        const grid = document.getElementById('ta-cat-tiles-grid');
+        if (grid) grid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    } else if (cmd === 'evidence') {
+        const ev = document.getElementById('ta-annotated-email');
+        if (ev) ev.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    } else if (cmd === 'headers') {
+        switchMode('headers');
+    } else if (cmd === 'reset') {
+        const ta = document.getElementById('ta-email-input');
+        if (ta.value.trim().length > 0) {
+            askConfirm('Are you sure you want to clear your email input and reset the current security report?', 'CLEAR TERMINAL INPUT', function() {
+                ta.value = '';
+                resetToInput();
+            });
+        } else {
+            resetToInput();
+        }
+    }
 }
 
 /* ── Tooltip Portal ──────────────────────────────────── */
 (function() {
-    // Build the single shared portal element once
     const portal = document.createElement('div');
     portal.id = 'ta-tt-portal';
     document.body.appendChild(portal);
 
-    const MARGIN = 10; // min px from viewport edges
-    const TT_WIDTH = 260;
-    const ARROW_H = 8;  // arrow height
-    const GAP = 6;      // gap between phrase and tooltip
+    const MARGIN = 10;
+    const TT_WIDTH = 270;
+    const ARROW_H = 8;
+    const GAP = 6;
 
     function positionPortal(anchorRect) {
         const winW = window.innerWidth;
         const winH = window.innerHeight;
         const ttH = portal.offsetHeight || 100;
 
-        // Preferred: above the phrase, centered horizontally on it
         let left = anchorRect.left + anchorRect.width / 2 - TT_WIDTH / 2;
         let top  = anchorRect.top - ttH - GAP - ARROW_H;
         let above = true;
 
-        // Flip to below if not enough space above
         if (top < MARGIN) {
             top = anchorRect.bottom + GAP + ARROW_H;
             above = false;
         }
 
-        // Clamp left to stay within viewport
         const maxLeft = winW - TT_WIDTH - MARGIN;
         left = Math.max(MARGIN, Math.min(left, maxLeft));
 
-        // Clamp top in case below also overflows (very short viewport)
         const maxTop = winH - ttH - MARGIN;
         top = Math.max(MARGIN, Math.min(top, maxTop));
 
-        // Compute where the caret should point (relative to portal)
         const caretLeft = anchorRect.left + anchorRect.width / 2 - left;
         const caretPct = Math.max(10, Math.min(90, (caretLeft / TT_WIDTH) * 100));
 
@@ -998,12 +2218,10 @@ function resetToInput() {
             '<div class="ann-tt-reason">' + reason + '</div>' +
             '<div><span class="ann-tt-sev sev-' + sev + '">' + sev + '</span></div>';
 
-        // Make visible off-screen first to measure height
         portal.style.left = '-9999px';
         portal.style.top  = '-9999px';
         portal.classList.add('ta-tt-visible');
 
-        // Position after layout
         requestAnimationFrame(function() {
             positionPortal(el.getBoundingClientRect());
         });
@@ -1013,19 +2231,16 @@ function resetToInput() {
         portal.classList.remove('ta-tt-visible', 'tt-above', 'tt-below');
     };
 
-    // Hide on click outside any .ann
     document.addEventListener('click', function(e) {
         if (!e.target.closest('.ann')) hideAllTooltips();
     });
 
-    // Reposition on scroll/resize while visible
     window.addEventListener('scroll', function() {
         if (portal.classList.contains('ta-tt-visible')) hideAllTooltips();
     }, { passive: true, capture: true });
 })();
 
-
-/* ── Build Annotated HTML ─────────────────────────────── */
+/* ── Build Annotated Email Text ──────────────────────── */
 const CAT_ICONS  = { urgency:'ti-clock-exclamation', authority:'ti-user-shield', financial:'ti-credit-card', credential:'ti-key' };
 const CAT_LABELS = { urgency:'Artificial Urgency', authority:'Authority Impersonation', financial:'Financial Ask', credential:'Credential Harvest' };
 const CAT_COLORS = { urgency:'var(--ta-urgency)', authority:'var(--ta-authority)', financial:'var(--ta-financial)', credential:'var(--ta-credential)' };
@@ -1039,7 +2254,7 @@ function buildAnnotatedHtml(text, phrases) {
     const normText = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
     if (!phrases || phrases.length === 0) return escHtml(normText);
 
-    // Filter and adjust phrase start/end indices to guarantee exact match against normText
+    // Adjust phrase start/end indices against normText
     const adjustedPhrases = phrases.map(p => {
         const item = { ...p };
         if (item.phrase) {
@@ -1056,10 +2271,8 @@ function buildAnnotatedHtml(text, phrases) {
         return item;
     });
 
-    // Sort by start position ascending, length descending
     adjustedPhrases.sort((a, b) => a.start - b.start || (b.end - b.start) - (a.end - a.start));
 
-    // Filter out overlapping phrase matches
     const nonOverlapping = [];
     let lastEnd = 0;
     for (const p of adjustedPhrases) {
@@ -1077,13 +2290,14 @@ function buildAnnotatedHtml(text, phrases) {
         const phraseText = normText.slice(p.start, p.end);
         const reason = escHtml(p.reason || 'Social engineering indicator.');
         html += '<span class="ann ann-' + cat + '"' +
+            ' data-cat="' + cat + '"' +
             ' data-tt-cat="' + cat + '"' +
             ' data-tt-label="' + escHtml(CAT_LABELS[cat] || cat) + '"' +
             ' data-tt-color="' + (CAT_COLORS[cat] || 'var(--primary)') + '"' +
             ' data-tt-icon="' + (CAT_ICONS[cat] || 'ti-alert-circle') + '"' +
             ' data-tt-reason="' + reason + '"' +
             ' data-tt-sev="' + sev + '"' +
-            ' onmouseenter="showTooltip(this)" onmouseleave="hideAllTooltips()" onclick="showTooltip(this)" tabindex="0">' +
+            ' onmouseenter="showTooltip(this)" onmouseleave="hideAllTooltips()" onclick="showTooltip(this); inspectEvidence(this.innerText, this.dataset.cat, this.dataset.ttReason, this.dataset.ttSev);" tabindex="0">' +
             escHtml(phraseText) +
             '</span>';
         cursor = p.end;
@@ -1092,352 +2306,382 @@ function buildAnnotatedHtml(text, phrases) {
     return html;
 }
 
-/* ── Score Ring ───────────────────────────────────────── */
-function animateRing(score, color) {
-    const ring = document.getElementById('ta-ring-fill');
-    const C = 163.36;
-    ring.style.stroke = color;
-    ring.style.strokeDashoffset = C - (score / 100) * C;
-    const numEl = document.getElementById('ring-score');
-    let cur = 0;
-    const step = Math.max(1, Math.round(score / 40));
-    const iv = setInterval(() => { cur = Math.min(cur + step, score); numEl.textContent = cur; if (cur >= score) clearInterval(iv); }, 30);
-}
-
 /* ── Render Shared Verdict ────────────────────────────── */
 function renderVerdict(prefix, data) {
     const badge = document.getElementById(prefix + '-verdict-badge');
     if (badge) {
         badge.textContent = data.verdict;
-        badge.className = 'ta-verdict-badge ' + (data.badge || 'success');
+        badge.className = (prefix === 'res' ? 'ta-verdict-pill ' : 'ta-verdict-badge ') + (data.badge || 'success');
     }
-    const scoreColor = data.badge === 'danger' ? 'var(--verdict-critical)' : data.badge === 'warning' ? 'var(--verdict-suspicious)' : 'var(--verdict-safe)';
+    const scoreColor = data.badge === 'danger' ? 'var(--danger)' : data.badge === 'warning' ? 'var(--warning)' : 'var(--success)';
     const scoreNum = document.getElementById(prefix + '-score-num');
     if (scoreNum) {
         scoreNum.textContent = data.score;
         scoreNum.style.color = scoreColor;
     }
+
+    // Animate instrument ring for result state
+    const ringFill = document.getElementById('res-gauge-fill');
+    if (ringFill) {
+        const C = 138.2;
+        ringFill.style.stroke = scoreColor;
+        ringFill.style.strokeDashoffset = C - (data.score / 100) * C;
+    }
+
     return scoreColor;
+}
+
+/* ── Custom PhishSim Confirm Modal Helper ────────────────── */
+function askConfirm(msg, title, onConfirm) {
+    const titleEl = document.getElementById('ta-confirm-title');
+    const msgEl = document.getElementById('ta-confirm-msg');
+    const modal = document.getElementById('ta-confirm-modal');
+    if (titleEl) titleEl.textContent = title || 'Clear & Reset Analysis?';
+    if (msgEl) msgEl.textContent = msg || 'This will clear all entered email text and reset the current security investigation report.';
+    if (modal) modal.style.display = 'flex';
+    
+    window._onConfirmAction = function(confirmed) {
+        if (modal) modal.style.display = 'none';
+        if (confirmed && typeof onConfirm === 'function') onConfirm();
+    };
 }
 
 /* ── Render Body Results ──────────────────────────────── */
 function renderBodyResult(data) {
-    document.getElementById('ta-annotated-email').innerHTML = buildAnnotatedHtml(_currentEmailText, data.phrases || []);
-
     const scoreColor = renderVerdict('res', data);
     document.getElementById('res-phrase-count').textContent = (data.phrases || []).length;
-    document.getElementById('res-path-used').textContent = data.path_used === 'openrouter_llm' ? 'AI Analysis' : 'Heuristic Engine';
+    document.getElementById('res-path-used').innerHTML = '<i class="ti ti-cpu"></i> ' + (data.path_used === 'openrouter_llm' ? 'AI Analysis' : 'Heuristic Engine');
 
-    const counts = data.category_counts || {};
-    const PILL_META = {
-        urgency:   {cls:'pill-urgency',   icon:'ti-clock-exclamation', label:'Urgency'},
-        authority: {cls:'pill-authority', icon:'ti-user-shield',       label:'Authority'},
-        financial: {cls:'pill-financial', icon:'ti-credit-card',       label:'Financial'},
-        credential:{cls:'pill-credential',icon:'ti-key',               label:'Credential'},
-    };
-    const pillsContainer = document.getElementById('ta-flag-pills');
-    const pillHtml = Object.entries(counts).filter(([,v])=>v>0).map(([cat,count]) => {
-        const m = PILL_META[cat] || {cls:'pill-urgency',icon:'ti-flag',label:cat};
-        return '<div class="ta-flag-pill ' + m.cls + '"><i class="ti ' + m.icon + '"></i>' + m.label + '<span class="pill-count">x' + count + '</span></div>';
-    }).join('');
-    pillsContainer.innerHTML = pillHtml || '<span style="font-family:var(--font-mono);font-size:0.72rem;color:var(--text-muted);">No flags — email appears safe</span>';
+    // Parse email envelope (From, To, Subject) from email text
+    const fullText = _currentEmailText || '';
+    const fromMatch = fullText.match(/^From:\s*(.*)$/mi);
+    const toMatch = fullText.match(/^To:\s*(.*)$/mi);
+    const subjMatch = fullText.match(/^Subject:\s*(.*)$/mi);
 
-    document.getElementById('ta-rec-text').textContent = data.recommendation;
-    animateRing(data.score, scoreColor);
+    document.getElementById('env-from').textContent = fromMatch ? fromMatch[1].trim() : 'Unspecified Sender';
+    document.getElementById('env-to').textContent = toMatch ? toMatch[1].trim() : 'recipient@domain.com';
+    document.getElementById('env-subject').textContent = subjMatch ? subjMatch[1].trim() : 'No Subject';
+
+    // Pass fullText directly to buildAnnotatedHtml so python character indices match 100% perfectly without offset shifts
+    document.getElementById('ta-annotated-email').innerHTML = buildAnnotatedHtml(fullText, data.phrases || []);
+
+    // Category counts & Signal meters
+    const counts = data.category_counts || { urgency: 0, authority: 0, financial: 0, credential: 0 };
+    const totalPhrases = Math.max(1, (data.phrases || []).length);
+
+    ['urgency', 'authority', 'financial', 'credential'].forEach(cat => {
+        const cnt = counts[cat] || 0;
+        const countEl = document.getElementById('cat-count-' + cat);
+        if (countEl) countEl.textContent = 'x' + cnt;
+
+        const pct = Math.round((cnt / totalPhrases) * 100);
+        const valEl = document.getElementById('meter-val-' + cat);
+        const barEl = document.getElementById('meter-bar-' + cat);
+        if (valEl) valEl.textContent = pct + '% (' + cnt + ')';
+        if (barEl) barEl.style.width = pct + '%';
+    });
+
+    // Populate Observed Indicators
+    const obsContainer = document.getElementById('ta-observed-list');
+    if (data.phrases && data.phrases.length > 0) {
+        const uniqueReasons = [...new Set(data.phrases.map(p => p.reason))];
+        obsContainer.innerHTML = uniqueReasons.slice(0, 5).map(r => `
+            <div class="ta-obs-item">
+                <i class="ti ti-alert-triangle"></i>
+                <span>${escHtml(r)}</span>
+            </div>
+        `).join('');
+    } else {
+        obsContainer.innerHTML = '<div class="ta-obs-item"><i class="ti ti-check" style="color:var(--success)"></i><span>No critical threat indicators detected. Email appears safe.</span></div>';
+    }
+
+    // Analyst Summary Box
+    const summaryVerdictEl = document.getElementById('ta-summary-verdict-desc');
+    if (summaryVerdictEl) {
+        if (data.score >= 75) {
+            summaryVerdictEl.textContent = 'This email exhibits multiple high-confidence indicators of phishing or social engineering. The presence of coercive language and credential requests signals an active threat.';
+        } else if (data.score >= 45) {
+            summaryVerdictEl.textContent = 'This email contains suspicious patterns often associated with phishing lures. Exercise caution before clicking links or executing requested actions.';
+        } else {
+            summaryVerdictEl.textContent = 'No coercive tactics or credential harvesting signals were found. Standard email security protocols still apply.';
+        }
+    }
+    document.getElementById('ta-rec-text').textContent = data.recommendation || 'No recommendation provided.';
+
+    // Interactive Category Tile Hover -> Highlight Email Phrases
+    document.querySelectorAll('.ta-cat-tile').forEach(tile => {
+        const cat = tile.dataset.cat;
+        tile.addEventListener('mouseenter', () => {
+            document.querySelectorAll('.ann[data-cat="' + cat + '"]').forEach(el => el.classList.add('highlight-active'));
+        });
+        tile.addEventListener('mouseleave', () => {
+            document.querySelectorAll('.ann[data-cat="' + cat + '"]').forEach(el => el.classList.remove('highlight-active'));
+        });
+        tile.onclick = function() { onHudChipClick(cat); };
+    });
+
+    // Update Security HUD
+    updateHudData();
 
     document.getElementById('ta-input-state').style.display = 'none';
     document.getElementById('ta-loading-state').style.display = 'none';
-    document.getElementById('ta-result-state').style.display = '';
+    document.getElementById('ta-result-state').style.display = 'block';
     document.getElementById('ta-headers-result').style.display = 'none';
+
+    // Smooth scroll to the result window
+    const resultCard = document.getElementById('ta-result-state');
+    if (resultCard) {
+        resultCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
 }
 
 /* ── Render Header Results ────────────────────────────── */
 function renderHeadersResult(data) {
     renderVerdict('hdr', data);
-    document.getElementById('hdr-rec-text').textContent = data.recommendation;
+    document.getElementById('hdr-rec-text').textContent = data.recommendation || 'No recommendation provided.';
 
     const grid = document.getElementById('ta-headers-grid');
     grid.innerHTML = (!data.indicators || !data.indicators.length)
-        ? '<div style="grid-column:1/-1;font-family:var(--font-mono);font-size:0.8rem;color:var(--text-muted);padding:1rem 0;text-align:center;">No authentication failures detected</div>'
-        : data.indicators.map(ind => '<div class="ta-header-indicator"><div class="ta-hi-title">' + escHtml(ind.title) + '</div><div class="ta-hi-desc">' + escHtml(ind.desc) + '</div><span class="ta-sev-badge ta-sev-' + (ind.severity||'medium') + '">' + (ind.severity||'medium') + '</span></div>').join('');
+        ? '<div class="ta-header-row"><div class="ta-hi-title">All Authentication Checks Passed</div><div class="ta-hi-desc">SPF, DKIM, and DMARC alignments are valid. No suspicious hops or client spoofing detected.</div><span class="ta-sev-badge ta-sev-low">PASS</span></div>'
+        : data.indicators.map(ind => `
+            <div class="ta-header-row">
+                <div>
+                    <div class="ta-hi-title">${escHtml(ind.title)}</div>
+                    <div class="ta-hi-desc">${escHtml(ind.desc)}</div>
+                </div>
+                <span class="ta-sev-badge ta-sev-${ind.severity || 'medium'}">${ind.severity || 'medium'}</span>
+            </div>
+        `).join('');
+
+    updateHudData();
 
     document.getElementById('ta-input-state').style.display = 'none';
     document.getElementById('ta-loading-state').style.display = 'none';
     document.getElementById('ta-result-state').style.display = 'none';
-    document.getElementById('ta-headers-result').style.display = '';
+    document.getElementById('ta-headers-result').style.display = 'block';
+
+    const resultCard = document.getElementById('ta-headers-result');
+    if (resultCard) {
+        resultCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
 }
 
 /* ── Run Analysis ─────────────────────────────────────── */
 async function runAnalysis() {
-    const emailText = document.getElementById('ta-email-input').value.trim();
+    const rawVal = document.getElementById('ta-email-input').value;
+    const emailText = rawVal.replace(/\r\n/g, '\n').replace(/\r/g, '\n').trim();
     if (!emailText) {
         const ta = document.getElementById('ta-email-input');
-        ta.focus(); ta.style.borderColor = 'var(--danger)';
+        ta.focus();
+        ta.style.borderColor = 'var(--danger)';
         setTimeout(() => { ta.style.borderColor = ''; }, 2000);
         return;
     }
     _currentEmailText = emailText;
+    document.getElementById('ta-minimized-hud').style.display = 'none';
     document.getElementById('ta-input-state').style.display = 'none';
     document.getElementById('ta-result-state').style.display = 'none';
     document.getElementById('ta-headers-result').style.display = 'none';
+    
+    // Show State 2 Pipeline Loading Card
+    document.getElementById('ta-loading-state').style.display = 'block';
+    
+    // Reset pipeline steps
+    for (let i = 1; i <= 6; i++) {
+        const step = document.getElementById('pipe-step-' + i);
+        if (step) {
+            step.className = 'ta-step';
+            step.querySelector('.step-icon').innerHTML = '<i class="ti ti-circle-dashed"></i>';
+        }
+    }
 
-    // Show inline mini loader card
-    const loader = new ToolMiniLoader('ta-loading-state', 'threat');
-    loader.start();
-
-    let isSuccess = false;
+    // Animate pipeline sequence
+    const stepTimes = [100, 300, 500, 750, 950, 1150];
+    stepTimes.forEach((delay, idx) => {
+        setTimeout(() => {
+            const stepNum = idx + 1;
+            const prevStep = document.getElementById('pipe-step-' + (stepNum - 1));
+            if (prevStep) {
+                prevStep.className = 'ta-step done';
+                prevStep.querySelector('.step-icon').innerHTML = '<i class="ti ti-check" style="color:var(--success)"></i>';
+            }
+            const currStep = document.getElementById('pipe-step-' + stepNum);
+            if (currStep) {
+                currStep.className = 'ta-step active';
+                currStep.querySelector('.step-icon').innerHTML = '<i class="ti ti-loader"></i>';
+            }
+        }, delay);
+    });
 
     try {
         const fd = new FormData();
         fd.append('email_text', emailText);
         fd.append('mode', _currentMode);
-        const res = await fetch('/api/analyze-threat', { method: 'POST', body: fd });
+        
+        const [res] = await Promise.all([
+            fetch('/api/analyze-threat', { method: 'POST', body: fd }),
+            new Promise(r => setTimeout(r, 1350)) // Ensure smooth minimum pipeline animation time
+        ]);
+        
         const data = await res.json();
         if (!data.success) {
-            throw new Error(data.message || 'Unknown error');
+            throw new Error(data.message || 'Analysis failed');
         }
         _currentResult = data;
         _currentResult.original_text = emailText;
-        isSuccess = true;
+
+        // Complete final pipeline step
+        const lastStep = document.getElementById('pipe-step-6');
+        if (lastStep) {
+            lastStep.className = 'ta-step done';
+            lastStep.querySelector('.step-icon').innerHTML = '<i class="ti ti-check" style="color:var(--success)"></i>';
+        }
+
+        setTimeout(() => {
+            if (_currentResult.mode === 'headers') renderHeadersResult(_currentResult);
+            else renderBodyResult(_currentResult);
+        }, 200);
+
     } catch(e) {
-        alert(e.message.startsWith('Network error') ? e.message : 'Analysis failed: ' + e.message);
-        isSuccess = false;
-    } finally {
-        loader.stop(() => {
-            if (isSuccess && _currentResult) {
-                if (_currentResult.mode === 'headers') renderHeadersResult(_currentResult);
-                else renderBodyResult(_currentResult);
-            } else {
-                resetToInput();
-            }
-        });
+        alert('Analysis error: ' + e.message);
+        resetToInput();
     }
 }
 
-/* ── Share Link ───────────────────────────────────────── */
+/* ── Share Report ─────────────────────────────────────── */
 async function shareReport() {
-    if (!_currentResult) return;
+    if (!_currentResult) {
+        alert("Please run an email analysis first to generate a report to share.");
+        return;
+    }
+    
+    const csrfMeta = document.querySelector('meta[name="csrf-token"]');
+    const csrfToken = csrfMeta ? csrfMeta.content : '';
+    
+    let reportUuid = null;
     try {
         const res = await fetch('/api/save-threat-report', {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
             body: JSON.stringify({ report: _currentResult })
         });
-        const data = await res.json();
-        if (data.success && data.uuid) {
-            const url = window.location.origin + '/threat-analyzer?report=' + data.uuid;
-            try { await navigator.clipboard.writeText(url); } catch(e) { prompt('Copy this URL:', url); return; }
-            const t = document.getElementById('ta-share-toast');
-            t.classList.add('show');
-            setTimeout(() => t.classList.remove('show'), 3000);
+        
+        if (res.ok) {
+            const contentType = res.headers.get("content-type") || "";
+            if (contentType.includes("application/json")) {
+                const data = await res.json();
+                if (data && data.success && data.uuid) {
+                    reportUuid = data.uuid;
+                }
+            }
         }
-    } catch(e) { alert('Share failed: ' + e.message); }
+    } catch(e) {
+        console.warn("Share API request error:", e);
+    }
+    
+    let shareUrl = '';
+    if (reportUuid) {
+        shareUrl = window.location.origin + '/threat-analyzer?report=' + reportUuid;
+    } else {
+        const emailText = _currentEmailText || (_currentResult ? _currentResult.original_text : '') || '';
+        if (emailText) {
+            shareUrl = window.location.origin + '/threat-analyzer?email=' + encodeURIComponent(emailText);
+        } else {
+            shareUrl = window.location.href;
+        }
+    }
+
+    let copied = false;
+    try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            await navigator.clipboard.writeText(shareUrl);
+            copied = true;
+        }
+    } catch(e) {}
+    
+    if (!copied) {
+        prompt('Copy this report URL to share:', shareUrl);
+    }
+    
+    const t = document.getElementById('ta-share-toast');
+    if (t) {
+        t.textContent = copied ? "Report URL copied to clipboard!" : "Report URL ready!";
+        t.classList.add('show');
+        setTimeout(() => t.classList.remove('show'), 3500);
+    }
 }
 
 /* ── Load Shared Report ───────────────────────────────── */
 async function loadSharedReport(uuid) {
     document.getElementById('ta-input-state').style.display = 'none';
-    document.getElementById('ta-loading-state').style.display = '';
+    document.getElementById('ta-loading-state').style.display = 'block';
     try {
         const res = await fetch('/api/threat-report/' + uuid);
+        if (!res.ok) throw new Error("Report not found");
         const data = await res.json();
         if (!data.success || !data.report) { alert('Shared report not found or expired.'); resetToInput(); return; }
         const report = data.report;
         _currentResult = report;
-        _currentEmailText = (report.original_text || '').replace(/\r\n/g, '\n');
+        _currentEmailText = (report.original_text || '').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
         if (report.mode === 'headers') renderHeadersResult(report);
         else renderBodyResult(report);
     } catch(e) { alert('Failed to load shared report: ' + e.message); resetToInput(); }
 }
 
-/* ── Window Control Button Logic ─────────────────────────────── */
-(function() {
-    // Phishing red-flag phrases (static, hardcoded — no real user data)
-    const TA_PHRASES = [
-        '"URGENT: Verify your account immediately"',
-        '"Click here to avoid account suspension"',
-        '"Dear Valued Customer, action required"',
-        '"Your password will expire in 24 hours"',
-        '"Wire $48,000 to the attached account"',
-        '"Reply with your SSN to confirm identity"',
-        '"You have won a $500 Amazon gift card"',
-        '"CEO request: process this payment quietly"',
-        '"Unusual sign-in activity — verify now"',
-        '"Your invoice is attached — open to pay"',
-        '"IT Helpdesk: reset your VPN credentials"',
-        '"Confirm your shipping address to avoid return"',
-    ];
-    let _phraseCycle = null;
-    let _phraseCurrent = 0;
+/* ── Window Controls Init ─────────────────────────────── */
+document.addEventListener('DOMContentLoaded', function() {
+    const redDot = document.getElementById('ta-dot-red');
+    const amberDot = document.getElementById('ta-dot-amber');
+    const greenDot = document.getElementById('ta-dot-green');
 
-    function taNextPhrase() {
-        const el = document.getElementById('ta-phish-feed');
-        if (!el) return;
-        el.textContent = TA_PHRASES[_phraseCurrent % TA_PHRASES.length];
-        _phraseCurrent = (_phraseCurrent + 1) % TA_PHRASES.length;
+    if (redDot) {
+        redDot.onclick = function() {
+            const ta = document.getElementById('ta-email-input');
+            if (ta.value.trim().length > 0) {
+                askConfirm(
+                    'Are you sure you want to clear your email input and reset the current security report?',
+                    'CLEAR TERMINAL INPUT',
+                    function() {
+                        ta.value = '';
+                        resetToInput();
+                    }
+                );
+            } else {
+                resetToInput();
+            }
+        };
+    }
+    if (amberDot) {
+        amberDot.onclick = function() {
+            if (_isMinimized) expandTerminal();
+            else minimizeTerminal();
+        };
+    }
+    if (greenDot) {
+        greenDot.onclick = function() {
+            const ta = document.getElementById('ta-email-input');
+            if (ta) {
+                ta.classList.toggle('is-expanded');
+                const isExp = ta.classList.contains('is-expanded');
+                greenDot.title = isExp ? "Restore normal terminal height" : "Expand terminal editor height";
+            }
+        };
     }
 
-    // RED — clear input + reset results
-    document.getElementById('ta-dot-red').addEventListener('click', function() {
-        const ta = document.getElementById('ta-email-input');
-        if (ta.value.trim().length > 0) {
-            if (!confirm('Clear current input and reset results?')) return;
-        }
-        ta.value = '';
-        resetToInput();
-        // Also clear any preset highlights
-        document.querySelectorAll('.ta-preset-chip.active').forEach(c => c.classList.remove('active'));
-    });
-
-    // AMBER — minimize: hide input body, show phishing-phrase animation
-    document.getElementById('ta-dot-amber').addEventListener('click', function() {
-        const inputState = document.getElementById('ta-input-state');
-        inputState.classList.toggle('ta-minimized');
-        if (inputState.classList.contains('ta-minimized')) {
-            taNextPhrase();
-            _phraseCycle = setInterval(taNextPhrase, 4000);
-        } else {
-            clearInterval(_phraseCycle);
-        }
-    });
-
-    window.taRestoreFromMinimize = function() {
-        const inputState = document.getElementById('ta-input-state');
-        inputState.classList.remove('ta-minimized');
-        clearInterval(_phraseCycle);
-    };
-
-    // GREEN — expand: show fullscreen overlay with a synced copy of the textarea
-    let _taOverlay = null;
-    function buildTaOverlay() {
-        if (_taOverlay) return;
-        _taOverlay = document.createElement('div');
-        _taOverlay.className = 'ta-expand-overlay';
-        _taOverlay.innerHTML = `
-            <div class="ta-expand-header">
-                <span class="ta-expand-label"><i class="ti ti-scan" style="margin-right:6px;"></i>agent@phishsim — expanded view</span>
-                <button class="ta-expand-close" id="ta-expand-close">&#x2715; Collapse</button>
-            </div>
-            <textarea class="ta-expand-textarea" id="ta-expand-textarea" spellcheck="false"
-                placeholder="Paste the full email here — include From:, Subject:, and body…"></textarea>
-        `;
-        document.body.appendChild(_taOverlay);
-        document.getElementById('ta-expand-close').addEventListener('click', taCollapse);
-    }
-    function taExpand() {
-        buildTaOverlay();
-        const src = document.getElementById('ta-email-input').value;
-        document.getElementById('ta-expand-textarea').value = src;
-        _taOverlay.classList.add('active');
-        document.getElementById('ta-expand-textarea').focus();
-    }
-    function taCollapse() {
-        if (!_taOverlay) return;
-        const expanded = document.getElementById('ta-expand-textarea').value;
-        document.getElementById('ta-email-input').value = expanded;
-        _taOverlay.classList.remove('active');
-    }
-    document.getElementById('ta-dot-green').addEventListener('click', function() {
-        if (_taOverlay && _taOverlay.classList.contains('active')) { taCollapse(); }
-        else { taExpand(); }
-    });
-    // ESC closes expand overlay
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape' && _taOverlay && _taOverlay.classList.contains('active')) taCollapse();
-    });
-})();
-
-/* ── Init ─────────────────────────────────────────────── */
-(function() {
+    // Check query params for shared report
     const p = new URLSearchParams(window.location.search);
     const r = p.get('report');
-    if (r) loadSharedReport(r);
-})();
-</script>
-
-<script>
-/* ── Lure: Proactive callout for threat analyzer ── */
-(function() {
-  'use strict';
-  const SESSION_KEY = 'lure_ta_nudge_shown';
-  const WAIT_TIME = 25000; // 25s
-  let submitted = false;
-
-  // Track if user clicked the Analyze button
-  const analyzeBtn = document.getElementById('ta-analyze-btn');
-  if (analyzeBtn) {
-    analyzeBtn.addEventListener('click', () => {
-      submitted = true;
-    }, { once: true });
-  }
-
-  function maybeShowNudge() {
-    if (submitted || sessionStorage.getItem(SESSION_KEY)) return;
-    if (!window.lureShowCallout) return;
-
-    const calloutEl = document.getElementById('pb-callout');
-    if (calloutEl && calloutEl.classList.contains('pb-show')) return; // another callout is showing
-
-    sessionStorage.setItem(SESSION_KEY, '1');
-    window.lureShowCallout("Need a hand? Paste an email above, or click me to ask in the chat tab!");
-
-    // Add click handler to callout text to open the chat tab
-    const calloutText = document.getElementById('pb-callout-text');
-    if (calloutText) {
-      calloutText.style.cursor = 'pointer';
-      calloutText.addEventListener('click', function openLureChat() {
-        const panel = document.getElementById('pb-panel');
-        const avatar = document.getElementById('pb-avatar');
-        const fvPopover = document.getElementById('pb-first-visit-popover');
-        
-        if (fvPopover && fvPopover.classList.contains('pb-open')) {
-          const genBtn = document.getElementById('pb-fv-generate-btn');
-          if (genBtn) genBtn.click();
-        } else if (panel && !panel.classList.contains('pb-open')) {
-          if (avatar) avatar.click();
-        }
-        
-        const chatBtn = document.querySelector('#pb-panel .pb-tab-btn[data-tab="chat"]');
-        if (chatBtn) chatBtn.click();
-        
-        // Cleanup listener after click
-        calloutText.removeEventListener('click', openLureChat);
-      });
+    const e = p.get('email');
+    if (r) {
+        loadSharedReport(r);
+    } else if (e) {
+        const ta = document.getElementById('ta-email-input');
+        if (ta) ta.value = e;
+        runAnalysis();
     }
-  }
-
-  setTimeout(maybeShowNudge, WAIT_TIME);
-})();
-</script>
-
-<script>
-/* ── Lure: Proactive tour offer trigger ── */
-(function() {
-  'use strict';
-  const TOUR_NAME = 'tool_threat_analyzer';
-  const SESSION_KEY = 'pb_proactive_' + TOUR_NAME;
-
-  function maybeShowProactiveOffer() {
-    if (!window.lureShowCallout) return;
-    if (typeof window.lureIsWalkthroughActive === 'function' && window.lureIsWalkthroughActive()) return;
-    if (typeof window.lureIsCalloutShowing === 'function' && window.lureIsCalloutShowing()) return;
-    if (typeof window.lureHasCompletedTour === 'function' && window.lureHasCompletedTour(TOUR_NAME)) return;
-    if (sessionStorage.getItem(SESSION_KEY)) return;
-
-    sessionStorage.setItem(SESSION_KEY, '1');
-    window.lureShowCallout(
-      "Want a quick tour? I can show you how I analyze email bodies for threat indicators! Click here to start.",
-      TOUR_NAME
-    );
-  }
-
-  if (document.readyState === 'complete') {
-    setTimeout(maybeShowProactiveOffer, 2500);
-  } else {
-    window.addEventListener('load', function() {
-      setTimeout(maybeShowProactiveOffer, 2500);
-    });
-  }
-})();
+});
 </script>
 {% endblock %}
