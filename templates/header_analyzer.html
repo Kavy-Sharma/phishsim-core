@@ -22,18 +22,17 @@
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    font-family: 'JetBrains Mono', monospace;
+    font-family: var(--font-mono, 'JetBrains Mono'), monospace;
     font-size: 0.72rem;
     font-weight: 700;
     color: var(--primary);
-    background: rgba(56, 189, 248, 0.1);
-    border: 1px solid rgba(56, 189, 248, 0.25);
-    padding: 6px 14px;
+    background: color-mix(in srgb, var(--primary) 12%, transparent);
+    border: 1px solid color-mix(in srgb, var(--primary) 28%, transparent);
+    padding: 5px 14px;
     border-radius: 100px;
     text-transform: uppercase;
-    letter-spacing: 0.1em;
+    letter-spacing: 0.08em;
     margin-bottom: 1.25rem;
-    box-shadow: 0 0 15px rgba(56, 189, 248, 0.05);
 }
 .ha-hero h1 {
     font-size: clamp(2rem, 5vw, 3.2rem);
@@ -44,7 +43,7 @@
     margin-bottom: 1rem;
 }
 .ha-hero h1 span {
-    background: linear-gradient(135deg, var(--primary) 0%, var(--accent-purple, #8b5cf6) 100%);
+    background: var(--primary);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -57,70 +56,89 @@
     line-height: 1.6;
 }
 
-/* ── Cyber Terminal Card ───────────────────────────────────────── */
+/* ── Forensic Console Terminal Card ───────────────────────────── */
 .ha-main-card {
-    background: rgba(15, 23, 42, 0.65);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 16px;
+    background: var(--bg-surface, #0f172a);
+    border: 1px solid var(--border-default, rgba(255, 255, 255, 0.08));
+    border-radius: var(--radius-lg, 16px);
     overflow: hidden;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 40px rgba(6, 182, 212, 0.03);
-    transition: border-color 0.5s ease, box-shadow 0.5s ease;
+    position: relative;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+    transition: border-color 0.3s ease;
     margin-bottom: 2rem;
 }
+.ha-main-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, #f97316 0%, #06b6d4 100%);
+    opacity: 0.85;
+    z-index: 2;
+}
 
-/* Verdict classes for card glows */
-.card-verdict-LEGITIMATE {
-    border-color: var(--verdict-safe);
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 50px var(--verdict-safe-dim);
-}
-.card-verdict-UNCERTAIN {
-    border-color: var(--verdict-suspicious);
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 50px var(--verdict-suspicious-dim);
-}
-.card-verdict-SUSPICIOUS {
-    border-color: var(--verdict-critical);
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 50px var(--verdict-critical-dim);
-}
+/* Verdict classes for card border */
+.card-verdict-LEGITIMATE { border-color: var(--verdict-safe, #10b981); }
+.card-verdict-UNCERTAIN  { border-color: var(--verdict-suspicious, #f59e0b); }
+.card-verdict-SUSPICIOUS { border-color: var(--verdict-critical, #ef4444); }
 
 .ha-term-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 14px 20px;
-    background: linear-gradient(180deg, rgba(20, 40, 80, 0.95) 0%, rgba(10, 20, 48, 0.88) 100%);
-    border-bottom: 1px solid rgba(56, 189, 248, 0.22);
-    border-top: 2px solid rgba(56, 189, 248, 0.55);  /* cyan accent seam */
-    border-radius: 12px 12px 0 0;
+    padding: 10px 18px;
+    background: linear-gradient(180deg, color-mix(in srgb, var(--bg-surface-raised, #1e293b) 90%, #000) 0%, color-mix(in srgb, var(--bg-base, #0b0f17) 95%, #000) 100%);
+    border-bottom: 1px solid var(--border-default, rgba(255, 255, 255, 0.08));
+    user-select: none;
 }
 .ha-term-dots {
     display: flex;
-    gap: 8px;
+    gap: 6px;
+    align-items: center;
 }
 .ha-term-dot {
-    width: 12px;
-    height: 12px;
+    width: 11px;
+    height: 11px;
     border-radius: 50%;
     cursor: pointer;
-    transition: transform 0.12s ease, filter 0.12s ease;
+    transition: transform 0.12s ease;
 }
-.ha-term-dot:hover { transform: scale(1.25); filter: brightness(1.2); }
-.ha-term-dot.dot-r { background: #ef4444; }
-.ha-term-dot.dot-y { background: #f59e0b; }
-.ha-term-dot.dot-g { background: #10b981; }
+.ha-term-dot:hover { transform: scale(1.2); }
+.ha-term-dot.dot-r { background: var(--danger, #ef4444); }
+.ha-term-dot.dot-y { background: var(--warning, #f59e0b); }
+.ha-term-dot.dot-g { background: var(--success, #10b981); }
 
 .ha-term-title {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.72rem;
-    color: var(--text-muted, #64748b);
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
+    font-family: var(--font-mono, 'JetBrains Mono'), monospace;
+    font-size: 0.7rem;
+    color: var(--text-secondary, #94a3b8);
+    letter-spacing: 0.06em;
 }
-.ha-term-status {
+.ha-term-title .prompt-cmd {
+    color: var(--primary, #38bdf8);
+    font-weight: 700;
+}
+
+.ha-live-badge {
     display: flex;
     align-items: center;
     gap: 6px;
+    font-family: var(--font-mono, 'JetBrains Mono'), monospace;
+    font-size: 0.62rem;
+    font-weight: 700;
+    color: var(--success, #10b981);
+    letter-spacing: 0.08em;
+}
+.ha-live-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--success, #10b981);
+    animation: haLivePulse 1.8s ease-in-out infinite;
+}
+@keyframes haLivePulse {
+    0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 0 6px var(--success, #10b981); }
+    50% { opacity: 0.4; transform: scale(0.75); box-shadow: none; }
 }
 
 /* ── Window Controls Functional States ──────────────────── */
@@ -186,7 +204,7 @@
 .ha-mini-nav-status {
     font-size: 0.65rem;
     font-weight: 700;
-    color: var(--accent-cyan, #06b6d4);
+    color: var(--primary);
     display: flex;
     align-items: center;
     gap: 6px;
@@ -196,7 +214,7 @@
     width: 7px;
     height: 7px;
     border-radius: 50%;
-    background: #10b981;
+    background: var(--success);
     box-shadow: 0 0 8px rgba(16, 185, 129, 0.6);
 }
 .ha-mini-restore-btn {
@@ -271,21 +289,21 @@
 
 /* Subtle Node States: healthy, warning, anomalous */
 .mini-route-node.state-healthy .mini-route-node-dot {
-    background: #10b981;
+    background: var(--success);
     box-shadow: 0 0 6px rgba(16, 185, 129, 0.5);
 }
 .mini-route-node.state-warning {
     border-color: rgba(245, 158, 11, 0.3);
 }
 .mini-route-node.state-warning .mini-route-node-dot {
-    background: #f59e0b;
+    background: var(--warning);
     box-shadow: 0 0 6px rgba(245, 158, 11, 0.6);
 }
 .mini-route-node.state-anomalous {
     border-color: rgba(239, 68, 68, 0.4);
 }
 .mini-route-node.state-anomalous .mini-route-node-dot {
-    background: #ef4444;
+    background: var(--danger);
     box-shadow: 0 0 6px rgba(239, 68, 68, 0.7);
 }
 
@@ -303,7 +321,7 @@
     border-radius: 4px;
 }
 .mini-route-line:hover, .mini-route-line.active {
-    color: var(--accent-cyan, #06b6d4);
+    color: var(--primary);
     background: rgba(56, 189, 248, 0.08);
 }
 
@@ -386,7 +404,7 @@ body.light-theme .mini-route-node {
 }
 body.light-theme .mini-route-node:hover {
     background: #fff;
-    color: #0284c7;
+    color: var(--primary);
 }
 body.light-theme .pop-label {
     color: #64748b;
@@ -488,7 +506,7 @@ body.light-theme .ha-expand-close:hover { background: rgba(0,0,0,0.1); color: #0
 .ha-console-prompt {
     font-family: 'JetBrains Mono', monospace;
     font-size: 0.75rem;
-    color: var(--accent-cyan, #06b6d4);
+    color: var(--primary);
     letter-spacing: 0.05em;
     margin-bottom: 0.75rem;
     display: flex;
@@ -499,27 +517,45 @@ body.light-theme .ha-expand-close:hover { background: rgba(0,0,0,0.1); color: #0
     color: var(--primary);
     font-weight: 800;
 }
-.ha-textarea {
-    width: 100%;
-    height: 250px;
+.ha-textarea-wrap {
+    position: relative;
+    margin-bottom: 1.5rem;
     background: rgba(15, 23, 42, 0.4);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 10px;
+    transition: border-color 0.25s, box-shadow 0.25s;
+    box-sizing: border-box;
+}
+.ha-textarea-wrap:focus-within {
+    border-color: rgba(6, 182, 212, 0.5);
+    box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.15), 0 0 20px rgba(6, 182, 212, 0.1);
+    background: rgba(15, 23, 42, 0.6);
+}
+.ha-textarea {
+    width: 100%;
+    height: 250px;
+    background: transparent !important;
+    background-color: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    outline: none !important;
+    box-shadow: none !important;
+    appearance: none !important;
+    -webkit-appearance: none !important;
     padding: 1.25rem;
     font-family: 'JetBrains Mono', monospace;
     font-size: 0.8rem;
     color: #e2e8f0;
     line-height: 1.5;
     resize: none;
-    outline: none;
-    transition: all 0.3s ease;
+    transition: none;
     box-sizing: border-box;
-    margin-bottom: 1.5rem;
 }
 .ha-textarea:focus {
-    border-color: rgba(6, 182, 212, 0.5);
-    box-shadow: 0 0 15px rgba(6, 182, 212, 0.1);
-    background: rgba(15, 23, 42, 0.6);
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
 }
 .ha-textarea::placeholder {
     color: #475569;
@@ -568,12 +604,12 @@ body.light-theme .ha-expand-close:hover { background: rgba(0,0,0,0.1); color: #0
 }
 .ha-struct-chip.chip-ok {
     background: rgba(16, 185, 129, 0.1);
-    color: #34d399;
+    color: var(--success);
     border: 1px solid rgba(16, 185, 129, 0.25);
 }
 .ha-struct-chip.chip-warn {
     background: rgba(245, 158, 11, 0.1);
-    color: #fb923c;
+    color: var(--warning);
     border: 1px solid rgba(245, 158, 11, 0.25);
 }
 
@@ -607,7 +643,7 @@ body.light-theme .ha-expand-close:hover { background: rgba(0,0,0,0.1); color: #0
 }
 .ha-preset-btn.sample-clean {
     border-color: rgba(16, 185, 129, 0.3);
-    color: #34d399;
+    color: var(--success);
     background: rgba(16, 185, 129, 0.06);
     justify-content: center;
     font-family: 'JetBrains Mono', monospace;
@@ -619,11 +655,11 @@ body.light-theme .ha-expand-close:hover { background: rgba(0,0,0,0.1); color: #0
     border-color: rgba(16, 185, 129, 0.5);
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
-    color: #34d399;
+    color: var(--success);
 }
 .ha-preset-btn.sample-suspicious {
     border-color: rgba(239, 68, 68, 0.3);
-    color: #f87171;
+    color: var(--danger);
     background: rgba(239, 68, 68, 0.06);
     justify-content: center;
     font-family: 'JetBrains Mono', monospace;
@@ -635,7 +671,7 @@ body.light-theme .ha-expand-close:hover { background: rgba(0,0,0,0.1); color: #0
     border-color: rgba(239, 68, 68, 0.5);
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(239, 68, 68, 0.15);
-    color: #f87171;
+    color: var(--danger);
 }
 .ha-preset-btn:hover {
     background: rgba(30, 41, 59, 0.8);
@@ -645,8 +681,8 @@ body.light-theme .ha-expand-close:hover { background: rgba(0,0,0,0.1); color: #0
 }
 .ha-preset-btn.active {
     background: rgba(6, 182, 212, 0.08);
-    border-color: var(--accent-cyan, #06b6d4);
-    color: var(--accent-cyan, #06b6d4);
+    border-color: var(--primary);
+    color: var(--primary);
 }
 
 .ha-presets-more {
@@ -721,7 +757,7 @@ body.light-theme .ha-expand-close:hover { background: rgba(0,0,0,0.1); color: #0
     position: absolute;
     inset: 0;
     border-radius: inherit;
-    background-image: linear-gradient(135deg, var(--primary) 0%, #6366f1 100%);
+    background-image: var(--primary);
     z-index: -1;
     transition: opacity 0.15s ease;
 }
@@ -750,7 +786,7 @@ body.light-theme .ha-expand-close:hover { background: rgba(0,0,0,0.1); color: #0
     opacity: 0.6;
 }
 .ha-action-btn:focus-visible {
-    outline: 2px solid #6366f1 !important;
+    outline: 2px solid var(--primary) !important;
     outline-offset: 2px;
     box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.2);
 }
@@ -768,7 +804,7 @@ body.light-theme .ha-expand-close:hover { background: rgba(0,0,0,0.1); color: #0
 .ha-intel-field-card:focus-visible,
 .ha-anomaly-card:focus-visible,
 .ha-intel-flow-step:focus-visible {
-    outline: 2px solid var(--primary, #38bdf8) !important;
+    outline: 2px solid var(--primary) !important;
     outline-offset: 2px !important;
     box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.25) !important;
 }
@@ -830,11 +866,11 @@ body.light-theme .ha-expand-close:hover { background: rgba(0,0,0,0.1); color: #0
     flex-shrink: 0;
 }
 .ha-decoding-line.pending .step-prefix {
-    color: var(--accent-cyan, #06b6d4);
+    color: var(--primary);
     animation: haPulseText 0.8s infinite alternate;
 }
 .ha-decoding-line.done .step-prefix {
-    color: #34d399;
+    color: var(--success);
 }
 .ha-decoding-line.done .step-text {
     color: var(--text-muted, #94a3b8);
@@ -847,7 +883,7 @@ body.light-theme .ha-expand-close:hover { background: rgba(0,0,0,0.1); color: #0
 }
 .ha-decoding-line.complete-success {
     font-weight: 800;
-    color: #34d399;
+    color: var(--success);
     letter-spacing: 0.08em;
 }
 
@@ -867,7 +903,7 @@ body.light-theme .ha-expand-close:hover { background: rgba(0,0,0,0.1); color: #0
 .ha-decoding-progress-fill {
     height: 100%;
     width: 0%;
-    background: linear-gradient(90deg, var(--primary) 0%, var(--accent-cyan, #06b6d4) 50%, #34d399 100%);
+    background: linear-gradient(90deg, var(--primary) 0%, var(--success) 100%);
     transition: width 0.25s linear;
 }
 
@@ -928,7 +964,7 @@ body.light-theme .ha-decoding-line.done .step-text {
     font-family: 'JetBrains Mono', monospace;
     font-size: 0.72rem;
     font-weight: 800;
-    color: var(--accent-cyan, #06b6d4);
+    color: var(--primary);
     background: rgba(6, 182, 212, 0.08);
     border: 1px solid rgba(6, 182, 212, 0.2);
     padding: 5px 14px;
@@ -957,17 +993,17 @@ body.light-theme .ha-decoding-line.done .step-text {
 }
 .ha-summary-pill.pill-pass {
     background: rgba(16, 185, 129, 0.1);
-    color: #34d399;
+    color: var(--success);
     border: 1px solid rgba(16, 185, 129, 0.25);
 }
 .ha-summary-pill.pill-fail {
     background: rgba(239, 68, 68, 0.1);
-    color: #f87171;
+    color: var(--danger);
     border: 1px solid rgba(239, 68, 68, 0.25);
 }
 .ha-summary-pill.pill-warn {
     background: rgba(245, 158, 11, 0.1);
-    color: #fb923c;
+    color: var(--warning);
     border: 1px solid rgba(245, 158, 11, 0.25);
 }
 
@@ -994,7 +1030,7 @@ body.light-theme .ha-decoding-line.done .step-text {
     transform: translateY(-1px);
 }
 .ha-connector-time-badge.badge-unusual {
-    color: #fb923c;
+    color: var(--warning);
 }
 .ha-connector.is-unusual .ha-connector-link-wrap {
     border-color: rgba(245, 158, 11, 0.4);
@@ -1022,17 +1058,17 @@ body.light-theme .ha-decoding-line.done .step-text {
 }
 .verdict-LEGITIMATE {
     background: rgba(52, 211, 153, 0.1);
-    color: #34d399;
+    color: var(--success);
     border: 1px solid rgba(52, 211, 153, 0.2);
 }
 .verdict-UNCERTAIN {
     background: rgba(251, 146, 60, 0.1);
-    color: #fb923c;
+    color: var(--warning);
     border: 1px solid rgba(251, 146, 60, 0.2);
 }
 .verdict-SUSPICIOUS {
     background: rgba(248, 113, 113, 0.1);
-    color: #f87171;
+    color: var(--danger);
     border: 1px solid rgba(248, 113, 113, 0.2);
 }
 
@@ -1180,13 +1216,13 @@ body.light-theme .ha-decoding-line.done .step-text {
     stroke-dasharray: 6, 4;
     animation: ha-flow-line-anim 1s linear infinite;
 }
-.line-safe   { stroke: #10b981; }
-.line-warn   { stroke: #f59e0b; }
-.line-danger { stroke: #ef4444; }
+.line-safe   { stroke: var(--success); }
+.line-warn   { stroke: var(--warning); }
+.line-danger { stroke: var(--danger); }
 
-.head-safe   { fill: #10b981; }
-.head-warn   { fill: #f59e0b; }
-.head-danger { fill: #ef4444; }
+.head-safe   { fill: var(--success); }
+.head-warn   { fill: var(--warning); }
+.head-danger { fill: var(--danger); }
 
 @keyframes ha-flow-line-anim {
     to { stroke-dashoffset: -20; }
@@ -1294,7 +1330,7 @@ body.light-theme .ha-decoding-line.done .step-text {
     gap: 4px;
 }
 .ha-node-time.slow {
-    color: #f59e0b;
+    color: var(--warning);
 }
 
 /* compact badge cluster showing SPF/DKIM/DMARC at origin */
@@ -1377,7 +1413,7 @@ body.light-theme .ha-decoding-line.done .step-text {
     font-size: 0.55rem;
     background: rgba(245, 158, 11, 0.08);
     border: 1px solid rgba(245, 158, 11, 0.15);
-    color: #fb923c;
+    color: var(--warning);
     border-radius: 4px;
     padding: 4px 6px;
     line-height: 1.2;
@@ -1495,21 +1531,21 @@ body.light-theme .ha-decoding-line.done .step-text {
 
 .badge-pass {
     background: rgba(16, 185, 129, 0.15);
-    color: #10b981;
+    color: var(--success);
     border: 1px solid rgba(16, 185, 129, 0.3);
     box-shadow: 0 0 10px rgba(16, 185, 129, 0.15);
 }
 
 .badge-fail {
     background: rgba(239, 68, 68, 0.15);
-    color: #ef4444;
+    color: var(--danger);
     border: 1px solid rgba(239, 68, 68, 0.3);
     box-shadow: 0 0 10px rgba(239, 68, 68, 0.15);
 }
 
 .badge-warn {
     background: rgba(245, 158, 11, 0.15);
-    color: #f59e0b;
+    color: var(--warning);
     border: 1px solid rgba(245, 158, 11, 0.3);
     box-shadow: 0 0 10px rgba(245, 158, 11, 0.15);
 }
@@ -1532,7 +1568,7 @@ body.light-theme .ha-decoding-line.done .step-text {
     font-family: 'JetBrains Mono', monospace;
     font-size: 0.88rem;
     font-weight: 600;
-    color: var(--primary, #38bdf8);
+    color: var(--primary);
     word-break: break-all;
 }
 
@@ -1548,7 +1584,7 @@ body.light-theme .ha-decoding-line.done .step-text {
     font-family: 'JetBrains Mono', monospace;
     font-size: 0.72rem;
     font-weight: 700;
-    color: var(--primary, #38bdf8);
+    color: var(--primary);
     display: inline-flex;
     align-items: center;
     gap: 6px;
@@ -1712,8 +1748,8 @@ body.light-theme .ha-decoding-line.done .step-text {
     font-weight: 800;
 }
 
-.align-pass .ha-vis-badge { color: #10b981; }
-.align-fail .ha-vis-badge { color: #ef4444; }
+.align-pass .ha-vis-badge { color: var(--success); }
+.align-fail .ha-vis-badge { color: var(--danger); }
 
 .ha-vis-plus {
     font-family: 'JetBrains Mono', monospace;
@@ -1733,19 +1769,19 @@ body.light-theme .ha-decoding-line.done .step-text {
 .ha-vis-verdict.verdict-pass {
     background: rgba(16, 185, 129, 0.12);
     border: 1px solid rgba(16, 185, 129, 0.3);
-    color: #10b981;
+    color: var(--success);
 }
 
 .ha-vis-verdict.verdict-fail {
     background: rgba(239, 68, 68, 0.12);
     border: 1px solid rgba(239, 68, 68, 0.3);
-    color: #ef4444;
+    color: var(--danger);
 }
 
 .ha-vis-verdict.verdict-warn {
     background: rgba(245, 158, 11, 0.12);
     border: 1px solid rgba(245, 158, 11, 0.3);
-    color: #f59e0b;
+    color: var(--warning);
 }
 
 .ha-vis-verdict-title {
@@ -1767,7 +1803,7 @@ body.light-theme .ha-decoding-line.done .step-text {
     border-radius: 6px;
     padding: 8px 12px;
     font-size: 0.75rem;
-    color: #fca5a5;
+    color: var(--danger);
     line-height: 1.4;
     margin-top: 4px;
 }
@@ -1891,19 +1927,19 @@ body.light-theme .ha-decoding-line.done .step-text {
 
 .rel-aligned {
     background: rgba(16, 185, 129, 0.15);
-    color: #10b981;
+    color: var(--success);
     border: 1px solid rgba(16, 185, 129, 0.3);
 }
 
 .rel-different {
     background: rgba(245, 158, 11, 0.15);
-    color: #f59e0b;
+    color: var(--warning);
     border: 1px solid rgba(245, 158, 11, 0.3);
 }
 
 .rel-failed {
     background: rgba(239, 68, 68, 0.15);
-    color: #ef4444;
+    color: var(--danger);
     border: 1px solid rgba(239, 68, 68, 0.3);
 }
 
@@ -1957,7 +1993,7 @@ body.light-theme .ha-decoding-line.done .step-text {
 
 .ha-intel-field-hint {
     font-size: 0.7rem;
-    color: var(--primary, #38bdf8);
+    color: var(--primary);
     margin-top: 4px;
     display: flex;
     align-items: center;
@@ -1978,7 +2014,7 @@ body.light-theme .ha-decoding-line.done .step-text {
     font-family: 'JetBrains Mono', monospace;
     font-size: 0.78rem;
     font-weight: 800;
-    color: var(--primary, #38bdf8);
+    color: var(--primary);
     margin-bottom: 0.75rem;
     display: flex;
     justify-content: space-between;
@@ -2062,7 +2098,7 @@ body.light-theme .ha-decoding-line.done .step-text {
 }
 
 .ha-view-tab.active {
-    color: var(--primary, #38bdf8);
+    color: var(--primary);
     background: rgba(56, 189, 248, 0.12);
     border-color: rgba(56, 189, 248, 0.3);
     box-shadow: 0 0 12px rgba(56, 189, 248, 0.15);
@@ -2090,7 +2126,7 @@ body.light-theme .ha-decoding-line.done .step-text {
 .ha-raw-viewer-title {
     font-size: 0.78rem;
     font-weight: 800;
-    color: var(--primary, #38bdf8);
+    color: var(--primary);
     display: flex;
     align-items: center;
     gap: 8px;
@@ -2148,7 +2184,7 @@ body.light-theme .ha-decoding-line.done .step-text {
 
 .ha-raw-line.is-important:hover {
     background: rgba(56, 189, 248, 0.12);
-    border-left-color: var(--primary, #38bdf8);
+    border-left-color: var(--primary);
 }
 
 .ha-header-badge {
@@ -2269,7 +2305,7 @@ body.light-theme .ha-decoding-line.done .step-text {
     border-radius: 50%;
     background: rgba(56, 189, 248, 0.1);
     border: 1px solid rgba(56, 189, 248, 0.3);
-    color: var(--primary, #38bdf8);
+    color: var(--primary);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -2324,7 +2360,7 @@ body.light-theme .ha-decoding-line.done .step-text {
 .ha-modal-btn.btn-confirm {
     background: linear-gradient(135deg, rgba(56, 189, 248, 0.25) 0%, rgba(59, 130, 246, 0.25) 100%);
     border: 1px solid rgba(56, 189, 248, 0.5);
-    color: #38bdf8;
+    color: var(--primary);
     box-shadow: 0 0 12px rgba(56, 189, 248, 0.2);
 }
 
@@ -2358,7 +2394,7 @@ body.light-theme .ha-decoding-line.done .step-text {
 
 .ha-replay-badge {
     background: rgba(56, 189, 248, 0.15);
-    color: #38bdf8;
+    color: var(--primary);
     border: 1px solid rgba(56, 189, 248, 0.3);
     font-size: 0.7rem;
     font-weight: 800;
@@ -2389,7 +2425,7 @@ body.light-theme .ha-decoding-line.done .step-text {
 .ha-replay-progress-bar {
     height: 100%;
     width: 0%;
-    background: linear-gradient(90deg, #38bdf8, #818cf8);
+    background: var(--primary);
     transition: width 0.3s ease;
 }
 
@@ -2402,7 +2438,7 @@ body.light-theme .ha-decoding-line.done .step-text {
 }
 
 .ha-connector.replay-active-connector {
-    color: var(--primary, #38bdf8) !important;
+    color: var(--primary) !important;
     text-shadow: 0 0 10px rgba(56, 189, 248, 0.8) !important;
 }
 
@@ -2415,7 +2451,7 @@ body.light-theme .ha-decoding-line.done .step-text {
 
 .badge-hdr-identity {
     background: rgba(245, 158, 11, 0.15);
-    color: #f59e0b;
+    color: var(--warning);
     border: 1px solid rgba(245, 158, 11, 0.3);
 }
 
@@ -2440,13 +2476,13 @@ body.light-theme .ha-decoding-line.done .step-text {
 
 .summary-clean {
     background: rgba(16, 185, 129, 0.12);
-    color: #10b981;
+    color: var(--success);
     border: 1px solid rgba(16, 185, 129, 0.3);
 }
 
 .summary-anomalies {
     background: rgba(245, 158, 11, 0.12);
-    color: #f59e0b;
+    color: var(--warning);
     border: 1px solid rgba(245, 158, 11, 0.3);
 }
 
@@ -2494,25 +2530,25 @@ body.light-theme .ha-decoding-line.done .step-text {
 
 .badge-sev-critical {
     background: rgba(239, 68, 68, 0.2);
-    color: #ef4444;
+    color: var(--danger);
     border: 1px solid rgba(239, 68, 68, 0.4);
 }
 
 .badge-sev-high {
     background: rgba(239, 68, 68, 0.15);
-    color: #f87171;
+    color: var(--danger);
     border: 1px solid rgba(239, 68, 68, 0.3);
 }
 
 .badge-sev-medium {
     background: rgba(245, 158, 11, 0.15);
-    color: #f59e0b;
+    color: var(--warning);
     border: 1px solid rgba(245, 158, 11, 0.3);
 }
 
 .badge-sev-low {
     background: rgba(56, 189, 248, 0.15);
-    color: #38bdf8;
+    color: var(--primary);
     border: 1px solid rgba(56, 189, 248, 0.3);
 }
 
@@ -2527,7 +2563,7 @@ body.light-theme .ha-decoding-line.done .step-text {
     margin-left: auto;
     font-family: 'JetBrains Mono', monospace;
     font-size: 0.7rem;
-    color: var(--primary, #38bdf8);
+    color: var(--primary);
     opacity: 0.8;
     display: flex;
     align-items: center;
@@ -2559,7 +2595,7 @@ body.light-theme .ha-decoding-line.done .step-text {
 
 .evidence-label {
     font-size: 0.65rem;
-    color: var(--primary, #38bdf8);
+    color: var(--primary);
     text-transform: uppercase;
     font-weight: 700;
 }
@@ -2640,8 +2676,8 @@ body.light-theme .ha-decoding-line.done .step-text {
     flex-shrink: 0;
     margin-top: 2px;
 }
-.sev-badge-critical { background: rgba(239, 68, 68, 0.12); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2); }
-.sev-badge-high     { background: rgba(245, 158, 11, 0.12); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.2); }
+.sev-badge-critical { background: rgba(239, 68, 68, 0.12); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.2); }
+.sev-badge-high     { background: rgba(245, 158, 11, 0.12); color: var(--warning); border: 1px solid rgba(245, 158, 11, 0.2); }
 .sev-badge-medium   { background: rgba(56, 189, 248, 0.12); color: var(--primary); border: 1px solid rgba(56, 189, 248, 0.2); }
 
 .ha-flag-title {
@@ -2661,7 +2697,7 @@ body.light-theme .ha-decoding-line.done .step-text {
     padding: 2rem;
     font-family: 'JetBrains Mono', monospace;
     font-size: 0.85rem;
-    color: #10b981;
+    color: var(--success);
 }
 
 /* ── Mobile Layout Adaptation ─────────────────────────────────── */
@@ -2768,18 +2804,25 @@ body.light-theme .ha-term-header {
     border-color: rgba(56, 189, 248, 0.15);
     border-top: 2px solid rgba(56, 189, 248, 0.4);
 }
-body.light-theme .ha-textarea {
+body.light-theme .ha-textarea-wrap {
     background: rgba(255, 255, 255, 0.5);
     border-color: rgba(0, 0, 0, 0.08);
-    color: #1e293b;
 }
-body.light-theme .ha-textarea:focus {
+body.light-theme .ha-textarea-wrap:focus-within {
     background: #fff;
     border-color: rgba(6, 182, 212, 0.6);
+    box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.15);
 }
-body.light-theme .ha-textarea::placeholder {
-    color: #94a3b8;
+body.light-theme .ha-textarea {
+    color: #1e293b;
+    background: transparent !important;
+    border: none !important;
 }
+body.light-theme .ha-textarea:focus {
+    background: transparent !important;
+    border: none !important;
+}
+
 body.light-theme .ha-preset-btn {
     background: rgba(0, 0, 0, 0.02);
     border-color: rgba(0, 0, 0, 0.05);
@@ -2874,14 +2917,14 @@ body.light-theme .ha-flag-title {
     color: #1e293b;
 }
 body.light-theme .ha-action-btn {
-    background-color: #2563eb !important;   /* blue/indigo */
+    background-color: var(--primary) !important;   /* blue/indigo */
     color: #ffffff !important;
     border: 1px solid rgba(0, 0, 0, 0.12) !important;
     border-bottom: 3.5px solid rgba(0, 0, 0, 0.28) !important;
     box-shadow: 0 4px 14px rgba(37, 99, 235, 0.28), inset 0 1px 0 rgba(255,255,255,0.25) !important;
 }
 body.light-theme .ha-action-btn::before {
-    background-image: linear-gradient(135deg, #3b82f6 0%, #4f46e5 100%);
+    background-image: var(--primary);
 }
 body.light-theme .ha-action-btn:hover:not(:disabled) {
     border-bottom-width: 4.5px !important;
@@ -2902,7 +2945,7 @@ body.light-theme .ha-action-btn:disabled {
     transform: none !important;
 }
 body.light-theme .ha-action-btn:focus-visible {
-    outline: 2px solid #2563eb;
+    outline: 2px solid var(--primary);
     outline-offset: 3px;
     box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.2) !important;
 }
@@ -2927,12 +2970,12 @@ body.light-theme .ha-action-btn:focus-visible {
         <div id="stage-input" class="ha-input-stage">
             <div class="ha-term-header">
                 <div class="ha-term-dots">
-                    <div class="ha-term-dot dot-r" id="ha-dot-red"   title="Clear input"></div>
-                    <div class="ha-term-dot dot-y" id="ha-dot-amber" title="Minimize"></div>
-                    <div class="ha-term-dot dot-g" id="ha-dot-green" title="Expand"></div>
+                    <div class="ha-term-dot dot-r" id="ha-dot-red"   title="Clear input / Reset"></div>
+                    <div class="ha-term-dot dot-y" id="ha-dot-amber" title="Minimize to Route HUD"></div>
+                    <div class="ha-term-dot dot-g" id="ha-dot-green" title="Toggle Fullscreen Maximize"></div>
                 </div>
-                <div class="ha-term-title">PHISHSIM-TERMINAL://HEADER-DECODER</div>
-                <div class="ha-term-status"><div class="ha-status-pulse"></div>READY</div>
+                <div class="ha-term-title" id="ha-term-title">agent@phishsim:~$ <span class="prompt-cmd">trace --mode=headers</span></div>
+                <div class="ha-live-badge"><div class="ha-live-dot"></div>LIVE ENGINE</div>
             </div>
 
             <!-- Minimized interactive route navigator stage -->
@@ -2965,9 +3008,11 @@ body.light-theme .ha-action-btn:focus-visible {
                     <span class="ha-prompt-symbol">&gt;</span> awaiting header payload...
                 </div>
 
+                <div class="ha-textarea-wrap" id="ha-textarea-wrap">
                 <textarea id="headers-input" class="ha-textarea"
                     placeholder="Paste raw email headers here."
                     spellcheck="false"></textarea>
+                </div>
 
                 <!-- Live Structural Detection Bar -->
                 <div class="ha-structural-bar" id="ha-structural-detection" style="display: none;">
@@ -3014,8 +3059,8 @@ body.light-theme .ha-action-btn:focus-visible {
                         <div class="ha-term-dot dot-y"></div>
                         <div class="ha-term-dot dot-g"></div>
                     </div>
-                    <div class="ha-term-title">PHISHSIM-TERMINAL://FORENSIC-DECODER</div>
-                    <div class="ha-term-status"><div class="ha-status-pulse"></div>DECODING</div>
+                    <div class="ha-term-title">agent@phishsim:~$ <span class="prompt-cmd">trace --mode=headers [DECODING]</span></div>
+                    <div class="ha-live-badge"><div class="ha-live-dot"></div>LIVE ENGINE</div>
                 </div>
                 <div class="ha-decoding-body">
                     <div class="ha-decoding-terminal" id="ha-decoding-log">
@@ -3352,7 +3397,8 @@ function loadPreset(key) {
     
     // Clear validation borders on preset select
     const textarea = document.getElementById('headers-input');
-    textarea.style.borderColor = '';
+    const wrap = document.getElementById('ha-textarea-wrap');
+    if (wrap) wrap.style.borderColor = '';
     
     updateStructuralDetection();
 }
@@ -3495,6 +3541,9 @@ function confirmNewScan() {
 function resetToInput() {
     // 1. Stop any ongoing route replay
     if (typeof stopRouteReplay === 'function') stopRouteReplay();
+
+    const t = document.getElementById('ha-term-title');
+    if (t) t.innerHTML = 'agent@phishsim:~$ <span class="prompt-cmd">trace --mode=headers</span>';
 
     // 2. Clear result summary strip metrics
     const verdictEl = document.getElementById('result-verdict');
@@ -3705,10 +3754,17 @@ async function executeTrace() {
     if (!headersText) {
         const textarea = document.getElementById('headers-input');
         textarea.focus();
-        textarea.style.borderColor = 'rgba(239, 68, 68, 0.6)';
-        setTimeout(() => { textarea.style.borderColor = ''; }, 2000);
+        const wrap = document.getElementById('ha-textarea-wrap');
+        if (wrap) {
+          wrap.style.borderColor = 'rgba(239, 68, 68, 0.6)';
+          wrap.style.boxShadow = '0 0 0 3px rgba(239, 68, 68, 0.2)';
+          setTimeout(() => { wrap.style.borderColor = ''; wrap.style.boxShadow = ''; }, 2000);
+        }
         return;
     }
+
+    const termLabel = document.getElementById('ha-term-title');
+    if (termLabel) termLabel.innerHTML = 'agent@phishsim:~$ <span class="prompt-cmd">trace --mode=headers [RUNNING]</span>';
 
     const fd = new FormData();
     fd.append('headers', headersText);
@@ -4453,7 +4509,7 @@ function renderSecurityAnomalies(data) {
 
     if (flagCount === 0) {
         container.innerHTML = `
-            <div class="ha-clean-badge" style="padding: 1.5rem; text-align: center; color: #10b981; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem;">
+            <div class="ha-clean-badge" style="padding: 1.5rem; text-align: center; color: var(--success); font-family: 'JetBrains Mono', monospace; font-size: 0.85rem;">
                 <i class="ti ti-shield-check" style="font-size: 2rem; display: block; margin-bottom: 8px;"></i>
                 <strong>✓ NO HIGH-RISK ANOMALIES IDENTIFIED</strong><br>
                 <span style="font-size: 0.78rem; color: var(--text-muted, #94a3b8);">All authentication, routing, and identity checks passed baseline validation metrics.</span>
@@ -4838,7 +4894,10 @@ async function runReplayStep() {
 
 /* Populate result states in UI */
 function renderForensicResults(data) {
-    // Verdict glow mapping
+    const t = document.getElementById('ha-term-title');
+    if (t) t.innerHTML = 'agent@phishsim:~$ <span class="prompt-cmd">trace --mode=headers [COMPLETED]</span>';
+
+    // Verdict border mapping
     const card = document.getElementById('ha-card-container');
     card.className = 'ha-main-card card-verdict-' + (data.verdict_class === 'danger' ? 'SUSPICIOUS' : (data.verdict_class === 'warning' ? 'UNCERTAIN' : 'LEGITIMATE'));
 

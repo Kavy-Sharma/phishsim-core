@@ -554,7 +554,7 @@
       max-height: 80vh;
       display: flex;
       flex-direction: column;
-      overflow-y: auto;
+      overflow: hidden;
       scrollbar-width: thin;
       scrollbar-color: color-mix(in srgb, var(--primary) 22%, transparent) transparent;
       --lure-bg-base: var(--bg-surface, var(--lure-bg-base));
@@ -604,6 +604,8 @@
       transform: translateY(0) scale(1);
       pointer-events: auto;
     }
+
+    /* Full-screen Maximized Mode — removed duplicate block; canonical rules are in the main maximized section below */
 
     /* Pause all infinite animations when tab is hidden */
     body.pb-tab-hidden * {
@@ -722,7 +724,7 @@
       justify-content: center;
       align-items: center;
     }
-    .pb-tab-btn {
+    #pb-panel .pb-tab-btn {
       font-family: var(--mono, 'JetBrains Mono', monospace);
       font-size: var(--lure-font-xs);
       font-weight: 700;
@@ -742,15 +744,15 @@
       background: transparent;
       transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
     }
-    .pb-tab-btn i {
+    #pb-panel .pb-tab-btn i {
       font-size: var(--lure-font-lg);
       display: inline-block;
     }
-    .pb-tab-text {
+    #pb-panel .pb-tab-text {
       display: none; /* Hide text label in normal mode to prevent overflow */
     }
-    .pb-tab-btn:hover { color: var(--primary); background: var(--primary-dim); }
-    .pb-tab-btn.active {
+    #pb-panel .pb-tab-btn:hover { color: var(--primary); background: var(--primary-dim); }
+    #pb-panel .pb-tab-btn.active {
       color: var(--primary);
       background: var(--primary-dim);
       border-color: color-mix(in srgb, var(--primary) 30%, transparent);
@@ -777,6 +779,7 @@
       flex: 1 !important;
       min-height: 0 !important;
       overflow-y: auto !important;
+      /* Chat tab overrides overflow below — #pb-tab-chat.active uses overflow:hidden */
     }
 
     /* PhishBot dialogue row */
@@ -837,6 +840,11 @@
       border-color: var(--primary);
       transform: translateY(-1.5px);
     }
+    .pb-chip.active {
+      background: color-mix(in srgb, var(--primary) 12%, var(--lure-bg-card)) !important;
+      border-color: var(--primary) !important;
+      box-shadow: 0 0 14px color-mix(in srgb, var(--primary) 22%, transparent);
+    }
     .pb-chip-icon-wrap {
       font-size: var(--lure-font-3xl);
       flex-shrink: 0;
@@ -882,6 +890,11 @@
       border: 1px solid var(--border-subtle, rgba(255,255,255,0.06));
       box-shadow: 0 6px 22px rgba(0,0,0,0.4);
       margin-bottom: 10px;
+      animation: pbCardEntrance 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes pbCardEntrance {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
     }
     .pb-chrome {
       background: color-mix(in srgb, var(--bg-elevated,var(--lure-bg-elevated)) 85%, transparent);
@@ -1259,11 +1272,14 @@
       display: none;
       flex-direction: column;
       height: 100%;
+      min-height: 0;
       box-sizing: border-box;
       padding: 12px 14px;
+      overflow: hidden !important; /* Messages scroll internally; input stays pinned */
     }
     #pb-tab-chat.active {
-      display: flex;
+      display: flex !important;
+      overflow: hidden !important;
     }
     .pb-chat-layout-wrapper {
       display: flex;
@@ -1584,63 +1600,79 @@
       font-weight: 500;
     }
 
-    /* Modern Chat Input Area */
+    /* Modern Chat Input Area — Inner Box Reset & Ultra-Sleek Design */
     .pb-chat-input-wrap {
       display: flex;
-      gap: 8px;
+      gap: 10px;
       align-items: center;
-      background: rgba(255, 255, 255, 0.03) !important;
-      border: 1px solid var(--border-subtle, var(--lure-border-subtle)) !important;
-      border-radius: 12px !important;
-      padding: 6px 10px 6px 12px !important;
-      box-shadow: none !important;
-      transition: all 0.2s ease !important;
+      background: var(--bg-surface, rgba(18, 24, 38, 0.85)) !important;
+      border: 1px solid var(--border-default, rgba(255, 255, 255, 0.12)) !important;
+      border-radius: 14px !important;
+      padding: 8px 12px 8px 16px !important;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25) !important;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
       margin-top: 8px;
     }
     .pb-chat-input-wrap:focus-within {
-      background: rgba(255, 255, 255, 0.05) !important;
-      border-color: var(--primary-glow, rgba(45, 212, 191, 0.45)) !important;
-      box-shadow: 0 0 14px var(--primary-glow, rgba(45, 212, 191, 0.2)) !important;
+      background: var(--bg-hover, rgba(26, 34, 52, 0.95)) !important;
+      border-color: var(--primary, #00F2FE) !important;
+      box-shadow: 0 0 18px var(--primary-glow, rgba(0, 242, 254, 0.3)), 0 4px 24px rgba(0, 0, 0, 0.35) !important;
     }
     .pb-chat-input-wrap textarea {
       flex: 1;
-      background: transparent;
-      border: none;
-      outline: none;
-      color: var(--text-primary, var(--lure-text-primary)) !important;
+      width: 100%;
+      min-width: 0;
+      background: transparent !important;
+      background-color: transparent !important;
+      border: none !important;
+      border-radius: 0 !important;
+      outline: none !important;
+      box-shadow: none !important;
+      appearance: none !important;
+      -webkit-appearance: none !important;
+      color: var(--text-primary, #F8FAFC) !important;
       font-family: var(--sans, 'Space Grotesk', sans-serif) !important;
       font-size: var(--lure-font-lg) !important;
       resize: none;
-      max-height: 80px;
-      height: 32px;
-      line-height: 1.6;
+      max-height: 90px;
+      height: 36px;
+      line-height: 1.5;
       padding: 6px 0 !important;
       box-sizing: border-box;
+      margin: 0 !important;
+    }
+    .pb-chat-input-wrap textarea:focus,
+    .pb-chat-input-wrap textarea:active {
+      border: none !important;
+      outline: none !important;
+      box-shadow: none !important;
+      background: transparent !important;
     }
     .pb-chat-input-wrap textarea::placeholder {
-      color: var(--text-muted, var(--lure-text-muted)) !important;
+      color: var(--text-muted, #64748B) !important;
       font-family: var(--sans, 'Space Grotesk', sans-serif) !important;
       font-size: var(--lure-font-sm) !important;
     }
     .pb-chat-input-wrap button {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, var(--primary), color-mix(in srgb, var(--primary) 70%, var(--text-inverse)));
-      border: none;
-      color: var(--text-inverse);
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: var(--primary, #00F2FE) !important;
+      border: none !important;
+      color: var(--text-inverse, #090C15) !important;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: var(--lure-font-xl);
-      transition: transform 0.2s, filter 0.2s, opacity 0.2s;
+      font-size: 1.1rem;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
       flex-shrink: 0;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      box-shadow: 0 4px 12px var(--primary-glow, rgba(0, 242, 254, 0.3));
     }
     .pb-chat-input-wrap button:hover:not(:disabled) {
-      filter: brightness(1.15);
-      transform: scale(1.06);
+      background: var(--primary-hover, #14B8A6) !important;
+      transform: translateY(-1px) scale(1.04);
+      box-shadow: 0 6px 16px var(--primary-glow, rgba(0, 242, 254, 0.45));
     }
     .pb-chat-input-wrap button:active:not(:disabled) {
       transform: scale(0.95);
@@ -1846,14 +1878,22 @@
 
     /* Maximized desktop panel state styles */
     #pb-panel.pb-panel-maximized {
+      position: fixed !important;
+      top: 16px !important;
+      left: 16px !important;
+      right: 16px !important;
+      bottom: 16px !important;
+      width: calc(100vw - 32px) !important;
+      height: calc(100vh - 32px) !important;
+      max-width: 1200px !important;
+      max-height: 900px !important;
+      margin: auto !important;
       z-index: 10000000 !important;
-      max-width: 1100px !important;
-      max-height: 850px !important;
       transform: none !important;
-      border-radius: 24px !important;
-      background: linear-gradient(135deg, rgba(10, 18, 36, 0.94), rgba(15, 23, 42, 0.92)) !important;
+      border-radius: 20px !important;
+      background: linear-gradient(135deg, rgba(10, 18, 36, 0.96), rgba(15, 23, 42, 0.94)) !important;
       backdrop-filter: blur(32px) saturate(180%) !important;
-      border: 1px solid rgba(56, 189, 248, 0.2) !important;
+      border: 1px solid rgba(56, 189, 248, 0.25) !important;
       box-shadow: 0 40px 100px rgba(0, 0, 0, 0.85), 0 0 80px rgba(56, 189, 248, 0.1) !important;
     }
     #pb-panel.pb-panel-maximized #pb-drag-handle {
@@ -4337,21 +4377,33 @@
       if (!panelOpen) return;
 
       if (panel.classList.contains('pb-panel-maximized')) {
-        if (window.innerWidth > 768) {
-          const maxW = Math.min(1100, window.innerWidth * 0.9);
-          const maxH = Math.min(850, window.innerHeight * 0.9);
-          const maxLeft = (window.innerWidth - maxW) / 2;
-          const maxTop = (window.innerHeight - maxH) / 2;
-          panel.style.width = maxW + 'px';
-          panel.style.height = maxH + 'px';
-          panel.style.left = maxLeft + 'px';
-          panel.style.top = maxTop + 'px';
-        } else {
-          panel.style.width = '';
-          panel.style.height = '';
-          panel.style.left = '';
-          panel.style.top = '';
+        // When maximized, the CSS class (pb-panel-maximized) holds all layout via !important.
+        // We must NOT set any inline styles here — inline styles override !important CSS.
+        // Just clear any stale inline size/position values and let CSS take over.
+        panel.style.width = '';
+        panel.style.height = '';
+        panel.style.top = '';
+        panel.style.left = '';
+        panel.style.right = '';
+        panel.style.bottom = '';
+        if (avatar.classList.contains('pb-in-header')) {
+          updateHeaderAvatarPosition(false);
         }
+        return;
+      }
+      
+      const panelW  = panel.offsetWidth || 450;
+      const panelH  = panel.offsetHeight || 520;
+      const margin = 10;
+
+      // If user manually dragged the panel anywhere on the screen, preserve their chosen placement!
+      if (panel._userMoved && panel.style.left && panel.style.top) {
+        let curLeft = parseFloat(panel.style.left) || 0;
+        let curTop = parseFloat(panel.style.top) || 0;
+        curLeft = Math.max(margin, Math.min(curLeft, window.innerWidth - panelW - margin));
+        curTop = Math.max(margin, Math.min(curTop, window.innerHeight - panelH - margin));
+        panel.style.left = curLeft + 'px';
+        panel.style.top  = curTop + 'px';
         if (avatar.classList.contains('pb-in-header')) {
           updateHeaderAvatarPosition(false);
         }
@@ -4363,16 +4415,12 @@
       avatar.style.transform = 'none';
       const avatarR = avatar.getBoundingClientRect();
       avatar.style.transform = prevTransform;
-      
-      const panelW  = panel.offsetWidth;
-      const panelH  = panel.offsetHeight;
 
       // Position panel relative to avatar
       let left = avatarR.left + (avatarR.width / 2) - (panelW / 2);
       let top  = avatarR.top - panelH - 12; // 12px gap above avatar
 
       // Clamp coordinates to viewport boundaries
-      const margin = 10;
       left = Math.max(margin, Math.min(left, window.innerWidth - panelW - margin));
       
       // If panel overflows the top edge of screen, open it downwards
@@ -4482,9 +4530,13 @@
         };
       }
 
+      // Set initial position off-screen to prevent flash-at-wrong-position on first hover
+      popoverEl.style.left = '-9999px';
+      popoverEl.style.top = '-9999px';
       popoverEl.style.display = 'block';
       popoverEl.setAttribute('aria-hidden', 'false');
-      repositionFvPopover();
+      // Defer positioning until after browser has laid out and measured the element
+      requestAnimationFrame(() => { requestAnimationFrame(() => { repositionFvPopover(); }); });
     }
 
     function hidePopover() {
@@ -4584,12 +4636,24 @@
       const maxBtn = document.getElementById('pb-max-btn');
 
       if (!isMaximized) {
-        panel.style.width = '';
-        panel.style.height = '';
-        panel.style.top = '';
-        panel.style.left = '';
-        panel.style.right = '';
-        panel.style.bottom = '';
+        // Add size-transitioning for smooth animation
+        panel.classList.add('pb-size-transitioning');
+        setTimeout(() => panel.classList.remove('pb-size-transitioning'), 400);
+
+        // Explicitly set fullscreen geometry via inline styles so the layout is guaranteed.
+        // The CSS class (pb-panel-maximized) handles background/border/shadow styling.
+        const margin = 16;
+        panel.style.position = 'fixed';
+        panel.style.top = margin + 'px';
+        panel.style.left = margin + 'px';
+        panel.style.right = margin + 'px';
+        panel.style.bottom = margin + 'px';
+        panel.style.width = 'calc(100vw - ' + (margin * 2) + 'px)';
+        panel.style.height = 'calc(100vh - ' + (margin * 2) + 'px)';
+        panel.style.maxWidth = 'none';
+        panel.style.maxHeight = 'none';
+        panel.style.zIndex = '10005';
+        panel.style.borderRadius = '20px';
         panel.classList.add('pb-panel-maximized');
         panelOpen = true;
         if (maxIcon) maxIcon.className = 'ti ti-minimize';
@@ -4598,7 +4662,19 @@
           maxBtn.setAttribute('aria-label', 'Collapse');
         }
       } else {
+        // Collapsing: remove the class and ALL inline size/position overrides
         panel.classList.remove('pb-panel-maximized');
+        panel.style.position = '';
+        panel.style.top = '';
+        panel.style.left = '';
+        panel.style.right = '';
+        panel.style.bottom = '';
+        panel.style.width = '';
+        panel.style.height = '';
+        panel.style.maxWidth = '';
+        panel.style.maxHeight = '';
+        panel.style.zIndex = '';
+        panel.style.borderRadius = '';
         if (maxIcon) maxIcon.className = 'ti ti-maximize';
         if (maxBtn) {
           maxBtn.setAttribute('title', 'Expand to page');
@@ -4991,16 +5067,38 @@
         try { targetEl.setPointerCapture(e.pointerId); } catch(err) {}
       }
 
-      const hostR = host.getBoundingClientRect();
-      drag = {
-        pointerId: e.pointerId || null,
-        target:    targetEl,
-        startX:    e.clientX,
-        startY:    e.clientY,
-        origLeft:  hostR.left,
-        origTop:   hostR.top,
-        hasMoved:  false
-      };
+      const isPanel = Boolean(e.target.closest('#pb-drag-handle'));
+      if (isPanel) {
+        const panelR = panel.getBoundingClientRect();
+        drag = {
+          pointerId: e.pointerId || null,
+          target:    targetEl,
+          isPanel:   true,
+          startX:    e.clientX,
+          startY:    e.clientY,
+          origLeft:  panelR.left,
+          origTop:   panelR.top,
+          panelW:    panel.offsetWidth || 450,
+          panelH:    panel.offsetHeight || 520,
+          hasMoved:  false
+        };
+      } else {
+        const hostR = host.getBoundingClientRect();
+        const avatarW = avatar.offsetWidth || 110;
+        const avatarH = avatar.offsetHeight || 110;
+        drag = {
+          pointerId: e.pointerId || null,
+          target:    targetEl,
+          isPanel:   false,
+          startX:    e.clientX,
+          startY:    e.clientY,
+          origLeft:  hostR.left,
+          origTop:   hostR.top,
+          avatarW:   avatarW,
+          avatarH:   avatarH,
+          hasMoved:  false
+        };
+      }
     }
 
     function onDragMove(e) {
@@ -5020,11 +5118,29 @@
         if (LURE_DEBUG) console.log('[Lure drag] wtUserDragged SET true — dx:', dx.toFixed(1), 'dy:', dy.toFixed(1));
       }
 
+      if (drag.isPanel) {
+        let newPanelLeft = drag.origLeft + dx;
+        let newPanelTop  = drag.origTop  + dy;
+        const margin = 8;
+        newPanelLeft = Math.max(margin, Math.min(newPanelLeft, window.innerWidth - drag.panelW - margin));
+        newPanelTop  = Math.max(margin, Math.min(newPanelTop, window.innerHeight - drag.panelH - margin));
+
+        panel.style.setProperty('position', 'fixed', 'important');
+        panel.style.setProperty('left', newPanelLeft + 'px', 'important');
+        panel.style.setProperty('top', newPanelTop + 'px', 'important');
+        panel.style.setProperty('right', 'auto', 'important');
+        panel.style.setProperty('bottom', 'auto', 'important');
+        panel._userMoved = true;
+        return;
+      }
+
+      // Drag mascot avatar
       let newLeft = drag.origLeft + dx;
       let newTop  = drag.origTop  + dy;
+      const margin = 8;
 
-      newLeft = Math.max(DRAG_MARGIN, Math.min(newLeft, window.innerWidth - host.offsetWidth - DRAG_MARGIN));
-      newTop  = Math.max(DRAG_MARGIN, Math.min(newTop, window.innerHeight - host.offsetHeight - DRAG_MARGIN));
+      newLeft = Math.max(margin, Math.min(newLeft, window.innerWidth - drag.avatarW - margin));
+      newTop  = Math.max(margin, Math.min(newTop, window.innerHeight - drag.avatarH - margin));
 
       host.style.setProperty('position', 'fixed', 'important');
       host.style.setProperty('left', newLeft + 'px', 'important');
@@ -5032,7 +5148,7 @@
       host.style.setProperty('right', 'auto', 'important');
       host.style.setProperty('bottom', 'auto', 'important');
 
-      if (panelOpen) repositionPanel();
+      if (panelOpen && !panel._userMoved) repositionPanel();
       if (fvOpen) repositionFvPopover();
     }
 
@@ -5093,13 +5209,7 @@
       });
     });
 
-    /* ── Maximize and Collapse handlers ── */
-    document.getElementById('pb-max-btn').addEventListener('click', toggleMaximize);
-    document.getElementById('pb-inline-collapse').addEventListener('click', () => {
-      if (inlineSec.style.display === 'flex') {
-        toggleMaximize();
-      }
-    });
+    /* ── Maximize and Collapse handlers already registered in setupEventHandlers above ── */
 
     function openWalkthroughDirectly() {
       openPanel();
@@ -5153,9 +5263,50 @@
       });
     }
 
+    const FALLBACK_LURES = {
+      ceo_fraud: {
+        success: true,
+        sender_display: "Office of the CEO",
+        subject: "Urgent: Authorization needed for vendor payment",
+        body_text: "Hi Jordan Ellis,\n\nI am currently in executive meetings and need you to authorize an [urgent wire payment](rf:Artificial high-pressure deadline to skip validation) of $45,000 for our incoming vendor today. Please visit [PHISHING_LINK](rf:External unverified link outside corp SSO) to sign off on the disbursement immediately so we avoid contractual penalties.\n\nBest regards,\nExecutive Office",
+        phishing_tactic: "Impersonates executive authority and fabricates high-urgency financial pressure to bypass standard dual-control accounting checks.",
+        bait_score: { authority: 95, urgency: 92, believability: 85, personalization: 80, obfuscation: 55 }
+      },
+      it_alert: {
+        success: true,
+        sender_display: "IT Helpdesk & Systems",
+        subject: "ACTION REQUIRED: Mandatory SSO Session Security Re-Authentication",
+        body_text: "Dear Jordan Ellis,\n\nOur automated security monitors detected an [unauthorized session probe](rf:Security fear trigger to induce panic) originating from outside the corporate subnet. To prevent immediate account suspension, you must [verify your Active Directory credentials](rf:Credential harvesting trap mimicking internal auth): visit [PHISHING_LINK](rf:Lookalike domain designed to capture 2FA tokens).\n\nIT Support Services",
+        phishing_tactic: "Exploits IT authority cues and urgent security panic to force the victim into re-entering SSO credentials into a harvested portal.",
+        bait_score: { authority: 90, urgency: 88, believability: 88, personalization: 75, obfuscation: 65 }
+      },
+      hr_update: {
+        success: true,
+        sender_display: "People Operations & HR",
+        subject: "Confidential: Updated Q3 Compensation & Benefits Restructuring Document",
+        body_text: "Hi Jordan,\n\nHuman Resources has finalized the [revised compensation matrix](rf:Curiosity and financial self-interest bait) and annual benefits review for your department. Please review your personalized adjustment breakdown here: [PHISHING_LINK](rf:OAuth grant request disguised as a shared PDF document). Review required before payroll cutoff.\n\nWarm regards,\nPeople & Culture Team",
+        phishing_tactic: "Lures victim through financial self-interest and curiosity regarding confidential departmental salary adjustments.",
+        bait_score: { authority: 75, urgency: 70, believability: 92, personalization: 88, obfuscation: 60 }
+      },
+      invoice: {
+        success: true,
+        sender_display: "Accounts Payable Gateway",
+        subject: "OVERDUE NOTICE: Invoice #INV-884920 Past Grace Period",
+        body_text: "Attention Accounts Payable,\n\nThis is a final notice regarding [unpaid statement #INV-884920](rf:False urgency asserting overdue debt) in the amount of $18,340.00. Late interest fees will accrue automatically within 24 hours. Download and reconcile the signed invoice voucher: [PHISHING_LINK](rf:Executable or weaponized macro disguised as invoice). Reference account: AP-4029.\n\nBilling Department",
+        phishing_tactic: "Leverages fear of financial penalties and overdue vendor debt to trick employees into downloading malicious attachments or visiting wire portals.",
+        bait_score: { authority: 82, urgency: 94, believability: 86, personalization: 70, obfuscation: 75 }
+      }
+    };
+
     window.pbGen = function (scenario, isInline = false) {
       if (_busy) return;
       _busy = true;
+
+      // Highlight the active scenario chip
+      document.querySelectorAll('.pb-chip').forEach(c => {
+        const fnStr = c.getAttribute('onclick') || '';
+        c.classList.toggle('active', fnStr.includes(scenario));
+      });
 
       const prefix = isInline ? 'pb-il-' : 'pb-';
       const dialogue = document.getElementById('pb-dialogue-text');
@@ -5164,19 +5315,22 @@
       const sender = document.getElementById(prefix + 'sender');
       const subject = document.getElementById(prefix + 'subject');
       const body = document.getElementById(prefix + 'body');
-      const tacticText = document.getElementById(prefix + 'tactic');
+      const tacticText = document.getElementById(prefix + 'tactic-text') || document.getElementById(prefix + 'tactic');
       const meta = document.getElementById(prefix + 'meta');
-      const errorMsg = document.getElementById(prefix + 'error');
+      const errorMsg = document.getElementById(prefix + 'error-msg') || document.getElementById(prefix + 'error');
       
       const baitSect = document.getElementById('pb-bait-section');
       const scoreBars = document.getElementById('pb-score-bars');
 
-      // Reset
+      // Reset previous states
       if (errorMsg) errorMsg.style.display = 'none';
-      card.style.display = 'none';
+      if (card) card.style.display = 'none';
       if (meta) meta.style.display = 'none';
       if (baitSect) baitSect.style.display = 'none';
-      loader.style.display = 'block';
+      if (loader) {
+        loader.style.display = 'block';
+        loader.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
 
       // Set avatar status
       setHostState({ visual: 'active' });
@@ -5201,12 +5355,12 @@
           "Calibrating authority angle...",
           "Polishing urgency triggers..."
         ];
-        stopNarration = startLoadingNarration(dialogue, stages, 850, 6000, "Still crafting... a bit longer...");
+        stopNarration = startLoadingNarration(dialogue, stages, 600, 3500, "Still crafting... a bit longer...");
       }
 
       function process(data) {
         if (stopNarration) stopNarration();
-        loader.style.display = 'none';
+        if (loader) loader.style.display = 'none';
         setHostState({ visual: 'success' });
         if (!isInline) {
           updateMessageAvatar('pb-gen-avatar-container', 'success', 2500);
@@ -5239,7 +5393,7 @@
         setTimeout(() => {
           _busy = false;
           process(_cache[scenario]);
-        }, 400);
+        }, 150);
         return;
       }
 
@@ -5248,29 +5402,38 @@
 
       fetch('/api/hero-demo-lure', { method: 'POST', body: fd })
         .then(r => {
-          if (!r.ok) throw new Error('AI Lure Engine is currently busy. Try again later.');
+          if (!r.ok) {
+            return FALLBACK_LURES[scenario] || { success: false, message: 'AI Engine busy' };
+          }
           return r.json();
         })
         .then(j => {
           _busy = false;
           if (j && j.success) {
-            // Save to cache
             _cache[scenario] = j;
-            
-            // Save last scenario to visitor profile
             loadVisitorProfile();
             visitorProfile.lastScenarioUsed = scenario;
             saveVisitorProfile();
-
             process(j);
           } else {
-            throw new Error(j.message || 'Lure formulation failed.');
+            const fallback = FALLBACK_LURES[scenario];
+            if (fallback) {
+              process(fallback);
+            } else {
+              throw new Error(j.message || 'Lure formulation failed.');
+            }
           }
         })
         .catch(err => {
+          const fallback = FALLBACK_LURES[scenario];
+          if (fallback) {
+            _busy = false;
+            process(fallback);
+            return;
+          }
           if (stopNarration) stopNarration();
           _busy = false;
-          loader.style.display = 'none';
+          if (loader) loader.style.display = 'none';
           setHostState({ visual: 'error' });
           if (!isInline) {
             updateMessageAvatar('pb-gen-avatar-container', 'error', 2500);
@@ -5279,9 +5442,11 @@
             dialogue.style.opacity = '1';
             dialogue.textContent = getRandomVariant(generateErrorLines, 'generate_error');
           }
-          errorMsg.style.display = 'block';
-          errorMsg.textContent = err.message;
-          if (isInline) repositionPanel();
+          if (errorMsg) {
+            errorMsg.style.display = 'block';
+            errorMsg.textContent = err.message;
+          }
+          if (isInline && panelOpen && !panel._userMoved) repositionPanel();
         });
     };
 
@@ -5334,46 +5499,56 @@
       
       const senderEl = getEl(ids.sender);
       const subjectEl = getEl(ids.subject);
-      const tacticEl = getEl(ids.tactic);
+      const tacticEl = getEl(ids.tactic) || document.getElementById('pb-tactic-text');
       const cardEl = getEl(ids.card);
       const metaEl = getEl(ids.meta);
       const bodyEl = getEl(ids.body);
       const baitEl = getEl(ids.bait);
       const barsEl = getEl(ids.bars);
       
-      if (senderEl) senderEl.textContent = data.sender_display || '';
-      if (subjectEl) subjectEl.textContent = data.subject || '';
-      if (tacticEl) tacticEl.innerHTML = 'Tactic: <strong>' + esc(data.phishing_tactic || '') + '</strong>';
-      if (cardEl) cardEl.style.display = 'block';
+      if (senderEl) senderEl.textContent = data.sender_display || 'IT Security Team';
+      if (subjectEl) subjectEl.textContent = data.subject || 'Security Notice';
+      if (tacticEl) tacticEl.innerHTML = 'Tactic: <strong>' + esc(data.phishing_tactic || 'Social engineering pretext') + '</strong>';
+      if (cardEl) {
+        cardEl.style.display = 'block';
+        setTimeout(() => {
+          cardEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }, 100);
+      }
       if (metaEl) metaEl.style.display = 'flex';
-      repositionPanel();
+      if (panelOpen && !panel._userMoved) repositionPanel();
 
       // Typewriter with red-flag annotation
       if (bodyEl) {
         bodyEl.innerHTML = '';
-        const raw = data.body_text || '';
-        let idx = 0;
-        const spd = Math.max(5, Math.floor(1400 / Math.max(raw.length, 1)));
-        function tick() {
-          if (idx < raw.length) {
-            idx++;
-            bodyEl.innerHTML = annotate(raw.slice(0, idx));
-            bodyEl.scrollTop = bodyEl.scrollHeight;
-            setTimeout(tick, spd);
-          } else {
-            bodyEl.innerHTML = annotate(raw); // final pass
-            if (baitEl && barsEl) {
-              if (data.bait_score) {
-                renderBait(barsEl, data.bait_score);
-                baitEl.style.display = 'block';
-              } else {
-                baitEl.style.display = 'none';
+        const raw = data.body_text || data.body || data.body_html || '';
+        if (!raw) {
+          bodyEl.innerHTML = '<span style="color:var(--text-muted);">Simulation email draft ready.</span>';
+        } else {
+          let idx = 0;
+          const spd = Math.max(3, Math.floor(650 / Math.max(raw.length, 1)));
+          function tick() {
+            if (idx < raw.length) {
+              idx += 2;
+              if (idx > raw.length) idx = raw.length;
+              bodyEl.innerHTML = annotate(raw.slice(0, idx));
+              bodyEl.scrollTop = bodyEl.scrollHeight;
+              setTimeout(tick, spd);
+            } else {
+              bodyEl.innerHTML = annotate(raw); // final pass
+              if (baitEl && barsEl) {
+                if (data.bait_score) {
+                  renderBait(barsEl, data.bait_score);
+                  baitEl.style.display = 'block';
+                } else {
+                  baitEl.style.display = 'none';
+                }
               }
+              if (panelOpen && !panel._userMoved) repositionPanel();
             }
-            repositionPanel(); // Adjust position again after bait section shows/hides!
           }
+          tick();
         }
-        tick();
       }
     }
 
@@ -5939,6 +6114,10 @@
         openWalkthroughDirectly();
       } else {
         openPanel();
+        setTimeout(() => {
+          const genBtn = panel.querySelector('.pb-tab-btn[data-tab="generate"]') || panel.querySelector('.pb-sidebar-tab-btn[data-tab="generate"]');
+          if (genBtn) genBtn.click();
+        }, 60);
       }
     };
 

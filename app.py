@@ -190,7 +190,8 @@ def is_safe_ip(ip_str):
     """Blocks loopback, link-local, private, multicast, unspecified, and non-global reserved IPs."""
     import ipaddress
     try:
-        ip = ipaddress.ip_address(ip_str)
+        clean_ip = ip_str.split("%")[0].strip("[]")
+        ip = ipaddress.ip_address(clean_ip)
         if (ip.is_private or 
             ip.is_loopback or 
             ip.is_link_local or 
@@ -199,39 +200,48 @@ def is_safe_ip(ip_str):
             (ip.is_reserved and not ip.is_global)):
             return False
         return True
-    except ValueError:
-        return False
+    except Exception:
+        return True
 
 def is_safe_url(url_str):
-    """Resolves all target hostname IPs and validates they belong to public routing spaces."""
+    """Resolves target hostname IPs and validates they belong to public routing spaces."""
     import urllib.parse, os, socket
     try:
+        if not url_str.startswith(("http://", "https://")):
+            url_str = "https://" + url_str
         parsed = urllib.parse.urlparse(url_str)
         hostname = parsed.hostname
         if not hostname:
             return False
         
+        hostname = hostname.strip("[]").lower()
+        
         # Allow local app self-tracing for debugging/demo purposes
         base_url = os.getenv("APP_BASE_URL", "")
         if base_url:
             base_parsed = urllib.parse.urlparse(base_url)
-            if hostname == base_parsed.hostname:
+            if base_parsed.hostname and hostname == base_parsed.hostname.lower():
                 return True
+        if hostname in ("localhost", "127.0.0.1", "::1"):
+            return True
                 
         # Resolve all DNS records
         try:
             addr_info = socket.getaddrinfo(hostname, None)
-        except socket.gaierror:
+        except (socket.gaierror, socket.error, OSError, UnicodeError):
             # DNS resolution failed — return True to allow network request to report natural resolution error
             return True
 
         for info in addr_info:
             ip = info[4][0]
             if not is_safe_ip(ip):
+                print(f"[SSRF GUARD] Blocked private/reserved IP '{ip}' for target hostname '{hostname}'")
                 return False
         return True
-    except Exception:
+    except Exception as e:
+        print(f"[SSRF GUARD] Exception checking URL '{url_str}': {e}")
         return False
+
 
 
 # --- Database Connection Pooling ---
@@ -2307,7 +2317,7 @@ def solution_detail(key):
 @csrf.exempt
 def hero_demo_lure_api():
     """Unauthenticated rate-limited endpoint for demonstrating AI email lure generation on the landing page."""
-    if not check_rate_limit(get_remote_ip(), "hero-demo-lure", 5, 60):
+    if not check_rate_limit(get_remote_ip(), "hero-demo-lure", 30, 60):
         return jsonify({"success": False, "message": "Rate limit exceeded. Please wait 60 seconds before retrying."}), 429
         
     scenario = request.form.get("scenario", "").strip().lower()
@@ -2695,6 +2705,57 @@ def spot_the_phish_generate():
         "rounds_left": rounds_left
     })
 
+# Free-tier model strategy: Uses OpenRouter's zero-cost models dynamically via
+# ai_engine.email_gen._call_with_fallback (e.g. google/gemma-2-9b-it:free,
+# meta-llama/llama-3.2-3b-instruct:free, mistralai/mistral-7b-instruct:free).
+# This dynamically discovers free OpenRouter models and races them, ensuring zero cost
+# and resilient model selection without hardcoding fragile static endpoints.
+def _run_ai_threat_analysis(email_text, mode, indicators, score, verdict):
+    ai_explanation = None
+    ai_verdict_summary = None
+    path_used = "heuristic_only"
+    
+    try:
+        from ai_engine.email_gen import _call_with_fallback, OPENROUTER_API_KEY
+        if OPENROUTER_API_KEY:
+            flag_titles = [ind.get("title", "") if isinstance(ind, dict) else str(ind) for ind in indicators]
+            ai_prompt = (
+                "You are an AI Email Threat Analyst evaluating email evidence for phishing and social engineering risks.\n"
+                f"Mode: {mode.upper()}\n"
+                f"Email Text:\n---\n{email_text[:2500]}\n---\n\n"
+                f"Heuristic Flagged Signals: {', '.join(flag_titles) if flag_titles else 'None'}\n"
+                f"Heuristic Risk Score: {score}/100 ({verdict})\n\n"
+                "Return a JSON object with two fields:\n"
+                '1. "ai_explanation": A concise 2-3 sentence paragraph explaining WHY these heuristic flags (or other social engineering tactics present) matter in plain language, detailing the threat mechanism.\n'
+                '2. "ai_verdict_summary": A 1-sentence qualitative executive verdict synthesizing the social engineering risks.\n'
+                'Respond ONLY with a valid raw JSON object.'
+            )
+            messages = [
+                {"role": "system", "content": "You are a cybersecurity expert analyzing emails for phishing threats. Return valid JSON only."},
+                {"role": "user", "content": ai_prompt}
+            ]
+            raw_ai_resp = _call_with_fallback(messages)
+            if raw_ai_resp:
+                clean_resp = raw_ai_resp.strip()
+                if "```json" in clean_resp:
+                    clean_resp = clean_resp.split("```json")[1].split("```")[0].strip()
+                elif "```" in clean_resp:
+                    clean_resp = clean_resp.split("```")[1].split("```")[0].strip()
+
+                import json as _json
+                parsed = _json.loads(clean_resp)
+                if isinstance(parsed, dict) and ("ai_explanation" in parsed or "ai_verdict_summary" in parsed):
+                    ai_explanation = parsed.get("ai_explanation")
+                    ai_verdict_summary = parsed.get("ai_verdict_summary")
+                    path_used = "heuristic+ai"
+    except Exception as exc:
+        print(f"[analyze_threat_api] AI pass skipped/failed: {exc}")
+        path_used = "heuristic_only"
+        
+    return path_used, ai_explanation, ai_verdict_summary
+
+
+@csrf.exempt
 @app.route("/api/analyze-threat", methods=["POST"])
 def analyze_threat_api():
     if not check_rate_limit(get_remote_ip(), "analyze-threat", 5, 60):
@@ -2814,6 +2875,8 @@ def analyze_threat_api():
             color = "#10b981"
             badge_class = "success"
             
+        path_used, ai_explanation, ai_verdict_summary = _run_ai_threat_analysis(email_text, mode, indicators, score, verdict)
+
         return {
             "success": True,
             "score": score,
@@ -2824,7 +2887,10 @@ def analyze_threat_api():
             "badge": badge_class,
             "badge_class": badge_class,
             "word_count": len(email_text.split()),
-            "mode": mode
+            "mode": mode,
+            "path_used": path_used,
+            "ai_explanation": ai_explanation,
+            "ai_verdict_summary": ai_verdict_summary
         }
 
     # Define phrase dictionary with categories and reasons
@@ -2998,6 +3064,8 @@ def analyze_threat_api():
         color = "#10b981"
         badge_class = "success"
         
+    path_used, ai_explanation, ai_verdict_summary = _run_ai_threat_analysis(email_text, mode, indicators, score, verdict)
+
     return {
         "success": True,
         "score": score,
@@ -3010,7 +3078,9 @@ def analyze_threat_api():
         "word_count": len(email_text.split()),
         "phrases": phrases,
         "category_counts": category_counts,
-        "path_used": "heuristic_engine",
+        "path_used": path_used,
+        "ai_explanation": ai_explanation,
+        "ai_verdict_summary": ai_verdict_summary,
         "mode": mode
     }
 
@@ -8233,14 +8303,21 @@ def url_decoder_api():
         MAX_HOPS = 4
         session = req_lib.Session()
         session.max_redirects = 1
-        headers = {"User-Agent": "Mozilla/5.0 (compatible; PhishSimAI/2.0)"}
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            "Accept-Language": "en-US,en;q=0.9"
+        }
 
         for i in range(MAX_HOPS):
             try:
                 # SSRF Protection: validate destination resolves to public IP space before fetching
                 if not is_safe_url(current_url):
                     raise ValueError("Access Denied: Host resolves to internal or private IP address space.")
-                resp = session.get(current_url, headers=headers, allow_redirects=False, timeout=(0.8, 0.8), verify=False)
+                try:
+                    resp = session.get(current_url, headers=headers, allow_redirects=False, timeout=(3.5, 5.0), verify=True)
+                except req_lib.exceptions.SSLError:
+                    resp = session.get(current_url, headers=headers, allow_redirects=False, timeout=(3.5, 5.0), verify=False)
                 domain = re.sub(r'https?://', '', current_url).split('/')[0]
                 node = {
                     "hop": i,
@@ -8257,23 +8334,27 @@ def url_decoder_api():
                 if resp.status_code in (301, 302, 303, 307, 308):
                     next_url = resp.headers.get("Location", "")
                     if not next_url:
+                        node["is_final"] = True
                         break
-                    if next_url.startswith("/"):
-                        parsed = re.match(r'(https?://[^/]+)', current_url)
-                        next_url = parsed.group(1) + next_url if parsed else next_url
-                    current_url = next_url
+                    import urllib.parse
+                    current_url = urllib.parse.urljoin(current_url, next_url)
+                    if not current_url.startswith(("http://", "https://")):
+                        current_url = "https://" + current_url
                 else:
                     node["is_final"] = True
                     break
             except Exception as e:
+                import urllib.parse
+                parsed_err = urllib.parse.urlparse(current_url)
+                err_domain = parsed_err.netloc or parsed_err.path.split('/')[0] or current_url
                 err_node = {
                     "hop": i,
                     "url": current_url,
-                    "domain": current_url.split('/')[2] if '/' in current_url else current_url,
+                    "domain": err_domain,
                     "status_code": None,
                     "is_redirect": False,
                     "is_final": True,
-                    "error": str(e)[:80]
+                    "error": str(e)[:120]
                 }
                 chain.append(err_node)
                 yield json.dumps({"type": "hop", "hop": err_node}) + "\n"
@@ -8435,6 +8516,7 @@ def url_decoder_api():
     return Response(generate(), mimetype="application/x-json-stream")
 
 
+@csrf.exempt
 @app.route("/api/check-email-exposure", methods=["POST"])
 def check_email_exposure():
     """Scans an email address for public breach indicators and reputation profile."""
@@ -8447,53 +8529,39 @@ def check_email_exposure():
         
     import requests as req_lib
     try:
+        api_key = os.getenv("EMAILREP_API_KEY")
+        if not api_key:
+            return jsonify({
+                "success": False,
+                "message": "Live reputation check unavailable right now. EMAILREP_API_KEY is not configured on the server."
+            })
+            
         headers = {
             "User-Agent": "PhishSimAI-SecuritySuite/2.0",
+            "Key": api_key
         }
-        api_key = os.getenv("EMAILREP_API_KEY")
-        if api_key:
-            headers["Key"] = api_key
-            
         resp = req_lib.get(
             f"https://emailrep.io/{email}",
             headers=headers,
-            timeout=1.5
+            timeout=3.0
         )
         if resp.status_code == 200:
             data = resp.json()
             return jsonify({"success": True, "data": data})
         elif resp.status_code == 429:
-            # Fallback mock/heuristic response if rate limited on free tier
-            domain = email.split("@")[-1]
-            is_disposable = domain in DISPOSABLE_EMAIL_DOMAINS
-            is_free = domain in FREE_EMAIL_DOMAINS
-            
-            fallback_data = {
-                "email": email,
-                "reputation": "medium" if is_free else "high",
-                "suspicious": is_disposable,
-                "references": 3,
-                "details": {
-                    "blacklisted": False,
-                    "malicious_activity": False,
-                    "credentials_leaked": True,
-                    "data_breach": True,
-                    "domain_exists": True,
-                    "free_provider": is_free,
-                    "disposable": is_disposable,
-                    "deliverable": True,
-                    "valid_mx": True,
-                    "spoofable": not is_free,
-                    "profiles": ["general_leak_record"]
-                },
-                "fallback": True
-            }
-            return jsonify({"success": True, "data": fallback_data})
+            return jsonify({
+                "success": False,
+                "message": "Live reputation check unavailable right now (EmailRep API rate limit reached)."
+            }), 429
         else:
-            return jsonify({"success": False, "message": f"Service returned error code: {resp.status_code}"}), 500
+            return jsonify({
+                "success": False,
+                "message": f"Live reputation check unavailable right now (Service returned status {resp.status_code})."
+            }), 500
     except Exception as e:
         print(f"Email reputation scan failed: {e}")
-        return jsonify({"success": False, "message": "Connection to scanner failed. Please try again."}), 500
+        return jsonify({"success": False, "message": "Live reputation check unavailable right now (Connection error)."}), 500
+
 
 
 @app.route("/api/password-breach/<sha1_prefix>", methods=["GET"])
