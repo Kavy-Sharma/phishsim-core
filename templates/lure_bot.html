@@ -904,8 +904,23 @@
       align-items: center;
       justify-content: space-between;
     }
-    .pb-chrome-dots { display: flex; gap: 5px; }
-    .pb-chrome-dots span { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+    .pb-chrome-dots { display: flex; gap: 6px; align-items: center; }
+    .pb-chrome-dots span {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+      cursor: pointer;
+    }
+    .pb-chrome-dots span:hover { transform: scale(1.22); }
+    .pb-chrome-dots span:nth-child(1):hover { box-shadow: 0 0 8px rgba(239, 68, 68, 0.7); }
+    .pb-chrome-dots span:nth-child(2):hover { box-shadow: 0 0 8px rgba(245, 158, 11, 0.7); }
+    .pb-chrome-dots span:nth-child(3):hover { box-shadow: 0 0 8px rgba(16, 185, 129, 0.7); }
+    .pb-chrome-dots span:active { transform: scale(0.92); }
     .pb-mail-header-inbox {
       background: var(--lure-bg-card);
       border-bottom: 1px solid var(--border-subtle, rgba(255,255,255,0.06));
@@ -1788,6 +1803,184 @@
       color: var(--primary) !important;
     }
 
+    /* Light Theme Main Panel & Maximized Mode Overrides */
+    body.light-theme #pb-panel, [data-theme="light"] #pb-panel {
+      background: #FFFFFF !important;
+      background-image: none !important;
+      border-color: #CBD5E1 !important;
+      box-shadow: 0 20px 60px rgba(15, 23, 42, 0.12), 0 0 0 1px rgba(0, 242, 254, 0.25) !important;
+    }
+    body.light-theme #pb-panel .pb-panel-header, [data-theme="light"] #pb-panel .pb-panel-header {
+      background: linear-gradient(180deg, #F8FAFC 0%, #F1F5F9 100%) !important;
+      border-bottom-color: #E2E8F0 !important;
+    }
+    body.light-theme #pb-panel .pb-panel-title, [data-theme="light"] #pb-panel .pb-panel-title {
+      color: #0F172A !important;
+    }
+    body.light-theme #pb-panel .pb-tab-btn, [data-theme="light"] #pb-panel .pb-tab-btn {
+      color: #64748B !important;
+    }
+    body.light-theme #pb-panel .pb-tab-btn:hover, [data-theme="light"] #pb-panel .pb-tab-btn:hover {
+      color: var(--primary) !important;
+      background: color-mix(in srgb, var(--primary) 12%, transparent) !important;
+    }
+    body.light-theme #pb-panel .pb-tab-btn.active, [data-theme="light"] #pb-panel .pb-tab-btn.active {
+      color: var(--primary) !important;
+      background: color-mix(in srgb, var(--primary) 14%, transparent) !important;
+      border-color: var(--primary) !important;
+    }
+    body.light-theme #pb-panel .pb-dialogue, [data-theme="light"] #pb-panel .pb-dialogue {
+      background: #F8FAFC !important;
+      border-color: #E2E8F0 !important;
+      color: #334155 !important;
+    }
+    /* ── Scenario Chips Default & Dark Theme Theming ── */
+    .pb-chip.pb-scenario-ceo {
+      border: 1.5px solid rgba(6, 182, 212, 0.45) !important;
+      color: #06b6d4 !important;
+      background: rgba(6, 182, 212, 0.08) !important;
+    }
+    .pb-chip.pb-scenario-ceo:hover {
+      background: rgba(6, 182, 212, 0.18) !important;
+      border-color: #06b6d4 !important;
+      box-shadow: 0 4px 14px rgba(6, 182, 212, 0.25);
+    }
+    .pb-chip.pb-scenario-it {
+      border: 1.5px solid rgba(245, 158, 11, 0.45) !important;
+      color: #f59e0b !important;
+      background: rgba(245, 158, 11, 0.08) !important;
+    }
+    .pb-chip.pb-scenario-it:hover {
+      background: rgba(245, 158, 11, 0.18) !important;
+      border-color: #f59e0b !important;
+      box-shadow: 0 4px 14px rgba(245, 158, 11, 0.25);
+    }
+    .pb-chip.pb-scenario-hr {
+      border: 1.5px solid rgba(16, 185, 129, 0.45) !important;
+      color: #10b981 !important;
+      background: rgba(16, 185, 129, 0.08) !important;
+    }
+    .pb-chip.pb-scenario-hr:hover {
+      background: rgba(16, 185, 129, 0.18) !important;
+      border-color: #10b981 !important;
+      box-shadow: 0 4px 14px rgba(16, 185, 129, 0.25);
+    }
+    .pb-chip.pb-scenario-invoice {
+      border: 1.5px solid rgba(239, 68, 68, 0.45) !important;
+      color: #ef4444 !important;
+      background: rgba(239, 68, 68, 0.08) !important;
+    }
+    .pb-chip.pb-scenario-invoice:hover {
+      background: rgba(239, 68, 68, 0.18) !important;
+      border-color: #ef4444 !important;
+      box-shadow: 0 4px 14px rgba(239, 68, 68, 0.25);
+    }
+
+    /* ── Light Theme Scenario Chips ── */
+    body.light-theme #pb-panel .pb-chip, [data-theme="light"] #pb-panel .pb-chip {
+      background: #FFFFFF !important;
+      border-color: #CBD5E1 !important;
+      color: #334155 !important;
+    }
+    body.light-theme #pb-panel .pb-chip:hover, [data-theme="light"] #pb-panel .pb-chip:hover {
+      border-color: var(--primary) !important;
+      background: color-mix(in srgb, var(--primary) 8%, transparent) !important;
+    }
+    body.light-theme #pb-panel .pb-chip.pb-scenario-ceo,
+    [data-theme="light"] #pb-panel .pb-chip.pb-scenario-ceo {
+      background: #F0F9FF !important;
+      border: 1.5px solid #0EA5E9 !important;
+      color: #0369A1 !important;
+      box-shadow: 0 2px 8px rgba(14, 165, 233, 0.12) !important;
+    }
+    body.light-theme #pb-panel .pb-chip.pb-scenario-ceo .pb-chip-title,
+    [data-theme="light"] #pb-panel .pb-chip.pb-scenario-ceo .pb-chip-title {
+      color: #0369A1 !important;
+    }
+    body.light-theme #pb-panel .pb-chip.pb-scenario-it,
+    [data-theme="light"] #pb-panel .pb-chip.pb-scenario-it {
+      background: #FFFBEB !important;
+      border: 1.5px solid #F59E0B !important;
+      color: #B45309 !important;
+      box-shadow: 0 2px 8px rgba(245, 158, 11, 0.12) !important;
+    }
+    body.light-theme #pb-panel .pb-chip.pb-scenario-it .pb-chip-title,
+    [data-theme="light"] #pb-panel .pb-chip.pb-scenario-it .pb-chip-title {
+      color: #B45309 !important;
+    }
+    body.light-theme #pb-panel .pb-chip.pb-scenario-hr,
+    [data-theme="light"] #pb-panel .pb-chip.pb-scenario-hr {
+      background: #ECFDF5 !important;
+      border: 1.5px solid #10B981 !important;
+      color: #047857 !important;
+      box-shadow: 0 2px 8px rgba(16, 185, 129, 0.12) !important;
+    }
+    body.light-theme #pb-panel .pb-chip.pb-scenario-hr .pb-chip-title,
+    [data-theme="light"] #pb-panel .pb-chip.pb-scenario-hr .pb-chip-title {
+      color: #047857 !important;
+    }
+    body.light-theme #pb-panel .pb-chip.pb-scenario-invoice,
+    [data-theme="light"] #pb-panel .pb-chip.pb-scenario-invoice {
+      background: #FEF2F2 !important;
+      border: 1.5px solid #EF4444 !important;
+      color: #B91C1C !important;
+      box-shadow: 0 2px 8px rgba(239, 68, 68, 0.12) !important;
+    }
+    body.light-theme #pb-panel .pb-chip.pb-scenario-invoice .pb-chip-title,
+    [data-theme="light"] #pb-panel .pb-chip.pb-scenario-invoice .pb-chip-title {
+      color: #B91C1C !important;
+    }
+    body.light-theme #pb-panel .pb-chip-title, [data-theme="light"] #pb-panel .pb-chip-title {
+      color: #0F172A !important;
+    }
+    body.light-theme #pb-panel .pb-chip-desc, [data-theme="light"] #pb-panel .pb-chip-desc {
+      color: #64748B !important;
+    }
+    body.light-theme #pb-panel #pb-card, [data-theme="light"] #pb-panel #pb-card {
+      background: #FFFFFF !important;
+      border-color: #E2E8F0 !important;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.04) !important;
+    }
+    body.light-theme #pb-panel .pb-card-subject, [data-theme="light"] #pb-panel .pb-card-subject {
+      color: #0F172A !important;
+    }
+    body.light-theme #pb-panel .pb-card-body, [data-theme="light"] #pb-panel .pb-card-body {
+      color: #334155 !important;
+    }
+    body.light-theme #pb-panel #pb-bait-section, [data-theme="light"] #pb-panel #pb-bait-section {
+      background: #F8FAFC !important;
+      border-color: #E2E8F0 !important;
+    }
+    body.light-theme #pb-panel .pb-input, [data-theme="light"] #pb-panel .pb-input {
+      background: #FFFFFF !important;
+      border-color: #CBD5E1 !important;
+      color: #0F172A !important;
+    }
+    body.light-theme #pb-panel.pb-panel-maximized, [data-theme="light"] #pb-panel.pb-panel-maximized {
+      background: #FFFFFF !important;
+      background-image: linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%) !important;
+      border-color: #CBD5E1 !important;
+      box-shadow: 0 40px 100px rgba(15, 23, 42, 0.18), 0 0 0 1px var(--primary) !important;
+    }
+    body.light-theme #pb-panel.pb-panel-maximized .pb-panel-header, [data-theme="light"] #pb-panel.pb-panel-maximized .pb-panel-header {
+      background: linear-gradient(180deg, #F8FAFC 0%, #F1F5F9 100%) !important;
+      border-bottom-color: #E2E8F0 !important;
+    }
+    body.light-theme #pb-panel.pb-panel-maximized .pb-panel-sidebar, [data-theme="light"] #pb-panel.pb-panel-maximized .pb-panel-sidebar {
+      background: #F8FAFC !important;
+      border-right-color: #E2E8F0 !important;
+    }
+    body.light-theme #pb-panel.pb-panel-maximized .pb-sidebar-tab-btn, [data-theme="light"] #pb-panel.pb-panel-maximized .pb-sidebar-tab-btn {
+      color: #64748B !important;
+    }
+    body.light-theme #pb-panel.pb-panel-maximized .pb-sidebar-tab-btn.active, [data-theme="light"] #pb-panel.pb-panel-maximized .pb-sidebar-tab-btn.active {
+      background: color-mix(in srgb, var(--primary) 12%, transparent) !important;
+      color: var(--primary) !important;
+    }
+    body.light-theme #pb-panel.pb-panel-maximized .pb-panel-content-area, [data-theme="light"] #pb-panel.pb-panel-maximized .pb-panel-content-area {
+      background: #FFFFFF !important;
+    }
+
     /* Mobile responsive overrides (max-width: 768px) */
     @media (max-width: 768px) {
       .pb-mobile-no-arrow::before {
@@ -2475,10 +2668,11 @@
         display: flex !important;
         flex-direction: column !important;
         align-items: center !important;
-        justify-content: center !important;
-        padding: 24px 30px !important;
+        justify-content: flex-start !important;
+        padding: 24px 30px 60px !important;
         box-sizing: border-box !important;
         height: 100% !important;
+        overflow-y: auto !important;
       }
       #pb-panel.pb-panel-maximized #pb-tab-riskscore.active #rs-form,
       #pb-panel.pb-panel-maximized #pb-tab-riskscore.active #rs-result {
@@ -3191,34 +3385,141 @@
       color: var(--text-primary, #0F172A) !important;
       border: 1px solid rgba(0, 0, 0, 0.12) !important;
     }
-    /* Tour category accordion light-mode */
-    body.light-theme .pb-tour-cat-accordion-header {
-      background: rgba(0, 0, 0, 0.03) !important;
-      border-color: rgba(0, 0, 0, 0.08) !important;
+    /* ── Lure Footer in Light Mode (Pic 4) ── */
+    body.light-theme .pb-panel-footer,
+    [data-theme="light"] .pb-panel-footer {
+      background: #F8FAFC !important;
+      border-top: 1px solid #E2E8F0 !important;
+      color: #64748B !important;
     }
-    body.light-theme .pb-tour-cat-accordion-header:hover {
-      background: rgba(0, 0, 0, 0.05) !important;
+    body.light-theme .pb-panel-footer span,
+    [data-theme="light"] .pb-panel-footer span {
+      color: #475569 !important;
     }
-    body.light-theme .pb-tour-cat-name {
-      color: var(--text-primary) !important;
+    body.light-theme #pb-reset-visitor,
+    [data-theme="light"] #pb-reset-visitor {
+      color: #64748B !important;
     }
-    body.light-theme .pb-tour-cat-count {
-      background: rgba(0, 0, 0, 0.06) !important;
-      color: var(--text-secondary) !important;
+    body.light-theme #pb-reset-visitor:hover,
+    [data-theme="light"] #pb-reset-visitor:hover {
+      color: var(--primary) !important;
     }
-    body.light-theme .pb-wt-guide-card {
-      background: rgba(0, 0, 0, 0.02) !important;
-      border-color: rgba(0, 0, 0, 0.08) !important;
+
+    /* ── Tour category accordion & cards light-mode ── */
+    body.light-theme .pb-tour-cat-accordion-header,
+    [data-theme="light"] .pb-tour-cat-accordion-header {
+      background: #FFFFFF !important;
+      border: 1px solid #CBD5E1 !important;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
     }
-    body.light-theme .pb-wt-guide-card:hover {
-      background: rgba(0, 0, 0, 0.04) !important;
-      border-color: rgba(0, 0, 0, 0.15) !important;
+    body.light-theme .pb-tour-cat-accordion-header:hover,
+    [data-theme="light"] .pb-tour-cat-accordion-header:hover {
+      background: #F8FAFC !important;
+      border-color: var(--primary) !important;
     }
-    body.light-theme .pb-wt-guide-name {
-      color: var(--text-primary) !important;
+    body.light-theme .pb-tour-cat-name,
+    [data-theme="light"] .pb-tour-cat-name {
+      color: #0F172A !important;
     }
-    body.light-theme .pb-wt-guide-desc {
-      color: var(--text-secondary) !important;
+    body.light-theme .pb-tour-cat-count,
+    [data-theme="light"] .pb-tour-cat-count {
+      background: #F1F5F9 !important;
+      color: #475569 !important;
+    }
+    body.light-theme .pb-tour-cat-completion,
+    [data-theme="light"] .pb-tour-cat-completion {
+      color: #64748B !important;
+    }
+    body.light-theme .pb-wt-guide-card,
+    [data-theme="light"] .pb-wt-guide-card {
+      background: #FFFFFF !important;
+      border: 1px solid #CBD5E1 !important;
+      box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04) !important;
+    }
+    body.light-theme .pb-wt-guide-card:hover,
+    [data-theme="light"] .pb-wt-guide-card:hover {
+      background: #F8FAFC !important;
+      border-color: var(--primary) !important;
+    }
+    body.light-theme .pb-wt-guide-name,
+    [data-theme="light"] .pb-wt-guide-name {
+      color: #0F172A !important;
+    }
+    body.light-theme .pb-wt-guide-desc,
+    [data-theme="light"] .pb-wt-guide-desc {
+      color: #475569 !important;
+    }
+
+    /* ── Spot the Phish light-mode ── */
+    body.light-theme .stp-email,
+    [data-theme="light"] .stp-email {
+      background: #FFFFFF !important;
+      border: 1px solid #CBD5E1 !important;
+      box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04) !important;
+    }
+    body.light-theme .stp-email:hover,
+    [data-theme="light"] .stp-email:hover {
+      border-color: var(--primary) !important;
+    }
+    body.light-theme .stp-email-header,
+    [data-theme="light"] .stp-email-header {
+      background: #F8FAFC !important;
+      border-bottom: 1px solid #E2E8F0 !important;
+      color: #0F172A !important;
+    }
+    body.light-theme .stp-email-body,
+    [data-theme="light"] .stp-email-body {
+      background: #FFFFFF !important;
+      color: #334155 !important;
+    }
+    body.light-theme .stp-score-row,
+    [data-theme="light"] .stp-score-row {
+      color: #334155 !important;
+    }
+    body.light-theme .stp-result,
+    [data-theme="light"] .stp-result {
+      background: #FFFFFF !important;
+      border: 1px solid #CBD5E1 !important;
+    }
+    body.light-theme .pb-memory-banner,
+    [data-theme="light"] .pb-memory-banner {
+      background: #F0FDF4 !important;
+      border: 1px solid #86EFAC !important;
+      color: #166534 !important;
+    }
+
+    /* ── Risk Score light-mode ── */
+    body.light-theme .rs-opt,
+    [data-theme="light"] .rs-opt {
+      background: #FFFFFF !important;
+      border: 1px solid #CBD5E1 !important;
+      color: #334155 !important;
+    }
+    body.light-theme .rs-opt:hover,
+    [data-theme="light"] .rs-opt:hover {
+      background: #F8FAFC !important;
+      border-color: var(--primary) !important;
+    }
+    body.light-theme .rs-opt.selected,
+    [data-theme="light"] .rs-opt.selected {
+      background: color-mix(in srgb, var(--primary) 10%, #FFFFFF) !important;
+      border-color: var(--primary) !important;
+      color: #0F172A !important;
+    }
+    body.light-theme .rs-q-text,
+    [data-theme="light"] .rs-q-text {
+      color: #0F172A !important;
+    }
+    body.light-theme .rs-result,
+    [data-theme="light"] .rs-result {
+      background: #FFFFFF !important;
+      border: 1px solid #CBD5E1 !important;
+    }
+    body.light-theme .rs-metric-tile,
+    [data-theme="light"] .rs-metric-tile {
+      background: #F8FAFC !important;
+      border: 1px solid #E2E8F0 !important;
+      color: #334155 !important;
     }
     
     .pb-wt-bubble-container {
@@ -3614,7 +3915,11 @@
   <div class="pb-panel-body-wrapper">
     <!-- Sidebar docked left (vertical rail) -->
     <div class="pb-panel-sidebar">
-      <button class="pb-sidebar-tab-btn active" data-tab="generate" title="Generate Lure">
+      <button class="pb-sidebar-tab-btn active" data-tab="chat" title="Ask Lure">
+        <i class="ti ti-messages" aria-hidden="true"></i>
+        <span class="pb-sidebar-tab-label">Ask Lure</span>
+      </button>
+      <button class="pb-sidebar-tab-btn" data-tab="generate" title="Generate Lure">
         <i class="ti ti-dna" aria-hidden="true"></i>
         <span class="pb-sidebar-tab-label">Generate</span>
       </button>
@@ -3626,10 +3931,6 @@
         <i class="ti ti-chart-bar" aria-hidden="true"></i>
         <span class="pb-sidebar-tab-label">Risk Score</span>
       </button>
-      <button class="pb-sidebar-tab-btn" data-tab="chat" title="Ask Lure">
-        <i class="ti ti-messages" aria-hidden="true"></i>
-        <span class="pb-sidebar-tab-label">Ask Lure</span>
-      </button>
       <button class="pb-sidebar-tab-btn" data-tab="tours" title="Walkthrough Tours">
         <i class="ti ti-compass" aria-hidden="true"></i>
         <span class="pb-sidebar-tab-label">Tours</span>
@@ -3639,7 +3940,7 @@
     <div class="pb-panel-content-area">
 
       <!-- TAB: Generate -->
-      <div class="pb-tab-panel active" id="pb-tab-generate">
+      <div class="pb-tab-panel" id="pb-tab-generate">
     <div class="pb-dialogue">
       <div class="pb-dialogue-icon" id="pb-gen-avatar-container"></div>
       <div class="pb-bubble" id="pb-dialogue-text">
@@ -3647,28 +3948,28 @@
       </div>
     </div>
     <div class="pb-chips">
-      <button class="pb-chip" onclick="pbGen('ceo_fraud')" style="color:var(--primary); border-color:color-mix(in srgb, var(--primary) 32%, transparent);">
+      <button class="pb-chip pb-scenario-ceo" onclick="pbGen('ceo_fraud')">
         <div class="pb-chip-icon-wrap">🧬</div>
         <div class="pb-chip-content-wrap">
           <span class="pb-chip-title">CEO Fraud</span>
           <span class="pb-chip-desc">Simulate high-authority urgency pretexts targeting finance and operations.</span>
         </div>
       </button>
-      <button class="pb-chip" onclick="pbGen('it_alert')" style="color:var(--warning); border-color:color-mix(in srgb, var(--warning) 32%, transparent);">
+      <button class="pb-chip pb-scenario-it" onclick="pbGen('it_alert')">
         <div class="pb-chip-icon-wrap">⚙️</div>
         <div class="pb-chip-content-wrap">
           <span class="pb-chip-title">IT Support Alert</span>
           <span class="pb-chip-desc">Urgent security patches, system maintenance warnings, or password resets.</span>
         </div>
       </button>
-      <button class="pb-chip" onclick="pbGen('hr_update')" style="color:var(--success,var(--lure-success)); border-color:color-mix(in srgb, var(--success,var(--lure-success)) 32%, transparent);">
+      <button class="pb-chip pb-scenario-hr" onclick="pbGen('hr_update')">
         <div class="pb-chip-icon-wrap">📋</div>
         <div class="pb-chip-content-wrap">
           <span class="pb-chip-title">HR Policy Update</span>
           <span class="pb-chip-desc">Benefits updates, appraisal forms, or compliance training alerts.</span>
         </div>
       </button>
-      <button class="pb-chip" onclick="pbGen('invoice')" style="color:var(--danger); border-color:color-mix(in srgb, var(--danger) 32%, transparent);">
+      <button class="pb-chip pb-scenario-invoice" onclick="pbGen('invoice')">
         <div class="pb-chip-icon-wrap">💸</div>
         <div class="pb-chip-content-wrap">
           <span class="pb-chip-title">Urgent Invoice</span>
@@ -3753,46 +4054,92 @@
     <div class="pb-dialogue">
       <div class="pb-dialogue-icon" id="pb-riskscore-avatar-container"></div>
       <div class="pb-bubble" id="rs-dialogue-text">
-        3 quick questions. I'll estimate your organisation's phishing exposure.
+        Phishing Exposure &amp; Human Risk Matrix. Configure your organizational vectors for dynamic threat modeling.
       </div>
     </div>
     <div id="rs-form">
-      <div class="rs-q-text">1. What industry are you in?</div>
-      <div class="rs-opts">
-        <label class="rs-opt"><input type="radio" name="rs-ind" value="3"><span class="rs-radio"></span>Finance / Banking / Insurance</label>
-        <label class="rs-opt"><input type="radio" name="rs-ind" value="2"><span class="rs-radio"></span>Healthcare / Legal / Government</label>
-        <label class="rs-opt"><input type="radio" name="rs-ind" value="1"><span class="rs-radio"></span>Technology / SaaS / Media</label>
-        <label class="rs-opt"><input type="radio" name="rs-ind" value="1"><span class="rs-radio"></span>Other</label>
+      <!-- Real-time Phishing Threat Meter -->
+      <div class="rs-live-meter-wrap" id="rs-live-meter" style="display:flex; align-items:center; justify-content:space-between; gap:16px; background:rgba(15,23,42,0.6); border:1px solid var(--border-default); border-radius:12px; padding:14px 18px; margin-bottom:18px;">
+        <div style="display:flex; align-items:center; gap:14px;">
+          <div class="rs-gauge-circle-wrap" style="position:relative; width:56px; height:56px; flex-shrink:0;">
+            <svg viewBox="0 0 36 36" style="width:100%; height:100%; transform: rotate(-90deg);">
+              <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="3.2"/>
+              <path id="rs-circle-bar" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="var(--warning)" stroke-width="3.2" stroke-dasharray="100, 100" stroke-dashoffset="48" stroke-linecap="round" style="transition: stroke-dashoffset 0.4s ease, stroke 0.4s ease;"/>
+            </svg>
+            <div id="rs-mini-score" style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-family:var(--mono); font-size:0.82rem; font-weight:800; color:var(--text-primary);">52%</div>
+          </div>
+          <div>
+            <div style="font-family:var(--mono); font-size:0.62rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.06em;">LIVE EXPOSURE INDEX</div>
+            <div id="rs-status-tag" style="font-family:var(--sans); font-size:0.85rem; font-weight:700; color:var(--warning); margin-top:2px;">MODERATE RISK POSTURE</div>
+          </div>
+        </div>
+        <div style="display:flex; flex-direction:column; align-items:flex-end; gap:3px;">
+          <span id="rs-click-rate-badge" style="font-family:var(--mono); font-size:0.68rem; font-weight:700; background:rgba(255,255,255,0.05); padding:3px 8px; border-radius:4px; border:1px solid var(--border-default); color:var(--warning);">~14.2% Click Drift</span>
+          <span style="font-size:0.6rem; color:var(--text-muted);">Real-Time Threat Drift</span>
+        </div>
       </div>
-      <div class="rs-q-text">2. Company size?</div>
+
+      <div class="rs-q-text">1. Industry &amp; Target Attractiveness</div>
       <div class="rs-opts">
-        <label class="rs-opt"><input type="radio" name="rs-sz" value="3"><span class="rs-radio"></span>1,000+ (Enterprise)</label>
-        <label class="rs-opt"><input type="radio" name="rs-sz" value="2"><span class="rs-radio"></span>100 – 999 (Mid-market)</label>
-        <label class="rs-opt"><input type="radio" name="rs-sz" value="1"><span class="rs-radio"></span>Under 100 (SMB)</label>
+        <label class="rs-opt selected"><input type="radio" name="rs-ind" value="3" checked><span class="rs-radio"></span>🏦 Finance / Banking / FinTech <span style="margin-left:auto; font-size:0.68rem; color:var(--danger); font-family:var(--mono);">High Value Target</span></label>
+        <label class="rs-opt"><input type="radio" name="rs-ind" value="2"><span class="rs-radio"></span>🏥 Healthcare / Legal / Gov <span style="margin-left:auto; font-size:0.68rem; color:var(--warning); font-family:var(--mono);">Critical Data</span></label>
+        <label class="rs-opt"><input type="radio" name="rs-ind" value="1"><span class="rs-radio"></span>💻 Technology / SaaS / Cloud <span style="margin-left:auto; font-size:0.68rem; color:var(--primary); font-family:var(--mono);">API / SSO Vector</span></label>
+        <label class="rs-opt"><input type="radio" name="rs-ind" value="1"><span class="rs-radio"></span>🏢 General Enterprise / Supply Chain <span style="margin-left:auto; font-size:0.68rem; color:var(--text-muted); font-family:var(--mono);">BEC / Vendor Wire</span></label>
       </div>
-      <div class="rs-q-text">3. Do you run phishing simulations regularly?</div>
+
+      <div class="rs-q-text">2. Company Size &amp; Remote Footprint</div>
       <div class="rs-opts">
-        <label class="rs-opt"><input type="radio" name="rs-tr" value="0"><span class="rs-radio"></span>Yes — quarterly or more</label>
-        <label class="rs-opt"><input type="radio" name="rs-tr" value="2"><span class="rs-radio"></span>Occasionally — once a year or less</label>
-        <label class="rs-opt"><input type="radio" name="rs-tr" value="3"><span class="rs-radio"></span>No / not sure</label>
+        <label class="rs-opt selected"><input type="radio" name="rs-sz" value="3" checked><span class="rs-radio"></span>🌍 1,000+ Enterprise (High Blast Radius)</label>
+        <label class="rs-opt"><input type="radio" name="rs-sz" value="2"><span class="rs-radio"></span>🏢 100 – 999 Mid-Market (Expanding Perimeter)</label>
+        <label class="rs-opt"><input type="radio" name="rs-sz" value="1"><span class="rs-radio"></span>👥 Under 100 SMB (Supply Chain Access Vector)</label>
       </div>
-      <button class="pb-action-btn" onclick="rsCalc()">
-        <i class="ti ti-calculator" aria-hidden="true"></i> Calculate exposure
+
+      <div class="rs-q-text">3. Authentication &amp; Identity Guardrails</div>
+      <div class="rs-opts">
+        <label class="rs-opt"><input type="radio" name="rs-auth" value="0"><span class="rs-radio"></span>🔒 FIDO2 / Hardware Security Keys (Phish-Resistant)</label>
+        <label class="rs-opt selected"><input type="radio" name="rs-auth" value="2" checked><span class="rs-radio"></span>📱 Mobile Authenticator / SMS OTP (Proxy-Bypassable)</label>
+        <label class="rs-opt"><input type="radio" name="rs-auth" value="3"><span class="rs-radio"></span>⚠️ Passwords Only / Partial 2FA Rollout</label>
+      </div>
+
+      <div class="rs-q-text">4. Phishing Drills &amp; Behavioral Baseline</div>
+      <div class="rs-opts">
+        <label class="rs-opt"><input type="radio" name="rs-tr" value="0"><span class="rs-radio"></span>🎯 Regular Adaptive Phishing Drills (Quarterly+)</label>
+        <label class="rs-opt selected"><input type="radio" name="rs-tr" value="2" checked><span class="rs-radio"></span>📅 Annual / Infrequent Compliance Check</label>
+        <label class="rs-opt"><input type="radio" name="rs-tr" value="3"><span class="rs-radio"></span>❌ No Active Simulations Conducted</label>
+      </div>
+
+      <button class="pb-action-btn" onclick="rsCalc(true)" style="width:100%; justify-content:center; padding:12px 18px; margin-top:8px;">
+        <i class="ti ti-shield-search" aria-hidden="true"></i> Run In-Depth Threat Audit
       </button>
     </div>
+
+    <!-- Results Panel -->
     <div class="rs-result" id="rs-result">
-      <div class="rs-gauge" id="rs-gauge">—</div>
+      <div class="rs-gauge" id="rs-gauge">52%</div>
       <div style="font-family:var(--mono);font-size: var(--lure-font-xs);color:var(--text-secondary,var(--lure-text-secondary));margin-bottom:14px;" id="rs-gauge-lbl"></div>
-      <div id="rs-gauge-reaction" style="font-size: var(--lure-font-xs);color:var(--text-primary,var(--lure-text-primary));margin-bottom:14px;line-height:1.3;"></div>
+      
+      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(160px, 1fr)); gap:10px; margin-bottom:16px; text-align:left;">
+        <div class="rs-metric-tile" style="padding:10px 14px; border-radius:8px; background:rgba(255,255,255,0.03); border:1px solid var(--border-default);">
+          <div style="font-size:0.62rem; color:var(--text-muted); font-family:var(--mono); text-transform:uppercase;">Primary Attack Surface</div>
+          <div id="rs-surface-val" style="font-size:0.78rem; font-weight:700; color:var(--text-primary); margin-top:3px;">Session Hijack via Reverse Proxy</div>
+        </div>
+        <div class="rs-metric-tile" style="padding:10px 14px; border-radius:8px; background:rgba(255,255,255,0.03); border:1px solid var(--border-default);">
+          <div style="font-size:0.62rem; color:var(--text-muted); font-family:var(--mono); text-transform:uppercase;">Simulated Click Drift</div>
+          <div id="rs-drift-val" style="font-size:0.78rem; font-weight:700; color:var(--danger); margin-top:3px;">16.8% (Elevated)</div>
+        </div>
+      </div>
+
+      <div id="rs-gauge-reaction" style="font-size: var(--lure-font-xs);color:var(--text-primary,var(--lure-text-primary));margin-bottom:14px;line-height:1.5; text-align:left; background:rgba(0,0,0,0.15); padding:12px; border-radius:8px; border-left:3px solid var(--primary);"></div>
+
       <button class="pb-action-btn" onclick="rsReset()">
-        <i class="ti ti-refresh" aria-hidden="true"></i> Start over
+        <i class="ti ti-refresh" aria-hidden="true"></i> Reconfigure Threat Parameters
       </button>
-      <div class="rs-note">⚠ This is a directional estimate based on averages. Actual risk depends on technical configurations and ongoing training levels.</div>
+      <div class="rs-note">⚠ Quantitative model derived from PhishSim AI behavioral intelligence and MITRE ATT&amp;CK phishing sub-techniques (T1566.001 / T1566.002).</div>
     </div>
   </div>
 
   <!-- TAB: Ask Lure (Chat) -->
-  <div class="pb-tab-panel" id="pb-tab-chat">
+  <div class="pb-tab-panel active" id="pb-tab-chat">
     <div class="pb-chat-header-meta">
       <div class="pb-chat-header-left">
         <span class="pb-chat-header-title">Ask Lure</span>
@@ -4703,10 +5050,10 @@
       }
       panel.setAttribute('aria-hidden', 'false');
       
-      // Restore last active tab from sessionStorage if it exists
-      const lastTab = sessionStorage.getItem('pb_active_tab');
+      // Restore last active tab from sessionStorage if it exists (defaults to 'chat')
+      const lastTab = sessionStorage.getItem('pb_active_tab') || 'chat';
       if (lastTab) {
-        const targetBtn = panel.querySelector(`.pb-tab-btn[data-tab="${lastTab}"]`);
+        const targetBtn = panel.querySelector(`.pb-tab-btn[data-tab="${lastTab}"], .pb-sidebar-tab-btn[data-tab="${lastTab}"]`);
         if (targetBtn) {
           panel.querySelectorAll('.pb-tab-btn, .pb-sidebar-tab-btn').forEach(b => {
             if (b.dataset.tab === lastTab) {
@@ -4722,6 +5069,8 @@
             if (typeof window.stpRender === 'function') window.stpRender();
           } else if (lastTab === 'tours') {
             if (typeof renderToursList === 'function') renderToursList();
+          } else if (lastTab === 'chat') {
+            if (typeof initChat === 'function') initChat();
           }
         }
       }
@@ -7824,8 +8173,11 @@
           memBanner.id = 'stp-memory-banner';
           memBanner.className = 'pb-memory-banner';
           const dial = document.getElementById('stp-dialogue-text');
-          if (dial && dial.parentNode) {
-            dial.parentNode.insertBefore(memBanner, dial);
+          if (dial) {
+            const dialogueBox = dial.closest('.pb-dialogue');
+            if (dialogueBox && dialogueBox.parentNode) {
+              dialogueBox.parentNode.insertBefore(memBanner, dialogueBox);
+            }
           }
         }
         memBanner.innerHTML = `<i class="ti ti-history" aria-hidden="true"></i> Last round you got ${stpMem.score}/${stpMem.total} &mdash; let's beat it!`;
@@ -7920,94 +8272,138 @@
 
 
     /* ================================================================
-       Risk Score calculations & Memory (Task 4 & Task 5)
+       Risk Score calculations & Memory (Interactive Human Risk Matrix)
        ================================================================ */
-    window.rsCalc = function() {
-      const ind = document.querySelector('input[name="rs-ind"]:checked');
-      const sz  = document.querySelector('input[name="rs-sz"]:checked');
-      const tr  = document.querySelector('input[name="rs-tr"]:checked');
-      if (!ind || !sz || !tr) {
-        document.getElementById('rs-dialogue-text').textContent = 'Please answer all 3 questions first.';
-        updateMessageAvatar('pb-riskscore-avatar-container', 'error', 2500);
-        return;
+    function rsComputeCurrentValues() {
+      const indEl = document.querySelector('input[name="rs-ind"]:checked');
+      const szEl  = document.querySelector('input[name="rs-sz"]:checked');
+      const authEl = document.querySelector('input[name="rs-auth"]:checked');
+      const trEl  = document.querySelector('input[name="rs-tr"]:checked');
+
+      const ind = indEl ? +indEl.value : 3;
+      const sz  = szEl ? +szEl.value : 3;
+      const auth = authEl ? +authEl.value : 2;
+      const tr  = trEl ? +trEl.value : 2;
+
+      const raw = ind + sz + auth + tr; // 1 to 12
+      const pct = Math.min(94, Math.max(14, Math.round((raw / 12) * 92)));
+      const color = pct >= 65 ? 'var(--danger)' : pct >= 40 ? 'var(--warning)' : 'var(--success, #10b981)';
+      const status = pct >= 65 ? 'CRITICAL RISK POSTURE' : pct >= 40 ? 'MODERATE RISK POSTURE' : 'LOW RISK POSTURE';
+      const drift = (pct * 0.32).toFixed(1) + '%';
+
+      let surface = 'Generic Brand Spoofing & Phishing Links';
+      if (auth >= 2) {
+        surface = 'Reverse-Proxy Session Interception & OTP Traps';
+      } else if (ind === 3) {
+        surface = 'Targeted Executive BEC & Payment Redirection';
+      } else if (sz === 3) {
+        surface = 'Mass Credential Stuffing & OAuth Consent Abuse';
+      } else if (ind === 2) {
+        surface = 'Ransomware Lures & Supply-Chain Breaches';
       }
-      const raw   = +ind.value + +sz.value + +tr.value; // 0-9
-      const pct   = Math.round(14 + raw * 8);            // 14-86%
-      const color = pct >= 60 ? 'var(--danger)' : pct >= 35 ? 'var(--warning)' : 'var(--success,var(--lure-success))';
-      const label = pct >= 60 ? 'High exposure — simulations strongly recommended'
-                  : pct >= 35 ? 'Moderate exposure — some controls in place'
-                  :             'Lower exposure — good hygiene, keep it up';
-      
-      const indVal = +ind.value;
-      const szVal  = +sz.value;
-      const trVal  = +tr.value;
+
+      return { ind, sz, auth, tr, raw, pct, color, status, drift, surface };
+    }
+
+    window.rsUpdateLive = function() {
+      const data = rsComputeCurrentValues();
+      const circleBar = document.getElementById('rs-circle-bar');
+      const miniScore = document.getElementById('rs-mini-score');
+      const statusTag = document.getElementById('rs-status-tag');
+      const clickBadge = document.getElementById('rs-click-rate-badge');
+
+      if (circleBar) {
+        circleBar.style.strokeDashoffset = (100 - data.pct);
+        circleBar.style.stroke = data.color;
+      }
+      if (miniScore) {
+        miniScore.textContent = data.pct + '%';
+        miniScore.style.color = data.color;
+      }
+      if (statusTag) {
+        statusTag.textContent = data.status;
+        statusTag.style.color = data.color;
+      }
+      if (clickBadge) {
+        clickBadge.textContent = `~${data.drift} Click Drift`;
+        clickBadge.style.color = data.color;
+      }
+    };
+
+    window.rsCalc = function(detailed = false) {
+      const data = rsComputeCurrentValues();
+      const pct = data.pct;
+      const color = data.color;
+      const label = data.status;
 
       let reasoning = '';
-      if (indVal === 3 && szVal === 3 && trVal >= 2) {
-        reasoning = "Finance & Banking at enterprise scale without regular simulation drills is precisely the high-yield profile threat actors target first.";
-      } else if (indVal === 2 && trVal >= 2) {
-        reasoning = "Healthcare and public sector infrastructure with infrequent training creates critical blind spots for spear-phishing and credential traps.";
-      } else if (trVal === 0) {
-        reasoning = "Quarterly phishing simulations establish strong security hygiene across your team, dramatically reducing credential harvesting success rates.";
-      } else if (szVal === 1 && trVal >= 2) {
-        reasoning = "Smaller organizations without routine simulation training are frequently targeted as entry vectors into larger partner supply chains.";
-      } else if (indVal === 1 && trVal >= 2) {
-        reasoning = "Tech and SaaS environments face constant automated phishing probes; annual training alone leaves employees vulnerable to novel pretexts.";
+      if (data.auth >= 2 && data.tr >= 2) {
+        reasoning = `High risk exposure identified: Lack of phishing-resistant hardware MFA combined with infrequent simulation drills leaves credentials vulnerable to automated Reverse-Proxy (AiTM) harvesting. Primary vector: <strong>${data.surface}</strong>.`;
+      } else if (data.ind === 3 && data.sz === 3) {
+        reasoning = `Enterprise financial sector profile: High-yield wire pretexts and supplier invoicing vectors represent significant liability. Recommended action: Deploy Adaptive Spear-Phishing simulations and strict dual-custody verification.`;
+      } else if (data.auth === 0 && data.tr === 0) {
+        reasoning = `Strong security hygiene: Hardware-backed FIDO2 authentication and quarterly adaptive drills dramatically mitigate human factor risk, containing blast radius.`;
       } else {
-        reasoning = "Infrequent training coupled with expanding attack surfaces makes employee credentials vulnerable to tailored social engineering.";
+        reasoning = `Moderate exposure posture: Attack surface expands through decentralized employee workflows and evolving social engineering. Target defense: <strong>${data.surface}</strong>.`;
       }
 
       localStorage.setItem('lure_rs_memory', JSON.stringify({ gauge: pct, label: label }));
 
       document.getElementById('rs-form').style.display = 'none';
       const res = document.getElementById('rs-result');
-      const avatarState = pct >= 60 ? 'error' : pct >= 35 ? 'active' : 'success';
+      const avatarState = pct >= 65 ? 'error' : pct >= 40 ? 'active' : 'success';
       updateMessageAvatar('pb-riskscore-avatar-container', avatarState, 2500);
       res.style.display = 'block';
-      document.getElementById('rs-gauge').style.color = color;
-      document.getElementById('rs-gauge').textContent = pct + '%';
-      document.getElementById('rs-gauge-lbl').textContent = label;
-      document.getElementById('rs-gauge-reaction').innerHTML = '🦈 <strong>Lure Analysis:</strong> ' + esc(reasoning);
+
+      const gaugeEl = document.getElementById('rs-gauge');
+      if (gaugeEl) {
+        gaugeEl.style.color = color;
+        gaugeEl.textContent = pct + '%';
+      }
+      const gaugeLbl = document.getElementById('rs-gauge-lbl');
+      if (gaugeLbl) gaugeLbl.textContent = label;
+      
+      const surfaceVal = document.getElementById('rs-surface-val');
+      if (surfaceVal) surfaceVal.textContent = data.surface;
+
+      const driftVal = document.getElementById('rs-drift-val');
+      if (driftVal) {
+        driftVal.textContent = `${data.drift} (${pct >= 65 ? 'Critical' : pct >= 40 ? 'Elevated' : 'Controlled'})`;
+        driftVal.style.color = color;
+      }
+
+      const reactEl = document.getElementById('rs-gauge-reaction');
+      if (reactEl) reactEl.innerHTML = '🦈 <strong>Lure Exposure Audit:</strong> ' + reasoning;
+
       repositionPanel();
     };
 
     window.rsReset = function() {
       document.getElementById('rs-result').style.display = 'none';
       document.getElementById('rs-form').style.display = 'block';
-      document.getElementById('rs-gauge-reaction').textContent = '';
-      document.querySelectorAll('.rs-opt').forEach(o => o.classList.remove('selected'));
-      document.querySelectorAll('.rs-opt input').forEach(i => i.checked = false);
-      document.getElementById('rs-dialogue-text').textContent = "3 quick questions. I'll estimate your organisation's phishing exposure.";
+      const reactEl = document.getElementById('rs-gauge-reaction');
+      if (reactEl) reactEl.textContent = '';
+      document.getElementById('rs-dialogue-text').textContent = "Phishing Exposure & Human Risk Matrix. Configure your organizational vectors for dynamic threat modeling.";
       updateMessageAvatar('pb-riskscore-avatar-container', 'idle');
-
-      const rsMem = JSON.parse(localStorage.getItem('lure_rs_memory') || 'null');
-      if (rsMem && rsMem.gauge) {
-        const formEl = document.getElementById('rs-form');
-        if (formEl) {
-          let memBanner = document.getElementById('rs-memory-banner');
-          if (!memBanner) {
-            memBanner = document.createElement('div');
-            memBanner.id = 'rs-memory-banner';
-            memBanner.className = 'pb-memory-banner';
-            formEl.prepend(memBanner);
-          }
-          memBanner.innerHTML = `<i class="ti ti-history" aria-hidden="true"></i> Last time I estimated ${rsMem.gauge}% exposure &mdash; want to redo it?`;
-          memBanner.style.display = 'flex';
-        }
-      }
-
+      rsUpdateLive();
       repositionPanel();
     };
 
     document.querySelectorAll('.rs-opt').forEach(opt => {
       opt.addEventListener('click', () => {
-        const name = opt.querySelector('input').name;
+        const input = opt.querySelector('input');
+        if (!input) return;
+        const name = input.name;
         document.querySelectorAll(`.rs-opt input[name="${name}"]`)
           .forEach(i => i.closest('.rs-opt').classList.remove('selected'));
         opt.classList.add('selected');
-        opt.querySelector('input').checked = true;
+        input.checked = true;
+        rsUpdateLive();
       });
     });
+
+    // Initialize live risk meter on load
+    setTimeout(rsUpdateLive, 100);
 
     /* ════════════════════════════════════════════════════════
        Proactive Callout Controller

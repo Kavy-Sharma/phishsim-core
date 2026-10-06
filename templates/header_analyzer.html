@@ -72,15 +72,15 @@
     position: absolute;
     top: 0; left: 0; right: 0;
     height: 2px;
-    background: linear-gradient(90deg, #f97316 0%, #06b6d4 100%);
+    background: linear-gradient(90deg, #f97316 0%, var(--primary) 100%);
     opacity: 0.85;
     z-index: 2;
 }
 
 /* Verdict classes for card border */
-.card-verdict-LEGITIMATE { border-color: var(--verdict-safe, #10b981); }
-.card-verdict-UNCERTAIN  { border-color: var(--verdict-suspicious, #f59e0b); }
-.card-verdict-SUSPICIOUS { border-color: var(--verdict-critical, #ef4444); }
+.card-verdict-LEGITIMATE { border-color: var(--verdict-safe, var(--success)); }
+.card-verdict-UNCERTAIN  { border-color: var(--verdict-suspicious, var(--warning)); }
+.card-verdict-SUSPICIOUS { border-color: var(--verdict-critical, var(--danger)); }
 
 .ha-term-header {
     display: flex;
@@ -93,20 +93,74 @@
 }
 .ha-term-dots {
     display: flex;
-    gap: 6px;
+    gap: 7px;
     align-items: center;
 }
 .ha-term-dot {
-    width: 11px;
-    height: 11px;
+    width: 12px;
+    height: 12px;
     border-radius: 50%;
     cursor: pointer;
-    transition: transform 0.12s ease;
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
 }
-.ha-term-dot:hover { transform: scale(1.2); }
-.ha-term-dot.dot-r { background: var(--danger, #ef4444); }
-.ha-term-dot.dot-y { background: var(--warning, #f59e0b); }
-.ha-term-dot.dot-g { background: var(--success, #10b981); }
+.ha-term-dot::before {
+    content: '';
+    position: absolute;
+    font-size: 9px;
+    font-weight: 900;
+    line-height: 1;
+    opacity: 0;
+    transition: opacity 0.15s ease, transform 0.15s ease;
+    transform: scale(0.6);
+    color: rgba(0, 0, 0, 0.75);
+    pointer-events: none;
+    font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
+}
+.ha-term-dots:hover .ha-term-dot::before {
+    opacity: 0.85;
+    transform: scale(1);
+}
+.ha-term-dot.dot-r {
+    background: #ff5f56;
+    border: 1px solid rgba(224, 68, 62, 0.6);
+}
+.ha-term-dot.dot-r::before {
+    content: '×';
+}
+.ha-term-dot.dot-r:hover {
+    transform: scale(1.22);
+    box-shadow: 0 0 10px rgba(255, 95, 86, 0.7);
+}
+.ha-term-dot.dot-y {
+    background: #ffbd2e;
+    border: 1px solid rgba(222, 161, 35, 0.6);
+}
+.ha-term-dot.dot-y::before {
+    content: '−';
+}
+.ha-term-dot.dot-y:hover {
+    transform: scale(1.22);
+    box-shadow: 0 0 10px rgba(255, 189, 46, 0.7);
+}
+.ha-term-dot.dot-g {
+    background: #27c93f;
+    border: 1px solid rgba(26, 171, 42, 0.6);
+}
+.ha-term-dot.dot-g::before {
+    content: '+';
+}
+.ha-term-dot.dot-g:hover {
+    transform: scale(1.22);
+    box-shadow: 0 0 10px rgba(39, 201, 63, 0.7);
+}
+.ha-term-dot:active {
+    transform: scale(0.92) !important;
+}
 
 .ha-term-title {
     font-family: var(--font-mono, 'JetBrains Mono'), monospace;
@@ -115,7 +169,7 @@
     letter-spacing: 0.06em;
 }
 .ha-term-title .prompt-cmd {
-    color: var(--primary, #38bdf8);
+    color: var(--primary);
     font-weight: 700;
 }
 
@@ -126,18 +180,18 @@
     font-family: var(--font-mono, 'JetBrains Mono'), monospace;
     font-size: 0.62rem;
     font-weight: 700;
-    color: var(--success, #10b981);
+    color: var(--success);
     letter-spacing: 0.08em;
 }
 .ha-live-dot {
     width: 6px;
     height: 6px;
     border-radius: 50%;
-    background: var(--success, #10b981);
+    background: var(--success);
     animation: haLivePulse 1.8s ease-in-out infinite;
 }
 @keyframes haLivePulse {
-    0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 0 6px var(--success, #10b981); }
+    0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 0 6px var(--success); }
     50% { opacity: 0.4; transform: scale(0.75); box-shadow: none; }
 }
 
@@ -161,39 +215,308 @@
 .ha-minimized .ha-term-header { border-bottom: none; }
 /* DNS-hop animation stage */
 /* ── Minimized Terminal Interactive Navigator ──────────────────── */
+/* ── BESPOKE MINIMIZED CONSOLE: ORBITAL BGP FLIGHT RADAR & TRANSIT CONDUIT ── */
 .ha-hop-stage {
-    display: flex !important;
-    max-height: 0;
-    min-height: 0;
-    opacity: 0;
-    overflow: hidden;
-    padding: 0 1.5rem;
-    align-items: center;
-    justify-content: center;
+    display: none;
     flex-direction: column;
+    gap: 0.85rem;
+    padding: 1rem 1.5rem;
+    background: linear-gradient(180deg, #090e1a 0%, #040813 100%);
+    border-bottom: 1px solid rgba(56, 189, 248, 0.22);
+    font-family: var(--font-mono, 'JetBrains Mono'), monospace;
+    min-height: 95px;
+    box-sizing: border-box;
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1);
     position: relative;
-    transition: max-height 0.4s cubic-bezier(0.16, 1, 0.3, 1), 
-                min-height 0.4s cubic-bezier(0.16, 1, 0.3, 1), 
-                opacity 0.3s ease, 
-                padding 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    overflow: hidden;
 }
 .ha-minimized .ha-hop-stage {
-    max-height: 380px;
-    min-height: 200px;
-    opacity: 1;
-    padding: 1.25rem 1.75rem;
+    display: flex !important;
+    opacity: 1 !important;
 }
 
-.ha-mini-nav-header {
-    width: 100%;
+/* Tactical Cockpit Header Row */
+.ha-radar-header-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 1rem;
-    font-family: 'JetBrains Mono', monospace;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+/* Left: Animated Radar Scope Instrument */
+.ha-radar-deck {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+}
+.ha-radar-scope {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(14, 165, 233, 0.15) 0%, rgba(2, 6, 23, 0.95) 75%);
+    border: 1.5px solid rgba(56, 189, 248, 0.4);
+    box-shadow: 0 0 14px rgba(56, 189, 248, 0.25), inset 0 0 8px rgba(56, 189, 248, 0.2);
+    position: relative;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+.ha-radar-sweep {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: conic-gradient(from 0deg, rgba(34, 211, 238, 0.45) 0deg, rgba(34, 211, 238, 0.12) 45deg, transparent 75deg);
+    animation: haRadarSweep 2.8s linear infinite;
+    pointer-events: none;
+}
+@keyframes haRadarSweep {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+.ha-radar-cross {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+.ha-radar-cross::before, .ha-radar-cross::after {
+    content: '';
+    position: absolute;
+    background: rgba(56, 189, 248, 0.25);
+}
+.ha-radar-cross::before {
+    left: 50%; top: 0; bottom: 0; width: 1px; transform: translateX(-50%);
+}
+.ha-radar-cross::after {
+    top: 50%; left: 0; right: 0; height: 1px; transform: translateY(-50%);
+}
+.ha-radar-ring {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    border: 1px dashed rgba(56, 189, 248, 0.25);
+    pointer-events: none;
+}
+.ha-radar-ring.r1 { width: 62%; height: 62%; }
+.ha-radar-blip {
+    position: absolute;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: #38BDF8;
+    box-shadow: 0 0 8px #38BDF8;
+    animation: haBlipPulse 1.8s ease-in-out infinite alternate;
+}
+.ha-radar-blip.b1 { top: 28%; left: 36%; }
+.ha-radar-blip.b2 { top: 62%; left: 68%; animation-delay: 0.6s; background: #34D399; box-shadow: 0 0 8px #34D399; }
+@keyframes haBlipPulse {
+    0% { transform: scale(0.8); opacity: 0.4; }
+    100% { transform: scale(1.4); opacity: 1; }
+}
+
+.ha-radar-meta {
+    display: flex;
+    flex-direction: column;
+}
+.ha-radar-title {
+    font-size: 0.74rem;
+    font-weight: 800;
+    color: #F8FAFC;
+    letter-spacing: 0.08em;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.ha-radar-title i { color: #38BDF8; font-size: 0.9rem; }
+.ha-radar-sub {
+    font-size: 0.65rem;
+    color: #94A3B8;
+    letter-spacing: 0.03em;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 2px;
+}
+.ha-radar-live-pip {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #10B981;
+    box-shadow: 0 0 6px #10B981;
+    display: inline-block;
+}
+
+/* Center Chips / Telemetry telemetry pills */
+.ha-radar-telemetry-chips {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.ha-radar-chip {
+    background: rgba(15, 23, 42, 0.75);
+    border: 1px solid rgba(56, 189, 248, 0.25);
+    border-radius: 6px;
+    padding: 3px 9px;
+    font-size: 0.66rem;
+    color: #CBD5E1;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    white-space: nowrap;
+}
+.ha-radar-chip i { color: #38BDF8; }
+
+/* Right Deck Controls */
+.ha-radar-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+}
+.ha-ping-btn {
+    padding: 6px 12px;
+    background: rgba(56, 189, 248, 0.1);
+    border: 1px solid rgba(56, 189, 248, 0.35);
+    border-radius: 6px;
+    color: #38BDF8;
+    font-family: inherit;
+    font-size: 0.68rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+}
+.ha-ping-btn:hover {
+    background: #38BDF8;
+    color: #040813;
+    box-shadow: 0 0 14px rgba(56, 189, 248, 0.45);
+}
+.ha-restore-deck-btn {
+    padding: 6px 14px;
+    background: linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(14, 165, 233, 0.3));
+    border: 1px solid #38BDF8;
+    border-radius: 6px;
+    color: #FFFFFF;
+    font-family: inherit;
+    font-size: 0.7rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.22s ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    letter-spacing: 0.06em;
+    white-space: nowrap;
+    box-shadow: 0 2px 10px rgba(56, 189, 248, 0.25);
+}
+.ha-restore-deck-btn:hover {
+    background: #38BDF8;
+    color: #040813;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 18px rgba(56, 189, 248, 0.5);
+}
+
+/* ── Section 2: Live Optical Transit Cable Pipeline ── */
+.ha-mini-route-container {
+    position: relative;
+    padding-top: 6px;
+}
+.ha-mini-route-chain {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    position: relative;
+    padding: 6px 0;
+}
+.mini-route-node {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    background: rgba(15, 23, 42, 0.85);
+    border: 1px solid rgba(56, 189, 248, 0.3);
+    border-radius: 8px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: #F1F5F9;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    user-select: none;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+.mini-route-node:hover {
+    background: rgba(56, 189, 248, 0.15);
+    border-color: #38BDF8;
+    color: #FFFFFF;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(56, 189, 248, 0.35);
+}
+.mini-route-node.active {
+    background: rgba(56, 189, 248, 0.25);
+    border-color: #38BDF8;
+    box-shadow: 0 0 14px rgba(56, 189, 248, 0.5);
+}
+.mini-route-node-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #10B981;
+    box-shadow: 0 0 6px #10B981;
+}
+.mini-route-node.state-anomalous .mini-route-node-dot {
+    background: #EF4444;
+    box-shadow: 0 0 6px #EF4444;
+}
+.mini-route-node.state-warning .mini-route-node-dot {
+    background: #F59E0B;
+    box-shadow: 0 0 6px #F59E0B;
+}
+
+/* Connecting Optical Cable */
+.mini-route-line {
+    font-size: 0.72rem;
+    color: #38BDF8;
+    opacity: 0.7;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+    letter-spacing: -1px;
+}
+.mini-route-line:hover, .mini-route-line.active {
+    opacity: 1;
+    color: #38BDF8;
+    text-shadow: 0 0 8px #38BDF8;
+}
+
+/* Dynamic Photon Wave Animation when Ping is clicked */
+.ha-hop-stage.is-pinging .mini-route-node {
+    animation: haNodeFlash 0.5s ease-in-out;
+}
+@keyframes haNodeFlash {
+    0% { box-shadow: 0 0 4px rgba(56, 189, 248, 0.2); }
+    50% { box-shadow: 0 0 20px #38BDF8, 0 0 35px #38BDF8; border-color: #FFFFFF; }
+    100% { box-shadow: 0 0 4px rgba(56, 189, 248, 0.2); }
+}
+
+@media (max-width: 860px) {
+    .ha-radar-header-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .ha-radar-actions {
+        justify-content: flex-end;
+    }
 }
 .ha-mini-nav-title {
-    font-size: 0.72rem;
     font-weight: 700;
     color: var(--primary);
     letter-spacing: 0.08em;
@@ -392,32 +715,126 @@
     word-break: break-all;
 }
 
-body.light-theme .ha-mini-popover {
-    background: rgba(255, 255, 255, 0.98);
-    border-color: rgba(56, 189, 248, 0.4);
-    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+body.light-theme .ha-hop-stage,
+[data-theme="light"] .ha-hop-stage {
+    background: #FFFFFF !important;
+    border-bottom: 1px solid #E2E8F0 !important;
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.8) !important;
 }
-body.light-theme .mini-route-node {
-    background: rgba(255, 255, 255, 0.8);
-    border-color: rgba(0, 0, 0, 0.1);
-    color: #1e293b;
+
+body.light-theme .ha-radar-scope,
+[data-theme="light"] .ha-radar-scope {
+    background: radial-gradient(circle, #E0F2FE 0%, #F8FAFC 80%) !important;
+    border: 1.5px solid #0284C7 !important;
+    box-shadow: 0 0 14px rgba(2, 132, 199, 0.18) !important;
 }
-body.light-theme .mini-route-node:hover {
-    background: #fff;
-    color: var(--primary);
+body.light-theme .ha-radar-cross::before,
+body.light-theme .ha-radar-cross::after,
+[data-theme="light"] .ha-radar-cross::before,
+[data-theme="light"] .ha-radar-cross::after {
+    background: rgba(2, 132, 199, 0.25) !important;
 }
-body.light-theme .pop-label {
-    color: #64748b;
+body.light-theme .ha-radar-ring,
+[data-theme="light"] .ha-radar-ring {
+    border-color: rgba(2, 132, 199, 0.3) !important;
 }
-body.light-theme .pop-val {
-    color: #0f172a;
+
+body.light-theme .ha-radar-title,
+[data-theme="light"] .ha-radar-title {
+    color: #0F172A !important;
+}
+body.light-theme .ha-radar-sub,
+[data-theme="light"] .ha-radar-sub {
+    color: #64748B !important;
+}
+
+body.light-theme .ha-radar-chip,
+[data-theme="light"] .ha-radar-chip {
+    background: #F8FAFC !important;
+    color: #334155 !important;
+    border: 1px solid #CBD5E1 !important;
+}
+body.light-theme .ha-radar-chip i,
+[data-theme="light"] .ha-radar-chip i {
+    color: #0284C7 !important;
+}
+
+body.light-theme .ha-ping-btn,
+[data-theme="light"] .ha-ping-btn {
+    background: #F0F9FF !important;
+    border: 1px solid #BAE6FD !important;
+    color: #0284C7 !important;
+}
+body.light-theme .ha-ping-btn:hover,
+[data-theme="light"] .ha-ping-btn:hover {
+    background: #0284C7 !important;
+    color: #FFFFFF !important;
+    box-shadow: 0 0 12px rgba(2, 132, 199, 0.35) !important;
+}
+
+body.light-theme .ha-restore-deck-btn,
+[data-theme="light"] .ha-restore-deck-btn {
+    background: linear-gradient(135deg, #0284C7 0%, #0369A1 100%) !important;
+    border: 1px solid #0284C7 !important;
+    color: #FFFFFF !important;
+    box-shadow: 0 2px 10px rgba(2, 132, 199, 0.25) !important;
+}
+body.light-theme .ha-restore-deck-btn:hover,
+[data-theme="light"] .ha-restore-deck-btn:hover {
+    background: linear-gradient(135deg, #0369A1 0%, #075985 100%) !important;
+    border-color: #0369A1 !important;
+    box-shadow: 0 4px 16px rgba(2, 132, 199, 0.4) !important;
+    transform: translateY(-1px);
+}
+
+body.light-theme .mini-route-node,
+[data-theme="light"] .mini-route-node {
+    background: #F8FAFC !important;
+    border: 1px solid #CBD5E1 !important;
+    color: #1E293B !important;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05) !important;
+}
+body.light-theme .mini-route-node:hover,
+[data-theme="light"] .mini-route-node:hover {
+    background: #E0F2FE !important;
+    border-color: #38BDF8 !important;
+    color: #0284C7 !important;
+    box-shadow: 0 4px 12px rgba(2, 132, 199, 0.2) !important;
+}
+body.light-theme .mini-route-node.active,
+[data-theme="light"] .mini-route-node.active {
+    background: #E0F2FE !important;
+    border-color: #0284C7 !important;
+    color: #0284C7 !important;
+    box-shadow: 0 0 12px rgba(2, 132, 199, 0.3) !important;
+}
+
+body.light-theme .mini-route-line,
+[data-theme="light"] .mini-route-line {
+    color: #0284C7 !important;
+    opacity: 0.85 !important;
+}
+
+body.light-theme .ha-mini-popover,
+[data-theme="light"] .ha-mini-popover {
+    background: #FFFFFF !important;
+    border: 1px solid #CBD5E1 !important;
+    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.12) !important;
+}
+body.light-theme .pop-label,
+[data-theme="light"] .pop-label {
+    color: #64748B !important;
+}
+body.light-theme .pop-val,
+[data-theme="light"] .pop-val {
+    color: #0F172A !important;
 }
 /* Expand overlay */
 .ha-expand-overlay {
     display: flex !important; /* Keep display: flex always */
     position: fixed;
     inset: 0;
-    z-index: 9000;
+    z-index: 100050 !important;
     background: rgba(2, 6, 23, 0.95);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
@@ -501,7 +918,10 @@ body.light-theme .ha-expand-close:hover { background: rgba(0,0,0,0.1); color: #0
 
 /* ── Input Stage ──────────────────────────────────────────────── */
 .ha-input-stage {
-    padding: 2.25rem;
+    padding: 0;
+}
+.ha-input-body {
+    padding: 1.5rem 2rem 2rem;
 }
 .ha-console-prompt {
     font-family: 'JetBrains Mono', monospace;
@@ -563,12 +983,13 @@ body.light-theme .ha-expand-close:hover { background: rgba(0,0,0,0.1); color: #0
 
 /* ── Live Structural Detection Bar ────────────────────────────── */
 .ha-structural-bar {
-    background: rgba(15, 23, 42, 0.5);
-    border: 1px solid rgba(56, 189, 248, 0.2);
-    border-radius: 8px;
-    padding: 12px 16px;
+    background: rgba(15, 23, 42, 0.75);
+    border: 1px solid rgba(56, 189, 248, 0.28);
+    border-radius: 10px;
+    padding: 12px 18px;
     margin-bottom: 1.5rem;
     animation: haFadeIn 0.3s ease;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
 }
 @keyframes haFadeIn {
     from { opacity: 0; transform: translateY(-4px); }
@@ -576,9 +997,9 @@ body.light-theme .ha-expand-close:hover { background: rgba(0,0,0,0.1); color: #0
 }
 .ha-structural-title {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 0.65rem;
-    font-weight: 700;
-    color: var(--text-muted, #64748b);
+    font-size: 0.68rem;
+    font-weight: 800;
+    color: var(--primary);
     letter-spacing: 0.08em;
     text-transform: uppercase;
     margin-bottom: 10px;
@@ -593,7 +1014,7 @@ body.light-theme .ha-expand-close:hover { background: rgba(0,0,0,0.1); color: #0
 }
 .ha-struct-chip {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 0.7rem;
+    font-size: 0.72rem;
     font-weight: 700;
     padding: 5px 12px;
     border-radius: 6px;
@@ -603,14 +1024,16 @@ body.light-theme .ha-expand-close:hover { background: rgba(0,0,0,0.1); color: #0
     transition: all 0.2s ease;
 }
 .ha-struct-chip.chip-ok {
-    background: rgba(16, 185, 129, 0.1);
-    color: var(--success);
-    border: 1px solid rgba(16, 185, 129, 0.25);
+    background: rgba(16, 185, 129, 0.16);
+    color: #10b981;
+    border: 1px solid rgba(16, 185, 129, 0.4);
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.15);
 }
 .ha-struct-chip.chip-warn {
-    background: rgba(245, 158, 11, 0.1);
-    color: var(--warning);
-    border: 1px solid rgba(245, 158, 11, 0.25);
+    background: rgba(245, 158, 11, 0.16);
+    color: #f59e0b;
+    border: 1px solid rgba(245, 158, 11, 0.4);
+    box-shadow: 0 0 10px rgba(245, 158, 11, 0.15);
 }
 
 /* ── Sample Buttons & Presets Bar ─────────────────────────────── */
@@ -627,13 +1050,13 @@ body.light-theme .ha-expand-close:hover { background: rgba(0,0,0,0.1); color: #0
 }
 .ha-preset-btn {
     background: rgba(30, 41, 59, 0.4);
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 8px;
-    padding: 10px 14px;
+    padding: 10px 16px;
     color: var(--text-muted, #94a3b8);
     font-family: 'Space Grotesk', sans-serif;
     font-size: 0.82rem;
-    font-weight: 500;
+    font-weight: 600;
     text-align: left;
     cursor: pointer;
     transition: all 0.25s ease;
@@ -642,36 +1065,40 @@ body.light-theme .ha-expand-close:hover { background: rgba(0,0,0,0.1); color: #0
     gap: 8px;
 }
 .ha-preset-btn.sample-clean {
-    border-color: rgba(16, 185, 129, 0.3);
-    color: var(--success);
-    background: rgba(16, 185, 129, 0.06);
+    border: 1.5px solid rgba(16, 185, 129, 0.45);
+    color: #10b981;
+    background: rgba(16, 185, 129, 0.1);
     justify-content: center;
     font-family: 'JetBrains Mono', monospace;
     font-size: 0.78rem;
     font-weight: 700;
+    letter-spacing: 0.04em;
+    box-shadow: 0 2px 10px rgba(16, 185, 129, 0.15);
 }
 .ha-preset-btn.sample-clean:hover {
-    background: rgba(16, 185, 129, 0.16);
-    border-color: rgba(16, 185, 129, 0.5);
+    background: rgba(16, 185, 129, 0.22);
+    border-color: #10b981;
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
-    color: var(--success);
+    box-shadow: 0 4px 18px rgba(16, 185, 129, 0.35);
+    color: #34d399;
 }
 .ha-preset-btn.sample-suspicious {
-    border-color: rgba(239, 68, 68, 0.3);
-    color: var(--danger);
-    background: rgba(239, 68, 68, 0.06);
+    border: 1.5px solid rgba(239, 68, 68, 0.45);
+    color: #ef4444;
+    background: rgba(239, 68, 68, 0.1);
     justify-content: center;
     font-family: 'JetBrains Mono', monospace;
     font-size: 0.78rem;
     font-weight: 700;
+    letter-spacing: 0.04em;
+    box-shadow: 0 2px 10px rgba(239, 68, 68, 0.15);
 }
 .ha-preset-btn.sample-suspicious:hover {
-    background: rgba(239, 68, 68, 0.16);
-    border-color: rgba(239, 68, 68, 0.5);
+    background: rgba(239, 68, 68, 0.22);
+    border-color: #ef4444;
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.15);
-    color: var(--danger);
+    box-shadow: 0 4px 18px rgba(239, 68, 68, 0.35);
+    color: #f87171;
 }
 .ha-preset-btn:hover {
     background: rgba(30, 41, 59, 0.8);
@@ -2190,12 +2617,37 @@ body.light-theme .ha-decoding-line.done .step-text {
 .ha-header-badge {
     font-size: 0.62rem;
     font-weight: 800;
-    padding: 1px 5px;
-    border-radius: 3px;
+    padding: 1px 6px;
+    border-radius: 4px;
     margin-right: 8px;
     text-transform: uppercase;
     display: inline-block;
 }
+
+.badge-hdr-received {
+    background: rgba(56, 189, 248, 0.15);
+    color: #38BDF8;
+    border: 1px solid rgba(56, 189, 248, 0.35);
+}
+
+.badge-hdr-auth {
+    background: rgba(16, 185, 129, 0.15);
+    color: #34D399;
+    border: 1px solid rgba(16, 185, 129, 0.35);
+}
+
+.badge-hdr-dkim {
+    background: rgba(168, 85, 247, 0.15);
+    color: #C084FC;
+    border: 1px solid rgba(168, 85, 247, 0.35);
+}
+
+.badge-hdr-identity {
+    background: rgba(245, 158, 11, 0.15);
+    color: #FBBF24;
+    border: 1px solid rgba(245, 158, 11, 0.35);
+}
+
 
 /* ── Route Replay Controls & Live Status Overlay Banner ──────────── */
 .ha-diagram-heading {
@@ -2707,7 +3159,10 @@ body.light-theme .ha-decoding-line.done .step-text {
         padding: 1.25rem;
     }
     .ha-input-stage {
-        padding: 1.25rem;
+        padding: 0;
+    }
+    .ha-input-body {
+        padding: 1rem 1.25rem 1.25rem;
     }
     .ha-diagram-container {
         padding: 1.5rem 1rem;
@@ -2823,20 +3278,113 @@ body.light-theme .ha-textarea:focus {
     border: none !important;
 }
 
-body.light-theme .ha-preset-btn {
-    background: rgba(0, 0, 0, 0.02);
-    border-color: rgba(0, 0, 0, 0.05);
-    color: #475569;
+/* ── Live Structural Bar in Light Theme ── */
+body.light-theme .ha-structural-bar,
+[data-theme="light"] .ha-structural-bar {
+    background: #FFFFFF !important;
+    border: 1px solid #CBD5E1 !important;
+    box-shadow: 0 4px 18px rgba(15, 23, 42, 0.05) !important;
 }
-body.light-theme .ha-preset-btn:hover {
-    background: rgba(0, 0, 0, 0.05);
-    border-color: rgba(6, 182, 212, 0.3);
-    color: #0f172a;
+body.light-theme .ha-structural-title,
+[data-theme="light"] .ha-structural-title {
+    color: #0F172A !important;
+    font-weight: 800 !important;
 }
-body.light-theme .ha-preset-btn.active {
-    background: rgba(56, 189, 248, 0.05);
+body.light-theme .ha-struct-chip.chip-ok,
+[data-theme="light"] .ha-struct-chip.chip-ok {
+    background: #ECFDF5 !important;
+    color: #047857 !important;
+    border: 1.5px solid #A7F3D0 !important;
+    font-weight: 700 !important;
+    box-shadow: 0 1px 3px rgba(16, 185, 129, 0.12) !important;
+}
+body.light-theme .ha-struct-chip.chip-warn,
+[data-theme="light"] .ha-struct-chip.chip-warn {
+    background: #FFFBEB !important;
+    color: #B45309 !important;
+    border: 1.5px solid #FDE68A !important;
+    font-weight: 700 !important;
+    box-shadow: 0 1px 3px rgba(245, 158, 11, 0.12) !important;
+}
+
+/* ── Sample Buttons in Light Theme ── */
+body.light-theme .ha-preset-btn,
+[data-theme="light"] .ha-preset-btn {
+    background: #F8FAFC;
+    border: 1px solid #CBD5E1;
+    color: #334155;
+}
+body.light-theme .ha-preset-btn:hover,
+[data-theme="light"] .ha-preset-btn:hover {
+    background: #F1F5F9;
+    border-color: rgba(6, 182, 212, 0.4);
+    color: #0F172A;
+}
+body.light-theme .ha-preset-btn.active,
+[data-theme="light"] .ha-preset-btn.active {
+    background: color-mix(in srgb, var(--primary) 10%, transparent);
     border-color: var(--primary);
     color: var(--primary);
+}
+
+body.light-theme .ha-preset-btn.sample-clean,
+[data-theme="light"] .ha-preset-btn.sample-clean {
+    background: #ECFDF5 !important;
+    border: 1.5px solid #10B981 !important;
+    color: #047857 !important;
+    font-weight: 800 !important;
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.16) !important;
+}
+body.light-theme .ha-preset-btn.sample-clean:hover,
+[data-theme="light"] .ha-preset-btn.sample-clean:hover {
+    background: #D1FAE5 !important;
+    border-color: #059669 !important;
+    color: #065F46 !important;
+    box-shadow: 0 4px 16px rgba(16, 185, 129, 0.28) !important;
+    transform: translateY(-1px);
+}
+
+body.light-theme .ha-preset-btn.sample-suspicious,
+[data-theme="light"] .ha-preset-btn.sample-suspicious {
+    background: #FEF2F2 !important;
+    border: 1.5px solid #EF4444 !important;
+    color: #B91C1C !important;
+    font-weight: 800 !important;
+    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.16) !important;
+}
+body.light-theme .ha-preset-btn.sample-suspicious:hover,
+[data-theme="light"] .ha-preset-btn.sample-suspicious:hover {
+    background: #FEE2E2 !important;
+    border-color: #DC2626 !important;
+    color: #991B1B !important;
+    box-shadow: 0 4px 16px rgba(239, 68, 68, 0.28) !important;
+    transform: translateY(-1px);
+}
+
+body.light-theme .ha-presets-more-title,
+[data-theme="light"] .ha-presets-more-title {
+    color: #475569 !important;
+    font-weight: 700 !important;
+}
+
+body.light-theme .ha-preset-pill,
+[data-theme="light"] .ha-preset-pill {
+    background: #F1F5F9 !important;
+    border: 1px solid #CBD5E1 !important;
+    color: #334155 !important;
+    font-weight: 600 !important;
+}
+body.light-theme .ha-preset-pill:hover,
+[data-theme="light"] .ha-preset-pill:hover {
+    background: #E2E8F0 !important;
+    border-color: var(--primary) !important;
+    color: var(--primary) !important;
+}
+body.light-theme .ha-preset-pill.active,
+[data-theme="light"] .ha-preset-pill.active {
+    background: color-mix(in srgb, var(--primary) 12%, transparent) !important;
+    border-color: var(--primary) !important;
+    color: var(--primary) !important;
 }
 body.light-theme .ha-result-strip {
     background: rgba(0, 0, 0, 0.02);
@@ -2949,6 +3497,420 @@ body.light-theme .ha-action-btn:focus-visible {
     outline-offset: 3px;
     box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.2) !important;
 }
+
+/* ── Terminal Buttons in Results View: Always Interactive ── */
+.stage-results-active #ha-dot-red,
+.stage-results-active .ha-preset-btn,
+.stage-results-active .ha-preset-pill {
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    cursor: pointer !important;
+}
+
+/* ── Light Mode Overrides for Results Section (Pic 1) ── */
+body.light-theme .ha-view-mode-bar,
+[data-theme="light"] .ha-view-mode-bar {
+    background: #F8FAFC !important;
+    border-bottom: 1px solid #E2E8F0 !important;
+}
+body.light-theme .ha-view-tab,
+[data-theme="light"] .ha-view-tab {
+    color: #64748B !important;
+}
+body.light-theme .ha-view-tab:hover,
+[data-theme="light"] .ha-view-tab:hover {
+    color: #0F172A !important;
+    background: #F1F5F9 !important;
+}
+body.light-theme .ha-view-tab.active,
+[data-theme="light"] .ha-view-tab.active {
+    color: var(--primary) !important;
+    background: color-mix(in srgb, var(--primary) 12%, transparent) !important;
+    border-color: color-mix(in srgb, var(--primary) 35%, transparent) !important;
+}
+
+/* Timing connector link pill (2.8s in Pic 1) */
+body.light-theme .ha-connector-link-wrap,
+[data-theme="light"] .ha-connector-link-wrap {
+    background: #F8FAFC !important;
+    border: 1px dashed #CBD5E1 !important;
+    color: #475569 !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+}
+body.light-theme .ha-connector-link-wrap:hover,
+[data-theme="light"] .ha-connector-link-wrap:hover {
+    background: #F1F5F9 !important;
+    border-color: var(--primary) !important;
+    color: var(--primary) !important;
+}
+
+/* Authentication Cards (SPF, DKIM, DMARC in Pic 1) */
+body.light-theme .ha-auth-card,
+[data-theme="light"] .ha-auth-card {
+    background: #FFFFFF !important;
+    border: 1px solid #E2E8F0 !important;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04) !important;
+}
+body.light-theme .ha-auth-card:hover,
+[data-theme="light"] .ha-auth-card:hover {
+    background: #FFFFFF !important;
+    border-color: color-mix(in srgb, var(--primary) 40%, transparent) !important;
+    box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08) !important;
+}
+body.light-theme .ha-auth-card-title,
+[data-theme="light"] .ha-auth-card-title {
+    color: #0F172A !important;
+}
+body.light-theme .ha-auth-card-desc,
+[data-theme="light"] .ha-auth-card-desc {
+    color: #475569 !important;
+}
+body.light-theme .ha-auth-key-label,
+[data-theme="light"] .ha-auth-key-label {
+    color: #64748B !important;
+}
+body.light-theme .ha-auth-why-btn,
+[data-theme="light"] .ha-auth-why-btn {
+    background: #F1F5F9 !important;
+    border: 1px solid #CBD5E1 !important;
+    color: var(--primary) !important;
+}
+body.light-theme .ha-auth-why-btn:hover,
+[data-theme="light"] .ha-auth-why-btn:hover {
+    background: var(--primary) !important;
+    color: #FFFFFF !important;
+}
+body.light-theme .ha-auth-detail-drawer,
+[data-theme="light"] .ha-auth-detail-drawer {
+    border-top: 1px dashed #E2E8F0 !important;
+    color: #334155 !important;
+}
+body.light-theme .ha-detail-key,
+[data-theme="light"] .ha-detail-key {
+    color: #64748B !important;
+}
+body.light-theme .ha-detail-val,
+[data-theme="light"] .ha-detail-val {
+    color: #0F172A !important;
+}
+body.light-theme .ha-auth-card-header,
+[data-theme="light"] .ha-auth-card-header {
+    border-bottom: 1px solid #E2E8F0 !important;
+}
+
+/* Identity & Domain Intelligence Panel (Pic 1) */
+body.light-theme .ha-intel-flow-card,
+[data-theme="light"] .ha-intel-flow-card {
+    background: #FFFFFF !important;
+    border: 1px solid #E2E8F0 !important;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04) !important;
+}
+body.light-theme .ha-intel-flow-header,
+[data-theme="light"] .ha-intel-flow-header {
+    color: #64748B !important;
+}
+body.light-theme .ha-intel-flow-step,
+[data-theme="light"] .ha-intel-flow-step {
+    background: #F8FAFC !important;
+    border: 1px solid #E2E8F0 !important;
+}
+body.light-theme .ha-intel-flow-step:hover,
+[data-theme="light"] .ha-intel-flow-step:hover {
+    background: #F1F5F9 !important;
+    border-color: var(--primary) !important;
+}
+body.light-theme .ha-flow-step-label,
+[data-theme="light"] .ha-flow-step-label {
+    color: #64748B !important;
+}
+body.light-theme .ha-flow-step-domain,
+[data-theme="light"] .ha-flow-step-domain {
+    color: #0F172A !important;
+}
+
+/* 6 Domain Intel Field Cards */
+body.light-theme .ha-intel-field-card,
+[data-theme="light"] .ha-intel-field-card {
+    background: #FFFFFF !important;
+    border: 1px solid #E2E8F0 !important;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.03) !important;
+}
+body.light-theme .ha-intel-field-card:hover,
+[data-theme="light"] .ha-intel-field-card:hover {
+    background: #F8FAFC !important;
+    border-color: color-mix(in srgb, var(--primary) 35%, transparent) !important;
+    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.06) !important;
+}
+body.light-theme .ha-intel-field-key,
+[data-theme="light"] .ha-intel-field-key {
+    color: #64748B !important;
+}
+body.light-theme .ha-intel-field-val,
+[data-theme="light"] .ha-intel-field-val {
+    color: #0F172A !important;
+}
+
+/* MX Records & Domain Inspection Drawer (Pic 5) */
+body.light-theme .ha-intel-inspect-drawer,
+[data-theme="light"] .ha-intel-inspect-drawer {
+    background: #F8FAFC !important;
+    border: 1px solid #CBD5E1 !important;
+    box-shadow: 0 4px 16px rgba(15, 23, 42, 0.06) !important;
+}
+body.light-theme .ha-inspect-title,
+[data-theme="light"] .ha-inspect-title {
+    color: var(--primary) !important;
+}
+body.light-theme .ha-inspect-close,
+[data-theme="light"] .ha-inspect-close {
+    color: #64748B !important;
+}
+body.light-theme .ha-inspect-close:hover,
+[data-theme="light"] .ha-inspect-close:hover {
+    color: #0F172A !important;
+}
+body.light-theme .ha-inspect-item,
+[data-theme="light"] .ha-inspect-item {
+    background: #FFFFFF !important;
+    border: 1px solid #E2E8F0 !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03) !important;
+}
+body.light-theme .ha-inspect-item-key,
+[data-theme="light"] .ha-inspect-item-key {
+    color: #64748B !important;
+}
+body.light-theme .ha-inspect-item-val,
+[data-theme="light"] .ha-inspect-item-val {
+    color: #0F172A !important;
+}
+
+/* DMARC Alignment Visualizer */
+body.light-theme .ha-dmarc-vis-wrap,
+[data-theme="light"] .ha-dmarc-vis-wrap {
+    background: #F8FAFC !important;
+    border: 1px solid #E2E8F0 !important;
+}
+body.light-theme .ha-vis-node,
+[data-theme="light"] .ha-vis-node {
+    background: #FFFFFF !important;
+    border: 1px solid #CBD5E1 !important;
+}
+body.light-theme .ha-vis-domain,
+[data-theme="light"] .ha-vis-domain {
+    color: #0F172A !important;
+}
+body.light-theme .ha-vis-branch,
+[data-theme="light"] .ha-vis-branch {
+    background: #FFFFFF !important;
+    border: 1px solid #CBD5E1 !important;
+}
+body.light-theme .ha-vis-branch-domain,
+[data-theme="light"] .ha-vis-branch-domain {
+    color: #0F172A !important;
+}
+
+/* Side Panels & Anomaly Cards */
+body.light-theme .ha-side-panel,
+[data-theme="light"] .ha-side-panel {
+    background: #FFFFFF !important;
+    border: 1px solid #E2E8F0 !important;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04) !important;
+}
+body.light-theme .ha-panel-head,
+[data-theme="light"] .ha-panel-head {
+    background: #F8FAFC !important;
+    border-bottom: 1px solid #E2E8F0 !important;
+    color: #334155 !important;
+}
+body.light-theme .ha-anomaly-card,
+[data-theme="light"] .ha-anomaly-card {
+    background: #F8FAFC !important;
+    border: 1px solid #E2E8F0 !important;
+}
+body.light-theme .ha-anomaly-card:hover,
+[data-theme="light"] .ha-anomaly-card:hover {
+    background: #F1F5F9 !important;
+    border-color: var(--warning) !important;
+}
+body.light-theme .ha-hdr-name,
+[data-theme="light"] .ha-hdr-name {
+    color: #0F172A !important;
+}
+body.light-theme .ha-hdr-val,
+[data-theme="light"] .ha-hdr-val {
+    color: #475569 !important;
+}
+
+/* ── Forensic Raw Header Inspector Light Theme ───────────────── */
+body.light-theme .ha-raw-viewer-container,
+[data-theme="light"] .ha-raw-viewer-container {
+    background: #FFFFFF !important;
+    border: 1px solid #CBD5E1 !important;
+    box-shadow: 0 4px 20px rgba(15, 23, 42, 0.05) !important;
+}
+body.light-theme .ha-raw-viewer-header,
+[data-theme="light"] .ha-raw-viewer-header {
+    background: #F8FAFC !important;
+    border-bottom: 1px solid #E2E8F0 !important;
+}
+body.light-theme .ha-raw-viewer-title,
+[data-theme="light"] .ha-raw-viewer-title {
+    color: #0284C7 !important;
+}
+body.light-theme .ha-raw-viewer-meta,
+[data-theme="light"] .ha-raw-viewer-meta {
+    color: #64748B !important;
+}
+body.light-theme .ha-raw-viewer-body,
+[data-theme="light"] .ha-raw-viewer-body {
+    background: #FFFFFF !important;
+}
+body.light-theme .ha-raw-line,
+[data-theme="light"] .ha-raw-line {
+    border-left: 3px solid transparent;
+}
+body.light-theme .ha-raw-line:hover,
+[data-theme="light"] .ha-raw-line:hover {
+    background: #F1F5F9 !important;
+}
+body.light-theme .ha-raw-line-num,
+[data-theme="light"] .ha-raw-line-num {
+    color: #94A3B8 !important;
+    border-right: 1px solid #F1F5F9;
+    padding-right: 14px;
+}
+body.light-theme .ha-raw-line-content,
+[data-theme="light"] .ha-raw-line-content {
+    color: #1E293B !important;
+}
+body.light-theme .ha-hdr-name,
+[data-theme="light"] .ha-hdr-name {
+    color: #0F172A !important;
+    font-weight: 700 !important;
+}
+body.light-theme .ha-hdr-val,
+[data-theme="light"] .ha-hdr-val {
+    color: #334155 !important;
+}
+body.light-theme .ha-raw-line.is-important,
+[data-theme="light"] .ha-raw-line.is-important {
+    background: rgba(2, 132, 199, 0.05) !important;
+}
+body.light-theme .ha-raw-line.is-important:hover,
+[data-theme="light"] .ha-raw-line.is-important:hover {
+    background: rgba(2, 132, 199, 0.12) !important;
+    border-left-color: #0284C7 !important;
+}
+
+body.light-theme .badge-hdr-received,
+[data-theme="light"] .badge-hdr-received {
+    background: #E0F2FE !important;
+    color: #0284C7 !important;
+    border: 1px solid #BAE6FD !important;
+}
+body.light-theme .badge-hdr-auth,
+[data-theme="light"] .badge-hdr-auth {
+    background: #ECFDF5 !important;
+    color: #059669 !important;
+    border: 1px solid #A7F3D0 !important;
+}
+body.light-theme .badge-hdr-dkim,
+[data-theme="light"] .badge-hdr-dkim {
+    background: #F3E8FF !important;
+    color: #7E22CE !important;
+    border: 1px solid #DDD6FE !important;
+}
+body.light-theme .badge-hdr-identity,
+[data-theme="light"] .badge-hdr-identity {
+    background: #FEF3C7 !important;
+    color: #D97706 !important;
+    border: 1px solid #FDE68A !important;
+}
+
+/* Quick Clear Header Button */
+.ha-quick-clear-btn {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.25);
+    color: #f87171;
+    font-family: var(--font-mono, 'JetBrains Mono'), monospace;
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.2s ease;
+}
+.ha-quick-clear-btn:hover {
+    background: rgba(239, 68, 68, 0.2);
+    border-color: #ef4444;
+    color: #ffffff;
+}
+body.light-theme .ha-quick-clear-btn,
+[data-theme="light"] .ha-quick-clear-btn {
+    background: #FEF2F2 !important;
+    border: 1px solid #FECACA !important;
+    color: #DC2626 !important;
+}
+body.light-theme .ha-quick-clear-btn:hover,
+[data-theme="light"] .ha-quick-clear-btn:hover {
+    background: #FEE2E2 !important;
+    border-color: #F87171 !important;
+    color: #B91C1C !important;
+}
+
+.ha-preset-btn.ha-btn-clear {
+    background: rgba(239, 68, 68, 0.08);
+    border-color: rgba(239, 68, 68, 0.25);
+    color: #f87171;
+}
+.ha-preset-btn.ha-btn-clear:hover {
+    background: rgba(239, 68, 68, 0.18);
+    border-color: #ef4444;
+    color: #ffffff;
+}
+body.light-theme .ha-preset-btn.ha-btn-clear,
+[data-theme="light"] .ha-preset-btn.ha-btn-clear {
+    background: #FEF2F2 !important;
+    border-color: #FECACA !important;
+    color: #DC2626 !important;
+}
+body.light-theme .ha-preset-btn.ha-btn-clear:hover,
+[data-theme="light"] .ha-preset-btn.ha-btn-clear:hover {
+    background: #FEE2E2 !important;
+    border-color: #F87171 !important;
+    color: #B91C1C !important;
+}
+
+/* Floating Toast Notification */
+.ha-toast-notice {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: #0F172A;
+    border: 1px solid var(--primary);
+    color: #F8FAFC;
+    padding: 10px 18px;
+    border-radius: 8px;
+    font-family: var(--font-mono, monospace);
+    font-size: 0.76rem;
+    font-weight: 600;
+    z-index: 100050;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    animation: haFadeIn 0.22s ease-out;
+}
+body.light-theme .ha-toast-notice,
+[data-theme="light"] .ha-toast-notice {
+    background: #FFFFFF !important;
+    border: 1px solid #CBD5E1 !important;
+    color: #0F172A !important;
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.14) !important;
+}
 </style>
 
 <div class="ha-container">
@@ -2978,21 +3940,40 @@ body.light-theme .ha-action-btn:focus-visible {
                 <div class="ha-live-badge"><div class="ha-live-dot"></div>LIVE ENGINE</div>
             </div>
 
-            <!-- Minimized interactive route navigator stage -->
+            <!-- Bespoke Minimized Orbital BGP Flight Radar & Transit Conduit -->
             <div class="ha-hop-stage" id="ha-hop-stage">
-                <div class="ha-mini-nav-header">
-                    <div class="ha-mini-nav-title">
-                        <i class="ti ti-route-2"></i> PHISHSIM HEADER DECODER
+                <!-- Row 1: Tactical Radar Cockpit Deck -->
+                <div class="ha-radar-header-row">
+                    <div class="ha-radar-deck">
+                        <div class="ha-radar-scope" title="Active BGP Route Radar">
+                            <div class="ha-radar-sweep"></div>
+                            <div class="ha-radar-cross"></div>
+                            <div class="ha-radar-ring r1"></div>
+                            <div class="ha-radar-blip b1"></div>
+                            <div class="ha-radar-blip b2"></div>
+                        </div>
+                        <div class="ha-radar-meta">
+                            <div class="ha-radar-title"><i class="ti ti-satellite"></i> BGP ORBITAL TRACER</div>
+                            <div class="ha-radar-sub"><span class="ha-radar-live-pip"></span> <span id="ha-mini-status-text">STANDBY</span> • 0-RTT TRANSIT RECON</div>
+                        </div>
                     </div>
-                    <div class="ha-mini-nav-status">
-                        <span class="ha-mini-status-dot"></span> <span id="ha-mini-status-text">STANDBY</span>
+
+                    <div class="ha-radar-telemetry-chips">
+                        <span class="ha-radar-chip"><i class="ti ti-shield-check"></i> <span id="ha-hud-auth-chip">AUTH DECODER</span></span>
+                        <span class="ha-radar-chip"><i class="ti ti-activity"></i> <span id="ha-hud-status-chip">0-DELAY TELEMETRY</span></span>
                     </div>
-                    <button class="ha-mini-restore-btn" onclick="haRestoreFromMinimize()" title="Restore Full Console">
-                        <i class="ti ti-maximize"></i> RESTORE CONSOLE
-                    </button>
+
+                    <div class="ha-radar-actions">
+                        <button class="ha-ping-btn" onclick="haPingTransitConduit()" title="Fire Diagnostic Photon Packet Across Route">
+                            <i class="ti ti-bolt"></i> PING ROUTE
+                        </button>
+                        <button class="ha-restore-deck-btn" onclick="haRestoreFromMinimize()" title="Expand Full Header Dissection Console">
+                            <i class="ti ti-terminal-2"></i> RESTORE CONSOLE
+                        </button>
+                    </div>
                 </div>
 
-                <!-- Mini Route Chain Navigator -->
+                <!-- Row 2: Live Optical Transit Cable Pipeline -->
                 <div class="ha-mini-route-container">
                     <div class="ha-mini-route-chain" id="ha-mini-route-chain">
                         <!-- Dynamic interactive route nodes & line links inserted here -->
@@ -3004,8 +3985,13 @@ body.light-theme .ha-action-btn:focus-visible {
 
             <!-- Wrapper for smooth minimization transition -->
             <div class="ha-input-body" id="ha-input-body">
-                <div class="ha-console-prompt">
-                    <span class="ha-prompt-symbol">&gt;</span> awaiting header payload...
+                <div class="ha-console-prompt-row" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                    <div class="ha-console-prompt" style="margin-bottom: 0;">
+                        <span class="ha-prompt-symbol">&gt;</span> awaiting header payload...
+                    </div>
+                    <button type="button" class="ha-quick-clear-btn" id="ha-quick-clear-btn" onclick="clearHeadersInput()" title="Clear header input" style="display: none;">
+                        <i class="ti ti-x"></i> Clear Input
+                    </button>
                 </div>
 
                 <div class="ha-textarea-wrap" id="ha-textarea-wrap">
@@ -3030,6 +4016,9 @@ body.light-theme .ha-action-btn:focus-visible {
                         </button>
                         <button class="ha-preset-btn sample-suspicious" id="btn-preset-spf-fail" onclick="loadPreset('spf-fail')">
                             <i class="ti ti-alert-octagon"></i> LOAD SUSPICIOUS SAMPLE
+                        </button>
+                        <button class="ha-preset-btn ha-btn-clear" id="ha-clear-headers-btn" onclick="clearHeadersInput()" title="Clear header input">
+                            <i class="ti ti-trash"></i> CLEAR INPUT
                         </button>
                     </div>
                     <div class="ha-presets-more">
@@ -3389,6 +4378,7 @@ Return-Path: <security@newly-registered-phish.com>`
 
 /* Preset loading handler */
 function loadPreset(key) {
+    if (typeof showStage === 'function') showStage('input');
     document.querySelectorAll('.ha-preset-btn, .ha-preset-pill').forEach(btn => btn.classList.remove('active'));
     const activeBtn = document.getElementById('btn-preset-' + key);
     if (activeBtn) activeBtn.classList.add('active');
@@ -3401,6 +4391,40 @@ function loadPreset(key) {
     if (wrap) wrap.style.borderColor = '';
     
     updateStructuralDetection();
+    updateHaClearBtnVisibility();
+}
+
+/* Quick Clear Button Visibility Updater */
+function updateHaClearBtnVisibility() {
+    const input = document.getElementById('headers-input');
+    const quickBtn = document.getElementById('ha-quick-clear-btn');
+    if (quickBtn && input) {
+        quickBtn.style.display = input.value && input.value.trim().length > 0 ? 'inline-flex' : 'none';
+    }
+}
+
+/* Dedicated Clear Input Action */
+function clearHeadersInput() {
+    const ta = document.getElementById('headers-input');
+    if (ta) {
+        if (ta.animate) {
+            ta.animate([
+                { opacity: 0.3, transform: 'scale(0.995)' },
+                { opacity: 1, transform: 'scale(1)' }
+            ], { duration: 180, easing: 'ease-out' });
+        }
+        ta.value = '';
+        ta.style.borderColor = '';
+        ta.focus();
+    }
+    const wrap = document.getElementById('ha-textarea-wrap');
+    if (wrap) wrap.style.borderColor = '';
+
+    document.querySelectorAll('.ha-preset-btn, .ha-preset-pill').forEach(b => b.classList.remove('active'));
+    updateStructuralDetection();
+    updateHaClearBtnVisibility();
+    if (typeof showStage === 'function') showStage('input');
+    if (typeof haShowToast === 'function') haShowToast('Header input cleared', 'ti-trash');
 }
 
 /* Live Structural Detection Handler */
@@ -3474,7 +4498,30 @@ function showStage(stageId) {
     document.getElementById('stage-input').style.display = stageId === 'input' ? '' : 'none';
     document.getElementById('stage-loading').style.display = stageId === 'loading' ? '' : 'none';
     document.getElementById('stage-results').style.display = stageId === 'results' ? '' : 'none';
+    const cardContainer = document.getElementById('ha-card-container');
+    if (cardContainer) {
+        if (stageId === 'results') {
+            cardContainer.classList.add('stage-results-active');
+        } else {
+            cardContainer.classList.remove('stage-results-active');
+        }
+    }
 }
+
+window.haShowToast = function(msg, icon) {
+    const existing = document.querySelector('.ha-toast-notice');
+    if (existing) existing.remove();
+    const t = document.createElement('div');
+    t.className = 'ha-toast-notice';
+    t.innerHTML = `<i class="${icon || 'ti ti-info-circle'}"></i> <span>${msg}</span>`;
+    document.body.appendChild(t);
+    setTimeout(() => {
+        t.style.opacity = '0';
+        t.style.transform = 'translateY(10px)';
+        t.style.transition = 'all 0.25s ease';
+        setTimeout(() => t.remove(), 250);
+    }, 2800);
+};
 
 /* Website Alert Modal Helper */
 function askHeaderConfirm(title, desc, confirmBtnText, onConfirm) {
@@ -3502,6 +4549,31 @@ function askHeaderConfirm(title, desc, confirmBtnText, onConfirm) {
         if (confirmed && typeof onConfirm === 'function') {
             onConfirm();
         }
+    };
+
+    if (modal) modal.style.display = 'flex';
+}
+
+function askHeaderAlert(title, desc) {
+    const modal = document.getElementById('ha-new-scan-modal');
+    const titleEl = document.getElementById('ha-modal-title-text');
+    const descEl = document.getElementById('ha-modal-desc-text');
+    const confirmBtn = document.getElementById('ha-modal-confirm-btn');
+    const cancelBtn = modal ? modal.querySelector('.btn-cancel') : null;
+    const cardContainer = document.getElementById('ha-card-container');
+    const resultsStage = document.getElementById('stage-results');
+
+    if (titleEl) titleEl.textContent = title || 'SECURITY NOTICE';
+    if (descEl) descEl.textContent = desc || '';
+    if (confirmBtn) confirmBtn.textContent = '[ OK ]';
+    if (cancelBtn) cancelBtn.style.display = 'none';
+
+    window._haConfirmAction = function() {
+        if (resultsStage) resultsStage.classList.remove('ha-results-blurred');
+        if (cardContainer) cardContainer.classList.remove('ha-results-blurred');
+        if (modal) modal.style.display = 'none';
+        if (cancelBtn) cancelBtn.style.display = '';
+        if (confirmBtn) confirmBtn.textContent = '[ NEW SCAN ]';
     };
 
     if (modal) modal.style.display = 'flex';
@@ -3788,7 +4860,7 @@ async function executeTrace() {
         const parsedData = await runForensicDecodingSequence(fetchPromise);
         renderForensicResults(parsedData);
     } catch (err) {
-        alert('Analysis failed: ' + err.message);
+        askHeaderAlert('ANALYSIS FAILED', 'Analysis failed: ' + err.message);
         showStage('input');
     }
 }
@@ -4755,7 +5827,7 @@ window.replayState = {
 function triggerRouteReplay() {
     const hops = window.lastAnalyzedData?.hops || [];
     if (!hops || hops.length === 0) {
-        alert("No hop chain records available for route replay.");
+        askHeaderAlert("REPLAY NOTICE", "No hop chain records available for route replay.");
         return;
     }
 
@@ -4978,54 +6050,6 @@ function renderForensicResults(data) {
 /* ── Minimized Terminal Interactive Navigator logic ──────────────── */
 window.lastAnalyzedData = null;
 
-const DEFAULT_MINI_HOPS = [
-    {
-        name: "ORIGIN",
-        from: "mail-sender102.google.com",
-        by: "mx.enterprise.com",
-        ip: "209.85.128.102",
-        delta: 0,
-        raw: "Received: from mail-sender102.google.com ([209.85.128.102]) by mx.enterprise.com with ESMTPS; Mon, 15 Jan 2024 10:25:44 UTC",
-        trust: "healthy"
-    },
-    {
-        name: "RELAY 01",
-        from: "relay-01.google.com",
-        by: "relay-02.google.com",
-        ip: "209.85.128.110",
-        delta: 1.2,
-        raw: "Received: from relay-01.google.com by relay-02.google.com with ESMTP id g12so123; Mon, 15 Jan 2024 10:25:43 UTC",
-        trust: "healthy"
-    },
-    {
-        name: "RELAY 02",
-        from: "relay-02.google.com",
-        by: "smtp-out.enterprise.com",
-        ip: "198.51.100.42",
-        delta: 1.8,
-        raw: "Received: from relay-02.google.com by smtp-out.enterprise.com with ESMTPS; Mon, 15 Jan 2024 10:25:42 UTC",
-        trust: "healthy"
-    },
-    {
-        name: "SMTP OUT",
-        from: "smtp-out.enterprise.com",
-        by: "mx.destination.com",
-        ip: "198.51.100.99",
-        delta: 0.5,
-        raw: "Received: from smtp-out.enterprise.com by mx.destination.com with ESMTPS; Mon, 15 Jan 2024 10:25:41 UTC",
-        trust: "healthy"
-    },
-    {
-        name: "INBOX",
-        from: "mx.destination.com",
-        by: "inbox.destination.com",
-        ip: "10.0.1.5",
-        delta: 0.2,
-        raw: "Received: from mx.destination.com by inbox.destination.com with LMTPA; Mon, 15 Jan 2024 10:25:40 UTC",
-        trust: "healthy"
-    }
-];
-
 function extractHopMetadata(hop) {
     if (!hop) return {};
     const raw = hop.raw || '';
@@ -5102,21 +6126,23 @@ function renderMiniRouteNavigator() {
     chainBox.innerHTML = '';
     closeMiniPopover();
 
-    let hopsList = [];
-    let isAnalyzed = false;
-
-    if (window.lastAnalyzedData) {
-        hopsList = window.lastAnalyzedData.hops || [];
-        isAnalyzed = true;
-    } else {
-        hopsList = DEFAULT_MINI_HOPS;
+    if (!window.lastAnalyzedData) {
+        if (statusText) statusText.textContent = 'STANDBY • AWAITING PAYLOAD';
+        chainBox.innerHTML = `
+            <div style="display:flex; align-items:center; gap:8px; font-family:'JetBrains Mono',monospace; font-size:0.7rem; color:var(--text-muted, #94a3b8); padding:4px 6px;">
+                <i class="ti ti-satellite" style="color:var(--primary, #38bdf8); font-size:0.95rem;"></i>
+                <span>Awaiting email header payload. Paste headers in console or load a forensic sample to trace transit route.</span>
+            </div>
+        `;
+        return;
     }
 
+    const hopsList = window.lastAnalyzedData.hops || [];
     if (statusText) {
-        statusText.textContent = isAnalyzed ? 'ANALYSIS COMPLETE' : 'STANDBY';
+        statusText.textContent = 'ANALYSIS COMPLETE';
     }
 
-    if (isAnalyzed && hopsList.length === 0) {
+    if (hopsList.length === 0) {
         chainBox.innerHTML = `<div style="font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: var(--text-muted, #94a3b8); padding: 8px;">No standard 'Received' hop records isolated in email payload.</div>`;
         return;
     }
@@ -5257,27 +6283,31 @@ function closeMiniPopover() {
     // RED — clear textarea + reset to input stage using site custom alert modal
     document.getElementById('ha-dot-red').addEventListener('click', function() {
         const ta = document.getElementById('headers-input');
-        if (ta.value.trim().length > 0 || window.lastAnalyzedData) {
-            askHeaderConfirm(
-                'CLEAR TERMINAL INPUT?',
-                'Are you sure you want to clear your header payload and reset the active forensic investigation?',
-                '[ CLEAR INPUT ]',
-                function() {
-                    ta.value = '';
-                    ta.style.borderColor = '';
-                    window.lastAnalyzedData = null;
-                    document.querySelectorAll('.ha-preset-btn.active').forEach(b => b.classList.remove('active'));
-                    resetToInput();
-                    renderMiniRouteNavigator();
-                }
-            );
-        } else {
+        const clearAction = function() {
+            if (ta.animate) {
+                ta.animate([
+                    { opacity: 0.3, transform: 'scale(0.995)' },
+                    { opacity: 1, transform: 'scale(1)' }
+                ], { duration: 180, easing: 'ease-out' });
+            }
             ta.value = '';
             ta.style.borderColor = '';
             window.lastAnalyzedData = null;
             document.querySelectorAll('.ha-preset-btn.active').forEach(b => b.classList.remove('active'));
             resetToInput();
             renderMiniRouteNavigator();
+            ta.focus();
+        };
+
+        if (ta.value.trim().length > 0 || window.lastAnalyzedData) {
+            askHeaderConfirm(
+                'CLEAR TERMINAL INPUT?',
+                'Are you sure you want to clear your header payload and reset the active forensic investigation?',
+                '[ CLEAR INPUT ]',
+                clearAction
+            );
+        } else {
+            clearAction();
         }
     });
 
@@ -5287,10 +6317,26 @@ function closeMiniPopover() {
         const isMin = inputStage.classList.toggle('ha-minimized');
         if (isMin) {
             renderMiniRouteNavigator();
+            if (window.haShowToast) window.haShowToast('Console minimized to Route HUD', 'ti ti-layout-navbar-collapse');
+        } else {
+            if (window.haShowToast) window.haShowToast('Console restored to full view', 'ti ti-layout-navbar-expand');
         }
     });
     window.haRestoreFromMinimize = function() {
         document.getElementById('stage-input').classList.remove('ha-minimized');
+        if (window.haShowToast) window.haShowToast('Console restored to full view', 'ti ti-layout-navbar-expand');
+    };
+
+    window.haPingTransitConduit = function() {
+        const stage = document.getElementById('ha-hop-stage');
+        if (!stage) return;
+        stage.classList.remove('is-pinging');
+        void stage.offsetWidth;
+        stage.classList.add('is-pinging');
+        if (window.haShowToast) window.haShowToast('Diagnostic packet traversing BGP route nodes (0-RTT)', 'ti ti-bolt');
+        setTimeout(() => {
+            stage.classList.remove('is-pinging');
+        }, 900);
     };
 
     // GREEN — expand overlay
@@ -5315,11 +6361,13 @@ function closeMiniPopover() {
         document.getElementById('ha-expand-textarea').value = document.getElementById('headers-input').value;
         _haOverlay.classList.add('active');
         document.getElementById('ha-expand-textarea').focus();
+        if (window.haShowToast) window.haShowToast('Console expanded to full screen', 'ti ti-maximize');
     }
     function haCollapse() {
         if (!_haOverlay) return;
         document.getElementById('headers-input').value = document.getElementById('ha-expand-textarea').value;
         _haOverlay.classList.remove('active');
+        if (window.haShowToast) window.haShowToast('Console collapsed to normal view', 'ti ti-minimize');
     }
     document.getElementById('ha-dot-green').addEventListener('click', function() {
         if (_haOverlay && _haOverlay.classList.contains('active')) haCollapse();
@@ -5332,11 +6380,18 @@ function closeMiniPopover() {
     // Attach live structural detection listeners to textarea
     const inputArea = document.getElementById('headers-input');
     if (inputArea) {
-        inputArea.addEventListener('input', updateStructuralDetection);
+        inputArea.addEventListener('input', function() {
+            updateStructuralDetection();
+            updateHaClearBtnVisibility();
+        });
         inputArea.addEventListener('paste', function() {
-            setTimeout(updateStructuralDetection, 50);
+            setTimeout(function() {
+                updateStructuralDetection();
+                updateHaClearBtnVisibility();
+            }, 50);
         });
         updateStructuralDetection();
+        updateHaClearBtnVisibility();
     }
 
     // Lure: proactive callout when idle

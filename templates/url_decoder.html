@@ -112,20 +112,74 @@
 }
 .ud-term-dots {
     display: flex;
-    gap: 6px;
+    gap: 7px;
     align-items: center;
 }
 .ud-term-dot {
-    width: 11px;
-    height: 11px;
+    width: 12px;
+    height: 12px;
     border-radius: 50%;
     cursor: pointer;
-    transition: transform 0.12s ease;
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
 }
-.ud-term-dot:hover { transform: scale(1.2); }
-.ud-term-dot.r { background: var(--danger, #ef4444); }
-.ud-term-dot.y { background: var(--warning, #f59e0b); }
-.ud-term-dot.g { background: var(--success, #10b981); }
+.ud-term-dot::before {
+    content: '';
+    position: absolute;
+    font-size: 9px;
+    font-weight: 900;
+    line-height: 1;
+    opacity: 0;
+    transition: opacity 0.15s ease, transform 0.15s ease;
+    transform: scale(0.6);
+    color: rgba(0, 0, 0, 0.75);
+    pointer-events: none;
+    font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
+}
+.ud-term-dots:hover .ud-term-dot::before {
+    opacity: 0.85;
+    transform: scale(1);
+}
+.ud-term-dot.r {
+    background: #ff5f56;
+    border: 1px solid rgba(224, 68, 62, 0.6);
+}
+.ud-term-dot.r::before {
+    content: '×';
+}
+.ud-term-dot.r:hover {
+    transform: scale(1.22);
+    box-shadow: 0 0 10px rgba(255, 95, 86, 0.7);
+}
+.ud-term-dot.y {
+    background: #ffbd2e;
+    border: 1px solid rgba(222, 161, 35, 0.6);
+}
+.ud-term-dot.y::before {
+    content: '−';
+}
+.ud-term-dot.y:hover {
+    transform: scale(1.22);
+    box-shadow: 0 0 10px rgba(255, 189, 46, 0.7);
+}
+.ud-term-dot.g {
+    background: #27c93f;
+    border: 1px solid rgba(26, 171, 42, 0.6);
+}
+.ud-term-dot.g::before {
+    content: '+';
+}
+.ud-term-dot.g:hover {
+    transform: scale(1.22);
+    box-shadow: 0 0 10px rgba(39, 201, 63, 0.7);
+}
+.ud-term-dot:active {
+    transform: scale(0.92) !important;
+}
 
 .ud-term-title {
     font-family: var(--font-mono);
@@ -769,7 +823,38 @@
     font-weight: 700;
     color: var(--text-primary);
     margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    min-width: 0;
+}
+.ud-hop-domain-name {
+    min-width: 0;
     word-break: break-all;
+}
+.ud-favicon-slot {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    line-height: 1;
+    vertical-align: middle;
+}
+.ud-hop-favicon {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    border-radius: 2px;
+    display: block;
+}
+.ud-hop-favicon-fallback {
+    width: 100%;
+    height: 100%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    line-height: 1;
 }
 .ud-hop-status-row {
     display: flex;
@@ -1001,6 +1086,578 @@
     from { opacity: 0; transform: translateY(4px); }
     to { opacity: 1; transform: translateY(0); }
 }
+
+/* ════════════════════════════════════════════════════════════════
+   LIGHT MODE ADAPTATIONS ([data-theme="light"])
+   ════════════════════════════════════════════════════════════════ */
+body.light-theme .ud-term-card, [data-theme="light"] .ud-term-card {
+    background: #FFFFFF;
+    border-color: #E2E8F0;
+    box-shadow: 0 20px 50px rgba(15, 23, 42, 0.08);
+}
+body.light-theme .ud-term-hdr, [data-theme="light"] .ud-term-hdr {
+    background: linear-gradient(180deg, #F8FAFC 0%, #F1F5F9 100%);
+    border-bottom-color: #E2E8F0;
+}
+body.light-theme .ud-term-title, [data-theme="light"] .ud-term-title {
+    color: #475569;
+}
+body.light-theme .ud-search-box, [data-theme="light"] .ud-search-box {
+    background: #FFFFFF;
+    border-color: #CBD5E1;
+}
+body.light-theme .ud-search-box:focus-within, [data-theme="light"] .ud-search-box:focus-within {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary) 25%, transparent);
+}
+body.light-theme .ud-input-field, [data-theme="light"] .ud-input-field {
+    color: #0F172A;
+}
+body.light-theme .ud-input-field::placeholder, [data-theme="light"] .ud-input-field::placeholder {
+    color: #94A3B8;
+}
+body.light-theme .ud-preset-pill, [data-theme="light"] .ud-preset-pill {
+    background: #F8FAFC !important;
+    border: 1px solid #CBD5E1 !important;
+    color: #1E293B !important;
+    font-weight: 600 !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+}
+body.light-theme .ud-preset-pill:hover, [data-theme="light"] .ud-preset-pill:hover {
+    color: var(--primary) !important;
+    border-color: var(--primary) !important;
+    background: #FFFFFF !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
+    transform: translateY(-1px);
+}
+body.light-theme .ud-preset-pill.active, [data-theme="light"] .ud-preset-pill.active {
+    background: color-mix(in srgb, var(--primary) 12%, transparent) !important;
+    border-color: var(--primary) !important;
+    color: var(--primary) !important;
+}
+body.light-theme .ud-anatomy-strip, [data-theme="light"] .ud-anatomy-strip {
+    background: #F8FAFC;
+    border-color: #E2E8F0;
+}
+body.light-theme .ud-anatomy-seg, [data-theme="light"] .ud-anatomy-seg {
+    background: #FFFFFF;
+    border-color: #CBD5E1;
+}
+body.light-theme .ud-seg-k, [data-theme="light"] .ud-seg-k {
+    background: #F1F5F9;
+    border-right-color: #CBD5E1;
+    color: #475569;
+}
+body.light-theme .ud-seg-v, [data-theme="light"] .ud-seg-v {
+    color: #0F172A;
+}
+body.light-theme .ud-decoded-preview-box, [data-theme="light"] .ud-decoded-preview-box {
+    background: #F8FAFC;
+    border-color: #E2E8F0;
+}
+body.light-theme .ud-step-item, [data-theme="light"] .ud-step-item {
+    background: #F8FAFC;
+    border-color: #E2E8F0;
+    color: #475569;
+}
+body.light-theme .ud-step-item.active, [data-theme="light"] .ud-step-item.active {
+    background: color-mix(in srgb, var(--primary) 10%, transparent);
+    color: #0F172A;
+}
+body.light-theme .ud-step-item.completed, [data-theme="light"] .ud-step-item.completed {
+    border-color: rgba(16, 185, 129, 0.4);
+    color: #0F172A;
+}
+body.light-theme .ud-stream-hops-box, [data-theme="light"] .ud-stream-hops-box {
+    background: #F8FAFC;
+    border-color: #E2E8F0;
+}
+body.light-theme .ud-stream-hop-row, [data-theme="light"] .ud-stream-hop-row {
+    border-bottom-color: #E2E8F0;
+    color: #334155;
+}
+body.light-theme .ud-verdict-banner, [data-theme="light"] .ud-verdict-banner {
+    background: #F8FAFC;
+    border-color: #E2E8F0;
+}
+body.light-theme .ud-verdict-summary-side, [data-theme="light"] .ud-verdict-summary-side {
+    border-color: #E2E8F0;
+}
+body.light-theme .ud-tab-bar, [data-theme="light"] .ud-tab-bar {
+    border-bottom-color: #E2E8F0;
+}
+body.light-theme .ud-tab-btn, [data-theme="light"] .ud-tab-btn {
+    color: #64748B;
+}
+body.light-theme .ud-tab-btn.active, [data-theme="light"] .ud-tab-btn.active {
+    color: var(--primary);
+}
+body.light-theme .ud-tab-content-panel, [data-theme="light"] .ud-tab-content-panel,
+body.light-theme .ud-tech-box, [data-theme="light"] .ud-tech-box,
+body.light-theme .ud-dns-record-card, [data-theme="light"] .ud-dns-record-card {
+    background: #FFFFFF;
+    border-color: #E2E8F0;
+}
+
+body.light-theme .ud-term-card.ud-term-card-maximized, [data-theme="light"] .ud-term-card.ud-term-card-maximized {
+    background: #FFFFFF !important;
+    box-shadow: 0 40px 100px rgba(15, 23, 42, 0.18), 0 0 0 1px var(--primary) !important;
+}
+
+/* ── Light Mode Fixes for URL Decoder Results (Pic 2) ── */
+body.light-theme .ud-target-row, [data-theme="light"] .ud-target-row {
+    background: #F8FAFC !important;
+    border: 1px solid #CBD5E1 !important;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.03) !important;
+}
+body.light-theme .ud-target-row-hdr, [data-theme="light"] .ud-target-row-hdr {
+    color: #64748B !important;
+}
+body.light-theme .ud-target-url-text, [data-theme="light"] .ud-target-url-text {
+    color: #0F172A !important;
+}
+body.light-theme .ud-copy-btn, [data-theme="light"] .ud-copy-btn {
+    background: #FFFFFF !important;
+    border: 1px solid #CBD5E1 !important;
+    color: #475569 !important;
+}
+body.light-theme .ud-copy-btn:hover, [data-theme="light"] .ud-copy-btn:hover {
+    background: #F1F5F9 !important;
+    color: var(--primary) !important;
+    border-color: var(--primary) !important;
+}
+body.light-theme .ud-metrics-strip, [data-theme="light"] .ud-metrics-strip {
+    background: transparent !important;
+}
+body.light-theme .ud-mini-metric, [data-theme="light"] .ud-mini-metric {
+    background: #FFFFFF !important;
+    border: 1px solid #CBD5E1 !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03) !important;
+}
+body.light-theme .ud-mini-k, [data-theme="light"] .ud-mini-k {
+    color: #64748B !important;
+}
+body.light-theme .ud-mini-v, [data-theme="light"] .ud-mini-v {
+    color: #0F172A !important;
+}
+body.light-theme .ud-hub-nav, [data-theme="light"] .ud-hub-nav {
+    background: #F8FAFC !important;
+    border-bottom: 1px solid #E2E8F0 !important;
+}
+body.light-theme .ud-hub-tab-btn, [data-theme="light"] .ud-hub-tab-btn {
+    color: #64748B !important;
+}
+body.light-theme .ud-hub-tab-btn:hover, [data-theme="light"] .ud-hub-tab-btn:hover {
+    color: #0F172A !important;
+    background: #F1F5F9 !important;
+}
+body.light-theme .ud-hub-tab-btn.active, [data-theme="light"] .ud-hub-tab-btn.active {
+    color: var(--primary) !important;
+    border-bottom-color: var(--primary) !important;
+    background: color-mix(in srgb, var(--primary) 10%, transparent) !important;
+}
+body.light-theme .ud-flow-section, [data-theme="light"] .ud-flow-section {
+    background: #FFFFFF !important;
+    border: 1px solid #E2E8F0 !important;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04) !important;
+}
+body.light-theme .ud-flow-title, [data-theme="light"] .ud-flow-title {
+    color: #334155 !important;
+}
+body.light-theme .ud-hop-card, [data-theme="light"] .ud-hop-card {
+    background: #F8FAFC !important;
+    border: 1px solid #CBD5E1 !important;
+}
+body.light-theme .ud-hop-step-num, [data-theme="light"] .ud-hop-step-num {
+    color: #64748B !important;
+}
+body.light-theme .ud-hop-domain, [data-theme="light"] .ud-hop-domain {
+    color: #0F172A !important;
+}
+body.light-theme .ud-threat-item, [data-theme="light"] .ud-threat-item {
+    background: #FFFFFF !important;
+    border: 1px solid #CBD5E1 !important;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04) !important;
+}
+body.light-theme .ud-threat-item-hdr, [data-theme="light"] .ud-threat-item-hdr {
+    color: #0F172A !important;
+}
+body.light-theme .ud-threat-item-desc, [data-theme="light"] .ud-threat-item-desc {
+    color: #475569 !important;
+}
+body.light-theme .ud-params-table th, [data-theme="light"] .ud-params-table th {
+    background: #F8FAFC !important;
+    color: #64748B !important;
+    border-bottom: 1px solid #CBD5E1 !important;
+}
+body.light-theme .ud-params-table td, [data-theme="light"] .ud-params-table td {
+    background: #FFFFFF !important;
+    color: #0F172A !important;
+    border-bottom: 1px solid #E2E8F0 !important;
+}
+body.light-theme .ud-browser-frame, [data-theme="light"] .ud-browser-frame {
+    background: #FFFFFF !important;
+    border: 1px solid #CBD5E1 !important;
+}
+body.light-theme .ud-browser-header, [data-theme="light"] .ud-browser-header {
+    background: #F8FAFC !important;
+    border-bottom: 1px solid #E2E8F0 !important;
+}
+body.light-theme .ud-browser-url, [data-theme="light"] .ud-browser-url {
+    background: #FFFFFF !important;
+    border: 1px solid #CBD5E1 !important;
+    color: #0F172A !important;
+}
+
+/* Disabled Terminal Buttons during Results View */
+.has-active-results #ud-dot-red,
+.has-active-results .ud-preset-pill {
+    opacity: 0.45 !important;
+    pointer-events: none !important;
+    cursor: not-allowed !important;
+}
+
+/* ── BESPOKE MINIMIZED CONSOLE: QUANTUM LASER REDIRECT PRISM & OPTICAL DISARMER ── */
+.ud-hud-bar {
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.25rem;
+    padding: 0.9rem 1.5rem;
+    background: linear-gradient(180deg, #0b0f19 0%, #050811 100%);
+    border-top: 1px solid rgba(168, 85, 247, 0.3);
+    font-family: var(--font-mono, 'JetBrains Mono'), monospace;
+    min-height: 82px;
+    box-sizing: border-box;
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+body.light-theme .ud-hud-bar,
+[data-theme="light"] .ud-hud-bar {
+    background: #FFFFFF !important;
+    border-top: 1px solid #E2E8F0 !important;
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06) !important;
+}
+body.light-theme .ud-prism-core,
+[data-theme="light"] .ud-prism-core {
+    background: radial-gradient(circle, #F3E8FF 0%, #FAF5FF 80%) !important;
+    border: 1.5px solid #A855F7 !important;
+    box-shadow: 0 0 14px rgba(168, 85, 247, 0.2) !important;
+}
+body.light-theme .ud-prism-title,
+[data-theme="light"] .ud-prism-title {
+    color: #0F172A !important;
+}
+body.light-theme .ud-prism-sub,
+[data-theme="light"] .ud-prism-sub {
+    color: #64748B !important;
+}
+body.light-theme .ud-spectrum-chain,
+[data-theme="light"] .ud-spectrum-chain {
+    background: #F8FAFC !important;
+    border: 1px solid #CBD5E1 !important;
+}
+body.light-theme .ud-node-val,
+[data-theme="light"] .ud-node-val {
+    color: #0F172A !important;
+}
+body.light-theme .ud-spectrum-chip-btn,
+[data-theme="light"] .ud-spectrum-chip-btn {
+    background: #F1F5F9 !important;
+    border: 1px solid #CBD5E1 !important;
+    color: #475569 !important;
+}
+body.light-theme .ud-spectrum-chip-btn:hover,
+[data-theme="light"] .ud-spectrum-chip-btn:hover {
+    background: #F3E8FF !important;
+    border-color: #A855F7 !important;
+    color: #7E22CE !important;
+}
+body.light-theme .ud-prism-badge,
+[data-theme="light"] .ud-prism-badge {
+    background: #F3E8FF !important;
+    border: 1px solid #D8B4FE !important;
+    color: #7E22CE !important;
+}
+body.light-theme .ud-prism-expand-btn,
+[data-theme="light"] .ud-prism-expand-btn {
+    background: linear-gradient(135deg, #7C3AED 0%, #0284C7 100%) !important;
+    border: 1px solid #7C3AED !important;
+    color: #FFFFFF !important;
+    box-shadow: 0 2px 10px rgba(124, 58, 237, 0.25) !important;
+}
+body.light-theme .ud-prism-expand-btn:hover,
+[data-theme="light"] .ud-prism-expand-btn:hover {
+    background: linear-gradient(135deg, #6D28D9 0%, #0369A1 100%) !important;
+    border-color: #6D28D9 !important;
+    box-shadow: 0 4px 16px rgba(124, 58, 237, 0.4) !important;
+    transform: translateY(-1px);
+}
+
+/* Section 1: Refracting Laser Prism Aperture */
+.ud-prism-aperture-wrap {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+}
+.ud-prism-core {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    background: radial-gradient(circle, rgba(168, 85, 247, 0.2) 0%, rgba(15, 23, 42, 0.9) 80%);
+    border: 1.5px solid rgba(168, 85, 247, 0.45);
+    box-shadow: 0 0 16px rgba(168, 85, 247, 0.3), inset 0 0 8px rgba(168, 85, 247, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+.ud-prism-svg {
+    width: 32px;
+    height: 32px;
+    animation: udPrismSpin 12s linear infinite;
+}
+@keyframes udPrismSpin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+.ud-prism-hex {
+    fill: rgba(168, 85, 247, 0.15);
+    stroke: #A855F7;
+    stroke-width: 1.8;
+}
+.ud-laser-beam {
+    stroke-width: 1.8;
+    stroke-linecap: round;
+}
+.ud-laser-beam.in {
+    stroke: #FFFFFF;
+    animation: udLaserIn 1.6s ease-in-out infinite alternate;
+}
+.ud-laser-beam.out-cyan {
+    stroke: #22D3EE;
+    filter: drop-shadow(0 0 4px #22D3EE);
+}
+.ud-laser-beam.out-amber {
+    stroke: #F59E0B;
+    filter: drop-shadow(0 0 4px #F59E0B);
+}
+.ud-laser-beam.out-purple {
+    stroke: #E879F9;
+    filter: drop-shadow(0 0 4px #E879F9);
+}
+@keyframes udLaserIn {
+    0% { opacity: 0.4; }
+    100% { opacity: 1; }
+}
+
+.ud-prism-meta {
+    display: flex;
+    flex-direction: column;
+}
+.ud-prism-title {
+    font-size: 0.74rem;
+    font-weight: 800;
+    color: #F8FAFC;
+    letter-spacing: 0.07em;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.ud-prism-title i { color: #C084FC; font-size: 0.95rem; }
+.ud-prism-sub {
+    font-size: 0.65rem;
+    color: #94A3B8;
+    letter-spacing: 0.02em;
+    margin-top: 2px;
+}
+
+/* Section 2: Interactive Redirect Spectrum Ladder */
+.ud-redirect-spectrum-stage {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+    justify-content: center;
+    min-width: 0;
+}
+.ud-spectrum-chain {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(15, 23, 42, 0.75);
+    border: 1px solid rgba(168, 85, 247, 0.25);
+    border-radius: 8px;
+    padding: 6px 12px;
+    max-width: 480px;
+    min-width: 0;
+    overflow: hidden;
+}
+.ud-spectrum-node {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+.ud-node-tag {
+    font-size: 0.58rem;
+    font-weight: 800;
+    color: #A855F7;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+.ud-node-tag.dst { color: #22D3EE; }
+.ud-node-val {
+    font-size: 0.68rem;
+    font-weight: 600;
+    color: #F1F5F9;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 170px;
+}
+.ud-spectrum-arrow {
+    color: #C084FC;
+    font-size: 0.85rem;
+    flex-shrink: 0;
+    animation: udArrowPulse 1.8s ease-in-out infinite alternate;
+}
+@keyframes udArrowPulse {
+    0% { transform: translateX(-2px); opacity: 0.5; }
+    100% { transform: translateX(2px); opacity: 1; }
+}
+
+.ud-spectrum-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+}
+.ud-spectrum-chip-btn {
+    padding: 5px 10px;
+    background: rgba(168, 85, 247, 0.12);
+    border: 1px solid rgba(168, 85, 247, 0.35);
+    border-radius: 6px;
+    color: #E9D5FF;
+    font-family: inherit;
+    font-size: 0.65rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    white-space: nowrap;
+}
+.ud-spectrum-chip-btn:hover {
+    background: rgba(168, 85, 247, 0.3);
+    border-color: #C084FC;
+    color: #FFFFFF;
+    transform: translateY(-1px);
+}
+
+/* Section 3: Disarm Command Hub */
+.ud-prism-hub {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+}
+.ud-prism-badge {
+    font-size: 0.68rem;
+    font-weight: 800;
+    padding: 4px 10px;
+    border-radius: 6px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #A855F7;
+    background: rgba(168, 85, 247, 0.15);
+    border: 1px solid rgba(168, 85, 247, 0.35);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+.ud-pulse-pip {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #10B981;
+    box-shadow: 0 0 6px #10B981;
+}
+.ud-prism-expand-btn {
+    padding: 7px 15px;
+    background: linear-gradient(135deg, rgba(168, 85, 247, 0.25), rgba(126, 34, 206, 0.35));
+    border: 1px solid #C084FC;
+    border-radius: 6px;
+    color: #FFFFFF;
+    font-family: inherit;
+    font-size: 0.72rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.22s ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    letter-spacing: 0.06em;
+    white-space: nowrap;
+    box-shadow: 0 2px 12px rgba(168, 85, 247, 0.25);
+}
+.ud-prism-expand-btn:hover {
+    background: #A855F7;
+    color: #040813;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 18px rgba(168, 85, 247, 0.5);
+}
+
+@media (max-width: 900px) {
+    .ud-hud-bar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+    }
+    .ud-prism-aperture-wrap, .ud-prism-hub {
+        justify-content: space-between;
+    }
+    .ud-spectrum-chain {
+        max-width: 100%;
+    }
+}
+
+/* Floating Toast Notification */
+.ud-toast-notice {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: #0F172A;
+    border: 1px solid var(--primary);
+    color: #F8FAFC;
+    padding: 10px 18px;
+    border-radius: 8px;
+    font-family: var(--font-mono);
+    font-size: 0.76rem;
+    font-weight: 600;
+    z-index: 100050;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    animation: fadeIn 0.22s ease-out;
+}
+body.light-theme .ud-toast-notice, [data-theme="light"] .ud-toast-notice {
+    background: #FFFFFF !important;
+    border: 1px solid #CBD5E1 !important;
+    color: #0F172A !important;
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.14) !important;
+}
 </style>
 
 <div class="ud-container">
@@ -1028,16 +1685,58 @@
             <div class="ta-live-badge"><div class="ta-live-dot"></div>LIVE ENGINE</div>
         </div>
 
-        <!-- Minimized Compact HUD -->
-        <div id="ud-minimized-hud" style="display: none; padding: 12px 20px; align-items: center; justify-content: space-between; background: var(--bg-surface); font-family: var(--font-mono); font-size: 0.75rem; border-top: 1px solid var(--border-default);">
-            <div style="display:flex; align-items:center; gap:8px;">
-                <span style="width:7px; height:7px; border-radius:50%; background:var(--warning); display:inline-block;"></span>
-                <span style="color:var(--text-secondary); font-weight:700;">URL CONSOLE MINIMIZED</span>
-                <span style="color:var(--text-muted); font-size:0.68rem;" id="ud-minimized-target-label">[STANDBY]</span>
+        <!-- Bespoke Minimized Quantum Laser Redirect Prism & Optical Disarmer -->
+        <div id="ud-minimized-hud" class="ud-hud-bar" style="display: none;">
+            <!-- Section 1: Refracting Laser Prism Aperture -->
+            <div class="ud-prism-aperture-wrap">
+                <div class="ud-prism-core" title="Optical Laser Refraction Core">
+                    <svg class="ud-prism-svg" viewBox="0 0 48 48">
+                        <polygon points="24,6 42,16 42,32 24,42 6,32 6,16" class="ud-prism-hex"/>
+                        <line x1="2" y1="24" x2="24" y2="24" class="ud-laser-beam in"/>
+                        <line x1="24" y1="24" x2="44" y2="14" class="ud-laser-beam out-cyan"/>
+                        <line x1="24" y1="24" x2="44" y2="24" class="ud-laser-beam out-amber"/>
+                        <line x1="24" y1="24" x2="44" y2="34" class="ud-laser-beam out-purple"/>
+                    </svg>
+                </div>
+                <div class="ud-prism-meta">
+                    <div class="ud-prism-title"><i class="ti ti-prism"></i> QUANTUM OPTICAL DISARMER</div>
+                    <div class="ud-prism-sub" id="ud-minimized-target-label">Recursive Cloak &amp; Redirect Unroller</div>
+                </div>
             </div>
-            <button type="button" class="ud-reset-action-btn" onclick="toggleMinimize()" style="padding:4px 12px; font-size:0.68rem;">
-                <i class="ti ti-maximize"></i> RESTORE CONSOLE
-            </button>
+
+            <!-- Section 2: Interactive Redirect Spectrum Ladder -->
+            <div class="ud-redirect-spectrum-stage">
+                <div class="ud-spectrum-chain" id="ud-hud-chips-grid">
+                    <div class="ud-spectrum-node">
+                        <span class="ud-node-tag"><i class="ti ti-link"></i> INCOMING LINK</span>
+                        <span class="ud-node-val" id="ud-mini-src-val">Awaiting input...</span>
+                    </div>
+                    <div class="ud-spectrum-arrow">➔</div>
+                    <div class="ud-spectrum-node">
+                        <span class="ud-node-tag dst"><i class="ti ti-shield-search"></i> UNMASKED TARGET</span>
+                        <span class="ud-node-val" id="ud-mini-dst-val">STANDBY</span>
+                    </div>
+                </div>
+
+                <div class="ud-spectrum-actions">
+                    <button type="button" class="ud-spectrum-chip-btn" onclick="udSimulateDisarmClick(this)" title="Preview Destination Safely">
+                        <i class="ti ti-eye"></i> PEEK TARGET
+                    </button>
+                    <button type="button" class="ud-spectrum-chip-btn" onclick="udCopySanitizedMiniUrl()" title="Copy Defanged URL">
+                        <i class="ti ti-copy"></i> COPY DEFANGED
+                    </button>
+                </div>
+            </div>
+
+            <!-- Section 3: Disarm Command Hub -->
+            <div class="ud-prism-hub">
+                <div class="ud-prism-badge" id="ud-hud-status-badge">
+                    <span class="ud-pulse-pip"></span> ENCLAVE ARMED
+                </div>
+                <button type="button" class="ud-prism-expand-btn" onclick="toggleMinimize()" title="Expand Full URL Decoder">
+                    <i class="ti ti-focus-2"></i> RESTORE CONSOLE
+                </button>
+            </div>
         </div>
 
         <!-- 1. INPUT STATE -->
@@ -1354,16 +2053,6 @@ if (urlInput) {
     }
 }
 
-function clearUrlInput() {
-    if (!urlInput) return;
-    urlInput.value = '';
-    urlInput.focus();
-    if (clearBtn) clearBtn.classList.remove('visible');
-    const strip = document.getElementById('ud-anatomy-strip');
-    if (strip) strip.classList.remove('visible');
-    document.querySelectorAll('.ud-preset-pill').forEach(p => p.classList.remove('active'));
-}
-
 /* Preset Loader */
 function applyPreset(url) {
     if (!urlInput) return;
@@ -1563,6 +2252,16 @@ function setStepState(stepId, state) {
     el.className = 'ud-step-item ' + state;
 }
 
+/* Helper to render hop favicon with generic globe fallback */
+function getHopFaviconHTML(domain, size = 16) {
+    const cleanDomain = (domain || '').trim();
+    if (!cleanDomain) {
+        return `<span class="ud-favicon-slot" style="width:${size}px; height:${size}px;"><i class="ti ti-world ud-hop-favicon-fallback" style="font-size:${size}px;"></i></span>`;
+    }
+    const faviconUrl = `https://www.google.com/s2/favicons?domain=${encodeURIComponent(cleanDomain)}&sz=32`;
+    return `<span class="ud-favicon-slot" style="width:${size}px; height:${size}px;"><img class="ud-hop-favicon" src="${faviconUrl}" alt="" width="${size}" height="${size}" loading="lazy" onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='inline-flex';"><i class="ti ti-world ud-hop-favicon-fallback" style="display:none; font-size:${size}px;" aria-hidden="true"></i></span>`;
+}
+
 function appendStreamingHop(hop) {
     const hopsList = document.getElementById('ud-stream-hops-list');
     if (!hopsList) return;
@@ -1581,6 +2280,7 @@ function appendStreamingHop(hop) {
     row.className = 'ud-stream-hop-row';
     row.innerHTML = `
         <span class="ud-hop-badge ${badgeClass}">${statusText}</span>
+        ${getHopFaviconHTML(hop.domain, 14)}
         <span style="color:#fff; font-weight:700;">${escapeHTML(hop.domain)}</span>
         <span style="color:var(--text-muted); font-size:0.65rem; word-break:break-all;">${escapeHTML(hop.url)}</span>
     `;
@@ -1598,6 +2298,8 @@ function renderResultsUI(summary, originalUrl) {
     // Switch view
     document.getElementById('ud-stream-loader').style.display = 'none';
     document.getElementById('ud-result-preview').style.display = 'block';
+    const card = document.getElementById('ud-term-card');
+    if (card) card.classList.add('has-active-results');
 
     const verdict = summary.verdict || 'LIKELY SAFE';
     const riskScore = summary.risk_score !== undefined ? summary.risk_score : 0;
@@ -1672,11 +2374,15 @@ function renderRedirectFlow(chain, verdict) {
     if (!track) return;
 
     if (!chain || chain.length <= 1) {
+        const domain = chain[0]?.domain || 'Direct';
         summaryEl.textContent = 'Direct Resolution (0 Redirects)';
         track.innerHTML = `
             <div class="ud-hop-card" style="max-width:320px;">
                 <div class="ud-hop-step-num"><span>Initial &amp; Final Target</span><span style="color:var(--success);">HTTP 200</span></div>
-                <div class="ud-hop-domain">${escapeHTML(chain[0]?.domain || 'Direct')}</div>
+                <div class="ud-hop-domain" title="${escapeHTML(domain)}">
+                    ${getHopFaviconHTML(domain, 16)}
+                    <span class="ud-hop-domain-name">${escapeHTML(domain)}</span>
+                </div>
                 <div class="ud-hop-status-row">
                     <span class="ud-hop-badge ok">Resolved Directly</span>
                     <span style="color:var(--text-muted); font-size:0.65rem;">Single hop delivery</span>
@@ -1700,7 +2406,10 @@ function renderRedirectFlow(chain, verdict) {
                     <span>Hop ${idx + 1} of ${chain.length}</span>
                     <span class="ud-hop-badge ${badgeClass}">${statusCode}</span>
                 </div>
-                <div class="ud-hop-domain" title="${escapeHTML(node.domain)}">${escapeHTML(node.domain)}</div>
+                <div class="ud-hop-domain" title="${escapeHTML(node.domain)}">
+                    ${getHopFaviconHTML(node.domain, 16)}
+                    <span class="ud-hop-domain-name">${escapeHTML(node.domain)}</span>
+                </div>
                 <div class="ud-hop-status-row">
                     <span style="color:var(--text-muted); font-size:0.68rem;">${isFinal ? 'Final Destination' : '302 Header Location'}</span>
                 </div>
@@ -1958,6 +2667,9 @@ function resetToInput() {
     document.getElementById('ud-minimized-hud').style.display = 'none';
     document.getElementById('ud-input-state').style.display = 'block';
 
+    const card = document.getElementById('ud-term-card');
+    if (card) card.classList.remove('has-active-results');
+
     const termCmd = document.getElementById('ud-term-cmd');
     if (termCmd) termCmd.innerHTML = 'analyze --mode=url';
 
@@ -1971,6 +2683,12 @@ function resetToInput() {
 
 function clearUrlInput(showNotice = false) {
     if (urlInput) {
+        if (urlInput.animate) {
+            urlInput.animate([
+                { opacity: 0.3, transform: 'scale(0.995)' },
+                { opacity: 1, transform: 'scale(1)' }
+            ], { duration: 180, easing: 'ease-out' });
+        }
         urlInput.value = '';
         urlInput.focus();
     }
@@ -1992,21 +2710,45 @@ function toggleMinimize() {
     const streamLoader = document.getElementById('ud-stream-loader');
     const errorState = document.getElementById('ud-error-state');
     const amberDot = document.getElementById('ud-dot-amber');
+    const card = document.getElementById('ud-term-card');
 
     if (_isUrlConsoleMinimized) {
+        // If maximized, collapse maximize state so HUD is cleanly shown
+        if (_isUrlConsoleFullscreen) {
+            _isUrlConsoleFullscreen = false;
+            if (card) card.classList.remove('ud-term-card-maximized');
+            const greenDot = document.getElementById('ud-dot-green');
+            if (greenDot) greenDot.title = 'Toggle Fullscreen Maximize';
+        }
+
         inputState.style.display = 'none';
         resultState.style.display = 'none';
         streamLoader.style.display = 'none';
         errorState.style.display = 'none';
         hud.style.display = 'flex';
 
-        const currentTarget = urlInput?.value.trim() || currentSummaryData?.final_domain || '';
+        // Update Quantum Prism ladder
+        const rawUrl = urlInput?.value.trim() || '';
+        const srcVal = document.getElementById('ud-mini-src-val');
+        const dstVal = document.getElementById('ud-mini-dst-val');
         const targetLabel = document.getElementById('ud-minimized-target-label');
-        if (targetLabel) {
-            targetLabel.textContent = currentTarget ? `[${currentTarget.substring(0, 32)}${currentTarget.length > 32 ? '…' : ''}]` : '[STANDBY]';
+
+        if (currentSummaryData) {
+            if (srcVal) srcVal.textContent = currentSummaryData.original_url ? currentSummaryData.original_url.replace(/^https?:\/\//i, '') : 'None';
+            if (dstVal) dstVal.textContent = currentSummaryData.final_domain || 'None';
+            if (targetLabel) targetLabel.textContent = `${currentSummaryData.chain ? currentSummaryData.chain.length : 1}-Hop Redirect Cloak Resolved`;
+        } else if (rawUrl) {
+            if (srcVal) srcVal.textContent = rawUrl.replace(/^https?:\/\//i, '');
+            if (dstVal) dstVal.textContent = 'Armed for Audit';
+            if (targetLabel) targetLabel.textContent = 'Payload Ingested • Ready for Unpack';
+        } else {
+            if (srcVal) srcVal.textContent = 'Awaiting input...';
+            if (dstVal) dstVal.textContent = 'STANDBY';
+            if (targetLabel) targetLabel.textContent = 'Recursive Cloak & Redirect Unroller';
         }
+
         if (amberDot) amberDot.title = 'Restore Console';
-        showToast('Console minimized to HUD');
+        showToast('Console minimized to Optical Disarmer');
     } else {
         hud.style.display = 'none';
         if (currentSummaryData) {
@@ -2017,6 +2759,33 @@ function toggleMinimize() {
         }
         if (amberDot) amberDot.title = 'Minimize console to HUD';
         showToast('Console restored');
+    }
+}
+
+function udSimulateDisarmClick(btn) {
+    const dstVal = document.getElementById('ud-mini-dst-val')?.textContent || '';
+    if (!dstVal || dstVal === 'STANDBY' || dstVal === 'Armed for Audit') {
+        showToast('No URL audited yet. Ingest a target to preview.');
+        return;
+    }
+    showToast(`[DISARM ENCLAVE] Isolated domain: ${dstVal}`);
+}
+
+function udCopySanitizedMiniUrl() {
+    const dstVal = document.getElementById('ud-mini-dst-val')?.textContent || '';
+    if (!dstVal || dstVal === 'STANDBY' || dstVal === 'Armed for Audit') {
+        showToast('No target analyzed yet to defang.');
+        return;
+    }
+    const defanged = `hxxps[://]${dstVal}/disarmed-quarantine`;
+    if (navigator.clipboard) {
+        navigator.clipboard.writeText(defanged).then(() => {
+            showToast('Copied sanitized URL: ' + defanged);
+        }).catch(() => {
+            showToast('Sanitized: ' + defanged);
+        });
+    } else {
+        showToast('Sanitized: ' + defanged);
     }
 }
 
@@ -2075,10 +2844,15 @@ function showToast(msg) {
 
     const toast = document.createElement('div');
     toast.id = 'ud-toast';
-    toast.style.cssText = 'position:fixed; bottom:24px; right:24px; background:var(--bg-surface); border:1px solid var(--primary); color:#fff; padding:10px 18px; border-radius:6px; font-family:var(--font-mono); font-size:0.75rem; z-index:100010; box-shadow:0 10px 25px rgba(0,0,0,0.5); animation:fadeIn 0.2s ease;';
-    toast.innerHTML = `<i class="ti ti-check" style="color:var(--success); margin-right:6px;"></i> ${escapeHTML(msg)}`;
+    toast.className = 'ud-toast-notice';
+    toast.innerHTML = `<i class="ti ti-check" style="color:var(--success); margin-right:6px;"></i> <span>${escapeHTML(msg)}</span>`;
     document.body.appendChild(toast);
-    setTimeout(() => toast.remove(), 2500);
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(10px)';
+        toast.style.transition = 'all 0.25s ease';
+        setTimeout(() => toast.remove(), 250);
+    }, 2500);
 }
 
 function escapeHTML(str) {

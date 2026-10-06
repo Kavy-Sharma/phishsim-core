@@ -132,12 +132,76 @@
     background: linear-gradient(180deg, color-mix(in srgb, var(--bg-surface-raised) 90%, #000) 0%, color-mix(in srgb, var(--bg-base) 95%, #000) 100%);
     border-bottom: 1px solid var(--border-default);
 }
-.ta-dots { display: flex; gap: 6px; }
-.ta-dot { width: 11px; height: 11px; border-radius: 50%; cursor: pointer; transition: transform 0.12s ease; }
-.ta-dot:hover { transform: scale(1.2); }
-.ta-dot.red   { background: var(--danger); }
-.ta-dot.amber { background: var(--warning); }
-.ta-dot.green { background: var(--success); }
+.ta-dots {
+    display: flex;
+    gap: 7px;
+    align-items: center;
+}
+.ta-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    cursor: pointer;
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+}
+.ta-dot::before {
+    content: '';
+    position: absolute;
+    font-size: 9px;
+    font-weight: 900;
+    line-height: 1;
+    opacity: 0;
+    transition: opacity 0.15s ease, transform 0.15s ease;
+    transform: scale(0.6);
+    color: rgba(0, 0, 0, 0.75);
+    pointer-events: none;
+    font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
+}
+.ta-dots:hover .ta-dot::before {
+    opacity: 0.85;
+    transform: scale(1);
+}
+.ta-dot.red {
+    background: #ff5f56;
+    border: 1px solid rgba(224, 68, 62, 0.6);
+}
+.ta-dot.red::before {
+    content: '×';
+}
+.ta-dot.red:hover {
+    transform: scale(1.22);
+    box-shadow: 0 0 10px rgba(255, 95, 86, 0.7);
+}
+.ta-dot.amber {
+    background: #ffbd2e;
+    border: 1px solid rgba(222, 161, 35, 0.6);
+}
+.ta-dot.amber::before {
+    content: '−';
+}
+.ta-dot.amber:hover {
+    transform: scale(1.22);
+    box-shadow: 0 0 10px rgba(255, 189, 46, 0.7);
+}
+.ta-dot.green {
+    background: #27c93f;
+    border: 1px solid rgba(26, 171, 42, 0.6);
+}
+.ta-dot.green::before {
+    content: '+';
+}
+.ta-dot.green:hover {
+    transform: scale(1.22);
+    box-shadow: 0 0 10px rgba(39, 201, 63, 0.7);
+}
+.ta-dot:active {
+    transform: scale(0.92) !important;
+}
 
 .ta-terminal-label {
     font-family: var(--font-mono);
@@ -460,6 +524,56 @@
     transform: translateY(-1px);
 }
 
+/* ── AI Second-Opinion Pull-Quote Verdict ─────────────────────── */
+.ta-ai-verdict-quote {
+    background: color-mix(in srgb, var(--primary) 6%, var(--bg-surface));
+    border: 1px solid color-mix(in srgb, var(--primary) 22%, var(--border-default));
+    border-left: 4px solid var(--primary);
+    border-radius: var(--radius-md);
+    padding: 14px 18px;
+    margin: 16px 24px 0 24px;
+    position: relative;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+.ta-ai-quote-hdr {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+.ta-ai-quote-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: var(--primary);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+.ta-ai-quote-badge i {
+    font-size: 0.85rem;
+}
+.ta-ai-quote-source {
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    color: var(--text-muted);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+.ta-ai-quote-content {
+    margin: 0;
+    padding: 0;
+    font-family: var(--font-heading);
+    font-size: 1rem;
+    font-weight: 600;
+    line-height: 1.5;
+    color: var(--text-primary);
+    letter-spacing: -0.01em;
+}
+
 /* 2. Main Two-Column Investigation Layout (55% / 45%) */
 .ta-investigation-workspace {
     display: grid;
@@ -498,14 +612,14 @@
 
 /* Email Envelope Meta Fields */
 .ta-email-envelope {
-    padding: 14px 18px;
+    padding: 10px 18px;
     background: rgba(0, 0, 0, 0.2);
     border-bottom: 1px solid var(--border-subtle);
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 4px;
     font-family: var(--font-mono);
-    font-size: 0.74rem;
+    font-size: 0.72rem;
 }
 .ta-env-row { display: flex; gap: 8px; line-height: 1.4; word-break: break-all; }
 .ta-env-lbl { color: var(--text-muted); font-weight: 700; width: 62px; flex-shrink: 0; }
@@ -513,16 +627,17 @@
 .ta-env-val.subj { font-weight: 700; color: var(--primary); }
 
 .ta-evidence-body {
-    padding: 1.5rem 1.75rem;
+    padding: 12px 18px 24px 18px;
     font-family: var(--font-mono);
     font-size: 0.82rem;
-    line-height: 1.8;
+    line-height: 1.75;
     color: var(--text-primary);
     white-space: pre-wrap;
     word-break: break-word;
-    flex: 1;
+    flex: 1 1 auto;
+    min-height: 380px;
+    max-height: 80vh;
     overflow-y: auto;
-    max-height: 540px;
 }
 
 /* Highlighted Annotation Phrases — Inline Highlighter Style */
@@ -1170,19 +1285,83 @@
 .ann-tt-sev.sev-medium   { background: var(--info-dim);    color: var(--info);    border: 1px solid var(--info); }
 .ann-tt-sev.sev-low      { background: var(--success-dim); color: var(--success); border: 1px solid var(--success); }
 
-/* Maximized Console Mode */
+/* Maximized Console Mode — expands the typing terminal console */
 .ta-console-card.is-maximized {
     position: fixed !important;
-    top: 15px !important;
-    left: 15px !important;
-    right: 15px !important;
-    bottom: 15px !important;
-    z-index: 9200 !important;
+    top: 16px !important;
+    left: 16px !important;
+    right: 16px !important;
+    bottom: 16px !important;
+    width: calc(100vw - 32px) !important;
+    height: calc(100vh - 32px) !important;
     max-width: none !important;
-    height: calc(100vh - 30px) !important;
-    overflow-y: auto !important;
-    box-shadow: 0 30px 90px rgba(0,0,0,0.85) !important;
+    margin: 0 !important;
+    z-index: 100050 !important;
+    border-radius: 16px !important;
+    overflow: hidden !important;
+    box-shadow: 0 50px 120px rgba(0, 0, 0, 0.95), 0 0 0 1px var(--primary) !important;
     border-color: var(--primary) !important;
+    background: var(--bg-surface) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+/* In maximized mode: only the terminal typing console expands (when not minimized) */
+.ta-console-card.is-maximized:not(.is-minimized) #ta-input-state {
+    display: flex !important;
+    flex-direction: column !important;
+    flex: 1 !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+}
+
+.ta-console-card.is-minimized #ta-input-state {
+    display: none !important;
+}
+
+.ta-console-card.is-maximized .ta-input-body {
+    display: flex !important;
+    flex-direction: column !important;
+    flex: 1 !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+    padding: 1.25rem 2rem 1.5rem !important;
+}
+
+.ta-console-card.is-maximized .ta-textarea-wrap {
+    flex: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    min-height: 280px !important;
+    margin-bottom: 1rem !important;
+}
+
+.ta-console-card.is-maximized .ta-textarea {
+    flex: 1 !important;
+    height: 100% !important;
+    min-height: 250px !important;
+    max-height: none !important;
+    resize: none !important;
+    font-size: 0.92rem !important;
+    line-height: 1.7 !important;
+}
+
+.ta-console-card.is-maximized .ta-presets-row {
+    flex-shrink: 0 !important;
+    margin-bottom: 0.75rem !important;
+}
+
+.ta-console-card.is-maximized .ta-analyze-btn {
+    flex-shrink: 0 !important;
+}
+
+body.light-theme .ta-console-card.is-maximized,
+[data-theme="light"] .ta-console-card.is-maximized {
+    background: #FFFFFF !important;
+    box-shadow: 0 40px 100px rgba(15, 23, 42, 0.18), 0 0 0 1px var(--primary) !important;
 }
 
 /* Custom PhishSim Confirm Modal */
@@ -1191,7 +1370,7 @@
     top: 0; left: 0; right: 0; bottom: 0;
     background: rgba(4, 7, 13, 0.85);
     backdrop-filter: blur(8px);
-    z-index: 9990;
+    z-index: 100060;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1273,7 +1452,7 @@
     font-family: var(--font-mono);
     font-size: 0.75rem;
     color: var(--primary);
-    z-index: 9999;
+    z-index: 100070;
     transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
     pointer-events: none;
     box-shadow: 0 10px 30px rgba(0,0,0,0.5);
@@ -1333,16 +1512,26 @@ body.light-theme .ta-textarea::placeholder , [data-theme="light"] .ta-textarea::
     color: #94A3B8;
 }
 
-body.light-theme .ta-preset-chip , [data-theme="light"] .ta-preset-chip {
-    background: #F1F5F9;
-    border-color: #E2E8F0;
-    color: #334155;
+body.light-theme .ta-preset-chip, [data-theme="light"] .ta-preset-chip {
+    background: #FFFFFF !important;
+    border: 1px solid #CBD5E1 !important;
+    color: #1E293B !important;
+    font-weight: 600 !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
 }
 
-body.light-theme .ta-preset-chip:hover , [data-theme="light"] .ta-preset-chip:hover {
-    background: color-mix(in srgb, var(--primary) 10%, transparent);
-    border-color: var(--primary);
-    color: var(--primary);
+body.light-theme .ta-preset-chip:hover, [data-theme="light"] .ta-preset-chip:hover {
+    background: #F8FAFC !important;
+    border-color: var(--primary) !important;
+    color: var(--primary) !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
+    transform: translateY(-1px);
+}
+
+body.light-theme .ta-preset-chip.active, [data-theme="light"] .ta-preset-chip.active {
+    background: color-mix(in srgb, var(--primary) 12%, transparent) !important;
+    border-color: var(--primary) !important;
+    color: var(--primary) !important;
 }
 
 body.light-theme .ta-analyze-btn , [data-theme="light"] .ta-analyze-btn {
@@ -1545,6 +1734,38 @@ body.light-theme .ta-share-toast , [data-theme="light"] .ta-share-toast {
     border-color: var(--primary);
     color: var(--primary);
     box-shadow: 0 10px 30px rgba(15, 23, 42, 0.15);
+}
+
+/* Floating Cyber Toast Notification (Bottom Right) */
+.ta-toast-notice {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: #0F172A;
+    border: 1px solid var(--primary);
+    color: #F8FAFC;
+    padding: 10px 18px;
+    border-radius: 8px;
+    font-family: var(--font-mono, monospace);
+    font-size: 0.76rem;
+    font-weight: 600;
+    z-index: 100050;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    animation: taFadeIn 0.22s ease-out;
+}
+body.light-theme .ta-toast-notice,
+[data-theme="light"] .ta-toast-notice {
+    background: #FFFFFF !important;
+    border: 1px solid #CBD5E1 !important;
+    color: #0F172A !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12), 0 0 12px rgba(2, 132, 199, 0.15) !important;
+}
+@keyframes taFadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 /* Additional Comprehensive body.light-theme Overrides for Threat Analyzer */
@@ -1792,6 +2013,15 @@ body.light-theme .ta-confirm-title {
                 </div>
             </div>
 
+            <!-- AI Independent Pull-Quote Verdict Element -->
+            <div class="ta-ai-verdict-quote" id="ta-ai-verdict-quote" style="display:none;">
+                <div class="ta-ai-quote-hdr">
+                    <span class="ta-ai-quote-badge"><i class="ti ti-sparkles"></i> AI Second-Opinion Verdict</span>
+                    <span class="ta-ai-quote-source">Independent Analysis</span>
+                </div>
+                <blockquote class="ta-ai-quote-content" id="ta-ai-verdict-text">&mdash;</blockquote>
+            </div>
+
             <!-- Two-Column Main Investigation Workspace (55% / 45%) -->
             <div class="ta-investigation-workspace">
                 
@@ -1985,18 +2215,94 @@ function switchMode(mode) {
     resetToInput();
 }
 
+/* ── Cyber Toast Notification (Bottom Right) ───────────── */
+window.taShowToast = function(msg, icon) {
+    const existing = document.querySelector('.ta-toast-notice');
+    if (existing) existing.remove();
+    const t = document.createElement('div');
+    t.className = 'ta-toast-notice';
+    t.innerHTML = `<i class="${icon || 'ti ti-info-circle'}"></i> <span>${msg}</span>`;
+    document.body.appendChild(t);
+    setTimeout(() => {
+        t.style.opacity = '0';
+        t.style.transform = 'translateY(10px)';
+        t.style.transition = 'all 0.25s ease';
+        setTimeout(() => t.remove(), 250);
+    }, 2800);
+};
+
 /* ── Terminal Minimizing & Interactive HUD Controls ────── */
 function minimizeTerminal() {
     _isMinimized = true;
-    document.getElementById('ta-input-state').style.display = 'none';
-    document.getElementById('ta-minimized-hud').style.display = 'flex';
-    updateHudData();
+    const card = document.getElementById('ta-main-card');
+    if (card) {
+        card.classList.remove('is-maximized');
+        card.classList.add('is-minimized');
+    }
+    const greenDot = document.getElementById('ta-dot-green');
+    if (greenDot) {
+        greenDot.title = 'Toggle Fullscreen Maximize';
+    }
+    taShowToast('Console minimized to Threat HUD', 'ti ti-layout-navbar-collapse');
+    const inputState = document.getElementById('ta-input-state');
+    const hud = document.getElementById('ta-minimized-hud');
+    if (!inputState || !hud) return;
+
+    if (inputState.animate) {
+        inputState.animate([
+            { opacity: 1, transform: 'scale(1) translateY(0)' },
+            { opacity: 0, transform: 'scale(0.98) translateY(-8px)' }
+        ], { duration: 180, easing: 'cubic-bezier(0.16, 1, 0.3, 1)' }).onfinish = () => {
+            inputState.style.display = 'none';
+            hud.style.display = 'flex';
+            if (hud.animate) {
+                hud.animate([
+                    { opacity: 0, transform: 'translateY(-6px)' },
+                    { opacity: 1, transform: 'translateY(0)' }
+                ], { duration: 220, easing: 'cubic-bezier(0.16, 1, 0.3, 1)' });
+            }
+            updateHudData();
+        };
+    } else {
+        inputState.style.display = 'none';
+        hud.style.display = 'flex';
+        updateHudData();
+    }
 }
 
 function expandTerminal() {
     _isMinimized = false;
-    document.getElementById('ta-minimized-hud').style.display = 'none';
-    document.getElementById('ta-input-state').style.display = 'block';
+    const card = document.getElementById('ta-main-card');
+    if (card) {
+        card.classList.remove('is-minimized');
+    }
+    taShowToast('Console restored to full view', 'ti ti-layout-navbar-expand');
+    const inputState = document.getElementById('ta-input-state');
+    const hud = document.getElementById('ta-minimized-hud');
+    if (!inputState || !hud) return;
+
+    if (hud.animate) {
+        hud.animate([
+            { opacity: 1, transform: 'translateY(0)' },
+            { opacity: 0, transform: 'translateY(-6px)' }
+        ], { duration: 150, easing: 'ease-out' }).onfinish = () => {
+            hud.style.display = 'none';
+            inputState.style.display = 'block';
+            if (inputState.animate) {
+                inputState.animate([
+                    { opacity: 0, transform: 'scale(0.98) translateY(6px)' },
+                    { opacity: 1, transform: 'scale(1) translateY(0)' }
+                ], { duration: 220, easing: 'cubic-bezier(0.16, 1, 0.3, 1)' });
+            }
+            const ta = document.getElementById('ta-email-input');
+            if (ta) ta.focus();
+        };
+    } else {
+        hud.style.display = 'none';
+        inputState.style.display = 'block';
+        const ta = document.getElementById('ta-email-input');
+        if (ta) ta.focus();
+    }
 }
 
 function updateHudData() {
@@ -2452,6 +2758,27 @@ function askConfirm(msg, title, onConfirm) {
     };
 }
 
+function askAlert(msg, title) {
+    const titleEl = document.getElementById('ta-confirm-title');
+    const msgEl = document.getElementById('ta-confirm-msg');
+    const modal = document.getElementById('ta-confirm-modal');
+    if (!modal) return;
+    const cancelBtn = modal.querySelector('.cancel');
+    const confirmBtn = modal.querySelector('.confirm');
+    
+    if (titleEl) titleEl.textContent = title || 'SECURITY NOTICE';
+    if (msgEl) msgEl.textContent = msg || '';
+    if (cancelBtn) cancelBtn.style.display = 'none';
+    if (confirmBtn) confirmBtn.textContent = 'OK';
+    modal.style.display = 'flex';
+    
+    window._onConfirmAction = function() {
+        modal.style.display = 'none';
+        if (cancelBtn) cancelBtn.style.display = '';
+        if (confirmBtn) confirmBtn.textContent = 'CONFIRM RESET';
+    };
+}
+
 /* ── Render Body Results ──────────────────────────────── */
 function renderBodyResult(data) {
     const scoreColor = renderVerdict('res', data);
@@ -2502,7 +2829,7 @@ function renderBodyResult(data) {
         obsContainer.innerHTML = '<div class="ta-obs-item"><i class="ti ti-check" style="color:var(--success)"></i><span>No critical threat indicators detected. Email appears safe.</span></div>';
     }
 
-    // AI Explanation Box
+    // AI Explanation Box (Analyst Summary Bottom)
     const aiBox = document.getElementById('ta-ai-exp-box');
     const aiText = document.getElementById('ta-ai-exp-text');
     if (data.ai_explanation && aiBox && aiText) {
@@ -2512,12 +2839,20 @@ function renderBodyResult(data) {
         aiBox.style.display = 'none';
     }
 
-    // Analyst Summary Box
+    // AI One-Sentence Verdict Pull-Quote (Independent Check)
+    const aiQuoteEl = document.getElementById('ta-ai-verdict-quote');
+    const aiQuoteText = document.getElementById('ta-ai-verdict-text');
+    if ((data.path_used === 'heuristic+ai' || data.path_used === 'openrouter_llm') && data.ai_verdict_summary && aiQuoteEl && aiQuoteText) {
+        aiQuoteText.textContent = data.ai_verdict_summary;
+        aiQuoteEl.style.display = 'block';
+    } else if (aiQuoteEl) {
+        aiQuoteEl.style.display = 'none';
+    }
+
+    // Analyst Summary Box (Heuristic Executive Verdict)
     const summaryVerdictEl = document.getElementById('ta-summary-verdict-desc');
     if (summaryVerdictEl) {
-        if (data.ai_verdict_summary) {
-            summaryVerdictEl.textContent = data.ai_verdict_summary;
-        } else if (data.score >= 75) {
+        if (data.score >= 75) {
             summaryVerdictEl.textContent = 'This email exhibits multiple high-confidence indicators of phishing or social engineering. The presence of coercive language and credential requests signals an active threat.';
         } else if (data.score >= 45) {
             summaryVerdictEl.textContent = 'This email contains suspicious patterns often associated with phishing lures. Exercise caution before clicking links or executing requested actions.';
@@ -2662,7 +2997,7 @@ async function runAnalysis() {
         }, 200);
 
     } catch(e) {
-        alert('Analysis error: ' + e.message);
+        askAlert('Analysis error: ' + e.message, 'ANALYSIS ERROR');
         resetToInput();
     }
 }
@@ -2670,7 +3005,7 @@ async function runAnalysis() {
 /* ── Share Report ─────────────────────────────────────── */
 async function shareReport() {
     if (!_currentResult) {
-        alert("Please run an email analysis first to generate a report to share.");
+        askAlert("Please run an email analysis first to generate a report to share.", "NO REPORT READY");
         return;
     }
     
@@ -2722,15 +3057,18 @@ async function shareReport() {
     } catch(e) {}
     
     if (!copied) {
-        prompt('Copy this report URL to share:', shareUrl);
+        const fallbackTa = document.createElement('textarea');
+        fallbackTa.value = shareUrl;
+        document.body.appendChild(fallbackTa);
+        fallbackTa.select();
+        try {
+            document.execCommand('copy');
+            copied = true;
+        } catch(err) {}
+        document.body.removeChild(fallbackTa);
     }
     
-    const t = document.getElementById('ta-share-toast');
-    if (t) {
-        t.textContent = copied ? "Report URL copied to clipboard!" : "Report URL ready!";
-        t.classList.add('show');
-        setTimeout(() => t.classList.remove('show'), 3500);
-    }
+    taShowToast(copied ? 'Share report link copied to clipboard!' : 'Report URL ready', 'ti ti-copy');
 }
 
 /* ── Load Shared Report ───────────────────────────────── */
@@ -2741,14 +3079,52 @@ async function loadSharedReport(uuid) {
         const res = await fetch('/api/threat-report/' + uuid);
         if (!res.ok) throw new Error("Report not found");
         const data = await res.json();
-        if (!data.success || !data.report) { alert('Shared report not found or expired.'); resetToInput(); return; }
+        if (!data.success || !data.report) {
+            askAlert('Shared report not found or expired.', 'REPORT EXPIRED');
+            resetToInput();
+            return;
+        }
         const report = data.report;
         _currentResult = report;
         _currentEmailText = (report.original_text || '').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
         if (report.mode === 'headers') renderHeadersResult(report);
         else renderBodyResult(report);
-    } catch(e) { alert('Failed to load shared report: ' + e.message); resetToInput(); }
+    } catch(e) {
+        askAlert('Failed to load shared report: ' + e.message, 'LOAD ERROR');
+        resetToInput();
+    }
 }
+
+function toggleTaFullscreen() {
+    const card = document.getElementById('ta-main-card');
+    const greenDot = document.getElementById('ta-dot-green');
+    const taInput = document.getElementById('ta-email-input');
+    if (!card) return;
+
+    if (_isMinimized) {
+        expandTerminal();
+    }
+
+    card.classList.remove('is-minimized');
+    card.classList.toggle('is-maximized');
+    const isMax = card.classList.contains('is-maximized');
+    if (greenDot) {
+        greenDot.title = isMax ? 'Restore normal window' : 'Toggle Fullscreen Maximize';
+    }
+    if (isMax && taInput) {
+        setTimeout(() => taInput.focus(), 150);
+    }
+    taShowToast(isMax ? 'Console maximized to full screen (Press Esc to restore)' : 'Console collapsed to normal view', isMax ? 'ti ti-maximize' : 'ti ti-minimize');
+}
+
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        const card = document.getElementById('ta-main-card');
+        if (card && card.classList.contains('is-maximized')) {
+            toggleTaFullscreen();
+        }
+    }
+});
 
 /* ── Window Controls Init ─────────────────────────────── */
 document.addEventListener('DOMContentLoaded', function() {
@@ -2759,17 +3135,28 @@ document.addEventListener('DOMContentLoaded', function() {
     if (redDot) {
         redDot.onclick = function() {
             const ta = document.getElementById('ta-email-input');
-            if (ta.value.trim().length > 0) {
+            const doClear = () => {
+                if (ta) {
+                    if (ta.animate) {
+                        ta.animate([
+                            { opacity: 0.3, transform: 'scale(0.995)' },
+                            { opacity: 1, transform: 'scale(1)' }
+                        ], { duration: 180, easing: 'ease-out' });
+                    }
+                    ta.value = '';
+                    ta.focus();
+                }
+                resetToInput();
+                taShowToast('Terminal input cleared & reset', 'ti ti-refresh');
+            };
+            if (ta && ta.value.trim().length > 0) {
                 askConfirm(
                     'Are you sure you want to clear your email input and reset the current security report?',
                     'CLEAR TERMINAL INPUT',
-                    function() {
-                        ta.value = '';
-                        resetToInput();
-                    }
+                    doClear
                 );
             } else {
-                resetToInput();
+                doClear();
             }
         };
     }
@@ -2780,14 +3167,7 @@ document.addEventListener('DOMContentLoaded', function() {
         };
     }
     if (greenDot) {
-        greenDot.onclick = function() {
-            const ta = document.getElementById('ta-email-input');
-            if (ta) {
-                ta.classList.toggle('is-expanded');
-                const isExp = ta.classList.contains('is-expanded');
-                greenDot.title = isExp ? "Restore normal terminal height" : "Expand terminal editor height";
-            }
-        };
+        greenDot.onclick = toggleTaFullscreen;
     }
 
     // Check query params for shared report

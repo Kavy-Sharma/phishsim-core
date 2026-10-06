@@ -108,7 +108,7 @@
 
 :root[data-theme="light"] {
   /* === BACKGROUNDS === */
-  --bg-base:        #F8FAFC;
+  --bg-base:        #EBF3FC;
   --bg-surface:     #FFFFFF;
   --bg-surface-raised:#FFFFFF;
   --bg-elevated:    #F1F5F9;
@@ -188,6 +188,19 @@
 ::-webkit-scrollbar-thumb {
     background: var(--scrollbar-thumb);
     border-radius: 3px;
+}
+
+/* Suppress Edge/IE/WebKit native password reveal/clear buttons globally */
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear,
+input::-ms-reveal,
+input::-ms-clear {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+    pointer-events: none !important;
+    appearance: none !important;
+    -webkit-appearance: none !important;
 }
 
 html {
@@ -3099,7 +3112,14 @@ body.light-theme h1, body.light-theme h2 {
 .billing-container,
 .admin-container {
     position: relative;
-    z-index: 1;
+    /* Avoid fixed z-index here to prevent trapping fixed-position modals/maximized cards below navbar */
+}
+
+.analyzer-container:has(.is-maximized),
+.ha-container:has(.ha-expand-overlay.active),
+.ud-container:has(.ud-term-card-maximized),
+.pb-container:has(.pb-expand-overlay.active) {
+    z-index: 100050 !important;
 }
 
 /* -- X-ray Spotlight Effect -- */
@@ -5612,9 +5632,10 @@ section .btn-get-started:hover {
     animation: toastSlideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     max-width: 420px;
 }
-body.light-theme .premium-toast {
-    background: rgba(255, 255, 255, 0.95);
-    border: 1px solid rgba(99, 102, 241, 0.25);
+body.light-theme .premium-toast,
+[data-theme="light"] .premium-toast {
+    background: rgba(255, 255, 255, 0.98);
+    border: 1px solid rgba(99, 102, 241, 0.3);
     color: #0f172a;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12), 0 0 20px rgba(99, 102, 241, 0.1);
 }

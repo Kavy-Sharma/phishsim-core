@@ -74,7 +74,9 @@ FREE_EMAIL_DOMAINS = {
 }
 DISPOSABLE_EMAIL_DOMAINS = {
     "mailinator.com", "tempmail.com", "10minutemail.com", "guerrillamail.com",
-    "trashmail.com", "yopmail.com", "getnada.com", "sharklasers.com"
+    "trashmail.com", "yopmail.com", "getnada.com", "sharklasers.com",
+    "temp-mail.org", "dispostable.com", "throwawaymail.com", "fakemailgenerator.com",
+    "10minutemail.net"
 }
 
 
@@ -7995,6 +7997,7 @@ def pro_waitlist():
 # NEW TOOL APIs
 # ─────────────────────────────────────────────────────────────────
 
+@csrf.exempt
 @app.route("/api/header-analyzer", methods=["POST"])
 def header_analyzer_api():
     """Parse raw email headers and return DMARC/SPF/DKIM/routing verdict."""
@@ -8516,51 +8519,170 @@ def url_decoder_api():
     return Response(generate(), mimetype="application/x-json-stream")
 
 
+def damerau_levenshtein_distance(s1, s2):
+    """Computes Damerau-Levenshtein distance between two strings."""
+    d = {}
+    len1, len2 = len(s1), len(s2)
+    for i in range(-1, len1 + 1):
+        d[(i, -1)] = i + 1
+    for j in range(-1, len2 + 1):
+        d[(-1, j)] = j + 1
+
+    for i in range(len1):
+        for j in range(len2):
+            cost = 0 if s1[i] == s2[j] else 1
+            d[(i, j)] = min(
+                d[(i - 1, j)] + 1,
+                d[(i, j - 1)] + 1,
+                d[(i - 1, j - 1)] + cost
+            )
+            if i > 0 and j > 0 and s1[i] == s2[j - 1] and s1[i - 1] == s2[j]:
+                d[(i, j)] = min(d[(i, j)], d[(i - 2, j - 2)] + 1)
+    return d[(len1 - 1, len2 - 1)]
+
+
 @csrf.exempt
 @app.route("/api/check-email-exposure", methods=["POST"])
 def check_email_exposure():
-    """Scans an email address for public breach indicators and reputation profile."""
-    if not check_rate_limit(get_remote_ip(), "check-email-exposure", 10, 60):
+    """Deterministic, keyless email hygiene and deliverability check.
+    Validates RFC 5322 syntax, verifies MX routing via Google DoH, detects
+    disposable/free providers, and identifies typosquats against major mail services.
+    Never overclaims breach detection."""
+    if not check_rate_limit(get_remote_ip(), "check-email-exposure", 20, 60):
         return jsonify({"success": False, "message": "Rate limit exceeded. Please wait 60 seconds before retrying."}), 429
         
     email = request.form.get("email", "").strip().lower()
-    if not email or "@" not in email:
-        return jsonify({"success": False, "message": "Invalid email address."}), 400
-        
+    if not email:
+        return jsonify({"success": False, "message": "Please enter an email address."}), 400
+
+    # 1. Syntax check
+    email_regex = r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)+$"
+    if "@" not in email or email.count("@") != 1 or ".." in email or not re.match(email_regex, email):
+        domain_part = email.split("@")[1] if "@" in email and len(email.split("@")) == 2 else ""
+        return jsonify({
+            "success": True,
+            "data": {
+                "email": email,
+                "domain": domain_part,
+                "syntax_valid": False,
+                "mx_valid": False,
+                "mx_records": [],
+                "primary_mx": "None",
+                "is_disposable": False,
+                "is_free_provider": False,
+                "typosquat_detected": False,
+                "suggested_domain": None,
+                "provider_type": "Malformed Syntax",
+                "hygiene_verdict": "INVALID SYNTAX",
+                "verdict_status": "danger",
+                "verdict_desc": "Email string violates RFC 5322 format standards (invalid characters, consecutive dots, or malformed domain structure)."
+            }
+        })
+
+    user_part, domain = email.rsplit("@", 1)
+    domain = domain.strip(".")
+
+    # 2. Disposable check
+    is_disposable = domain in DISPOSABLE_EMAIL_DOMAINS
+
+    # 3. Free provider check
+    is_free = domain in FREE_EMAIL_DOMAINS
+
+    # 4. Typosquat check against common webmail providers
+    typosquat_target = None
+    if not is_free and not is_disposable:
+        major_targets = [d for d in FREE_EMAIL_DOMAINS if len(d.split(".")[0]) > 2]
+        for target in major_targets:
+            if damerau_levenshtein_distance(domain, target) <= 1:
+                typosquat_target = target
+                break
+
+    # 5. MX check via Google DoH (keyless)
+    mx_records = []
     import requests as req_lib
     try:
-        api_key = os.getenv("EMAILREP_API_KEY")
-        if not api_key:
-            return jsonify({
-                "success": False,
-                "message": "Live reputation check unavailable right now. EMAILREP_API_KEY is not configured on the server."
-            })
-            
-        headers = {
-            "User-Agent": "PhishSimAI-SecuritySuite/2.0",
-            "Key": api_key
-        }
-        resp = req_lib.get(
-            f"https://emailrep.io/{email}",
-            headers=headers,
+        dns_resp = req_lib.get(
+            f"https://dns.google/resolve?name={domain}&type=MX",
+            headers={"User-Agent": "PhishSimAI-EmailHygiene/2.0"},
             timeout=3.0
         )
-        if resp.status_code == 200:
-            data = resp.json()
-            return jsonify({"success": True, "data": data})
-        elif resp.status_code == 429:
-            return jsonify({
-                "success": False,
-                "message": "Live reputation check unavailable right now (EmailRep API rate limit reached)."
-            }), 429
-        else:
-            return jsonify({
-                "success": False,
-                "message": f"Live reputation check unavailable right now (Service returned status {resp.status_code})."
-            }), 500
+        if dns_resp.status_code == 200:
+            dns_data = dns_resp.json()
+            answers = dns_data.get("Answer", [])
+            mx_records = [ans.get("data") for ans in answers if ans.get("type") == 15]
     except Exception as e:
-        print(f"Email reputation scan failed: {e}")
-        return jsonify({"success": False, "message": "Live reputation check unavailable right now (Connection error)."}), 500
+        print(f"DNS MX lookup error for {domain}: {e}")
+
+    mx_valid = len(mx_records) > 0
+    primary_mx = "None"
+    parsed_mx_hosts = []
+
+    if mx_records:
+        parsed_entries = []
+        for entry in mx_records:
+            parts = entry.strip().split()
+            if len(parts) >= 2:
+                try:
+                    prio = int(parts[0])
+                    host = parts[1].rstrip(".")
+                    parsed_entries.append((prio, host))
+                except ValueError:
+                    parsed_entries.append((999, parts[-1].rstrip(".")))
+            else:
+                parsed_entries.append((999, entry.strip().rstrip(".")))
+        parsed_entries.sort(key=lambda x: x[0])
+        parsed_mx_hosts = [h for _, h in parsed_entries]
+        primary_mx = parsed_mx_hosts[0]
+
+    # Classification
+    if is_disposable:
+        provider_type = "Disposable / Burner Webmail"
+    elif is_free:
+        provider_type = "Free Consumer Webmail"
+    else:
+        provider_type = "Corporate / Custom Domain"
+
+    # Verdict derivation
+    if typosquat_target:
+        verdict_status = "danger"
+        hygiene_verdict = "SUSPECTED TYPOSQUAT"
+        verdict_desc = f'Domain appears to be a typo-squat / misspelling of "{typosquat_target}". High risk of spoofing or phishing misdirection.'
+    elif is_disposable:
+        verdict_status = "warning"
+        hygiene_verdict = "DISPOSABLE PROVIDER"
+        verdict_desc = "Ephemeral / burner email provider detected. Temporary addresses have short lifespans and are frequently used to bypass verification."
+    elif not mx_valid:
+        verdict_status = "danger"
+        hygiene_verdict = "UNROUTABLE (NO MX)"
+        verdict_desc = "No active Mail Exchange (MX) DNS records detected for this domain. Inbound messages cannot be routed or delivered."
+    elif is_free:
+        verdict_status = "safe"
+        hygiene_verdict = "HEALTHY CONSUMER"
+        verdict_desc = f"Valid syntax, active MX routing ({primary_mx}), and established consumer webmail profile verified. No disposable flags."
+    else:
+        verdict_status = "safe"
+        hygiene_verdict = "HEALTHY ENTERPRISE"
+        verdict_desc = f"Dedicated corporate or custom domain verified with active MX routing ({primary_mx}). Clean deliverability profile."
+
+    return jsonify({
+        "success": True,
+        "data": {
+            "email": email,
+            "domain": domain,
+            "syntax_valid": True,
+            "mx_valid": mx_valid,
+            "mx_records": parsed_mx_hosts[:4],
+            "primary_mx": primary_mx,
+            "is_disposable": is_disposable,
+            "is_free_provider": is_free,
+            "typosquat_detected": bool(typosquat_target),
+            "suggested_domain": typosquat_target,
+            "provider_type": provider_type,
+            "hygiene_verdict": hygiene_verdict,
+            "verdict_status": verdict_status,
+            "verdict_desc": verdict_desc
+        }
+    })
 
 
 
