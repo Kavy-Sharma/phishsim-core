@@ -7426,6 +7426,12 @@ def password_breach():
     """Renders the Password Breach Checker page."""
     return render_template("password_breach.html")
 
+@app.route("/exposure-report")
+def exposure_report():
+    """Renders the PhishRecon Exposure Report page."""
+    domain = (request.args.get("domain") or "").strip()
+    return render_template("exposure_report.html", prefill_domain=domain or "stripe.com")
+
 def generate_ai_briefing(campaign_data):
     from ai_engine.email_gen import client as ai_client
     if not ai_client:
@@ -7993,6 +7999,103 @@ def pro_waitlist():
 
 
 
+def check_rdap(domain_str):
+    """
+    Queries RDAP (https://rdap.org/domain/{domain}) for registration date,
+    domain age, expiration date, and registrar.
+    """
+    result = {
+        "created_date": "Unknown",
+        "domain_age_days": None,
+        "domain_age_label": "Unknown",
+        "expiration_date": "Unknown",
+        "registrar": "Unknown"
+    }
+    if not domain_str:
+        return result
+    import requests as _req
+    from datetime import datetime
+    try:
+        rdap_resp = _req.get(f"https://rdap.org/domain/{domain_str}", timeout=3.5)
+        if rdap_resp.status_code == 200:
+            rdap_data = rdap_resp.json()
+            events = rdap_data.get("events", [])
+            for event in events:
+                act = event.get("eventAction")
+                e_date = event.get("eventDate", "")
+                if act == "registration" and e_date:
+                    result["created_date"] = e_date.split("T")[0]
+                elif act == "expiration" and e_date:
+                    result["expiration_date"] = e_date.split("T")[0]
+
+            for ent in rdap_data.get("entities", []):
+                if "registrar" in ent.get("roles", []):
+                    vcard = ent.get("vcardArray", [])
+                    if len(vcard) > 1 and isinstance(vcard[1], list):
+                        for prop in vcard[1]:
+                            if len(prop) > 3 and prop[0] == "fn":
+                                result["registrar"] = prop[3]
+                                break
+                    if result["registrar"] == "Unknown" and ent.get("handle"):
+                        result["registrar"] = str(ent.get("handle"))
+                    break
+
+            if result["created_date"] != "Unknown":
+                try:
+                    dt = datetime.strptime(result["created_date"], "%Y-%m-%d")
+                    days = (datetime.now() - dt).days
+                    result["domain_age_days"] = max(0, days)
+                    if days < 30:
+                        result["domain_age_label"] = f"{days} days"
+                    elif days < 365:
+                        result["domain_age_label"] = f"{days // 30} months"
+                    else:
+                        years = round(days / 365.25, 1)
+                        result["domain_age_label"] = f"{years} years"
+                except Exception:
+                    pass
+    except Exception as e:
+        print(f"RDAP lookup failed for {domain_str}: {e}")
+    return result
+
+
+def check_ssl(domain_str):
+    """
+    Performs an SSL handshake to inspect certificate issuer, TLS protocol,
+    expiration date, and validity.
+    """
+    result = {
+        "valid": False,
+        "issuer": "Unknown/None",
+        "protocol": "None",
+        "expiry": None,
+        "error": None
+    }
+    if not domain_str:
+        return result
+    import ssl as _ssl, socket
+    try:
+        host = domain_str.split(':')[0]
+        context = _ssl.create_default_context()
+        with socket.create_connection((host, 443), timeout=3.0) as sock:
+            with context.wrap_socket(sock, server_hostname=host) as ssock:
+                cert = ssock.getpeercert()
+                result["protocol"] = ssock.version() or "TLS"
+                result["valid"] = True
+                for rdn in cert.get('issuer', []):
+                    for attr in rdn:
+                        if attr[0] in ('commonName', 'organizationName'):
+                            result["issuer"] = attr[1]
+                            break
+                    if result["issuer"] != "Unknown/None":
+                        break
+                result["expiry"] = cert.get('notAfter')
+    except Exception as e:
+        result["error"] = str(e)[:120]
+        result["issuer"] = "Unknown/None"
+    return result
+
+
 # ─────────────────────────────────────────────────────────────────
 # NEW TOOL APIs
 # ─────────────────────────────────────────────────────────────────
@@ -8081,24 +8184,12 @@ def header_analyzer_api():
                 print(f"DNS MX lookup failed: {e}")
             return []
 
-        def check_rdap():
-            try:
-                rdap_resp = req_lib.get(f"https://rdap.org/domain/{domain_str}", timeout=2)
-                if rdap_resp.status_code == 200:
-                    rdap_data = rdap_resp.json()
-                    events = rdap_data.get("events", [])
-                    for event in events:
-                        if event.get("eventAction") == "registration":
-                            c_date = event.get("eventDate", "")
-                            if c_date:
-                                return c_date.split("T")[0]
-            except Exception as e:
-                print(f"RDAP lookup failed: {e}")
-            return "Unknown"
+        def check_rdap_inner():
+            return check_rdap(domain_str).get("created_date", "Unknown")
 
         with ThreadPoolExecutor(max_workers=2) as executor:
             future_mx = executor.submit(check_mx)
-            future_rdap = executor.submit(check_rdap)
+            future_rdap = executor.submit(check_rdap_inner)
             mx_records = future_mx.result()
             created_date = future_rdap.result()
 
@@ -8419,27 +8510,14 @@ def url_decoder_api():
                 print(f"[Warning] URLscan check failed for {final_domain}: {e}")
             return "unknown", 0, ""
 
-        def check_ssl():
+        def check_ssl_inner():
             if not final_domain:
                 return "Unknown/None"
-            import ssl as _ssl, socket
-            try:
-                host = final_domain.split(':')[0]
-                context = _ssl.create_default_context()
-                with socket.create_connection((host, 443), timeout=0.5) as sock:
-                    with context.wrap_socket(sock, server_hostname=host) as ssock:
-                        cert = ssock.getpeercert()
-                        for rdn in cert.get('issuer', []):
-                            for attr in rdn:
-                                if attr[0] == 'commonName':
-                                    return attr[1]
-            except Exception as e:
-                print(f"[Warning] SSL check failed for {final_domain}: {e}")
-            return "Unknown/None"
+            return check_ssl(final_domain).get("issuer", "Unknown/None")
 
         future_uh = DIAGNOSTICS_EXECUTOR.submit(check_urlhaus)
         future_us = DIAGNOSTICS_EXECUTOR.submit(check_urlscan)
-        future_ssl = DIAGNOSTICS_EXECUTOR.submit(check_ssl)
+        future_ssl = DIAGNOSTICS_EXECUTOR.submit(check_ssl_inner)
         
         try:
             urlhaus_verdict, urlhaus_detail = future_uh.result(timeout=0.6)
@@ -8931,6 +9009,434 @@ def scan_exposure():
     
     flash("Scanning your organization now — results will be emailed to you shortly.")
     return redirect(url_for("home"))
+
+
+# ─────────────────────────────────────────────────────────────────
+# PHISHRECON: LIVE STREAMING EXPOSURE REPORT BACKEND
+# ─────────────────────────────────────────────────────────────────
+
+def check_lookalikes(domain):
+    """
+    Generates look-alike mutations via generate_lookalikes() and executes concurrent
+    DNS resolution via DIAGNOSTICS_EXECUTOR to detect live typosquatted infrastructure.
+    """
+    candidates = generate_lookalikes(domain)
+    live_lookalikes = []
+
+    def _resolve(c):
+        import socket
+        try:
+            ip = socket.gethostbyname(c)
+            return {"domain": c, "ip": ip, "is_live": True}
+        except Exception:
+            return {"domain": c, "ip": None, "is_live": False}
+
+    futures = [DIAGNOSTICS_EXECUTOR.submit(_resolve, cand) for cand in candidates]
+    all_results = []
+    for f in futures:
+        try:
+            res = f.result(timeout=2.5)
+            all_results.append(res)
+            if res.get("is_live"):
+                live_lookalikes.append(res)
+        except Exception:
+            pass
+
+    return {
+        "candidates_count": len(candidates),
+        "live_count": len(live_lookalikes),
+        "live_lookalikes": live_lookalikes,
+        "all_candidates": candidates,
+        "details": all_results
+    }
+
+
+def check_crtsh_subdomains(domain):
+    """
+    Discovers public subdomains using crt.sh Certificate Transparency logs.
+    Deduplicates, strips wildcards, caps at 25 results, enforces 4-second timeout,
+    and fails gracefully with an empty list if crt.sh is slow or unavailable.
+    """
+    subdomains = set()
+    clean_dom = domain.lower().strip()
+    try:
+        import requests as _req
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) PhishSimAI/2.0",
+            "Accept": "application/json"
+        }
+        resp = _req.get("https://crt.sh/", params={"q": f"%.{clean_dom}", "output": "json"}, headers=headers, timeout=4.0)
+        if resp.status_code == 200:
+            data = resp.json()
+            if isinstance(data, list):
+                for entry in data:
+                    nv = entry.get("name_value", "")
+                    for name in nv.split("\n"):
+                        name = name.strip().lower()
+                        if name.startswith("*."):
+                            name = name[2:]
+                        if name and (name.endswith("." + clean_dom)) and name != clean_dom:
+                            subdomains.add(name)
+                            if len(subdomains) >= 25:
+                                break
+                    if len(subdomains) >= 25:
+                        break
+    except Exception as e:
+        print(f"[Warning] crt.sh subdomain discovery failed/timed out for {clean_dom}: {e}")
+    return sorted(list(subdomains))[:25]
+
+
+def calculate_exposure_score(rdap, ssl, lookalikes, subdomains, surface):
+    """
+    Computes Exposure Score (0-100) combining:
+    - Domain age (newer = riskier)
+    - SSL issues (missing, expired, or obsolete protocol)
+    - Count of live look-alikes (heaviest weight — active phishing infrastructure)
+    - Count of exposed subdomains (expanded perimeter)
+    - Count of exposed emails & socials (OSINT surface)
+    """
+    score = 0
+    breakdown = {}
+
+    # 1. Live look-alike phishing infrastructure (heaviest weight: up to 50 pts)
+    live_count = len(lookalikes.get("live_lookalikes", []))
+    lookalikes_pts = min(live_count * 20, 50)
+    score += lookalikes_pts
+    breakdown["lookalikes_points"] = lookalikes_pts
+
+    # 2. Domain age points (newer = higher risk)
+    age_days = rdap.get("domain_age_days")
+    if age_days is None:
+        age_pts = 10
+    elif age_days < 30:
+        age_pts = 25
+    elif age_days < 180:
+        age_pts = 15
+    elif age_days < 365:
+        age_pts = 10
+    elif age_days < 1095:  # 3 years
+        age_pts = 5
+    else:
+        age_pts = 0
+    score += age_pts
+    breakdown["domain_age_points"] = age_pts
+
+    # 3. SSL issues (up to 20 pts)
+    ssl_pts = 0
+    if not ssl.get("valid"):
+        ssl_pts = 20
+    else:
+        proto = (ssl.get("protocol") or "").upper()
+        if proto in ("TLSV1", "TLSV1.0", "TLSV1.1", "SSLV3", "SSLV2"):
+            ssl_pts = 15
+    score += ssl_pts
+    breakdown["ssl_points"] = ssl_pts
+
+    # 4. Discovered subdomains (expanded attack surface, up to 15 pts)
+    subs_count = len(subdomains)
+    if subs_count > 15:
+        subs_pts = 15
+    elif subs_count >= 8:
+        subs_pts = 10
+    elif subs_count >= 1:
+        subs_pts = 5
+    else:
+        subs_pts = 0
+    score += subs_pts
+    breakdown["subdomains_points"] = subs_pts
+
+    # 5. OSINT surface: emails and social presence (up to 25 pts)
+    emails = surface.get("emails") or []
+    socials = surface.get("socials") or {}
+    emails_pts = min(len(emails), 10) * 2
+    socials_pts = min(len(socials), 4) * 3
+    surface_pts = min(emails_pts + socials_pts, 25)
+    score += surface_pts
+    breakdown["surface_points"] = surface_pts
+
+    # Final score bounded 0-100
+    score = max(0, min(100, score))
+
+    if score >= 75:
+        verdict = "CRITICAL EXPOSURE"
+        verdict_color = "#ef4444"
+    elif score >= 50:
+        verdict = "ELEVATED RISK"
+        verdict_color = "#f97316"
+    elif score >= 25:
+        verdict = "MODERATE RISK"
+        verdict_color = "#f59e0b"
+    else:
+        verdict = "LOW EXPOSURE"
+        verdict_color = "#10b981"
+
+    return score, verdict, verdict_color, breakdown
+
+
+def _run_ai_exposure_synthesis(domain, findings):
+    """
+    Generates AI executive threat analysis using OpenRouter free-tier fallback,
+    or falls back honestly to deterministic heuristic synthesis.
+    """
+    path_used = "heuristic_only"
+    ai_analysis = None
+    executive_verdict = None
+
+    score = findings.get("score", 0)
+    verdict = findings.get("verdict", "UNKNOWN")
+    rdap = findings.get("rdap", {})
+    ssl = findings.get("ssl", {})
+    lookalikes = findings.get("lookalikes", {})
+    subdomains = findings.get("subdomains", [])
+    surface = findings.get("surface", {})
+
+    live_cands = [item["domain"] for item in lookalikes.get("live_lookalikes", [])]
+    summary_parts = []
+
+    if live_cands:
+        summary_parts.append(
+            f"Detected {len(live_cands)} live squatted look-alike domain(s) ({', '.join(live_cands[:3])}) resolving on active IP addresses, posing an immediate impersonation and typosquatting risk."
+        )
+    else:
+        summary_parts.append("No active squatted look-alike domains were detected among top candidate mutations.")
+
+    age_lbl = rdap.get("domain_age_label", "Unknown")
+    reg = rdap.get("registrar", "Unknown")
+    summary_parts.append(f"Domain '{domain}' was registered via {reg} (age: {age_lbl}).")
+
+    if ssl.get("valid"):
+        summary_parts.append(f"SSL endpoint is healthy using {ssl.get('protocol', 'TLS')} from {ssl.get('issuer', 'recognized authority')}.")
+    else:
+        summary_parts.append("SSL configuration exhibits warnings or certificate validation errors.")
+
+    subs_count = len(subdomains)
+    if subs_count > 0:
+        summary_parts.append(f"Discovered {subs_count} public subdomains expanding the organization's perimeter.")
+
+    emails_count = len(surface.get("emails", []))
+    socials_count = len(surface.get("socials", {}))
+    if emails_count or socials_count:
+        summary_parts.append(f"Surface reconnaissance indexed {emails_count} public email address(es) and {socials_count} social handle(s).")
+
+    heuristic_analysis = " ".join(summary_parts)
+    infra_clean = bool(ssl.get("valid") and (rdap.get("domain_age_days") is None or rdap.get("domain_age_days") > 180))
+    infra_desc = "infrastructure looks clean" if infra_clean else "infrastructure exhibits configuration warnings"
+    if live_cands:
+        n_live = len(live_cands)
+        lookalike_desc = f"with {n_live} look-alike domain{'s' if n_live != 1 else ''} currently active"
+    else:
+        lookalike_desc = "with no active look-alike domains detected"
+    heuristic_verdict = f"{domain}'s {infra_desc}, {lookalike_desc}."
+
+    try:
+        from ai_engine.email_gen import _call_with_fallback, OPENROUTER_API_KEY
+        if OPENROUTER_API_KEY:
+            ai_prompt = (
+                "You are an expert Cyber Threat Intelligence and Attack Surface Reconnaissance Analyst.\n"
+                f"Domain: {domain}\n"
+                f"Exposure Score: {score}/100 ({verdict})\n"
+                f"Domain Age: {age_lbl} (Registrar: {reg})\n"
+                f"SSL/TLS Status: {'Valid ' + str(ssl.get('protocol')) + ' from ' + str(ssl.get('issuer')) if ssl.get('valid') else 'Invalid/Missing'}\n"
+                f"Active Squatted Look-alikes ({len(live_cands)}): {', '.join(live_cands) if live_cands else 'None'}\n"
+                f"Public Subdomains ({subs_count}): {', '.join(subdomains[:8]) if subdomains else 'None'}\n"
+                f"Exposed Emails ({emails_count}): {', '.join(surface.get('emails', [])[:5]) if emails_count else 'None'}\n"
+                f"Exposed Socials ({socials_count}): {list(surface.get('socials', {}).keys()) if socials_count else 'None'}\n\n"
+                "Return a JSON object with two fields:\n"
+                '1. "ai_analysis": Exactly ONE paragraph explaining the real-world risk in plain language, not generic advice. Detail how threat actors could exploit the specific findings (e.g. typosquatted spear-phishing, subdomain takeover, targeted credential harvesting).\n'
+                f'2. "executive_verdict": Exactly ONE plain-language sentence summarizing the overall finding concretely (e.g. "{domain}\'s infrastructure looks clean, with 3 look-alike domains currently active").\n'
+                'Respond ONLY with a valid raw JSON object.'
+            )
+            messages = [
+                {"role": "system", "content": "You are a cyber intelligence analyst evaluating domain attack surface. Output valid raw JSON only."},
+                {"role": "user", "content": ai_prompt}
+            ]
+            raw_ai_resp = _call_with_fallback(messages)
+            if raw_ai_resp:
+                clean_resp = raw_ai_resp.strip()
+                if "```json" in clean_resp:
+                    clean_resp = clean_resp.split("```json")[1].split("```")[0].strip()
+                elif "```" in clean_resp:
+                    clean_resp = clean_resp.split("```")[1].split("```")[0].strip()
+
+                import json as _json, re as _re
+                parsed = {}
+                try:
+                    parsed = _json.loads(clean_resp, strict=False)
+                except Exception:
+                    # Fallback regex extraction if raw unescaped newlines are present
+                    m_ana = _re.search(r'"ai_analysis"\s*:\s*"([^"\\]*(?:\\.[^"\\]*)*)"', clean_resp)
+                    if not m_ana:
+                        m_ana = _re.search(r'"ai_analysis"\s*:\s*"(.*?)"(?:\s*,|\s*})', clean_resp, _re.DOTALL)
+                    if m_ana:
+                        parsed["ai_analysis"] = m_ana.group(1).replace('\\"', '"').replace('\\n', ' ')
+                    m_ver = _re.search(r'"executive_verdict"\s*:\s*"([^"\\]*(?:\\.[^"\\]*)*)"', clean_resp)
+                    if not m_ver:
+                        m_ver = _re.search(r'"executive_verdict"\s*:\s*"(.*?)"(?:\s*,|\s*})', clean_resp, _re.DOTALL)
+                    if m_ver:
+                        parsed["executive_verdict"] = m_ver.group(1).replace('\\"', '"')
+
+                if isinstance(parsed, dict) and ("ai_analysis" in parsed or "executive_verdict" in parsed):
+                    ai_analysis = parsed.get("ai_analysis") or heuristic_analysis
+                    executive_verdict = parsed.get("executive_verdict") or heuristic_verdict
+                    path_used = "heuristic+ai"
+    except Exception as exc:
+        print(f"[_run_ai_exposure_synthesis] AI synthesis fallback to heuristic: {exc}")
+        path_used = "heuristic_only"
+
+    return {
+        "path_used": path_used,
+        "ai_analysis": ai_analysis or heuristic_analysis,
+        "executive_verdict": executive_verdict or heuristic_verdict
+    }
+
+
+@csrf.exempt
+@app.route("/api/exposure-report", methods=["POST"])
+def exposure_report_api():
+    """Live streaming backend for PhishRecon Exposure Report."""
+    if not check_rate_limit(get_remote_ip(), "exposure-report", 10, 60):
+        return jsonify({"success": False, "message": "Rate limit exceeded. Please wait 60 seconds before retrying."}), 429
+
+    raw_domain = (request.form.get("domain") or (request.json.get("domain") if request.is_json else "") or "").strip()
+    if not raw_domain:
+        return jsonify({"success": False, "message": "Domain is required."}), 400
+
+    import re, json, secrets
+    from flask import Response
+    
+    # Sanitize target domain
+    domain = re.sub(r'^https?://', '', raw_domain).split('/')[0].split(':')[0].strip().lower()
+    if not domain or '.' not in domain or len(domain) < 3:
+        return jsonify({"success": False, "message": "Invalid domain format."}), 400
+
+    # SSRF Guard via is_safe_url()
+    if domain in ("localhost", "127.0.0.1", "::1", "0.0.0.0") or not is_safe_url(domain):
+        return jsonify({"success": False, "message": "Access Denied: Target domain resolves to a private or restricted network."}), 400
+
+    def generate():
+        # Launch all reconnaissance tasks concurrently on DIAGNOSTICS_EXECUTOR
+        future_rdap = DIAGNOSTICS_EXECUTOR.submit(check_rdap, domain)
+        future_ssl = DIAGNOSTICS_EXECUTOR.submit(check_ssl, domain)
+        future_lookalikes = DIAGNOSTICS_EXECUTOR.submit(check_lookalikes, domain)
+        future_crtsh = DIAGNOSTICS_EXECUTOR.submit(check_crtsh_subdomains, domain)
+        future_surface = DIAGNOSTICS_EXECUTOR.submit(scrape_company_cached, domain)
+
+        # ── Stage 1: Domain Age & SSL (Fastest) ──────────────────────────
+        try:
+            rdap_res = future_rdap.result(timeout=4.0)
+        except Exception:
+            rdap_res = {
+                "created_date": "Unknown",
+                "domain_age_days": None,
+                "domain_age_label": "Unknown",
+                "expiration_date": "Unknown",
+                "registrar": "Unknown"
+            }
+
+        try:
+            ssl_res = future_ssl.result(timeout=4.0)
+        except Exception:
+            ssl_res = {
+                "valid": False,
+                "issuer": "Unknown/None",
+                "protocol": "None",
+                "expiry": None,
+                "error": "Handshake timeout"
+            }
+
+        yield json.dumps({
+            "stage": "domain_ssl",
+            "domain": domain,
+            "rdap": rdap_res,
+            "ssl": ssl_res
+        }) + "\n"
+
+        # ── Stage 2: Look-alike Domains ─────────────────────────────────
+        try:
+            lookalikes_res = future_lookalikes.result(timeout=5.0)
+        except Exception:
+            lookalikes_res = {
+                "candidates_count": 0,
+                "live_count": 0,
+                "live_lookalikes": [],
+                "all_candidates": [],
+                "details": []
+            }
+
+        yield json.dumps({
+            "stage": "lookalikes",
+            "domain": domain,
+            "lookalikes": lookalikes_res
+        }) + "\n"
+
+        # ── Stage 3: Subdomains via crt.sh ──────────────────────────────
+        try:
+            subdomains_res = future_crtsh.result(timeout=4.5)
+        except Exception:
+            subdomains_res = []
+
+        yield json.dumps({
+            "stage": "subdomains",
+            "domain": domain,
+            "count": len(subdomains_res),
+            "subdomains": subdomains_res
+        }) + "\n"
+
+        # ── Stage 4: Exposed OSINT Surface ──────────────────────────────
+        try:
+            surface_raw = future_surface.result(timeout=6.0) or {}
+        except Exception:
+            surface_raw = {}
+
+        surface_res = {
+            "company_name": surface_raw.get("company_name") or domain,
+            "emails": surface_raw.get("emails") or [],
+            "emails_count": len(surface_raw.get("emails") or []),
+            "socials": surface_raw.get("socials") or {},
+            "socials_count": len(surface_raw.get("socials") or {}),
+            "description": surface_raw.get("description") or "",
+            "blocked": surface_raw.get("blocked", False)
+        }
+
+        yield json.dumps({
+            "stage": "exposed_surface",
+            "domain": domain,
+            "surface": surface_res
+        }) + "\n"
+
+        # ── Stage 5: AI Synthesis & Final Score ─────────────────────────
+        score, verdict, verdict_color, score_breakdown = calculate_exposure_score(
+            rdap_res, ssl_res, lookalikes_res, subdomains_res, surface_res
+        )
+
+        findings = {
+            "score": score,
+            "verdict": verdict,
+            "rdap": rdap_res,
+            "ssl": ssl_res,
+            "lookalikes": lookalikes_res,
+            "subdomains": subdomains_res,
+            "surface": surface_res
+        }
+
+        ai_res = _run_ai_exposure_synthesis(domain, findings)
+        inv_id = f"EX-{secrets.token_hex(3).upper()}"
+
+        yield json.dumps({
+            "stage": "summary",
+            "success": True,
+            "domain": domain,
+            "investigation_id": inv_id,
+            "exposure_score": score,
+            "verdict": verdict,
+            "verdict_color": verdict_color,
+            "score_breakdown": score_breakdown,
+            "path_used": ai_res.get("path_used"),
+            "ai_analysis": ai_res.get("ai_analysis"),
+            "executive_verdict": ai_res.get("executive_verdict")
+        }) + "\n"
+
+    return Response(generate(), mimetype="application/x-json-stream")
 
 
 @app.route("/robots.txt")

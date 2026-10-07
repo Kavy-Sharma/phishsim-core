@@ -1,0 +1,1208 @@
+{% extends "base.html" %}
+{% block title %}Attack Surface Audit — PhishSim AI{% endblock %}
+{% block og_title %}Attack Surface Audit — PhishSim AI{% endblock %}
+{% block og_description %}Restrained, editorial attack surface report assessing domain infrastructure, typosquatting mutations, public subdomains, and external footprint.{% endblock %}
+
+{% block content %}
+<style>
+/* ════════════════════════════════════════════════════════════════
+   ATTACK SURFACE AUDIT — EDITORIAL DOSSIER REPORT
+   Design system rules:
+   - Reference: Stripe dashboard, Linear issue view, Mercury statement
+   - Typography: var(--font-sans) for all body/data/UI, var(--font-heading) for title,
+                 var(--font-mono) ONLY for literal inline tokens (domains, IPs).
+   - Color: Near-monochrome dark neutrals. var(--primary) appears in exactly ONE
+            place with real visual weight: the headline score number.
+   - Accents: Quiet signals only (var(--danger) for registered look-alikes; silence for clean).
+   - Motion: Gentle fade-up (8-12px, cubic-bezier(0.16, 1, 0.3, 1), 300-400ms).
+   - No new colors, no new fonts.
+   ════════════════════════════════════════════════════════════════ */
+
+.audit-page {
+    font-family: var(--font-sans);
+    color: var(--text-primary);
+    padding: 2.5rem 1.5rem 6rem;
+    min-height: calc(100vh - 140px);
+}
+
+.audit-container {
+    max-width: 820px;
+    margin: 0 auto;
+}
+
+/* ── 1. Page Header & Audit Search Bar ─────────────────────────── */
+.audit-header-area {
+    margin-bottom: 2.25rem;
+}
+
+.audit-eyebrow {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    margin-bottom: 0.5rem;
+}
+
+.audit-main-title {
+    font-family: var(--font-heading);
+    font-size: clamp(1.85rem, 3.5vw, 2.35rem);
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -0.025em;
+    line-height: 1.2;
+    margin: 0 0 0.35rem 0;
+}
+
+.audit-subtitle {
+    font-size: var(--text-sm);
+    color: var(--text-muted);
+    line-height: 1.5;
+    margin: 0 0 1.5rem 0;
+}
+
+.audit-search-box {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+    padding: 4px 6px 4px 14px;
+    transition: var(--transition);
+}
+
+.audit-search-box:focus-within {
+    border-color: var(--border-active);
+}
+
+.audit-search-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    font-family: var(--font-sans);
+    font-size: var(--text-sm);
+    color: var(--text-primary);
+    padding: 8px 0;
+}
+
+.audit-search-input::placeholder {
+    color: var(--text-muted);
+}
+
+.audit-search-btn {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-sm);
+    padding: 8px 18px;
+    font-family: var(--font-sans);
+    font-size: var(--text-xs);
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    cursor: pointer;
+    transition: var(--transition);
+    white-space: nowrap;
+}
+
+.audit-search-btn:hover:not(:disabled) {
+    background: var(--border-default);
+    color: var(--text-primary);
+}
+
+.audit-search-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.audit-samples-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 0.75rem;
+    font-size: var(--text-xs);
+    color: var(--text-muted);
+}
+
+.audit-sample-link {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    cursor: pointer;
+    padding: 2px 4px;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    transition: color 0.15s ease;
+}
+
+.audit-sample-link:hover {
+    color: var(--text-primary);
+}
+
+/* ── 2. Minimized Compact HUD Bar (Mercury / Linear style) ─────── */
+.audit-minimized-bar {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+    padding: 12px 18px;
+    margin-bottom: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.audit-mini-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: var(--text-sm);
+    color: var(--text-secondary);
+}
+
+.audit-mini-domain {
+    font-family: var(--font-mono);
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.audit-mini-score {
+    font-weight: 700;
+    color: var(--primary);
+}
+
+.audit-mini-word {
+    color: var(--text-muted);
+    font-size: var(--text-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.audit-link-action {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-family: var(--font-sans);
+    font-size: var(--text-xs);
+    font-weight: 500;
+    cursor: pointer;
+    padding: 4px 8px;
+    transition: color 0.15s ease;
+}
+
+.audit-link-action:hover {
+    color: var(--text-primary);
+}
+
+/* ── 3. Document Sheet (Paper / Report Canvas) ─────────────────── */
+.doc-sheet {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 20px 60px -15px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.03);
+    padding: 3rem 3.5rem;
+    position: relative;
+    animation: docFadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (max-width: 640px) {
+    .doc-sheet {
+        padding: 2rem 1.5rem;
+    }
+}
+
+@keyframes docFadeIn {
+    0% { opacity: 0; transform: translateY(8px); }
+    100% { opacity: 1; transform: translateY(0); }
+}
+
+/* a. Top quiet metadata row */
+.doc-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border-subtle);
+    margin-bottom: 2rem;
+}
+
+.doc-metadata {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    font-size: var(--text-xs);
+    color: var(--text-muted);
+    letter-spacing: 0.04em;
+}
+
+.doc-kicker {
+    text-transform: uppercase;
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+.doc-domain {
+    font-family: var(--font-mono);
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.doc-sep {
+    color: var(--text-muted);
+    opacity: 0.5;
+}
+
+.doc-actions {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.doc-quiet-action {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-family: var(--font-sans);
+    font-size: var(--text-xs);
+    font-weight: 500;
+    cursor: pointer;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: color 0.15s ease;
+}
+
+.doc-quiet-action:hover {
+    color: var(--text-primary);
+}
+
+/* b. Large plain-language verdict lead sentence */
+.doc-verdict-lead {
+    font-size: 1.3rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    line-height: 1.55;
+    letter-spacing: -0.015em;
+    margin-bottom: 2.25rem;
+    max-width: 680px;
+}
+
+/* c. Stripe-invoice style large score number */
+.doc-score-hero {
+    margin-bottom: 2.5rem;
+}
+
+.doc-score-number {
+    font-family: var(--font-sans);
+    font-size: clamp(4rem, 7vw, 5rem);
+    font-weight: 700;
+    color: var(--primary);
+    line-height: 1;
+    letter-spacing: -0.04em;
+}
+
+.doc-score-posture {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    margin-top: 0.45rem;
+}
+
+.doc-breakdown-line {
+    font-size: var(--text-xs);
+    color: var(--text-muted);
+    margin-top: 0.85rem;
+    line-height: 1.6;
+}
+
+.doc-breakdown-token {
+    color: var(--text-secondary);
+    font-family: var(--font-mono);
+}
+
+/* d. Calm Supporting Sections Flow */
+.doc-body-flow {
+    display: flex;
+    flex-direction: column;
+    gap: 2.75rem;
+}
+
+.doc-section {
+    border-top: 1px solid var(--border-subtle);
+    padding-top: 2rem;
+    transition: opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1), transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.doc-section-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 1.25rem;
+}
+
+.doc-section-heading {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--text-muted);
+    margin: 0;
+}
+
+.doc-section-subtext {
+    font-size: var(--text-xs);
+    color: var(--text-muted);
+}
+
+/* Facts Grid */
+.doc-facts-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.25rem 2rem;
+}
+
+@media (max-width: 560px) {
+    .doc-facts-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+}
+
+.doc-fact-item {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.doc-fact-label {
+    font-size: var(--text-xs);
+    color: var(--text-muted);
+}
+
+.doc-fact-value {
+    font-size: 0.9375rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    word-break: break-word;
+}
+
+/* Look-alike Domains Clean List */
+.doc-lookalikes-list {
+    display: flex;
+    flex-direction: column;
+}
+
+.doc-lookalike-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border-subtle);
+    font-size: var(--text-sm);
+}
+
+.doc-lookalike-row:last-child {
+    border-bottom: none;
+}
+
+.doc-lookalike-row.is-registered {
+    border-left: 2px solid var(--danger);
+    padding-left: 10px;
+}
+
+.doc-lookalike-domain {
+    font-family: var(--font-mono);
+    color: var(--text-primary);
+    font-size: 0.875rem;
+}
+
+.doc-lookalike-meta {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    font-size: var(--text-xs);
+}
+
+.doc-lookalike-status {
+    font-weight: 500;
+}
+
+.doc-lookalike-status.status-registered {
+    color: var(--danger);
+}
+
+.doc-lookalike-status.status-clean {
+    color: var(--text-muted);
+    font-weight: 400;
+}
+
+.doc-lookalike-ip {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+/* Subdomains Flow */
+.doc-subdomains-flow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 12px;
+}
+
+.doc-subdomain-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    color: var(--text-secondary);
+    padding: 4px 0;
+}
+
+.doc-favicon {
+    width: 14px;
+    height: 14px;
+    border-radius: 2px;
+    flex-shrink: 0;
+}
+
+.doc-favicon-fallback {
+    width: 14px;
+    height: 14px;
+    font-size: 13px;
+    color: var(--text-muted);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+/* Public Surface */
+.doc-surface-statement {
+    font-size: 0.9375rem;
+    color: var(--text-primary);
+    line-height: 1.6;
+    margin: 0 0 1rem 0;
+}
+
+.doc-surface-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.doc-surface-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: var(--text-xs);
+    color: var(--text-secondary);
+}
+
+.doc-surface-token {
+    font-family: var(--font-mono);
+    color: var(--text-primary);
+}
+
+.doc-copy-link {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-family: var(--font-sans);
+    font-size: 0.75rem;
+    cursor: pointer;
+    padding: 0;
+    transition: color 0.15s ease;
+}
+
+.doc-copy-link:hover {
+    color: var(--text-primary);
+}
+
+.doc-social-link {
+    color: var(--text-secondary);
+    text-decoration: none;
+    transition: color 0.15s ease;
+}
+
+.doc-social-link:hover {
+    color: var(--text-primary);
+}
+
+/* AI Pull-Quote */
+.doc-editorial-quote {
+    border-left: 2px solid var(--border-default);
+    padding: 0.25rem 0 0.25rem 1.25rem;
+    margin: 0;
+    font-size: 0.9375rem;
+    line-height: 1.65;
+    color: var(--text-secondary);
+    font-style: normal;
+}
+
+/* Document Footer */
+.doc-footer {
+    border-top: 1px solid var(--border-subtle);
+    padding-top: 2rem;
+    margin-top: 3.5rem;
+    display: flex;
+    gap: 16px;
+}
+
+.doc-subtle-btn {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-family: var(--font-sans);
+    font-size: var(--text-xs);
+    font-weight: 500;
+    cursor: pointer;
+    padding: 0;
+    transition: color 0.15s ease;
+}
+
+.doc-subtle-btn:hover {
+    color: var(--text-primary);
+}
+
+/* Toast */
+.doc-toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-default);
+    color: var(--text-primary);
+    padding: 8px 14px;
+    border-radius: var(--radius-sm);
+    font-size: var(--text-xs);
+    font-weight: 500;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+    display: none;
+    align-items: center;
+    gap: 6px;
+    z-index: 9999;
+}
+
+/* Inline Monospace Helper */
+.doc-mono {
+    font-family: var(--font-mono);
+}
+</style>
+
+<div class="audit-page">
+    <div class="audit-container">
+
+        <!-- 1. Header & Domain Input -->
+        <header class="audit-header-area">
+            <div class="audit-eyebrow">External Reconnaissance</div>
+            <h1 class="audit-main-title">Attack Surface Audit</h1>
+            <p class="audit-subtitle">External security posture and infrastructure reconnaissance.</p>
+            
+            <form id="audit-form" onsubmit="event.preventDefault(); startAudit();">
+                <div class="audit-search-box">
+                    <input type="text" id="audit-domain-input" class="audit-search-input" 
+                           placeholder="Enter a domain to audit (e.g. stripe.com)" 
+                           value="{{ prefill_domain or 'stripe.com' }}" spellcheck="false" autocomplete="off" />
+                    <button type="submit" id="audit-submit-btn" class="audit-search-btn">
+                        Audit domain
+                    </button>
+                </div>
+            </form>
+
+            <div class="audit-samples-row">
+                <span>Sample targets:</span>
+                <button type="button" class="audit-sample-link" onclick="runSample('stripe.com')">stripe.com</button>
+                <span class="doc-sep">·</span>
+                <button type="button" class="audit-sample-link" onclick="runSample('github.com')">github.com</button>
+                <span class="doc-sep">·</span>
+                <button type="button" class="audit-sample-link" onclick="runSample('paypal.com')">paypal.com</button>
+            </div>
+        </header>
+
+        <!-- 2. Minimized Compact HUD Bar -->
+        <div class="audit-minimized-bar" id="audit-minimized-bar" style="display: none;">
+            <div class="audit-mini-left">
+                <span class="audit-mini-domain" id="audit-mini-domain">{{ prefill_domain or 'stripe.com' }}</span>
+                <span class="doc-sep">·</span>
+                <span class="audit-mini-score" id="audit-mini-score">—</span>
+                <span class="audit-mini-word" id="audit-mini-word">STANDBY</span>
+            </div>
+            <button type="button" class="audit-link-action" onclick="toggleMinimize()">Restore report</button>
+        </div>
+
+        <!-- 3. Document Sheet (Always visible, live document canvas) -->
+        <article class="doc-sheet" id="audit-sheet">
+
+            <!-- a. Top Quiet Metadata Row: Domain + Date + Quiet Actions -->
+            <header class="doc-header">
+                <div class="doc-metadata">
+                    <span class="doc-kicker">Audit Report</span>
+                    <span class="doc-sep">·</span>
+                    <span class="doc-domain" id="doc-meta-domain">{{ prefill_domain or 'stripe.com' }}</span>
+                    <span class="doc-sep">·</span>
+                    <span id="doc-meta-date">—</span>
+                </div>
+                <div class="doc-actions">
+                    <button type="button" class="doc-quiet-action" onclick="copyDossierJson()"><i class="ti ti-copy"></i> Copy JSON</button>
+                    <button type="button" class="doc-quiet-action" onclick="window.print()"><i class="ti ti-printer"></i> Print</button>
+                    <button type="button" class="doc-quiet-action" onclick="toggleMinimize()"><i class="ti ti-arrows-collapse"></i> Minimize</button>
+                </div>
+            </header>
+
+            <!-- b. ONE sentence verdict in larger type (First thing read before data) -->
+            <div class="doc-verdict-lead" id="doc-verdict-lead">
+                Evaluating external attack surface and infrastructure posture...
+            </div>
+
+            <!-- c. Single focal point: Stripe-invoice style large score number -->
+            <div class="doc-score-hero">
+                <div class="doc-score-number" id="doc-score-number">0</div>
+                <div class="doc-score-posture" id="doc-score-posture">Evaluating posture</div>
+                <div class="doc-breakdown-line" id="doc-breakdown-line" style="display: none;"></div>
+            </div>
+
+            <!-- d. Calm Supporting Sections Flow -->
+            <div class="doc-body-flow">
+
+                <!-- Section 1: Domain & SSL Facts -->
+                <section class="doc-section" id="sec-facts">
+                    <div class="doc-section-head">
+                        <h2 class="doc-section-heading">Infrastructure & Encryption</h2>
+                    </div>
+                    <div class="doc-facts-grid">
+                        <div class="doc-fact-item">
+                            <span class="doc-fact-label">Domain age</span>
+                            <span class="doc-fact-value" id="fact-age">—</span>
+                        </div>
+                        <div class="doc-fact-item">
+                            <span class="doc-fact-label">Registrar</span>
+                            <span class="doc-fact-value" id="fact-registrar">—</span>
+                        </div>
+                        <div class="doc-fact-item">
+                            <span class="doc-fact-label">Registration date</span>
+                            <span class="doc-fact-value" id="fact-created">—</span>
+                        </div>
+                        <div class="doc-fact-item">
+                            <span class="doc-fact-label">Expiration date</span>
+                            <span class="doc-fact-value" id="fact-expires">—</span>
+                        </div>
+                        <div class="doc-fact-item">
+                            <span class="doc-fact-label">TLS protocol</span>
+                            <span class="doc-fact-value" id="fact-proto">—</span>
+                        </div>
+                        <div class="doc-fact-item">
+                            <span class="doc-fact-label">Certificate issuer</span>
+                            <span class="doc-fact-value" id="fact-issuer">—</span>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Section 2: Look-alike Domains -->
+                <section class="doc-section" id="sec-lookalikes">
+                    <div class="doc-section-head">
+                        <h2 class="doc-section-heading">Look-alike domains</h2>
+                        <span class="doc-section-subtext" id="lookalikes-summary-note">Scanning mutations...</span>
+                    </div>
+                    <div class="doc-lookalikes-list" id="doc-lookalikes-list">
+                        <div style="font-size:0.875rem; color:var(--text-muted); padding:8px 0;">Resolving candidate typosquatting mutations...</div>
+                    </div>
+                </section>
+
+                <!-- Section 3: Exposed Subdomains with Favicons -->
+                <section class="doc-section" id="sec-subdomains">
+                    <div class="doc-section-head">
+                        <h2 class="doc-section-heading">Public subdomains</h2>
+                        <span class="doc-section-subtext" id="subdomains-summary-note">Querying certificate transparency...</span>
+                    </div>
+                    <div class="doc-subdomains-flow" id="doc-subdomains-flow">
+                        <div style="font-size:0.875rem; color:var(--text-muted); padding:4px 0;">Awaiting certificate transparency stream...</div>
+                    </div>
+                </section>
+
+                <!-- Section 4: Public Attack Surface (Plain Stated Numbers) -->
+                <section class="doc-section" id="sec-surface">
+                    <div class="doc-section-head">
+                        <h2 class="doc-section-heading">Public surface</h2>
+                    </div>
+                    <p class="doc-surface-statement" id="doc-surface-statement">
+                        Awaiting surface telemetry...
+                    </p>
+                    <div class="doc-surface-list" id="doc-surface-list"></div>
+                </section>
+
+                <!-- Section 5: AI Threat Synthesis (Pull-Quote: ONLY when path_used == 'heuristic+ai') -->
+                <section class="doc-section" id="sec-ai-pullquote" style="display: none;">
+                    <div class="doc-section-head">
+                        <h2 class="doc-section-heading">Threat synthesis</h2>
+                    </div>
+                    <blockquote class="doc-editorial-quote" id="doc-ai-quote-text"></blockquote>
+                </section>
+
+            </div><!-- /doc-body-flow -->
+
+            <!-- Document Footer -->
+            <footer class="doc-footer">
+                <button type="button" class="doc-subtle-btn" onclick="copyDossierJson()">Copy JSON</button>
+                <button type="button" class="doc-subtle-btn" onclick="window.print()">Print</button>
+                <button type="button" class="doc-subtle-btn" onclick="resetAuditForm()">New audit</button>
+            </footer>
+
+        </article>
+
+    </div>
+</div>
+
+<!-- Subtle Toast Notification -->
+<div id="doc-toast" class="doc-toast"></div>
+
+<script>
+/* ════════════════════════════════════════════════════════════════
+   ATTACK SURFACE AUDIT CONTROLLER
+   Consumes streaming /api/exposure-report via ReadableStream
+   ════════════════════════════════════════════════════════════════ */
+
+let currentAbortController = null;
+let currentDossierData = {};
+let isReportMinimized = false;
+
+function showToast(message) {
+    const el = document.getElementById('doc-toast');
+    if (!el) return;
+    el.textContent = message;
+    el.style.display = 'inline-flex';
+    setTimeout(() => { el.style.display = 'none'; }, 2200);
+}
+
+function runSample(domain) {
+    const input = document.getElementById('audit-domain-input');
+    if (input) {
+        input.value = domain;
+    }
+    startAudit();
+}
+
+function resetAuditForm() {
+    if (currentAbortController) {
+        currentAbortController.abort();
+        currentAbortController = null;
+    }
+    const input = document.getElementById('audit-domain-input');
+    if (input) {
+        input.value = '';
+        input.focus();
+    }
+    document.getElementById('audit-minimized-bar').style.display = 'none';
+    document.getElementById('audit-sheet').style.display = 'block';
+    document.getElementById('doc-meta-domain').textContent = '—';
+    document.getElementById('doc-verdict-lead').textContent = 'Enter an organizational domain above to evaluate external attack surface and infrastructure posture.';
+    document.getElementById('doc-score-number').textContent = '0';
+    document.getElementById('doc-score-posture').textContent = 'Awaiting target';
+    document.getElementById('doc-breakdown-line').style.display = 'none';
+    document.getElementById('sec-ai-pullquote').style.display = 'none';
+
+    // Clear fact values
+    ['fact-age', 'fact-registrar', 'fact-created', 'fact-expires', 'fact-proto', 'fact-issuer'].forEach(id => {
+        document.getElementById(id).textContent = '—';
+    });
+
+    document.getElementById('doc-lookalikes-list').innerHTML = '<div style="font-size:0.875rem; color:var(--text-muted); padding:8px 0;">No active look-alike mutations scanned.</div>';
+    document.getElementById('lookalikes-summary-note').textContent = '';
+
+    document.getElementById('doc-subdomains-flow').innerHTML = '<div style="font-size:0.875rem; color:var(--text-muted); padding:4px 0;">No public certificates indexed.</div>';
+    document.getElementById('subdomains-summary-note').textContent = '';
+
+    document.getElementById('doc-surface-statement').textContent = 'Awaiting domain audit...';
+    document.getElementById('doc-surface-list').innerHTML = '';
+
+    const btn = document.getElementById('audit-submit-btn');
+    btn.disabled = false;
+    btn.textContent = 'Audit domain';
+
+    currentDossierData = {};
+    isReportMinimized = false;
+}
+
+function toggleMinimize() {
+    const sheet = document.getElementById('audit-sheet');
+    const miniBar = document.getElementById('audit-minimized-bar');
+    if (!sheet || !miniBar) return;
+
+    if (isReportMinimized) {
+        // Restore
+        miniBar.style.display = 'none';
+        sheet.style.display = 'block';
+        isReportMinimized = false;
+    } else {
+        // Minimize
+        sheet.style.display = 'none';
+        miniBar.style.display = 'flex';
+        isReportMinimized = true;
+        renderMinimizedBar();
+    }
+}
+
+function renderMinimizedBar() {
+    const domain = currentDossierData.domain || document.getElementById('audit-domain-input').value.trim() || '—';
+    document.getElementById('audit-mini-domain').textContent = domain;
+
+    if (currentDossierData.summary) {
+        document.getElementById('audit-mini-score').textContent = currentDossierData.summary.exposure_score + '/100';
+        document.getElementById('audit-mini-word').textContent = formatPostureWord(currentDossierData.summary.exposure_score);
+    } else {
+        document.getElementById('audit-mini-score').textContent = '—';
+        document.getElementById('audit-mini-word').textContent = 'AUDITING';
+    }
+}
+
+function formatPostureWord(score) {
+    if (score >= 75) return 'Critical exposure';
+    if (score >= 50) return 'Elevated risk';
+    if (score >= 25) return 'Moderate risk';
+    return 'Low risk';
+}
+
+function getFaviconHTML(domain) {
+    const clean = (domain || '').trim();
+    if (!clean) {
+        return `<span class="doc-favicon-fallback"><i class="ti ti-world"></i></span>`;
+    }
+    const faviconUrl = `https://www.google.com/s2/favicons?domain=${encodeURIComponent(clean)}&sz=32`;
+    return `<img class="doc-favicon" src="${faviconUrl}" alt="" loading="lazy" onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='inline-flex';"><span class="doc-favicon-fallback" style="display:none;"><i class="ti ti-world"></i></span>`;
+}
+
+function formatReportDate(dateObj) {
+    return dateObj.toLocaleDateString('en-US', {
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric'
+    });
+}
+
+/* ── Streaming Controller ──────────────────────────────────────── */
+async function startAudit() {
+    const rawVal = document.getElementById('audit-domain-input').value.trim();
+    if (!rawVal) {
+        showToast('Please enter a domain');
+        return;
+    }
+
+    const domain = rawVal.replace(/^https?:\/\//i, '').split('/')[0].split(':')[0].trim().toLowerCase();
+    if (!domain || !domain.includes('.')) {
+        showToast('Please enter a valid domain (e.g. stripe.com)');
+        return;
+    }
+
+    if (currentAbortController) {
+        currentAbortController.abort();
+    }
+    currentAbortController = new AbortController();
+
+    const submitBtn = document.getElementById('audit-submit-btn');
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Auditing...';
+
+    // Show report document
+    const sheet = document.getElementById('audit-sheet');
+    sheet.style.display = 'block';
+    document.getElementById('audit-minimized-bar').style.display = 'none';
+    isReportMinimized = false;
+
+    // Reset document states
+    document.getElementById('doc-meta-domain').textContent = domain;
+    document.getElementById('doc-meta-date').textContent = formatReportDate(new Date());
+    document.getElementById('doc-verdict-lead').textContent = `Assessing external infrastructure for ${domain}...`;
+    document.getElementById('doc-score-number').textContent = '—';
+    document.getElementById('doc-score-posture').textContent = 'Evaluating posture';
+    document.getElementById('doc-breakdown-line').style.display = 'none';
+    document.getElementById('sec-ai-pullquote').style.display = 'none';
+
+    currentDossierData = { domain: domain };
+    renderMinimizedBar();
+
+    const formData = new FormData();
+    formData.append('domain', domain);
+
+    try {
+        const response = await fetch('/api/exposure-report', {
+            method: 'POST',
+            body: formData,
+            signal: currentAbortController.signal
+        });
+
+        if (!response.ok) {
+            let errMsg = 'Audit service error (' + response.status + ')';
+            try {
+                const j = await response.json();
+                if (j.message) errMsg = j.message;
+            } catch(e) {}
+            throw new Error(errMsg);
+        }
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder('utf-8');
+        let buffer = '';
+
+        while (true) {
+            const { value, done } = await reader.read();
+            if (done) break;
+
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split('\n');
+            buffer = lines.pop();
+
+            for (const line of lines) {
+                if (!line.trim()) continue;
+                try {
+                    const packet = JSON.parse(line);
+                    handlePacket(packet);
+                } catch(e) {
+                    console.error('Packet parse error:', e);
+                }
+            }
+        }
+
+        if (buffer && buffer.trim()) {
+            try {
+                const packet = JSON.parse(buffer.trim());
+                handlePacket(packet);
+            } catch(e) {}
+        }
+
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Audit domain';
+
+    } catch(err) {
+        if (err.name === 'AbortError') return;
+        showToast(err.message || 'Audit failed');
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Audit domain';
+    }
+}
+
+function handlePacket(packet) {
+    if (!packet || !packet.stage) return;
+    const stage = packet.stage;
+
+    if (stage === 'domain_ssl') {
+        currentDossierData.domain_ssl = packet;
+        renderFacts(packet);
+
+    } else if (stage === 'lookalikes') {
+        currentDossierData.lookalikes = packet.lookalikes;
+        renderLookalikes(packet.lookalikes);
+
+    } else if (stage === 'subdomains') {
+        currentDossierData.subdomains = packet.subdomains;
+        renderSubdomains(packet.subdomains);
+
+    } else if (stage === 'exposed_surface') {
+        currentDossierData.surface = packet.surface;
+        renderSurface(packet.surface);
+
+    } else if (stage === 'summary') {
+        currentDossierData.summary = packet;
+        renderSummary(packet);
+        renderMinimizedBar();
+    }
+}
+
+/* ── Section Renderers ─────────────────────────────────────────── */
+
+function renderFacts(data) {
+    const rdap = data.rdap || {};
+    const ssl = data.ssl || {};
+
+    document.getElementById('fact-age').textContent = rdap.domain_age_label || 'Unknown';
+    document.getElementById('fact-registrar').textContent = rdap.registrar || 'Unknown';
+    document.getElementById('fact-created').textContent = rdap.created_date || 'Unknown';
+    document.getElementById('fact-expires').textContent = rdap.expiration_date || 'Unknown';
+    document.getElementById('fact-proto').textContent = ssl.protocol || (ssl.valid ? 'TLS' : 'None');
+    document.getElementById('fact-issuer').textContent = ssl.issuer || 'Unknown';
+}
+
+function renderLookalikes(data) {
+    const listEl = document.getElementById('doc-lookalikes-list');
+    const noteEl = document.getElementById('lookalikes-summary-note');
+    listEl.innerHTML = '';
+
+    const details = (data && data.details) || [];
+    const liveCount = (data && data.live_count) || 0;
+
+    if (noteEl) {
+        noteEl.textContent = liveCount > 0 ? `${liveCount} active mutation${liveCount !== 1 ? 's' : ''}` : 'No active mutations';
+    }
+
+    if (details.length === 0) {
+        listEl.innerHTML = '<div style="font-size:0.875rem; color:var(--text-muted); padding:8px 0;">No permutation candidates generated.</div>';
+        return;
+    }
+
+    details.forEach(item => {
+        const row = document.createElement('div');
+        row.className = 'doc-lookalike-row' + (item.is_live ? ' is-registered' : '');
+
+        const statusClass = item.is_live ? 'status-registered' : 'status-clean';
+        const statusText = item.is_live ? 'Registered' : 'Unregistered';
+        const ipSnippet = item.is_live && item.ip ? `<span class="doc-lookalike-ip doc-mono">${item.ip}</span>` : '';
+
+        row.innerHTML = `
+            <span class="doc-lookalike-domain doc-mono">${item.domain}</span>
+            <div class="doc-lookalike-meta">
+                ${ipSnippet}
+                <span class="doc-lookalike-status ${statusClass}">${statusText}</span>
+            </div>
+        `;
+        listEl.appendChild(row);
+    });
+}
+
+function renderSubdomains(subdomains) {
+    const flowEl = document.getElementById('doc-subdomains-flow');
+    const noteEl = document.getElementById('subdomains-summary-note');
+    flowEl.innerHTML = '';
+
+    const list = subdomains || [];
+    if (noteEl) {
+        noteEl.textContent = list.length > 0 ? `${list.length} indexed` : 'None indexed';
+    }
+
+    if (list.length === 0) {
+        flowEl.innerHTML = '<div style="font-size:0.875rem; color:var(--text-muted); padding:4px 0;">No public certificates indexed by crt.sh.</div>';
+        return;
+    }
+
+    list.forEach(sub => {
+        const item = document.createElement('span');
+        item.className = 'doc-subdomain-pill';
+        item.innerHTML = `
+            ${getFaviconHTML(sub)}
+            <span class="doc-mono">${sub}</span>
+        `;
+        flowEl.appendChild(item);
+    });
+}
+
+function renderSurface(surface) {
+    const statementEl = document.getElementById('doc-surface-statement');
+    const listEl = document.getElementById('doc-surface-list');
+    listEl.innerHTML = '';
+
+    const emails = (surface && surface.emails) || [];
+    const socials = (surface && surface.socials) || {};
+    const eCount = emails.length;
+    const sCount = Object.keys(socials).length;
+
+    let statement = '';
+    if (eCount === 0 && sCount === 0) {
+        statement = 'No public organizational email addresses or corporate profiles were indexed on external surfaces.';
+    } else {
+        const parts = [];
+        if (eCount > 0) parts.push(`${eCount} public email address${eCount !== 1 ? 'es' : ''}`);
+        if (sCount > 0) parts.push(`${sCount} corporate social profile${sCount !== 1 ? 's' : ''}`);
+        statement = parts.join(' and ') + ' indexed across public channels.';
+    }
+    statementEl.textContent = statement;
+
+    emails.forEach(em => {
+        const row = document.createElement('div');
+        row.className = 'doc-surface-item';
+        row.innerHTML = `
+            <span class="doc-surface-token doc-mono">${em}</span>
+            <button type="button" class="doc-copy-link" onclick="navigator.clipboard.writeText('${em}'); showToast('Email copied');">Copy</button>
+        `;
+        listEl.appendChild(row);
+    });
+
+    Object.keys(socials).forEach(platform => {
+        const url = socials[platform];
+        const row = document.createElement('div');
+        row.className = 'doc-surface-item';
+        row.innerHTML = `
+            <span>${platform.charAt(0).toUpperCase() + platform.slice(1)}:</span>
+            <a href="${url}" target="_blank" rel="noopener noreferrer" class="doc-social-link doc-mono">${url}</a>
+        `;
+        listEl.appendChild(row);
+    });
+}
+
+function renderSummary(summary) {
+    // b. ONE sentence verdict in larger type
+    const leadEl = document.getElementById('doc-verdict-lead');
+    if (summary.executive_verdict) {
+        leadEl.textContent = summary.executive_verdict;
+    } else if (summary.ai_analysis) {
+        leadEl.textContent = summary.ai_analysis.split('.')[0] + '.';
+    }
+
+    // c. The score: one large number, Stripe-invoice style
+    const score = summary.exposure_score || 0;
+    const scoreNumEl = document.getElementById('doc-score-number');
+    const scorePostureEl = document.getElementById('doc-score-posture');
+
+    // Quiet count-up (no scale bounce, no glow)
+    let current = 0;
+    const steps = 24;
+    const stepDuration = 380 / steps;
+    const increment = score / steps;
+    const timer = setInterval(() => {
+        current += increment;
+        if (current >= score) {
+            current = score;
+            clearInterval(timer);
+        }
+        scoreNumEl.textContent = Math.round(current);
+    }, stepDuration);
+
+    scorePostureEl.textContent = formatPostureWord(score);
+
+    // Score breakdown (Quiet line)
+    const bdLine = document.getElementById('doc-breakdown-line');
+    const bd = summary.score_breakdown || {};
+    const parts = [];
+    if (bd.lookalikes_points !== undefined) parts.push(`Look-alikes: <span class="doc-breakdown-token">+${bd.lookalikes_points}</span>`);
+    if (bd.domain_age_points !== undefined) parts.push(`Domain age: <span class="doc-breakdown-token">+${bd.domain_age_points}</span>`);
+    if (bd.ssl_points !== undefined) parts.push(`SSL: <span class="doc-breakdown-token">+${bd.ssl_points}</span>`);
+    if (bd.subdomains_points !== undefined) parts.push(`Subdomains: <span class="doc-breakdown-token">+${bd.subdomains_points}</span>`);
+    if (bd.surface_points !== undefined) parts.push(`Surface: <span class="doc-breakdown-token">+${bd.surface_points}</span>`);
+    
+    if (parts.length > 0) {
+        bdLine.innerHTML = parts.join(' &nbsp;·&nbsp; ');
+        bdLine.style.display = 'block';
+    }
+
+    // Editorial Pull-Quote: ONLY shown when path_used is 'heuristic+ai'
+    const aiSec = document.getElementById('sec-ai-pullquote');
+    const aiQuoteText = document.getElementById('doc-ai-quote-text');
+    if (summary.path_used === 'heuristic+ai' && summary.ai_analysis && aiSec && aiQuoteText) {
+        aiQuoteText.textContent = summary.ai_analysis;
+        aiSec.style.display = 'block';
+    } else if (aiSec) {
+        aiSec.style.display = 'none';
+    }
+}
+
+function copyDossierJson() {
+    navigator.clipboard.writeText(JSON.stringify(currentDossierData, null, 2));
+    showToast('Audit JSON copied to clipboard');
+}
+
+// Auto-trigger if domain passed in URL query param or default
+window.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('doc-meta-date').textContent = formatReportDate(new Date());
+    const val = document.getElementById('audit-domain-input').value.trim();
+    if (val) {
+        startAudit();
+    }
+});
+</script>
+{% endblock %}
