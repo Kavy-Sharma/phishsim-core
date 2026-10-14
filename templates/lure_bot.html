@@ -2069,26 +2069,8 @@
       }
     }
 
-    /* Maximized desktop panel state styles */
-    #pb-panel.pb-panel-maximized {
-      position: fixed !important;
-      top: 16px !important;
-      left: 16px !important;
-      right: 16px !important;
-      bottom: 16px !important;
-      width: calc(100vw - 32px) !important;
-      height: calc(100vh - 32px) !important;
-      max-width: 1200px !important;
-      max-height: 900px !important;
-      margin: auto !important;
-      z-index: 10000000 !important;
-      transform: none !important;
-      border-radius: 20px !important;
-      background: linear-gradient(135deg, rgba(10, 18, 36, 0.96), rgba(15, 23, 42, 0.94)) !important;
-      backdrop-filter: blur(32px) saturate(180%) !important;
-      border: 1px solid rgba(56, 189, 248, 0.25) !important;
-      box-shadow: 0 40px 100px rgba(0, 0, 0, 0.85), 0 0 80px rgba(56, 189, 248, 0.1) !important;
-    }
+    /* Maximized desktop panel state styles handled below */
+
     #pb-panel.pb-panel-maximized #pb-drag-handle {
       cursor: default !important;
       background: transparent !important;
@@ -2277,6 +2259,7 @@
       max-width: none !important;
       max-height: none !important;
       z-index: 10005 !important;
+      transform: none !important;
       border-radius: 20px !important;
       background: #080C16 !important;
       background-image: 
@@ -2285,10 +2268,13 @@
         linear-gradient(180deg, rgba(13, 18, 30, 0.95) 0%, rgba(8, 12, 22, 0.98) 100%) !important;
       border: 1px solid color-mix(in srgb, var(--primary) 28%, transparent) !important;
       box-shadow:
-        0 30px 90px rgba(0,0,0,0.9),
-        0 0 0 1px color-mix(in srgb, var(--primary) 25%, transparent),
-        0 0 70px color-mix(in srgb, var(--primary) 18%, transparent) !important;
-      backdrop-filter: blur(32px) !important;
+        0 24px 60px rgba(0,0,0,0.85),
+        0 0 0 1px color-mix(in srgb, var(--primary) 25%, transparent) !important;
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
+      animation: none !important;
+      will-change: auto !important;
+      contain: paint !important;
     }
     #pb-panel.pb-panel-maximized .pb-panel-header {
       padding: 16px 24px !important;
@@ -4831,7 +4817,7 @@
         if (actionsEl) {
           actionsEl.innerHTML = `
             <button class="pb-popover-btn primary" onclick="chooseLureOnboarding('walkthrough')">Take recommended Tour</button>
-            <button class="pb-popover-btn secondary" onclick="chooseLureOnboarding('generate')">Just generate a lure</button>
+            <button class="pb-popover-btn secondary" onclick="chooseLureOnboarding('chat')"><i class="ti ti-messages"></i> Chat with Lure</button>
           `;
           actionsEl.style.display = 'flex';
         }
@@ -5992,7 +5978,7 @@
                   selectRadio('#d_local', () => {
                     checkCheckbox('consent_confirmed', true, () => {
                       setTimeout(() => {
-                        const launchBtn = document.getElementById('wt-create-campaign-btn');
+                        const launchBtn = document.getElementById('wt-next-btn') || document.getElementById('wt-create-campaign-btn') || document.querySelector('#campaign-form button[type="submit"]');
                         if (launchBtn) launchBtn.click();
                         if (cb) cb();
                       }, 500);
@@ -6461,6 +6447,16 @@
       closeFvPopover();
       if (choice === 'walkthrough' || choice === 'tour') {
         openWalkthroughDirectly();
+      } else if (choice === 'chat' || choice === 'ask_lure') {
+        openPanel();
+        setTimeout(() => {
+          const chatBtn = panel.querySelector('.pb-tab-btn[data-tab="chat"]') || panel.querySelector('.pb-sidebar-tab-btn[data-tab="chat"]');
+          if (chatBtn) chatBtn.click();
+          const chatInput = panel.querySelector('#pb-chat-input');
+          if (chatInput) {
+            setTimeout(() => chatInput.focus(), 80);
+          }
+        }, 60);
       } else {
         openPanel();
         setTimeout(() => {

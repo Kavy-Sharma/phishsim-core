@@ -45,6 +45,8 @@ def compute_human_security_score(click_rate, open_rate, report_rate, repeat_pct=
     return {"score": score, "tier": tier, "label": label}
 
 
+_CAMPAIGN_REPORT_CACHE = {}
+
 def build_campaign_report(campaign):
     """Creates an Agentic AI campaign report using LLM analysis on tracked metrics."""
     employees = int(campaign.get("employee_count") or 0)
@@ -53,6 +55,12 @@ def build_campaign_report(campaign):
     opens = int(campaign.get("opens") or 0)
     clicks = int(campaign.get("clicks") or 0)
     reports = int(campaign.get("reports") or 0)
+
+    # Check cache
+    camp_id = campaign.get("id")
+    cache_key = f"{camp_id}_{sent}_{opens}_{clicks}_{reports}"
+    if camp_id is not None and cache_key in _CAMPAIGN_REPORT_CACHE:
+        return dict(_CAMPAIGN_REPORT_CACHE[cache_key])
 
     open_rate = round((opens / sent) * 100, 1) if sent else 0
     click_rate = round((clicks / sent) * 100, 1) if sent else 0
@@ -137,9 +145,9 @@ CRITICAL: Return ONLY valid JSON: {{"summary": "...", "recommendations": ["...",
         if client is None:
             raise RuntimeError("OPENROUTER_API_KEY is not configured.")
         
-        # Try primary model first, then fallback model
+        # Fast free models with graceful fallback
         response = None
-        for model_name in ["google/gemini-2.5-flash", "openrouter/free"]:
+        for model_name in ["google/gemma-4-26b-a4b-it:free", "meta-llama/llama-3.3-70b-instruct:free", "openrouter/free", "google/gemini-2.5-flash"]:
             try:
                 response = client.chat.completions.create(
                     model=model_name,
@@ -148,7 +156,8 @@ CRITICAL: Return ONLY valid JSON: {{"summary": "...", "recommendations": ["...",
                         {"role": "user", "content": prompt}
                     ],
                     temperature=0.3,
-                    max_tokens=400
+                    max_tokens=400,
+                    timeout=5.0
                 )
                 if response and response.choices and response.choices[0].message.content:
                     break
@@ -185,9 +194,9 @@ CRITICAL: Return ONLY valid JSON: {{"summary": "...", "recommendations": ["...",
             start_idx = json_str.find('{', start_idx + 1)
             
     except Exception as e:
-        print(f"AI Report Generation Failed, falling back to scenario defaults: {e}")
+        print(f"AI Report Generation fast fallback to scenario defaults: {e}")
 
-    return {
+    result = {
         "risk_level": risk_level,
         "summary": summary,
         "delivery_rate": delivery_rate,
@@ -197,3 +206,7 @@ CRITICAL: Return ONLY valid JSON: {{"summary": "...", "recommendations": ["...",
         "recommendations": recommendations,
         "hss": hss,
     }
+    if camp_id is not None:
+        _CAMPAIGN_REPORT_CACHE[cache_key] = result
+    return result
+

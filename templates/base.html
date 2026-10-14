@@ -1267,10 +1267,10 @@ window.init3DTiltCards = init3DTiltCards;
     <svg style="position: absolute; width: 0; height: 0; pointer-events: none; overflow: hidden; display: block;" width="0" height="0" version="1.1" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
       <defs>
         <filter id="liquid-filter" x="-20%" y="-20%" width="140%" height="140%">
-          <feTurbulence type="fractalNoise" baseFrequency="0.015 0.04" numOctaves="2" result="noise">
-            <animate attributeName="baseFrequency" dur="10s" values="0.015 0.04; 0.03 0.06; 0.015 0.04" repeatCount="indefinite" />
+          <feTurbulence type="fractalNoise" baseFrequency="0.02 0.05" numOctaves="2" result="noise">
+            <animate attributeName="baseFrequency" dur="3.2s" values="0.02 0.05; 0.032 0.08; 0.018 0.04; 0.02 0.05" repeatCount="indefinite" />
           </feTurbulence>
-          <feDisplacementMap in="SourceGraphic" in2="noise" scale="4.5" xChannelSelector="R" yChannelSelector="G" />
+          <feDisplacementMap in="SourceGraphic" in2="noise" scale="2.8" xChannelSelector="R" yChannelSelector="G" />
         </filter>
       </defs>
     </svg>
@@ -1288,43 +1288,52 @@ window.init3DTiltCards = init3DTiltCards;
       position: relative;
     }
 
+    /* Style 1: Dynamic Mouse-Spotlight Water (Main Headings & Titles) */
     h1.liquid-active,
     h2.liquid-active,
-    h3.liquid-active,
-    h4.liquid-active,
-    h5.liquid-active,
-    h6.liquid-active,
     .liquid-text.liquid-active,
     .section-title.liquid-active,
-    .card-title.liquid-active,
     .page-title.liquid-active,
     .heading-title.liquid-active,
-    .banner-title.liquid-active,
-    .modal-title.liquid-active {
-      background-size: 300% 100% !important;
+    .banner-title.liquid-active {
+      background-size: 100% 100% !important;
       -webkit-background-clip: text !important;
       -webkit-text-fill-color: transparent !important;
       background-clip: text !important;
       color: transparent !important;
-      text-shadow: none !important;
       filter: url(#liquid-filter) !important;
       will-change: background-position, filter;
     }
 
-    body.light-theme h1.liquid-active,
-    body.light-theme h2.liquid-active,
-    body.light-theme h3.liquid-active,
-    body.light-theme h4.liquid-active,
-    body.light-theme h5.liquid-active,
-    body.light-theme h6.liquid-active,
-    body.light-theme .liquid-text.liquid-active,
-    body.light-theme .section-title.liquid-active,
-    body.light-theme .card-title.liquid-active,
-    body.light-theme .page-title.liquid-active,
-    body.light-theme .heading-title.liquid-active,
-    body.light-theme .banner-title.liquid-active,
-    body.light-theme .modal-title.liquid-active {
+    /* Style 2: New Full-Element Water Shimmer (Cards, Modals, Panels, Subheadings) */
+    .card-title,
+    .panel-title,
+    .modal-title,
+    h3:not(.hero-h1), h4, h5, h6 {
+      transition: color 220ms ease, text-shadow 220ms ease, filter 220ms ease;
+    }
+
+    .card-title:hover,
+    .panel-title:hover,
+    .modal-title:hover,
+    h3:not(.hero-h1):hover,
+    h4:hover,
+    h5:hover,
+    h6:hover {
       filter: url(#liquid-filter) !important;
+      color: var(--primary, #38bdf8) !important;
+      text-shadow: 0 0 14px color-mix(in srgb, var(--primary, #38bdf8) 40%, transparent) !important;
+    }
+
+    body.light-theme .card-title:hover,
+    body.light-theme .panel-title:hover,
+    body.light-theme .modal-title:hover,
+    body.light-theme h3:not(.hero-h1):hover,
+    body.light-theme h4:hover,
+    body.light-theme h5:hover,
+    body.light-theme h6:hover {
+      color: var(--primary, #1d4ed8) !important;
+      text-shadow: 0 0 14px color-mix(in srgb, var(--primary, #1d4ed8) 25%, transparent) !important;
     }
     </style>
 
@@ -1336,17 +1345,18 @@ window.init3DTiltCards = init3DTiltCards;
 
         function isLiquidTarget(el) {
             if (!el || !el.tagName) return false;
-            // Deliberately exclude the main hero heading
-            if (el.classList.contains('hero-h1')) return false;
+            // Deliberately exclude the main hero heading and PhishRecon verdict
+            if (el.classList.contains('hero-h1') || el.classList.contains('pr-verdict') || el.closest('.pr-verdict')) return false;
+            // Cards, modals and small headings use the pure CSS new watery effect
+            if (el.classList.contains('card-title') || el.classList.contains('modal-title') || el.classList.contains('panel-title')) return false;
             const tag = el.tagName.toUpperCase();
-            if (['H1', 'H2', 'H3', 'H4', 'H5', 'H6'].includes(tag)) return true;
+            if (['H3', 'H4', 'H5', 'H6'].includes(tag)) return false;
+            if (['H1', 'H2'].includes(tag)) return true;
             if (el.classList.contains('liquid-text') || 
                 el.classList.contains('section-title') || 
-                el.classList.contains('card-title') || 
                 el.classList.contains('page-title') ||
                 el.classList.contains('heading-title') ||
-                el.classList.contains('banner-title') ||
-                el.classList.contains('modal-title')) return true;
+                el.classList.contains('banner-title')) return true;
             return false;
         }
 
@@ -1367,18 +1377,19 @@ window.init3DTiltCards = init3DTiltCards;
 
             const frac = Math.max(0, Math.min(1, relX / relW));
             const pct = Math.round(frac * 100);
-            const activeRadius = Math.min(140, Math.max(40, relW * 0.4));
+            const activeRadius = Math.min(160, Math.max(50, relW * 0.45));
             const r   = Math.round((activeRadius / relW) * 100);
 
             const colorStop1 = colors[0];
             const colorStop2 = colors[Math.floor(colors.length / 2)];
             const colorStop3 = colors[colors.length - 1];
+            const baseColor  = isLight ? '#0f172a' : '#f8fafc';
 
             const bg = `radial-gradient(ellipse ${r * 2}% 220% at ${pct}% 50%,
                 ${colorStop2} 0%,
                 ${colorStop1} 35%,
                 ${colorStop3} 70%,
-                transparent 100%)`;
+                ${baseColor} 98%)`;
 
             el.classList.add('liquid-active');
             el.style.setProperty('background-image', bg, 'important');

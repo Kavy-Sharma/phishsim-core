@@ -1012,15 +1012,17 @@
 
     .hero-h1:hover {
       animation: hero-gradient-flow 2.6s ease-in-out infinite alternate;
-      filter: drop-shadow(0 0 18px color-mix(in srgb, var(--primary) 20.0%, transparent));
+      filter: url(#liquid-filter) drop-shadow(0 0 20px color-mix(in srgb, var(--primary) 28%, transparent));
     }
 
     body.light-theme .hero-h1 {
       background-image: linear-gradient(100deg, #0f172a 5%, #0e74c8 35%, #4f46e5 65%, #7c3aed 85%, #0f172a 100%);
     }
 
-    /* Pruned continuous ambient animation for calm B2B aesthetics */
-
+    @keyframes hero-gradient-flow {
+      from {
+        background-position: 0% 50%;
+      }
       to {
         background-position: 100% 50%;
       }
@@ -6435,20 +6437,21 @@
         <div class="suite-link-text" style="color:var(--warning);">Check Password <i class="ti ti-arrow-right"></i></div>
       </a>
 
-      <!-- Card 5: PhishRecon Exposure Report -->
+      <!-- Card 5: PhishRecon -->
       <a href="/exposure-report" class="suite-card">
         <div class="suite-card-top">
           <div class="suite-icon"
-            style="color:#f43f5e; background:rgba(244,63,94,0.1); border-color:rgba(244,63,94,0.25);"><i
+            style="color:var(--primary); background:color-mix(in srgb, var(--primary) 8%, transparent); border-color:color-mix(in srgb, var(--primary) 15%, transparent);"><i
               class="ti ti-radar"></i></div>
           <span class="suite-badge-pro"
-            style="background:rgba(244,63,94,0.1); border-color:rgba(244,63,94,0.25); color:#f43f5e;">LIVE RECON</span>
+            style="background:color-mix(in srgb, var(--primary) 10%, transparent); border-color:color-mix(in srgb, var(--primary) 18%, transparent); color:var(--primary);">AUDIT</span>
         </div>
         <div>
           <h3 class="suite-title">PhishRecon</h3>
-          <p class="suite-desc">Live streaming multi-vector reconnaissance analyzing domain infrastructure, typosquatting look-alikes, crt.sh subdomains, and attack surface.</p>
+          <p class="suite-desc">Audit any domain's public attack surface: registration age, TLS, look-alike domains that
+            resolve, and subdomains from certificate transparency. Checks that can't complete are reported as such.</p>
         </div>
-        <div class="suite-link-text" style="color:#f43f5e;">Run Reconnaissance <i class="ti ti-arrow-right"></i></div>
+        <div class="suite-link-text" style="color:var(--primary);">Audit a Domain <i class="ti ti-arrow-right"></i></div>
       </a>
     </div>
 

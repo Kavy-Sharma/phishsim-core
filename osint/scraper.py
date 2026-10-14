@@ -207,10 +207,19 @@ def scrape_company(domain):
 
     socials = {}
 
+    from urllib.parse import urlparse as _urlparse
     for link in profile["links"]:
+        try:
+            parsed = _urlparse(link)
+            host = (parsed.hostname or "").lower()
+        except ValueError:
+            continue
+        if parsed.scheme not in ("http", "https") or not host:
+            continue
         for name, pattern in social_patterns.items():
-            if pattern in link:
-                socials[name] = link
+            # Match the hostname itself, not a substring of the URL
+            if host == pattern or host.endswith("." + pattern):
+                socials.setdefault(name, link)
 
     profile["socials"] = socials
 

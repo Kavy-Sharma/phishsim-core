@@ -61,12 +61,12 @@ _STATIC_SAFETY_NET = [
 # Preferred models — if any of these appear in the live free list we sort them
 # to the front because they follow structured-output prompts most reliably.
 _PREFERRED_ORDER = [
-    "deepseek/deepseek-chat",
-    "deepseek/deepseek-r1",
-    "google/gemma",
+    "liquid/lfm",
+    "dots-studio",
     "qwen/qwen",
-    "meta-llama/llama-3",
+    "google/gemma",
     "mistralai/mistral",
+    "meta-llama/llama-3.2",
 ]
 
 
@@ -101,6 +101,8 @@ def _fetch_free_models() -> list[str]:
             if (
                 str(m.get("pricing", {}).get("prompt", "1"))  in ("0", "0.0")
                 and str(m.get("pricing", {}).get("completion", "1")) in ("0", "0.0")
+                and ":free" in m["id"]
+                and not any(bad in m["id"] for bad in ("inclusionai", "meta-llama/llama-3.3-70b", "gemma-4", "nemotron-3.5"))
             )
         ]
 
@@ -295,7 +297,7 @@ def _call_with_fallback(messages: list) -> str | None:
                 messages=messages,
                 temperature=0.7,
                 max_tokens=2000,
-                timeout=22.0,   # generous — the race itself caps wall-clock time
+                timeout=5.0,
             )
             content = response.choices[0].message.content
             if content and content.strip():
@@ -306,25 +308,29 @@ def _call_with_fallback(messages: list) -> str | None:
             print(f"[email_gen] {model} failed in race: {exc}")
             return model, None
 
-    with concurrent.futures.ThreadPoolExecutor(max_workers=RACE_LIMIT) as pool:
+    # NOTE: not a `with` block. Exiting a `with ThreadPoolExecutor` calls shutdown(wait=True),
+    # which blocked the return until every slower racer finished and defeated the race.
+    pool = concurrent.futures.ThreadPoolExecutor(max_workers=RACE_LIMIT)
+    try:
         futures = {pool.submit(_try_model, m): m for m in race_models}
         for fut in concurrent.futures.as_completed(futures):
             _, content = fut.result()
             if content:
-                # Cancel remaining (best-effort — threads may already be in-flight)
                 for f in futures:
-                    f.cancel()
+                    f.cancel()  # best-effort; in-flight calls finish in the background
                 return content
+    finally:
+        pool.shutdown(wait=False, cancel_futures=True)
 
-    # All racers failed — try remaining models sequentially as last resort
-    for model in models[RACE_LIMIT:]:
+    # All racers failed — try up to 3 remaining models sequentially as last resort
+    for model in models[RACE_LIMIT:RACE_LIMIT+3]:
         try:
             response = client.chat.completions.create(
                 model=model,
                 messages=messages,
                 temperature=0.7,
                 max_tokens=2000,
-                timeout=22.0,
+                timeout=4.0,
             )
             content = response.choices[0].message.content
             if content and content.strip():
@@ -335,6 +341,54 @@ def _call_with_fallback(messages: list) -> str | None:
             continue
 
     print("[email_gen] All models exhausted — using static fallback.")
+    return None
+
+
+def _call_chat_fast(messages: list, max_tokens: int = 150, timeout: float = 2.5) -> str | None:
+    """
+    Ultra-low latency completion designed for interactive chat and synthesis.
+    Races the top 3 fastest, reliable free models with a small token cap.
+    Returns as soon as the first model finishes.
+    """
+    if client is None:
+        return None
+
+    raw_models = _get_models()
+    models = [m for m in raw_models if not any(b in m for b in ("gemma-4", "nemotron-3.5", "inclusionai"))]
+    if not models:
+        return None
+
+    race_models = models[:3]
+    import concurrent.futures
+
+    pool = concurrent.futures.ThreadPoolExecutor(max_workers=len(race_models))
+    def _try_model(model: str):
+        try:
+            resp = client.chat.completions.create(
+                model=model,
+                messages=messages,
+                temperature=0.6,
+                max_tokens=max_tokens,
+                timeout=timeout,
+            )
+            content = resp.choices[0].message.content
+            if content and content.strip():
+                return model, content.strip()
+            return model, None
+        except Exception:
+            return model, None
+
+    try:
+        futures = {pool.submit(_try_model, m): m for m in race_models}
+        for fut in concurrent.futures.as_completed(futures):
+            _, content = fut.result()
+            if content:
+                for f in futures:
+                    f.cancel()
+                return content
+    finally:
+        pool.shutdown(wait=False, cancel_futures=True)
+
     return None
 
 
