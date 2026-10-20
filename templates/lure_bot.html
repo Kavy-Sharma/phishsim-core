@@ -219,6 +219,52 @@
       50% { transform: translateY(-3.5px); }
     }
 
+    /* Restrained idle bobbing for forensic audits (PhishRecon) */
+    #pb-host.pb-restrained #pb-avatar-inner,
+    body.pr-page-body #pb-avatar-inner {
+      animation: pbBobRestrained 6s ease-in-out infinite !important;
+    }
+    @keyframes pbBobRestrained {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-1.5px); }
+    }
+
+    /* Amber lure-bulb */
+    #pb-lure-bulb {
+      position: absolute;
+      top: 15%;
+      left: 22%;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--warning);
+      box-shadow: 0 0 6px var(--warning);
+      opacity: 0.4;
+      pointer-events: none;
+      z-index: 2;
+      transition: opacity 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    #pb-lure-bulb.pulse {
+      animation: pbBulbSoftPulse 1.05s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    @keyframes pbBulbSoftPulse {
+      0% {
+        transform: scale(0.9);
+        opacity: 0.4;
+        box-shadow: 0 0 4px var(--warning);
+      }
+      35% {
+        transform: scale(1.6);
+        opacity: 1;
+        box-shadow: 0 0 14px var(--warning), 0 0 24px var(--warning);
+      }
+      100% {
+        transform: scale(1);
+        opacity: 0.4;
+        box-shadow: 0 0 6px var(--warning);
+      }
+    }
+
     /* Squash & Stretch transition micro-animation */
     @keyframes pbSquashStretch {
       0% { transform: scale(1); }
@@ -2076,18 +2122,36 @@
       background: transparent !important;
       border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
     }
+    /* Scrollbar styling for panels */
     #pb-panel::-webkit-scrollbar,
-    #pb-panel.pb-panel-maximized .pb-panel-content-area::-webkit-scrollbar {
+    #pb-panel.pb-panel-maximized .pb-tab-panel::-webkit-scrollbar,
+    #pb-panel.pb-panel-maximized .pb-chat-messages::-webkit-scrollbar,
+    #pb-panel.pb-panel-maximized .pb-chat-sidebar-reference::-webkit-scrollbar {
       width: 6px;
     }
+    #pb-panel::-webkit-scrollbar-track,
+    #pb-panel.pb-panel-maximized .pb-tab-panel::-webkit-scrollbar-track,
+    #pb-panel.pb-panel-maximized .pb-chat-messages::-webkit-scrollbar-track,
+    #pb-panel.pb-panel-maximized .pb-chat-sidebar-reference::-webkit-scrollbar-track {
+      background: transparent;
+    }
     #pb-panel::-webkit-scrollbar-thumb,
-    #pb-panel.pb-panel-maximized .pb-panel-content-area::-webkit-scrollbar-thumb {
-      background: rgba(56, 189, 248, 0.2);
+    #pb-panel.pb-panel-maximized .pb-tab-panel::-webkit-scrollbar-thumb,
+    #pb-panel.pb-panel-maximized .pb-chat-messages::-webkit-scrollbar-thumb,
+    #pb-panel.pb-panel-maximized .pb-chat-sidebar-reference::-webkit-scrollbar-thumb {
+      background: rgba(56, 189, 248, 0.25);
       border-radius: 10px;
     }
     #pb-panel::-webkit-scrollbar-thumb:hover,
-    #pb-panel.pb-panel-maximized .pb-panel-content-area::-webkit-scrollbar-thumb:hover {
-      background: rgba(56, 189, 248, 0.4);
+    #pb-panel.pb-panel-maximized .pb-tab-panel::-webkit-scrollbar-thumb:hover,
+    #pb-panel.pb-panel-maximized .pb-chat-messages::-webkit-scrollbar-thumb:hover,
+    #pb-panel.pb-panel-maximized .pb-chat-sidebar-reference::-webkit-scrollbar-thumb:hover {
+      background: rgba(56, 189, 248, 0.45);
+    }
+    #pb-panel.pb-panel-maximized .pb-panel-content-area::-webkit-scrollbar {
+      display: none !important;
+      width: 0 !important;
+      height: 0 !important;
     }
 
     /* Mobile override for maximized panel */
@@ -2105,17 +2169,25 @@
       }
     }
 
-    /* Maximized tab heights & scroll support */
+    /* Maximized tab heights & GPU scroll support */
     #pb-panel.pb-panel-maximized .pb-tab-panel {
-      flex: 1 !important;
+      flex: 1 1 0% !important;
+      min-height: 0 !important;
       height: 100% !important;
+      max-height: 100% !important;
       overflow-y: auto !important;
+      overflow-x: hidden !important;
+      overscroll-behavior: contain !important;
+      -webkit-overflow-scrolling: touch !important;
+      transform: translateZ(0) !important;
+      will-change: scroll-position !important;
     }
     #pb-panel.pb-panel-maximized .pb-tab-panel:not(.active) {
       display: none !important;
     }
     #pb-panel.pb-panel-maximized #pb-tab-chat {
       height: 100% !important;
+      overflow: hidden !important;
     }
 
     /* Two-column grid reflow for maximized Generate tab */
@@ -2248,6 +2320,9 @@
     }
 
     /* ── Maximized states override (Redesigned Cybersecurity HUD Lab) ── */
+    body.pb-maximized-scroll-lock {
+      overflow: hidden !important;
+    }
     #pb-panel.pb-panel-maximized {
       position: fixed !important;
       top: 16px !important;
@@ -2275,12 +2350,14 @@
       animation: none !important;
       will-change: auto !important;
       contain: paint !important;
+      overscroll-behavior: contain !important;
     }
     #pb-panel.pb-panel-maximized .pb-panel-header {
       padding: 16px 24px !important;
       background: color-mix(in srgb, var(--bg-surface, #121826) 85%, transparent) !important;
       border-bottom: 1px solid color-mix(in srgb, var(--primary) 18%, transparent) !important;
       border-radius: 20px 20px 0 0 !important;
+      flex-shrink: 0 !important;
     }
     #pb-panel.pb-panel-maximized .pb-panel-tabs {
       display: none !important;
@@ -2288,9 +2365,10 @@
     #pb-panel.pb-panel-maximized .pb-panel-body-wrapper {
       display: flex !important;
       flex-direction: row !important;
-      flex: 1 !important;
+      flex: 1 1 0% !important;
       min-height: 0 !important;
       height: calc(100% - 60px) !important;
+      overflow: hidden !important;
     }
     #pb-panel.pb-panel-maximized .pb-panel-sidebar {
       display: flex !important;
@@ -2303,6 +2381,8 @@
       padding-top: 20px !important;
       gap: 16px !important;
       box-sizing: border-box !important;
+      overflow-y: auto !important;
+      overflow-x: hidden !important;
     }
     #pb-panel.pb-panel-maximized .pb-sidebar-tab-btn.active {
       color: var(--primary) !important;
@@ -2321,17 +2401,35 @@
     #pb-panel.pb-panel-maximized .pb-panel-content-area {
       display: flex !important;
       flex-direction: column !important;
-      flex: 1 !important;
+      flex: 1 1 0% !important;
       min-width: 0 !important;
+      min-height: 0 !important;
       height: 100% !important;
-      overflow-y: auto !important;
+      overflow: hidden !important;
       justify-content: flex-start !important;
       padding: 0 !important;
+      position: relative !important;
+    }
+    #pb-panel.pb-panel-maximized .pb-panel-content-area::-webkit-scrollbar {
+      display: none !important;
+      width: 0 !important;
+      height: 0 !important;
+    }
+    #pb-panel.pb-panel-maximized .pb-panel-footer {
+      flex-shrink: 0 !important;
+      margin-top: auto !important;
+      z-index: 2 !important;
     }
     #pb-panel.pb-panel-maximized .pb-tab-panel.active {
       overflow-y: auto !important;
+      overflow-x: hidden !important;
       max-height: 100% !important;
-      flex: 1 !important;
+      flex: 1 1 0% !important;
+      min-height: 0 !important;
+      overscroll-behavior: contain !important;
+      -webkit-overflow-scrolling: touch !important;
+      transform: translateZ(0) !important;
+      will-change: scroll-position !important;
     }
 
     /* Sidebar tab button styling */
@@ -2523,6 +2621,8 @@
       #pb-panel.pb-panel-maximized #pb-tab-chat.active {
         display: block !important;
         height: 100% !important;
+        min-height: 0 !important;
+        overflow: hidden !important;
         box-sizing: border-box !important;
       }
       #pb-panel.pb-panel-maximized #pb-tab-chat.active .pb-chat-layout-wrapper {
@@ -2530,6 +2630,8 @@
         grid-template-columns: 1.4fr 1fr !important;
         gap: 24px !important;
         height: 100% !important;
+        min-height: 0 !important;
+        overflow: hidden !important;
         padding: 24px 30px !important;
         box-sizing: border-box !important;
       }
@@ -2537,11 +2639,20 @@
         display: flex !important;
         flex-direction: column !important;
         height: 100% !important;
+        min-height: 0 !important;
+        overflow: hidden !important;
         gap: 12px !important;
       }
       #pb-panel.pb-panel-maximized #pb-tab-chat.active .pb-chat-messages {
-        flex: 1 !important;
+        flex: 1 1 0% !important;
+        min-height: 0 !important;
         gap: 14px !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        overscroll-behavior: contain !important;
+        -webkit-overflow-scrolling: touch !important;
+        transform: translateZ(0) !important;
+        will-change: scroll-position !important;
       }
       #pb-panel.pb-panel-maximized #pb-tab-chat.active .pb-chat-bubble {
         font-size: var(--lure-font-lg) !important;
@@ -2574,8 +2685,14 @@
         padding: 24px !important;
         gap: 16px !important;
         height: 100% !important;
+        min-height: 0 !important;
         box-sizing: border-box !important;
         overflow-y: auto !important;
+        overflow-x: hidden !important;
+        overscroll-behavior: contain !important;
+        -webkit-overflow-scrolling: touch !important;
+        transform: translateZ(0) !important;
+        will-change: scroll-position !important;
       }
       .pb-ref-title {
         font-family: var(--sans, sans-serif);
@@ -2658,7 +2775,13 @@
         padding: 24px 30px 60px !important;
         box-sizing: border-box !important;
         height: 100% !important;
+        min-height: 0 !important;
         overflow-y: auto !important;
+        overflow-x: hidden !important;
+        overscroll-behavior: contain !important;
+        -webkit-overflow-scrolling: touch !important;
+        transform: translateZ(0) !important;
+        will-change: scroll-position !important;
       }
       #pb-panel.pb-panel-maximized #pb-tab-riskscore.active #rs-form,
       #pb-panel.pb-panel-maximized #pb-tab-riskscore.active #rs-result {
@@ -2679,11 +2802,17 @@
       /* 5. Maximized Tours Tab — Single-Column Wide Layout */
       #pb-panel.pb-panel-maximized #pb-tab-tours.active {
         height: 100% !important;
+        min-height: 0 !important;
         display: flex !important;
         flex-direction: column !important;
         box-sizing: border-box !important;
         padding: 24px 30px !important;
         overflow-y: auto !important;
+        overflow-x: hidden !important;
+        overscroll-behavior: contain !important;
+        -webkit-overflow-scrolling: touch !important;
+        transform: translateZ(0) !important;
+        will-change: scroll-position !important;
       }
       #pb-panel.pb-panel-maximized #pb-tab-tours.active #pb-tab-tours-container,
       #pb-panel.pb-panel-maximized #pb-tab-tours.active .pb-wt-guide-list {
@@ -2767,7 +2896,8 @@
       border: 1px solid rgba(255, 255, 255, 0.1) !important;
       border-radius: 14px !important;
       cursor: pointer;
-      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+      transition: background-color 0.15s ease, border-color 0.15s ease !important;
+      contain: content;
       user-select: none;
       margin-bottom: 10px !important;
       box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2) !important;
@@ -2775,8 +2905,6 @@
     .pb-tour-cat-accordion-header:hover {
       background: rgba(30, 41, 59, 0.85) !important;
       border-color: rgba(56, 189, 248, 0.3) !important;
-      transform: translateY(-1px) !important;
-      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3) !important;
     }
     
     .pb-tour-cat-header-left {
@@ -2841,7 +2969,8 @@
       border-radius: 12px;
       padding: 12px 14px;
       cursor: pointer;
-      transition: all 0.2s ease;
+      transition: background-color 0.15s ease, border-color 0.15s ease !important;
+      contain: content;
       position: relative;
       text-align: left;
       width: 100%;
@@ -2850,7 +2979,6 @@
     .pb-wt-guide-card:hover {
       background: rgba(255, 255, 255, 0.04);
       border-color: rgba(255, 255, 255, 0.12);
-      transform: translateY(-1px);
     }
     
     /* Card state modifiers */
@@ -3869,6 +3997,7 @@
       <div id="pb-avatar-inner">
         <div id="pb-avatar-glow-ring"></div>
         <div id="pb-open-ring"></div>
+        <div id="pb-lure-bulb"></div>
         <img id="pb-avatar-img-a" src="{{ url_for('static', filename='images/lure/lure_idle.png') }}" alt="" class="pb-mascot-img visible">
         <img id="pb-avatar-img-b" src="{{ url_for('static', filename='images/lure/lure_idle.png') }}" alt="" class="pb-mascot-img">
       </div>
@@ -4559,10 +4688,12 @@
       let animationFrameId = null;
 
       function onMouseMove(e) {
+        if (panelOpen || (panel && panel.classList.contains('pb-panel-maximized'))) return;
         if (animationFrameId) return;
 
         animationFrameId = requestAnimationFrame(() => {
           animationFrameId = null;
+          if (panelOpen || (panel && panel.classList.contains('pb-panel-maximized'))) return;
 
           const rect = avatar.getBoundingClientRect();
           const avatarCenterX = rect.left + rect.width / 2;
@@ -4967,6 +5098,7 @@
       const isMaximized = panel.classList.contains('pb-panel-maximized');
       const maxIcon = document.querySelector('#pb-max-btn i');
       const maxBtn = document.getElementById('pb-max-btn');
+      const hostEl = document.getElementById('pb-host');
 
       if (!isMaximized) {
         // Add size-transitioning for smooth animation
@@ -4988,6 +5120,8 @@
         panel.style.zIndex = '10005';
         panel.style.borderRadius = '20px';
         panel.classList.add('pb-panel-maximized');
+        document.body.classList.add('pb-maximized-scroll-lock');
+        if (hostEl) hostEl.style.visibility = 'hidden';
         panelOpen = true;
         if (maxIcon) maxIcon.className = 'ti ti-minimize';
         if (maxBtn) {
@@ -4997,6 +5131,8 @@
       } else {
         // Collapsing: remove the class and ALL inline size/position overrides
         panel.classList.remove('pb-panel-maximized');
+        document.body.classList.remove('pb-maximized-scroll-lock');
+        if (hostEl) hostEl.style.visibility = '';
         panel.style.position = '';
         panel.style.top = '';
         panel.style.left = '';
@@ -5067,8 +5203,6 @@
       
       avatar.classList.add('pb-panel-open-avatar');
       
-
-      
       // Clear proactive badge on open
       unseenCalloutsCount = 0;
       updateAvatarBadge();
@@ -5105,6 +5239,9 @@
       if (LURE_DEBUG) console.log('[DEBUG_CLOSE_PANEL_FIRED]', new Error().stack);
       panelOpen = false;
       panel.classList.remove('pb-open');
+      document.body.classList.remove('pb-maximized-scroll-lock');
+      const hostEl = document.getElementById('pb-host');
+      if (hostEl) hostEl.style.visibility = '';
       avatar.setAttribute('aria-expanded', 'false');
       
       avatar.classList.remove('pb-panel-open-avatar');
@@ -5153,6 +5290,8 @@
     // Teaser hover interaction
     avatar.addEventListener('mouseenter', () => {
       prewarmCeoFraud();
+
+      if (typeof isScanActive === 'function' && isScanActive()) return;
 
       if (!panelOpen && !activePopover) {
         const rand = LURE_TEASERS[Math.floor(Math.random() * LURE_TEASERS.length)];
@@ -6398,6 +6537,47 @@
           text: "When the scan finishes, you'll see a list of leaks where this email was compromised, helping you proactively secure compromised accounts!",
           path: "/password-breach"
         }
+      ],
+      tool_exposure_report: [
+        {
+          targetId: "pr-command-bar",
+          title: "PhishRecon Exposure Audit",
+          text: "Welcome to PhishRecon! This tool conducts a live forensic audit of any company's public domain exposure and attack surface.",
+          path: "/exposure-report"
+        },
+        {
+          targetId: "pr-domain-input",
+          title: "Target Domain Input",
+          assistRequired: true,
+          text: "Type any corporate domain here to audit its surface, discovering resolving lookalikes, public CT subdomains, and TLS posture.",
+          path: "/exposure-report",
+          action: (cb) => {
+            const input = document.getElementById('pr-domain-input');
+            if (input) {
+              typeIntoInput(input, "stripe.com", () => {
+                setTimeout(() => {
+                  const btn = document.getElementById('pr-audit-btn');
+                  if (btn) btn.click();
+                  if (cb) cb();
+                }, 300);
+              });
+            } else {
+              if (cb) cb();
+            }
+          }
+        },
+        {
+          targetId: "pr-surface-map-card",
+          title: "Telemetry & Live Synthesis",
+          text: "Watch the audit stream in real time. We concurrently verify certificate transparency logs, probe resolving look-alike mutations, and map public exposure nodes.",
+          path: "/exposure-report"
+        },
+        {
+          targetId: "pr-exposure-section",
+          title: "Exposure Score & Findings",
+          text: "Here is the composite exposure score, risk posture rating, and prioritized findings checklist to remediate brand spoofing risks.",
+          path: "/exposure-report"
+        }
       ]
     };
     let wtActive = false;
@@ -6643,6 +6823,16 @@
         if (stepIdx === 2) {
           const verdict = document.getElementById('email-verdict-panel');
           return !!(verdict && verdict.style.display !== 'none');
+        }
+      }
+      if (wtCurrentPage === 'tool_exposure_report') {
+        if (stepIdx === 1) {
+          const input = document.getElementById('pr-domain-input');
+          return !!(input && input.value.trim().length > 0);
+        }
+        if (stepIdx === 2) {
+          const numeral = document.getElementById('pr-score-numeral');
+          return !!(numeral && numeral.textContent.trim() !== '—');
         }
       }
       return true; // Other steps are not gated
@@ -7259,6 +7449,14 @@
         desc: "A 4-step inspection of local password complexity and email address database leak scans.",
         icon: "ti ti-shield-lock",
         color: "var(--danger)",
+        category: "Standalone Forensic Tools",
+        tier: "standard"
+      },
+      tool_exposure_report: {
+        name: "Domain Exposure Tour",
+        desc: "A 4-step walkthrough of corporate domain attack surface audits, look-alike resolution, and exposure scoring.",
+        icon: "ti ti-radar",
+        color: "var(--primary)",
         category: "Standalone Forensic Tools",
         tier: "standard"
       }
@@ -8417,6 +8615,9 @@
         hideCallout();
         return;
       }
+      if (typeof isScanActive === 'function' && isScanActive() && !tourName && !message.includes('attention') && !message.includes('perimeter') && !message.includes('clear')) {
+        return;
+      }
       calloutText.textContent = message;
 
       // Clear any existing auto-dismiss timer
@@ -8685,6 +8886,12 @@
         return {
           label: "Password Breach Checker tool",
           description: "This is the Password Breach Checker, checking email addresses against public databases of known data breaches and compromised credentials."
+        };
+      }
+      if (currentPath.startsWith('/exposure-report')) {
+        return {
+          label: "PhishRecon Domain Exposure tool",
+          description: "This is PhishRecon, a forensic attack surface audit scanning corporate domains for resolving lookalikes, public CT subdomains, TLS posture, and exposed contacts."
         };
       }
       if (currentPath.startsWith('/campaign-report') || currentPath.startsWith('/campaign-emails')) {
@@ -9122,6 +9329,8 @@
             ackMsg = "Excellent! The URL Decoder Tour is complete. Ready to expand redirects and check link feeds.";
           } else if (lastTour === 'tool_password_breach') {
             ackMsg = "Well done! You've completed the Password & Leak Scan Tour. Your credentials scanning is active.";
+          } else if (lastTour === 'tool_exposure_report') {
+            ackMsg = "Awesome! You've completed the PhishRecon Domain Exposure Tour. Surface forensics and lookalike scanning are now active.";
           }
           
           const calloutEl = document.getElementById('pb-callout');
@@ -9240,6 +9449,50 @@
     resetIdleFidgetTimer();
 
     checkCompletedTourUrl();
+
+    // ── PhishRecon Restrained Mode Controller ──
+    function isScanActive() {
+      const isExposurePage = window.location.pathname.includes('/exposure-report') || 
+                             document.body.classList.contains('pr-page-body') ||
+                             document.getElementById('pr-command-form') !== null;
+      if (!isExposurePage) return false;
+      if (window.isPhishReconScanning) return true;
+      const progressLine = document.getElementById('pr-progress-line');
+      if (progressLine && progressLine.classList.contains('is-active')) return true;
+      if (typeof state !== 'undefined' && state && state.phase === 'running') return true;
+      return false;
+    }
+
+    function initRestrainedMode() {
+      const isExposurePage = window.location.pathname.includes('/exposure-report') || 
+                             document.body.classList.contains('pr-page-body') ||
+                             document.getElementById('pr-command-form') !== null;
+      const host = document.getElementById('pb-host');
+      if (isExposurePage && host) {
+        host.classList.add('pb-restrained');
+      }
+    }
+
+    window.lurePulseBulb = function() {
+      const bulb = document.getElementById('pb-lure-bulb');
+      if (!bulb) return;
+      bulb.classList.remove('pulse');
+      void bulb.offsetWidth;
+      bulb.classList.add('pulse');
+    };
+
+    window.lureShowRestrainedClosing = function(line) {
+      if (!line) return;
+      const host = document.getElementById('pb-host');
+      if (host) host.classList.add('pb-restrained');
+      showCallout(line);
+      setTimeout(() => {
+        hideCallout();
+      }, 6500);
+    };
+
+    window.addEventListener('DOMContentLoaded', initRestrainedMode);
+    initRestrainedMode();
 
   })();
 </script>

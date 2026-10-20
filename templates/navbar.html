@@ -1,777 +1,1218 @@
-<!-- Sitewide SVG Liquid/Watery text hover effect filter -->
-<svg style="position: absolute; width: 0; height: 0; pointer-events: none; overflow: hidden; display: block;" width="0" height="0" version="1.1" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-  <defs>
-    <filter id="liquid-filter" x="-20%" y="-20%" width="140%" height="140%">
-      <feTurbulence type="fractalNoise" baseFrequency="0.02 0.05" numOctaves="2" result="noise">
-        <animate attributeName="baseFrequency" dur="3.2s" values="0.02 0.05; 0.032 0.08; 0.018 0.04; 0.02 0.05" repeatCount="indefinite" />
-      </feTurbulence>
-      <feDisplacementMap in="SourceGraphic" in2="noise" scale="2.8" xChannelSelector="R" yChannelSelector="G" />
-    </filter>
-  </defs>
-</svg>
+{# Single Source of Truth Navigation Data #}
+{% set check_items = [
+  {
+    'group': 'An email',
+    'id': 'threat-analyzer',
+    'title': 'Threat Analyzer',
+    'desc': 'Scan suspicious emails & files for malware',
+    'href': '/threat-analyzer',
+    'preview_id': 'preview-threat',
+    'icon': 'ti-shield-bolt',
+    'color': 'cyan'
+  },
+  {
+    'group': 'An email',
+    'id': 'header-analyzer',
+    'title': 'Header Analyzer',
+    'desc': 'Inspect SPF, DKIM & email transit hops',
+    'href': '/header-analyzer',
+    'preview_id': 'preview-header',
+    'icon': 'ti-mail-search',
+    'color': 'purple'
+  },
+  {
+    'group': 'A link',
+    'id': 'url-decoder',
+    'title': 'URL Decoder',
+    'desc': 'Safely unmask hidden links and redirect hops',
+    'href': '/url-decoder',
+    'preview_id': 'preview-url',
+    'icon': 'ti-link',
+    'color': 'emerald'
+  },
+  {
+    'group': 'A password',
+    'id': 'password-breach',
+    'title': 'Password Breach Check',
+    'desc': 'Search leaked credential bases with k-anonymity',
+    'href': '/password-breach',
+    'preview_id': 'preview-password',
+    'icon': 'ti-key',
+    'color': 'amber'
+  },
+  {
+    'group': 'A company domain',
+    'id': 'phishrecon',
+    'title': 'PhishRecon',
+    'desc': 'Map your external attack surface & exposure score',
+    'href': '/exposure-report',
+    'preview_id': 'preview-recon',
+    'badge': 'new',
+    'icon': 'ti-radar',
+    'color': 'cyan'
+  }
+] %}
 
-<style>
-/* Sitewide Unified Scrolled Navbar & Glassmorphism Animation Rules */
-.navbar {
-    position: sticky !important;
-    top: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-    width: 100% !important;
-    height: 72px !important;
-    background: rgba(8, 14, 28, 0.75) !important;
-    backdrop-filter: blur(16px) saturate(180%) !important;
-    -webkit-backdrop-filter: blur(16px) saturate(180%) !important;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
-    z-index: 9999 !important;
-    transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
-    box-sizing: border-box !important;
-}
+{% set train_items = [
+  {
+    'id': 'drill',
+    'title': 'Run a phishing drill',
+    'desc': 'Launch realistic, adaptive spear-phishing campaigns',
+    'href': '/new-campaign',
+    'preview_id': 'preview-drill',
+    'icon': 'ti-target-arrow',
+    'color': 'rose'
+  },
+  {
+    'id': 'dashboard',
+    'title': 'See what people did',
+    'desc': 'Track clicks, reports, and team vulnerabilities live',
+    'href': '/dashboard',
+    'preview_id': 'preview-activity',
+    'icon': 'ti-chart-dots',
+    'color': 'emerald'
+  },
+  {
+    'id': 'reports',
+    'title': 'Prove it to your boss',
+    'desc': 'Export audit-ready reports and compliance certificates',
+    'href': '/reports-demo',
+    'preview_id': 'preview-reports',
+    'icon': 'ti-file-certificate',
+    'color': 'amber'
+  },
+  {
+    'id': 'demo',
+    'title': 'Preview before sending',
+    'desc': 'Test interactive safe mailbox sandbox and live demo',
+    'href': '/fake-login-demo',
+    'preview_id': 'preview-demo',
+    'icon': 'ti-sparkles',
+    'color': 'purple'
+  }
+] %}
 
-.navbar.scrolled {
-    height: 62px !important;
-    background: rgba(5, 10, 20, 0.92) !important;
-    border-bottom-color: rgba(0, 242, 254, 0.3) !important;
-    box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.6), 0 0 24px rgba(0, 242, 254, 0.15) !important;
-}
+{% set plain_links = [
+  {'title': 'How it works', 'href': ('#attack-chain' if request.path == '/' else '/#attack-chain'), 'anchor': True},
+  {'title': 'Pricing', 'href': '/#pricing', 'anchor': True},
+  {'title': 'About', 'href': '/about'}
+] %}
 
-body.light-theme .navbar {
-    background: rgba(255, 255, 255, 0.85) !important;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important;
-}
+{% set is_check_active = request.path in ['/threat-analyzer', '/header-analyzer', '/url-decoder', '/password-breach', '/exposure-report'] %}
+{% set is_train_active = request.path in ['/new-campaign', '/dashboard', '/reports-demo', '/fake-login-demo', '/demo-login'] or request.path.startswith('/campaign') or request.path.startswith('/new-campaign') %}
 
-body.light-theme .navbar.scrolled {
-    background: rgba(255, 255, 255, 0.96) !important;
-    border-bottom-color: rgba(79, 70, 229, 0.25) !important;
-    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 0 18px rgba(79, 70, 229, 0.12) !important;
-}
-
-.nav-container {
-    max-width: 1440px !important;
-    height: 100% !important;
-    margin: 0 auto !important;
-    padding: 0 32px !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: space-between !important;
-    box-sizing: border-box !important;
-}
-
-.nav-dropdown-menu {
-    transition: opacity 0.25s ease, transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.25s !important;
-}
-
-/* Futuristic Cyber Theme Toggle Switch */
-button.theme-toggle-pill,
-.theme-toggle-pill {
-    width: 56px !important;
-    height: 28px !important;
-    min-width: 56px !important;
-    min-height: 28px !important;
-    max-width: 56px !important;
-    max-height: 28px !important;
-    flex-shrink: 0 !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    position: relative !important;
-    padding: 0 !important;
-    margin: 0 4px !important;
-    border-radius: 9999px !important;
-    cursor: pointer !important;
-    outline: none !important;
-    background: rgba(10, 15, 29, 0.95) !important;
-    border: 1.5px solid color-mix(in srgb, var(--primary) 45%, transparent) !important;
-    box-shadow: 0 0 14px color-mix(in srgb, var(--primary) 25%, transparent), inset 0 1px 4px rgba(0, 0, 0, 0.8) !important;
-    transition: all 0.3s ease !important;
-    overflow: hidden !important;
-}
-
-button.theme-toggle-pill::before,
-.theme-toggle-pill::before {
-    display: none !important;
-}
-
-button.theme-toggle-pill:hover,
-.theme-toggle-pill:hover {
-    border-color: color-mix(in srgb, var(--primary) 85%, transparent) !important;
-    box-shadow: 0 0 18px color-mix(in srgb, var(--primary) 50%, transparent), inset 0 1px 3px rgba(0, 0, 0, 0.8) !important;
-    transform: translateY(-1px) scale(1.03) !important;
-}
-
-.theme-track-icons {
-    position: absolute !important;
-    top: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-    bottom: 0 !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: space-between !important;
-    padding: 0 6px !important;
-    pointer-events: none !important;
-    z-index: 1 !important;
-}
-
-.theme-track-icons svg {
-    width: 12px !important;
-    height: 12px !important;
-    transition: opacity 0.3s ease !important;
-}
-
-.track-sun-icon {
-    color: color-mix(in srgb, var(--warning) 50%, transparent) !important;
-    opacity: 0.6 !important;
-}
-
-.track-moon-icon {
-    color: color-mix(in srgb, var(--primary) 50%, transparent) !important;
-    opacity: 0.8 !important;
-}
-
-.theme-toggle-thumb {
-    position: absolute !important;
-    top: 1px !important;
-    left: 2px !important;
-    width: 22px !important;
-    height: 22px !important;
-    border-radius: 50% !important;
-    background: radial-gradient(circle at 30% 30%, var(--primary) 0%, var(--primary) 100%) !important;
-    box-shadow: 0 0 12px color-mix(in srgb, var(--primary) 85%, transparent) !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    transform: translateX(26px) !important;
-    transition: transform 0.38s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.35s ease, box-shadow 0.35s ease !important;
-    z-index: 2 !important;
-}
-
-.theme-toggle-thumb svg {
-    width: 11px !important;
-    height: 11px !important;
-    color: #ffffff !important;
-    transition: transform 0.35s ease, opacity 0.25s ease !important;
-}
-
-.theme-toggle-thumb .moon-icon {
-    opacity: 1 !important;
-    transform: rotate(0deg) scale(1) !important;
-}
-
-.theme-toggle-thumb .sun-icon {
-    opacity: 0 !important;
-    transform: rotate(-180deg) scale(0.2) !important;
-    position: absolute !important;
-}
-
-body.light-theme button.theme-toggle-pill,
-body.light-theme .theme-toggle-pill {
-    background: rgba(241, 245, 249, 0.95) !important;
-    border-color: color-mix(in srgb, var(--warning) 45%, transparent) !important;
-    box-shadow: 0 0 14px color-mix(in srgb, var(--warning) 25%, transparent), inset 0 1px 3px rgba(0, 0, 0, 0.1) !important;
-}
-
-body.light-theme .theme-track-icons .track-sun-icon {
-    opacity: 0.85 !important;
-    color: color-mix(in srgb, var(--warning) 80%, transparent) !important;
-}
-
-body.light-theme .theme-track-icons .track-moon-icon {
-    opacity: 0.35 !important;
-    color: rgba(100, 116, 139, 0.5) !important;
-}
-
-body.light-theme .theme-toggle-thumb {
-    transform: translateX(0px) !important;
-    background: radial-gradient(circle at 30% 30%, var(--warning) 0%, var(--warning) 100%) !important;
-    box-shadow: 0 0 12px color-mix(in srgb, var(--warning) 85%, transparent) !important;
-}
-
-body.light-theme .theme-toggle-thumb .moon-icon {
-    opacity: 0 !important;
-    transform: rotate(180deg) scale(0.2) !important;
-    position: absolute !important;
-}
-
-body.light-theme .theme-toggle-thumb .sun-icon {
-    opacity: 1 !important;
-    transform: rotate(0deg) scale(1) !important;
-}
-
-/* Live Demo Navbar Pill styling (Handcrafted Neon Gradient Border in website theme) */
-.nav-live-demo-pill {
-    display: inline-flex !important;
-    align-items: center !important;
-    gap: 8px !important;
-    padding: 7px 18px !important;
-    background: linear-gradient(#080e1c, #080e1c) padding-box, linear-gradient(135deg, var(--primary) 0%, var(--warning) 100%) border-box !important;
-    border: 2px solid transparent !important;
-    border-radius: 9999px !important;
-    font-family: 'Space Grotesk', sans-serif !important;
-    font-size: 13px !important;
-    font-weight: 600 !important;
-    color: #ffffff !important;
-    text-decoration: none !important;
-    letter-spacing: 0.02em !important;
-    box-shadow: 0 0 16px color-mix(in srgb, var(--primary) 25%, transparent), inset 0 1px 2px rgba(255, 255, 255, 0.15) !important;
-    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
-    line-height: 1.2 !important;
-    margin-left: 8px;
-}
-
-.nav-live-demo-pill:hover {
-    background: linear-gradient(#0f172a, #0f172a) padding-box, linear-gradient(135deg, var(--primary) 0%, var(--warning) 100%) border-box !important;
-    box-shadow: 0 0 24px color-mix(in srgb, var(--primary) 45%, transparent), inset 0 1px 2px rgba(255, 255, 255, 0.3) !important;
-    transform: translateY(-2px) scale(1.03) !important;
-    color: #ffffff !important;
-}
-
-.nav-live-demo-pill .live-icon {
-    font-size: 0.95rem !important;
-    color: var(--primary) !important;
-    filter: drop-shadow(0 0 6px color-mix(in srgb, var(--primary) 60%, transparent)) !important;
-    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), color 0.3s ease !important;
-}
-
-.nav-live-demo-pill:hover .live-icon {
-    transform: scale(1.2) rotate(15deg) !important;
-    color: var(--primary) !important;
-    filter: drop-shadow(0 0 10px color-mix(in srgb, var(--primary) 80%, transparent)) !important;
-}
-
-body.light-theme .nav-live-demo-pill {
-    background: linear-gradient(#ffffff, #ffffff) padding-box, linear-gradient(135deg, var(--primary) 0%, var(--warning) 100%) border-box !important;
-    color: #0f172a !important;
-    box-shadow: 0 0 16px color-mix(in srgb, var(--primary) 20%, transparent) !important;
-}
-
-body.light-theme .nav-live-demo-pill:hover {
-    background: linear-gradient(#f8fafc, #f8fafc) padding-box, linear-gradient(135deg, var(--primary) 0%, var(--warning) 100%) border-box !important;
-    box-shadow: 0 0 22px color-mix(in srgb, var(--primary) 35%, transparent) !important;
-    color: #0f172a !important;
-}
-
-body.light-theme .nav-live-demo-pill .live-icon {
-    color: var(--primary) !important;
-}
-
-/* Page Context Badge for inside pages */
-.nav-page-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 4px 12px;
-    background: rgba(45, 212, 191, 0.08);
-    border: 1px solid rgba(45, 212, 191, 0.25);
-    border-radius: 9999px;
-    font-family: 'Space Grotesk', sans-serif;
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--primary);
-    letter-spacing: 0.01em;
-    backdrop-filter: blur(8px);
-    transition: all 0.3s ease;
-}
-
-.nav-page-badge i {
-    font-size: 0.95rem;
-    color: var(--primary);
-}
-
-body.light-theme .nav-page-badge {
-    background: rgba(13, 148, 136, 0.1);
-    border-color: rgba(13, 148, 136, 0.3);
-    color: var(--primary);
-}
-
-/* Page-specific navbar action button */
-.nav-page-action-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 6px 14px;
-    background: rgba(6, 182, 212, 0.1);
-    border: 1px solid rgba(6, 182, 212, 0.25);
-    border-radius: var(--radius-md);
-    font-family: 'Space Grotesk', sans-serif;
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--text-primary);
-    text-decoration: none;
-    transition: all 0.25s ease;
-}
-
-.nav-page-action-btn:hover {
-    background: rgba(6, 182, 212, 0.2);
-    border-color: var(--primary);
-    transform: translateY(-1px);
-    color: var(--text-primary);
-}
-
-body.light-theme .nav-page-action-btn {
-    background: rgba(13, 148, 136, 0.08);
-    border-color: rgba(13, 148, 136, 0.22);
-    color: var(--text-primary);
-}
-
-body.light-theme .nav-page-action-btn:hover {
-    background: rgba(13, 148, 136, 0.16);
-    border-color: var(--primary);
-}
-
-@media (max-width: 992px) {
-    .nav-page-badge {
-        display: none;
-    }
-    .desktop-only-btn {
-        display: none !important;
-    }
-}
-
-@media (max-width: 768px) {
-    .mobile-dropdown .nav-live-demo-pill {
-        margin: 12px 24px !important;
-        font-size: 12px !important;
-        padding: 6px 14px !important;
-    }
-}
-</style>
-
-<nav class="navbar" id="navbar">
-    <div class="nav-container">
-        <div class="nav-left" style="display: flex; align-items: center; gap: 20px; height: 100%;">
-            <!-- Logo -->
-            <div style="display: flex; align-items: center; gap: 12px;">
-                <a href="/" class="brand-logo" style="display: inline-flex; align-items: center; gap: 8px; text-decoration: none;">
-                    <span class="brand-name">PhishSim</span><span class="brand-domain">.ai</span>
-                </a>
-            </div>
-
-            <!-- Desktop Links -->
-            <div class="nav-links">
-                {% if current_user %}
-                    <a href="/dashboard" class="nav-link {% if request.path == '/dashboard' %}active{% endif %}">Dashboard</a>
-                    <a href="/new-campaign" class="nav-link {% if request.path == '/new-campaign' or request.path.startswith('/campaign') or request.path.startswith('/new-campaign') %}active{% endif %}">Campaigns</a>
-                    <a href="/reports-demo" class="nav-link {% if request.path == '/reports-demo' or request.path.startswith('/campaign-report') %}active{% endif %}">Reports</a>
-                    {% if current_user.role == 'admin' %}
-                        <a href="/admin" class="nav-link {% if request.path in ['/admin', '/users'] or request.path.startswith('/admin') %}active{% endif %}">Admin</a>
-                    {% endif %}
-                    
-                    <!-- Solutions Dropdown -->
-                    <div class="nav-dropdown">
-                        <button class="nav-dropdown-trigger {% if request.path in ['/solution-detail'] or request.path.startswith('/solution') %}active{% endif %}">
-                            Solutions <i class="ti ti-chevron-down nav-caret"></i>
-                        </button>
-                        <div class="nav-dropdown-menu nav-dropdown-rich">
-                            <a href="{% if request.path == '/' %}#attack-chain{% else %}/#attack-chain{% endif %}" class="nav-dropdown-item">
-                                <div class="nav-item-icon icon-cyan"><i class="ti ti-target-arrow"></i></div>
-                                <div class="nav-item-content">
-                                    <span class="nav-item-title">AI Phishing Drills</span>
-                                    <span class="nav-item-desc">Automated, adaptive spear-phishing simulation</span>
-                                </div>
-                            </a>
-                            <a href="/threat-analyzer" class="nav-dropdown-item">
-                                <div class="nav-item-icon icon-purple"><i class="ti ti-shield-bolt"></i></div>
-                                <div class="nav-item-content">
-                                    <span class="nav-item-title">Threat Intelligence</span>
-                                    <span class="nav-item-desc">Real-time email & link payload analysis</span>
-                                </div>
-                            </a>
-                            <a href="/reports-demo" class="nav-dropdown-item">
-                                <div class="nav-item-icon icon-emerald"><i class="ti ti-chart-dots"></i></div>
-                                <div class="nav-item-content">
-                                    <span class="nav-item-title">Risk Analytics</span>
-                                    <span class="nav-item-desc">Human vulnerability metrics & report builder</span>
-                                </div>
-                            </a>
-                            <a href="/password-breach" class="nav-dropdown-item">
-                                <div class="nav-item-icon icon-amber"><i class="ti ti-key-off"></i></div>
-                                <div class="nav-item-content">
-                                    <span class="nav-item-title">Credential Guard</span>
-                                    <span class="nav-item-desc">Exposed password audit & breach check</span>
-                                </div>
-                            </a>
-                        </div>
-                    </div>
-
-                    <!-- Tools Dropdown -->
-                    <div class="nav-dropdown">
-                        <button class="nav-dropdown-trigger {% if request.path in ['/threat-analyzer', '/header-analyzer', '/url-decoder', '/password-breach', '/exposure-report', '/ai-risk-advisor'] %}active{% endif %}">
-                            Tools <i class="ti ti-chevron-down nav-caret"></i>
-                        </button>
-                        <div class="nav-dropdown-menu nav-dropdown-rich">
-                            <a href="/threat-analyzer" class="nav-dropdown-item">
-                                <div class="nav-item-icon icon-cyan"><i class="ti ti-heartbeat"></i></div>
-                                <div class="nav-item-content">
-                                    <span class="nav-item-title">Threat Analyzer</span>
-                                    <span class="nav-item-desc">Scan suspicious emails & files</span>
-                                </div>
-                            </a>
-                            <a href="/header-analyzer" class="nav-dropdown-item">
-                                <div class="nav-item-icon icon-purple"><i class="ti ti-mail-search"></i></div>
-                                <div class="nav-item-content">
-                                    <span class="nav-item-title">Header Analyzer</span>
-                                    <span class="nav-item-desc">Inspect SPF, DKIM & mail hops</span>
-                                </div>
-                            </a>
-                            <a href="/url-decoder" class="nav-dropdown-item">
-                                <div class="nav-item-icon icon-emerald"><i class="ti ti-link"></i></div>
-                                <div class="nav-item-content">
-                                    <span class="nav-item-title">URL Decoder</span>
-                                    <span class="nav-item-desc">Safely unmask hidden links</span>
-                                </div>
-                            </a>
-                            <a href="/password-breach" class="nav-dropdown-item">
-                                <div class="nav-item-icon icon-amber"><i class="ti ti-key"></i></div>
-                                <div class="nav-item-content">
-                                    <span class="nav-item-title">Password Breach Check</span>
-                                    <span class="nav-item-desc">Search leaked credential bases</span>
-                                </div>
-                            </a>
-                            <a href="/exposure-report" class="nav-dropdown-item">
-                                <div class="nav-item-icon icon-cyan"><i class="ti ti-radar"></i></div>
-                                <div class="nav-item-content">
-                                    <span class="nav-item-title">PhishRecon</span>
-                                    <span class="nav-item-desc">Attack surface & exposure report</span>
-                                </div>
-                            </a>
-                            <a href="/ai-risk-advisor" class="nav-dropdown-item nav-item-featured">
-                                <div class="nav-item-icon icon-gold"><i class="ti ti-crown"></i></div>
-                                <div class="nav-item-content">
-                                    <div class="nav-item-title-row">
-                                        <span class="nav-item-title" style="color:var(--warning);">AI Risk Advisor</span>
-                                        <span class="pro-badge">PRO</span>
-                                    </div>
-                                    <span class="nav-item-desc">24/7 AI security copilot</span>
-                                </div>
-                            </a>
-                        </div>
-                    </div>
-                {% else %}
-                    <!-- Guest Navigation Links -->
-                    <div class="nav-dropdown">
-                        <button class="nav-dropdown-trigger {% if request.path in ['/solution-detail'] or request.path.startswith('/solution') %}active{% endif %}">
-                            Solutions <i class="ti ti-chevron-down nav-caret"></i>
-                        </button>
-                        <div class="nav-dropdown-menu nav-dropdown-rich">
-                            <a href="{% if request.path == '/' %}#attack-chain{% else %}/#attack-chain{% endif %}" class="nav-dropdown-item">
-                                <div class="nav-item-icon icon-cyan"><i class="ti ti-target-arrow"></i></div>
-                                <div class="nav-item-content">
-                                    <span class="nav-item-title">AI Phishing Drills</span>
-                                    <span class="nav-item-desc">Automated, adaptive spear-phishing simulation</span>
-                                </div>
-                            </a>
-                            <a href="/threat-analyzer" class="nav-dropdown-item">
-                                <div class="nav-item-icon icon-purple"><i class="ti ti-shield-bolt"></i></div>
-                                <div class="nav-item-content">
-                                    <span class="nav-item-title">Threat Intelligence</span>
-                                    <span class="nav-item-desc">Real-time email & link payload analysis</span>
-                                </div>
-                            </a>
-                            <a href="/reports-demo" class="nav-dropdown-item">
-                                <div class="nav-item-icon icon-emerald"><i class="ti ti-chart-dots"></i></div>
-                                <div class="nav-item-content">
-                                    <span class="nav-item-title">Risk Analytics</span>
-                                    <span class="nav-item-desc">Human vulnerability metrics & executive reporting</span>
-                                </div>
-                            </a>
-                            <a href="/password-breach" class="nav-dropdown-item">
-                                <div class="nav-item-icon icon-amber"><i class="ti ti-key-off"></i></div>
-                                <div class="nav-item-content">
-                                    <span class="nav-item-title">Credential Guard</span>
-                                    <span class="nav-item-desc">Exposed password audit & breach monitoring</span>
-                                </div>
-                            </a>
-                        </div>
-                    </div>
-
-                    <div class="nav-dropdown">
-                        <button class="nav-dropdown-trigger {% if request.path in ['/threat-analyzer', '/header-analyzer', '/url-decoder', '/password-breach', '/exposure-report', '/ai-risk-advisor'] %}active{% endif %}">
-                            Tools <i class="ti ti-chevron-down nav-caret"></i>
-                        </button>
-                        <div class="nav-dropdown-menu nav-dropdown-rich">
-                            <a href="/threat-analyzer" class="nav-dropdown-item">
-                                <div class="nav-item-icon icon-cyan"><i class="ti ti-heartbeat"></i></div>
-                                <div class="nav-item-content">
-                                    <span class="nav-item-title">Threat Analyzer</span>
-                                    <span class="nav-item-desc">Scan suspicious emails & files</span>
-                                </div>
-                            </a>
-                            <a href="/header-analyzer" class="nav-dropdown-item">
-                                <div class="nav-item-icon icon-purple"><i class="ti ti-mail-search"></i></div>
-                                <div class="nav-item-content">
-                                    <span class="nav-item-title">Header Analyzer</span>
-                                    <span class="nav-item-desc">Inspect SPF, DKIM & mail hops</span>
-                                </div>
-                            </a>
-                            <a href="/url-decoder" class="nav-dropdown-item">
-                                <div class="nav-item-icon icon-emerald"><i class="ti ti-link"></i></div>
-                                <div class="nav-item-content">
-                                    <span class="nav-item-title">URL Decoder</span>
-                                    <span class="nav-item-desc">Safely unmask hidden links</span>
-                                </div>
-                            </a>
-                            <a href="/password-breach" class="nav-dropdown-item">
-                                <div class="nav-item-icon icon-amber"><i class="ti ti-key"></i></div>
-                                <div class="nav-item-content">
-                                    <span class="nav-item-title">Password Breach Check</span>
-                                    <span class="nav-item-desc">Search leaked credential bases</span>
-                                </div>
-                            </a>
-                            <a href="/exposure-report" class="nav-dropdown-item">
-                                <div class="nav-item-icon icon-cyan"><i class="ti ti-radar"></i></div>
-                                <div class="nav-item-content">
-                                    <span class="nav-item-title">PhishRecon</span>
-                                    <span class="nav-item-desc">Attack surface & exposure report</span>
-                                </div>
-                            </a>
-                            <a href="/ai-risk-advisor" class="nav-dropdown-item nav-item-featured">
-                                <div class="nav-item-icon icon-gold"><i class="ti ti-crown"></i></div>
-                                <div class="nav-item-content">
-                                    <div class="nav-item-title-row">
-                                        <span class="nav-item-title" style="color:var(--warning);">AI Risk Advisor</span>
-                                        <span class="pro-badge">PRO</span>
-                                    </div>
-                                    <span class="nav-item-desc">24/7 AI security copilot</span>
-                                </div>
-                            </a>
-                        </div>
-                    </div>
-
-                    <a href="{% if request.path == '/' %}#attack-chain{% else %}/#attack-chain{% endif %}" class="nav-link">How It Works</a>
-                    <a href="/#pricing" class="nav-link {% if request.path == '/#pricing' %}active{% endif %}">Pricing</a>
-                    <a href="/about" class="nav-link {% if request.path == '/about' %}active{% endif %}">About</a>
-                    <a href="/demo-login" class="nav-live-demo-pill">
-                        <i class="ti ti-sparkles live-icon"></i>
-                        <span>Live Demo</span>
-                    </a>
-                {% endif %}
-            </div>
-
-
-        </div>
-
-        <div class="nav-right" style="display: flex; align-items: center; gap: 16px;">
-            {% if current_user %}
-                <!-- Contextual Page Quick Action Button -->
-                {% if request.path == '/dashboard' %}
-                    <a href="/new-campaign" class="nav-page-action-btn desktop-only-btn" title="Create New Phishing Campaign">
-                        <i class="ti ti-plus" style="color:var(--primary);"></i>
-                        <span>New Campaign</span>
-                    </a>
-                {% elif request.path in ['/new-campaign', '/new-campaign-launch', '/new-campaign-upload', '/simulated'] or request.path.startswith('/campaign') %}
-                    <a href="/reports-demo" class="nav-page-action-btn desktop-only-btn" title="View Vulnerability Reports">
-                        <i class="ti ti-chart-bar" style="color:var(--info);"></i>
-                        <span>View Reports</span>
-                    </a>
-                {% elif request.path in ['/threat-analyzer', '/header-analyzer', '/url-decoder', '/password-breach', '/exposure-report', '/ai-risk-advisor'] %}
-                    <a href="/dashboard" class="nav-page-action-btn desktop-only-btn" title="Back to Dashboard">
-                        <i class="ti ti-layout-dashboard" style="color:var(--primary);"></i>
-                        <span>Dashboard</span>
-                    </a>
-                {% endif %}
-
-                <!-- Billing Link -->
-                <a href="/billing" class="nav-billing-btn" title="Billing & Plans" style="font-size: 1.25rem; color: var(--text-secondary); text-decoration: none; display: inline-flex; align-items: center; justify-content: center; transition: color 0.2s;" onmouseover="this.style.color='var(--text-primary)';" onmouseout="this.style.color='var(--text-secondary)';">
-                    <i class="ti ti-credit-card"></i>
-                </a>
-                
-                <!-- Upgrade Chip for non-admin/non-pro -->
-                {% if current_user.role not in ('admin', 'pro') %}
-                <a href="/billing" class="upgrade-chip" style="background: color-mix(in srgb, var(--warning) 12%, transparent); border: 1px solid color-mix(in srgb, var(--warning) 35%, transparent); color: var(--warning); font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: var(--radius-sm); text-decoration: none; text-transform: uppercase; transition: all 0.25s; display: inline-flex; align-items: center; gap: 4px;" onmouseover="this.style.background='var(--warning)'; this.style.color='#000';" onmouseout="this.style.background='color-mix(in srgb, var(--warning) 12%, transparent)'; this.style.color='var(--warning)';">
-                    <i class="ti ti-crown" style="font-size: 0.85rem;"></i> Upgrade
-                </a>
-                {% endif %}
-
-                <i class="ti ti-bell" style="font-size: 1.25rem; color: var(--text-secondary); cursor: pointer;" title="Notifications"></i>
-            {% endif %}
-
-            <!-- Futuristic Cyber Theme Toggle Switch -->
-            <button type="button" class="theme-toggle-pill" id="theme-toggle" aria-label="Switch theme" title="Switch theme">
-                <span class="theme-track-icons">
-                    <svg class="track-sun-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="12" cy="12" r="4"/>
-                        <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
-                    </svg>
-                    <svg class="track-moon-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
-                    </svg>
-                </span>
-                <span class="theme-toggle-thumb">
-                    <svg class="moon-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" fill="currentColor" fill-opacity="0.25"/>
-                        <path d="M19 3v4M21 5h-4" stroke-width="1.8"/>
-                    </svg>
-                    <svg class="sun-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="12" cy="12" r="4" fill="currentColor" fill-opacity="0.3"/>
-                        <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
-                    </svg>
-                </span>
-            </button>
-
-            {% if current_user %}
-                <!-- Avatar -->
-                {% set name_parts = current_user.name.split(' ') %}
-                {% if current_user.role in ('admin', 'pro') %}
-                <div style="position: relative; display: inline-flex;">
-                    <a href="/profile" class="nav-avatar pro-avatar" style="width: 32px; height: 32px; border-radius: 50%; border: 2px solid var(--warning); display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: var(--warning); background: color-mix(in srgb, var(--warning) 10%, transparent); text-decoration: none; font-family: var(--font-mono), monospace; box-shadow: 0 0 10px color-mix(in srgb, var(--warning) 40%, transparent); position: relative; transition: all 0.3s ease;">
-                        {% if name_parts|length > 1 %}{{ name_parts[0][0]|upper }}{{ name_parts[1][0]|upper }}{% else %}{{ current_user.name[:2]|upper }}{% endif %}
-                    </a>
-                    <span style="position: absolute; top: -6px; right: -6px; background: var(--warning); color: #000; width: 14px; height: 14px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 8px; box-shadow: 0 0 4px rgba(0,0,0,0.5); z-index: 2;" title="PRO User">
-                        <i class="ti ti-crown"></i>
-                    </span>
-                </div>
-                {% else %}
-                <a href="/profile" class="nav-avatar" style="width: 32px; height: 32px; border-radius: 50%; border: 2px solid var(--primary); display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: var(--primary); background: var(--primary-dim); text-decoration: none; font-family: var(--font-mono), monospace;">
-                    {% if name_parts|length > 1 %}{{ name_parts[0][0]|upper }}{{ name_parts[1][0]|upper }}{% else %}{{ current_user.name[:2]|upper }}{% endif %}
-                </a>
-                {% endif %}
-                <a href="/logout" class="nav-link" style="font-size: var(--text-sm); height: auto; border: none; padding: 0;">Logout</a>
-            {% else %}
-                {% if request.path != '/login' %}
-                    <a href="/login" id="wt-signin-link" class="nav-link" style="font-size: var(--text-sm); height: auto; border: none; padding: 0;">Sign In</a>
-                {% endif %}
-                {% if request.path != '/signup' %}
-                    <a href="/signup" id="wt-signup-btn" class="lure-cta lure-cta-compact">
-                      <span class="lure-cta-label">GET STARTED</span>
-                      <span class="lure-cta-orb">
-                        <span class="lure-cta-chevrons">
-                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none">
-                            <path d="M8 5l7 7-7 7M13 5l7 7-7 7" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-                          </svg>
-                        </span>
-                      </span>
-                    </a>
-                {% endif %}
-            {% endif %}
-
-            <!-- Mobile Hamburger Button -->
-            <button class="hamburger-btn" onclick="toggleMobileMenu()" aria-label="Toggle Menu">
-                <span class="bar" style="width: 22px; height: 2px; background: var(--text-secondary); transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);"></span>
-                <span class="bar" style="width: 22px; height: 2px; background: var(--text-secondary); transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);"></span>
-                <span class="bar" style="width: 22px; height: 2px; background: var(--text-secondary); transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);"></span>
-            </button>
-        </div>
+<nav class="navbar" id="navbar" aria-label="Main Navigation">
+  <div class="nav-container">
+    <!-- Brand Logo -->
+    <div class="nav-brand-wrap">
+      <a href="/" class="brand-logo" aria-label="PhishSim AI Home">
+        <span class="brand-name">PhishSim</span><span class="brand-domain">.ai</span>
+      </a>
     </div>
 
-    <!-- Mobile Slide-Down Dropdown -->
-    <div class="mobile-dropdown" id="mobile-dropdown">
-        {% if current_user %}
-            <a href="/dashboard" class="nav-link {% if request.path == '/dashboard' %}active{% endif %}" onclick="toggleMobileMenu()">Dashboard</a>
-            <a href="/new-campaign" class="nav-link {% if request.path == '/new-campaign' or request.path.startswith('/campaign') or request.path.startswith('/new-campaign') %}active{% endif %}" onclick="toggleMobileMenu()">Campaigns</a>
-            <a href="/reports-demo" class="nav-link {% if request.path == '/reports-demo' or request.path.startswith('/campaign-report') %}active{% endif %}" onclick="toggleMobileMenu()">Reports</a>
-            {% if current_user.role == 'admin' %}
-                <a href="/admin" class="nav-link {% if request.path in ['/admin', '/users'] %}active{% endif %}" onclick="toggleMobileMenu()">Admin</a>
-            {% endif %}
-            <div style="padding: 12px 24px; font-weight: 600; color: var(--text-primary); font-size: var(--text-sm); border-top: 1px solid var(--border-subtle); margin-top: 8px;">Solutions</div>
-            <a href="{% if request.path == '/' %}#attack-chain{% else %}/#attack-chain{% endif %}" class="nav-link" onclick="toggleMobileMenu()" style="padding-left: 36px;">AI Phishing Drills</a>
-            <a href="/reports-demo" class="nav-link" onclick="toggleMobileMenu()" style="padding-left: 36px;">Risk Analytics</a>
-            <div style="padding: 12px 24px; font-weight: 600; color: var(--text-primary); font-size: var(--text-sm); border-top: 1px solid var(--border-subtle); margin-top: 8px;">Tools</div>
-            <a href="/threat-analyzer" class="nav-link {% if request.path == '/threat-analyzer' %}active{% endif %}" onclick="toggleMobileMenu()" style="padding-left: 36px;">Threat Analyzer</a>
-            <a href="/header-analyzer" class="nav-link {% if request.path == '/header-analyzer' %}active{% endif %}" onclick="toggleMobileMenu()" style="padding-left: 36px;">Header Analyzer</a>
-            <a href="/url-decoder" class="nav-link {% if request.path == '/url-decoder' %}active{% endif %}" onclick="toggleMobileMenu()" style="padding-left: 36px;">URL Decoder</a>
-            <a href="/password-breach" class="nav-link {% if request.path == '/password-breach' %}active{% endif %}" onclick="toggleMobileMenu()" style="padding-left: 36px;">Password Breach Check</a>
-            <a href="/exposure-report" class="nav-link {% if request.path == '/exposure-report' %}active{% endif %}" onclick="toggleMobileMenu()" style="padding-left: 36px;">PhishRecon</a>
-            <a href="/ai-risk-advisor" class="nav-link {% if request.path == '/ai-risk-advisor' %}active{% endif %}" onclick="toggleMobileMenu()" style="padding-left: 36px; color: var(--warning) !important;">AI Risk Advisor</a>
-            <a href="/billing" class="nav-link" onclick="toggleMobileMenu()" style="border-top: 1px solid var(--border-subtle); margin-top: 8px;"><i class="ti ti-credit-card" style="margin-right: 6px;"></i>Billing & Plans</a>
-            {% if current_user.role not in ('admin', 'pro') %}
-                <a href="/billing" class="nav-link" onclick="toggleMobileMenu()" style="color: var(--warning) !important; padding-left: 36px;"><i class="ti ti-crown" style="margin-right: 6px;"></i>Upgrade to PRO</a>
-            {% endif %}
-            <a href="/logout" class="nav-link" onclick="toggleMobileMenu()" style="border-top: 1px solid var(--border-subtle); margin-top: 8px;">Logout</a>
-        {% else %}
-            <div style="padding: 12px 24px; font-weight: 600; color: var(--text-primary); font-size: var(--text-sm);">Solutions</div>
-            <a href="{% if request.path == '/' %}#attack-chain{% else %}/#attack-chain{% endif %}" class="nav-link" onclick="toggleMobileMenu()" style="padding-left: 36px;">AI Phishing Drills</a>
-            <a href="/threat-analyzer" class="nav-link" onclick="toggleMobileMenu()" style="padding-left: 36px;">Threat Intelligence</a>
-            <a href="/reports-demo" class="nav-link" onclick="toggleMobileMenu()" style="padding-left: 36px;">Risk Analytics</a>
-            <a href="/password-breach" class="nav-link" onclick="toggleMobileMenu()" style="padding-left: 36px;">Credential Guard</a>
-            <div style="padding: 12px 24px; font-weight: 600; color: var(--text-primary); font-size: var(--text-sm); border-top: 1px solid var(--border-subtle); margin-top: 8px;">Tools</div>
-            <a href="/threat-analyzer" class="nav-link {% if request.path == '/threat-analyzer' %}active{% endif %}" onclick="toggleMobileMenu()" style="padding-left: 36px;">Threat Analyzer</a>
-            <a href="/header-analyzer" class="nav-link {% if request.path == '/header-analyzer' %}active{% endif %}" onclick="toggleMobileMenu()" style="padding-left: 36px;">Header Analyzer</a>
-            <a href="/url-decoder" class="nav-link {% if request.path == '/url-decoder' %}active{% endif %}" onclick="toggleMobileMenu()" style="padding-left: 36px;">URL Decoder</a>
-            <a href="/password-breach" class="nav-link {% if request.path == '/password-breach' %}active{% endif %}" onclick="toggleMobileMenu()" style="padding-left: 36px;">Password Breach Check</a>
-            <a href="/exposure-report" class="nav-link {% if request.path == '/exposure-report' %}active{% endif %}" onclick="toggleMobileMenu()" style="padding-left: 36px;">PhishRecon</a>
-            <a href="/ai-risk-advisor" class="nav-link {% if request.path == '/ai-risk-advisor' %}active{% endif %}" onclick="toggleMobileMenu()" style="padding-left: 36px; color: var(--warning) !important;">AI Risk Advisor</a>
-            <div style="border-top: 1px solid var(--border-subtle); margin-top: 8px; padding-top: 8px;">
-                <a href="{% if request.path == '/' %}#attack-chain{% else %}/#attack-chain{% endif %}" class="nav-link" onclick="toggleMobileMenu()">How It Works</a>
-                <a href="/#pricing" class="nav-link" onclick="toggleMobileMenu()">Pricing</a>
-                <a href="/about" class="nav-link {% if request.path == '/about' %}active{% endif %}" onclick="toggleMobileMenu()">About</a>
+    <!-- Desktop Primary Navigation -->
+    <div class="nav-desktop-menu" role="menubar">
+      <!-- 1. Check Something Dropdown Trigger -->
+      <div class="nav-trigger-wrapper">
+        <button type="button"
+                class="nav-trigger {% if is_check_active %}nav-active-section{% endif %}"
+                id="nav-trigger-check"
+                data-pane="check"
+                aria-expanded="false"
+                aria-haspopup="true"
+                aria-controls="nav-popover-surface"
+                role="menuitem">
+          <span>Check something</span>
+          <i class="ti ti-chevron-down nav-caret" aria-hidden="true"></i>
+        </button>
+      </div>
+
+      <!-- 2. Train Your Team Dropdown Trigger -->
+      <div class="nav-trigger-wrapper">
+        <button type="button"
+                class="nav-trigger {% if is_train_active %}nav-active-section{% endif %}"
+                id="nav-trigger-train"
+                data-pane="train"
+                aria-expanded="false"
+                aria-haspopup="true"
+                aria-controls="nav-popover-surface"
+                role="menuitem">
+          <span>Train your team</span>
+          <i class="ti ti-chevron-down nav-caret" aria-hidden="true"></i>
+        </button>
+      </div>
+
+      <!-- 3. Plain Links -->
+      {% for item in plain_links %}
+        {% set is_active = (request.path == item.href) %}
+        <a href="{{ item.href }}"
+           class="nav-plain-link {% if is_active %}nav-active-section{% endif %}"
+           {% if is_active %}aria-current="page"{% endif %}
+           role="menuitem">
+          {{ item.title }}
+        </a>
+      {% endfor %}
+
+      <!-- 4. Live Demo Pill (Only on home page when guest) -->
+      {% if not current_user and request.path == '/' %}
+        <a href="/demo-login"
+           class="nav-live-demo-pill"
+           id="nav-try-demo-btn"
+           title="Try Interactive Live Demo with 1 Click"
+           role="menuitem">
+          <i class="ti ti-sparkles live-icon" aria-hidden="true"></i>
+          <span>LIVE DEMO</span>
+        </a>
+      {% endif %}
+    </div>
+
+    <!-- Right-Hand Controls & Auth -->
+    <div class="nav-actions-wrap">
+      <!-- Search / Command Palette Trigger -->
+      <button type="button"
+              class="nav-search-btn"
+              id="nav-search-trigger"
+              aria-label="Search pages and tools (Press /)"
+              title="Quick Search (Press /)">
+        <i class="ti ti-search" aria-hidden="true"></i>
+        <span class="nav-search-text">Search</span>
+        <kbd class="nav-search-kbd">/</kbd>
+      </button>
+
+      <!-- Theme Toggle Switch -->
+      <button type="button"
+              class="theme-toggle-pill"
+              id="theme-toggle"
+              aria-label="Switch theme"
+              title="Switch theme">
+        <span class="theme-track-icons">
+          <svg class="track-sun-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="4"/>
+            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
+          </svg>
+          <svg class="track-moon-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+          </svg>
+        </span>
+        <span class="theme-toggle-thumb">
+          <svg class="moon-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" fill="currentColor" fill-opacity="0.25"/>
+            <path d="M19 3v4M21 5h-4" stroke-width="1.8"/>
+          </svg>
+          <svg class="sun-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="4" fill="currentColor" fill-opacity="0.3"/>
+            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
+          </svg>
+        </span>
+      </button>
+
+      <!-- Auth State Actions -->
+      {% if current_user %}
+        <a href="/dashboard" class="nav-plain-link {% if request.path == '/dashboard' %}nav-active-section{% endif %}" {% if request.path == '/dashboard' %}aria-current="page"{% endif %}>
+          Dashboard
+        </a>
+
+        <!-- Account Popover Trigger -->
+        <div class="nav-account-wrap">
+          <button type="button"
+                  class="nav-account-btn"
+                  id="nav-account-trigger"
+                  aria-expanded="false"
+                  aria-haspopup="true"
+                  aria-label="Account menu"
+                  title="{{ current_user.name }}">
+            <span class="nav-avatar-circle {% if current_user.role in ('admin', 'pro') %}avatar-pro{% endif %}">
+              {% set name_parts = current_user.name.split(' ') %}
+              {% if name_parts|length > 1 %}{{ name_parts[0][0]|upper }}{{ name_parts[1][0]|upper }}{% else %}{{ current_user.name[:2]|upper }}{% endif %}
+            </span>
+            <i class="ti ti-chevron-down nav-caret" aria-hidden="true"></i>
+          </button>
+          
+          <div class="nav-account-dropdown" id="nav-account-dropdown" role="menu" aria-label="Account menu options">
+            <div class="nav-account-header">
+              <span class="nav-account-name">{{ current_user.name }}</span>
+              <span class="nav-account-role-tag role-{{ current_user.role }}">
+                {% if current_user.role == 'pro' %}PRO Member{% elif current_user.role == 'admin' %}Administrator{% else %}Free Tier{% endif %}
+              </span>
             </div>
-            <a href="/demo-login" class="nav-live-demo-pill" onclick="toggleMobileMenu()" style="margin: 12px 24px; display: inline-flex; align-self: flex-start;">
-                <i class="ti ti-sparkles live-icon"></i>
-                <span>Live Demo</span>
+            <div class="nav-account-divider"></div>
+            <a href="/briefing" class="nav-account-item" role="menuitem">
+              <i class="ti ti-brain" aria-hidden="true"></i>
+              <span>Risk Briefing</span>
             </a>
-            {% if request.path != '/login' %}
-                <a href="/login" class="nav-link" onclick="toggleMobileMenu()" style="border-top: 1px solid var(--border-subtle); margin-top: 8px;">Sign In</a>
+            <a href="/profile" class="nav-account-item" role="menuitem">
+              <i class="ti ti-user" aria-hidden="true"></i>
+              <span>Profile & Security</span>
+            </a>
+            <a href="/billing" class="nav-account-item" role="menuitem">
+              <i class="ti ti-credit-card" aria-hidden="true"></i>
+              <span>Billing & Plans</span>
+            </a>
+            {% if current_user.role == 'admin' %}
+            <a href="/admin" class="nav-account-item" role="menuitem">
+              <i class="ti ti-shield-check" aria-hidden="true"></i>
+              <span>Admin Console</span>
+            </a>
             {% endif %}
-            {% if request.path != '/signup' %}
-                <div style="padding: 12px 24px;">
-                    <a href="/signup" class="btn-get-started" onclick="toggleMobileMenu()" style="width: 100%; justify-content: center;">Get Started &rarr;</a>
-                </div>
-            {% endif %}
+            <div class="nav-account-divider"></div>
+            <a href="/logout" class="nav-account-item item-danger" role="menuitem">
+              <i class="ti ti-logout" aria-hidden="true"></i>
+              <span>Sign out</span>
+            </a>
+          </div>
+        </div>
+      {% else %}
+        {% if request.path != '/login' %}
+          <a href="/login" class="nav-plain-link" id="wt-signin-link">Sign in</a>
         {% endif %}
+        {% if request.path != '/signup' %}
+          <a href="/signup" id="wt-signup-btn" class="lure-cta lure-cta-compact">
+            <span class="lure-cta-label">GET STARTED</span>
+            <span class="lure-cta-orb">
+              <span class="lure-cta-chevrons">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none">
+                  <path d="M8 5l7 7-7 7M13 5l7 7-7 7" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </span>
+            </span>
+          </a>
+        {% endif %}
+      {% endif %}
+
+      <!-- Mobile Hamburger Button -->
+      <button type="button"
+              class="nav-hamburger-btn"
+              id="nav-hamburger-btn"
+              aria-expanded="false"
+              aria-controls="nav-mobile-sheet"
+              aria-label="Open mobile navigation menu">
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+      </button>
     </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       STRIPE-STYLE SHARED MORPHING POPOVER SURFACE
+       ═══════════════════════════════════════════════════════════ -->
+  <div class="nav-popover-surface" id="nav-popover-surface" aria-hidden="true">
+    <div class="nav-popover-arrow" id="nav-popover-arrow"></div>
+    <div class="nav-popover-box" id="nav-popover-box">
+      <div class="nav-popover-panes" id="nav-popover-panes">
+        
+        <!-- PANE 1: CHECK SOMETHING -->
+        <div class="nav-pane" id="nav-pane-check" role="region" aria-label="Check something menu">
+          <div class="nav-pane-grid">
+            <!-- Left: Items list -->
+            <div class="nav-pane-items" role="menu">
+              {% set current_group = namespace(name='') %}
+              {% for item in check_items %}
+                {% if item.group != current_group.name %}
+                  {% set current_group.name = item.group %}
+                  <div class="nav-group-heading" role="presentation">{{ item.group }}</div>
+                {% endif %}
+                {% set is_item_active = (request.path == item.href) %}
+                <a href="{{ item.href }}"
+                   class="nav-menu-item {% if is_item_active %}nav-item-active{% endif %}"
+                   data-preview="{{ item.preview_id }}"
+                   role="menuitem"
+                   {% if is_item_active %}aria-current="page"{% endif %}>
+                  <div class="nav-item-icon-box icon-{{ item.color }}" aria-hidden="true">
+                    <i class="ti {{ item.icon }}"></i>
+                  </div>
+                  <div class="nav-item-details">
+                    <div class="nav-item-title-line">
+                      <span class="nav-item-title">{{ item.title }}</span>
+                      {% if item.badge == 'new' %}
+                        <span class="nav-badge-recon-new" title="Recently launched tool">New</span>
+                      {% endif %}
+                    </div>
+                    <span class="nav-item-desc">{{ item.desc }}</span>
+                  </div>
+                  <div class="nav-item-arrow" aria-hidden="true">
+                    <i class="ti ti-chevron-right"></i>
+                  </div>
+                </a>
+              {% endfor %}
+            </div>
+
+            <!-- Right: Preview Vignette Pane -->
+            <div class="nav-pane-preview" aria-hidden="true">
+              <div class="nav-preview-header">
+                <span class="nav-preview-live"><span class="nav-live-dot"></span> Live Telemetry</span>
+                <span class="nav-preview-tag">Sandbox</span>
+              </div>
+              
+              <!-- Vignette: Threat Analyzer -->
+              <div class="nav-vignette active" id="preview-threat">
+                <div class="vig-card vig-threat">
+                  <div class="vig-badge-row">
+                    <span class="vig-pill pill-amber">SUSPICIOUS 78/100</span>
+                    <span class="vig-meta">Live Heuristics</span>
+                  </div>
+                  <div class="vig-line">
+                    <span class="vig-label">Sender:</span>
+                    <span class="vig-val">service@paypal-billing.net</span>
+                  </div>
+                  <div class="vig-flags">
+                    <span class="vig-chip">Display Name Spoof</span>
+                    <span class="vig-chip">Credential Harvest URL</span>
+                  </div>
+                  <div class="vig-footer">
+                    <span class="vig-action-chip">Action: Quarantine Email</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Vignette: Header Analyzer -->
+              <div class="nav-vignette" id="preview-header">
+                <div class="vig-card vig-header">
+                  <div class="vig-badge-row">
+                    <span class="vig-pill pill-cyan">AUTHENTICATION</span>
+                    <span class="vig-meta">4 Hops Analyzed</span>
+                  </div>
+                  <div class="vig-verdict-grid">
+                    <div class="vig-vrow"><span class="vig-tag tag-pass">SPF PASS</span> <span class="vig-sub">209.85.220.41</span></div>
+                    <div class="vig-vrow"><span class="vig-tag tag-pass">DKIM PASS</span> <span class="vig-sub">domain: github.com</span></div>
+                    <div class="vig-vrow"><span class="vig-tag tag-pass">DMARC PASS</span> <span class="vig-sub">p=reject</span></div>
+                  </div>
+                  <div class="vig-footer">
+                    <span class="vig-sub">Relayed via Google MTA &bull; No TLS downgrade</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Vignette: URL Decoder -->
+              <div class="nav-vignette" id="preview-url">
+                <div class="vig-card vig-url">
+                  <div class="vig-badge-row">
+                    <span class="vig-pill pill-amber">REDIRECT TRACE</span>
+                    <span class="vig-meta">3 Hops Unmasked</span>
+                  </div>
+                  <div class="vig-hop-chain">
+                    <div class="vig-hop"><span class="vig-hop-num">1</span> bit.ly/3x8Qp9</div>
+                    <div class="vig-hop-line"></div>
+                    <div class="vig-hop"><span class="vig-hop-num">2</span> t.co/redirect?id=912</div>
+                    <div class="vig-hop-line"></div>
+                    <div class="vig-hop hop-danger"><span class="vig-hop-num">3</span> secure-login-portal.top</div>
+                  </div>
+                  <div class="vig-footer">
+                    <span class="vig-warning-chip">Zero Trust Verdict: Phishing Target</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Vignette: Password Breach Check -->
+              <div class="nav-vignette" id="preview-password">
+                <div class="vig-card vig-password">
+                  <div class="vig-badge-row">
+                    <span class="vig-pill pill-cyan">K-ANONYMITY</span>
+                    <span class="vig-meta">SHA-1 Prefix Query</span>
+                  </div>
+                  <div class="vig-line">
+                    <span class="vig-label">Hash Prefix:</span>
+                    <span class="vig-mono">5BAA6 ... [masked]</span>
+                  </div>
+                  <div class="vig-stat-box">
+                    <span class="vig-stat-val">3,842</span>
+                    <span class="vig-stat-desc">Compromised occurrences detected across known leak dumps</span>
+                  </div>
+                  <div class="vig-footer">
+                    <span class="vig-sub">Zero plaintext exposure &bull; Instant rotation advice</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Vignette: PhishRecon -->
+              <div class="nav-vignette" id="preview-recon">
+                <div class="vig-card vig-recon">
+                  <div class="vig-badge-row">
+                    <span class="vig-pill pill-cyan">SURFACE AUDIT</span>
+                    <span class="vig-meta">Score 68/100 (Grade B)</span>
+                  </div>
+                  <div class="vig-recon-map">
+                    <div class="vig-vec vec-ok"><i class="ti ti-check"></i> DNS</div>
+                    <div class="vig-vec vec-ok"><i class="ti ti-check"></i> MX</div>
+                    <div class="vig-vec vec-warn"><i class="ti ti-alert-triangle"></i> SPF</div>
+                    <div class="vig-vec vec-danger"><i class="ti ti-x"></i> DMARC</div>
+                    <div class="vig-vec vec-ok"><i class="ti ti-check"></i> SSL</div>
+                    <div class="vig-vec vec-warn"><i class="ti ti-alert-triangle"></i> BIMI</div>
+                  </div>
+                  <div class="vig-footer">
+                    <span class="vig-sub">2 critical exposure gaps detected on domain perimeter</span>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- PANE 2: TRAIN YOUR TEAM -->
+        <div class="nav-pane" id="nav-pane-train" role="region" aria-label="Train your team menu">
+          <div class="nav-pane-grid">
+            <!-- Left: Items list -->
+            <div class="nav-pane-items" role="menu">
+              {% for item in train_items %}
+                {% set is_item_active = (request.path == item.href) %}
+                <a href="{{ item.href }}"
+                   class="nav-menu-item {% if is_item_active %}nav-item-active{% endif %}"
+                   data-preview="{{ item.preview_id }}"
+                   role="menuitem"
+                   {% if is_item_active %}aria-current="page"{% endif %}>
+                  <div class="nav-item-icon-box icon-{{ item.color }}" aria-hidden="true">
+                    <i class="ti {{ item.icon }}"></i>
+                  </div>
+                  <div class="nav-item-details">
+                    <span class="nav-item-title">{{ item.title }}</span>
+                    <span class="nav-item-desc">{{ item.desc }}</span>
+                  </div>
+                  <div class="nav-item-arrow" aria-hidden="true">
+                    <i class="ti ti-chevron-right"></i>
+                  </div>
+                </a>
+              {% endfor %}
+            </div>
+
+            <!-- Right: Preview Vignette Pane -->
+            <div class="nav-pane-preview" aria-hidden="true">
+              <div class="nav-preview-header">
+                <span class="nav-preview-live"><span class="nav-live-dot"></span> Live Telemetry</span>
+                <span class="nav-preview-tag">Sandbox</span>
+              </div>
+
+              <!-- Vignette: Phishing Drill -->
+              <div class="nav-vignette active" id="preview-drill">
+                <div class="vig-card vig-drill">
+                  <div class="vig-badge-row">
+                    <span class="vig-pill pill-cyan">SIMULATION SETUP</span>
+                    <span class="vig-meta">Adaptive Difficulty</span>
+                  </div>
+                  <div class="vig-line">
+                    <span class="vig-label">Scenario:</span>
+                    <span class="vig-val">Microsoft 365 Password Expiration</span>
+                  </div>
+                  <div class="vig-line">
+                    <span class="vig-label">Audience:</span>
+                    <span class="vig-val">Finance & HR Departments (32 targets)</span>
+                  </div>
+                  <div class="vig-footer">
+                    <span class="vig-sub">AI personalized &bull; Staggered realistic delivery</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Vignette: Dashboard / Activity -->
+              <div class="nav-vignette" id="preview-activity">
+                <div class="vig-card vig-activity">
+                  <div class="vig-badge-row">
+                    <span class="vig-pill pill-cyan">BEHAVIORAL TELEMETRY</span>
+                    <span class="vig-meta">Campaign Oct 2026</span>
+                  </div>
+                  <div class="vig-stats-row">
+                    <div class="vig-sbox">
+                      <span class="vig-snum text-danger">8.4%</span>
+                      <span class="vig-slbl">Click Rate</span>
+                    </div>
+                    <div class="vig-sbox">
+                      <span class="vig-snum text-success">71.2%</span>
+                      <span class="vig-slbl">Report Rate</span>
+                    </div>
+                    <div class="vig-sbox">
+                      <span class="vig-snum">3m 40s</span>
+                      <span class="vig-slbl">Time to Report</span>
+                    </div>
+                  </div>
+                  <div class="vig-footer">
+                    <span class="vig-sub">&darr; 22% vulnerability reduction over 90 days</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Vignette: Reports & Certificates -->
+              <div class="nav-vignette" id="preview-reports">
+                <div class="vig-card vig-reports">
+                  <div class="vig-badge-row">
+                    <span class="vig-pill pill-cyan">COMPLIANCE REPORT</span>
+                    <span class="vig-meta">Audit Ready</span>
+                  </div>
+                  <div class="vig-line">
+                    <span class="vig-label">Audit Scope:</span>
+                    <span class="vig-val">SOC 2 Type II &bull; ISO 27001 Readiness</span>
+                  </div>
+                  <div class="vig-line">
+                    <span class="vig-label">Certificate:</span>
+                    <span class="vig-val">PS-2026-9812 (Cryptographically Signed)</span>
+                  </div>
+                  <div class="vig-footer">
+                    <span class="vig-sub">Executive 1-page PDF export & completion ledger</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Vignette: Sandbox / Live Demo -->
+              <div class="nav-vignette" id="preview-demo">
+                <div class="vig-card vig-demo">
+                  <div class="vig-badge-row">
+                    <span class="vig-pill pill-cyan">INTERACTIVE SANDBOX</span>
+                    <span class="vig-meta">Zero Risk Chamber</span>
+                  </div>
+                  <div class="vig-line">
+                    <span class="vig-label">Environment:</span>
+                    <span class="vig-val">Simulated Employee Webmail Inbox</span>
+                  </div>
+                  <div class="vig-line">
+                    <span class="vig-label">Detonation:</span>
+                    <span class="vig-val">Safe landing page & teachable micro-training</span>
+                  </div>
+                  <div class="vig-footer">
+                    <span class="vig-sub">Explore full training flow without impacting live users</span>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
 </nav>
 
-<!-- Discreet Sandbox Mode Banner below navbar -->
+<!-- ═══════════════════════════════════════════════════════════
+     MOBILE NAVIGATION FULL-SCREEN SHEET (<900px)
+     ═══════════════════════════════════════════════════════════ -->
+<div class="nav-mobile-sheet" id="nav-mobile-sheet" role="dialog" aria-modal="true" aria-label="Mobile Navigation Menu">
+  <div class="nav-mobile-sheet-inner">
+    <!-- Mobile Header -->
+    <div class="nav-mobile-header">
+      <a href="/" class="brand-logo" onclick="closeMobileMenu()" aria-label="PhishSim AI Home">
+        <span class="brand-name">PhishSim</span><span class="brand-domain">.ai</span>
+      </a>
+      <button type="button" class="nav-mobile-close" id="nav-mobile-close" aria-label="Close navigation menu" onclick="closeMobileMenu()">
+        <i class="ti ti-x" aria-hidden="true"></i>
+      </button>
+    </div>
+
+    <!-- Mobile Scrollable Body -->
+    <div class="nav-mobile-body">
+      <!-- Group 1: Check Something (Accordion) -->
+      <div class="nav-mobile-accordion">
+        <button type="button" class="nav-mobile-acc-trigger" id="acc-trigger-check" aria-expanded="true" aria-controls="acc-content-check">
+          <span>Check something</span>
+          <i class="ti ti-chevron-down acc-caret" aria-hidden="true"></i>
+        </button>
+        <div class="nav-mobile-acc-content open" id="acc-content-check">
+          {% for item in check_items %}
+            <a href="{{ item.href }}" class="nav-mobile-item" onclick="closeMobileMenu()">
+              <div class="nav-item-icon-box icon-{{ item.color }}" aria-hidden="true">
+                <i class="ti {{ item.icon }}"></i>
+              </div>
+              <div class="nav-mobile-item-info">
+                <div class="nav-mobile-item-title-row">
+                  <span class="nav-mobile-item-title">{{ item.title }}</span>
+                  {% if item.badge == 'new' %}
+                    <span class="nav-badge-recon-new">New</span>
+                  {% endif %}
+                </div>
+                <span class="nav-mobile-item-desc">{{ item.desc }}</span>
+              </div>
+              <i class="ti ti-chevron-right nav-mobile-arrow" aria-hidden="true"></i>
+            </a>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Group 2: Train Your Team (Accordion) -->
+      <div class="nav-mobile-accordion">
+        <button type="button" class="nav-mobile-acc-trigger" id="acc-trigger-train" aria-expanded="true" aria-controls="acc-content-train">
+          <span>Train your team</span>
+          <i class="ti ti-chevron-down acc-caret" aria-hidden="true"></i>
+        </button>
+        <div class="nav-mobile-acc-content open" id="acc-content-train">
+          {% for item in train_items %}
+            <a href="{{ item.href }}" class="nav-mobile-item" onclick="closeMobileMenu()">
+              <div class="nav-item-icon-box icon-{{ item.color }}" aria-hidden="true">
+                <i class="ti {{ item.icon }}"></i>
+              </div>
+              <div class="nav-mobile-item-info">
+                <span class="nav-mobile-item-title">{{ item.title }}</span>
+                <span class="nav-mobile-item-desc">{{ item.desc }}</span>
+              </div>
+              <i class="ti ti-chevron-right nav-mobile-arrow" aria-hidden="true"></i>
+            </a>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Plain Links -->
+      <div class="nav-mobile-plain-links">
+        {% for item in plain_links %}
+          <a href="{{ item.href }}" class="nav-mobile-plain-item" onclick="closeMobileMenu()">
+            {{ item.title }}
+          </a>
+        {% endfor %}
+
+        {% if not current_user and request.path == '/' %}
+          <div style="padding: 8px 16px 12px;">
+            <a href="/demo-login" class="nav-live-demo-pill" id="nav-try-demo-btn-mobile" onclick="closeMobileMenu()" style="display: inline-flex;">
+              <i class="ti ti-sparkles live-icon" aria-hidden="true"></i>
+              <span>LIVE DEMO</span>
+            </a>
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- Auth Controls on Mobile -->
+      <div class="nav-mobile-footer-actions">
+        {% if current_user %}
+          <div class="nav-mobile-user-card">
+            <span class="nav-mobile-user-name">{{ current_user.name }}</span>
+            <span class="nav-account-role-tag role-{{ current_user.role }}">
+              {% if current_user.role == 'pro' %}PRO Member{% elif current_user.role == 'admin' %}Administrator{% else %}Free Tier{% endif %}
+            </span>
+          </div>
+          <div class="nav-mobile-user-links">
+            <a href="/dashboard" class="nav-mobile-user-btn" onclick="closeMobileMenu()"><i class="ti ti-layout-dashboard"></i> Dashboard</a>
+            <a href="/briefing" class="nav-mobile-user-btn" onclick="closeMobileMenu()"><i class="ti ti-brain"></i> Risk Briefing</a>
+            <a href="/profile" class="nav-mobile-user-btn" onclick="closeMobileMenu()"><i class="ti ti-user"></i> Profile</a>
+            <a href="/billing" class="nav-mobile-user-btn" onclick="closeMobileMenu()"><i class="ti ti-credit-card"></i> Billing</a>
+            {% if current_user.role == 'admin' %}
+            <a href="/admin" class="nav-mobile-user-btn" onclick="closeMobileMenu()"><i class="ti ti-shield-check"></i> Admin</a>
+            {% endif %}
+            <a href="/logout" class="nav-mobile-user-btn text-danger" onclick="closeMobileMenu()"><i class="ti ti-logout"></i> Sign out</a>
+          </div>
+        {% else %}
+          <div class="nav-mobile-guest-links">
+            <a href="/login" class="nav-mobile-signin-btn" onclick="closeMobileMenu()">Sign in</a>
+            <a href="/signup" id="wt-signup-btn-mobile" class="lure-cta lure-cta-compact" style="justify-content: center; width: 100%;" onclick="closeMobileMenu()">
+              <span class="lure-cta-label">GET STARTED</span>
+              <span class="lure-cta-orb">
+                <span class="lure-cta-chevrons">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none">
+                    <path d="M8 5l7 7-7 7M13 5l7 7-7 7" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </span>
+              </span>
+            </a>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SEARCH / COMMAND PALETTE MODAL (Shortcut: /)
+     ═══════════════════════════════════════════════════════════ -->
+<div class="nav-command-palette" id="nav-command-palette" role="dialog" aria-modal="true" aria-label="Command search palette">
+  <div class="nav-palette-backdrop" id="nav-palette-backdrop"></div>
+  <div class="nav-palette-container">
+    <div class="nav-palette-input-wrap">
+      <i class="ti ti-search nav-palette-icon" aria-hidden="true"></i>
+      <input type="text"
+             class="nav-palette-input"
+             id="nav-palette-input"
+             placeholder="Search tools, pages, workflows... (Esc to close)"
+             autocomplete="off"
+             spellcheck="false"
+             role="combobox"
+             aria-expanded="true"
+             aria-autocomplete="list"
+             aria-controls="nav-palette-results">
+      <kbd class="nav-palette-esc" id="nav-palette-close-kbd">ESC</kbd>
+    </div>
+    
+    <div class="nav-palette-results" id="nav-palette-results" role="listbox">
+      <!-- Dynamic filtered items populated by JavaScript -->
+    </div>
+    
+    <div class="nav-palette-footer">
+      <span class="nav-palette-hint"><kbd>&uarr;</kbd><kbd>&darr;</kbd> Navigate</span>
+      <span class="nav-palette-hint"><kbd>&crarr;</kbd> Open</span>
+      <span class="nav-palette-hint"><kbd>esc</kbd> Dismiss</span>
+    </div>
+  </div>
+</div>
+
+<!-- Sandbox Banner below navbar (if in demo environment) -->
 {% if current_user and current_user.company_domain == 'demo-corp.com' %}
-<div id="sandbox-warning-banner" class="sandbox-banner" style="background: var(--warning-dim); border-bottom: 1px solid rgba(251, 146, 60, 0.3); color: var(--warning); font-family: 'Space Grotesk', sans-serif; font-size: var(--text-sm); font-weight: 400; height: 36px; box-sizing: border-box; padding: 0 24px; display: flex; align-items: center; justify-content: center; z-index: 999; position: relative; width: 100%;">
-    <span style="flex-grow: 1; text-align: center;">⚠️ Sandbox Mode — This is a demo environment. Data is illustrative only.</span>
-    <button onclick="dismissSandboxBanner()" style="background: none; border: none; color: var(--warning); font-size: 1.2rem; cursor: pointer; padding: 0 4px; display: flex; align-items: center; justify-content: center; line-height: 1; opacity: 0.7; font-family: sans-serif;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.7'">&times;</button>
+<div id="sandbox-warning-banner" class="sandbox-banner" style="background: var(--warning-dim); border-bottom: 1px solid rgba(251, 146, 60, 0.3); color: var(--warning); font-family: var(--font-heading); font-size: var(--text-sm); font-weight: 500; height: 36px; box-sizing: border-box; padding: 0 24px; display: flex; align-items: center; justify-content: center; z-index: 999; position: relative; width: 100%;">
+  <span style="flex-grow: 1; text-align: center;">Sandbox Mode &mdash; Demo environment. Data is illustrative only.</span>
+  <button type="button" onclick="dismissSandboxBanner()" style="background: none; border: none; color: var(--warning); font-size: 1.2rem; cursor: pointer; padding: 0 4px; display: flex; align-items: center; justify-content: center; line-height: 1; opacity: 0.7;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.7'" aria-label="Dismiss banner">&times;</button>
 </div>
 <script>
-    if (sessionStorage.getItem('sandbox-banner-dismissed') === 'true') {
-        document.getElementById('sandbox-warning-banner').style.display = 'none';
-    }
-    function dismissSandboxBanner() {
-        document.getElementById('sandbox-warning-banner').style.display = 'none';
-        sessionStorage.setItem('sandbox-banner-dismissed', 'true');
-    }
+  if (sessionStorage.getItem('sandbox-banner-dismissed') === 'true') {
+    var b = document.getElementById('sandbox-warning-banner');
+    if (b) b.style.display = 'none';
+  }
+  function dismissSandboxBanner() {
+    var b = document.getElementById('sandbox-warning-banner');
+    if (b) b.style.display = 'none';
+    sessionStorage.setItem('sandbox-banner-dismissed', 'true');
+  }
 </script>
 {% endif %}
 
+<!-- ═══════════════════════════════════════════════════════════
+     NAVBAR INTERACTION CONTROLLER SCRIPT
+     ═══════════════════════════════════════════════════════════ -->
 <script>
-function toggleMobileMenu() {
-    const dropdown = document.getElementById('mobile-dropdown');
-    const hamburger = document.querySelector('.hamburger-btn');
-    if (dropdown) {
-        dropdown.classList.toggle('active');
-    }
-    if (hamburger) {
-        // Animate/toggle hamburger bars
-        const bars = hamburger.querySelectorAll('.bar');
-        if (bars.length === 3) {
-            hamburger.classList.toggle('active');
-            if (hamburger.classList.contains('active')) {
-                bars[0].style.transform = 'rotate(45deg) translate(5px, 5px)';
-                bars[1].style.opacity = '0';
-                bars[2].style.transform = 'rotate(-45deg) translate(5px, -5px)';
-            } else {
-                bars[0].style.transform = 'none';
-                bars[1].style.opacity = '1';
-                bars[2].style.transform = 'none';
-            }
-        }
-    }
-}
-
-// Sitewide Unified Navbar Scroll Handler
 (function() {
-    function initNavbarScroll() {
-        const navbar = document.getElementById('navbar');
-        if (!navbar) return;
-        const updateScroll = () => {
-            if (window.scrollY > 40) {
-                navbar.classList.add('scrolled');
-            } else {
-                navbar.classList.remove('scrolled');
-            }
-        };
-        window.addEventListener('scroll', updateScroll, { passive: true });
-        updateScroll();
-    }
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initNavbarScroll);
+  'use strict';
+
+  // 1. PhishRecon "New" Badge 30-Day Date Logic
+  const PHISHRECON_LAUNCH = new Date('2026-10-15T00:00:00Z').getTime();
+  const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
+  const isReconNew = (Date.now() - PHISHRECON_LAUNCH) < THIRTY_DAYS_MS;
+  document.querySelectorAll('.nav-badge-recon-new').forEach(function(badge) {
+    badge.style.display = isReconNew ? 'inline-block' : 'none';
+  });
+
+  // 2. Condensed Navbar on Scroll (>24px)
+  const navbar = document.getElementById('navbar');
+  function onScroll() {
+    if (!navbar) return;
+    if (window.scrollY > 24) {
+      navbar.classList.add('scrolled');
     } else {
-        initNavbarScroll();
+      navbar.classList.remove('scrolled');
     }
+  }
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+
+  // 3. Shared Stripe-style Morphing Popover
+  const surface = document.getElementById('nav-popover-surface');
+  const arrow = document.getElementById('nav-popover-arrow');
+  const box = document.getElementById('nav-popover-box');
+  const triggers = document.querySelectorAll('.nav-trigger');
+  const panes = document.querySelectorAll('.nav-pane');
+
+  let activeTrigger = null;
+  let openTimer = null;
+  let closeTimer = null;
+  const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function openPane(paneId, trigger) {
+    if (!surface || !box) return;
+    clearTimeout(closeTimer);
+
+    const targetPane = document.getElementById('nav-pane-' + paneId);
+    if (!targetPane) return;
+
+    // Reset previous pane and activate new pane
+    panes.forEach(function(p) { p.classList.remove('active'); });
+    targetPane.classList.add('active');
+
+    // Update triggers
+    triggers.forEach(function(t) {
+      t.setAttribute('aria-expanded', 'false');
+      t.classList.remove('menu-open');
+    });
+    trigger.setAttribute('aria-expanded', 'true');
+    trigger.classList.add('menu-open');
+    activeTrigger = trigger;
+
+    // Measure target pane dimensions
+    const paneWidth = targetPane.offsetWidth || 680;
+    const paneHeight = targetPane.offsetHeight || 380;
+
+    // Measure trigger horizontal position relative to navbar container
+    const navRect = navbar.getBoundingClientRect();
+    const trigRect = trigger.getBoundingClientRect();
+    const triggerCenter = (trigRect.left + trigRect.right) / 2 - navRect.left;
+
+    // Position dropdown directly below the active trigger heading
+    // (offset slightly by -14px so the dropdown items nicely frame the trigger heading)
+    let surfaceLeft = (trigRect.left - navRect.left) - 14;
+    const minLeft = 16;
+    const maxLeft = Math.max(minLeft, navRect.width - paneWidth - 16);
+    surfaceLeft = Math.max(minLeft, Math.min(surfaceLeft, maxLeft));
+
+    // Arrow points directly at the center of the active heading
+    const arrowX = Math.max(24, Math.min(triggerCenter - surfaceLeft, paneWidth - 24));
+
+    // Apply morphing transforms
+    box.style.width = paneWidth + 'px';
+    box.style.height = paneHeight + 'px';
+
+    if (prefersReduced) {
+      surface.style.transition = 'none';
+      box.style.transition = 'none';
+      arrow.style.transition = 'none';
+    }
+
+    surface.style.setProperty('left', surfaceLeft + 'px', 'important');
+    arrow.style.setProperty('left', arrowX + 'px', 'important');
+
+    surface.classList.add('open');
+    surface.setAttribute('aria-hidden', 'false');
+  }
+
+  function closePopover() {
+    clearTimeout(openTimer);
+    clearTimeout(closeTimer);
+    if (!surface) return;
+    surface.classList.remove('open');
+    surface.setAttribute('aria-hidden', 'true');
+    triggers.forEach(function(t) {
+      t.setAttribute('aria-expanded', 'false');
+      t.classList.remove('menu-open');
+    });
+    activeTrigger = null;
+  }
+
+  triggers.forEach(function(trigger) {
+    const paneId = trigger.dataset.pane;
+
+    // Hover intent: 80ms in
+    trigger.addEventListener('mouseenter', function() {
+      clearTimeout(closeTimer);
+      if (surface.classList.contains('open')) {
+        // Already open: morph immediately to new pane
+        openPane(paneId, trigger);
+      } else {
+        openTimer = setTimeout(function() {
+          openPane(paneId, trigger);
+        }, 80);
+      }
+    });
+
+    // Hover intent: 160ms out
+    trigger.addEventListener('mouseleave', function() {
+      clearTimeout(openTimer);
+      closeTimer = setTimeout(closePopover, 160);
+    });
+
+    // Click / touch toggle
+    trigger.addEventListener('click', function(e) {
+      e.preventDefault();
+      if (activeTrigger === trigger && surface.classList.contains('open')) {
+        closePopover();
+      } else {
+        openPane(paneId, trigger);
+      }
+    });
+
+    // Keyboard support: Enter / Space / ArrowDown
+    trigger.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowDown') {
+        e.preventDefault();
+        openPane(paneId, trigger);
+        // Focus first menu item inside pane
+        const targetPane = document.getElementById('nav-pane-' + paneId);
+        if (targetPane) {
+          const firstItem = targetPane.querySelector('.nav-menu-item');
+          if (firstItem) firstItem.focus();
+        }
+      } else if (e.key === 'Escape') {
+        const trig = activeTrigger || trigger;
+        closePopover();
+        if (trig) trig.focus();
+      }
+    });
+  });
+
+  // Keep popover open while hovering over surface
+  if (surface) {
+    surface.addEventListener('mouseenter', function() {
+      clearTimeout(closeTimer);
+    });
+    surface.addEventListener('mouseleave', function() {
+      closeTimer = setTimeout(closePopover, 160);
+    });
+  }
+
+  // Close when clicking outside
+  document.addEventListener('click', function(e) {
+    if (!navbar) return;
+    if (!navbar.contains(e.target) && !surface.contains(e.target)) {
+      closePopover();
+      closeAccountMenu();
+    }
+  });
+
+  // Keyboard navigation within popover items
+  panes.forEach(function(pane) {
+    const items = Array.from(pane.querySelectorAll('.nav-menu-item'));
+    items.forEach(function(item, idx) {
+      // Hover & focus updates preview vignette
+      function updateVignette() {
+        const previewId = item.dataset.preview;
+        if (!previewId) return;
+        const vignettes = pane.querySelectorAll('.nav-vignette');
+        vignettes.forEach(function(v) { v.classList.remove('active'); });
+        const targetVig = document.getElementById(previewId);
+        if (targetVig) targetVig.classList.add('active');
+      }
+
+      item.addEventListener('mouseenter', updateVignette);
+      item.addEventListener('focus', updateVignette);
+
+      item.addEventListener('keydown', function(e) {
+        if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          const next = items[idx + 1] || items[0];
+          next.focus();
+        } else if (e.key === 'ArrowUp') {
+          e.preventDefault();
+          const prev = items[idx - 1] || items[items.length - 1];
+          prev.focus();
+        } else if (e.key === 'Escape') {
+          e.preventDefault();
+          const trig = activeTrigger;
+          closePopover();
+          if (trig) trig.focus();
+        } else if (e.key === 'Tab' && !e.shiftKey && idx === items.length - 1) {
+          // Tab out of popover
+          closePopover();
+        }
+      });
+    });
+  });
+
+  // 4. Logged-in Account Dropdown
+  const accTrigger = document.getElementById('nav-account-trigger');
+  const accDropdown = document.getElementById('nav-account-dropdown');
+  function closeAccountMenu() {
+    if (accDropdown) accDropdown.classList.remove('show');
+    if (accTrigger) accTrigger.setAttribute('aria-expanded', 'false');
+  }
+  if (accTrigger && accDropdown) {
+    accTrigger.addEventListener('click', function(e) {
+      e.stopPropagation();
+      const isOpen = accDropdown.classList.toggle('show');
+      accTrigger.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+    });
+    accDropdown.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        closeAccountMenu();
+        accTrigger.focus();
+      }
+    });
+  }
+
+  // 5. Mobile Full-Screen Sheet
+  const hamburgerBtn = document.getElementById('nav-hamburger-btn');
+  const mobileSheet = document.getElementById('nav-mobile-sheet');
+  const mobileClose = document.getElementById('nav-mobile-close');
+
+  window.openMobileMenu = function() {
+    if (!mobileSheet) return;
+    mobileSheet.classList.add('active');
+    document.body.classList.add('nav-scroll-locked');
+    if (hamburgerBtn) hamburgerBtn.setAttribute('aria-expanded', 'true');
+    if (mobileClose) mobileClose.focus();
+  };
+
+  window.closeMobileMenu = function() {
+    if (!mobileSheet) return;
+    mobileSheet.classList.remove('active');
+    document.body.classList.remove('nav-scroll-locked');
+    if (hamburgerBtn) {
+      hamburgerBtn.setAttribute('aria-expanded', 'false');
+      hamburgerBtn.focus();
+    }
+  };
+
+  if (hamburgerBtn) {
+    hamburgerBtn.addEventListener('click', function() {
+      if (mobileSheet.classList.contains('active')) {
+        closeMobileMenu();
+      } else {
+        openMobileMenu();
+      }
+    });
+  }
+
+  // Mobile Accordion toggles
+  document.querySelectorAll('.nav-mobile-acc-trigger').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      const isExpanded = btn.getAttribute('aria-expanded') === 'true';
+      btn.setAttribute('aria-expanded', isExpanded ? 'false' : 'true');
+      const targetId = btn.getAttribute('aria-controls');
+      const content = document.getElementById(targetId);
+      if (content) {
+        content.classList.toggle('open', !isExpanded);
+      }
+    });
+  });
+
+  // Focus trap for mobile sheet & Escape key
+  if (mobileSheet) {
+    mobileSheet.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        closeMobileMenu();
+      } else if (e.key === 'Tab') {
+        const focusables = Array.from(mobileSheet.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'));
+        if (!focusables.length) return;
+        const first = focusables[0];
+        const last = focusables[focusables.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    });
+  }
+
+  // 6. Command Palette Engine
+  const palette = document.getElementById('nav-command-palette');
+  const paletteBackdrop = document.getElementById('nav-palette-backdrop');
+  const paletteInput = document.getElementById('nav-palette-input');
+  const paletteResults = document.getElementById('nav-palette-results');
+  const searchTrigger = document.getElementById('nav-search-trigger');
+
+  const commandItems = [
+    { title: 'Threat Analyzer', desc: 'Scan suspicious emails & files for malware', href: '/threat-analyzer', icon: 'ti-shield-bolt' },
+    { title: 'Header Analyzer', desc: 'Inspect SPF, DKIM & email transit hops', href: '/header-analyzer', icon: 'ti-mail-search' },
+    { title: 'URL Decoder', desc: 'Safely unmask hidden links and redirect hops', href: '/url-decoder', icon: 'ti-link' },
+    { title: 'Password Breach Check', desc: 'Search leaked credential bases with k-anonymity', href: '/password-breach', icon: 'ti-key' },
+    { title: 'PhishRecon', desc: 'Map external attack surface & exposure audit', href: '/exposure-report', icon: 'ti-radar' },
+    { title: 'Run a phishing drill', desc: 'Launch realistic spear-phishing campaigns', href: '/new-campaign', icon: 'ti-target-arrow' },
+    { title: 'See what people did', desc: 'Track employee clicks & simulation telemetry', href: '/dashboard', icon: 'ti-layout-dashboard' },
+    { title: 'Prove it to your boss', desc: 'Export executive compliance reports & certificates', href: '/reports-demo', icon: 'ti-file-certificate' },
+    { title: 'Preview before sending', desc: 'Safe interactive mailbox sandbox & demo', href: '/fake-login-demo', icon: 'ti-sparkles' },
+    { title: 'Try Live Demo', desc: 'Instant one-click interactive demo workspace', href: '/demo-login', icon: 'ti-sparkles' },
+    { title: 'Risk Briefing', desc: 'Executive risk briefing and guidance', href: '/briefing', icon: 'ti-brain' },
+    { title: 'How it works', desc: 'Interactive attack chain overview & features', href: '/#attack-chain', icon: 'ti-help' },
+    { title: 'Pricing', desc: 'Compare Free and Pro features', href: '/#pricing', icon: 'ti-tag' },
+    { title: 'About', desc: 'About PhishSim AI mission & security architecture', href: '/about', icon: 'ti-info-circle' },
+    { title: 'Profile', desc: 'Manage account security & preferences', href: '/profile', icon: 'ti-user' },
+    { title: 'Billing', desc: 'Manage subscription, usage and invoices', href: '/billing', icon: 'ti-credit-card' }
+  ];
+
+  let selectedIndex = 0;
+  let currentFiltered = [];
+
+  function openPalette() {
+    if (!palette || !paletteInput) return;
+    palette.classList.add('open');
+    paletteInput.value = '';
+    filterPalette('');
+    setTimeout(function() { paletteInput.focus(); }, 40);
+  }
+
+  function closePalette() {
+    if (!palette) return;
+    palette.classList.remove('open');
+    if (searchTrigger) searchTrigger.focus();
+  }
+
+  function filterPalette(query) {
+    const q = (query || '').toLowerCase().trim();
+    currentFiltered = commandItems.filter(function(item) {
+      return !q || item.title.toLowerCase().includes(q) || item.desc.toLowerCase().includes(q);
+    });
+
+    selectedIndex = 0;
+    renderPaletteResults();
+  }
+
+  function renderPaletteResults() {
+    if (!paletteResults) return;
+    paletteResults.innerHTML = '';
+
+    if (currentFiltered.length === 0) {
+      paletteResults.innerHTML = '<div class="nav-palette-empty">No matching pages or tools found</div>';
+      return;
+    }
+
+    currentFiltered.forEach(function(item, idx) {
+      const a = document.createElement('a');
+      a.href = item.href;
+      a.className = 'nav-palette-item' + (idx === selectedIndex ? ' active' : '');
+      a.setAttribute('role', 'option');
+      a.setAttribute('aria-selected', idx === selectedIndex ? 'true' : 'false');
+      a.innerHTML = `
+        <div class="nav-palette-item-icon"><i class="ti ${item.icon}"></i></div>
+        <div class="nav-palette-item-content">
+          <span class="nav-palette-item-title">${item.title}</span>
+          <span class="nav-palette-item-desc">${item.desc}</span>
+        </div>
+        <kbd class="nav-palette-item-enter">&crarr;</kbd>
+      `;
+
+      a.addEventListener('mouseenter', function() {
+        selectedIndex = idx;
+        updatePaletteSelection();
+      });
+
+      paletteResults.appendChild(a);
+    });
+  }
+
+  function updatePaletteSelection() {
+    const items = paletteResults.querySelectorAll('.nav-palette-item');
+    items.forEach(function(el, i) {
+      el.classList.toggle('active', i === selectedIndex);
+      el.setAttribute('aria-selected', i === selectedIndex ? 'true' : 'false');
+      if (i === selectedIndex) {
+        el.scrollIntoView({ block: 'nearest' });
+      }
+    });
+  }
+
+  if (searchTrigger) {
+    searchTrigger.addEventListener('click', openPalette);
+  }
+  if (paletteBackdrop) {
+    paletteBackdrop.addEventListener('click', closePalette);
+  }
+  const paletteCloseKbd = document.getElementById('nav-palette-close-kbd');
+  if (paletteCloseKbd) {
+    paletteCloseKbd.addEventListener('click', closePalette);
+  }
+
+  if (paletteInput) {
+    paletteInput.addEventListener('input', function(e) {
+      filterPalette(e.target.value);
+    });
+
+    paletteInput.addEventListener('keydown', function(e) {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        if (currentFiltered.length > 0) {
+          selectedIndex = (selectedIndex + 1) % currentFiltered.length;
+          updatePaletteSelection();
+        }
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        if (currentFiltered.length > 0) {
+          selectedIndex = (selectedIndex - 1 + currentFiltered.length) % currentFiltered.length;
+          updatePaletteSelection();
+        }
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        if (currentFiltered[selectedIndex]) {
+          window.location.href = currentFiltered[selectedIndex].href;
+        }
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        closePalette();
+      }
+    });
+  }
+
+  // Global "/" key handler
+  document.addEventListener('keydown', function(e) {
+    if (e.key === '/' && !palette.classList.contains('open')) {
+      const tag = (document.activeElement.tagName || '').toLowerCase();
+      const isInput = tag === 'input' || tag === 'textarea' || tag === 'select' || document.activeElement.isContentEditable;
+      if (!isInput) {
+        e.preventDefault();
+        openPalette();
+      }
+    } else if (e.key === 'Escape' && palette.classList.contains('open')) {
+      closePalette();
+    }
+  });
+
 })();
 </script>

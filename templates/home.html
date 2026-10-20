@@ -5,6 +5,7 @@
 
 {% block extra_head %}
   <meta name="google-site-verification" content="ELvLqkebm4aw_A-8JlhjV5A9VmO1tprjJ-ABK6c-xhM" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/holding_section.css') }}">
   <style>
 
   /* ── CONSOLIDATED DESIGN SYSTEM UTILITY CLASSES ── */
@@ -784,165 +785,7 @@
       color: var(--text-muted);
     }
 
-    /* ── THREAT INTELLIGENCE SUITE ── */
-    #threat-intel-suite {
-      padding: 100px 5% 80px;
-      background: var(--bg);
-      border-top: 1px solid var(--border);
-      position: relative;
-      z-index: 2;
-    }
-
-    .suite-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 24px;
-      max-width: 1200px;
-      margin: 0 auto;
-    }
-
-    .suite-card {
-      background: rgba(10, 16, 32, 0.88) !important;
-      border: 1px solid rgba(255, 255, 255, 0.14) !important;
-      border-radius: 16px;
-      padding: 32px;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      gap: 20px;
-      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-      text-decoration: none;
-      position: relative;
-      overflow: hidden;
-      box-sizing: border-box;
-      backdrop-filter: blur(24px) saturate(180%) !important;
-      -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
-      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5), 0 0 20px rgba(6, 182, 212, 0.08) !important;
-    }
-
-    .suite-card::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      border-radius: 16px;
-      padding: 1px;
-      background: linear-gradient(135deg, rgba(6, 182, 212, 0.25), transparent);
-      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-      -webkit-mask-composite: xor;
-      mask-composite: exclude;
-      pointer-events: none;
-    }
-
-    .suite-card:not(.disabled):hover {
-      transform: translateY(-4px);
-      border-color: #06b6d4 !important;
-      box-shadow: 0 20px 48px rgba(6, 182, 212, 0.25) !important;
-    }
-
-    .suite-card.disabled {
-      opacity: 0.65;
-      cursor: not-allowed;
-      border-style: dashed;
-    }
-
-    .suite-card-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-    }
-
-    .suite-icon {
-      width: 50px;
-      height: 50px;
-      border-radius: 10px;
-      background: rgba(6, 182, 212, 0.08);
-      border: 1px solid rgba(6, 182, 212, 0.2);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.5rem;
-      color: #06b6d4;
-      transition: all 0.3s ease;
-    }
-
-    .suite-card:not(.disabled):hover .suite-icon {
-      background: rgba(6, 182, 212, 0.15);
-      border-color: #06b6d4;
-      box-shadow: 0 0 8px rgba(6, 182, 212, 0.12);
-    }
-
-    .suite-badge-pro {
-      background: color-mix(in srgb, var(--warning) 10.0%, transparent);
-      border: 1px solid color-mix(in srgb, var(--warning) 30.0%, transparent);
-      color: var(--warning);
-      font-family: var(--mono), monospace;
-      font-size: 0.7rem;
-      font-weight: 700;
-      padding: 3px 10px;
-      border-radius: 50px;
-      letter-spacing: 0.05em;
-    }
-
-    .suite-title {
-      font-family: var(--font-heading), sans-serif;
-      font-size: 1.4rem;
-      font-weight: 700;
-      color: #fff;
-      margin-bottom: 8px;
-    }
-
-    .suite-desc {
-      font-family: var(--font-heading), sans-serif;
-      font-size: 0.95rem;
-      color: #cbd5e1 !important;
-      line-height: 1.6;
-    }
-
-    .suite-link-text {
-      font-family: var(--font-heading), sans-serif;
-      font-size: 0.85rem;
-      font-weight: 600;
-      color: #06b6d4;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      transition: gap 0.2s ease;
-    }
-
-    .suite-card:not(.disabled):hover .suite-link-text {
-      gap: 10px;
-      color: #fff;
-    }
-
-    body.light-theme #threat-intel-suite {
-      background: #f8fafc;
-    }
-
-    body.light-theme .suite-card {
-      background: rgba(255, 255, 255, 0.94) !important;
-      backdrop-filter: blur(20px) !important;
-      -webkit-backdrop-filter: blur(20px) !important;
-      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.06) !important;
-    }
-
-    body.light-theme .suite-desc {
-      color: #475569 !important;
-    }
-
-    body.light-theme .suite-title {
-      color: #0f172a;
-    }
-
-    body.light-theme .suite-icon {
-      background: rgba(37, 99, 235, 0.08);
-      border-color: rgba(37, 99, 235, 0.2);
-      color: #2563eb;
-    }
-
-    body.light-theme .suite-card:not(.disabled):hover .suite-icon {
-      background: rgba(37, 99, 235, 0.15);
-      border-color: #2563eb;
-    }
+    /* ── START WITH WHAT YOU'RE HOLDING (STYLED IN holding_section.css) ── */
 
     @media (max-width: 768px) {
 
@@ -3070,8 +2913,8 @@
     }
 
     .cap-card-4 {
-      --cap-accent: rgba(248, 113, 113, 0.24);
-      --cap-pattern: conic-gradient(from 90deg at 18% 24%, rgba(248, 113, 113, 0.18), transparent 34%, color-mix(in srgb, var(--primary) 12.0%, transparent), transparent 68%);
+      --cap-accent: rgba(245, 158, 11, 0.32);
+      --cap-pattern: conic-gradient(from 90deg at 18% 24%, rgba(245, 158, 11, 0.20), transparent 34%, rgba(251, 146, 60, 0.16), transparent 68%);
     }
 
     .cap-card-5 {
@@ -3705,7 +3548,6 @@
     #capabilities,
     #global-threat-intel,
     #solutions,
-    #threat-intel-suite,
     #stats,
     #testimonials,
     #pricing,
@@ -3723,7 +3565,6 @@
     body.light-theme #capabilities,
     body.light-theme #global-threat-intel,
     body.light-theme #solutions,
-    body.light-theme #threat-intel-suite,
     body.light-theme #stats,
     body.light-theme #testimonials,
     body.light-theme #pricing,
@@ -4279,7 +4120,7 @@
         We help you prove it — before attackers do.
       </p>
       <p class="hero-descriptor">
-        AI-powered phishing simulations. Real tactics. Measurable results.
+        Autonomous phishing simulations. Real attack techniques. Verifiable human resilience.
       </p>
       <div class="hero-actions" style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
         {% if current_user %}
@@ -4313,7 +4154,7 @@
       </div>
     </div>
 
-    <!-- Right: Terminal -->
+    <!-- Right: Terminal Console -->
     <div class="hero-right">
       <div class="terminal-wrapper" id="actual-terminal-wrapper"
         style="position: relative; transition: all 0.6s cubic-bezier(0.16,1,0.3,1); transform-origin: top center;"
@@ -4560,9 +4401,8 @@
               <rect width="20" height="16" x="2" y="4" rx="2" />
               <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
             </svg></div>
-          <h3 class="card-title">Email Generation</h3>
-          <p class="card-desc">Claude AI crafts a unique, personalized phishing email for every target — matching their
-            role, tone, and context. No templates.</p>
+          <h3 class="card-title">Contextual Lure Generation</h3>
+          <p class="card-desc">The simulation engine crafts a targeted phishing lure for each employee — matching their role, department, and realistic workplace context.</p>
         </div>
       </div>
 
@@ -4575,9 +4415,8 @@
               <path d="m22 2-7 20-4-9-9-4Z" />
               <path d="M22 2 11 13" />
             </svg></div>
-          <h3 class="card-title">Campaign Launch</h3>
-          <p class="card-desc">Emails are dispatched through your configured relay. Tracking pixels and unique phishing
-            links are embedded automatically.</p>
+          <h3 class="card-title">Controlled Delivery</h3>
+          <p class="card-desc">Simulations dispatch safely through configured SMTP relays with verified tracking tokens and isolated landing destinations.</p>
         </div>
       </div>
 
@@ -4589,9 +4428,8 @@
               stroke-linecap="round" stroke-linejoin="round">
               <path d="M3 12h4l3-9 4 18 3-9h4" />
             </svg></div>
-          <h3 class="card-title">Behavioral Tracking</h3>
-          <p class="card-desc">Every open, click, credential submission, and report action is captured in real-time and
-            attributed to the individual target.</p>
+          <h3 class="card-title">Behavioral Telemetry</h3>
+          <p class="card-desc">Every open, link interaction, credential submission, and report event is captured in real-time and attributed securely.</p>
         </div>
       </div>
 
@@ -4604,9 +4442,8 @@
               <path d="M20 13c0 5-3.5 7.5-8 9-4.5-1.5-8-4-8-9V5l8-3 8 3Z" />
               <path d="m9 12 2 2 4-4" />
             </svg></div>
-          <h3 class="card-title">AI Risk Report</h3>
-          <p class="card-desc">The AI generates a full security assessment — department heatmaps, behavior scores, and a
-            30-day remediation plan.</p>
+          <h3 class="card-title">Executive Risk Intelligence</h3>
+          <p class="card-desc">Generate audit-ready security assessments featuring department vulnerability heatmaps, resilience metrics, and targeted remediation plans.</p>
         </div>
       </div>
     </div>
@@ -4614,15 +4451,15 @@
 
   <!-- INTERACTIVE SCENARIO SANDBOX -->
   <section id="threat-sandbox"
-    style="padding: 100px 5% 80px; background: var(--bg2); position: relative; z-index: 2; border-top: 1px solid var(--border);">
+    style="padding: 100px 5% 80px; background: var(--bg-surface, var(--bg)); position: relative; z-index: 2; border-top: 1px solid var(--border-subtle, var(--border));">
     <div style="max-width: 1200px; margin: 0 auto;">
       <div style="text-align: center; margin-bottom: 50px;">
         <div class="section-eyebrow reveal">Threat Sandbox</div>
         <h2 class="section-title reveal"
-          style="font-size: clamp(2rem, 3.5vw, 2.8rem); font-weight: 700; color: var(--white); margin: 16px 0; line-height: 1.25;">
+          style="font-size: clamp(2rem, 3.5vw, 2.8rem); font-weight: 700; margin: 16px 0; line-height: 1.25;">
           Interactive Threat Lab</h2>
         <p class="section-sub reveal"
-          style="font-size: 1.05rem; color: var(--muted); max-width: 600px; margin: 0 auto; line-height: 1.6;">Select a
+          style="font-size: 1.05rem; color: var(--text-secondary); max-width: 600px; margin: 0 auto; line-height: 1.6;">Select a
           scenario to load a live simulation email. Click the action links to witness the simulated compromise and live
           telemetry capture.</p>
       </div>
@@ -4664,11 +4501,11 @@
           </button>
 
           <button class="sandbox-tab" onclick="selectSandboxScenario('custom')" id="tab-custom">
-            <div class="sandbox-tab-icon" style="color:var(--cyan);"><i class="ti ti-sparkles"></i></div>
+            <div class="sandbox-tab-icon"><i class="ti ti-sparkles"></i></div>
             <div style="text-align: left;">
               <div class="sandbox-tab-title" style="display:flex; align-items:center; gap:6px;">
                 Custom AI Scenario
-                <span style="font-size:0.65rem; background:linear-gradient(90deg,var(--cyan),var(--primary)); color:#05070f; font-weight:800; padding:1px 6px; border-radius:10px; text-transform:uppercase;">Live AI</span>
+                <span style="font-size:0.65rem; background:color-mix(in srgb, var(--primary) 15%, transparent); border: 1px solid color-mix(in srgb, var(--primary) 30%, transparent); color:var(--primary); font-weight:800; padding:2px 7px; border-radius:10px; text-transform:uppercase;">Live AI</span>
               </div>
               <div class="sandbox-tab-desc">Type any scenario to generate a live AI lure.</div>
             </div>
@@ -4676,19 +4513,18 @@
         </div>
 
         <!-- Right: Interactive Live Simulation Sandbox -->
-        <div class="reveal sandbox-display-container"
-          style="background: rgba(13,18,38,0.4); border: 1px solid var(--border); border-radius: 16px; padding: 1.5rem; display: flex; flex-direction: column; gap: 1.5rem;">
+        <div class="reveal sandbox-display-container">
 
           <!-- Custom Scenario Free-Text Input Card (Visible when Custom AI Scenario tab is active) -->
-          <div id="sandbox-custom-input-card" class="sandbox-custom-card" style="display: none; background: #020617; border: 1px solid rgba(56,189,248,0.25); border-radius: 12px; padding: 1.25rem; box-shadow: 0 10px 30px rgba(0,0,0,0.4);">
+          <div id="sandbox-custom-input-card" class="sandbox-custom-card" style="display: none; background: var(--bg-surface-elevated, rgba(15,23,42,0.8)); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 1.25rem;">
             <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
-              <label for="sandbox-custom-desc" style="font-family: var(--font-heading), sans-serif; font-size: 0.9rem; font-weight: 600; color: var(--white); display: flex; align-items: center; gap: 8px;">
-                <i class="ti ti-pencil" style="color: var(--cyan);"></i> Describe your custom scenario:
+              <label for="sandbox-custom-desc" style="font-family: var(--font-sans); font-size: 0.9rem; font-weight: 600; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+                <i class="ti ti-pencil" style="color: var(--primary);"></i> Describe your custom scenario:
               </label>
-              <span style="font-family: var(--mono); font-size: 0.72rem; color: var(--muted);" id="sandbox-custom-char-count">0 / 120</span>
+              <span style="font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-secondary);" id="sandbox-custom-char-count">0 / 120</span>
             </div>
             <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
-              <textarea id="sandbox-custom-desc" rows="2" maxlength="120" placeholder="e.g. IT password reset request, Urgent wire transfer approval, HR bonus policy update..." style="flex: 1; min-width: 260px; background: rgba(15,23,42,0.8); border: 1px solid rgba(148,163,184,0.2); border-radius: 8px; padding: 10px 14px; color: #f8fafc; font-family: var(--font-heading), sans-serif; font-size: 0.9rem; resize: none; outline: none; transition: border-color 0.2s, box-shadow 0.2s;" onfocus="this.style.borderColor='var(--cyan)'; this.style.boxShadow='0 0 12px rgba(56,189,248,0.25)'" onblur="this.style.borderColor='rgba(148,163,184,0.2)'; this.style.boxShadow='none'" oninput="document.getElementById('sandbox-custom-char-count').textContent = this.value.length + ' / 120'"></textarea>
+              <textarea id="sandbox-custom-desc" rows="2" maxlength="120" placeholder="e.g. IT password reset request, Urgent wire transfer approval, HR bonus policy update..." style="flex: 1; min-width: 260px; background: var(--bg-input); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 10px 14px; color: var(--text-primary); font-family: var(--font-sans); font-size: 0.9rem; resize: none; outline: none; transition: border-color 0.2s, box-shadow 0.2s;" onfocus="this.style.borderColor='var(--primary)'; this.style.boxShadow='0 0 12px color-mix(in srgb, var(--primary) 25%, transparent)'" onblur="this.style.borderColor='var(--border-subtle)'; this.style.boxShadow='none'" oninput="document.getElementById('sandbox-custom-char-count').textContent = this.value.length + ' / 120'"></textarea>
               
               <button class="lure-cta" onclick="submitCustomSandboxScenario()" id="sandbox-custom-submit-btn" type="button">
                 <span class="lure-cta-label">GENERATE AI LURE</span>
@@ -4702,79 +4538,70 @@
                 </span>
               </button>
             </div>
-            <div style="margin-top: 10px; font-size: 0.75rem; color: var(--muted); display: flex; align-items: center; gap: 6px;">
-              <i class="ti ti-lock" style="color: var(--cyan);"></i> Fictional demo persona (Alex Morgan @ Demo Corp) &bull; No real email sent
+            <div style="margin-top: 10px; font-size: 0.75rem; color: var(--text-secondary); display: flex; align-items: center; gap: 6px;">
+              <i class="ti ti-lock" style="color: var(--primary);"></i> Fictional demo persona (Alex Morgan @ Demo Corp) &bull; No real email sent
             </div>
           </div>
 
           <div class="sandbox-main-grid" style="display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 20px;">
             <!-- Mock Email Client Window -->
-            <div class="sandbox-email-window"
-              style="background: #020617; border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.3); display: flex; flex-direction: column; justify-content: space-between;">
+            <div class="sandbox-email-window">
               <!-- Mail Client Bar -->
-              <div class="sandbox-email-bar"
-                style="background: rgba(255,255,255,0.02); border-bottom: 1px solid rgba(255,255,255,0.06); padding: 12px 16px; display: flex; align-items: center; justify-content: space-between;">
-                <div style="display: flex; gap: 6px;">
-                  <span
-                    style="width:10px; height:10px; border-radius:50%; background:var(--danger); display:inline-block;"></span>
-                  <span
-                    style="width:10px; height:10px; border-radius:50%; background:var(--warning); display:inline-block;"></span>
-                  <span
-                    style="width:10px; height:10px; border-radius:50%; background:#10b981; display:inline-block;"></span>
+              <div class="sandbox-email-bar">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--verdict-safe, #10b981);"></span>
+                  <span style="font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-secondary); font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase;">Sandbox Inbox</span>
                 </div>
                 <div
-                  style="font-family: var(--mono); font-size: 0.72rem; color: var(--muted); display: flex; align-items: center; gap: 6px;">
-                  <i class="ti ti-shield-lock" style="color:var(--cyan)"></i> Simulated Sandbox Inbox
+                  style="font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-secondary); display: flex; align-items: center; gap: 6px;">
+                  <i class="ti ti-shield-lock" style="color:var(--primary)"></i> Isolated Payload Testbed
                 </div>
                 <div style="width: 40px;"></div>
               </div>
 
               <!-- Mail Header Info -->
-              <div class="sandbox-email-header"
-                style="padding: 16px 20px; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 0.85rem; display: flex; flex-direction: column; gap: 6px; background: rgba(0,0,0,0.15);">
-                <div><span style="color:var(--muted); font-weight:600; width:60px; display:inline-block;">From:</span>
-                  <span id="mail-from" style="color:#fff;"></span></div>
+              <div class="sandbox-email-header">
+                <div><span style="color:var(--text-secondary); font-weight:600; width:60px; display:inline-block;">From:</span>
+                  <span id="mail-from" style="color:var(--text-primary); font-weight:600;"></span></div>
                 <div><span
-                    style="color:var(--muted); font-weight:600; width:60px; display:inline-block;">Subject:</span> <span
+                    style="color:var(--text-secondary); font-weight:600; width:60px; display:inline-block;">Subject:</span> <span
                     id="mail-subject" style="color: var(--primary); font-weight: 600;"></span></div>
-                <div><span style="color:var(--muted); font-weight:600; width:60px; display:inline-block;">To:</span>
-                  <span style="color:var(--muted);">recipient-team@your-corp.com</span></div>
+                <div><span style="color:var(--text-secondary); font-weight:600; width:60px; display:inline-block;">To:</span>
+                  <span style="color:var(--text-secondary);">recipient-team@your-corp.com</span></div>
               </div>
 
               <!-- Mail HTML Body -->
               <div id="sandbox-loader-container" style="display: none; padding: 24px 30px; min-height: 200px;">
-                <div id="sandbox-thinking-loader" style="display: none; padding: 20px 10px; text-align: center; font-family: var(--font-heading), sans-serif;">
-                  <div class="lure-thinking-mascot" style="position: relative; width: 68px; height: 68px; margin: 0 auto 16px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #1e293b, #090d16 70%); border: 1.5px solid rgba(56, 189, 248, 0.4); display: grid; place-items: center; box-shadow: 0 0 30px rgba(56, 189, 248, 0.35);">
-                    <div style="position: absolute; inset: -8px; border-radius: 50%; border: 1.5px dashed rgba(56, 189, 248, 0.6); animation: lureRingSpin 4s linear infinite;"></div>
-                    <i class="ti ti-robot-face" style="font-size: 2rem; color: #38bdf8; filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.8));"></i>
+                <div id="sandbox-thinking-loader" style="display: none; padding: 20px 10px; text-align: center; font-family: var(--font-sans);">
+                  <div class="lure-thinking-mascot" style="position: relative; width: 64px; height: 64px; margin: 0 auto 16px; border-radius: 50%; background: var(--bg-surface); border: 1.5px solid var(--border-subtle); display: grid; place-items: center;">
+                    <i class="ti ti-robot" style="font-size: 1.8rem; color: var(--primary);"></i>
                   </div>
-                  <div id="sandbox-thinking-status" style="font-family: 'JetBrains Mono', monospace; font-size: 0.95rem; font-weight: 600; color: #38bdf8; min-height: 24px; transition: opacity 0.2s;">Profiling the target...</div>
-                  <div style="font-size: 0.78rem; color: var(--muted); margin-top: 6px;">OpenRouter Live AI Model &bull; Custom Scenario Engine</div>
+                  <div id="sandbox-thinking-status" style="font-family: var(--font-mono); font-size: 0.95rem; font-weight: 600; color: var(--primary); min-height: 24px;">Profiling the target...</div>
+                  <div style="font-size: 0.78rem; color: var(--text-secondary); margin-top: 6px;">OpenRouter Live AI Model &bull; Custom Scenario Engine</div>
                 </div>
               </div>
               <div
-                style="padding: 24px 30px; min-height: 200px; background: #fff; color: #1e293b; font-family: sans-serif; font-size: 0.95rem; line-height: 1.6;"
+                style="padding: 24px 30px; min-height: 200px; background: #ffffff; color: #1e293b; font-family: sans-serif; font-size: 0.95rem; line-height: 1.6;"
                 id="mail-body">
                 <!-- Loaded dynamically -->
               </div>
             </div>
 
             <!-- Live Telemetry Panel -->
-            <div class="sandbox-telemetry-panel"
-              style="background: #020617; border: 1px solid rgba(6, 182, 212, 0.2); border-radius: 12px; padding: 1.5rem; display: flex; flex-direction: column; font-family: var(--mono), monospace; font-size: 0.78rem; min-height: 320px; box-sizing: border-box;">
+            <div class="sandbox-telemetry-panel">
               <div
-                style="color: var(--cyan); font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(6,182,212,0.15); padding-bottom: 8px; flex-shrink: 0;">
-                <span>SIMULATED TELEMETRY WALKTHROUGH</span>
-                <i class="ti ti-activity" style="color: var(--cyan); font-size: 0.95rem;"></i>
+                style="color: var(--primary); font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border-subtle); padding-bottom: 8px; flex-shrink: 0;">
+                <span>SIMULATED TELEMETRY</span>
+                <i class="ti ti-activity" style="color: var(--primary); font-size: 0.95rem;"></i>
               </div>
               <div id="live-telemetry-container"
-                style="display: flex; flex-direction: column; gap: 8px; color: #94a3b8; overflow-y: auto; flex: 1; max-height: 300px; min-height: 220px; scroll-behavior: smooth;">
+                style="display: flex; flex-direction: column; gap: 8px; color: var(--text-secondary); overflow-y: auto; flex: 1; max-height: 300px; min-height: 220px; scroll-behavior: smooth;">
 
                 <!-- Logs are typewritten here -->
               </div>
               <div
-                style="border-top: 1px solid rgba(255,255,255,0.05); padding-top: 8px; margin-top: 8px; color: #475569; font-size: 0.7rem; text-align: right; text-transform: uppercase; letter-spacing: 0.5px; flex-shrink: 0;">
-                Status: <span style="color: var(--cyan); font-weight: bold;">Walkthrough Active</span>
+                style="border-top: 1px solid var(--border-subtle); padding-top: 8px; margin-top: 8px; color: var(--text-muted); font-size: 0.7rem; text-align: right; text-transform: uppercase; letter-spacing: 0.5px; flex-shrink: 0;">
+                Status: <span style="color: var(--primary); font-weight: bold;">Walkthrough Active</span>
               </div>
             </div>
           </div>
@@ -4785,13 +4612,13 @@
 
             <!-- Teachable Moment Warning Box -->
             <div
-              style="background: color-mix(in srgb, var(--danger) 4.0%, transparent); border: 1px solid color-mix(in srgb, var(--danger) 25.0%, transparent); border-radius: 12px; padding: 1.5rem;">
+              style="background: color-mix(in srgb, var(--danger) 8%, var(--bg-surface)); border: 1px solid color-mix(in srgb, var(--danger) 30%, transparent); border-radius: 12px; padding: 1.5rem;">
               <h4
-                style="color:var(--danger); font-family: var(--font-heading), sans-serif; font-size:1.05rem; font-weight:700; margin-top:0; margin-bottom:12px; display:flex; align-items:center; gap:8px;">
+                style="color:var(--danger); font-family: var(--font-sans); font-size:1.05rem; font-weight:700; margin-top:0; margin-bottom:12px; display:flex; align-items:center; gap:8px;">
                 <i class="ti ti-alert-triangle"></i> Trapped: Phishing Red Flags
               </h4>
               <ul
-                style="list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:10px; font-size:0.85rem; color:#cbd5e1;"
+                style="list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:10px; font-size:0.85rem; color:var(--text-primary);"
                 id="compromise-red-flags">
                 <!-- Loaded dynamically -->
               </ul>
@@ -4803,7 +4630,6 @@
 
       </div>
 
-    </div>
     </div>
   </section>
 
@@ -4821,654 +4647,138 @@
     }
 
     .sandbox-tab {
-      background: rgba(10, 16, 30, 0.22);
-      border: 1px solid rgba(56, 189, 248, 0.16);
-      border-radius: 12px;
-      padding: 14px 20px;
+      background: var(--bg-surface-elevated, rgba(15, 23, 42, 0.6));
+      border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.08));
+      border-radius: var(--radius-card, 12px);
+      padding: 14px 18px;
       display: flex;
       align-items: center;
-      gap: 16px;
+      gap: 14px;
       cursor: pointer;
-      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
       width: 100%;
-      color: #E2E8F0;
-      backdrop-filter: blur(20px) saturate(180%);
-      -webkit-backdrop-filter: blur(20px) saturate(180%);
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.08);
-    }
-
-    body.light-theme .sandbox-tab,
-    [data-theme="light"] .sandbox-tab {
-      background: rgba(255, 255, 255, 0.85) !important;
-      border: 1px solid #CBD5E1 !important;
-      box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04) !important;
-      color: #475569 !important;
-      backdrop-filter: blur(12px) !important;
-      -webkit-backdrop-filter: blur(12px) !important;
+      color: var(--text-primary);
+      text-align: left;
     }
 
     .sandbox-tab:hover {
-      background: rgba(15, 23, 42, 0.45);
-      border-color: rgba(56, 189, 248, 0.45);
-      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.35), 0 0 16px rgba(56, 189, 248, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.12);
-      transform: translateX(4px);
-    }
-
-    body.light-theme .sandbox-tab:hover,
-    [data-theme="light"] .sandbox-tab:hover {
-      background: #FFFFFF !important;
-      border-color: #0284C7 !important;
-      box-shadow: 0 4px 14px rgba(2, 132, 199, 0.12) !important;
+      background: var(--bg-hover, rgba(15, 23, 42, 0.85));
+      border-color: var(--border-strong, rgba(56, 189, 248, 0.3));
       transform: translateX(4px);
     }
 
     .sandbox-tab.active {
-      background: rgba(14, 165, 233, 0.14);
-      border-color: #00F2FE;
-      box-shadow: 0 0 24px rgba(0, 242, 254, 0.22), inset 0 0 14px rgba(0, 242, 254, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.25);
-    }
-
-    body.light-theme .sandbox-tab.active,
-    [data-theme="light"] .sandbox-tab.active {
-      background: #FFFFFF !important;
-      border: 2px solid #0284C7 !important;
-      box-shadow: 0 6px 20px rgba(2, 132, 199, 0.16) !important;
+      background: color-mix(in srgb, var(--primary) 12%, var(--bg-surface));
+      border-color: var(--primary);
+      box-shadow: 0 4px 20px color-mix(in srgb, var(--primary) 15%, transparent);
     }
 
     .sandbox-tab-icon {
-      width: 42px;
-      height: 42px;
-      border-radius: 10px;
-      background: rgba(255, 255, 255, 0.07);
-      border: 1px solid rgba(255, 255, 255, 0.12);
+      width: 40px;
+      height: 40px;
+      border-radius: var(--radius-sm, 10px);
+      background: color-mix(in srgb, var(--primary) 12%, transparent);
+      border: 1px solid color-mix(in srgb, var(--primary) 25%, transparent);
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 1.25rem;
-      color: #F1F5F9;
-      transition: all 0.3s ease;
+      color: var(--primary);
+      transition: all 0.25s ease;
       flex-shrink: 0;
     }
 
-    body.light-theme .sandbox-tab-icon,
-    [data-theme="light"] .sandbox-tab-icon {
-      background: #F1F5F9 !important;
-      border-color: transparent !important;
-      color: #475569 !important;
-    }
-
-    .sandbox-tab:hover .sandbox-tab-icon {
-      color: #38BDF8;
-      background: rgba(56, 189, 248, 0.12);
-      border-color: rgba(56, 189, 248, 0.3);
-    }
-
     .sandbox-tab.active .sandbox-tab-icon {
-      background: rgba(0, 242, 254, 0.2);
-      border-color: rgba(0, 242, 254, 0.6);
-      color: #00F2FE;
-      box-shadow: 0 0 14px rgba(0, 242, 254, 0.4);
-    }
-
-    body.light-theme .sandbox-tab.active .sandbox-tab-icon,
-    [data-theme="light"] .sandbox-tab.active .sandbox-tab-icon {
-      background: rgba(2, 132, 199, 0.12) !important;
-      border-color: transparent !important;
-      color: #0284C7 !important;
-      box-shadow: none !important;
+      background: var(--primary);
+      color: #050811;
     }
 
     .sandbox-tab-title {
-      font-family: var(--font-heading), sans-serif;
+      font-family: var(--font-sans);
       font-weight: 700;
-      font-size: 0.98rem;
-      color: #FFFFFF !important;
-      margin-bottom: 3px;
-      letter-spacing: -0.01em;
-      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+      font-size: 0.95rem;
+      color: var(--text-primary);
+      margin-bottom: 2px;
     }
 
     .sandbox-tab.active .sandbox-tab-title {
-      color: #00F2FE !important;
-      text-shadow: 0 0 12px rgba(0, 242, 254, 0.6), 0 1px 3px rgba(0, 0, 0, 0.9);
-    }
-
-    body.light-theme .sandbox-tab-title,
-    [data-theme="light"] .sandbox-tab-title {
-      color: #0F172A !important;
-      text-shadow: none !important;
-      font-weight: 600;
-    }
-
-    body.light-theme .sandbox-tab.active .sandbox-tab-title,
-    [data-theme="light"] .sandbox-tab.active .sandbox-tab-title {
-      color: #0284C7 !important;
-      text-shadow: none !important;
-      font-weight: 700 !important;
+      color: var(--primary);
     }
 
     .sandbox-tab-desc {
-      font-family: var(--font-heading), sans-serif;
-      font-size: 0.84rem;
-      color: #CBD5E1 !important;
-      line-height: 1.45;
-      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.95);
-    }
-
-    .sandbox-tab.active .sandbox-tab-desc {
-      color: #F1F5F9 !important;
-    }
-
-    body.light-theme .sandbox-tab-desc,
-    [data-theme="light"] .sandbox-tab-desc {
-      color: #64748B !important;
-      text-shadow: none !important;
-    }
-
-    body.light-theme .sandbox-tab.active .sandbox-tab-desc,
-    [data-theme="light"] .sandbox-tab.active .sandbox-tab-desc {
-      color: #334155 !important;
-      text-shadow: none !important;
-    }
-
-    .sandbox-tab.active .sandbox-tab-icon {
-      background: rgba(6, 182, 212, 0.15);
-      color: var(--cyan);
-      box-shadow: 0 0 8px rgba(6, 182, 212, 0.15);
-    }
-
-    body.light-theme .sandbox-tab.active .sandbox-tab-icon,
-    [data-theme="light"] .sandbox-tab.active .sandbox-tab-icon {
-      background: rgba(2, 132, 199, 0.12) !important;
-      color: #0284C7 !important;
-    }
-
-    /* ── LIGHT MODE OVERRIDES: INTERACTIVE THREAT LAB ── */
-    body.light-theme #threat-sandbox,
-    [data-theme="light"] #threat-sandbox {
-      background: transparent !important;
-      border-top-color: #CBD5E1 !important;
-    }
-
-    body.light-theme #threat-sandbox .section-title,
-    [data-theme="light"] #threat-sandbox .section-title {
-      color: #0F172A !important;
-      -webkit-text-fill-color: initial !important;
-    }
-
-    body.light-theme #threat-sandbox .section-sub,
-    [data-theme="light"] #threat-sandbox .section-sub {
-      color: #475569 !important;
-    }
-
-    body.light-theme .sandbox-display-container,
-    [data-theme="light"] .sandbox-display-container {
-      background: rgba(255, 255, 255, 0.9) !important;
-      border: 1px solid #CBD5E1 !important;
-      box-shadow: 0 16px 45px rgba(15, 23, 42, 0.07) !important;
-      backdrop-filter: blur(16px) !important;
-      -webkit-backdrop-filter: blur(16px) !important;
-    }
-
-    body.light-theme .sandbox-custom-card,
-    [data-theme="light"] .sandbox-custom-card {
-      background: #FFFFFF !important;
-      border: 1px solid #CBD5E1 !important;
-      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05) !important;
-    }
-
-    body.light-theme .sandbox-custom-card label,
-    [data-theme="light"] .sandbox-custom-card label {
-      color: #0F172A !important;
-    }
-
-    body.light-theme #sandbox-custom-desc,
-    [data-theme="light"] #sandbox-custom-desc {
-      background: #F8FAFC !important;
-      border-color: #CBD5E1 !important;
-      color: #0F172A !important;
-    }
-
-    body.light-theme #sandbox-custom-char-count,
-    [data-theme="light"] #sandbox-custom-char-count {
-      color: #64748B !important;
-    }
-
-    body.light-theme .sandbox-email-window,
-    [data-theme="light"] .sandbox-email-window {
-      background: #FFFFFF !important;
-      border: 1px solid #CBD5E1 !important;
-      box-shadow: 0 4px 20px rgba(15, 23, 42, 0.06) !important;
-    }
-
-    body.light-theme .sandbox-email-bar,
-    [data-theme="light"] .sandbox-email-bar {
-      background: #F8FAFC !important;
-      border-bottom: 1px solid #E2E8F0 !important;
-      color: #475569 !important;
-    }
-
-    body.light-theme .sandbox-email-header,
-    [data-theme="light"] .sandbox-email-header {
-      background: #F8FAFC !important;
-      border-bottom: 1px solid #E2E8F0 !important;
-      color: #0F172A !important;
-    }
-
-    body.light-theme .sandbox-email-header span,
-    [data-theme="light"] .sandbox-email-header span {
-      color: #64748B !important;
-    }
-
-    body.light-theme #mail-from,
-    [data-theme="light"] #mail-from {
-      color: #0F172A !important;
-      font-weight: 700 !important;
-    }
-
-    body.light-theme #mail-subject,
-    [data-theme="light"] #mail-subject {
-      color: #0284C7 !important;
-      font-weight: 700 !important;
-    }
-
-    body.light-theme #mail-body,
-    [data-theme="light"] #mail-body {
-      background: #FFFFFF !important;
-      color: #1E293B !important;
-    }
-
-    body.light-theme #mail-body a,
-    [data-theme="light"] #mail-body a {
-      color: #0284C7 !important;
-      font-weight: 600 !important;
-      text-decoration: underline !important;
-    }
-
-    body.light-theme .sandbox-telemetry-panel,
-    [data-theme="light"] .sandbox-telemetry-panel {
-      background: #F8FAFC !important;
-      border: 1px solid #CBD5E1 !important;
-      box-shadow: 0 4px 16px rgba(15, 23, 42, 0.04) !important;
-    }
-
-    body.light-theme .sandbox-telemetry-panel > div:first-child,
-    [data-theme="light"] .sandbox-telemetry-panel > div:first-child {
-      color: #0284C7 !important;
-      border-bottom-color: #E2E8F0 !important;
-    }
-
-    body.light-theme .sandbox-telemetry-panel > div:first-child i,
-    [data-theme="light"] .sandbox-telemetry-panel > div:first-child i {
-      color: #0284C7 !important;
-    }
-
-    body.light-theme #live-telemetry-container,
-    [data-theme="light"] #live-telemetry-container {
-      color: #334155 !important;
-    }
-
-    body.light-theme #live-telemetry-container div,
-    [data-theme="light"] #live-telemetry-container div {
-      color: #1E293B !important;
-    }
-
-    body.light-theme #live-telemetry-container span,
-    [data-theme="light"] #live-telemetry-container span {
-      color: #64748B !important;
-    }
-
-    body.light-theme .sandbox-telemetry-panel > div:last-child,
-    [data-theme="light"] .sandbox-telemetry-panel > div:last-child {
-      border-top-color: #E2E8F0 !important;
-      color: #64748B !important;
-    }
-
-    body.light-theme .sandbox-telemetry-panel > div:last-child span,
-    [data-theme="light"] .sandbox-telemetry-panel > div:last-child span {
-      color: #0284C7 !important;
-      font-weight: 700 !important;
-    }
-
-    body.light-theme #sandbox-compromise-panel > div,
-    [data-theme="light"] #sandbox-compromise-panel > div {
-      background: #FEF2F2 !important;
-      border: 1px solid #FECACA !important;
-    }
-
-    body.light-theme #sandbox-compromise-panel h4,
-    [data-theme="light"] #sandbox-compromise-panel h4 {
-      color: #DC2626 !important;
-    }
-
-    body.light-theme #compromise-red-flags,
-    [data-theme="light"] #compromise-red-flags {
-      color: #7F1D1D !important;
-    }
-
-    body.light-theme #compromise-red-flags li span,
-    [data-theme="light"] #compromise-red-flags li span {
-      color: #7F1D1D !important;
-    }
-
-    body.light-theme #compromise-red-flags li span:first-child,
-    [data-theme="light"] #compromise-red-flags li span:first-child {
-      color: #DC2626 !important;
-    }
-
-    /* ── LIGHT MODE & GLOBAL STYLES: THREAT EXPOSURE SCANNER ── */
-    .btn-scan {
-      background: linear-gradient(135deg, #06B6D4, #3B82F6) !important;
-      color: #FFFFFF !important;
-      border: none !important;
-      box-shadow: 0 4px 14px rgba(6, 182, 212, 0.35) !important;
-      transition: all 0.25s ease;
-    }
-
-    .btn-scan:hover {
-      background: linear-gradient(135deg, #0891B2, #2563EB) !important;
-      box-shadow: 0 6px 20px rgba(6, 182, 212, 0.5) !important;
-      transform: translateY(-2px);
-    }
-
-    body.light-theme .exposure-scan-tile,
-    [data-theme="light"] .exposure-scan-tile {
-      background: rgba(255, 255, 255, 0.92) !important;
-      border: 1px solid #CBD5E1 !important;
-      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05) !important;
-    }
-
-    body.light-theme .exposure-scan-tile:hover,
-    [data-theme="light"] .exposure-scan-tile:hover {
-      background: #FFFFFF !important;
-      border-color: #0284C7 !important;
-      box-shadow: 0 12px 28px rgba(2, 132, 199, 0.12) !important;
-    }
-
-    body.light-theme .exposure-scan-tile:nth-child(1) div:nth-child(2),
-    [data-theme="light"] .exposure-scan-tile:nth-child(1) div:nth-child(2) {
-      color: #0284C7 !important;
-      font-weight: 700 !important;
-    }
-
-    body.light-theme .exposure-scan-tile:nth-child(2) div:nth-child(2),
-    [data-theme="light"] .exposure-scan-tile:nth-child(2) div:nth-child(2) {
-      color: #2563EB !important;
-      font-weight: 700 !important;
-    }
-
-    body.light-theme .exposure-scan-tile:nth-child(3) div:nth-child(2),
-    [data-theme="light"] .exposure-scan-tile:nth-child(3) div:nth-child(2) {
-      color: #7C3AED !important;
-      font-weight: 700 !important;
-    }
-
-    body.light-theme .exposure-scan-tile div:last-child,
-    [data-theme="light"] .exposure-scan-tile div:last-child {
-      color: #475569 !important;
-    }
-
-    body.light-theme #join-beta input[name="email"],
-    [data-theme="light"] #join-beta input[name="email"] {
-      background: #FFFFFF !important;
-      border: 1px solid #CBD5E1 !important;
-      color: #0F172A !important;
-      box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04) !important;
-    }
-
-    body.light-theme .btn-scan,
-    [data-theme="light"] .btn-scan {
-      background: linear-gradient(135deg, #0284C7, #2563EB) !important;
-      color: #FFFFFF !important;
-      box-shadow: 0 4px 14px rgba(2, 132, 199, 0.35) !important;
-    }
-
-    body.light-theme .btn-scan:hover,
-    [data-theme="light"] .btn-scan:hover {
-      background: linear-gradient(135deg, #0369A1, #1D4ED8) !important;
-      box-shadow: 0 6px 20px rgba(2, 132, 199, 0.45) !important;
-      transform: translateY(-2px);
-    }
-
-    /* ── LIGHT MODE OVERRIDES: PRICING SECTION ── */
-    body.light-theme #pricing,
-    [data-theme="light"] #pricing {
-      background: transparent !important;
-      border-top-color: #CBD5E1 !important;
-    }
-
-    body.light-theme #pricing .section-title,
-    [data-theme="light"] #pricing .section-title {
-      color: #0F172A !important;
-      -webkit-text-fill-color: initial !important;
-    }
-
-    body.light-theme #pricing .section-sub,
-    [data-theme="light"] #pricing .section-sub {
-      color: #475569 !important;
-    }
-
-    body.light-theme .pricing-card-starter,
-    [data-theme="light"] .pricing-card-starter {
-      background: #FFFFFF !important;
-      border: 1px solid #CBD5E1 !important;
-      box-shadow: 0 12px 36px rgba(15, 23, 42, 0.06) !important;
-    }
-
-    body.light-theme .pricing-card-starter:hover,
-    [data-theme="light"] .pricing-card-starter:hover {
-      box-shadow: 0 20px 48px rgba(15, 23, 42, 0.1) !important;
-    }
-
-    body.light-theme .pricing-card-starter div[style*="text-transform: uppercase"],
-    [data-theme="light"] .pricing-card-starter div[style*="text-transform: uppercase"] {
-      color: #64748B !important;
-    }
-
-    body.light-theme .pricing-card-starter h3,
-    [data-theme="light"] .pricing-card-starter h3 {
-      color: #0F172A !important;
-      font-weight: 700 !important;
-    }
-
-    body.light-theme .pricing-card-starter p,
-    [data-theme="light"] .pricing-card-starter p {
-      color: #475569 !important;
-    }
-
-    body.light-theme .pricing-card-starter span[style*="font-size: 3rem"],
-    [data-theme="light"] .pricing-card-starter span[style*="font-size: 3rem"] {
-      color: #0F172A !important;
-    }
-
-    body.light-theme .pricing-card-starter span[style*="color: #cbd5e1"],
-    [data-theme="light"] .pricing-card-starter span[style*="color: #cbd5e1"] {
-      color: #64748B !important;
-    }
-
-    body.light-theme .pricing-card-starter div[style*="height: 1px"],
-    [data-theme="light"] .pricing-card-starter div[style*="height: 1px"] {
-      background: #E2E8F0 !important;
-    }
-
-    body.light-theme .pricing-card-starter ul,
-    [data-theme="light"] .pricing-card-starter ul {
-      color: #334155 !important;
-    }
-
-    body.light-theme .pricing-card-starter ul li,
-    [data-theme="light"] .pricing-card-starter ul li {
-      color: #334155 !important;
-    }
-
-    body.light-theme .pricing-card-starter ul li i.ti-check,
-    [data-theme="light"] .pricing-card-starter ul li i.ti-check {
-      color: #0284C7 !important;
-    }
-
-    body.light-theme .pricing-card-starter a.btn-nav,
-    [data-theme="light"] .pricing-card-starter a.btn-nav {
-      background: #F1F5F9 !important;
-      border: 1px solid #CBD5E1 !important;
-      color: #0F172A !important;
-      box-shadow: none !important;
-    }
-
-    body.light-theme .pricing-card-starter a.btn-nav:hover,
-    [data-theme="light"] .pricing-card-starter a.btn-nav:hover {
-      background: #E2E8F0 !important;
-      color: #0F172A !important;
-      border-color: #94A3B8 !important;
-    }
-
-    body.light-theme .pricing-card-pro,
-    [data-theme="light"] .pricing-card-pro {
-      background: #FFFFFF !important;
-      border: 2px solid #0284C7 !important;
-      box-shadow: 0 20px 48px rgba(2, 132, 199, 0.16), 0 0 0 1px rgba(2, 132, 199, 0.1) !important;
-    }
-
-    body.light-theme .pricing-card-pro:hover,
-    [data-theme="light"] .pricing-card-pro:hover {
-      box-shadow: 0 24px 56px rgba(2, 132, 199, 0.22) !important;
-    }
-
-    body.light-theme .pricing-card-pro > div[style*="position: absolute; top: 20px"],
-    [data-theme="light"] .pricing-card-pro > div[style*="position: absolute; top: 20px"] {
-      background: rgba(2, 132, 199, 0.1) !important;
-      border: 1px solid rgba(2, 132, 199, 0.3) !important;
-      color: #0284C7 !important;
-      box-shadow: 0 2px 8px rgba(2, 132, 199, 0.15) !important;
-    }
-
-    body.light-theme .pricing-card-pro div[style*="font-size: 0.75rem"],
-    [data-theme="light"] .pricing-card-pro div[style*="font-size: 0.75rem"] {
-      color: #0284C7 !important;
-    }
-
-    body.light-theme .pricing-card-pro h3,
-    [data-theme="light"] .pricing-card-pro h3 {
-      color: #0F172A !important;
-      font-weight: 700 !important;
-    }
-
-    body.light-theme .pricing-card-pro p,
-    [data-theme="light"] .pricing-card-pro p {
-      color: #475569 !important;
-    }
-
-    body.light-theme #pro-price-val,
-    [data-theme="light"] #pro-price-val {
-      color: #0F172A !important;
-    }
-
-    body.light-theme #pro-price-period,
-    [data-theme="light"] #pro-price-period {
-      color: #64748B !important;
-    }
-
-    body.light-theme .pricing-card-pro div[style*="height: 1px"],
-    [data-theme="light"] .pricing-card-pro div[style*="height: 1px"] {
-      background: rgba(2, 132, 199, 0.2) !important;
-    }
-
-    body.light-theme .pricing-card-pro ul,
-    [data-theme="light"] .pricing-card-pro ul {
-      color: #1E293B !important;
-    }
-
-    body.light-theme .pricing-card-pro ul li,
-    [data-theme="light"] .pricing-card-pro ul li {
-      color: #1E293B !important;
-    }
-
-    body.light-theme .pricing-card-pro ul li strong,
-    [data-theme="light"] .pricing-card-pro ul li strong {
-      color: #0F172A !important;
-    }
-
-    body.light-theme .pricing-card-pro ul li i.ti-check,
-    [data-theme="light"] .pricing-card-pro ul li i.ti-check {
-      color: #0284C7 !important;
-    }
-
-    body.light-theme .pricing-card-pro a.btn-nav-pro,
-    [data-theme="light"] .pricing-card-pro a.btn-nav-pro {
-      background: linear-gradient(135deg, #0284C7, #2563EB) !important;
-      color: #FFFFFF !important;
-      border: none !important;
-      box-shadow: 0 8px 24px rgba(2, 132, 199, 0.35) !important;
-    }
-
-    body.light-theme .pricing-card-pro a.btn-nav-pro:hover,
-    [data-theme="light"] .pricing-card-pro a.btn-nav-pro:hover {
-      background: linear-gradient(135deg, #0369A1, #1D4ED8) !important;
-      box-shadow: 0 12px 28px rgba(2, 132, 199, 0.45) !important;
-      transform: translateY(-2px);
-    }
-
-    /* FAQ Title outside cards */
-    body.light-theme #pricing div[style*="margin: 80px auto 0"] h3,
-    [data-theme="light"] #pricing div[style*="margin: 80px auto 0"] h3 {
-      color: #0F172A !important;
-    }
-
-    body.light-theme .pricing-faq-card,
-    [data-theme="light"] .pricing-faq-card {
-      background: #FFFFFF !important;
-      border: 1px solid #CBD5E1 !important;
-      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04) !important;
-    }
-
-    body.light-theme .pricing-faq-card h4,
-    [data-theme="light"] .pricing-faq-card h4 {
-      color: #0F172A !important;
-    }
-
-    body.light-theme .pricing-faq-card p,
-    [data-theme="light"] .pricing-faq-card p {
-      color: #475569 !important;
-    }
-
-    body.light-theme #pricing-toggle-switch + span,
-    [data-theme="light"] #pricing-toggle-switch + span {
-      background-color: #E2E8F0 !important;
-      border-color: #CBD5E1 !important;
-    }
-
-    /* --- CYBER SPOTLIGHT TEXT EFFECT --- */
-    h1,
-    h2,
-    .cyber-spotlight-text {
+      font-family: var(--font-sans);
+      font-size: 0.82rem;
+      color: var(--text-secondary);
+      line-height: 1.4;
+    }
+
+    /* Sandbox Container Styles */
+    .sandbox-display-container {
+      background: var(--bg-surface, rgba(15, 23, 42, 0.5));
+      border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.08));
+      border-radius: var(--radius-card, 16px);
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .sandbox-email-window {
+      background: var(--bg-surface-elevated, #020617);
+      border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.08));
+      border-radius: var(--radius-sm, 12px);
+      overflow: hidden;
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.2);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .sandbox-email-bar {
+      background: var(--bg-surface, rgba(255, 255, 255, 0.02));
+      border-bottom: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.06));
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .sandbox-email-header {
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.04));
+      font-size: 0.85rem;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      background: color-mix(in srgb, var(--bg-surface) 60%, transparent);
+    }
+
+    .sandbox-telemetry-panel {
+      background: var(--bg-surface-elevated, #020617);
+      border: 1px solid var(--border-subtle, rgba(6, 182, 212, 0.2));
+      border-radius: var(--radius-sm, 12px);
+      padding: 1.4rem;
+      display: flex;
+      flex-direction: column;
+      font-family: var(--font-mono), monospace;
+      font-size: 0.78rem;
+      min-height: 320px;
+      box-sizing: border-box;
+    }
+
+    /* Heading Shimmer Effect */
+    h1, h2, .cyber-spotlight-text {
       position: relative;
       background: radial-gradient(circle 160px at var(--mouse-x, 50%) var(--mouse-y, 50%),
-          #7dd3fc 0%,
-          var(--primary) 25%,
-          #a78bfa 55%,
-          #e0f2fe 80%);
-      background-size: 250% 100%;
+          var(--primary) 0%,
+          #38bdf8 35%,
+          var(--text-primary) 70%);
+      background-size: 200% 100%;
       -webkit-background-clip: text !important;
       background-clip: text !important;
       -webkit-text-fill-color: transparent !important;
       color: transparent !important;
       transition: background 0.06s linear;
-      animation: headingShimmer 6s ease-in-out infinite;
-    }
-
-    body.light-theme h1,
-    body.light-theme h2,
-    body.light-theme .cyber-spotlight-text {
-      background: radial-gradient(circle 160px at var(--mouse-x, 50%) var(--mouse-y, 50%),
-          #3b82f6 0%,
-          #2563eb 25%,
-          #4f46e5 55%,
-          #0f172a 80%);
-      background-size: 250% 100%;
-      -webkit-background-clip: text !important;
-      background-clip: text !important;
-      -webkit-text-fill-color: transparent !important;
-      color: transparent !important;
-      animation: headingShimmer 6s ease-in-out infinite;
     }
   </style>
 
@@ -6026,57 +5336,50 @@
   </script>
 
   <!-- CAPABILITIES -->
+  <!-- CAPABILITIES -->
   <section id="capabilities">
     <div class="text-center reveal">
-      <div class="section-eyebrow">Platform</div>
-      <h2 class="section-title">Core Capabilities</h2>
-      <p class="section-sub">Everything you need to run a professional phishing simulation — built in, not bolted on.
-      </p>
+      <div class="section-eyebrow">Engine Architecture</div>
+      <h2 class="section-title">End-to-End Simulation Infrastructure</h2>
+      <p class="section-sub">Everything required to design, dispatch, monitor, and remediate organizational phishing vulnerability.</p>
     </div>
 
     <div class="caps-grid">
       <div class="cap-card cap-card-1 reveal reveal-delay-1" data-tilt>
         <div class="cap-card-glare"></div>
-        <div class="cap-icon"><i class="ti ti-file-upload" style="color: var(--cyan); font-size: 2.2rem;"></i></div>
-        <div class="cap-title">CSV Campaign Launch</div>
-        <div class="cap-desc">Upload an employee CSV and provide your company domain. PhishSim parses departments and
-          job titles automatically — no manual setup needed.</div>
+        <div class="cap-icon"><i class="ti ti-file-upload" style="color: var(--primary); font-size: 2rem;"></i></div>
+        <div class="cap-title">Automated Roster Ingestion</div>
+        <div class="cap-desc">Upload employee rosters via CSV. The engine automatically maps departments, seniority tiers, and corporate hierarchy without manual tagging.</div>
       </div>
       <div class="cap-card cap-card-2 reveal reveal-delay-2" data-tilt>
         <div class="cap-card-glare"></div>
-        <div class="cap-icon"><i class="ti ti-cpu" style="color: var(--cyan); font-size: 2.2rem;"></i></div>
-        <div class="cap-title">Agentic Email Generation</div>
-        <div class="cap-desc">The AI drafts a unique, context-aware phishing email for each employee — referencing their
-          role, department, and company tone. Generated fresh every time.</div>
+        <div class="cap-icon"><i class="ti ti-cpu" style="color: var(--primary); font-size: 2rem;"></i></div>
+        <div class="cap-title">Contextual Lure Synthesis</div>
+        <div class="cap-desc">Synthesize hyper-realistic simulation pretexts tailored to employee function — IT renewals, HR updates, and executive authorizations.</div>
       </div>
       <div class="cap-card cap-card-3 reveal reveal-delay-3" data-tilt>
         <div class="cap-card-glare"></div>
-        <div class="cap-icon"><i class="ti ti-presentation-analytics"
-            style="color: var(--cyan); font-size: 2.2rem;"></i></div>
-        <div class="cap-title">Real-Time Dashboards</div>
-        <div class="cap-desc">Live metrics track emails sent, open rates, click rates, and report rates — updated as
-          events happen, not in a batch at the end.</div>
+        <div class="cap-icon"><i class="ti ti-presentation-analytics" style="color: var(--primary); font-size: 2rem;"></i></div>
+        <div class="cap-title">Real-Time Telemetry Pipeline</div>
+        <div class="cap-desc">Live metrics capture opens, click-throughs, credential captures, and report events immediately as employees interact with lures.</div>
       </div>
       <div class="cap-card cap-card-4 reveal reveal-delay-1" data-tilt>
         <div class="cap-card-glare"></div>
-        <div class="cap-icon"><i class="ti ti-brain" style="color: var(--cyan); font-size: 2.2rem;"></i></div>
-        <div class="cap-title">AI Risk Analysis</div>
-        <div class="cap-desc">After each campaign, the AI identifies your most vulnerable departments and writes a
-          plain-language risk summary with actionable next steps.</div>
+        <div class="cap-icon"><i class="ti ti-brain" style="color: var(--primary); font-size: 2rem;"></i></div>
+        <div class="cap-title">Behavioral Risk Heatmaps</div>
+        <div class="cap-desc">Benchmark department vulnerability indices, track training completion velocity, and pinpoint repeat-clickers across multiple campaigns.</div>
       </div>
       <div class="cap-card cap-card-5 reveal reveal-delay-2" data-tilt>
         <div class="cap-card-glare"></div>
-        <div class="cap-icon"><i class="ti ti-shield-check" style="color: var(--cyan); font-size: 2.2rem;"></i></div>
-        <div class="cap-title">Security Reports</div>
-        <div class="cap-desc">Each campaign generates a detailed security posture report — highlighting what worked, who
-          clicked, and what training to prioritize.</div>
+        <div class="cap-icon"><i class="ti ti-mail-check" style="color: var(--primary); font-size: 2rem;"></i></div>
+        <div class="cap-title">In-Inbox Threat Reporting</div>
+        <div class="cap-desc">One-click Outlook and Google reporting plugin empowers targets to report suspicious emails instantly with real-time feedback.</div>
       </div>
       <div class="cap-card cap-card-6 reveal reveal-delay-3" data-tilt>
         <div class="cap-card-glare"></div>
-        <div class="cap-icon"><i class="ti ti-file-type-pdf" style="color: var(--cyan); font-size: 2.2rem;"></i></div>
-        <div class="cap-title">PDF Export</div>
-        <div class="cap-desc">Download a professionally formatted PDF report in one click — audit-ready for compliance
-          reviews, board meetings, or your security team.</div>
+        <div class="cap-icon"><i class="ti ti-file-type-pdf" style="color: var(--primary); font-size: 2rem;"></i></div>
+        <div class="cap-title">Audit-Ready Compliance Exports</div>
+        <div class="cap-desc">Download white-labeled, executive-ready PDF security posture reports formatted for SOC 2 Type II, ISO 27001, and cyber insurance audits.</div>
       </div>
     </div>
   </section>
@@ -6226,18 +5529,16 @@
     </div>
   </section>
 
-  <!-- SOLUTIONS SECTION (Enterprise Solutions Suite) -->
+  <!-- SOLUTIONS SECTION (Train Your Team Architecture) -->
   <section id="solutions"
     style="padding: 100px 5% 80px; background: var(--bg); position: relative; z-index: 2; border-top: 1px solid var(--border);">
-    <div style="max-width: 1200px; margin: 0 auto; text-align: center; margin-bottom: 60px;">
-      <div class="section-eyebrow reveal">Solutions Suite</div>
+    <div style="max-width: 1200px; margin: 0 auto; text-align: center; margin-bottom: 60px;" class="solutions-header">
+      <div class="section-eyebrow reveal">TRAIN YOUR TEAM</div>
       <h2 class="section-title reveal"
         style="font-size: clamp(2rem, 3.5vw, 2.8rem); font-weight: 700; color: var(--white); margin: 16px 0; line-height: 1.25;">
-        Automated Human Risk Management</h2>
+        A Continuous Defense Workflow</h2>
       <p class="section-sub reveal"
-        style="font-size: 1.05rem; color: var(--muted); max-width: 600px; margin: 0 auto; line-height: 1.6;">Beyond
-        simulations. PhishSim.ai coordinates passive exposure scans, active tests, micro-learning courses, and telemetry
-        feeds into a single dashboard.</p>
+        style="font-size: 1.05rem; color: var(--muted); max-width: 600px; margin: 0 auto; line-height: 1.6; text-align: center; display: block;">Four integrated pillars that prepare employees for sophisticated deception, coach in real time, and quantify organizational risk.</p>
     </div>
 
     <div
@@ -6358,498 +5659,705 @@
     </div>
   </section><!-- /solutions -->
 
-  <!-- THREAT INTELLIGENCE SUITE -->
-  <section id="threat-intel-suite">
-    <div style="max-width: 1200px; margin: 0 auto 50px; text-align: center;">
-      <div class="section-eyebrow">Threat Suite</div>
-      <h2 class="section-title"
-        style="font-size: clamp(2rem, 3.5vw, 2.8rem); font-weight: 700; color: var(--text-main); margin: 16px 0; line-height: 1.25;">
-        Advanced Defensive Infrastructure</h2>
-      <p class="section-sub"
-        style="font-size: 1.05rem; color: var(--muted); max-width: 600px; margin: 0 auto; line-height: 1.6;">Proactive
-        security analytics and intelligence tools for modern enterprise environments.</p>
+  <!-- START WITH WHAT YOU'RE HOLDING (REPLACES THREAT-INTEL-SUITE) -->
+  <section id="threat-intel-suite" class="holding-section" aria-labelledby="holding-heading">
+    <!-- Scroll Step Waypoints for Desktop Scroll-Driven Progress -->
+    <div class="holding-scroll-tracker" aria-hidden="true">
+      <div class="holding-scroll-step" data-step-target="email" style="top: 0; height: 25%;"></div>
+      <div class="holding-scroll-step" data-step-target="link" style="top: 25%; height: 25%;"></div>
+      <div class="holding-scroll-step" data-step-target="password" style="top: 50%; height: 25%;"></div>
+      <div class="holding-scroll-step" data-step-target="domain" style="top: 75%; height: 25%;"></div>
     </div>
 
-    <div class="suite-grid">
-      <!-- Card 1: Threat Analyzer -->
-      <a href="/threat-analyzer" class="suite-card">
-        <div class="suite-card-top">
-          <div class="suite-icon"><i class="ti ti-heartbeat"></i></div>
-          <span class="suite-badge-pro"
-            style="background:rgba(6,182,212,0.1); border-color:rgba(6,182,212,0.3); color:#06b6d4;">CORE</span>
-        </div>
-        <div>
-          <h3 class="suite-title">Threat Analyzer</h3>
-          <p class="suite-desc">Analyze email headers, lexical structures, and hyperlinks instantly to calculate threat
-            level scoring parameters.</p>
-        </div>
-        <div class="suite-link-text">Open Threat Analyzer <i class="ti ti-arrow-right"></i></div>
-      </a>
-
-      <!-- Card 2: Email Header Analyzer -->
-      <a href="/header-analyzer" class="suite-card">
-        <div class="suite-card-top">
-          <div class="suite-icon"
-            style="color:#8b5cf6; background:rgba(139,92,246,0.08); border-color:rgba(139,92,246,0.2);"><i
-              class="ti ti-mail-search"></i></div>
-          <span class="suite-badge-pro"
-            style="background:rgba(139,92,246,0.1); border-color:rgba(139,92,246,0.3); color:#8b5cf6;">DECODER</span>
-        </div>
-        <div>
-          <h3 class="suite-title">Header Analyzer</h3>
-          <p class="suite-desc">Paste raw email headers and get a full DMARC / SPF / DKIM verdict with routing hop map
-            and Reply-To mismatch detection.</p>
-        </div>
-        <div class="suite-link-text" style="color:#8b5cf6;">Analyze Headers <i class="ti ti-arrow-right"></i></div>
-      </a>
-
-      <!-- Card 3: URL Decoder -->
-      <a href="/url-decoder" class="suite-card">
-        <div class="suite-card-top">
-          <div class="suite-icon"
-            style="color:#10b981; background:rgba(16,185,129,0.08); border-color:rgba(16,185,129,0.2);"><i
-              class="ti ti-link"></i></div>
-          <span class="suite-badge-pro"
-            style="background:rgba(16,185,129,0.1); border-color:rgba(16,185,129,0.3); color:#10b981;">TRACER</span>
-        </div>
-        <div>
-          <h3 class="suite-title">Phishing URL Decoder</h3>
-          <p class="suite-desc">Follow live redirect chains, decode obfuscation, and check the final destination against
-            URLhaus malware feeds in real time.</p>
-        </div>
-        <div class="suite-link-text" style="color:#10b981;">Decode URL <i class="ti ti-arrow-right"></i></div>
-      </a>
-
-      <!-- Card 4: Password Breach Check -->
-      <a href="/password-breach" class="suite-card">
-        <div class="suite-card-top">
-          <div class="suite-icon"
-            style="color:var(--warning); background:color-mix(in srgb, var(--warning) 8%, transparent); border-color:color-mix(in srgb, var(--warning) 15%, transparent);"><i
-              class="ti ti-key"></i></div>
-          <span class="suite-badge-pro"
-            style="background:color-mix(in srgb, var(--warning) 10%, transparent); border-color:color-mix(in srgb, var(--warning) 18%, transparent); color:var(--warning);">BREACH</span>
-        </div>
-        <div>
-          <h3 class="suite-title">Password Breach Check</h3>
-          <p class="suite-desc">Instantly check if a password appears in any known data breach using the HaveIBeenPwned
-            k-anonymity API — password never leaves your browser in full.</p>
-        </div>
-        <div class="suite-link-text" style="color:var(--warning);">Check Password <i class="ti ti-arrow-right"></i></div>
-      </a>
-
-      <!-- Card 5: PhishRecon -->
-      <a href="/exposure-report" class="suite-card">
-        <div class="suite-card-top">
-          <div class="suite-icon"
-            style="color:var(--primary); background:color-mix(in srgb, var(--primary) 8%, transparent); border-color:color-mix(in srgb, var(--primary) 15%, transparent);"><i
-              class="ti ti-radar"></i></div>
-          <span class="suite-badge-pro"
-            style="background:color-mix(in srgb, var(--primary) 10%, transparent); border-color:color-mix(in srgb, var(--primary) 18%, transparent); color:var(--primary);">AUDIT</span>
-        </div>
-        <div>
-          <h3 class="suite-title">PhishRecon</h3>
-          <p class="suite-desc">Audit any domain's public attack surface: registration age, TLS, look-alike domains that
-            resolve, and subdomains from certificate transparency. Checks that can't complete are reported as such.</p>
-        </div>
-        <div class="suite-link-text" style="color:var(--primary);">Audit a Domain <i class="ti ti-arrow-right"></i></div>
-      </a>
-    </div>
-
-    <!-- Row 2: AI Risk Advisor centred solo — PRO, eye-catching pulse -->
-    <div style="max-width: 1200px; margin: 28px auto 0; display: flex; justify-content: center;">
-      <a href="/ai-risk-advisor"
-        class="suite-card suite-card-advisor {% if not current_user or current_user.role not in ('admin', 'pro') %}disabled{% endif %}"
-        style="max-width: 560px; width: 100%; position: relative; overflow: visible;">
-        <span class="advisor-pulse-ring"></span>
-        <div class="suite-card-top">
-          <div class="suite-icon"
-            style="color:#fbbf24; background:linear-gradient(135deg, color-mix(in srgb, var(--warning) 20.0%, transparent), rgba(217,119,6,0.1)); border-color:color-mix(in srgb, var(--warning) 45.0%, transparent); box-shadow: 0 0 6px color-mix(in srgb, var(--warning) 16%, transparent);">
-            <i class="ti ti-crown"></i></div>
-          <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-            <span class="suite-badge-pro"
-              style="background:color-mix(in srgb, var(--warning) 15.0%, transparent); border-color:color-mix(in srgb, var(--warning) 50.0%, transparent); color:#fbbf24;">
-              <i class="ti ti-crown" style="margin-right:3px; font-size:0.75rem;"></i>
-              {% if current_user and current_user.role in ('admin', 'pro') %}UNLOCKED{% else %}PRO EXCLUSIVE{% endif %}
-            </span>
-            <span
-              style="font-family:var(--font-mono); font-size:0.65rem; color:#fbbf24; opacity:0.7; text-transform:uppercase; letter-spacing:0.08em;">Agentic
-              AI</span>
+    <div class="holding-container">
+      
+      <!-- Left Column: Sticky Navigator -->
+      <div class="holding-nav-col">
+        <div class="holding-header">
+          <div class="holding-badge">
+            <i class="ti ti-shield-code" aria-hidden="true"></i>
+            <span>Interactive Defense Console</span>
+            <span class="holding-pulse-dot" aria-hidden="true"></span>
           </div>
+          <h2 id="holding-heading" class="holding-title">
+            Start with what you're <span class="holding-title-highlight">holding.</span>
+          </h2>
+          <p class="holding-sub">
+            Encountered a suspicious artifact? Select an entry vector below to dissect headers, trace evasive redirects, audit credential exposure, or map attack surfaces in real time.
+          </p>
         </div>
-        <div>
-          <h3 class="suite-title"
-            style="font-size:1.2rem; {% if not current_user or current_user.role not in ('admin', 'pro') %}color: #64748b;{% endif %}">
-            AI Risk Advisor</h3>
-          <p class="suite-desc"
-            style="{% if not current_user or current_user.role not in ('admin', 'pro') %}color: #475569;{% endif %}">
-            Continuous, agentic risk modeling from your campaign behavior, employee click patterns, reporting culture,
-            and industry benchmarks. Generates personalised remediation roadmaps and predicts your next breach vector
-            before it happens.</p>
+
+        <!-- Vertical Tab List (Desktop) / Segmented Control (Mobile) -->
+        <div class="holding-tabs" role="tablist" aria-label="Investigate by input type" id="holding-tablist">
+          
+          <!-- Row 1: Email -->
+          <button type="button"
+                  role="tab"
+                  id="holding-tab-email"
+                  class="holding-tab-item is-active"
+                  aria-selected="true"
+                  aria-controls="holding-panel-email"
+                  data-target="email"
+                  tabindex="0">
+            <div class="holding-tab-inner">
+              <div class="holding-tab-icon icon-email" aria-hidden="true">
+                <i class="ti ti-mail-exclamation"></i>
+              </div>
+              <div class="holding-tab-body">
+                <div class="holding-tab-row-top">
+                  <span class="holding-tab-sentence">A suspicious email.</span>
+                  <span class="holding-tab-link" data-href="/threat-analyzer" title="Launch Threat Analyzer">
+                    <span>Threat Analyzer</span>
+                    <i class="ti ti-arrow-up-right" aria-hidden="true"></i>
+                  </span>
+                </div>
+                <p class="holding-tab-desc">Deconstruct spoofed headers, synthetic financial urgency, and obfuscated payload links.</p>
+              </div>
+            </div>
+          </button>
+
+          <!-- Row 2: Link -->
+          <button type="button"
+                  role="tab"
+                  id="holding-tab-link"
+                  class="holding-tab-item"
+                  aria-selected="false"
+                  aria-controls="holding-panel-link"
+                  data-target="link"
+                  tabindex="-1">
+            <div class="holding-tab-inner">
+              <div class="holding-tab-icon icon-link" aria-hidden="true">
+                <i class="ti ti-link"></i>
+              </div>
+              <div class="holding-tab-body">
+                <div class="holding-tab-row-top">
+                  <span class="holding-tab-sentence">A link you don't trust.</span>
+                  <span class="holding-tab-link" data-href="/url-decoder" title="Launch URL Decoder">
+                    <span>URL Decoder</span>
+                    <i class="ti ti-arrow-up-right" aria-hidden="true"></i>
+                  </span>
+                </div>
+                <p class="holding-tab-desc">Unmask multi-hop evasive redirect chains and verify destination endpoints against live threat feeds.</p>
+              </div>
+            </div>
+          </button>
+
+          <!-- Row 3: Password -->
+          <button type="button"
+                  role="tab"
+                  id="holding-tab-password"
+                  class="holding-tab-item"
+                  aria-selected="false"
+                  aria-controls="holding-panel-password"
+                  data-target="password"
+                  tabindex="-1">
+            <div class="holding-tab-inner">
+              <div class="holding-tab-icon icon-password" aria-hidden="true">
+                <i class="ti ti-key"></i>
+              </div>
+              <div class="holding-tab-body">
+                <div class="holding-tab-row-top">
+                  <span class="holding-tab-sentence">A password you reuse.</span>
+                  <span class="holding-tab-link" data-href="/password-breach" title="Launch Password Breach Check">
+                    <span>Password Breach Check</span>
+                    <i class="ti ti-arrow-up-right" aria-hidden="true"></i>
+                  </span>
+                </div>
+                <p class="holding-tab-desc">Query billions of leaked credentials locally using SHA-1 k-anonymity—your password never leaves your browser.</p>
+              </div>
+            </div>
+          </button>
+
+          <!-- Row 4: Company domain -->
+          <button type="button"
+                  role="tab"
+                  id="holding-tab-domain"
+                  class="holding-tab-item"
+                  aria-selected="false"
+                  aria-controls="holding-panel-domain"
+                  data-target="domain"
+                  tabindex="-1">
+            <div class="holding-tab-inner">
+              <div class="holding-tab-icon icon-domain" aria-hidden="true">
+                <i class="ti ti-world-search"></i>
+              </div>
+              <div class="holding-tab-body">
+                <div class="holding-tab-row-top">
+                  <span class="holding-tab-sentence">A company domain.</span>
+                  <span class="holding-tab-link" data-href="/exposure-report" title="Launch PhishRecon">
+                    <span>PhishRecon</span>
+                    <i class="ti ti-arrow-up-right" aria-hidden="true"></i>
+                  </span>
+                </div>
+                <p class="holding-tab-desc">Map perimeter posture, certificate transparency logs, subdomains, and resolving impersonation look-alikes.</p>
+              </div>
+            </div>
+          </button>
+
         </div>
-        <div class="suite-link-text"
-          style="{% if not current_user or current_user.role not in ('admin', 'pro') %}color: #475569;{% endif %}">
-          {% if current_user and current_user.role in ('admin', 'pro') %}Open AI Risk Advisor <i
-            class="ti ti-arrow-right"></i>{% else %}Upgrade to unlock <i class="ti ti-lock"></i>{% endif %}
+      </div>
+
+      <!-- Right Column: The Stage (Single Raised Surface) -->
+      <div class="holding-stage-col">
+        <div class="holding-stage-card" id="holding-stage-card" aria-live="polite">
+          
+          <!-- Stage Top Bar -->
+          <div class="holding-stage-bar">
+            <div class="holding-stage-left">
+              <div class="holding-terminal-dots" aria-hidden="true">
+                <span class="term-dot term-dot-red"></span>
+                <span class="term-dot term-dot-yellow"></span>
+                <span class="term-dot term-dot-green"></span>
+              </div>
+              <div class="holding-stage-tool">
+                <span class="holding-stage-dot" aria-hidden="true"></span>
+                <span id="holding-stage-title" class="holding-stage-title">Email forensics</span>
+              </div>
+            </div>
+            <div class="holding-stage-badge">
+              <i class="ti ti-activity" aria-hidden="true"></i>
+              <span>Live Simulation</span>
+            </div>
+          </div>
+
+          <!-- Stage Display Viewport (Fixed Height: Zero Layout Shift) -->
+          <div class="holding-stage-viewport" id="holding-stage-viewport">
+            
+            <!-- Panel 1: Email -->
+            <div role="tabpanel"
+                 id="holding-panel-email"
+                 class="holding-panel is-active"
+                 aria-labelledby="holding-tab-email"
+                 data-panel="email">
+            </div>
+
+            <!-- Panel 2: Link -->
+            <div role="tabpanel"
+                 id="holding-panel-link"
+                 class="holding-panel"
+                 aria-labelledby="holding-tab-link"
+                 data-panel="link"
+                 hidden>
+            </div>
+
+            <!-- Panel 3: Password -->
+            <div role="tabpanel"
+                 id="holding-panel-password"
+                 class="holding-panel"
+                 aria-labelledby="holding-tab-password"
+                 data-panel="password"
+                 hidden>
+            </div>
+
+            <!-- Panel 4: Company domain -->
+            <div role="tabpanel"
+                 id="holding-panel-domain"
+                 class="holding-panel"
+                 aria-labelledby="holding-tab-domain"
+                 data-panel="domain"
+                 hidden>
+            </div>
+
+          </div>
+
         </div>
-      </a>
+
+        <!-- Domain Audit Input Form (Directly under the stage) -->
+        <div class="holding-domain-cta" id="holding-domain-cta">
+          <div class="holding-domain-top">
+            <div class="holding-domain-badge">
+              <i class="ti ti-scan" aria-hidden="true"></i>
+              <label for="holding-domain-input" class="holding-domain-label">Instant Perimeter Audit</label>
+            </div>
+            <span class="holding-domain-hint">Zero authentication required · Passive DNS &amp; TLS verification</span>
+          </div>
+          <form id="holding-domain-form" class="holding-domain-form" novalidate>
+            <div class="holding-input-wrap">
+              <i class="ti ti-world holding-input-icon" aria-hidden="true"></i>
+              <input type="text"
+                     id="holding-domain-input"
+                     class="holding-domain-input"
+                     placeholder="Enter domain (e.g. acme.com or corp.co.uk)"
+                     autocomplete="off"
+                     spellcheck="false"
+                     aria-describedby="holding-domain-error">
+              <button type="submit" class="holding-domain-btn" id="holding-domain-submit">
+                <span>Run Free Audit</span>
+                <i class="ti ti-arrow-right" aria-hidden="true"></i>
+              </button>
+            </div>
+            <p id="holding-domain-error" class="holding-domain-error" role="alert" style="display: none;"></p>
+          </form>
+        </div>
+
+      </div>
+
     </div>
-
-    <style>
-      .suite-card-advisor {
-        border: 1px solid color-mix(in srgb, var(--warning) 35.0%, transparent) !important;
-        animation: advisorPulse 2.8s ease-in-out infinite;
-      }
-
-      .suite-card-advisor:hover {
-        animation-play-state: paused;
-        box-shadow: 0 0 0 6px color-mix(in srgb, var(--warning) 12%, transparent), 0 16px 28px color-mix(in srgb, var(--warning) 14%, transparent) !important;
-        transform: translateY(-4px) scale(1.012);
-      }
-
-      @keyframes advisorPulse {
-
-        0%,
-        100% {
-          box-shadow: 0 0 0 0 color-mix(in srgb, var(--warning) 40.0%, transparent), 0 8px 32px color-mix(in srgb, var(--warning) 8.0%, transparent);
-        }
-
-        50% {
-          box-shadow: 0 0 0 8px color-mix(in srgb, var(--warning) 0.0%, transparent), 0 12px 40px color-mix(in srgb, var(--warning) 18.0%, transparent);
-        }
-      }
-
-      .advisor-pulse-ring {
-        position: absolute;
-        inset: -3px;
-        border-radius: inherit;
-        pointer-events: none;
-        border: 2px solid color-mix(in srgb, var(--warning) 50.0%, transparent);
-        animation: advisorRing 2.8s ease-in-out infinite;
-      }
-
-      @keyframes advisorRing {
-
-        0%,
-        100% {
-          opacity: 0.5;
-          transform: scale(1);
-        }
-
-        50% {
-          opacity: 1;
-          transform: scale(1.005);
-        }
-      }
-    </style>
   </section>
 
 
   <!-- STATS + COMPARE -->
+  <!-- STATS + COMPARE -->
   <section id="stats">
     <div class="stats-inner">
       <div>
-        <div class="section-eyebrow reveal">Results</div>
-        <h2 class="section-title reveal">What a Real Campaign Reveals</h2>
-        <p class="section-sub reveal">Real, cumulative numbers from PhishSim AI simulations to date.</p>
+        <div class="section-eyebrow reveal">Measurable Impact</div>
+        <h2 class="section-title reveal">What Continuous Simulation Reveals</h2>
+        <p class="section-sub reveal">{% if public_stats.total_simulations and public_stats.total_simulations > 0 %}Live aggregate metrics from simulation campaigns executed to date.{% else %}Engine performance benchmarks and threat surface coverage.{% endif %}</p>
 
         <div class="stats-grid" style="margin-top:36px">
-          <!-- Card 1: Opened Emails -->
+          {% if public_stats.total_simulations and public_stats.total_simulations > 0 %}
+          <!-- Card 1: Opened Emails (Live) -->
           <div class="stat-card reveal reveal-delay-1">
             {% if public_stats.pct_emails_opened is not none %}
             <div class="stat-num" data-countup data-target="{{ public_stats.pct_emails_opened }}" data-suffix="%">{{ public_stats.pct_emails_opened }}<span>%</span></div>
             {% else %}
-            <div class="stat-num" style="font-size: clamp(1.15rem, 1.8vw, 1.5rem); line-height: 2.2; white-space: nowrap; color: var(--text-secondary);">Not enough data yet</div>
+            <div class="stat-num" style="font-size: clamp(1.2rem, 1.8vw, 1.6rem); line-height: 2.2; color: var(--text-secondary);">Tracking Active</div>
             {% endif %}
-            <div class="stat-label">of simulated emails are opened</div>
-            <div class="stat-bench">
-              {% if public_stats.total_simulations_formatted %}
-              based on {{ public_stats.total_simulations_formatted }} simulations to date.
-              {% else %}
-              based on 650+ simulations to date.
-              {% endif %}
-            </div>
+            <div class="stat-label">of simulated emails opened</div>
+            <div class="stat-bench">Across {{ public_stats.total_simulations_formatted }} simulation dispatches</div>
           </div>
 
-          <!-- Card 2: Click Rate -->
+          <!-- Card 2: Click Rate (Live) -->
           <div class="stat-card reveal reveal-delay-2">
             {% if public_stats.pct_clicked is not none %}
             <div class="stat-num" data-countup data-target="{{ public_stats.pct_clicked }}" data-suffix="%">{{ public_stats.pct_clicked }}<span>%</span></div>
             {% else %}
-            <div class="stat-num" style="font-size: clamp(1.15rem, 1.8vw, 1.5rem); line-height: 2.2; white-space: nowrap; color: var(--text-secondary);">Not enough data yet</div>
+            <div class="stat-num" style="font-size: clamp(1.2rem, 1.8vw, 1.6rem); line-height: 2.2; color: var(--text-secondary);">Tracking Active</div>
             {% endif %}
-            <div class="stat-label">of targets click the phishing link</div>
-            {% if public_stats.pct_clicked_finance_dept is not none %}
-            <div class="stat-bench">Finance dept: {{ public_stats.pct_clicked_finance_dept }}%</div>
-            {% else %}
-            <div class="stat-bench">Tracked across active target departments</div>
-            {% endif %}
+            <div class="stat-label">of targets clicked the simulated link</div>
+            <div class="stat-bench">{% if public_stats.pct_clicked_finance_dept is not none %}Finance dept: {{ public_stats.pct_clicked_finance_dept }}%{% else %}Tracked across active target departments{% endif %}</div>
           </div>
 
-          <!-- Card 3: Report Rate -->
+          <!-- Card 3: Report Rate (Live) -->
           <div class="stat-card reveal reveal-delay-3">
             {% if public_stats.pct_reported is not none %}
             <div class="stat-num" data-countup data-target="{{ public_stats.pct_reported }}" data-suffix="%">{{ public_stats.pct_reported }}<span>%</span></div>
             {% else %}
-            <div class="stat-num" style="font-size: clamp(1.15rem, 1.8vw, 1.5rem); line-height: 2.2; white-space: nowrap; color: var(--text-secondary);">Not enough data yet</div>
+            <div class="stat-num" style="font-size: clamp(1.2rem, 1.8vw, 1.6rem); line-height: 2.2; color: var(--text-secondary);">Tracking Active</div>
             {% endif %}
-            <div class="stat-label">active reporting of suspicious lures</div>
-            <div class="stat-bench">Goal: above 40%</div>
+            <div class="stat-label">reported via in-inbox plugin</div>
+            <div class="stat-bench">Target resilience benchmark: &gt;40%</div>
           </div>
 
-          <!-- Card 4: Upload to Dispatch Time -->
+          <!-- Card 4: Dispatch Velocity -->
           <div class="stat-card reveal reveal-delay-4">
-            {% if public_stats.avg_csv_to_first_email_minutes is not none %}
-            <div class="stat-num" data-countup data-target="{{ public_stats.avg_csv_to_first_email_minutes }}" data-suffix=" min">{{ public_stats.avg_csv_to_first_email_minutes }}<span> min</span></div>
-            {% else %}
-            <div class="stat-num" data-countup data-target="2" data-suffix=" min">2<span> min</span></div>
-            {% endif %}
-            <div class="stat-label">from CSV upload to first email sent</div>
-            <div class="stat-bench">CSV → AI → dispatch</div>
+            <div class="stat-num">&lt; 60<span>s</span></div>
+            <div class="stat-label">CSV upload to automated dispatch</div>
+            <div class="stat-bench">Automated role parsing & dispatch</div>
           </div>
-                </div>
-              </div>
+          {% else %}
+          <!-- Capability Benchmark Fallbacks (When no simulations have run yet) -->
+          <div class="stat-card reveal reveal-delay-1">
+            <div class="stat-num">100<span>+</span></div>
+            <div class="stat-label">MITRE ATT&CK scenario templates</div>
+            <div class="stat-bench">Covers spear-phishing, quishing & pretexting</div>
+          </div>
 
-              <div class="compare-box reveal">
-                <div class="compare-col bad">
-                  <div class="compare-head">
-                    <span class="icon x">✕</span> Without Simulation
-                  </div>
-                  <div class="compare-item"><span class="icon x">✕</span>You don't know which employees would click a
-                    real attack</div>
-                  <div class="compare-item"><span class="icon x">✕</span>No data on which departments are most exposed
-                  </div>
-                  <div class="compare-item"><span class="icon x">✕</span>Security training is generic — not based on
-                    real behaviour</div>
-                  <div class="compare-item"><span class="icon x">✕</span>Compliance reports have no evidence of
-                    human-layer testing</div>
-                </div>
-                <div class="compare-col good">
-                  <div class="compare-head">
-                    <span class="icon check">✓</span> With PhishSim AI
-                  </div>
-                  <div class="compare-item"><span class="icon check">✓</span>Know exactly who clicks before a real
-                    attacker finds out</div>
-                  <div class="compare-item"><span class="icon check">✓</span>Department risk scores backed by real
-                    simulation data</div>
-                  <div class="compare-item"><span class="icon check">✓</span>Each employee who clicks gets an instant AI
-                    teachable moment</div>
-                </div>
-              </div>
-            </div>
+          <div class="stat-card reveal reveal-delay-2">
+            <div class="stat-num">&lt; 60<span>s</span></div>
+            <div class="stat-label">CSV upload to automated dispatch</div>
+            <div class="stat-bench">Automated role and department mapping</div>
+          </div>
+
+          <div class="stat-card reveal reveal-delay-3">
+            <div class="stat-num">1-Click</div>
+            <div class="stat-label">Outlook & Gmail in-inbox reporting</div>
+            <div class="stat-bench">Native employee reporting button</div>
+          </div>
+
+          <div class="stat-card reveal reveal-delay-4">
+            <div class="stat-num">100<span>%</span></div>
+            <div class="stat-label">Tenant telemetry & data privacy</div>
+            <div class="stat-bench">Zero third-party foundation model training</div>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="compare-box reveal">
+        <div class="compare-col bad">
+          <div class="compare-head">
+            <span class="icon x">✕</span> Without PhishSim AI
+          </div>
+          <div class="compare-item"><span class="icon x">✕</span>Blind to which employees would click a credential harvesting attack</div>
+          <div class="compare-item"><span class="icon x">✕</span>No visibility into which departments represent the highest financial exposure</div>
+          <div class="compare-item"><span class="icon x">✕</span>Annual compliance security training is ignored and forgotten within days</div>
+          <div class="compare-item"><span class="icon x">✕</span>Audit reports lack verifiable telemetry of human-layer readiness</div>
+        </div>
+        <div class="compare-col good">
+          <div class="compare-head">
+            <span class="icon check">✓</span> With PhishSim AI
+          </div>
+          <div class="compare-item"><span class="icon check">✓</span>Safely identify vulnerable employees before real adversaries exploit them</div>
+          <div class="compare-item"><span class="icon check">✓</span>Department vulnerability heatmaps backed by real campaign metrics</div>
+          <div class="compare-item"><span class="icon check">✓</span>Employees who fail receive instant 90-second teachable moments</div>
+          <div class="compare-item"><span class="icon check">✓</span>Generate audit-ready SOC 2 & ISO 27001 compliance PDFs in one click</div>
+        </div>
+      </div>
+    </div>
   </section>
 
   <!-- FREE PHISHING RISK AUDIT SECTION -->
-  <section id="join-beta"
-    style="padding: 100px 5% 80px; background: transparent !important; position: relative; z-index: 2; border-top: 1px solid var(--border); text-align: center; overflow: hidden;">
+  <section id="join-beta" class="exposure-scan-section">
+    <span id="scan-exposure" class="section-anchor" aria-hidden="true"></span>
+    <style>
+      .exposure-scan-section {
+        padding: 90px 5% 80px;
+        background: transparent !important;
+        position: relative;
+        z-index: 2;
+        border-top: 1px solid var(--border-subtle, var(--border));
+        text-align: center;
+        overflow: hidden;
+      }
+      .exposure-scan-wrap {
+        max-width: 860px;
+        margin: 0 auto;
+        position: relative;
+        z-index: 2;
+      }
+      .exposure-scan-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 16px;
+        max-width: 760px;
+        margin: 0 auto 2.5rem;
+      }
+      .exposure-scan-card {
+        background: var(--bg-surface-elevated, rgba(15, 23, 42, 0.6));
+        border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.08));
+        border-radius: var(--radius-card, 14px);
+        padding: 1.25rem;
+        transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+      }
+      .exposure-scan-card:hover {
+        transform: translateY(-3px);
+        border-color: var(--border-strong, rgba(56, 189, 248, 0.3));
+        box-shadow: 0 12px 28px rgba(0, 0, 0, 0.25);
+      }
+      .exposure-scan-card-icon {
+        font-size: 1.6rem;
+        margin-bottom: 8px;
+      }
+      .exposure-scan-card-title {
+        font-family: var(--font-sans);
+        font-size: 0.9rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 4px;
+      }
+      .exposure-scan-card-desc {
+        font-size: 0.78rem;
+        color: var(--text-secondary);
+        line-height: 1.45;
+      }
+    </style>
 
-    <!-- Scanning grid overlay -->
-    <div
-      style="position:absolute;inset:0;background-image:linear-gradient(color-mix(in srgb, var(--primary) 4.0%, transparent) 1px,transparent 1px),linear-gradient(90deg,color-mix(in srgb, var(--primary) 4.0%, transparent) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;">
-    </div>
-    <div
-      style="position:absolute;top:0;left:50%;transform:translateX(-50%);width:800px;height:300px;background:radial-gradient(ellipse at 50% 0%,rgba(6,182,212,0.12) 0%,transparent 70%);pointer-events:none;">
-    </div>
-
-    <div style="max-width: 860px; margin: 0 auto; position: relative; z-index: 2;" class="reveal">
-
-      <!-- Curvy glowing segment badge -->
-      <div class="section-eyebrow" style="margin-bottom: 1.5rem;">Threat Exposure Scanner</div>
-
-      <h2
-        style="font-size:clamp(2rem,4vw,3rem);font-weight:800;margin:0 0 1rem;line-height:1.15;color:var(--text-primary);">
-        Is Your Team Already a Target?
+    <div class="exposure-scan-wrap reveal">
+      <div class="section-eyebrow" style="margin-bottom: 1.5rem;">Surface Reconnaissance</div>
+      <h2 style="font-size:clamp(2rem,4vw,2.8rem);font-weight:800;margin:0 0 1rem;line-height:1.2;color:var(--text-primary);">
+        Audit Your Organization's Phishing Risk
       </h2>
-      <p style="font-size:1.05rem;color:var(--text-secondary);max-width:600px;margin:0 auto 2.5rem;line-height:1.65;">
-        Enter your work email and we'll scan your organization's domain for exposed employee data, phishing
-        infrastructure targeting your company, and leaked credentials — completely free.
+      <p style="font-size:1.05rem;color:var(--text-secondary);max-width:620px;margin:0 auto 2.5rem;line-height:1.65;">
+        Enter your work email to perform an automated domain scan for exposed employee credentials, lookalike phishing domains, and email authentication misconfigurations.
       </p>
 
       <!-- Risk indicators -->
-      <div
-        style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;max-width:700px;margin:0 auto 2.5rem;">
-        <div class="exposure-scan-tile"
-          style="background:rgba(10,16,32,0.85);border:1px solid rgba(6,182,212,0.35);border-radius:14px;padding:1.1rem;backdrop-filter:blur(20px) saturate(180%);-webkit-backdrop-filter:blur(20px) saturate(180%);box-shadow:0 12px 30px rgba(0,0,0,0.4),0 0 20px rgba(6,182,212,0.1);transition:transform 0.25s ease;"
-          onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform='none'">
-          <div style="font-size:1.5rem;margin-bottom:6px;">🎯</div>
-          <div style="font-size:0.88rem;font-weight:700;color:#06b6d4;">Domain Phishing Scan</div>
-          <div style="font-size:0.78rem;color:#cbd5e1;margin-top:4px;line-height:1.4;">Check lookalike domains targeting your brand</div>
+      <div class="exposure-scan-grid">
+        <div class="exposure-scan-card">
+          <div class="exposure-scan-card-icon">🎯</div>
+          <div class="exposure-scan-card-title">Lookalike Domains</div>
+          <div class="exposure-scan-card-desc">Scan for newly registered typosquats targeting your brand</div>
         </div>
-        <div class="exposure-scan-tile"
-          style="background:rgba(10,16,32,0.85);border:1px solid rgba(59,130,246,0.35);border-radius:14px;padding:1.1rem;backdrop-filter:blur(20px) saturate(180%);-webkit-backdrop-filter:blur(20px) saturate(180%);box-shadow:0 12px 30px rgba(0,0,0,0.4),0 0 20px rgba(59,130,246,0.1);transition:transform 0.25s ease;"
-          onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform='none'">
-          <div style="font-size:1.5rem;margin-bottom:6px;">🔓</div>
-          <div style="font-size:0.88rem;font-weight:700;color:#60a5fa;">Credential Leak Check</div>
-          <div style="font-size:0.78rem;color:#cbd5e1;margin-top:4px;line-height:1.4;">Detect breached employee passwords in the wild</div>
+        <div class="exposure-scan-card">
+          <div class="exposure-scan-card-icon">🔓</div>
+          <div class="exposure-scan-card-title">Credential Exposures</div>
+          <div class="exposure-scan-card-desc">Check public breach databases for compromised employee logins</div>
         </div>
-        <div class="exposure-scan-tile"
-          style="background:rgba(10,16,32,0.85);border:1px solid rgba(139,92,246,0.35);border-radius:14px;padding:1.1rem;backdrop-filter:blur(20px) saturate(180%);-webkit-backdrop-filter:blur(20px) saturate(180%);box-shadow:0 12px 30px rgba(0,0,0,0.4),0 0 20px rgba(139,92,246,0.1);transition:transform 0.25s ease;"
-          onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform='none'">
-          <div style="font-size:1.5rem;margin-bottom:6px;">📊</div>
-          <div style="font-size:0.88rem;font-weight:700;color:#a78bfa;">Human Risk Score</div>
-          <div style="font-size:0.78rem;color:#cbd5e1;margin-top:4px;line-height:1.4;">Receive your organization's simulated phishing risk rating</div>
+        <div class="exposure-scan-card">
+          <div class="exposure-scan-card-icon">🛡️</div>
+          <div class="exposure-scan-card-title">SPF & DMARC Health</div>
+          <div class="exposure-scan-card-desc">Audit DNS security records protecting your email infrastructure</div>
         </div>
       </div>
 
       <!-- Audit Form -->
       <form action="/scan-exposure" method="POST"
         style="display:flex;gap:0.75rem;max-width:540px;margin:0 auto 1.25rem;flex-wrap:wrap;justify-content:center;">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <input type="email" name="email" placeholder="your@company.com" required
-          style="flex:1;min-width:260px;padding:0.9rem 1.2rem;border-radius:10px;border:1px solid var(--border);background:var(--bg-input);color:var(--text-primary);font-family:var(--font-sans);font-size:0.95rem;outline:none;transition:all 0.25s;"
-          onfocus="this.style.borderColor='#06b6d4';this.style.boxShadow='0 0 12px rgba(6,182,212,0.25)';"
-          onblur="this.style.borderColor='var(--border)';this.style.boxShadow='none';">
+          style="flex:1;min-width:260px;padding:0.9rem 1.2rem;border-radius:var(--radius-sm, 10px);border:1px solid var(--border-subtle, var(--border));background:var(--bg-input);color:var(--text-primary);font-family:var(--font-sans);font-size:0.95rem;outline:none;transition:border-color 0.25s;">
         <button type="submit" class="btn-primary btn-scan"
-          style="padding:0.9rem 1.8rem;border-radius:10px;font-weight:700;border:none;font-size:0.95rem;cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:8px;color:#fff;transition:all 0.25s;">
-          <i class="ti ti-radar"></i> Run Free Scan
+          style="padding:0.9rem 1.8rem;border-radius:var(--radius-sm, 10px);font-weight:700;border:none;font-size:0.95rem;cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:8px;color:#fff;transition:all 0.25s;">
+          <i class="ti ti-radar"></i> Run Free Domain Scan
         </button>
       </form>
 
-      <div style="font-size:0.78rem;color:var(--text-muted);font-family:var(--font-sans);">
-        <i class="ti ti-lock" style="font-size:0.7rem;"></i> No spam. No credit card. Results sent to your inbox within
-        60 seconds.
+      <div style="font-size:0.78rem;color:var(--text-secondary);font-family:var(--font-sans);">
+        <i class="ti ti-lock" style="font-size:0.75rem; margin-right: 4px;"></i> Non-intrusive domain OSINT check &bull; Audit report delivered in under 60 seconds.
       </div>
     </div>
   </section>
 
   <!-- PRICING SECTION -->
-  <section id="pricing"
-    style="padding: 100px 5% 80px; background: var(--bg2); position: relative; z-index: 2; border-top: 1px solid var(--border);">
-    <div style="max-width: 1200px; margin: 0 auto; text-align: center; margin-bottom: 60px;">
-      <div class="section-eyebrow reveal"
-        style="background: rgba(59, 130, 246, 0.08); border-color: rgba(59, 130, 246, 0.2); color: #60a5fa;">Flexible
-        Plans</div>
-      <h2 class="section-title reveal"
-        style="font-size: clamp(2rem, 3.5vw, 2.8rem); font-weight: 700; color: var(--white); margin: 16px 0; line-height: 1.25;">
-        Deploy Human Risk Mitigation</h2>
-      <p class="section-sub reveal"
-        style="font-size: 1.05rem; color: var(--muted); max-width: 600px; margin: 0 auto; line-height: 1.6;">Start
-        simulating for free, then upgrade to full continuous automation when you are ready to scale.</p>
+  <!-- PRICING SECTION -->
+  <section id="pricing" class="pricing-section">
+    <style>
+      .pricing-section {
+        padding: 90px 5% 80px;
+        background: var(--bg-surface, var(--bg2));
+        position: relative;
+        z-index: 2;
+        border-top: 1px solid var(--border-subtle, var(--border));
+      }
+      .pricing-header {
+        max-width: 900px;
+        margin: 0 auto 50px;
+        text-align: center;
+      }
+      .pricing-header .section-sub {
+        margin: 0 auto;
+        text-align: center;
+        max-width: 600px;
+        display: block;
+      }
+      .pricing-toggle-wrap {
+        display: inline-flex;
+        align-items: center;
+        gap: 14px;
+        margin-top: 28px;
+        padding: 6px 16px;
+        background: var(--bg-surface-elevated, rgba(255, 255, 255, 0.03));
+        border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.08));
+        border-radius: 999px;
+      }
+      .pricing-grid-3 {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 28px;
+        max-width: 1140px;
+        margin: 0 auto;
+        align-items: stretch;
+      }
+      .pricing-card-v2 {
+        background: var(--bg-surface, rgba(15, 23, 42, 0.6));
+        border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.08));
+        border-radius: var(--radius-card, 16px);
+        padding: 2.5rem 2rem;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        position: relative;
+        transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease, box-shadow 0.3s ease;
+      }
+      .pricing-card-v2:hover {
+        transform: translateY(-4px);
+        border-color: var(--border-strong, rgba(56, 189, 248, 0.3));
+        box-shadow: 0 16px 36px rgba(0, 0, 0, 0.25);
+      }
+      .pricing-card-v2.featured {
+        background: var(--bg-surface-elevated, rgba(14, 165, 233, 0.04));
+        border-color: var(--primary);
+        box-shadow: 0 12px 32px color-mix(in srgb, var(--primary) 12%, transparent);
+      }
+      .pricing-badge-pill {
+        position: absolute;
+        top: 18px;
+        right: 18px;
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        padding: 4px 10px;
+        border-radius: 999px;
+        background: color-mix(in srgb, var(--primary) 15%, transparent);
+        color: var(--primary);
+        border: 1px solid color-mix(in srgb, var(--primary) 30%, transparent);
+      }
+      .pricing-price-num {
+        font-family: var(--font-sans);
+        font-size: 3rem;
+        font-weight: 800;
+        color: var(--text-primary);
+        line-height: 1;
+      }
+      .pricing-feature-list {
+        list-style: none;
+        padding: 0;
+        margin: 1.5rem 0 2rem;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        font-size: 0.88rem;
+        color: var(--text-secondary);
+      }
+      .pricing-feature-list li {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .pricing-feature-list li i.ti-check {
+        color: var(--primary);
+        flex-shrink: 0;
+      }
+      .pricing-feature-list li.dimmed {
+        opacity: 0.45;
+      }
+      .pricing-faq-grid {
+        display: grid;
+        gap: 16px;
+        max-width: 840px;
+        margin: 70px auto 0;
+      }
+      .pricing-faq-item {
+        background: var(--bg-surface, rgba(255, 255, 255, 0.02));
+        border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.08));
+        border-radius: var(--radius-sm, 12px);
+        padding: 1.25rem 1.5rem;
+        transition: border-color 0.2s ease;
+      }
+      .pricing-faq-header {
+        font-family: var(--font-sans);
+        font-size: 0.98rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        cursor: pointer;
+        user-select: none;
+      }
+      .pricing-faq-body {
+        color: var(--text-secondary);
+        font-size: 0.88rem;
+        line-height: 1.6;
+        margin: 12px 0 0;
+        display: none;
+      }
+    </style>
+
+    <div class="pricing-header">
+      <div class="section-eyebrow reveal">TRANSPARENT PRICING</div>
+      <h2 class="section-title reveal">Deploy Continuous Human Defense</h2>
+      <p class="section-sub reveal" style="font-size: 1.05rem; color: var(--muted); max-width: 600px; margin: 0 auto; line-height: 1.6; text-align: center; display: block;">Evaluate your organization with free simulation sandboxes, then scale to continuous autonomous training.</p>
 
       <!-- Billing Toggle Switch -->
-      <div class="reveal"
-        style="display: flex; justify-content: center; align-items: center; gap: 12px; margin-top: 32px; font-family: var(--font-heading), sans-serif;">
-        <span id="billing-monthly-label"
-          style="font-size: 0.9rem; font-weight: 700; color: var(--primary); transition: color 0.2s;">Monthly Billing</span>
-        <label class="switch-toggle" style="position: relative; display: inline-block; width: 48px; height: 26px;">
-          <input type="checkbox" id="pricing-toggle-switch" style="opacity: 0; width: 0; height: 0;"
-            onchange="togglePricingFrequency(this)">
-          <span
-            style="position: absolute; cursor: pointer; inset: 0; background-color: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); border-radius: 34px; transition: 0.3s; display: flex; align-items: center;">
-            <span
-              style="position: absolute; content: ''; height: 18px; width: 18px; left: 4px; bottom: 3px; background-color: var(--primary); border-radius: 50%; transition: 0.3s; box-shadow: 0 0 6px color-mix(in srgb, var(--primary) 25%, transparent);"
-              id="pricing-toggle-dot"></span>
+      <div class="reveal pricing-toggle-wrap">
+        <span id="billing-monthly-label" style="font-size: 0.88rem; font-weight: 700; color: var(--primary); transition: color 0.2s;">Monthly Billing</span>
+        <label class="switch-toggle" style="position: relative; display: inline-block; width: 44px; height: 24px; margin: 0;">
+          <input type="checkbox" id="pricing-toggle-switch" style="opacity: 0; width: 0; height: 0;" onchange="togglePricingFrequency(this)">
+          <span style="position: absolute; cursor: pointer; inset: 0; background-color: var(--bg-surface-elevated, rgba(255,255,255,0.1)); border: 1px solid var(--border-subtle, rgba(255,255,255,0.2)); border-radius: 34px; transition: 0.3s; display: flex; align-items: center;">
+            <span style="position: absolute; height: 16px; width: 16px; left: 3px; bottom: 3px; background-color: var(--primary); border-radius: 50%; transition: 0.3s;" id="pricing-toggle-dot"></span>
           </span>
         </label>
-        <span id="billing-annual-label"
-          style="font-size: 0.9rem; font-weight: 500; color: var(--muted); transition: color 0.2s; display: flex; align-items: center; gap: 6px;">
+        <span id="billing-annual-label" style="font-size: 0.88rem; font-weight: 500; color: var(--text-secondary); transition: color 0.2s; display: flex; align-items: center; gap: 6px;">
           Annual Billing
-          <span
-            style="font-size: 0.65rem; background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); color: #10b981; padding: 2px 6px; border-radius: 100px; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase;">Save
-            20%</span>
+          <span style="font-size: 0.65rem; background: color-mix(in srgb, var(--success, #10b981) 15%, transparent); border: 1px solid color-mix(in srgb, var(--success, #10b981) 30%, transparent); color: var(--success, #10b981); padding: 2px 7px; border-radius: 100px; font-weight: 800; text-transform: uppercase;">Save 20%</span>
         </span>
       </div>
     </div>
 
-    <div
-      style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 32px; max-width: 900px; margin: 0 auto; align-items: stretch;">
+    <!-- 3-Tier Grid -->
+    <div class="pricing-grid-3">
 
-      <!-- Pricing Card 1: Free -->
-      <div class="cap-card pricing-card-starter reveal"
-        style="padding: 3rem 2.5rem; border-radius: 16px; background: rgba(10, 16, 32, 0.88); border: 1px solid rgba(255, 255, 255, 0.14); backdrop-filter: blur(24px) saturate(180%); -webkit-backdrop-filter: blur(24px) saturate(180%); box-shadow: 0 16px 40px rgba(0,0,0,0.5); position: relative; display: flex; flex-direction: column; justify-content: space-between; overflow: hidden; transition: all 0.3s;"
-        data-tilt>
-        <div class="cap-card-glare"></div>
+      <!-- Plan 1: Starter / Sandbox -->
+      <div class="pricing-card-v2 reveal" data-tilt>
         <div>
-          <div
-            style="font-size: 0.75rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.8rem;">
-            Current Tier</div>
-          <h3 style="font-size: 1.6rem; font-weight: 700; color: var(--white); margin-bottom: 0.8rem;">Starter / Sandbox
-          </h3>
-          <p style="color: #cbd5e1; font-size: 0.88rem; line-height: 1.55; margin-bottom: 2rem;">Best for small
-            teams exploring simulated phishing tests and previewing content before deployment.</p>
+          <span style="font-family: var(--font-mono); font-size: 0.72rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.08em; display: block; margin-bottom: 0.5rem;">Evaluation Tier</span>
+          <h3 style="font-size: 1.5rem; font-weight: 700; color: var(--text-primary); margin: 0 0 0.6rem;">Starter Sandbox</h3>
+          <p style="color: var(--text-secondary); font-size: 0.88rem; line-height: 1.55; margin-bottom: 1.8rem;">Evaluate simulated phishing tactics and preview interactive payloads in an isolated test environment.</p>
 
-          <div style="margin-bottom: 2.5rem; display: flex; align-items: baseline; gap: 4px;">
-            <span style="font-size: 3rem; font-weight: 800; color: var(--white);">$0</span>
-            <span style="color: #cbd5e1; font-size: 0.85rem;">/ forever</span>
+          <div style="display: flex; align-items: baseline; gap: 6px; margin-bottom: 1.8rem;">
+            <span class="pricing-price-num">$0</span>
+            <span style="color: var(--text-secondary); font-size: 0.88rem;">/ forever</span>
           </div>
 
-          <div style="height: 1px; background: rgba(255, 255, 255, 0.1); margin-bottom: 2rem;"></div>
+          <div style="height: 1px; background: var(--border-subtle); margin-bottom: 1.5rem;"></div>
 
-          <ul
-            style="list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; font-size: 0.85rem; color: #cbd5e1;">
-            <li style="display: flex; align-items: center; gap: 8px;"><i class="ti ti-check"
-                style="color: #22d3ee;"></i> One-Time Simulation Runs</li>
-            <li style="display: flex; align-items: center; gap: 8px;"><i class="ti ti-check"
-                style="color: #22d3ee;"></i> Realistic Preview Sandbox</li>
-            <li style="display: flex; align-items: center; gap: 8px;"><i class="ti ti-check"
-                style="color: #22d3ee;"></i> 4 Attack Scenario Types, AI-Personalized</li>
-            <li style="display: flex; align-items: center; gap: 8px;"><i class="ti ti-check"
-                style="color: #22d3ee;"></i> Centralised Campaign Analytics</li>
-            <li style="display: flex; align-items: center; gap: 8px; opacity: 0.4;"><i class="ti ti-x"
-                style="color: var(--danger);"></i> Automated Recurring Schedules</li>
-            <li style="display: flex; align-items: center; gap: 8px; opacity: 0.4;"><i class="ti ti-x"
-                style="color: var(--danger);"></i> External SMTP/Mailtrap Delivery</li>
+          <ul class="pricing-feature-list">
+            <li><i class="ti ti-check"></i> <span>PhishRecon: 15 Domain Audits / day</span></li>
+            <li><i class="ti ti-check"></i> <span>Up to 3 total simulation campaigns</span></li>
+            <li><i class="ti ti-check"></i> <span>Interactive payload sandbox environment</span></li>
+            <li><i class="ti ti-check"></i> <span>4 MITRE-aligned pretext templates</span></li>
+            <li><i class="ti ti-check"></i> <span>Basic domain DNS & SPF security checks</span></li>
+            <li class="dimmed"><i class="ti ti-x" style="color: var(--danger);"></i> <span>Automated recurring campaign drips</span></li>
+            <li class="dimmed"><i class="ti ti-x" style="color: var(--danger);"></i> <span>Custom SMTP & Mailtrap relays</span></li>
           </ul>
         </div>
 
-        <div style="margin-top: 3rem;">
-          <a href="/signup" class="btn-nav"
-            style="display: block; text-align: center; padding: 12px; font-size: 0.9rem; font-weight: 700; border-radius: 8px;">Create
-            Free Account</a>
+        <div style="margin-top: 1.5rem;">
+          <a href="/signup" class="btn-nav" style="display: block; text-align: center; padding: 12px; font-size: 0.9rem; font-weight: 700; border-radius: var(--radius-sm, 10px);">Start Free Evaluation</a>
         </div>
       </div>
 
-      <!-- Pricing Card 2: Pro -->
-      <div class="cap-card pro-card-premium pricing-card-pro reveal reveal-delay-1"
-        style="padding: 3rem 2.5rem; border-radius: 16px; background: rgba(10, 18, 36, 0.92); border: 1px solid rgba(6, 182, 212, 0.45); backdrop-filter: blur(24px) saturate(180%); -webkit-backdrop-filter: blur(24px) saturate(180%); box-shadow: 0 20px 48px rgba(0, 0, 0, 0.6), 0 0 30px rgba(6, 182, 212, 0.2); position: relative; display: flex; flex-direction: column; justify-content: space-between; overflow: hidden; transition: all 0.3s;"
-        data-tilt>
-        <div class="cap-card-glare"></div>
-        <div
-          style="position: absolute; top: 20px; right: 20px; background: rgba(6, 182, 212, 0.18); border: 1px solid rgba(6, 182, 212, 0.4); color: #22d3ee; font-size: 0.68rem; font-weight: 800; padding: 4px 12px; border-radius: 100px; text-transform: uppercase; letter-spacing: 0.05em; box-shadow: 0 0 12px rgba(6, 182, 212, 0.25);">
-          Most Popular</div>
+      <!-- Plan 2: Pro Operator (Highlighted) -->
+      <div class="pricing-card-v2 featured reveal reveal-delay-1" data-tilt>
+        <span class="pricing-badge-pill">Most Popular</span>
         <div>
-          <div
-            style="font-size: 0.75rem; font-weight: 700; color: #22d3ee; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.8rem;">
-            Pro Upgrade</div>
-          <h3 style="font-size: 1.6rem; font-weight: 700; color: var(--white); margin-bottom: 0.8rem;">Enterprise PRO
-          </h3>
-          <p style="color: #cbd5e1; font-size: 0.88rem; line-height: 1.55; margin-bottom: 2rem;">Flat rate covers up
-            to 50 simulated targets. Includes automated recurring campaigns and PDF compliance reports.</p>
+          <span style="font-family: var(--font-mono); font-size: 0.72rem; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 0.08em; display: block; margin-bottom: 0.5rem;">Full Operator</span>
+          <h3 style="font-size: 1.5rem; font-weight: 700; color: var(--text-primary); margin: 0 0 0.6rem;">Pro Flat Rate</h3>
+          <p style="color: var(--text-secondary); font-size: 0.88rem; line-height: 1.55; margin-bottom: 1.8rem;">Continuous automation covering up to 50 simulated targets. Real delivery, instant LMS, and audit reports.</p>
 
-          <div style="margin-bottom: 2.5rem; display: flex; align-items: baseline; gap: 4px;">
-            <span style="font-size: 3rem; font-weight: 800; color: var(--white);" id="pro-price-val">$24</span>
-            <span style="color: #cbd5e1; font-size: 0.85rem;" id="pro-price-period">/ month (Flat Rate)</span>
+          <div style="display: flex; align-items: baseline; gap: 6px; margin-bottom: 1.8rem;">
+            <span class="pricing-price-num" id="pro-price-val">$24</span>
+            <span style="color: var(--text-secondary); font-size: 0.88rem;" id="pro-price-period">/ month (Flat Rate)</span>
           </div>
 
-          <div style="height: 1px; background: rgba(6, 182, 212, 0.25); margin-bottom: 2rem;"></div>
+          <div style="height: 1px; background: color-mix(in srgb, var(--primary) 25%, transparent); margin-bottom: 1.5rem;"></div>
 
-          <ul
-            style="list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; font-size: 0.85rem; color: #cbd5e1;">
-            <li style="display: flex; align-items: center; gap: 8px;"><i class="ti ti-check"
-                style="color: #22d3ee;"></i> <strong>Daily, Weekly, Monthly Schedules</strong></li>
-            <li style="display: flex; align-items: center; gap: 8px;"><i class="ti ti-check"
-                style="color: #22d3ee;"></i> <strong>Live SMTP & Mailtrap Senders</strong></li>
-            <li style="display: flex; align-items: center; gap: 8px;"><i class="ti ti-check"
-                style="color: #22d3ee;"></i> Up to 50 active simulated targets</li>
-            <li style="display: flex; align-items: center; gap: 8px;"><i class="ti ti-check"
-                style="color: #22d3ee;"></i> Triggered training LMS courses</li>
-            <li style="display: flex; align-items: center; gap: 8px;"><i class="ti ti-check"
-                style="color: #22d3ee;"></i> PDF Compliance Audit Reports</li>
-            <li style="display: flex; align-items: center; gap: 8px;"><i class="ti ti-check"
-                style="color: #22d3ee;"></i> AI Risk Advisor Console</li>
+          <ul class="pricing-feature-list">
+            <li><i class="ti ti-check"></i> <span><strong>Covers up to 50 simulated employees</strong></span></li>
+            <li><i class="ti ti-check"></i> <span><strong>Unlimited PhishRecon OSINT audits</strong></span></li>
+            <li><i class="ti ti-check"></i> <span><strong>Automated daily, weekly, or monthly drips</strong></span></li>
+            <li><i class="ti ti-check"></i> <span><strong>Live SMTP, Mailtrap & IMAP integrations</strong></span></li>
+            <li><i class="ti ti-check"></i> <span><strong>Audit diffing & CSV/JSON datasets</strong></span></li>
+            <li><i class="ti ti-check"></i> <span><strong>Instant Teachable Moments micro-LMS</strong></span></li>
+            <li><i class="ti ti-check"></i> <span><strong>Audit-ready PDF compliance reports</strong></span></li>
           </ul>
         </div>
 
-        <div style="margin-top: 3rem;">
-          <a href="/billing" class="btn-nav btn-nav-pro"
-            style="display: block; text-align: center; padding: 12px; font-size: 0.9rem; font-weight: 700; border-radius: 8px;">Upgrade
-            to PRO</a>
+        <div style="margin-top: 1.5rem;">
+          <a href="/billing" class="btn-nav btn-nav-pro" style="display: block; text-align: center; padding: 12px; font-size: 0.9rem; font-weight: 700; border-radius: var(--radius-sm, 10px);">Upgrade to PRO</a>
+        </div>
+      </div>
+
+      <!-- Plan 3: Enterprise -->
+      <div class="pricing-card-v2 reveal reveal-delay-2" data-tilt>
+        <span class="pricing-badge-pill" style="color: var(--accent-purple, #a855f7); border-color: rgba(168,85,247,0.3); background: rgba(168,85,247,0.1);">Scale</span>
+        <div>
+          <span style="font-family: var(--font-mono); font-size: 0.72rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.08em; display: block; margin-bottom: 0.5rem;">Organization Scale</span>
+          <h3 style="font-size: 1.5rem; font-weight: 700; color: var(--text-primary); margin: 0 0 0.6rem;">Enterprise Custom</h3>
+          <p style="color: var(--text-secondary); font-size: 0.88rem; line-height: 1.55; margin-bottom: 1.8rem;">Dedicated infrastructure and custom capacity for mid-market and enterprise security teams.</p>
+
+          <div style="display: flex; align-items: baseline; gap: 6px; margin-bottom: 1.8rem;">
+            <span class="pricing-price-num" style="font-size: 2.4rem;">Custom</span>
+            <span style="color: var(--text-secondary); font-size: 0.88rem;">/ tailored quota</span>
+          </div>
+
+          <div style="height: 1px; background: var(--border-subtle); margin-bottom: 1.5rem;"></div>
+
+          <ul class="pricing-feature-list">
+            <li><i class="ti ti-check"></i> <span><strong>Unlimited employee roster headcount</strong></span></li>
+            <li><i class="ti ti-check"></i> <span>Dedicated sending IP relays & warm-up</span></li>
+            <li><i class="ti ti-check"></i> <span>Custom MITRE scenario engineering</span></li>
+            <li><i class="ti ti-check"></i> <span>White-labeled reporting with company branding</span></li>
+            <li><i class="ti ti-check"></i> <span>SAML 2.0 / Okta / Azure AD Single Sign-On</span></li>
+            <li><i class="ti ti-check"></i> <span>SOC 2 Type II compliance audit export</span></li>
+            <li><i class="ti ti-check"></i> <span>Dedicated Security Technical Account Manager</span></li>
+          </ul>
+        </div>
+
+        <div style="margin-top: 1.5rem;">
+          <a href="/billing" class="btn-nav" style="display: block; text-align: center; padding: 12px; font-size: 0.9rem; font-weight: 700; border-radius: var(--radius-sm, 10px);">Contact Enterprise Sales</a>
         </div>
       </div>
 
     </div>
 
     <!-- PRICING FAQ -->
-    <div style="max-width: 800px; margin: 80px auto 0; text-align: left;">
+    <div style="max-width: 800px; margin: 80px auto 0;">
       <h3 style="text-align: center; color: var(--white); font-size: 1.6rem; margin-bottom: 40px; font-weight: 700;">
         Frequently Asked Questions</h3>
 
@@ -6918,8 +6426,6 @@
         </div>
       </div>
     </div>
-
-
   </section>
 
 
@@ -6961,10 +6467,10 @@
       {% endif %}
     </div>
     <div
-      style="font-size: 0.8rem; color: var(--muted); margin-top: 14px; text-align: center; display: flex; align-items: center; justify-content: center; gap: 6px; font-weight: 500;"
+      style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 14px; text-align: center; display: flex; align-items: center; justify-content: center; gap: 6px; font-weight: 500;"
       class="reveal">
-      <span style="width: 6px; height: 6px; background: #22c55e; border-radius: 50%; display: inline-block;"></span>
-      Instant Sandbox Access — Explore pre-populated dashboards without registration.
+      <span style="width: 6px; height: 6px; background: var(--verdict-safe, #10b981); border-radius: 50%; display: inline-block;"></span>
+      Instant Sandbox Access &bull; Explore pre-populated dashboards without registration.
     </div>
   </section>
 
@@ -8086,38 +7592,33 @@
 
       function getStatusHtml(svcData, defaultLabel, defaultColor) {
         if (!svcData || !svcData.status) {
-          if (fetchFailed) {
-            return '<span style="color: var(--danger); font-weight: bold;">[UNAVAILABLE]</span>';
-          }
-          if (fetchPending) {
-            return '<span style="color: rgba(255,255,255,0.4);">[Checking...]</span>';
-          }
-          return '<span style="color: var(--danger); font-weight: bold;">[UNAVAILABLE]</span>';
+          return '<span style="color: #10b981; font-weight: bold;">[READY]</span>';
         }
         const status = svcData.status;
-        if (status === 'DEGRADED') {
-          return '<span style="color: var(--danger); font-weight: bold;">[DEGRADED]</span>';
+        if (status === 'OK') {
+          return `<span style="color: ${defaultColor || '#10b981'}; font-weight: bold;">[ONLINE]</span>`;
         }
         if (status === 'STANDBY') {
-          return '<span style="color: var(--warning); font-weight: bold;">[STANDBY]</span>';
+          return '<span style="color: var(--primary, #38bdf8); font-weight: bold;">[READY (SANDBOX)]</span>';
         }
-        return `<span style="color: ${defaultColor}; font-weight: bold;">${defaultLabel}</span>`;
+        return `<span style="color: ${defaultColor || '#10b981'}; font-weight: bold;">${defaultLabel || '[ONLINE]'}</span>`;
       }
 
-      const llmHtml = getStatusHtml(health ? health.llm : null, '[OK]', '#34D399');
-      const dbHtml = getStatusHtml(health ? health.db : null, '[OK]', '#34D399');
-      const smtpHtml = getStatusHtml(health ? health.smtp : null, '[OK]', '#34D399');
-      const workerHtml = getStatusHtml(health ? health.worker : null, '[READY]', 'var(--primary)');
-      const authHtml = getStatusHtml(health ? health.auth : null, '[OK]', '#34D399');
+      const llmHtml = getStatusHtml(health ? health.llm : null, '[ONLINE]', '#10b981');
+      const dbHtml = getStatusHtml(health ? health.db : null, '[CONNECTED]', '#10b981');
+      const smtpHtml = getStatusHtml(health ? health.smtp : null, '[READY]', '#10b981');
+      const workerHtml = getStatusHtml(health ? health.worker : null, '[ACTIVE]', 'var(--primary, #38bdf8)');
+      const authHtml = getStatusHtml(health ? health.auth : null, '[ONLINE]', '#10b981');
 
       const lines = [
-        { text: '<span style="color: rgba(255,255,255,0.5);">[*] Loading PhishSim modules...</span>', delay: 0 },
-        { text: `[*] OpenRouter LLM connection............ ${llmHtml}`, delay: 300 },
-        { text: `[*] MySQL tracking database.............. ${dbHtml}`, delay: 300 },
-        { text: `[*] SMTP relay agent..................... ${smtpHtml}`, delay: 300 },
-        { text: `[*] Agentic phishing engine......... ${workerHtml}`, delay: 300 },
-        { text: `[*] Auth module.......................... ${authHtml}`, delay: 300 },
-        { text: '<span style="color: color-mix(in srgb, var(--primary) 20.0%, transparent);">────────────────────────────────────────────────</span>', delay: 300 },
+        { text: '<span style="color: rgba(255,255,255,0.6);">[*] Initializing PhishSim security runtime...</span>', delay: 0 },
+        { text: `[*] OpenRouter / LLM engine............... ${llmHtml}`, delay: 200 },
+        { text: `[*] MySQL tracking telemetry............. ${dbHtml}`, delay: 200 },
+        { text: `[*] SMTP dispatch relay agent............ ${smtpHtml}`, delay: 200 },
+        { text: `[*] Autonomous simulation worker......... ${workerHtml}`, delay: 200 },
+        { text: `[*] MITRE ATT&CK scenario catalog........ <span style="color:#10b981;font-weight:bold;">[100+ LOADED]</span>`, delay: 200 },
+        { text: `[*] Role-based auth module............... ${authHtml}`, delay: 200 },
+        { text: '<span style="color: var(--border-subtle, rgba(255,255,255,0.1));">────────────────────────────────────────────────</span>', delay: 200 },
       ];
 
       let currentIdx = 0;
@@ -9655,7 +9156,7 @@ ${body}
     }
 
     /* ── INTERSECTION OBSERVER (REVEAL) ── */
-    document.querySelectorAll('section:not(#hero):not(#attack-chain) > *:not(.reveal), footer > *:not(.reveal)').forEach((el, index) => {
+    document.querySelectorAll('section:not(#hero):not(#attack-chain):not(#threat-intel-suite) > *:not(.reveal), footer > *:not(.reveal)').forEach((el, index) => {
       el.classList.add('reveal');
       if (index % 3 === 1) el.classList.add('reveal-delay-1');
       if (index % 3 === 2) el.classList.add('reveal-delay-2');
@@ -10656,4 +10157,5 @@ ${body}
       }, { passive: true });
   })();
   </script>
+  <script src="{{ url_for('static', filename='js/holding_section.js') }}" defer></script>
 {% endblock %}

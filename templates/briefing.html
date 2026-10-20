@@ -1,0 +1,487 @@
+{% extends "base.html" %}
+{% block title %}Risk Briefing — PhishSim AI{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/briefing.css') }}">
+<script src="{{ url_for('static', filename='js/briefing.js') }}"></script>
+{% endblock %}
+
+{% block content %}
+<main class="bf-page" role="main" aria-label="Executive Risk Briefing">
+  
+  <article class="bf-sheet" role="article">
+    
+    <!-- ── Sample State Notice (When 0 campaigns launched) ── -->
+    {% if is_sample %}
+    <div class="bf-notice-bar" role="region" aria-label="Sample Briefing Notice">
+      <div class="bf-notice-left">
+        <span class="bf-notice-chip">Sample Briefing</span>
+        <span>No campaigns launched yet. Demonstrating format with illustrative data for Acme Corporation.</span>
+      </div>
+      <a href="/new-campaign" class="bf-notice-action">
+        <span>Launch your first campaign</span>
+        <i class="ti ti-arrow-right" aria-hidden="true"></i>
+      </a>
+    </div>
+    {% endif %}
+
+    <!-- ── 1. Header Line: Domain, Date Range, Quiet Controls ── -->
+    <header class="bf-header-line">
+      <div class="bf-meta-left">
+        <div class="bf-domain-row">
+          <span class="bf-domain-name">{{ company_domain or 'your-organization.com' }}</span>
+          <span class="bf-coverage-badge">{{ total_employees }} tracked</span>
+        </div>
+        <div class="bf-date-covered">
+          {{ date_range_label }}
+        </div>
+      </div>
+
+      <div class="bf-header-actions">
+        <!-- Date Range Filter Control -->
+        <nav class="bf-range-pills" aria-label="Briefing time range">
+          <a href="/briefing?range=last" class="bf-range-btn {% if active_range == 'last' %}is-active{% endif %}" {% if active_range == 'last' %}aria-current="page"{% endif %}>Last campaign</a>
+          <a href="/briefing?range=30d" class="bf-range-btn {% if active_range == '30d' %}is-active{% endif %}" {% if active_range == '30d' %}aria-current="page"{% endif %}>30 days</a>
+          <a href="/briefing?range=90d" class="bf-range-btn {% if active_range == '90d' %}is-active{% endif %}" {% if active_range == '90d' %}aria-current="page"{% endif %}>90 days</a>
+          <a href="/briefing?range=all" class="bf-range-btn {% if active_range == 'all' %}is-active{% endif %}" {% if active_range == 'all' %}aria-current="page"{% endif %}>All time</a>
+        </nav>
+
+        <!-- Quiet Actions -->
+        <button type="button" class="bf-quiet-btn" id="bf-copy-summary-btn" onclick="copyBriefingSummary()" title="Copy executive summary to clipboard">
+          <i class="ti ti-copy" aria-hidden="true"></i>
+          <span>Copy summary</span>
+        </button>
+
+        <button type="button" class="bf-quiet-btn" onclick="window.print()" title="Print or save as PDF">
+          <i class="ti ti-printer" aria-hidden="true"></i>
+          <span>Print / PDF</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- ── 2. The Headline Sentence (Newsreader Voice) ── -->
+    <section class="bf-headline-section" aria-label="Executive Headline">
+      <h1 class="bf-headline">{{ headline }}</h1>
+      
+      {% if briefing_ai_note %}
+      <div class="bf-ai-note">
+        <span class="bf-ai-label">AI Note</span>
+        <span>{{ briefing_ai_note }}</span>
+        <span class="bf-ai-disclaimer">Written by a language model from the figures above. It can be wrong.</span>
+      </div>
+      {% endif %}
+    </section>
+
+    <!-- ── 3. Two Figures Side by Side & Hand-Built SVG Trend Line ── -->
+    <section class="bf-figures-section" aria-label="Key Performance Indicators">
+      <div class="bf-figures-grid">
+        
+        <!-- Figure 1: Report Rate First (The Good Number) -->
+        <div class="bf-figure-card">
+          <div class="bf-figure-label">
+            <span>Report rate</span>
+            <span class="bf-figure-tag">Target flagged</span>
+          </div>
+          <div class="bf-figure-val-row">
+            <span class="bf-figure-num" id="bf-num-report">{{ report_rate }}%</span>
+            <span class="bf-figure-delta" aria-label="{{ report_delta_aria }}">
+              <span class="bf-figure-shape" aria-hidden="true">{{ report_delta_shape }}</span>
+              <span>{{ report_delta_text }}</span>
+            </span>
+          </div>
+          <p class="bf-sr-only">Report rate is {{ report_rate }} percent. {{ report_delta_aria }}</p>
+        </div>
+
+        <!-- Figure 2: Click Rate -->
+        <div class="bf-figure-card">
+          <div class="bf-figure-label">
+            <span>Click rate</span>
+            <span class="bf-figure-tag">Exposure</span>
+          </div>
+          <div class="bf-figure-val-row">
+            <span class="bf-figure-num" id="bf-num-click">{{ click_rate }}%</span>
+            <span class="bf-figure-delta" aria-label="{{ click_delta_aria }}">
+              <span class="bf-figure-shape" aria-hidden="true">{{ click_delta_shape }}</span>
+              <span>{{ click_delta_text }}</span>
+            </span>
+          </div>
+          <p class="bf-sr-only">Click rate is {{ click_rate }} percent. {{ click_delta_aria }}</p>
+        </div>
+
+      </div>
+
+      <!-- Honest SVG Trend Line (One Point Per Campaign) -->
+      <div class="bf-trend-wrap" role="region" aria-label="Simulation Campaign Trend Line">
+        <div class="bf-trend-header">
+          <span class="bf-trend-title">Campaign Trajectory</span>
+          <div class="bf-trend-legend" id="bf-trend-legend" aria-hidden="true">
+            <span class="bf-legend-item"><span class="bf-legend-line is-report"></span> Report rate</span>
+            <span class="bf-legend-item"><span class="bf-legend-line is-click"></span> Click rate</span>
+          </div>
+          <div class="bf-trend-inspect" id="bf-trend-inspect" aria-live="polite" style="display: none;"></div>
+        </div>
+
+        {% if trend_points|length >= 3 %}
+          <!-- Honest Hand-Built SVG Polyline Chart -->
+          <svg class="bf-chart-svg" viewBox="0 0 600 120" preserveAspectRatio="none" role="img" aria-label="Trend chart of report and click rate across {{ trend_points|length }} campaigns">
+            <!-- Y-Axis Grid Lines & Tick Labels (0%, 50%, 100%) -->
+            <line x1="30" y1="15" x2="590" y2="15" stroke="var(--bf-line)" stroke-width="1" stroke-dasharray="3 3"/>
+            <text x="5" y="18" fill="var(--bf-ink-muted)" font-size="9" font-family="var(--bf-font-mono)">100%</text>
+
+            <line x1="30" y1="60" x2="590" y2="60" stroke="var(--bf-line)" stroke-width="1" stroke-dasharray="3 3"/>
+            <text x="5" y="63" fill="var(--bf-ink-muted)" font-size="9" font-family="var(--bf-font-mono)">50%</text>
+
+            <line x1="30" y1="105" x2="590" y2="105" stroke="var(--bf-line)" stroke-width="1"/>
+            <text x="5" y="108" fill="var(--bf-ink-muted)" font-size="9" font-family="var(--bf-font-mono)">0%</text>
+
+            <!-- Report Rate Polyline & Points (Teal/Structure) -->
+            <polyline fill="none" stroke="var(--bf-structure)" stroke-width="2" points="{{ report_svg_points }}"/>
+            {% for pt in trend_svg_items %}
+            <circle cx="{{ pt.x }}" cy="{{ pt.y_report }}" r="4" fill="var(--bf-structure)" class="bf-chart-point" data-name="{{ pt.name }}" data-date="{{ pt.date_full }}" data-rep="{{ pt.report_rate }}%" data-clk="{{ pt.click_rate }}%" tabindex="0">
+              <title>{{ pt.name }} ({{ pt.date_full }}): {{ pt.report_rate }}% reported</title>
+            </circle>
+            {% endfor %}
+
+            <!-- Click Rate Polyline & Points (Amber/Warning) -->
+            <polyline fill="none" stroke="var(--bf-warning)" stroke-width="2" points="{{ click_svg_points }}"/>
+            {% for pt in trend_svg_items %}
+            <circle cx="{{ pt.x }}" cy="{{ pt.y_click }}" r="4" fill="var(--bf-warning)" class="bf-chart-point" data-name="{{ pt.name }}" data-date="{{ pt.date_full }}" data-rep="{{ pt.report_rate }}%" data-clk="{{ pt.click_rate }}%" tabindex="0">
+              <title>{{ pt.name }} ({{ pt.date_full }}): {{ pt.click_rate }}% clicked</title>
+            </circle>
+            {% endfor %}
+          </svg>
+
+          <!-- Clean Non-Overlapping HTML X-Axis Ticks -->
+          <div class="bf-chart-x-axis" aria-hidden="true">
+            {% for tick in trend_axis_ticks %}
+            <span class="bf-x-tick {% if tick.is_mobile %}is-mobile-visible{% endif %}" style="left: {{ tick.pct }}%; text-align: {{ tick.align }};">
+              <span class="bf-x-tick-mark"></span>
+              <span class="bf-x-tick-label">{{ tick.label }}</span>
+            </span>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="bf-few-points-note">
+            <em>A trend needs at least three campaigns to establish a baseline.</em>
+            {% if trend_points|length == 1 %}
+              Currently recorded: <strong>{{ trend_points[0].name }}</strong> ({{ trend_points[0].report_rate }}% reported, {{ trend_points[0].click_rate }}% clicked).
+            {% elif trend_points|length == 2 %}
+              Currently recorded: <strong>{{ trend_points[0].name }}</strong> and <strong>{{ trend_points[1].name }}</strong>.
+            {% else %}
+              No completed campaign data recorded in this period.
+            {% endif %}
+          </div>
+        {% endif %}
+
+        <!-- Accessible Data Table Fallback -->
+        <details class="bf-table-fallback">
+          <summary>View data table</summary>
+          <table class="bf-fallback-table">
+            <thead>
+              <tr>
+                <th>Campaign</th>
+                <th>Date</th>
+                <th>Report Rate</th>
+                <th>Click Rate</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for p in trend_points %}
+              <tr>
+                <td>{{ p.name }}</td>
+                <td>{{ p.date }}</td>
+                <td>{{ p.report_rate }}%</td>
+                <td>{{ p.click_rate }}%</td>
+              </tr>
+              {% else %}
+              <tr>
+                <td colspan="4">No campaign points in this range.</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </details>
+      </div>
+    </section>
+
+    <!-- ── 4. "Do This Next" (Max 3 Rows from Real Conditions) ── -->
+    <section class="bf-section" aria-labelledby="bf-next-heading">
+      <div class="bf-section-title-row">
+        <h2 id="bf-next-heading" class="bf-section-title">Do this next</h2>
+        <p class="bf-section-sub">High-impact defensive actions generated from your current risk posture.</p>
+      </div>
+
+      <div class="bf-actions-list">
+        
+        <!-- Action 1: Email Authentication (Available to all logged-in users) -->
+        <div class="bf-action-row">
+          <div class="bf-action-content">
+            <div class="bf-action-heading-wrap">
+              <span class="bf-action-title">Verify domain SPF & DMARC authentication</span>
+            </div>
+            <span class="bf-action-why">Prevent adversaries from spoofing @{{ company_domain or 'your-domain' }} in executive impersonation attacks.</span>
+            <div class="bf-auth-result" id="bf-auth-result" role="status"></div>
+          </div>
+          <div class="bf-action-cta-wrap">
+            <button type="button" class="bf-action-btn" id="bf-check-auth-btn" onclick="checkDomainAuthInline()">
+              <i class="ti ti-shield-check" aria-hidden="true"></i>
+              <span>Check authentication</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Action 2: Decoy Mailbox (Pro feature) -->
+        <div class="bf-action-row">
+          <div class="bf-action-content">
+            <div class="bf-action-heading-wrap">
+              <span class="bf-action-title">Deploy an early-warning decoy mailbox</span>
+              {% if not is_pro %}
+              <span class="bf-pro-pill">Pro</span>
+              {% endif %}
+            </div>
+            <span class="bf-action-why">Catch targeted spear-phishing and credential stuffing before real staff see it.</span>
+          </div>
+          <div class="bf-action-cta-wrap">
+            {% if is_pro %}
+            <button type="button" class="bf-action-btn" id="bf-decoy-action-btn" onclick="openDecoyDrawer()">
+              <i class="ti ti-mail-bolt" aria-hidden="true"></i>
+              <span>Configure decoy mailbox</span>
+            </button>
+            {% else %}
+            <a href="/billing" class="bf-action-btn is-pro-upgrade">
+              <span>Upgrade to Pro</span>
+              <i class="ti ti-arrow-right" aria-hidden="true"></i>
+            </a>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Action 3: Send Refresher to Clickers (Pro feature) -->
+        <div class="bf-action-row">
+          <div class="bf-action-content">
+            <div class="bf-action-heading-wrap">
+              <span class="bf-action-title">Send bite-sized refresher to employees who clicked</span>
+              {% if not is_pro %}
+              <span class="bf-pro-pill">Pro</span>
+              {% endif %}
+            </div>
+            <span class="bf-action-why">Immediate teachable moments reinforce vigilance and reduce repeat click exposure by up to 80%.</span>
+          </div>
+          <div class="bf-action-cta-wrap">
+            {% if is_pro %}
+            <button type="button" class="bf-action-btn" id="bf-refresher-btn" onclick="triggerMicroTrainingRefresher()">
+              <i class="ti ti-school" aria-hidden="true"></i>
+              <span>Send refresher module</span>
+            </button>
+            {% else %}
+            <a href="/billing" class="bf-action-btn is-pro-upgrade">
+              <span>Upgrade to Pro</span>
+              <i class="ti ti-arrow-right" aria-hidden="true"></i>
+            </a>
+            {% endif %}
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ── 5. "What Happened" (Activity Ledger) ── -->
+    <section class="bf-section" aria-labelledby="bf-happened-heading">
+      <div class="bf-section-title-row">
+        <h2 id="bf-happened-heading" class="bf-section-title">What happened</h2>
+        <p class="bf-section-sub">Chronological ledger of workforce responses to simulated threat scenarios.</p>
+      </div>
+
+      {% if activity_groups %}
+        {% for group in activity_groups %}
+        <div class="bf-ledger-group">
+          <div class="bf-ledger-day">{{ group.day }}</div>
+          <div class="bf-ledger-list">
+            {% for item in group['items'] %}
+            <div class="bf-ledger-item">
+              <span class="bf-ledger-sentence">
+                <strong>{{ item.recipient }}</strong> {{ item.action_verb }} <em>‘{{ item.scenario }}’</em>
+              </span>
+              <div class="bf-ledger-meta">
+                <span class="bf-ledger-badge type-{{ item.action_type }}">
+                  <span aria-hidden="true">{{ item.action_shape }}</span>
+                  <span>{{ item.action_word }}</span>
+                </span>
+                <span>{{ item.time }}</span>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="bf-no-alerts">
+          No simulation activity recorded in this period.
+        </div>
+      {% endif %}
+    </section>
+
+    <!-- ── 6. "Who Needs Help" (Admins Only, Supportive Framing) ── -->
+    {% if current_user.role == 'admin' %}
+    <section class="bf-section" aria-labelledby="bf-help-heading">
+      <div class="bf-section-title-row">
+        <h2 id="bf-help-heading" class="bf-section-title">Who needs help</h2>
+        <p class="bf-section-sub">Team members who encountered difficulty during simulations and would benefit from 1-on-1 coaching.</p>
+      </div>
+
+      <details class="bf-support-details">
+        <summary class="bf-support-summary">
+          <span>Show repeat clickers ({{ repeat_clickers|length }})</span>
+          <i class="ti ti-chevron-down" aria-hidden="true"></i>
+        </summary>
+        
+        <div class="bf-support-body">
+          <div class="bf-policy-note">
+            <strong>Retention & Privacy Policy:</strong>
+            <span class="bf-policy-quote">"Targets and campaign logs are retained inside your secure tenant database and can be purged immediately at the administrator's request. Passwords and credentials are never captured or stored."</span>
+          </div>
+
+          {% if repeat_clickers %}
+          <table class="bf-support-table">
+            <thead>
+              <tr>
+                <th>Employee / Recipient</th>
+                <th>Clicks</th>
+                <th>Submitted</th>
+                <th>Scenarios Encountered</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for emp in repeat_clickers %}
+              <tr>
+                <td><strong>{{ emp.recipient_name or emp.recipient_email }}</strong></td>
+                <td>{{ emp.click_count }}</td>
+                <td>{{ emp.submit_count }}</td>
+                <td>{{ emp.scenarios or 'Standard email lure' }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+          {% else %}
+          <p style="font-size: 13px; color: var(--bf-ink-muted); margin: 12px 0 0;">No employees logged repeat simulation failures in this period.</p>
+          {% endif %}
+        </div>
+      </details>
+    </section>
+    {% endif %}
+
+    <!-- ── 7. Alerts (Real alerts only, or quiet empty state) ── -->
+    <section class="bf-section" style="border-bottom: none;" aria-labelledby="bf-alerts-heading">
+      <div class="bf-section-title-row">
+        <h2 id="bf-alerts-heading" class="bf-section-title">Alerts</h2>
+        <p class="bf-section-sub">Security advisories requiring review from account administrators.</p>
+      </div>
+
+      <div class="bf-alerts-list">
+        {% if alerts and alerts|length > 0 %}
+          {% for a in alerts %}
+          <div class="bf-alert-card {% if a.severity == 'CRITICAL' %}is-critical{% elif a.severity == 'HIGH' %}is-high{% endif %}">
+            <div class="bf-alert-head">
+              <span class="bf-alert-title">{{ a.title }}</span>
+              <span class="bf-alert-time">{{ a.time }}</span>
+            </div>
+            <p class="bf-alert-detail">{{ a.detail }}</p>
+          </div>
+          {% endfor %}
+        {% else %}
+          <div class="bf-no-alerts">
+            No alerts this period · {{ current_date_str }}
+          </div>
+        {% endif %}
+      </div>
+    </section>
+
+    <!-- Running footer for print stylesheet -->
+    <footer class="bf-print-footer">
+      PhishSim AI Executive Risk Briefing · {{ company_domain or 'Organization' }} · {{ date_range_label }}
+    </footer>
+
+  </article>
+
+  <!-- ── 8. Decoy Mailbox Side Panel (Drawer) ── -->
+  <div class="bf-drawer-overlay" id="bf-decoy-overlay" role="dialog" aria-modal="true" aria-labelledby="bf-decoy-drawer-title" aria-hidden="true" onclick="if(event.target===this) closeDecoyDrawer()">
+    <aside class="bf-drawer">
+      <div class="bf-drawer-header">
+        <h3 id="bf-decoy-drawer-title" class="bf-drawer-title">Decoy Mailbox Sentinel</h3>
+        <button type="button" class="bf-drawer-close" id="bf-drawer-close-btn" onclick="closeDecoyDrawer()" aria-label="Close panel">
+          <i class="ti ti-x" aria-hidden="true"></i>
+        </button>
+      </div>
+
+      <div class="bf-drawer-body">
+        <div class="bf-drawer-tabs">
+          <button type="button" class="bf-drawer-tab-btn is-active" id="bf-tab-btn-list" onclick="switchDecoyDrawerTab('list')">Active Decoys</button>
+          <button type="button" class="bf-drawer-tab-btn" id="bf-tab-btn-new" onclick="switchDecoyDrawerTab('new')">Deploy New Decoy</button>
+        </div>
+
+        <!-- Tab 1: List -->
+        <div id="bf-tab-panel-list">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <span style="font-size: 12px; color: var(--bf-ink-muted);">Monitored honeypot mailboxes:</span>
+            <button type="button" class="bf-action-btn" id="bf-scan-decoys-btn" onclick="runDecoyScanNow()" style="padding: 5px 10px; font-size: 11.5px;">
+              <i class="ti ti-refresh" aria-hidden="true"></i>
+              <span>Scan now</span>
+            </button>
+          </div>
+          <div id="bf-decoy-scan-output" style="display: none; padding: 10px; border-radius: 8px; background: color-mix(in srgb, var(--bf-ink) 4%, transparent); font-size: 12px; margin-bottom: 14px; font-family: var(--bf-font-mono);"></div>
+          <div id="bf-decoy-list-container">
+            Loading deployed decoys...
+          </div>
+        </div>
+
+        <!-- Tab 2: Deploy New -->
+        <div id="bf-tab-panel-new" style="display: none;">
+          <form id="bf-decoy-deploy-form" onsubmit="submitDeployDecoyForm(event)">
+            <div class="bf-form-group">
+              <label class="bf-form-label" for="decoy_email">Decoy Email Address</label>
+              <input type="email" id="decoy_email" name="decoy_email" class="bf-form-input" placeholder="e.g. legal-notices@{{ company_domain or 'yourcompany.com' }}" required>
+            </div>
+            <div class="bf-form-group">
+              <label class="bf-form-label" for="decoy_label">Role / Context Label</label>
+              <input type="text" id="decoy_label" name="decoy_label" class="bf-form-input" placeholder="e.g. Legal & Billing Inquiries" required>
+            </div>
+            <div class="bf-form-group">
+              <label class="bf-form-label" for="imap_host">IMAP Server Host (Optional)</label>
+              <input type="text" id="imap_host" name="imap_host" class="bf-form-input" placeholder="imap.mailserver.com">
+            </div>
+            <div class="bf-form-group">
+              <label class="bf-form-label" for="imap_port">IMAP Port</label>
+              <input type="number" id="imap_port" name="imap_port" class="bf-form-input" placeholder="993">
+            </div>
+            <div class="bf-form-group">
+              <label class="bf-form-label" for="imap_user">IMAP Username</label>
+              <input type="text" id="imap_user" name="imap_user" class="bf-form-input">
+            </div>
+            <div class="bf-form-group">
+              <label class="bf-form-label" for="imap_pass">IMAP Password</label>
+              <input type="password" id="imap_pass" name="imap_pass" class="bf-form-input">
+            </div>
+            <div id="bf-decoy-deploy-msg" style="display: none; padding: 10px; font-size: 12px; border-radius: 8px; margin-bottom: 12px;"></div>
+            <button type="submit" class="bf-action-btn" style="width: 100%; justify-content: center; padding: 10px;">
+              <i class="ti ti-plus" aria-hidden="true"></i> Deploy Decoy
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <div class="bf-drawer-footer">
+        <button type="button" class="bf-quiet-btn" onclick="closeDecoyDrawer()">Close</button>
+      </div>
+    </aside>
+  </div>
+
+</main>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    if (window.initBriefingFigures) {
+      window.initBriefingFigures({{ report_rate }}, {{ click_rate }});
+    }
+  });
+</script>
+{% endblock %}

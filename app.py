@@ -26,6 +26,12 @@ app = Flask(__name__)
 app.config['TEMPLATES_AUTO_RELOAD'] = True
 csrf = CSRFProtect(app)
 
+proxy_hops_val = int(os.getenv("PROXY_HOPS", "0"))
+if proxy_hops_val > 0:
+    from werkzeug.middleware.proxy_fix import ProxyFix
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=proxy_hops_val, x_proto=proxy_hops_val, x_host=proxy_hops_val)
+
+
 flask_secret_key = os.getenv("FLASK_SECRET_KEY")
 if not flask_secret_key:
     flask_secret_key = secrets.token_hex(32)
@@ -168,46 +174,170 @@ def clear_failed_logins(identifier):
     LOGIN_ATTEMPTS.pop(identifier, None)
 
 
+# --- PhishRecon & Platform Tier Configuration ---
+# Single config values for all tier limits
+PHISHRECON_REQUIRE_PRO = os.getenv("PHISHRECON_REQUIRE_PRO", "false").lower() in ("1", "true", "yes", "on")
+PHISHRECON_ANON_DAILY_LIMIT = int(os.getenv("PHISHRECON_ANON_DAILY_LIMIT", "5"))
+PHISHRECON_FREE_DAILY_LIMIT = int(os.getenv("PHISHRECON_FREE_DAILY_LIMIT", "15"))
+PHISHRECON_PRO_WATCHLIST_LIMIT = int(os.getenv("PHISHRECON_PRO_WATCHLIST_LIMIT", "5"))
+PHISHRECON_BURST_LIMIT = int(os.getenv("PHISHRECON_BURST_LIMIT", "10"))
+
+# --- Decoy Mailbox Credential Encryption at Rest (Fernet) ---
+def get_decoy_cipher():
+    key = os.getenv("DECOY_ENCRYPTION_KEY", "").strip()
+    if not key:
+        raise RuntimeError("DECOY_ENCRYPTION_KEY environment variable is missing. Refusing to store or read unencrypted credentials.")
+    try:
+        from cryptography.fernet import Fernet
+        return Fernet(key.encode("utf-8") if isinstance(key, str) else key)
+    except Exception as e:
+        raise RuntimeError(f"Invalid DECOY_ENCRYPTION_KEY configured: {e}")
+
+def encrypt_decoy_password(plaintext):
+    if not plaintext:
+        return None
+    cipher = get_decoy_cipher()
+    return cipher.encrypt(plaintext.encode("utf-8")).decode("utf-8")
+
+def decrypt_decoy_password(ciphertext):
+    if not ciphertext:
+        return ""
+    cipher = get_decoy_cipher()
+    try:
+        return cipher.decrypt(ciphertext.encode("utf-8")).decode("utf-8")
+    except Exception as e:
+        raise RuntimeError(f"Failed to decrypt decoy credentials: {e}")
+
+def safe_imap_ssl_connect(host, port=993, timeout=5):
+    """
+    Connects to IMAP4_SSL with strict public IP validation,
+    port restriction (only 993 allowed), TLS SNI hostname verification,
+    and timeout caps to prevent SSRF and internal port scanning.
+    """
+    import socket
+    import ssl
+    import imaplib
+
+    if not host or not isinstance(host, str):
+        raise ValueError("Invalid IMAP host")
+
+    clean_host = host.strip("[]").strip()
+    try:
+        port_num = int(port)
+    except (TypeError, ValueError):
+        raise ValueError("Invalid IMAP port")
+
+    if port_num != 993:
+        raise ValueError("Only standard secure IMAP (port 993) is permitted")
+
+    try:
+        addr_info = socket.getaddrinfo(clean_host, port_num, proto=socket.IPPROTO_TCP)
+    except (socket.gaierror, socket.error, OSError, UnicodeError):
+        raise ValueError("Unable to resolve IMAP host")
+
+    if not addr_info:
+        raise ValueError("Unable to resolve IMAP host")
+
+    validated_ips = []
+    for info in addr_info:
+        ip = info[4][0]
+        if not is_safe_ip(ip):
+            raise ValueError("Target IMAP host resolves to a private or restricted network address")
+        validated_ips.append(ip)
+
+    target_ip = validated_ips[0]
+
+    raw_sock = socket.create_connection((target_ip, port_num), timeout=timeout)
+    raw_sock.settimeout(timeout)
+
+    ssl_ctx = ssl.create_default_context()
+    tls_sock = ssl_ctx.wrap_socket(raw_sock, server_hostname=clean_host)
+
+    class SecureIMAP4_SSL(imaplib.IMAP4_SSL):
+        def _create_socket(self, timeout=None):
+            return tls_sock
+
+    mail = SecureIMAP4_SSL(clean_host, port_num)
+    return mail
+
 # --- Sliding Window Rate Limiter & SSRF Helpers ---
+import ipaddress
+
 PUBLIC_RATE_LIMITS = {}
+_CGNAT_NET = ipaddress.ip_network("100.64.0.0/10")
+_IPV6_ULA_NET = ipaddress.ip_network("fc00::/7")
+
+def prune_rate_limits(max_age_seconds=86400):
+    """Prunes expired entries from PUBLIC_RATE_LIMITS dictionary to prevent memory leaks."""
+    now = time.time()
+    dead_keys = []
+    for k, timestamps in list(PUBLIC_RATE_LIMITS.items()):
+        valid = [t for t in timestamps if now - t < max_age_seconds]
+        if valid:
+            PUBLIC_RATE_LIMITS[k] = valid
+        else:
+            dead_keys.append(k)
+    for k in dead_keys:
+        PUBLIC_RATE_LIMITS.pop(k, None)
 
 def check_rate_limit(ip, endpoint, max_requests, period_seconds):
-    """Sliding-window IP-based rate limiter stored in memory."""
+    """Sliding-window IP-based rate limiter stored in memory with auto-pruning."""
     now = time.time()
+    if len(PUBLIC_RATE_LIMITS) > 200:
+        prune_rate_limits()
     key = (ip, endpoint)
     history = [t for t in PUBLIC_RATE_LIMITS.get(key, []) if now - t < period_seconds]
-    PUBLIC_RATE_LIMITS[key] = history
     if len(history) >= max_requests:
+        PUBLIC_RATE_LIMITS[key] = history
         return False
-    PUBLIC_RATE_LIMITS[key].append(now)
+    history.append(now)
+    PUBLIC_RATE_LIMITS[key] = history
     return True
 
 def get_remote_ip():
-    """Extracts client IP, supporting reverse-proxy headers like X-Forwarded-For."""
-    if request.headers.get("X-Forwarded-For"):
-        return request.headers.get("X-Forwarded-For").split(",")[0].strip()
-    return request.remote_addr
+    """Extracts client IP, respecting configured proxy hop count (PROXY_HOPS, default 0)."""
+    proxy_hops = int(os.getenv("PROXY_HOPS", "0"))
+    if proxy_hops > 0 and request.headers.get("X-Forwarded-For"):
+        hops = [ip.strip() for ip in request.headers.get("X-Forwarded-For").split(",") if ip.strip()]
+        if len(hops) >= proxy_hops:
+            return hops[-proxy_hops]
+        return hops[0]
+    return request.remote_addr or "127.0.0.1"
 
 def is_safe_ip(ip_str):
-    """Blocks loopback, link-local, private, multicast, unspecified, and non-global reserved IPs."""
-    import ipaddress
+    """
+    Blocks loopback, link-local, private, multicast, unspecified, reserved,
+    CGNAT (100.64/10), IPv6 ULA (fc00::/7), and IPv4-mapped private IPs.
+    Fails closed (returns False on any parse error or exception).
+    """
+    if not ip_str or not isinstance(ip_str, str):
+        return False
     try:
-        clean_ip = ip_str.split("%")[0].strip("[]")
+        clean_ip = ip_str.split("%")[0].strip("[]").strip()
         ip = ipaddress.ip_address(clean_ip)
-        if (ip.is_private or 
-            ip.is_loopback or 
-            ip.is_link_local or 
-            ip.is_multicast or 
-            ip.is_unspecified or
-            (ip.is_reserved and not ip.is_global)):
+        if isinstance(ip, ipaddress.IPv6Address) and ip.ipv4_mapped:
+            ip = ip.ipv4_mapped
+
+        if not ip.is_global:
+            return False
+        if ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_multicast or ip.is_unspecified or ip.is_reserved:
+            return False
+        if ip.version == 4 and ip in _CGNAT_NET:
+            return False
+        if ip.version == 6 and ip in _IPV6_ULA_NET:
             return False
         return True
     except Exception:
-        return True
+        return False
 
 def is_safe_url(url_str):
-    """Resolves target hostname IPs and validates they belong to public routing spaces."""
-    import urllib.parse, os, socket
+    """
+    Resolves target hostname IPs and validates they belong to public routing spaces.
+    Fails closed (returns False if hostname is missing, unresolvable, or resolves to any non-public IP).
+    """
+    import urllib.parse, socket
+    if not url_str or not isinstance(url_str, str):
+        return False
     try:
         if not url_str.startswith(("http://", "https://")):
             url_str = "https://" + url_str
@@ -215,34 +345,26 @@ def is_safe_url(url_str):
         hostname = parsed.hostname
         if not hostname:
             return False
-        
+
         hostname = hostname.strip("[]").lower()
-        
-        # Allow local app self-tracing for debugging/demo purposes
-        base_url = os.getenv("APP_BASE_URL", "")
-        if base_url:
-            base_parsed = urllib.parse.urlparse(base_url)
-            if base_parsed.hostname and hostname == base_parsed.hostname.lower():
-                return True
-        if hostname in ("localhost", "127.0.0.1", "::1"):
-            return True
-                
-        # Resolve all DNS records
+
+        # Resolve all DNS records; fail closed on any resolution failure
         try:
             addr_info = socket.getaddrinfo(hostname, None)
         except (socket.gaierror, socket.error, OSError, UnicodeError):
-            # DNS resolution failed — return True to allow network request to report natural resolution error
-            return True
+            return False
+
+        if not addr_info:
+            return False
 
         for info in addr_info:
             ip = info[4][0]
             if not is_safe_ip(ip):
-                print(f"[SSRF GUARD] Blocked private/reserved IP '{ip}' for target hostname '{hostname}'")
                 return False
         return True
-    except Exception as e:
-        print(f"[SSRF GUARD] Exception checking URL '{url_str}': {e}")
+    except Exception:
         return False
+
 
 
 
@@ -461,7 +583,7 @@ def handle_db_error(e):
 @app.errorhandler(CSRFError)
 def handle_csrf_error(e):
     print(f"[CSRF] Handled CSRF validation error on {request.method} {request.path}: {e}")
-    if request.is_json or request.path.startswith("/api/") or request.headers.get("X-Requested-With") == "XMLHttpRequest":
+    if request.is_json or request.path.startswith("/api/") or request.path.startswith("/remediate/") or request.headers.get("X-Requested-With") == "XMLHttpRequest":
         return jsonify({"success": False, "ok": False, "error": "Session security token refreshed. Please retry."}), 400
     flash("Session security token refreshed. Please try again.")
     referrer = request.referrer or url_for("dashboard")
@@ -1009,11 +1131,47 @@ def ensure_simulation_tables(cursor):
             imap_host VARCHAR(255),
             imap_port INT,
             imap_user VARCHAR(255),
-            imap_pass VARCHAR(255),
+            imap_pass TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             UNIQUE KEY unique_user_decoy (user_id, email)
         )
     """)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS recon_history (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            user_id INT NOT NULL,
+            domain VARCHAR(255) NOT NULL,
+            score INT NOT NULL,
+            posture VARCHAR(50) NOT NULL,
+            scoring_version VARCHAR(20) DEFAULT 'v1',
+            summary_json LONGTEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            INDEX idx_user_recon (user_id, domain, created_at)
+        )
+    """)
+    try:
+        cursor.execute("ALTER TABLE users ADD COLUMN whitelabel_company_name VARCHAR(255) NULL")
+    except Exception:
+        pass
+    try:
+        cursor.execute("ALTER TABLE decoy_mailboxes MODIFY COLUMN imap_pass TEXT")
+    except Exception:
+        pass
+    try:
+        cursor.execute("SELECT id, imap_pass FROM decoy_mailboxes WHERE imap_pass IS NOT NULL AND imap_pass != ''")
+        existing_decoys = cursor.fetchall()
+        for dec in existing_decoys:
+            d_id = dec["id"] if isinstance(dec, dict) else dec[0]
+            raw_p = dec["imap_pass"] if isinstance(dec, dict) else dec[1]
+            if not raw_p:
+                continue
+            try:
+                decrypt_decoy_password(raw_p)
+            except Exception:
+                enc_p = encrypt_decoy_password(raw_p)
+                cursor.execute("UPDATE decoy_mailboxes SET imap_pass = %s WHERE id = %s", (enc_p, d_id))
+    except Exception as mig_err:
+        print(f"Decoy mailbox password migration note: {mig_err}")
     # Check if simulation_events has any rows to backfill it
     cursor.execute("SELECT COUNT(*) AS count FROM simulation_events")
     count_row = cursor.fetchone()
@@ -1153,9 +1311,9 @@ def get_public_stats(cursor):
         cursor.execute("SELECT COUNT(*) AS c FROM simulation_events")
         row_se = cursor.fetchone()
         count_se = row_se["c"] if (row_se and row_se["c"]) else 0
-        total_sims = max(count_emails, count_se, 650)
+        total_sims = max(count_emails, count_se)
         stats["total_simulations"] = total_sims
-        stats["total_simulations_formatted"] = "{:,}".format(total_sims)
+        stats["total_simulations_formatted"] = "{:,}".format(total_sims) if total_sims > 0 else "0"
 
         # 2. Avg Click Rate & Reuse for pct_clicked
         cursor.execute("""
@@ -1170,8 +1328,8 @@ def get_public_stats(cursor):
             stats["avg_click_rate"] = round((clicked / total) * 100, 1)
             stats["pct_clicked"] = stats["avg_click_rate"]
         else:
-            stats["avg_click_rate"] = 21.1
-            stats["pct_clicked"] = 21.1
+            stats["avg_click_rate"] = None
+            stats["pct_clicked"] = None
 
         # 3. Avg Remediation Minutes
         cursor.execute("""
@@ -1193,7 +1351,7 @@ def get_public_stats(cursor):
                     hrs_str = hrs_str[:-2]
                 stats["avg_remediation_minutes"] = f"{hrs_str} hr"
         else:
-            stats["avg_remediation_minutes"] = "14 min"
+            stats["avg_remediation_minutes"] = None
 
         # 4. First Touch Click Rate
         cursor.execute("""
@@ -1258,7 +1416,7 @@ def get_public_stats(cursor):
             total = row["total"]
             stats["pct_emails_opened"] = round((opened / total) * 100, 1)
         else:
-            stats["pct_emails_opened"] = 68.3
+            stats["pct_emails_opened"] = None
 
         # 8. pct_reported
         cursor.execute("""
@@ -1272,7 +1430,7 @@ def get_public_stats(cursor):
             total = row["total"]
             stats["pct_reported"] = round((reported / total) * 100, 1)
         else:
-            stats["pct_reported"] = 8.4
+            stats["pct_reported"] = None
 
         # 9. avg_csv_to_first_email_minutes
         cursor.execute("""
@@ -1289,7 +1447,7 @@ def get_public_stats(cursor):
         if row and row["avg_minutes"] is not None:
             stats["avg_csv_to_first_email_minutes"] = max(1, int(round(float(row["avg_minutes"]))))
         else:
-            stats["avg_csv_to_first_email_minutes"] = 2
+            stats["avg_csv_to_first_email_minutes"] = None
 
         # 10. pct_clicked_finance_dept
         cursor.execute("""
@@ -1305,7 +1463,7 @@ def get_public_stats(cursor):
             total = row["total"]
             stats["pct_clicked_finance_dept"] = round((clicked / total) * 100, 1)
         else:
-            stats["pct_clicked_finance_dept"] = 18.5
+            stats["pct_clicked_finance_dept"] = None
 
         # 7. Recent Events
         cursor.execute("""
@@ -2064,18 +2222,19 @@ def api_terminal_health():
     # 5. LLM Check
     t0 = time.time()
     try:
-        import requests
-        headers = {}
         api_key = os.getenv("OPENROUTER_API_KEY")
         if api_key:
-            headers["Authorization"] = f"Bearer {api_key}"
-        r = requests.get("https://openrouter.ai/api/v1/models", headers=headers, timeout=0.8)
-        if r.status_code == 200:
-            results["llm"] = {"status": "OK", "time_ms": int((time.time() - t0) * 1000)}
+            import requests
+            headers = {"Authorization": f"Bearer {api_key}"}
+            r = requests.get("https://openrouter.ai/api/v1/models", headers=headers, timeout=0.8)
+            if r.status_code == 200:
+                results["llm"] = {"status": "OK", "time_ms": int((time.time() - t0) * 1000)}
+            else:
+                results["llm"] = {"status": "STANDBY", "time_ms": int((time.time() - t0) * 1000)}
         else:
-            results["llm"] = {"status": "DEGRADED", "time_ms": int((time.time() - t0) * 1000)}
+            results["llm"] = {"status": "STANDBY", "time_ms": 12}
     except Exception:
-        results["llm"] = {"status": "DEGRADED" if not os.getenv("OPENROUTER_API_KEY") else "OK", "time_ms": 142}
+        results["llm"] = {"status": "STANDBY", "time_ms": 12}
         
     return jsonify({"ok": True, "health": results})
 
@@ -2330,6 +2489,7 @@ def solution_detail(key):
             "body": "<p>When clicked, the plugin analyzes the email metadata. If it is a simulated campaign, the employee receives positive feedback and their report is logged in the admin panel. If it is a real external threat, the email is packaged with headers and routed to the security team.</p><p>This active participation transforms employees from potential liabilities into a crowd-sourced threat detection network.</p>"
         }
     }
+    key = (key or "").strip().lower()
     solution = solutions_data.get(key)
     if not solution:
         return redirect(url_for("home"))
@@ -3822,7 +3982,8 @@ def dashboard():
             demo_summary=demo_summary,
             dept_count=dept_count,
             recent_activities=recent_activities,
-            is_demo_preview=True
+            is_demo_preview=True,
+            briefing_headline="In your demo baseline, 24.1% of employees reported the lure while 12.5% clicked."
         )
     db = get_db_connection()
     cursor = db.cursor(dictionary=True)
@@ -3839,13 +4000,8 @@ def dashboard():
             where_clause = "WHERE c.company_domain != 'demo-corp.com' OR c.company_domain IS NULL"
             params = ()
         else:
-            company_domain = normalize_domain(user.get("company_domain"))
-            if company_domain:
-                where_clause = "WHERE c.company_domain = %s OR c.user_id = %s"
-                params = (company_domain, user["id"])
-            else:
-                where_clause = "WHERE c.user_id = %s"
-                params = (user["id"],)
+            where_clause = "WHERE c.user_id = %s"
+            params = (user["id"],)
 
         sql = f"""
             SELECT 
@@ -4044,6 +4200,41 @@ def dashboard():
         cursor.close()
         db.close()
 
+    # Compute brief headline for dashboard summary card
+    launched_c_list = [c for c in campaigns if c.get("status") in ("launched", "launched_with_errors", "completed") and (c.get("emails_sent") or 0) > 0]
+    if not launched_c_list:
+        briefing_headline = "Continuous analysis of your campaign telemetry, attack trends, and targeted department exposure."
+    elif len(launched_c_list) == 1:
+        c0 = launched_c_list[0]
+        c0_sent = c0["emails_sent"] or 1
+        c0_clk = round((c0["clicks"] / c0_sent) * 100, 1)
+        c0_rep = round((c0["reports"] / c0_sent) * 100, 1)
+        briefing_headline = f"In your first campaign, {c0_rep:.1f}% of recipients reported the lure while {c0_clk:.1f}% clicked."
+    else:
+        sorted_c = sorted(launched_c_list, key=lambda x: str(x.get("created_at") or ""))
+        latest_c = sorted_c[-1]
+        prior_c = sorted_c[-2]
+        
+        l_sent = latest_c["emails_sent"] or 1
+        l_clk = round((latest_c["clicks"] / l_sent) * 100, 1)
+        l_rep = round((latest_c["reports"] / l_sent) * 100, 1)
+        
+        p_sent = prior_c["emails_sent"] or 1
+        p_clk = round((prior_c["clicks"] / p_sent) * 100, 1)
+        p_rep = round((prior_c["reports"] / p_sent) * 100, 1)
+        
+        delta_clk = round(l_clk - p_clk, 1)
+        delta_rep = round(l_rep - p_rep, 1)
+        
+        briefing_headline = generate_deterministic_briefing_headline(
+            total_campaigns=len(sorted_c),
+            report_rate=l_rep,
+            click_rate=l_clk,
+            delta_report=delta_rep,
+            delta_click=delta_clk,
+            repeat_offenders=0
+        )
+
     return render_template(
         "dashboard.html",
         campaigns=campaigns,
@@ -4053,6 +4244,7 @@ def dashboard():
         demo_summary=demo_summary,
         dept_count=dept_count,
         recent_activities=recent_activities,
+        briefing_headline=briefing_headline
     )
 
 @app.route("/reports-demo")
@@ -4070,13 +4262,8 @@ def reports_demo():
             where_clause = "WHERE c.company_domain != 'demo-corp.com' OR c.company_domain IS NULL"
             params = ()
         else:
-            company_domain = normalize_domain(user.get("company_domain"))
-            if company_domain:
-                where_clause = "WHERE c.company_domain = %s OR c.user_id = %s"
-                params = (company_domain, user["id"])
-            else:
-                where_clause = "WHERE c.user_id = %s"
-                params = (user["id"],)
+            where_clause = "WHERE c.user_id = %s"
+            params = (user["id"],)
 
         cursor.execute(f"""
             SELECT c.id, c.name, c.scenario_type, c.status, c.company_domain, c.created_at,
@@ -4706,86 +4893,89 @@ def contact_sales():
 # PHASE 4.5: REMEDIATION APIS (DECOYS & DNS)
 # ==========================================
 
-# API: Domain Lockdown real SPF/DMARC DNS check via Cloudflare/Google DNS-over-HTTPS API
+# ==========================================
+# PHASE 4.5: REMEDIATION APIS (DECOYS & DNS)
+# ==========================================
+
+# API: Domain Lockdown real SPF/DMARC DNS check via unified check_email_auth
+# Available to all logged-in users to demonstrate defense value
 @app.route("/api/remediate/domain-lockdown", methods=["POST"])
-@csrf.exempt
 @login_required
 def api_domain_lockdown():
     user = current_user()
-    domain = user.get("company_domain") or "demo-corp.com"
-    
-    import requests
-    
-    spf_record = None
-    dmarc_record = None
-    spf_status = "missing"
-    dmarc_status = "missing"
-    
-    # 1. Fetch SPF (TXT record on domain)
-    try:
-        r_spf = requests.get(f"https://dns.google/resolve?name={domain}&type=TXT", timeout=8)
-        if r_spf.status_code == 200:
-            data = r_spf.json()
-            for answer in data.get("Answer", []):
-                txt_data = answer.get("data", "")
-                clean_txt = txt_data.strip().strip('"')
-                if clean_txt.startswith("v=spf1"):
-                    spf_record = clean_txt
-                    spf_status = "present"
-                    break
-    except Exception as e:
-        print("SPF DNS Query failed:", e)
-        
-    # 2. Fetch DMARC (TXT record on _dmarc.domain)
-    try:
-        r_dmarc = requests.get(f"https://dns.google/resolve?name=_dmarc.{domain}&type=TXT", timeout=8)
-        if r_dmarc.status_code == 200:
-            data = r_dmarc.json()
-            for answer in data.get("Answer", []):
-                txt_data = answer.get("data", "")
-                clean_txt = txt_data.strip().strip('"')
-                if clean_txt.startswith("v=DMARC1"):
-                    dmarc_record = clean_txt
-                    dmarc_status = "present"
-                    break
-    except Exception as e:
-        print("DMARC DNS Query failed:", e)
-        
-    status = "secure" if (spf_status == "present" and dmarc_status == "present") else "vulnerable"
-    
+    domain = (user.get("company_domain") or "").strip().lower()
+    if not domain:
+        return jsonify({
+            "success": False,
+            "error": "Please add your company domain in your profile to check domain lockdown."
+        }), 400
+
+    clean_domain = normalize_exposure_domain(domain)
+    if not clean_domain:
+        return jsonify({
+            "success": False,
+            "error": "Invalid company domain configured in profile."
+        }), 400
+
+    auth_res = check_email_auth(clean_domain)
+    spf_obj = auth_res.get("spf", {})
+    dmarc_obj = auth_res.get("dmarc", {})
+
+    # RFC-compliant checks: SPF must be strict (-all) or softfail (~all)
+    # Open (+all), neutral (?all), invalid, missing, or lookup_limit_exceeded are NOT secure
+    spf_status = spf_obj.get("status", "missing")
+    spf_is_enforced = spf_status in ("strict", "softfail")
+
+    # DMARC must be reject or quarantine (p=none is monitoring only and NOT secure)
+    dmarc_status = dmarc_obj.get("status", "missing")
+    dmarc_is_enforced = dmarc_status in ("reject", "quarantine")
+
+    is_secure = (spf_is_enforced and dmarc_is_enforced)
+    status = "secure" if is_secure else "vulnerable"
+
     return jsonify({
         "success": True,
-        "domain": domain,
+        "domain": clean_domain,
         "spf_status": spf_status,
-        "spf_record": spf_record,
+        "spf_grade": spf_obj.get("grade", "Unknown"),
+        "spf_record": spf_obj.get("raw"),
+        "spf_is_enforced": spf_is_enforced,
         "dmarc_status": dmarc_status,
-        "dmarc_record": dmarc_record,
-        "status": status
+        "dmarc_grade": dmarc_obj.get("grade", "Unknown"),
+        "dmarc_record": dmarc_obj.get("raw"),
+        "dmarc_is_enforced": dmarc_is_enforced,
+        "status": status,
+        "email_auth": auth_res
     })
 
-# API: Deploy Decoy Mailbox
+# API: Deploy Decoy Mailbox (PRO ONLY)
 @app.route("/api/remediate/deploy-decoy", methods=["POST"])
-@csrf.exempt
 @login_required
 def api_deploy_decoy():
     user = current_user()
+    if not user or user.get("role") not in ("admin", "pro"):
+        return jsonify({"success": False, "error": "Pro subscription required", "upgrade_url": "/billing"}), 403
+
     email = request.form.get("decoy_email", "").strip().lower()
     label = request.form.get("label", "").strip()
     imap_host = request.form.get("imap_host", "").strip()
     imap_port = request.form.get("imap_port", "").strip()
     imap_user = request.form.get("imap_user", "").strip()
     imap_pass = request.form.get("imap_pass", "").strip()
-    
+
     if not email:
         return jsonify({"success": False, "error": "Email is required."}), 400
-        
+
     company_domain = (user.get("company_domain") or "").strip().lower()
     if company_domain and not email.endswith(f"@{company_domain}"):
         return jsonify({
-            "success": False, 
+            "success": False,
             "error": f"Decoy mailbox must belong to your organization domain (@{company_domain})."
         }), 400
-        
+
+    # Encrypt password at rest
+    enc_pass = encrypt_decoy_password(imap_pass) if imap_pass else None
+
     db = get_db_connection()
     cursor = db.cursor()
     try:
@@ -4793,8 +4983,8 @@ def api_deploy_decoy():
             INSERT INTO decoy_mailboxes (user_id, email, label, imap_host, imap_port, imap_user, imap_pass)
             VALUES (%s, %s, %s, %s, %s, %s, %s)
             ON DUPLICATE KEY UPDATE label=%s, imap_host=%s, imap_port=%s, imap_user=%s, imap_pass=%s
-        """, (user["id"], email, label, imap_host, imap_port or None, imap_user or None, imap_pass or None,
-              label, imap_host, imap_port or None, imap_user or None, imap_pass or None))
+        """, (user["id"], email, label, imap_host, imap_port or None, imap_user or None, enc_pass,
+              label, imap_host, imap_port or None, imap_user or None, enc_pass))
         db.commit()
         cursor.close()
         db.close()
@@ -4804,13 +4994,17 @@ def api_deploy_decoy():
         db.close()
         return jsonify({"success": False, "error": f"Database error: {str(e)}"}), 500
 
-# API: Get Deployed Decoys
+# API: Get Deployed Decoys (PRO ONLY)
 @app.route("/api/remediate/get-decoys", methods=["GET"])
 @login_required
 def api_get_decoys():
     user = current_user()
+    if not user or user.get("role") not in ("admin", "pro"):
+        return jsonify({"success": False, "error": "Pro subscription required", "upgrade_url": "/billing"}), 403
+
     db = get_db_connection()
     cursor = db.cursor(dictionary=True)
+    # Never select or return imap_pass to browser
     cursor.execute("""
         SELECT id, email, label, status, imap_host, imap_port, imap_user, created_at 
         FROM decoy_mailboxes WHERE user_id = %s
@@ -4818,90 +5012,99 @@ def api_get_decoys():
     decoys = cursor.fetchall()
     cursor.close()
     db.close()
-    
+
     for d in decoys:
         if d.get("created_at"):
             d["created_at"] = d["created_at"].strftime("%Y-%m-%d %H:%M")
     return jsonify({"success": True, "decoys": decoys})
 
-# API: Trigger live check of decoy mailboxes
+# API: Trigger live check of decoy mailboxes (PRO ONLY)
 @app.route("/api/remediate/check-decoys", methods=["POST"])
-@csrf.exempt
 @login_required
 def api_check_decoys():
     user = current_user()
+    if not user or user.get("role") not in ("admin", "pro"):
+        return jsonify({"success": False, "error": "Pro subscription required", "upgrade_url": "/billing"}), 403
+
     db = get_db_connection()
     cursor = db.cursor(dictionary=True)
     cursor.execute("SELECT * FROM decoy_mailboxes WHERE user_id = %s", (user["id"],))
     decoys = cursor.fetchall()
     cursor.close()
     db.close()
-    
+
     if not decoys:
         return jsonify({"success": False, "error": "No decoy mailboxes have been deployed yet."}), 400
-        
-    import imaplib
+
     import email
     from email.header import decode_header
-    
+
     results = []
     intercepted_threats = 0
     simulations_caught = 0
-    
+
     for d in decoys:
         host = d.get("imap_host")
         port = d.get("imap_port") or 993
         username = d.get("imap_user")
-        password = d.get("imap_pass")
+        stored_pass = d.get("imap_pass")
         email_addr = d.get("email")
-        
+
         status_info = {
             "email": email_addr,
             "checked": False,
             "error": None,
             "unread_count": 0
         }
-        
-        if not host or not username or not password:
+
+        if not host or not username or not stored_pass:
             status_info["error"] = "IMAP credentials not configured — skipping live connection."
             results.append(status_info)
             continue
-            
+
         try:
-            mail = imaplib.IMAP4_SSL(host, int(port))
+            password = decrypt_decoy_password(stored_pass)
+        except Exception:
+            status_info["error"] = "Unable to decrypt stored IMAP credentials."
+            results.append(status_info)
+            continue
+
+        try:
+            # Connect via SSRF-safe connection helper
+            mail = safe_imap_ssl_connect(host, port=port, timeout=5)
             mail.login(username, password)
             mail.select("inbox")
-            
+
             status, messages = mail.search(None, 'UNSEEN')
             if status == "OK" and messages[0]:
                 msg_ids = messages[0].split()
                 status_info["unread_count"] = len(msg_ids)
-                
+
                 db = get_db_connection()
                 cursor = db.cursor()
-                
+
                 for m_id in msg_ids:
                     res, data = mail.fetch(m_id, "(RFC822)")
                     if res != "OK":
                         continue
                     raw_email = data[0][1]
                     msg = email.message_from_bytes(raw_email)
-                    
+
                     subject, encoding = decode_header(msg["Subject"] or "")[0]
                     if isinstance(subject, bytes):
                         subject = subject.decode(encoding or "utf-8", errors="ignore")
-                    
+
                     sender = msg.get("From", "")
-                    
+
                     is_simulation = False
                     tracking_token = None
-                    
+
                     for header_name in ["X-PhishSim-Tracking", "X-Simulation-ID"]:
                         if msg[header_name]:
                             is_simulation = True
                             tracking_token = msg[header_name]
                             break
-                            
+
                     body_content = ""
                     if msg.is_multipart():
                         for part in msg.walk():
@@ -4910,14 +5113,14 @@ def api_check_decoys():
                                 break
                     else:
                         body_content = msg.get_payload(decode=True).decode(errors="ignore")
-                        
+
                     if not is_simulation and ("/click/" in body_content or "/track/open/" in body_content):
                         is_simulation = True
                         import re as _re
                         m = _re.search(r'/click/([a-zA-Z0-9_-]+)', body_content)
                         if m:
                             tracking_token = m.group(1)
-                            
+
                     if is_simulation:
                         simulations_caught += 1
                         if tracking_token:
@@ -4930,17 +5133,28 @@ def api_check_decoys():
                             INSERT INTO events (tracking_id, event_type, ip_address, user_agent, created_at)
                             VALUES (%s, 'threat_intercept', %s, %s, NOW())
                         """, (f"threat_{email_addr}_{m_id.decode()}", f"Sender: {sender}", f"Subject: {subject}"))
-                
+
                 db.commit()
                 cursor.close()
                 db.close()
-                
+
             mail.logout()
             status_info["checked"] = True
-        except Exception as ex:
-            status_info["error"] = str(ex)
-            
+        except ValueError as ve:
+            # Validation errors (e.g. non-public IP or invalid port)
+            status_info["error"] = str(ve)
+        except Exception:
+            # Sanitize error to prevent leaking internal network topology or exception traces
+            status_info["error"] = "Connection to IMAP server failed. Verify server settings."
+
         results.append(status_info)
+
+    return jsonify({
+        "success": True,
+        "results": results,
+        "intercepted_threats": intercepted_threats,
+        "simulations_caught": simulations_caught
+    })
         
     return jsonify({
         "success": True,
@@ -7561,8 +7775,20 @@ def password_breach():
 @app.route("/exposure-report")
 def exposure_report():
     """Renders the PhishRecon Exposure Report page."""
+    user = current_user()
+    if PHISHRECON_REQUIRE_PRO:
+        if not user:
+            return redirect(url_for("login", next=request.path))
+        if user.get("role") not in ("admin", "pro"):
+            flash("PhishRecon is now a Pro feature. Upgrade to run deep infrastructure audits.", "warning")
+            return redirect(url_for("billing_portal"))
+
+    whitelabel_name = ""
+    if user and user.get("role") in ("admin", "pro"):
+        whitelabel_name = user.get("whitelabel_company_name") or user.get("company_domain") or ""
+
     domain = normalize_exposure_domain(request.args.get("domain")) or ""
-    return render_template("exposure_report.html", prefill_domain=domain)
+    return render_template("exposure_report.html", prefill_domain=domain, whitelabel_company_name=whitelabel_name)
 
 def generate_ai_briefing(campaign_data):
     from ai_engine.email_gen import client as ai_client
@@ -7576,16 +7802,16 @@ def generate_ai_briefing(campaign_data):
 
 Here is the REAL data from their phishing simulation campaigns:
 
-Total campaigns run: {campaign_data['totalCampaigns']}
-Total employees tested: {campaign_data['totalEmployees']}
-Overall click rate: {campaign_data['clickRate']}%
-Overall report rate: {campaign_data['reportRate']}%
-Most clicked scenario: {campaign_data['mostClickedScenario']}
-Highest risk department: {campaign_data['highestRiskDepartment']} ({campaign_data['highestRiskClickRate']}% click rate)
-Employees who clicked 3+ times: {campaign_data['repeatOffenders']}
-Employees who have never reported: {campaign_data['neverReported']}
-Campaign with best result: {campaign_data['bestCampaign']} ({campaign_data['bestClickRate']}% click rate)
-Campaign with worst result: {campaign_data['worstCampaign']} ({campaign_data['worstClickRate']}% click rate)
+Total campaigns run: {campaign_data.get('totalCampaigns', 0)}
+Total employees tested: {campaign_data.get('totalEmployees', 0)}
+Overall click rate: {campaign_data.get('clickRate', 0.0)}%
+Overall report rate: {campaign_data.get('reportRate', 0.0)}%
+Most clicked scenario: {campaign_data.get('mostClickedScenario', 'None')}
+Highest risk department: {campaign_data.get('highestRiskDepartment', 'N/A')} ({campaign_data.get('highestRiskClickRate', 0.0)}% click rate)
+Employees who clicked 3+ times: {campaign_data.get('repeatOffenders', 0)}
+Employees who have never reported: {campaign_data.get('neverReported', 0)}
+Campaign with best result: {campaign_data.get('bestCampaign', 'N/A')} ({campaign_data.get('bestClickRate', 0.0)}% click rate)
+Campaign with worst result: {campaign_data.get('worstCampaign', 'N/A')} ({campaign_data.get('worstClickRate', 0.0)}% click rate)
 
 Write a professional 3-paragraph security intelligence briefing based ONLY on this real data. Do not invent external threats or dark web incidents. Focus on:
 1. What the click rate data reveals about the organization's current risk posture
@@ -7619,13 +7845,13 @@ Write in a professional intelligence briefing tone. Output plain text only, no m
     
     return (
         f"Security Intelligence Briefing Summary:\n\n"
-        f"Based on your campaign data, the organization has run {campaign_data['totalCampaigns']} campaigns targeting "
-        f"{campaign_data['totalEmployees']} employees. The current overall click rate is {campaign_data['clickRate']}% "
-        f"against a report rate of {campaign_data['reportRate']}%. The department showing the highest susceptibility "
-        f"is {campaign_data['highestRiskDepartment']} at a {campaign_data['highestRiskClickRate']}% click rate.\n\n"
-        f"A total of {campaign_data['repeatOffenders']} repeat offenders have clicked simulation links 3 or more times, "
-        f"and {campaign_data['neverReported']} employees have never reported a simulation event. "
-        f"Targeted remediation training is highly recommended for {campaign_data['highestRiskDepartment']}."
+        f"Based on your campaign data, the organization has run {campaign_data.get('totalCampaigns', 0)} campaigns targeting "
+        f"{campaign_data.get('totalEmployees', 0)} employees. The current overall click rate is {campaign_data.get('clickRate', 0.0)}% "
+        f"against a report rate of {campaign_data.get('reportRate', 0.0)}%. The department showing the highest susceptibility "
+        f"is {campaign_data.get('highestRiskDepartment', 'All Departments')} at a {campaign_data.get('highestRiskClickRate', 0.0)}% click rate.\n\n"
+        f"A total of {campaign_data.get('repeatOffenders', 0)} repeat offenders have clicked simulation links 3 or more times, "
+        f"and {campaign_data.get('neverReported', 0)} employees have never reported a simulation event. "
+        f"Targeted remediation training is recommended for {campaign_data.get('highestRiskDepartment', 'exposed departments')}."
     )
 
 def get_recent_activity_data(user, limit=20):
@@ -7636,13 +7862,8 @@ def get_recent_activity_data(user, limit=20):
             where_clause = "(c.company_domain != 'demo-corp.com' OR c.company_domain IS NULL)"
             params = ()
         else:
-            company_domain = normalize_domain(user.get("company_domain"))
-            if company_domain:
-                where_clause = "(c.company_domain = %s OR c.user_id = %s)"
-                params = (company_domain, user["id"])
-            else:
-                where_clause = "c.user_id = %s"
-                params = (user["id"],)
+            where_clause = "c.user_id = %s"
+            params = (user["id"],)
         
         cursor.execute(f"""
             SELECT 
@@ -7687,8 +7908,8 @@ def generate_real_alerts(campaign_data):
     if repeat_offenders > 0:
         alerts.append({
             'severity': 'HIGH',
-            'title': f"{repeat_offenders} employees have clicked phishing links 3+ times",
-            'detail': "Repeat clickers represent your highest individual risk. Consider mandatory one-on-one security training.",
+            'title': f"{repeat_offenders} employees have clicked phishing links multiple times",
+            'detail': "Repeat clickers represent your highest organizational vulnerability. Consider 1-on-1 coaching.",
             'time': 'All-time data'
         })
     
@@ -7704,34 +7925,54 @@ def generate_real_alerts(campaign_data):
     
     # No campaigns run recently
     days_since_last_campaign = campaign_data.get('daysSinceLastCampaign', 999)
-    if days_since_last_campaign > 30:
+    if days_since_last_campaign > 30 and days_since_last_campaign < 900:
         alerts.append({
             'severity': 'MEDIUM',
             'title': f"No simulation run in {days_since_last_campaign} days",
             'detail': "Regular phishing simulations (monthly recommended) maintain employee vigilance. Schedule your next campaign.",
-            'time': f"Last: {days_since_last_campaign} days ago" if days_since_last_campaign < 999 else "Never run"
-        })
-    
-    # If no real alerts, show positive confirmation
-    if len(alerts) == 0:
-        alerts.append({
-            'severity': 'PASS',
-            'title': 'No critical risk indicators detected',
-            'detail': 'Your current simulation data shows no critical patterns. Continue regular campaigns to maintain vigilance.',
-            'time': 'Current status'
+            'time': f"Last: {days_since_last_campaign} days ago"
         })
     
     return alerts
 
+def generate_deterministic_briefing_headline(total_campaigns, report_rate, click_rate, delta_report, delta_click, repeat_offenders, is_sample=False):
+    """
+    Constructs a calm, authoritative executive headline by deterministic rules from real data.
+    Never invents trends when data is insufficient.
+    """
+    if is_sample or total_campaigns == 0:
+        return "Acme Corporation simulated attack readiness · Sample Preview"
+    
+    if total_campaigns == 1:
+        return f"In your first campaign, {report_rate:.1f}% of recipients reported the lure while {click_rate:.1f}% clicked."
+    
+    # 2+ campaigns: honest period-over-period comparison
+    if delta_click is not None and delta_report is not None:
+        if delta_click < 0 and delta_report > 0:
+            return f"Click exposure fell by {abs(delta_click):.1f} points to {click_rate:.1f}%, while reporting improved by {abs(delta_report):.1f} points to {report_rate:.1f}%."
+        elif delta_click < 0:
+            return f"Click exposure decreased by {abs(delta_click):.1f} points to {click_rate:.1f}%, with {report_rate:.1f}% of recipients reporting the threat."
+        elif repeat_offenders > 0:
+            return f"Click exposure is {click_rate:.1f}%, though {repeat_offenders} repeat clickers require coaching."
+        elif delta_report > 0:
+            return f"Reporting rate increased by {abs(delta_report):.1f} points to {report_rate:.1f}%, while click exposure held steady at {click_rate:.1f}%."
+        elif delta_click > 0:
+            return f"Click exposure rose to {click_rate:.1f}% across the latest period, signaling need for targeted refresher training."
+        else:
+            return f"Click exposure held steady at {click_rate:.1f}%, with {report_rate:.1f}% of employees actively reporting lures."
+    
+    return f"Click exposure stands at {click_rate:.1f}%, with {report_rate:.1f}% of employees reporting simulated threats."
+
 @app.route("/ai-risk-advisor")
-@login_required
 def ai_risk_advisor():
-    """Renders the AI Risk Advisor page."""
+    """301 redirect from legacy /ai-risk-advisor to /briefing."""
+    return redirect(url_for("risk_briefing"), code=301)
+
+@app.route("/briefing")
+@login_required
+def risk_briefing():
+    """Renders the Risk Briefing page (accessible to all logged-in users)."""
     user = current_user()
-    if user["role"] not in ("admin", "pro"):
-        flash("Pro tier subscription required to access the AI Risk Advisor Console.", "warning")
-        return redirect(url_for("billing_portal"))
-        
     db = get_db_connection()
     cursor = db.cursor(dictionary=True)
     
@@ -7742,21 +7983,29 @@ def ai_risk_advisor():
         db.commit()
         run_due_scheduled_campaigns(cursor)
 
+        active_range = request.args.get("range", "all").lower()
+        if active_range not in ("last", "30d", "90d", "all"):
+            active_range = "all"
+
         if user["role"] == "admin":
             campaign_where = "(c.company_domain != 'demo-corp.com' OR c.company_domain IS NULL)"
             params = ()
         else:
-            company_domain = normalize_domain(user.get("company_domain"))
-            if company_domain:
-                campaign_where = "(c.company_domain = %s OR c.user_id = %s)"
-                params = (company_domain, user["id"])
-            else:
-                campaign_where = "c.user_id = %s"
-                params = (user["id"],)
+            campaign_where = "c.user_id = %s"
+            params = (user["id"],)
 
-        # 1. Get campaign count, sent, click, report metrics
+        # Date range filtering clause for campaigns
+        range_clause = ""
+        range_params = ()
+        if active_range == "30d":
+            range_clause = "AND COALESCE(c.status_updated_at, c.created_at) >= NOW() - INTERVAL 30 DAY"
+        elif active_range == "90d":
+            range_clause = "AND COALESCE(c.status_updated_at, c.created_at) >= NOW() - INTERVAL 90 DAY"
+
+        # Fetch all eligible completed/launched campaigns for user in chronological order
         cursor.execute(f"""
-            SELECT c.id, c.name,
+            SELECT c.id, c.name, c.scenario_type,
+                   COALESCE(c.status_updated_at, c.created_at) as campaign_date,
                    COUNT(DISTINCT es.tracking_id) as sent,
                    COUNT(DISTINCT CASE WHEN ev.event_type = 'click' THEN es.tracking_id END) as clicks,
                    COUNT(DISTINCT CASE WHEN ev.event_type = 'report' THEN es.tracking_id END) as reports
@@ -7764,255 +8013,475 @@ def ai_risk_advisor():
             JOIN emails_sent es ON es.campaign_id = c.id
             LEFT JOIN events ev ON ev.tracking_id = es.tracking_id
             WHERE {campaign_where} AND c.status IN ('launched', 'launched_with_errors', 'completed')
-            GROUP BY c.id, c.name
+            {range_clause}
+            GROUP BY c.id, c.name, c.scenario_type, campaign_date
+            ORDER BY campaign_date ASC
+        """, params + range_params)
+        all_chronological_campaigns = cursor.fetchall()
+
+        # If 'last' range was requested and campaigns exist, limit to the most recent campaign
+        if active_range == "last" and all_chronological_campaigns:
+            campaign_stats = [all_chronological_campaigns[-1]]
+        else:
+            campaign_stats = all_chronological_campaigns
+
+        # Check total campaigns across all time for this tenant
+        cursor.execute(f"""
+            SELECT COUNT(DISTINCT c.id) as all_time_count
+            FROM campaigns c
+            WHERE {campaign_where} AND c.status IN ('launched', 'launched_with_errors', 'completed')
         """, params)
-        campaign_stats = cursor.fetchall()
+        all_time_row = cursor.fetchone()
+        all_time_count = all_time_row.get('all_time_count', 0) if all_time_row else 0
+        has_any_campaigns = (all_time_count > 0)
 
         total_campaigns = len(campaign_stats)
-        total_sent = sum(c['sent'] for c in campaign_stats)
-        total_clicks = sum(c['clicks'] for c in campaign_stats)
-        total_reports = sum(c['reports'] for c in campaign_stats)
         
-        click_rate = round((total_clicks / total_sent) * 100, 1) if total_sent > 0 else 0.0
-        report_rate = round((total_reports / total_sent) * 100, 1) if total_sent > 0 else 0.0
+        # Check if sample preview should be shown (strictly for 0-campaign tenants)
+        if not has_any_campaigns:
+            is_sample = True
+            company_domain = user.get("company_domain") or "acme.corp"
+            total_employees = 120
+            date_range_label = "Illustrative Sample Baseline"
+            report_rate = 22.4
+            click_rate = 8.6
+            report_delta_shape = "↑"
+            report_delta_text = "Up 3.2% vs previous period"
+            report_delta_aria = "Report rate increased by 3.2 percent in sample baseline"
+            click_delta_shape = "↓"
+            click_delta_text = "Down 1.8% vs previous period"
+            click_delta_aria = "Click rate decreased by 1.8 percent in sample baseline"
+            
+            trend_points = [
+                {"name": "Q1 Baseline Drill", "date": "15 Jan", "date_full": "Jan 15, 2026", "report_rate": 14.2, "click_rate": 15.8},
+                {"name": "Tax Urgency Lure", "date": "20 Feb", "date_full": "Feb 20, 2026", "report_rate": 18.0, "click_rate": 11.4},
+                {"name": "Benefits Portal Update", "date": "25 Mar", "date_full": "Mar 25, 2026", "report_rate": 22.4, "click_rate": 8.6}
+            ]
+            
+            headline = "Acme Corporation simulated attack readiness · Sample Preview"
+            briefing_ai_note = "Workforce resilience improved across consecutive drills as reporting habit formation offset credential harvesting clicks."
+            
+            activity_groups = [
+                {
+                    "day": "Today",
+                    "items": [
+                        {"recipient": "Priya Sharma", "action_verb": "reported", "action_shape": "⊙", "action_word": "Reported", "action_type": "reported", "scenario": "Urgent invoice query", "time": "9:14 AM"},
+                        {"recipient": "Marcus Vance", "action_verb": "opened", "action_shape": "○", "action_word": "Opened", "action_type": "opened", "scenario": "Compensation review update", "time": "8:42 AM"}
+                    ]
+                },
+                {
+                    "day": "Yesterday",
+                    "items": [
+                        {"recipient": "David Chen", "action_verb": "clicked", "action_shape": "▲", "action_word": "Clicked", "action_type": "clicked", "scenario": "IT password expiry alert", "time": "4:15 PM"},
+                        {"recipient": "Elena Rostova", "action_verb": "reported", "action_shape": "⊙", "action_word": "Reported", "action_type": "reported", "scenario": "IT password expiry alert", "time": "3:58 PM"}
+                    ]
+                }
+            ]
+            
+            repeat_clickers = [
+                {"recipient_name": "David Chen", "recipient_email": "d.chen@acme.corp", "click_count": 3, "submit_count": 1, "scenarios": "IT alert, Invoice query"}
+            ]
+            
+            alerts = [
+                {
+                    "severity": "HIGH",
+                    "title": "Finance department click exposure above organizational baseline",
+                    "detail": "Finance personnel interacted with simulated wire transfer lures at double the company average.",
+                    "time": "Sample baseline"
+                }
+            ]
 
-        # 2. Get unique employees tested
-        cursor.execute(f"""
-            SELECT COUNT(DISTINCT es.recipient_email) as total_employees
-            FROM campaigns c
-            JOIN emails_sent es ON es.campaign_id = c.id
-            WHERE {campaign_where} AND c.status IN ('launched', 'launched_with_errors', 'completed')
-        """, params)
-        emp_count_row = cursor.fetchone()
-        total_employees = emp_count_row['total_employees'] if emp_count_row else 0
+        else:
+            is_sample = False
+            company_domain = (user.get("company_domain") or "").strip() or "your-organization.com"
+            total_sent = sum(c['sent'] for c in campaign_stats)
+            total_clicks = sum(c['clicks'] for c in campaign_stats)
+            total_reports = sum(c['reports'] for c in campaign_stats)
+            
+            click_rate = round((total_clicks / total_sent) * 100, 1) if total_sent > 0 else 0.0
+            report_rate = round((total_reports / total_sent) * 100, 1) if total_sent > 0 else 0.0
 
-        # 3. Most clicked scenario
-        cursor.execute(f"""
-            SELECT c.scenario_type, COUNT(DISTINCT ev.tracking_id) as clicks
-            FROM campaigns c
-            JOIN emails_sent es ON es.campaign_id = c.id
-            JOIN events ev ON ev.tracking_id = es.tracking_id
-            WHERE {campaign_where} AND c.status IN ('launched', 'launched_with_errors', 'completed') AND ev.event_type = 'click'
-            GROUP BY c.scenario_type
-            ORDER BY clicks DESC
-            LIMIT 1
-        """, params)
-        scenario_row = cursor.fetchone()
-        most_clicked_scenario = scenario_row['scenario_type'] if scenario_row else 'None'
-
-        # 4. Highest risk department
-        cursor.execute(f"""
-            SELECT emp.department, 
-                   COUNT(DISTINCT es.tracking_id) as sent,
-                   COUNT(DISTINCT CASE WHEN ev.event_type = 'click' THEN es.tracking_id END) as clicks
-            FROM campaigns c
-            JOIN emails_sent es ON es.campaign_id = c.id
-            JOIN employees emp ON emp.campaign_id = c.id AND emp.email = es.recipient_email
-            LEFT JOIN events ev ON ev.tracking_id = es.tracking_id AND ev.event_type = 'click'
-            WHERE {campaign_where} AND c.status IN ('launched', 'launched_with_errors', 'completed')
-            GROUP BY emp.department
-        """, params)
-        dept_stats = cursor.fetchall()
-        highest_risk_dept = "None"
-        highest_risk_rate = 0.0
-        max_rate = -1.0
-        for d in dept_stats:
-            dept_name = d.get('department') or 'Unknown'
-            d_sent = d['sent']
-            d_clicks = d['clicks']
-            d_rate = (d_clicks / d_sent) * 100 if d_sent > 0 else 0.0
-            if d_rate > max_rate:
-                max_rate = d_rate
-                highest_risk_dept = dept_name
-                highest_risk_rate = round(d_rate, 1)
-
-        # 5. Repeat offenders (3+ clicks)
-        cursor.execute(f"""
-            SELECT COUNT(DISTINCT r.recipient_email) as offender_count
-            FROM (
-                SELECT es.recipient_email, COUNT(DISTINCT ev.id) as clicks
+            # Employees tracked
+            cursor.execute(f"""
+                SELECT COUNT(DISTINCT es.recipient_email) as total_employees
                 FROM campaigns c
                 JOIN emails_sent es ON es.campaign_id = c.id
-                JOIN events ev ON ev.tracking_id = es.tracking_id
-                WHERE {campaign_where} AND c.status IN ('launched', 'launched_with_errors', 'completed') AND ev.event_type = 'click'
-                GROUP BY es.recipient_email
-                HAVING clicks >= 3
-            ) r
-        """, params)
-        offender_row = cursor.fetchone()
-        repeat_offenders = offender_row['offender_count'] if offender_row else 0
+                WHERE {campaign_where} AND c.status IN ('launched', 'launched_with_errors', 'completed')
+                {range_clause}
+            """, params + range_params)
+            emp_count_row = cursor.fetchone()
+            total_employees = emp_count_row.get('total_employees', 0) if emp_count_row else 0
 
-        # 6. Never reported (sent, but never reported)
-        cursor.execute(f"""
-            SELECT COUNT(DISTINCT es.recipient_email) as never_reported
-            FROM campaigns c
-            JOIN emails_sent es ON es.campaign_id = c.id
-            WHERE {campaign_where} AND c.status IN ('launched', 'launched_with_errors', 'completed')
-              AND es.recipient_email NOT IN (
-                  SELECT DISTINCT es2.recipient_email
-                  FROM campaigns c2
-                  JOIN emails_sent es2 ON es2.campaign_id = c2.id
-                  JOIN events ev2 ON ev2.tracking_id = es2.tracking_id
-                  WHERE {campaign_where} AND c2.status IN ('launched', 'launched_with_errors', 'completed')
-                    AND ev2.event_type = 'report'
-              )
-        """, params * 2)
-        never_reported_row = cursor.fetchone()
-        never_reported = never_reported_row['never_reported'] if never_reported_row else 0
+            # Period deltas from all_chronological_campaigns
+            delta_report = None
+            delta_click = None
+            if len(all_chronological_campaigns) >= 2:
+                latest_camp = all_chronological_campaigns[-1]
+                prev_camp = all_chronological_campaigns[-2]
+                
+                l_sent = latest_camp['sent'] or 1
+                p_sent = prev_camp['sent'] or 1
+                
+                l_cr = (latest_camp['clicks'] / l_sent) * 100
+                p_cr = (prev_camp['clicks'] / p_sent) * 100
+                l_rr = (latest_camp['reports'] / l_sent) * 100
+                p_rr = (prev_camp['reports'] / p_sent) * 100
+                
+                delta_click = round(l_cr - p_cr, 1)
+                delta_report = round(l_rr - p_rr, 1)
 
-        # 7. Best & worst campaigns
-        best_campaign = "None"
-        best_click_rate = 0.0
-        worst_campaign = "None"
-        worst_click_rate = 0.0
+            # Report delta text and shapes
+            if delta_report is not None:
+                if delta_report > 0:
+                    report_delta_shape = "↑"
+                    report_delta_text = f"Up {abs(delta_report):.1f}% vs previous period"
+                    report_delta_aria = f"Report rate increased by {abs(delta_report):.1f} percent"
+                elif delta_report < 0:
+                    report_delta_shape = "↓"
+                    report_delta_text = f"Down {abs(delta_report):.1f}% vs previous period"
+                    report_delta_aria = f"Report rate decreased by {abs(delta_report):.1f} percent"
+                else:
+                    report_delta_shape = "—"
+                    report_delta_text = "Unchanged vs previous period"
+                    report_delta_aria = "Report rate unchanged from previous period"
+            else:
+                report_delta_shape = "—"
+                report_delta_text = "Baseline campaign"
+                report_delta_aria = "Baseline campaign without previous period"
 
-        if campaign_stats:
-            calculated_stats = []
-            for c in campaign_stats:
-                sent = c['sent']
-                clicks = c['clicks']
-                rate = round((clicks / sent) * 100, 1) if sent > 0 else 0.0
-                calculated_stats.append({
-                    'name': c['name'],
-                    'rate': rate
-                })
-            calculated_stats.sort(key=lambda x: x['rate'])
-            best_campaign = calculated_stats[0]['name']
-            best_click_rate = calculated_stats[0]['rate']
-            worst_campaign = calculated_stats[-1]['name']
-            worst_click_rate = calculated_stats[-1]['rate']
+            # Click delta text and shapes
+            if delta_click is not None:
+                if delta_click < 0:
+                    click_delta_shape = "↓"
+                    click_delta_text = f"Down {abs(delta_click):.1f}% vs previous period"
+                    click_delta_aria = f"Click rate decreased by {abs(delta_click):.1f} percent"
+                elif delta_click > 0:
+                    click_delta_shape = "▲"
+                    click_delta_text = f"Up {abs(delta_click):.1f}% vs previous period"
+                    click_delta_aria = f"Click rate increased by {abs(delta_click):.1f} percent"
+                else:
+                    click_delta_shape = "—"
+                    click_delta_text = "Unchanged vs previous period"
+                    click_delta_aria = "Click rate unchanged from previous period"
+            else:
+                click_delta_shape = "—"
+                click_delta_text = "Baseline campaign"
+                click_delta_aria = "Baseline campaign without previous period"
 
-        # 8. Days since last campaign
-        cursor.execute(f"""
-            SELECT COALESCE(status_updated_at, created_at) as last_run
-            FROM campaigns c
-            WHERE {campaign_where} AND c.status IN ('launched', 'launched_with_errors', 'completed')
-            ORDER BY last_run DESC
-            LIMIT 1
-        """, params)
-        last_run_row = cursor.fetchone()
-        if last_run_row and last_run_row.get("last_run"):
-            last_run_dt = last_run_row["last_run"]
-            if isinstance(last_run_dt, str):
-                try:
-                    last_run_dt = datetime.strptime(last_run_dt[:19], "%Y-%m-%d %H:%M:%S")
-                except Exception:
+            # Repeat offenders count
+            cursor.execute(f"""
+                SELECT COUNT(DISTINCT r.recipient_email) as offender_count
+                FROM (
+                    SELECT es.recipient_email, COUNT(DISTINCT ev.id) as clicks
+                    FROM campaigns c
+                    JOIN emails_sent es ON es.campaign_id = c.id
+                    JOIN events ev ON ev.tracking_id = es.tracking_id
+                    WHERE {campaign_where} AND c.status IN ('launched', 'launched_with_errors', 'completed') AND ev.event_type = 'click'
+                    GROUP BY es.recipient_email
+                    HAVING clicks >= 2
+                ) r
+            """, params)
+            offender_row = cursor.fetchone()
+            repeat_offenders = offender_row.get('offender_count', 0) if offender_row else 0
+
+            # Deterministic Headline
+            headline = generate_deterministic_briefing_headline(
+                total_campaigns=len(all_chronological_campaigns),
+                report_rate=report_rate,
+                click_rate=click_rate,
+                delta_report=delta_report,
+                delta_click=delta_click,
+                repeat_offenders=repeat_offenders,
+                is_sample=False
+            )
+
+            # Date Range Label
+            now_dt = datetime.now()
+            if active_range == "last":
+                last_dt = campaign_stats[0].get("campaign_date")
+                if isinstance(last_dt, str):
                     try:
-                        last_run_dt = datetime.strptime(last_run_dt[:10], "%Y-%m-%d")
+                        last_dt = datetime.strptime(last_dt[:10], "%Y-%m-%d")
                     except Exception:
-                        last_run_dt = datetime.now()
-            days_since_last_campaign = (datetime.now() - last_run_dt).days
-        else:
-            days_since_last_campaign = 999
+                        last_dt = now_dt
+                date_str = last_dt.strftime("%b %d, %Y") if last_dt else now_dt.strftime("%b %d, %Y")
+                date_range_label = f"Last campaign · {date_str}"
+            elif active_range == "30d":
+                start_dt = now_dt - timedelta(days=30)
+                date_range_label = f"Past 30 days ({start_dt.strftime('%b %d')} – {now_dt.strftime('%b %d, %Y')})"
+            elif active_range == "90d":
+                start_dt = now_dt - timedelta(days=90)
+                date_range_label = f"Past 90 days ({start_dt.strftime('%b %d')} – {now_dt.strftime('%b %d, %Y')})"
+            else:
+                date_range_label = f"All campaigns to date ({total_campaigns} campaigns)"
 
-        # Consolidate data
-        campaign_data = {
-            "totalCampaigns": total_campaigns,
-            "totalEmployees": total_employees,
-            "clickRate": click_rate,
-            "reportRate": report_rate,
-            "mostClickedScenario": most_clicked_scenario,
-            "highestRiskDepartment": highest_risk_dept,
-            "highestRiskClickRate": highest_risk_rate,
-            "repeatOffenders": repeat_offenders,
-            "neverReported": never_reported,
-            "bestCampaign": best_campaign,
-            "bestClickRate": best_click_rate,
-            "worstCampaign": worst_campaign,
-            "worstClickRate": worst_click_rate,
-            "daysSinceLastCampaign": days_since_last_campaign
-        }
+            # Trend Points (Chronological)
+            trend_points = []
+            for c in all_chronological_campaigns:
+                c_sent = c['sent'] or 1
+                c_clicks = c['clicks'] or 0
+                c_reports = c['reports'] or 0
+                c_date = c.get('campaign_date')
+                if isinstance(c_date, str):
+                    try:
+                        c_date = datetime.strptime(c_date[:10], "%Y-%m-%d")
+                    except Exception:
+                        c_date = now_dt
+                date_fmt = c_date.strftime("%d %b") if c_date else ""
+                date_full = c_date.strftime("%b %d, %Y") if c_date else ""
+                trend_points.append({
+                    "name": c['name'],
+                    "date": date_fmt,
+                    "date_full": date_full,
+                    "report_rate": round((c_reports / c_sent) * 100, 1),
+                    "click_rate": round((c_clicks / c_sent) * 100, 1)
+                })
 
-        # 9. Generate AI briefing
-        briefing_content = generate_ai_briefing(campaign_data)
+            # AI Note (Secondary, clearly labelled)
+            campaign_data_summary = {
+                "totalCampaigns": len(all_chronological_campaigns),
+                "totalEmployees": total_employees,
+                "clickRate": click_rate,
+                "reportRate": report_rate,
+                "repeatOffenders": repeat_offenders,
+                "highestRiskDepartment": "All Departments",
+                "highestRiskClickRate": click_rate,
+                "neverReported": 0,
+                "mostClickedScenario": campaign_stats[0].get("scenario_type", "Standard Phishing") if campaign_stats else "Standard Phishing",
+                "bestCampaign": campaign_stats[0].get("name", "Baseline") if campaign_stats else "Baseline",
+                "bestClickRate": click_rate,
+                "worstCampaign": campaign_stats[-1].get("name", "Baseline") if campaign_stats else "Baseline",
+                "worstClickRate": click_rate
+            }
+            briefing_ai_note = generate_ai_briefing(campaign_data_summary) if len(all_chronological_campaigns) > 0 else None
 
-        # 10. Generate alerts
-        alerts = generate_real_alerts(campaign_data)
-        
-        # Check for decoy alerts (threat_intercept)
-        cursor.execute("SELECT id, ip_address, user_agent, created_at FROM events WHERE event_type = 'threat_intercept' ORDER BY created_at DESC")
-        threats = cursor.fetchall()
-        if threats:
-            if len(alerts) == 1 and alerts[0]['severity'] == 'PASS':
-                alerts = []
+            # Real Alerts (excluding PASS celebration)
+            alerts_raw = generate_real_alerts(campaign_data_summary)
+            # Decoy threats with ownership check
+            if user["role"] == "admin":
+                cursor.execute("""
+                    SELECT ev.id, ev.ip_address, ev.user_agent, ev.created_at 
+                    FROM events ev 
+                    WHERE ev.event_type = 'threat_intercept' 
+                    ORDER BY ev.created_at DESC LIMIT 5
+                """)
+            else:
+                cursor.execute("""
+                    SELECT ev.id, ev.ip_address, ev.user_agent, ev.created_at 
+                    FROM events ev
+                    JOIN decoy_mailboxes dm ON ev.tracking_id LIKE CONCAT('threat_', dm.email, '_%%')
+                    WHERE ev.event_type = 'threat_intercept' AND dm.user_id = %s
+                    ORDER BY ev.created_at DESC LIMIT 5
+                """, (user["id"],))
+            threats = cursor.fetchall()
             for t in threats:
-                alerts.append({
+                t_date = t['created_at'].strftime("%Y-%m-%d %H:%M") if hasattr(t['created_at'], 'strftime') else str(t['created_at'])
+                alerts_raw.append({
                     'severity': 'CRITICAL',
                     'title': "Rogue Phishing Threat Intercepted on Decoy Mailbox",
-                    'detail': f"Decoy mailbox received an unauthorized external email. {t['ip_address']} ({t['user_agent']})",
-                    'time': t['created_at'].strftime("%Y-%m-%d %H:%M")
+                    'detail': f"Decoy mailbox received an unauthorized external email. IP: {t['ip_address']} ({t['user_agent']})",
+                    'time': t_date
+                })
+            alerts = [a for a in alerts_raw if a.get('severity') in ('CRITICAL', 'HIGH', 'MEDIUM')]
+
+            # Activity feed ledger
+            recent_acts = get_recent_activity_data(user, limit=30)
+            today_date = now_dt.date()
+            yesterday_date = today_date - timedelta(days=1)
+            
+            grouped_dict = {}
+            for act in recent_acts:
+                act_dt = act['created_at']
+                if not isinstance(act_dt, datetime):
+                    try:
+                        act_dt = datetime.strptime(str(act_dt)[:19], "%Y-%m-%d %H:%M:%S")
+                    except Exception:
+                        act_dt = now_dt
+
+                if act_dt.date() == today_date:
+                    day_key = "Today"
+                elif act_dt.date() == yesterday_date:
+                    day_key = "Yesterday"
+                else:
+                    day_key = act_dt.strftime("%B %d, %Y")
+
+                act_raw = (act.get('action') or '').lower()
+                if act_raw == 'reported':
+                    action_verb = "reported"
+                    action_shape = "⊙"
+                    action_word = "Reported"
+                    action_type = "reported"
+                elif act_raw in ('opened', 'opened_only'):
+                    action_verb = "opened"
+                    action_shape = "○"
+                    action_word = "Opened"
+                    action_type = "opened"
+                elif act_raw == 'clicked':
+                    action_verb = "clicked"
+                    action_shape = "▲"
+                    action_word = "Clicked"
+                    action_type = "clicked"
+                elif act_raw == 'submitted':
+                    action_verb = "entered credentials in"
+                    action_shape = "◼"
+                    action_word = "Entered credentials"
+                    action_type = "submitted"
+                else:
+                    action_verb = "interacted with"
+                    action_shape = "·"
+                    action_word = "Action"
+                    action_type = "opened"
+
+                recipient_display = act.get('recipient_email') or 'Employee'
+                if '@' in recipient_display:
+                    user_part = recipient_display.split('@')[0].replace('.', ' ').title()
+                else:
+                    user_part = recipient_display
+
+                item = {
+                    "recipient": user_part,
+                    "action_verb": action_verb,
+                    "action_shape": action_shape,
+                    "action_word": action_word,
+                    "action_type": action_type,
+                    "scenario": act.get('scenario_type') or act.get('campaign_name') or 'Phishing simulation',
+                    "time": act_dt.strftime("%I:%M %p").lstrip('0')
+                }
+                if day_key not in grouped_dict:
+                    grouped_dict[day_key] = []
+                grouped_dict[day_key].append(item)
+
+            activity_groups = [{"day": k, "items": v} for k, v in grouped_dict.items()]
+
+            # Who needs help (Admins only)
+            repeat_clickers = []
+            if user["role"] == "admin":
+                cursor.execute(f"""
+                    SELECT 
+                        COALESCE(emp.name, es.recipient_email) as recipient_name,
+                        es.recipient_email,
+                        COUNT(DISTINCT CASE WHEN ev.event_type = 'click' THEN ev.id END) as click_count,
+                        COUNT(DISTINCT CASE WHEN ev.event_type = 'submitted' THEN ev.id END) as submit_count,
+                        GROUP_CONCAT(DISTINCT c.scenario_type SEPARATOR ', ') as scenarios
+                    FROM emails_sent es
+                    JOIN campaigns c ON es.campaign_id = c.id
+                    LEFT JOIN employees emp ON emp.campaign_id = c.id AND emp.email = es.recipient_email
+                    JOIN events ev ON ev.tracking_id = es.tracking_id
+                    WHERE {campaign_where} AND ev.event_type IN ('click', 'submitted')
+                    GROUP BY es.recipient_email, recipient_name
+                    HAVING click_count >= 2 OR submit_count >= 1
+                    ORDER BY click_count DESC, submit_count DESC
+                    LIMIT 20
+                """, params)
+                repeat_clickers = cursor.fetchall()
+
+        # Build SVG polyline coordinates and smart axis ticks if trend_points >= 3
+        trend_svg_items = []
+        trend_axis_ticks = []
+        report_svg_points = ""
+        click_svg_points = ""
+        if len(trend_points) >= 3:
+            N = len(trend_points)
+            report_coords = []
+            click_coords = []
+            for i, p in enumerate(trend_points):
+                x = int(40 + i * (540 / (N - 1)))
+                y_rep = int(max(15, min(105, 105 - (p['report_rate'] / 100.0) * 90)))
+                y_clk = int(max(15, min(105, 105 - (p['click_rate'] / 100.0) * 90)))
+                report_coords.append(f"{x},{y_rep}")
+                click_coords.append(f"{x},{y_clk}")
+                trend_svg_items.append({
+                    "name": p.get("name", "Campaign"),
+                    "x": x,
+                    "y_report": y_rep,
+                    "y_click": y_clk,
+                    "report_rate": p['report_rate'],
+                    "click_rate": p['click_rate'],
+                    "date_label": p.get("date", ""),
+                    "date_full": p.get("date_full", p.get("date", ""))
+                })
+            report_svg_points = " ".join(report_coords)
+            click_svg_points = " ".join(click_coords)
+
+            # Generate smart, readable, non-overlapping axis ticks (max 5 ticks)
+            if N <= 5:
+                tick_indices = list(range(N))
+            else:
+                raw_indices = [
+                    0,
+                    round((N - 1) * 0.25),
+                    round((N - 1) * 0.50),
+                    round((N - 1) * 0.75),
+                    N - 1
+                ]
+                tick_indices = []
+                for idx in raw_indices:
+                    if idx not in tick_indices and 0 <= idx < N:
+                        tick_indices.append(idx)
+
+            for idx in tick_indices:
+                pt = trend_svg_items[idx]
+                pct = round((pt["x"] / 600.0) * 100, 2)
+                if idx == 0:
+                    align = "left"
+                elif idx == N - 1:
+                    align = "right"
+                else:
+                    align = "center"
+
+                is_mobile = (idx == 0 or idx == N - 1 or idx == tick_indices[len(tick_indices) // 2])
+
+                trend_axis_ticks.append({
+                    "x": pt["x"],
+                    "pct": pct,
+                    "label": pt["date_label"],
+                    "align": align,
+                    "is_mobile": is_mobile
                 })
 
-        # 11. Live Campaign Activity Feed (recent 20 events)
-        recent_activities = get_recent_activity_data(user, limit=20)
-        formatted_activities = []
-        now = datetime.now()
-        has_recent_activity_last_24h = False
-
-        for act in recent_activities:
-            created_at = act['created_at']
-            time_str = created_at.strftime("%I:%M %p")
-            
-            is_recent = (now - created_at).total_seconds() < 86400
-            if is_recent:
-                has_recent_activity_last_24h = True
-                
-            action = act['action']
-            action_label = action
-            action_color = 'var(--text-muted)'
-            action_style = ''
-            if action == 'clicked':
-                action_label = '[CLICK]'
-                action_color = 'var(--danger, #ef4444)'
-            elif action == 'reported':
-                action_label = '[REPORT]'
-                action_color = 'var(--success, #10b981)'
-            elif action in ('opened', 'opened_only'):
-                action_label = '[OPEN]'
-                action_color = 'var(--warning, #fbbf24)'
-            elif action == 'submitted':
-                action_label = '[CREDENTIAL]'
-                action_color = 'var(--danger, #ef4444)'
-                action_style = 'font-weight: bold;'
-                
-            formatted_activities.append({
-                'time': time_str,
-                'action_label': action_label,
-                'action_color': action_color,
-                'action_style': action_style,
-                'recipient': act['recipient_email'],
-                'campaign_name': act['campaign_name']
-            })
-
-        current_time_formatted = datetime.now().strftime("%I:%M %p")
-
-        advisor = {
-            "campaign_count": total_campaigns,
-            "employees_tracked": total_employees,
-            "report_rate": report_rate,
-            "click_rate": click_rate,
-            "alert_count": len(alerts)
-        }
+        is_pro = user.get("role") in ("admin", "pro")
+        current_date_str = datetime.now().strftime("%B %d, %Y")
 
     finally:
         cursor.close()
         db.close()
 
     return render_template(
-        "ai_risk_advisor.html", 
-        advisor=advisor, 
-        briefing_content=briefing_content, 
+        "briefing.html",
+        is_sample=is_sample,
+        company_domain=company_domain,
+        total_employees=total_employees,
+        active_range=active_range,
+        date_range_label=date_range_label,
+        headline=headline,
+        briefing_ai_note=briefing_ai_note,
+        report_rate=report_rate,
+        click_rate=click_rate,
+        report_delta_shape=report_delta_shape,
+        report_delta_text=report_delta_text,
+        report_delta_aria=report_delta_aria,
+        click_delta_shape=click_delta_shape,
+        click_delta_text=click_delta_text,
+        click_delta_aria=click_delta_aria,
+        trend_points=trend_points,
+        trend_svg_items=trend_svg_items,
+        trend_axis_ticks=trend_axis_ticks,
+        report_svg_points=report_svg_points,
+        click_svg_points=click_svg_points,
+        activity_groups=activity_groups,
+        repeat_clickers=repeat_clickers,
         alerts=alerts,
-        recent_activities=formatted_activities,
-        has_recent_activity_last_24h=has_recent_activity_last_24h,
-        current_time_formatted=current_time_formatted
+        is_pro=is_pro,
+        current_date_str=current_date_str
     )
 
 @app.route("/remediate/micro-training", methods=["POST"])
-@csrf.exempt
 @login_required
 def remediate_micro_training():
     user = current_user()
+    if not user or user.get("role") not in ("admin", "pro"):
+        return jsonify({"error": "Pro subscription required", "upgrade_url": "/billing"}), 403
+
     db = get_db_connection()
     cursor = db.cursor(dictionary=True)
     try:
@@ -8020,13 +8489,8 @@ def remediate_micro_training():
             where_clause = "(c.company_domain != 'demo-corp.com' OR c.company_domain IS NULL)"
             params = ()
         else:
-            company_domain = normalize_domain(user.get("company_domain"))
-            if company_domain:
-                where_clause = "(c.company_domain = %s OR c.user_id = %s)"
-                params = (company_domain, user["id"])
-            else:
-                where_clause = "c.user_id = %s"
-                params = (user["id"],)
+            where_clause = "c.user_id = %s"
+            params = (user["id"],)
 
         # Get last campaign
         cursor.execute(f"""
@@ -8144,29 +8608,39 @@ def _whois_port43_fallback(domain_str):
     tld = domain_str.rsplit('.', 1)[-1].lower()
     whois_server = 'whois.iana.org'
     try:
+        _, _, w_ips = socket.gethostbyname_ex(whois_server)
+        if not w_ips or not all(is_safe_ip(ip) for ip in w_ips):
+            return {"status": "unavailable", "created_date": "Unknown", "expiration_date": "Unknown", "registrar": "Unknown"}
+
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.settimeout(2.5)
-        s.connect((whois_server, 43))
+        s.connect((w_ips[0], 43))
         s.sendall(f"{tld}\r\n".encode())
         raw = b""
         while True:
             chunk = s.recv(4096)
             if not chunk: break
             raw += chunk
+            if len(raw) > 65536: break
         s.close()
         text = raw.decode("utf-8", errors="ignore")
         m = re.search(r"whois:\s*(\S+)", text, re.I)
-        target_server = m.group(1) if m else f"whois.nic.{tld}"
+        target_server = m.group(1).strip() if m else f"whois.nic.{tld}"
+
+        _, _, t_ips = socket.gethostbyname_ex(target_server)
+        if not t_ips or not all(is_safe_ip(ip) for ip in t_ips):
+            return {"status": "unavailable", "created_date": "Unknown", "expiration_date": "Unknown", "registrar": "Unknown"}
 
         s2 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s2.settimeout(3.0)
-        s2.connect((target_server, 43))
+        s2.connect((t_ips[0], 43))
         s2.sendall(f"{domain_str}\r\n".encode())
         raw2 = b""
         while True:
             chunk = s2.recv(4096)
             if not chunk: break
             raw2 += chunk
+            if len(raw2) > 65536: break
         s2.close()
         t2 = raw2.decode("utf-8", errors="ignore")
 
@@ -8200,10 +8674,22 @@ def check_rdap(domain_str):
     }
     if not domain_str:
         return result
+
+    # Domain age and registration are properties of the registered apex domain (RFC 7480/7484)
+    query_domain = domain_str
+    try:
+        import tldextract
+        ext = tldextract.extract(domain_str)
+        apex = getattr(ext, "top_domain_under_public_suffix", None) or ext.registered_domain
+        if apex:
+            query_domain = apex
+    except Exception:
+        pass
+
     import requests as _req
     from datetime import datetime
     try:
-        rdap_resp = _req.get(f"https://rdap.org/domain/{domain_str}", timeout=4.5)
+        rdap_resp = _req.get(f"https://rdap.org/domain/{query_domain}", timeout=4.0)
         if rdap_resp.status_code == 200:
             rdap_data = rdap_resp.json()
             result["status"] = "ok"
@@ -8243,12 +8729,12 @@ def check_rdap(domain_str):
                 except Exception:
                     pass
     except Exception as e:
-        print(f"RDAP lookup failed for {domain_str}: {e}")
+        print(f"RDAP lookup failed for {query_domain}: {e}")
 
     # Fallback to direct WHOIS if RDAP didn't answer or lacks details
     if result["status"] != "ok" or result["created_date"] == "Unknown":
         try:
-            w_res = _whois_port43_fallback(domain_str)
+            w_res = _whois_port43_fallback(query_domain)
             if w_res.get("status") == "ok":
                 result["status"] = "ok"
                 if w_res.get("created_date") != "Unknown" and result["created_date"] == "Unknown":
@@ -8272,15 +8758,16 @@ def check_rdap(domain_str):
                     except Exception:
                         pass
         except Exception as we:
-            print(f"WHOIS fallback failed for {domain_str}: {we}")
+            print(f"WHOIS fallback failed for {query_domain}: {we}")
 
     return result
 
 
-def check_ssl(domain_str):
+def check_ssl(domain_str, validated_ip=None):
     """
     Performs an SSL handshake to inspect certificate issuer, TLS protocol,
-    expiration date, and validity.
+    expiration date, and validity. Connects strictly to the validated public IP,
+    preventing DNS rebinding and SSRF.
     """
     result = {
         "valid": False,
@@ -8295,8 +8782,17 @@ def check_ssl(domain_str):
     import ssl as _ssl, socket
     try:
         host = domain_str.split(':')[0]
+        if validated_ip and is_safe_ip(validated_ip):
+            target_ip = validated_ip
+        else:
+            _, _, ips = socket.gethostbyname_ex(host)
+            if not ips or not all(is_safe_ip(ip) for ip in ips):
+                result["error"] = "Target resolves to non-public or unresolvable address"
+                return result
+            target_ip = ips[0]
+
         context = _ssl.create_default_context()
-        with socket.create_connection((host, 443), timeout=3.0) as sock:
+        with socket.create_connection((target_ip, 443), timeout=3.0) as sock:
             with context.wrap_socket(sock, server_hostname=host) as ssock:
                 cert = ssock.getpeercert()
                 result["protocol"] = ssock.version() or "TLS"
@@ -8314,12 +8810,12 @@ def check_ssl(domain_str):
         # Definitive finding: invalid/expired/untrusted certificate, or nothing listening on 443
         result["error"] = str(e)[:120]
         result["issuer"] = "Unknown/None"
-        result["status"] = "ok"
     except Exception as e:
         # Timeout / DNS failure / network error: we simply could not check
         result["error"] = str(e)[:120]
         result["issuer"] = "Unknown/None"
     return result
+
 
 
 # ─────────────────────────────────────────────────────────────────
@@ -9022,83 +9518,84 @@ def consent_policy():
     return render_template("consent_policy.html")
 
 
+import tldextract
+_TLD_EXTRACTOR = tldextract.TLDExtract(suffix_list_urls=None)
+
 def generate_lookalikes(domain):
-    parts = domain.rsplit('.', 1)
-    if len(parts) < 2:
+    """
+    Generates realistic look-alike domain mutations using offline public suffix list parsing.
+    Correctly handles multi-part suffixes like example.co.uk.
+    """
+    if not domain or not isinstance(domain, str):
         return []
-    name, tld = parts[0].lower(), parts[1].lower()
+    dom_clean = domain.lower().strip()
+    try:
+        ext = _TLD_EXTRACTOR(dom_clean)
+        name = (ext.domain or "").lower()
+        tld = (ext.suffix or "").lower()
+    except Exception:
+        name, tld = "", ""
+
+    if not name or not tld:
+        parts = dom_clean.rsplit('.', 1)
+        if len(parts) < 2:
+            return []
+        name, tld = parts[0], parts[1]
+
     candidates = []
 
     # 1. Adjacent character swap
     if len(name) >= 3:
-        middle_idx = len(name) // 2
-        if middle_idx > 0:
-            swapped = name[:middle_idx-1] + name[middle_idx] + name[middle_idx-1] + name[middle_idx+1:]
-            candidates.append(f"{swapped}.{tld}")
+        mid = len(name) // 2
+        swapped = name[:mid-1] + name[mid] + name[mid-1] + name[mid+1:]
+        candidates.append(f"{swapped}.{tld}")
         if len(name) >= 4:
             swapped_start = name[1] + name[0] + name[2:]
             candidates.append(f"{swapped_start}.{tld}")
 
     # 2. Character omission
     if len(name) >= 3:
-        middle_idx = len(name) // 2
-        omitted = name[:middle_idx] + name[middle_idx+1:]
+        mid = len(name) // 2
+        omitted = name[:mid] + name[mid+1:]
         candidates.append(f"{omitted}.{tld}")
         if len(name) >= 4:
             candidates.append(f"{name[:-1]}.{tld}")
 
-    # 3. Hyphenated
-    if len(name) >= 4:
-        idx = 4 if len(name) >= 5 else 3
-        hyphenated = name[:idx] + '-' + name[idx:]
-        candidates.append(f"{hyphenated}.{tld}")
+    # 3. Homoglyphs & typo swaps (rn for m, vv for w, 0 for o, 1 for l/i)
+    if "m" in name:
+        candidates.append(f"{name.replace('m', 'rn', 1)}.{tld}")
+    if "w" in name:
+        candidates.append(f"{name.replace('w', 'vv', 1)}.{tld}")
+    if "o" in name:
+        candidates.append(f"{name.replace('o', '0', 1)}.{tld}")
+    if "l" in name:
+        candidates.append(f"{name.replace('l', '1', 1)}.{tld}")
+    elif "i" in name:
+        candidates.append(f"{name.replace('i', '1', 1)}.{tld}")
 
-    # 4. Common homoglyphs / substitutions
-    sub_name = ""
-    applied = False
-    for char in name:
-        if not applied:
-            if char == 'o':
-                sub_name += '0'
-                applied = True
-            elif char in ('l', 'i'):
-                sub_name += '1'
-                applied = True
-            elif char == 'm':
-                sub_name += 'rn'
-                applied = True
-            elif char == 'w':
-                sub_name += 'vv'
-                applied = True
-            else:
-                sub_name += char
-        else:
-            sub_name += char
-    if applied:
-        candidates.append(f"{sub_name}.{tld}")
+    # 4. Realistic phishing prefixes & suffixes (-login, -secure, -verify, -portal)
+    candidates.append(f"{name}-login.{tld}")
+    candidates.append(f"{name}-secure.{tld}")
+    candidates.append(f"{name}-portal.{tld}")
+    candidates.append(f"login-{name}.{tld}")
+    candidates.append(f"secure-{name}.{tld}")
 
-    # 5. Phishing prefix / suffix permutations
-    for lure_prefix in ("login-", "secure-", "verify-"):
-        candidates.append(f"{lure_prefix}{name}.{tld}")
-    for lure_suffix in ("-login", "-support", "-billing", "app"):
-        candidates.append(f"{name}{lure_suffix}.{tld}")
-
-    # 6. Alternative TLD swaps
-    for target_tld in ("net", "org", "co", "io", "info"):
-        if tld != target_tld:
-            candidates.append(f"{name}.{target_tld}")
+    # 5. Alternative TLD swaps
+    for alt_tld in ("com", "net", "org", "co", "io", "info"):
+        if tld != alt_tld:
+            candidates.append(f"{name}.{alt_tld}")
 
     # De-duplicate & cap to ~16 high-value targets
     seen = set()
-    unique_candidates = []
+    unique = []
     for c in candidates:
         c_low = c.lower().strip()
-        if c_low != domain.lower() and c_low not in seen:
+        if c_low != dom_clean and c_low not in seen:
             seen.add(c_low)
-            unique_candidates.append(c_low)
-            if len(unique_candidates) >= 16:
+            unique.append(c_low)
+            if len(unique) >= 16:
                 break
-    return unique_candidates
+    return unique
 
 
 def run_exposure_scan(email, domain):
@@ -9270,7 +9767,7 @@ EXPOSURE_DNS_EXECUTOR = ThreadPoolExecutor(max_workers=24, thread_name_prefix="p
 
 _EXPOSURE_LABEL_RE = re.compile(r"^(?!-)[a-z0-9-]{1,63}(?<!-)$")
 _EXPOSURE_BAD_TLDS = {"localhost", "local", "internal", "invalid", "test", "example",
-                      "lan", "home", "corp", "onion", "arpa"}
+                      "lan", "home", "corp", "onion", "arpa", "localdomain"}
 
 
 def normalize_exposure_domain(raw):
@@ -9296,32 +9793,80 @@ def normalize_exposure_domain(raw):
     if tld in _EXPOSURE_BAD_TLDS or not (tld.isalpha() or tld.startswith("xn--")):
         return None  # also rejects IP literals (numeric TLD)
     return d
+def probe_exact_lookalike_ip(target_ip, host_name, audit_dom):
+    """Probe exact validated public IP without following redirects and with short timeout."""
+    import http.client
+    import ssl
+    import urllib.parse
+    for port, is_ssl in ((443, True), (80, False)):
+        conn = None
+        try:
+            if is_ssl:
+                ctx = ssl.create_default_context()
+                ctx.check_hostname = False
+                ctx.verify_mode = ssl.CERT_NONE
+                conn = http.client.HTTPSConnection(target_ip, port=port, timeout=0.8, context=ctx)
+            else:
+                conn = http.client.HTTPConnection(target_ip, port=port, timeout=0.8)
+
+            conn.request("GET", "/", headers={
+                "Host": host_name,
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) PhishSim/2.0",
+                "Connection": "close"
+            })
+            resp = conn.getresponse()
+            code = resp.status
+            _ = resp.read(2048)
+            loc = resp.getheader("Location")
+            conn.close()
+
+            if code in (301, 302, 303, 307, 308) and loc:
+                loc_parsed = urllib.parse.urlparse(loc)
+                loc_host = (loc_parsed.hostname or "").lower().strip()
+                is_brand = bool(loc_host and (loc_host == audit_dom or loc_host.endswith("." + audit_dom)))
+                return "redirect", code, loc_host or None, is_brand
+            return "active", code, None, False
+        except Exception:
+            if conn:
+                try: conn.close()
+                except Exception: pass
+            continue
+    return "no_answer", None, None, False
 
 
-def check_lookalikes(domain):
+def check_lookalikes(domain, primary_ips=None):
     """
     Generates look-alike mutations and resolves them concurrently, verifying both
     DNS resolution and HTTP/HTTPS web application liveness.
 
-    Accurately classifies each candidate as:
-    - 'active' (live web server listening and serving HTTP responses)
-    - 'redirect' (brand redirect / defensive registration)
-    - 'dns_only' (domain is registered and resolves, but no active web server)
-    - 'not_resolving' (available / unowned)
-    - 'unknown' (transient DNS error)
+    Security & Honesty:
+    - If candidate resolves to private/non-public IP, NO TCP connection is made.
+      Web status is reported as 'not_probed' with reason 'points to a private address'.
+    - For public IPs, probes the exact validated IP directly (prevents DNS rebinding).
+    - Sends single minimal request, never follows redirects, reads small capped amount (2KB).
+    - Classifies brand redirect by comparing Location hostname to audited domain.
+      Returns only the redirect hostname to the client.
+    - If ports don't answer or timeout, reports 'no_answer' ('didn't answer').
+    - Dead resolver rule: if audited domain does not resolve AND no candidate resolves,
+      status is 'unavailable' (not ok).
     """
     import socket
-    import urllib.request
-    import urllib.error
+    import http.client
+    import ssl
+    import urllib.parse
     import concurrent.futures
 
     candidates = generate_lookalikes(domain)
-    try:
-        primary_ips = set(socket.gethostbyname_ex(domain)[2])
-    except Exception:
-        primary_ips = set()
+    if primary_ips is None:
+        try:
+            _, _, p_ips = socket.gethostbyname_ex(domain)
+            primary_ips = set(p_ips)
+        except Exception:
+            primary_ips = set()
+    else:
+        primary_ips = set(primary_ips)
 
-    def _entry(c, state, ips=(), web_status="none", http_code=None, redirect_target=None, is_brand_redirect=False):
+    def _entry(c, state, ips=(), web_status="none", http_code=None, redirect_target=None, is_brand_redirect=False, reason=None):
         ips = sorted(set(ips))
         same_infra = bool(primary_ips and set(ips) & primary_ips) or is_brand_redirect
         return {
@@ -9331,10 +9876,48 @@ def check_lookalikes(domain):
             "is_live": state == "resolves",       # kept for API compatibility
             "same_infrastructure": same_infra,
             "is_brand_redirect": is_brand_redirect,
-            "web_status": web_status,             # active | redirect | dns_only | none
+            "web_status": web_status,             # active | redirect | no_answer | not_probed | none
             "http_code": http_code,
             "redirect_target": redirect_target,
+            "reason": reason,
         }
+
+    def _probe_exact_ip(target_ip, host_name, audit_dom):
+        # Strict short timeout (0.8s), minimal probe on 443 then 80
+        for port, is_ssl in ((443, True), (80, False)):
+            conn = None
+            try:
+                if is_ssl:
+                    ctx = ssl.create_default_context()
+                    ctx.check_hostname = False
+                    ctx.verify_mode = ssl.CERT_NONE
+                    conn = http.client.HTTPSConnection(target_ip, port=port, timeout=0.8, context=ctx)
+                else:
+                    conn = http.client.HTTPConnection(target_ip, port=port, timeout=0.8)
+
+                conn.request("GET", "/", headers={
+                    "Host": host_name,
+                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) PhishSim/2.0",
+                    "Connection": "close"
+                })
+                resp = conn.getresponse()
+                code = resp.status
+                _ = resp.read(2048)
+                loc = resp.getheader("Location")
+                conn.close()
+
+                if code in (301, 302, 303, 307, 308) and loc:
+                    loc_parsed = urllib.parse.urlparse(loc)
+                    loc_host = (loc_parsed.hostname or "").lower().strip()
+                    is_brand = bool(loc_host and (loc_host == audit_dom or loc_host.endswith("." + audit_dom)))
+                    return "redirect", code, loc_host or None, is_brand
+                return "active", code, None, False
+            except Exception:
+                if conn:
+                    try: conn.close()
+                    except Exception: pass
+                continue
+        return "no_answer", None, None, False
 
     def _resolve_and_probe(c):
         try:
@@ -9342,55 +9925,14 @@ def check_lookalikes(domain):
             if not ips:
                 return _entry(c, "not_resolving")
 
-            # Domain resolves in DNS! Fast TCP socket check on 443 then 80 (timeout 0.5s)
-            has_web = False
-            open_port = None
-            for p in (443, 80):
-                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                s.settimeout(0.5)
-                try:
-                    if s.connect_ex((c, p)) == 0:
-                        has_web = True
-                        open_port = p
-                        s.close()
-                        break
-                except Exception:
-                    pass
-                finally:
-                    s.close()
+            # Check if any IP is non-public
+            has_private = any(not is_safe_ip(ip) for ip in ips)
+            if has_private:
+                return _entry(c, "resolves", ips, web_status="not_probed", reason="points to a private address")
 
-            if not has_web:
-                return _entry(c, "resolves", ips, web_status="dns_only")
-
-            # Active web port answered! Check HTTP redirect vs active
-            web_status = "active"
-            http_code = None
-            redirect_target = None
-            is_brand_redirect = False
-
-            scheme = "https://" if open_port == 443 else "http://"
-            try:
-                req = urllib.request.Request(
-                    scheme + c,
-                    headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"}
-                )
-                with urllib.request.urlopen(req, timeout=1.0) as resp:
-                    http_code = resp.getcode()
-                    final_url = resp.geturl() or ""
-                    if final_url and (domain in final_url or any(host in final_url for host in [f".{domain}", f"://{domain}"])):
-                        web_status = "redirect"
-                        is_brand_redirect = True
-                        redirect_target = final_url
-                    elif final_url and c not in final_url:
-                        web_status = "redirect"
-                        redirect_target = final_url
-                    else:
-                        web_status = "active"
-            except urllib.error.HTTPError as he:
-                http_code = he.code
-                web_status = "active"
-            except Exception:
-                web_status = "active"
+            # Public IP: probe exact validated IP
+            target_ip = ips[0]
+            web_status, http_code, redirect_target, is_brand_redirect = _probe_exact_ip(target_ip, c, domain)
 
             return _entry(c, "resolves", ips, web_status=web_status, http_code=http_code,
                           redirect_target=redirect_target, is_brand_redirect=is_brand_redirect)
@@ -9417,11 +9959,16 @@ def check_lookalikes(domain):
     resolving = [d for d in details if d["state"] == "resolves"]
     external = [d for d in resolving if not d["same_infrastructure"] and not d.get("is_brand_redirect")]
     unknown = [d for d in details if d["state"] == "unknown"]
+
+    # Dead resolver rule: if audited domain itself did not resolve AND no candidate resolves
+    dns_dead = (not primary_ips and len(resolving) == 0)
+    all_unknown = (bool(candidates) and len(unknown) == len(candidates))
+
     return {
-        "status": "unavailable" if candidates and len(unknown) == len(candidates) else "ok",
+        "status": "unavailable" if (dns_dead or all_unknown) else "ok",
         "candidates_count": len(candidates),
         "resolving_count": len(resolving),
-        "live_count": len(external),              # resolving AND not on the brand's own infrastructure / brand redirect
+        "live_count": len(external),
         "unknown_count": len(unknown),
         "live_lookalikes": external,
         "details": details,
@@ -9523,10 +10070,12 @@ def check_crtsh_subdomains(domain):
             h = f"{prefix}.{clean_dom}"
             try:
                 ip = socket.gethostbyname(h)
+                if not is_safe_ip(ip):
+                    return None
                 if wildcard_ip and ip == wildcard_ip:
                     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                     s.settimeout(0.6)
-                    connected = (s.connect_ex((h, 443)) == 0 or s.connect_ex((h, 80)) == 0)
+                    connected = (s.connect_ex((ip, 443)) == 0 or s.connect_ex((ip, 80)) == 0)
                     s.close()
                     if not connected:
                         return None
@@ -9542,11 +10091,13 @@ def check_crtsh_subdomains(domain):
     if not found:
         return {"status": "unavailable", "total": 0, "subdomains": []}
 
-    # 5. Concurrent DNS validation
+    # 5. Concurrent DNS validation (ensuring strictly public IPs)
     def _verify_dns(h):
         try:
-            socket.gethostbyname(h)
-            return h
+            ip = socket.gethostbyname(h)
+            if is_safe_ip(ip):
+                return h
+            return None
         except Exception:
             return None
 
@@ -9563,41 +10114,528 @@ def check_crtsh_subdomains(domain):
     return {"status": "ok", "total": len(ordered), "subdomains": ordered[:25]}
 
 
+def _clean_dns_txt(data):
+    """Normalize and unquote DNS TXT responses which may contain multiple quoted tokens."""
+    if not data:
+        return ""
+    matches = re.findall(r'"([^"]*)"', data)
+    if matches:
+        return "".join(matches)
+    return data.strip().strip('"')
 
-def calculate_exposure_score(rdap, ssl, lookalikes, subdomains, surface):
+
+def _dns_query_txt(name, timeout=1.8):
+    """Query TXT records via local DNS resolver first, falling back to Google DoH only on resolver failure."""
+    records = []
+    try:
+        import dns.resolver
+        answers = dns.resolver.resolve(name, "TXT", lifetime=timeout)
+        for rdata in answers:
+            txt = "".join(s.decode("utf-8", errors="replace") for s in rdata.strings)
+            if txt:
+                records.append(txt)
+        return records
+    except Exception as exc:
+        # If the domain/record definitively does not exist, return empty without wasting time on DoH
+        exc_type = type(exc).__name__
+        if exc_type in ("NXDOMAIN", "NoAnswer"):
+            return []
+
+    try:
+        import requests
+        r = requests.get(f"https://dns.google/resolve?name={name}&type=TXT", timeout=timeout)
+        if r.status_code == 200:
+            for ans in r.json().get("Answer", []):
+                if ans.get("type") == 16:
+                    txt = _clean_dns_txt(ans.get("data", ""))
+                    if txt:
+                        records.append(txt)
+            return records
+    except Exception:
+        pass
+
+    return records
+
+
+def _dns_query_mx(domain, timeout=1.8):
+    """Query MX records via local DNS resolver first, falling back to Google DoH only on resolver failure."""
+    mx_list = []
+    try:
+        import dns.resolver
+        answers = dns.resolver.resolve(domain, "MX", lifetime=timeout)
+        for rdata in answers:
+            mx_list.append((rdata.preference, str(rdata.exchange).rstrip(".")))
+        return mx_list
+    except Exception as exc:
+        exc_type = type(exc).__name__
+        if exc_type in ("NXDOMAIN", "NoAnswer"):
+            return []
+
+    try:
+        import requests
+        r = requests.get(f"https://dns.google/resolve?name={domain}&type=MX", timeout=timeout)
+        if r.status_code == 200:
+            for ans in r.json().get("Answer", []):
+                if ans.get("type") == 15:
+                    data = ans.get("data", "").strip()
+                    parts = data.split()
+                    if len(parts) >= 2:
+                        try:
+                            pref = int(parts[0])
+                            exch = parts[1].rstrip(".")
+                            mx_list.append((pref, exch))
+                        except Exception:
+                            pass
+            return mx_list
+    except Exception:
+        pass
+
+    return mx_list
+
+
+def _count_spf_lookups_and_parse(domain, txt_resolver_fn=None, visited=None, depth=0):
     """
-    Exposure score 0-100 (max 30+20+20+15+15). Only checks that actually completed
-    contribute; a check that failed or timed out adds 0 and is listed in `incomplete`
-    so the UI can say the score is partial instead of implying a clean result.
+    Parses SPF records and counts RFC 7208 DNS-mechanism lookups (include, a, mx, ptr, exists, redirect).
+    SSRF-safe: only queries normalized hostnames via DNS resolver.
+    Bounded: recursion depth <= 12, visited set prevents loops.
     """
+    if txt_resolver_fn is None:
+        txt_resolver_fn = _dns_query_txt
+    if visited is None:
+        visited = set()
+
+    clean_dom = normalize_exposure_domain(domain)
+    if not clean_dom or clean_dom in visited or depth > 12:
+        return {
+            "records": [],
+            "multiple_records": False,
+            "lookups": 0,
+            "all_qualifier": None,
+            "raw_record": None,
+        }
+
+    visited.add(clean_dom)
+
+    try:
+        txt_records = txt_resolver_fn(clean_dom)
+    except Exception:
+        txt_records = []
+
+    spf_records = [r for r in txt_records if r.strip().lower().startswith("v=spf1")]
+    if not spf_records:
+        return {
+            "records": [],
+            "multiple_records": False,
+            "lookups": 0,
+            "all_qualifier": None,
+            "raw_record": None,
+        }
+
+    multiple_records = len(spf_records) > 1
+    primary_record = spf_records[0]
+
+    tokens = primary_record.strip().split()
+    lookups = 0
+    all_qualifier = None
+    includes_to_fetch = []
+    redirect_target = None
+
+    for tok in tokens[1:]:
+        tok_lower = tok.lower()
+        if tok_lower in ("-all", "~all", "+all", "?all", "all"):
+            all_qualifier = tok_lower
+        elif tok_lower.endswith("all") and len(tok_lower) == 4 and tok_lower[0] in ("-", "~", "+", "?"):
+            all_qualifier = tok_lower
+        elif tok_lower.startswith("include:"):
+            lookups += 1
+            target = tok.split(":", 1)[1].strip()
+            norm_target = normalize_exposure_domain(target)
+            if norm_target and norm_target not in visited:
+                includes_to_fetch.append(norm_target)
+        elif tok_lower.startswith("redirect="):
+            lookups += 1
+            target = tok.split("=", 1)[1].strip()
+            norm_target = normalize_exposure_domain(target)
+            if norm_target and norm_target not in visited:
+                redirect_target = norm_target
+        elif (tok_lower == "a" or tok_lower.startswith(("a:", "a/")) or
+              tok_lower in ("+a", "-a", "~a", "?a") or
+              any(tok_lower.startswith(p) for p in ("+a:", "-a:", "~a:", "?a:", "+a/", "-a/", "~a/", "?a/"))):
+            lookups += 1
+        elif (tok_lower == "mx" or tok_lower.startswith(("mx:", "mx/")) or
+              tok_lower in ("+mx", "-mx", "~mx", "?mx") or
+              any(tok_lower.startswith(p) for p in ("+mx:", "-mx:", "~mx:", "?mx:", "+mx/", "-mx/", "~mx/", "?mx/"))):
+            lookups += 1
+        elif tok_lower == "ptr" or tok_lower.startswith("ptr:") or any(tok_lower.startswith(p) for p in ("+ptr", "-ptr", "~ptr", "?ptr")):
+            lookups += 1
+        elif tok_lower.startswith("exists:"):
+            lookups += 1
+
+    for inc_target in includes_to_fetch:
+        if lookups > 12:
+            break
+        sub_res = _count_spf_lookups_and_parse(inc_target, txt_resolver_fn, visited, depth + 1)
+        lookups += sub_res["lookups"]
+
+    if redirect_target and lookups <= 12:
+        sub_res = _count_spf_lookups_and_parse(redirect_target, txt_resolver_fn, visited, depth + 1)
+        lookups += sub_res["lookups"]
+        if not all_qualifier and sub_res["all_qualifier"]:
+            all_qualifier = sub_res["all_qualifier"]
+
+    return {
+        "records": spf_records,
+        "multiple_records": multiple_records,
+        "lookups": lookups,
+        "all_qualifier": all_qualifier,
+        "raw_record": primary_record[:500],
+    }
+
+
+def check_email_auth(domain, txt_resolver_fn=None, mx_resolver_fn=None):
+    """
+    Evaluates SPF, DMARC, MTA-STS, TLS-RPT, MX presence, and common DKIM selectors.
+    Never overclaims DKIM presence or absence.
+    Returns honest findings, raw records (truncated, untrusted), status, and exposure points.
+    """
+    clean_domain = normalize_exposure_domain(domain)
+    if not clean_domain:
+        return {"status": "unavailable", "domain": domain, "reason": "invalid_domain"}
+
+    if txt_resolver_fn is None:
+        txt_resolver_fn = _dns_query_txt
+    if mx_resolver_fn is None:
+        mx_resolver_fn = _dns_query_mx
+
+    # 1. MX check
+    try:
+        mx_records = mx_resolver_fn(clean_domain)
+    except Exception:
+        mx_records = []
+
+    has_mx = False
+    is_null_mx = False
+    if mx_records:
+        if len(mx_records) == 1 and (mx_records[0][1] in ("", ".") or mx_records[0] == (0, "")):
+            is_null_mx = True
+            has_mx = False
+        else:
+            has_mx = True
+            is_null_mx = False
+
+    # 2. SPF check
+    try:
+        spf_info = _count_spf_lookups_and_parse(clean_domain, txt_resolver_fn)
+    except Exception:
+        spf_info = {"records": [], "multiple_records": False, "lookups": 0, "all_qualifier": None, "raw_record": None}
+
+    raw_spf = spf_info["raw_record"]
+    multiple_spf = spf_info["multiple_records"]
+    spf_lookups = spf_info["lookups"]
+    spf_all = spf_info["all_qualifier"]
+
+    if not spf_info["records"]:
+        spf_status = "missing"
+        spf_grade = "Exposed"
+        spf_detail = "No SPF record published"
+    elif multiple_spf:
+        spf_status = "invalid"
+        spf_grade = "Invalid"
+        spf_detail = "Multiple SPF records published (PermError under RFC 7208)"
+    elif spf_lookups > 10:
+        spf_status = "lookup_limit_exceeded"
+        spf_grade = "Broken"
+        spf_detail = f"SPF include chain requires {spf_lookups} DNS lookups (exceeds RFC 7208 limit of 10)"
+    elif spf_all in ("+all", "all"):
+        spf_status = "open"
+        spf_grade = "Exposed"
+        spf_detail = "SPF specifies +all (anyone is authorized to send email)"
+    elif spf_all == "?all":
+        spf_status = "neutral"
+        spf_grade = "Effectively open"
+        spf_detail = "SPF specifies ?all (neutral/unrestricted, spoofed mail is accepted)"
+    elif spf_all == "~all":
+        spf_status = "softfail"
+        spf_grade = "Soft fail"
+        spf_detail = "SPF specifies ~all (acceptable transition policy; mail is flagged, not dropped)"
+    elif spf_all == "-all":
+        spf_status = "strict"
+        spf_grade = "Strict"
+        spf_detail = "SPF specifies -all (strict enforcement, unauthorized mail is rejected)"
+    else:
+        spf_status = "incomplete"
+        spf_grade = "No all mechanism"
+        spf_detail = "SPF published without an 'all' mechanism"
+
+    # 3. DMARC check
+    dmarc_qname = f"_dmarc.{clean_domain}"
+    try:
+        dmarc_txts = txt_resolver_fn(dmarc_qname)
+    except Exception:
+        dmarc_txts = []
+
+    dmarc_records = [r for r in dmarc_txts if r.strip().lower().startswith("v=dmarc1")]
+    raw_dmarc = dmarc_records[0][:500] if dmarc_records else None
+
+    dmarc_tags = {}
+    if dmarc_records:
+        for part in raw_dmarc.split(";"):
+            part = part.strip()
+            if "=" in part:
+                k, v = part.split("=", 1)
+                dmarc_tags[k.strip().lower()] = v.strip().lower()
+
+    dmarc_p = dmarc_tags.get("p")
+    dmarc_sp = dmarc_tags.get("sp")
+    dmarc_pct_str = dmarc_tags.get("pct", "100")
+    try:
+        dmarc_pct = int(dmarc_pct_str)
+    except ValueError:
+        dmarc_pct = 100
+    has_rua = "rua" in dmarc_tags
+
+    if not dmarc_records:
+        dmarc_status = "missing"
+        dmarc_grade = "Exposed"
+        dmarc_detail = "No DMARC record published"
+    elif dmarc_p == "reject":
+        dmarc_status = "reject"
+        dmarc_grade = "Enforced (reject)"
+        pct_note = f", pct={dmarc_pct}%" if dmarc_pct < 100 else ""
+        dmarc_detail = f"Policy rejects unaligned messages{pct_note}"
+    elif dmarc_p == "quarantine":
+        dmarc_status = "quarantine"
+        dmarc_grade = "Enforced (quarantine)"
+        pct_note = f", pct={dmarc_pct}%" if dmarc_pct < 100 else ""
+        dmarc_detail = f"Policy diverts unaligned messages to spam/quarantine{pct_note}"
+    elif dmarc_p == "none":
+        dmarc_status = "none"
+        dmarc_grade = "Monitoring only"
+        dmarc_detail = "Policy is p=none (monitoring only; spoofed mail is delivered)"
+    else:
+        dmarc_status = "invalid"
+        dmarc_grade = "Invalid policy"
+        dmarc_detail = f"DMARC published with unknown policy '{dmarc_p}'"
+
+    # 4. MTA-STS & TLS-RPT
+    try:
+        mta_sts_txts = txt_resolver_fn(f"_mta-sts.{clean_domain}")
+        has_mta_sts = any(r.strip().lower().startswith("v=stsv1") for r in mta_sts_txts)
+        raw_mta_sts = mta_sts_txts[0][:300] if mta_sts_txts else None
+    except Exception:
+        has_mta_sts = False
+        raw_mta_sts = None
+
+    try:
+        tls_rpt_txts = txt_resolver_fn(f"_smtp._tls.{clean_domain}")
+        has_tls_rpt = any(r.strip().lower().startswith("v=tlsrptv1") for r in tls_rpt_txts)
+        raw_tls_rpt = tls_rpt_txts[0][:300] if tls_rpt_txts else None
+    except Exception:
+        has_tls_rpt = False
+        raw_tls_rpt = None
+
+    # 5. DKIM with common selectors (probed concurrently for speed)
+    common_selectors = ["default", "google", "selector1", "selector2", "k1", "s1", "mandrill", "dkim"]
+    dkim_found_selector = None
+    raw_dkim = None
+
+    def _probe_selector(sel):
+        try:
+            sel_txts = txt_resolver_fn(f"{sel}._domainkey.{clean_domain}")
+            for rec in sel_txts:
+                rec_clean = rec.strip()
+                if "p=" in rec_clean or rec_clean.lower().startswith("v=dkim1") or "k=" in rec_clean:
+                    return sel, rec_clean[:300]
+        except Exception:
+            pass
+        return sel, None
+
+    try:
+        from concurrent.futures import ThreadPoolExecutor
+        with ThreadPoolExecutor(max_workers=min(8, len(common_selectors))) as dkim_exec:
+            dkim_results = list(dkim_exec.map(_probe_selector, common_selectors))
+        for sel, rec_clean in dkim_results:
+            if rec_clean:
+                dkim_found_selector = sel
+                raw_dkim = rec_clean
+                break
+    except Exception:
+        pass
+
+    if dkim_found_selector:
+        dkim_status = "found"
+        dkim_detail = f"Found for selector '{dkim_found_selector}'"
+    else:
+        dkim_status = "not_detected"
+        dkim_detail = "Not detected with common selectors (this does not mean it's absent)"
+
+    # 6. Scoring (Max 25 points)
+    points = 0
+    if not has_mx:
+        is_clean_no_mail = (spf_status == "strict" and dmarc_status == "reject" and dmarc_pct == 100)
+        if is_clean_no_mail:
+            points = 0
+            overall_summary = "Domain does not receive mail (no MX) and is secured with SPF -all and DMARC reject."
+        elif dmarc_status in ("missing", "none"):
+            points = 25
+            overall_summary = "Domain does not receive mail (no MX) and lacks DMARC enforcement, leaving it open to spoofing."
+        elif spf_status in ("missing", "open", "neutral"):
+            points = 20
+            overall_summary = "Domain does not receive mail (no MX) and lacks a strict SPF null record (v=spf1 -all)."
+        else:
+            points = 5
+            overall_summary = "Domain does not receive mail (no MX); policy is partially configured."
+    else:
+        if dmarc_status == "missing":
+            points = 25
+            overall_summary = "No DMARC record: anyone can send unauthorized email as your domain."
+        elif spf_status in ("missing", "open"):
+            points = 25
+            overall_summary = "SPF record is missing or open (+all), allowing arbitrary senders."
+        elif dmarc_status == "none":
+            points = 18
+            overall_summary = "DMARC is monitoring only (p=none); spoofed mail is still accepted by receivers."
+        elif spf_status in ("invalid", "lookup_limit_exceeded"):
+            if dmarc_status in ("reject", "quarantine"):
+                points = 12
+                overall_summary = f"SPF configuration error ({spf_detail}), but DMARC provides fallback protection."
+            else:
+                points = 25
+                overall_summary = f"SPF is broken ({spf_detail}) and DMARC is not enforcing."
+        elif dmarc_status == "quarantine":
+            if dmarc_pct < 100:
+                points = 8
+                overall_summary = f"DMARC quarantine policy is only partially enforced ({dmarc_pct}% of traffic)."
+            elif spf_status == "softfail":
+                points = 5
+                overall_summary = "DMARC quarantine active with SPF softfail (~all)."
+            else:
+                points = 4
+                overall_summary = "DMARC quarantine active; advance to p=reject for full protection."
+        elif dmarc_status == "reject":
+            if dmarc_pct < 100:
+                points = 6
+                overall_summary = f"DMARC reject policy is partially applied ({dmarc_pct}% of traffic)."
+            elif spf_status == "softfail":
+                points = 2
+                overall_summary = "DMARC reject policy active with SPF softfail (~all)."
+            elif spf_status == "strict":
+                points = 0
+                overall_summary = "Strict SPF (-all) and DMARC reject policies are fully enforced."
+            else:
+                points = 3
+                overall_summary = "DMARC reject active with basic SPF."
+        else:
+            points = 15
+            overall_summary = "Email authentication policy is incomplete or contains errors."
+
+    return {
+        "status": "ok",
+        "domain": clean_domain,
+        "has_mx": has_mx,
+        "is_null_mx": is_null_mx,
+        "mx_records": [f"{p} {h}" for p, h in mx_records[:5]],
+        "spf": {
+            "status": spf_status,
+            "grade": spf_grade,
+            "detail": spf_detail,
+            "lookups": spf_lookups,
+            "multiple_records": multiple_spf,
+            "all_qualifier": spf_all,
+            "raw": raw_spf,
+        },
+        "dmarc": {
+            "status": dmarc_status,
+            "grade": dmarc_grade,
+            "detail": dmarc_detail,
+            "policy": dmarc_p,
+            "subdomain_policy": dmarc_sp,
+            "pct": dmarc_pct,
+            "has_rua": has_rua,
+            "raw": raw_dmarc,
+        },
+        "mta_sts": {
+            "status": "present" if has_mta_sts else "missing",
+            "raw": raw_mta_sts,
+        },
+        "tls_rpt": {
+            "status": "present" if has_tls_rpt else "missing",
+            "raw": raw_tls_rpt,
+        },
+        "dkim": {
+            "status": dkim_status,
+            "selector": dkim_found_selector,
+            "detail": dkim_detail,
+            "raw": raw_dkim,
+        },
+        "points": points,
+        "summary": overall_summary,
+        "overall_summary": overall_summary,
+    }
+
+
+EXPOSURE_WEIGHTS = {
+    "lookalikes": 25,
+    "email_auth": 25,
+    "domain_age": 15,
+    "ssl": 15,
+    "subdomains": 10,
+    "surface": 10,
+}
+
+
+def calculate_exposure_score(rdap, ssl, lookalikes, subdomains, surface, email_auth=None):
+    """
+    Exposure score 0-100 (max 25+25+15+15+10+10). Only checks that actually completed
+    contribute; a check that failed or timed out adds 0 and is listed in `incomplete`.
+    If fewer than 50 points are assessable, the posture is 'Not enough data' and
+    score is None (en dash in UI).
+    """
+    if email_auth is None:
+        email_auth = {"status": "unavailable"}
+
     score, breakdown, incomplete = 0, {}, []
+    assessable_points = 0
 
-    # 1. Look-alike domains that resolve off the brand's own infrastructure (<=30)
+    # 1. Look-alike domains that resolve off the brand's own infrastructure (<=25)
     if lookalikes.get("status") == "ok":
-        pts = min(lookalikes.get("live_count", 0) * 8, 30)
+        assessable_points += EXPOSURE_WEIGHTS["lookalikes"]
+        pts = min(lookalikes.get("live_count", 0) * 8, EXPOSURE_WEIGHTS["lookalikes"])
     else:
         pts = 0
         incomplete.append("look-alike domains")
     score += pts
     breakdown["lookalikes_points"] = pts
 
-    # 2. Domain age (<=20)
+    # 2. Email authentication (<=25)
+    if email_auth.get("status") == "ok":
+        assessable_points += EXPOSURE_WEIGHTS["email_auth"]
+        pts = min(email_auth.get("points", 0), EXPOSURE_WEIGHTS["email_auth"])
+    else:
+        pts = 0
+        incomplete.append("email authentication")
+    score += pts
+    breakdown["email_auth_points"] = pts
+
+    # 3. Domain age (<=15)
     age_days = rdap.get("domain_age_days")
     if rdap.get("status") == "ok" and age_days is not None:
-        pts = 20 if age_days < 30 else 12 if age_days < 180 else 8 if age_days < 365 else 4 if age_days < 1095 else 0
+        assessable_points += EXPOSURE_WEIGHTS["domain_age"]
+        pts = 15 if age_days < 30 else 10 if age_days < 180 else 6 if age_days < 365 else 3 if age_days < 1095 else 0
     else:
         pts = 0
         incomplete.append("domain age")
     score += pts
     breakdown["domain_age_points"] = pts
 
-    # 3. TLS posture (<=20)
+    # 4. TLS posture (<=15)
     if ssl.get("status") == "ok":
+        assessable_points += EXPOSURE_WEIGHTS["ssl"]
         proto = (ssl.get("protocol") or "").upper()
         if not ssl.get("valid"):
-            pts = 20
-        elif proto in ("TLSV1", "TLSV1.0", "TLSV1.1", "SSLV3", "SSLV2"):
             pts = 15
+        elif proto in ("TLSV1", "TLSV1.0", "TLSV1.1", "SSLV3", "SSLV2"):
+            pts = 10
         else:
             pts = 0
     else:
@@ -9606,24 +10644,32 @@ def calculate_exposure_score(rdap, ssl, lookalikes, subdomains, surface):
     score += pts
     breakdown["ssl_points"] = pts
 
-    # 4. Public subdomains (<=15)
+    # 5. Public subdomains (<=10)
     if subdomains.get("status") == "ok":
+        assessable_points += EXPOSURE_WEIGHTS["subdomains"]
         n = subdomains.get("total", 0)
-        pts = 15 if n > 15 else 10 if n >= 8 else 5 if n >= 1 else 0
+        pts = 10 if n > 15 else 7 if n >= 8 else 3 if n >= 1 else 0
     else:
         pts = 0
         incomplete.append("subdomain discovery")
     score += pts
     breakdown["subdomains_points"] = pts
 
-    # 5. Public contact surface (<=15)
+    # 6. Public contact surface (<=10)
     if surface.get("status") == "ok":
-        pts = min(min(len(surface.get("emails") or []), 5) * 2 + min(len(surface.get("socials") or {}), 5), 15)
+        assessable_points += EXPOSURE_WEIGHTS["surface"]
+        pts = min(min(len(surface.get("emails") or []), 4) * 2 + min(len(surface.get("socials") or {}), 2), EXPOSURE_WEIGHTS["surface"])
     else:
         pts = 0
         incomplete.append("public surface")
     score += pts
     breakdown["surface_points"] = pts
+
+    breakdown["assessable_points"] = assessable_points
+    breakdown["weights"] = EXPOSURE_WEIGHTS
+
+    if assessable_points < 50:
+        return None, "Not enough data", breakdown, incomplete
 
     score = max(0, min(100, score))
     posture = ("Critical exposure" if score >= 75 else "Elevated risk" if score >= 50
@@ -9631,11 +10677,42 @@ def calculate_exposure_score(rdap, ssl, lookalikes, subdomains, surface):
     return score, posture, breakdown, incomplete
 
 
-def _heuristic_exposure_verdict(domain, f):
+def _heuristic_exposure_verdict(domain, f, posture=None):
     """One deterministic, honest sentence built only from completed checks."""
-    ssl, rdap, la = f["ssl"], f["rdap"], f["lookalikes"]
+    if posture == "Not enough data":
+        return f"Could not complete enough checks to rate {domain}. Please try again."
+
+    ssl = f.get("ssl", {})
+    rdap = f.get("rdap", {})
+    la = f.get("lookalikes", {})
+    email_auth = f.get("email_auth", {})
+
     age = rdap.get("domain_age_days")
-    if ssl.get("status") != "ok":
+
+    # Email authentication is the most relevant finding for a phishing-awareness product
+    email_clause = None
+    if email_auth.get("status") == "ok":
+        dmarc = email_auth.get("dmarc", {})
+        spf = email_auth.get("spf", {})
+        has_mx = email_auth.get("has_mx", True)
+
+        if not has_mx:
+            if email_auth.get("points", 0) == 0:
+                email_clause = "does not receive mail and has protected SPF/DMARC records"
+            elif dmarc.get("status") in ("missing", "none"):
+                email_clause = "does not receive mail, but lacks DMARC enforcement to prevent spoofing"
+            elif spf.get("status") in ("missing", "open"):
+                email_clause = "does not receive mail, but lacks SPF null records"
+        elif dmarc.get("status") == "missing":
+            email_clause = "has no DMARC record to protect against email spoofing"
+        elif spf.get("status") in ("missing", "open"):
+            email_clause = "has an open or missing SPF record allowing unauthorized senders"
+        elif dmarc.get("status") == "none":
+            email_clause = "has DMARC in monitoring mode only (p=none), leaving email spoofable"
+
+    if email_clause:
+        infra = email_clause
+    elif ssl.get("status") != "ok":
         infra = "could not be checked for TLS"
     elif not ssl.get("valid"):
         infra = "has TLS configuration problems"
@@ -9643,6 +10720,7 @@ def _heuristic_exposure_verdict(domain, f):
         infra = "is a recently registered domain"
     else:
         infra = "has a healthy TLS setup"
+
     n = la.get("live_count", 0)
     if la.get("status") != "ok":
         look = "look-alike checks were inconclusive"
@@ -9714,23 +10792,198 @@ def _ai_exposure_synthesis(domain, f, score, posture):
     return None
 
 
+PHISHRECON_FAVICON_CACHE = {}  # domain -> (bytes, content_type, timestamp)
+
+
+@app.route("/api/favicon", methods=["GET"])
+def proxy_favicon():
+    """SSRF-safe favicon proxy for audited target domain only (A4)."""
+    import socket
+    import ssl
+    import http.client
+    from urllib.parse import urlparse, urljoin
+    from flask import Response
+
+    raw_domain = request.args.get("domain", "")
+    domain = normalize_exposure_domain(raw_domain)
+    if not domain:
+        return "", 404
+
+    now = time.time()
+
+    # Serve PhishSim's own favicon directly
+    if domain in ("phishsim-ai.onrender.com", "phishsim.ai", "127.0.0.1", "localhost") or "phishsim" in domain:
+        try:
+            fav_path = os.path.join(app.root_path, "static", "favicon.png")
+            if os.path.isfile(fav_path):
+                with open(fav_path, "rb") as f:
+                    data = f.read()
+                return Response(data, mimetype="image/png", headers={"Cache-Control": "public, max-age=86400"})
+        except Exception:
+            pass
+
+    cached = PHISHRECON_FAVICON_CACHE.get(domain)
+    if cached:
+        cache_dur = 60 if cached[0] is None else 86400
+        if (now - cached[2] < cache_dur):
+            if cached[0] is None:
+                return "", 404
+            return Response(cached[0], mimetype=cached[1], headers={"Cache-Control": "public, max-age=86400"})
+
+    for scheme in ("https", "http"):
+        curr_url = f"{scheme}://{domain}/favicon.ico"
+        for _ in range(3):
+            try:
+                p = urlparse(curr_url)
+                host = (p.hostname or "").strip("[]").lower()
+                if not host:
+                    break
+                port = p.port or (443 if p.scheme == "https" else 80)
+
+                addr_infos = socket.getaddrinfo(host, port, socket.AF_INET, socket.SOCK_STREAM)
+                if not addr_infos:
+                    break
+                safe_infos = [info for info in addr_infos if is_safe_ip(info[4][0])]
+                if not safe_infos:
+                    break
+
+                sock = None
+                for info in safe_infos:
+                    try:
+                        sock = socket.create_connection((info[4][0], port), timeout=2.5)
+                        break
+                    except Exception:
+                        continue
+                if not sock:
+                    break
+
+                if p.scheme == "https":
+                    ctx = ssl.create_default_context()
+                    ctx.check_hostname = False
+                    ctx.verify_mode = ssl.CERT_NONE
+                    sock = ctx.wrap_socket(sock, server_hostname=host)
+                    conn = http.client.HTTPSConnection(host, port=port)
+                else:
+                    conn = http.client.HTTPConnection(host, port=port)
+                conn.sock = sock
+
+                req_path = p.path or "/"
+                if p.query:
+                    req_path += "?" + p.query
+
+                conn.request("GET", req_path, headers={
+                    "Host": host,
+                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) PhishSim/1.0",
+                    "Accept": "image/webp,image/apng,image/svg+xml,image/*,*/*",
+                    "Connection": "close"
+                })
+                resp = conn.getresponse()
+                status = resp.status
+
+                if status in (301, 302, 303, 307, 308):
+                    loc = resp.getheader("Location")
+                    conn.close()
+                    if not loc:
+                        break
+                    curr_url = urljoin(curr_url, loc)
+                    continue
+
+                if 200 <= status < 300:
+                    raw_bytes = resp.read(65536)
+                    ctype = resp.getheader("Content-Type") or "image/x-icon"
+                    conn.close()
+                    if raw_bytes and len(raw_bytes) > 8:
+                        PHISHRECON_FAVICON_CACHE[domain] = (raw_bytes, ctype, now)
+                        return Response(raw_bytes, mimetype=ctype, headers={"Cache-Control": "public, max-age=86400"})
+
+                conn.close()
+                break
+            except Exception:
+                break
+
+    # Fallback to Google S2 public favicon service (e.g. for domains behind WAFs like Ferrari)
+    try:
+        import requests
+        g_resp = requests.get(f"https://www.google.com/s2/favicons?domain={domain}&sz=64", timeout=2.5)
+        if g_resp.status_code == 200 and len(g_resp.content) > 100:
+            ctype = g_resp.headers.get("Content-Type") or "image/png"
+            PHISHRECON_FAVICON_CACHE[domain] = (g_resp.content, ctype, now)
+            return Response(g_resp.content, mimetype=ctype, headers={"Cache-Control": "public, max-age=86400"})
+    except Exception:
+        pass
+
+    PHISHRECON_FAVICON_CACHE[domain] = (None, None, now)
+    return "", 404
+
+
 @csrf.exempt
 @app.route("/api/exposure-report", methods=["POST"])
 def exposure_report_api():
     """Streaming (NDJSON) backend for PhishRecon. Stages: domain_ssl, lookalikes,
     subdomains, exposed_surface, summary (score + heuristic verdict), ai (optional)."""
     import json
+    import socket
     from flask import Response
 
-    if not check_rate_limit(get_remote_ip(), "exposure-report", 10, 60):
-        return jsonify({"success": False, "message": "Rate limit exceeded. Please wait 60 seconds before retrying."}), 429
+    user = current_user()
+
+    # Code switch: when PHISHRECON_REQUIRE_PRO is True
+    if PHISHRECON_REQUIRE_PRO:
+        if not user:
+            return jsonify({"error": "Authentication required", "login_url": "/login"}), 401
+        if user.get("role") not in ("admin", "pro"):
+            return jsonify({"error": "Pro subscription required", "upgrade_url": "/billing"}), 403
+
+    client_ip = get_remote_ip()
+    is_pro_or_admin = bool(user and user.get("role") in ("admin", "pro"))
+
+    # Burst rate limit (10/min) for all clients to prevent abuse
+    burst_key = f"recon_burst_{user['id']}" if user else f"recon_burst_{client_ip}"
+    if not check_rate_limit(burst_key, "exposure-report-burst", PHISHRECON_BURST_LIMIT, 60):
+        return jsonify({"success": False, "error": "Too many requests. Please wait 60 seconds before retrying.", "message": "Too many requests. Please wait 60 seconds before retrying.", "kind": "rate_limit"}), 429
+
+    # Daily cap check
+    if not is_pro_or_admin:
+        if user:
+            # Free logged-in user: 15/day
+            user_key = f"recon_daily_user_{user['id']}"
+            if not check_rate_limit(user_key, "exposure-report-daily", PHISHRECON_FREE_DAILY_LIMIT, 86400):
+                return jsonify({
+                    "success": False,
+                    "error": f"Daily audit limit reached ({PHISHRECON_FREE_DAILY_LIMIT} audits per day). Upgrade to Pro for unlimited audits.",
+                    "message": f"Daily audit limit reached ({PHISHRECON_FREE_DAILY_LIMIT} audits per day). Upgrade to Pro for unlimited audits.",
+                    "kind": "rate_limit",
+                    "upgrade_url": "/billing"
+                }), 429
+        else:
+            # Anonymous visitor: 5/day
+            is_localhost = client_ip in ("127.0.0.1", "::1", "localhost")
+            if not is_localhost and not check_rate_limit(f"recon_daily_ip_{client_ip}", "exposure-report-daily", PHISHRECON_ANON_DAILY_LIMIT, 86400):
+                return jsonify({
+                    "success": False,
+                    "error": f"Daily audit limit reached ({PHISHRECON_ANON_DAILY_LIMIT} audits per day). Sign up for a free account to get 15 audits/day, or upgrade to Pro for unlimited audits.",
+                    "message": f"Daily audit limit reached ({PHISHRECON_ANON_DAILY_LIMIT} audits per day). Sign up for a free account to get 15 audits/day, or upgrade to Pro for unlimited audits.",
+                    "kind": "rate_limit",
+                    "nudge_signup": True,
+                    "login_url": "/login"
+                }), 429
 
     raw_domain = request.form.get("domain") or (request.get_json(silent=True) or {}).get("domain") or ""
     domain = normalize_exposure_domain(raw_domain)
     if not domain:
         return jsonify({"success": False, "message": "Enter a valid domain such as example.com."}), 400
-    if not is_safe_url(domain):
-        return jsonify({"success": False, "message": "Access denied: target resolves to a private or restricted network."}), 400
+
+    # Resolve target domain once and validate all returned IP(s)
+    try:
+        _, _, domain_ips = socket.gethostbyname_ex(domain)
+    except Exception:
+        domain_ips = []
+
+    for ip in domain_ips:
+        if not is_safe_ip(ip):
+            return jsonify({"success": False, "message": "Access denied: target resolves to a private or restricted network."}), 400
+
+    validated_ip = domain_ips[0] if domain_ips else None
 
     def generate():
         t0 = time.time()
@@ -9743,29 +10996,34 @@ def exposure_report_api():
 
         try:
             f_rdap = DIAGNOSTICS_EXECUTOR.submit(check_rdap, domain)
-            f_ssl = DIAGNOSTICS_EXECUTOR.submit(check_ssl, domain)
-            f_look = DIAGNOSTICS_EXECUTOR.submit(check_lookalikes, domain)
+            f_ssl = DIAGNOSTICS_EXECUTOR.submit(check_ssl, domain, validated_ip)
+            f_email = DIAGNOSTICS_EXECUTOR.submit(check_email_auth, domain)
+            f_look = DIAGNOSTICS_EXECUTOR.submit(check_lookalikes, domain, set(domain_ips))
             f_crt = DIAGNOSTICS_EXECUTOR.submit(check_crtsh_subdomains, domain)
             f_surf = DIAGNOSTICS_EXECUTOR.submit(scrape_company_cached, domain)
 
-            rdap, _ = _get(f_rdap, 3.0, {"status": "unavailable", "created_date": "Unknown", "domain_age_days": None,
+            rdap, _ = _get(f_rdap, 4.5, {"status": "unavailable", "created_date": "Unknown", "domain_age_days": None,
                                         "domain_age_label": "Unknown", "expiration_date": "Unknown", "registrar": "Unknown"})
-            ssl_res, _ = _get(f_ssl, 3.0, {"status": "unavailable", "valid": False, "issuer": "Unknown",
+            ssl_res, _ = _get(f_ssl, 4.5, {"status": "unavailable", "valid": False, "issuer": "Unknown",
                                           "protocol": "None", "expiry": None, "error": "timeout"})
             yield json.dumps({"stage": "domain_ssl", "domain": domain, "rdap": rdap, "ssl": ssl_res}) + "\n"
 
-            look, _ = _get(f_look, 3.8, {"status": "unavailable", "candidates_count": 0, "resolving_count": 0,
+            email_res, _ = _get(f_email, 5.5, {"status": "unavailable", "domain": domain, "reason": "timeout"})
+            yield json.dumps({"stage": "email_auth", "domain": domain, "email_auth": email_res}) + "\n"
+
+            look, _ = _get(f_look, 6.0, {"status": "unavailable", "candidates_count": 0, "resolving_count": 0,
                                         "live_count": 0, "unknown_count": 0, "live_lookalikes": [], "details": []})
             yield json.dumps({"stage": "lookalikes", "domain": domain, "lookalikes": look}) + "\n"
 
-            subs, _ = _get(f_crt, 4.0, {"status": "unavailable", "total": 0, "subdomains": []})
+            subs, _ = _get(f_crt, 6.0, {"status": "unavailable", "total": 0, "subdomains": []})
             yield json.dumps({"stage": "subdomains", "domain": domain, "status": subs["status"],
                               "count": subs["total"], "subdomains": subs["subdomains"]}) + "\n"
 
-            raw_surface, surf_ok = _get(f_surf, 4.5, None)
+            raw_surface, surf_ok = _get(f_surf, 6.5, None)
             raw_surface = raw_surface or {}
+            surface_ok = bool(surf_ok and raw_surface.get("fetch_success") and not raw_surface.get("blocked"))
             surface = {
-                "status": "ok" if surf_ok and raw_surface and not raw_surface.get("blocked") else "unavailable",
+                "status": "ok" if surface_ok else "unavailable",
                 "company_name": raw_surface.get("company_name") or domain,
                 "emails": raw_surface.get("emails") or [],
                 "socials": raw_surface.get("socials") or {},
@@ -9775,22 +11033,54 @@ def exposure_report_api():
             surface["socials_count"] = len(surface["socials"])
             yield json.dumps({"stage": "exposed_surface", "domain": domain, "surface": surface}) + "\n"
 
-            score, posture, breakdown, incomplete = calculate_exposure_score(rdap, ssl_res, look, subs, surface)
+            score, posture, breakdown, incomplete = calculate_exposure_score(rdap, ssl_res, look, subs, surface, email_res)
             findings = {"rdap": rdap, "ssl": ssl_res, "lookalikes": look, "subdomains": subs,
-                        "surface": surface, "incomplete": incomplete}
+                        "surface": surface, "email_auth": email_res, "incomplete": incomplete}
+            investigation_id = f"EX-{secrets.token_hex(3).upper()}"
+            exec_verdict = _heuristic_exposure_verdict(domain, findings, posture=posture)
             yield json.dumps({
                 "stage": "summary", "success": True, "domain": domain,
-                "investigation_id": f"EX-{secrets.token_hex(3).upper()}",
+                "investigation_id": investigation_id,
                 "exposure_score": score, "posture": posture, "score_breakdown": breakdown,
                 "incomplete": incomplete, "path_used": "heuristic_only",
-                "executive_verdict": _heuristic_exposure_verdict(domain, findings),
+                "executive_verdict": exec_verdict,
             }) + "\n"
 
-            # Fast AI synthesis: completes in ~1.5s or falls back cleanly
-            fut_ai = DIAGNOSTICS_EXECUTOR.submit(_ai_exposure_synthesis, domain, findings, score, posture)
-            ai, _ = _get(fut_ai, 7.5, None)
-            if ai:
-                yield json.dumps({"stage": "ai", "path_used": "heuristic+ai", **ai}) + "\n"
+            # Persist audit to server history for Pro and Admin users
+            if is_pro_or_admin and user:
+                try:
+                    db_hist = get_db_connection()
+                    cur_hist = db_hist.cursor()
+                    cur_hist.execute("""
+                        INSERT INTO recon_history (user_id, domain, score, posture, scoring_version, summary_json)
+                        VALUES (%s, %s, %s, %s, %s, %s)
+                    """, (
+                        user["id"],
+                        domain,
+                        score,
+                        posture,
+                        "v1",
+                        json.dumps({
+                            "investigation_id": investigation_id,
+                            "score_breakdown": breakdown,
+                            "findings": findings,
+                            "executive_verdict": exec_verdict
+                        })
+                    ))
+                    db_hist.commit()
+                    cur_hist.close()
+                    db_hist.close()
+                except Exception as hist_err:
+                    print(f"[PhishRecon] Failed to save recon_history for user {user['id']}: {hist_err}")
+
+            # Do not call AI synthesis if posture is "Not enough data"
+            if posture != "Not enough data":
+                fut_ai = DIAGNOSTICS_EXECUTOR.submit(_ai_exposure_synthesis, domain, findings, score, posture)
+                ai, _ = _get(fut_ai, 7.5, None)
+                if ai:
+                    yield json.dumps({"stage": "ai", "path_used": "heuristic+ai", **ai}) + "\n"
+                else:
+                    yield json.dumps({"stage": "ai", "path_used": "heuristic_only"}) + "\n"
             else:
                 yield json.dumps({"stage": "ai", "path_used": "heuristic_only"}) + "\n"
         except GeneratorExit:
@@ -9803,9 +11093,303 @@ def exposure_report_api():
                     headers={"Cache-Control": "no-store", "X-Accel-Buffering": "no"})
 
 
+# --- PhishRecon Pro Endpoints ---
+
+@app.route("/api/recon/history", methods=["GET"])
+@login_required
+def api_recon_history():
+    """Returns saved server audit history for the authenticated Pro/Admin user."""
+    user = current_user()
+    if not user or user.get("role") not in ("admin", "pro"):
+        return jsonify({"error": "Pro subscription required", "upgrade_url": "/billing"}), 403
+
+    db = get_db_connection()
+    cursor = db.cursor(dictionary=True)
+    try:
+        cursor.execute("""
+            SELECT id, domain, score, posture, created_at
+            FROM recon_history
+            WHERE user_id = %s
+            ORDER BY created_at DESC
+            LIMIT 50
+        """, (user["id"],))
+        rows = cursor.fetchall()
+        for r in rows:
+            if r.get("created_at"):
+                r["created_at"] = r["created_at"].strftime("%Y-%m-%d %H:%M")
+        return jsonify({"success": True, "history": rows})
+    finally:
+        cursor.close()
+        db.close()
+
+
+@app.route("/api/recon/compare/<path:domain>", methods=["GET"])
+@login_required
+def api_recon_compare(domain):
+    """Compares the two most recent audits for a domain saved on the server."""
+    user = current_user()
+    if not user or user.get("role") not in ("admin", "pro"):
+        return jsonify({"error": "Pro subscription required", "upgrade_url": "/billing"}), 403
+
+    clean_domain = normalize_exposure_domain(domain)
+    if not clean_domain:
+        return jsonify({"success": False, "message": "Invalid domain."}), 400
+
+    db = get_db_connection()
+    cursor = db.cursor(dictionary=True)
+    try:
+        cursor.execute("""
+            SELECT id, score, posture, summary_json, created_at
+            FROM recon_history
+            WHERE user_id = %s AND domain = %s
+            ORDER BY created_at DESC
+            LIMIT 2
+        """, (user["id"], clean_domain))
+        audits = cursor.fetchall()
+        if len(audits) < 2:
+            return jsonify({
+                "success": True,
+                "has_previous": False,
+                "message": "No previous server audit found for this domain to compare against."
+            })
+
+        curr_audit = audits[0]
+        prev_audit = audits[1]
+
+        import json as _json
+        try:
+            curr_data = _json.loads(curr_audit.get("summary_json") or "{}")
+        except Exception:
+            curr_data = {}
+        try:
+            prev_data = _json.loads(prev_audit.get("summary_json") or "{}")
+        except Exception:
+            prev_data = {}
+
+        curr_findings = curr_data.get("findings", {})
+        prev_findings = prev_data.get("findings", {})
+
+        curr_la = set(d.get("domain") for d in curr_findings.get("lookalikes", {}).get("live_lookalikes", []))
+        prev_la = set(d.get("domain") for d in prev_findings.get("lookalikes", {}).get("live_lookalikes", []))
+
+        curr_subs = set(curr_findings.get("subdomains", {}).get("subdomains", []))
+        prev_subs = set(prev_findings.get("subdomains", {}).get("subdomains", []))
+
+        curr_spf = curr_findings.get("email_auth", {}).get("spf", {}).get("status", "unknown")
+        prev_spf = prev_findings.get("email_auth", {}).get("spf", {}).get("status", "unknown")
+
+        curr_dmarc = curr_findings.get("email_auth", {}).get("dmarc", {}).get("status", "unknown")
+        prev_dmarc = prev_findings.get("email_auth", {}).get("dmarc", {}).get("status", "unknown")
+
+        score_delta = curr_audit["score"] - prev_audit["score"]
+
+        return jsonify({
+            "success": True,
+            "has_previous": True,
+            "domain": clean_domain,
+            "current_score": curr_audit["score"],
+            "previous_score": prev_audit["score"],
+            "score_delta": score_delta,
+            "new_lookalikes": sorted(list(curr_la - prev_la)),
+            "removed_lookalikes": sorted(list(prev_la - curr_la)),
+            "new_subdomains": sorted(list(curr_subs - prev_subs)),
+            "email_auth_changes": {
+                "spf": f"{prev_spf} -> {curr_spf}" if prev_spf != curr_spf else "Unchanged",
+                "dmarc": f"{prev_dmarc} -> {curr_dmarc}" if prev_dmarc != curr_dmarc else "Unchanged"
+            }
+        })
+    finally:
+        cursor.close()
+        db.close()
+
+
+@app.route("/api/recon/export/csv", methods=["GET"])
+@login_required
+def api_recon_export_csv():
+    """Exports the latest PhishRecon audit findings as a downloadable CSV."""
+    user = current_user()
+    if not user or user.get("role") not in ("admin", "pro"):
+        if request.accept_mimetypes.accept_json and not request.accept_mimetypes.accept_html:
+            return jsonify({"error": "Pro subscription required", "upgrade_url": "/billing"}), 403
+        flash("Pro tier required to export CSV audit reports.", "warning")
+        return redirect(url_for("billing_portal"))
+
+    raw_domain = request.args.get("domain", "")
+    domain = normalize_exposure_domain(raw_domain)
+    if not domain:
+        flash("Invalid domain for export.", "danger")
+        return redirect(url_for("exposure_report"))
+
+    db = get_db_connection()
+    cursor = db.cursor(dictionary=True)
+    try:
+        cursor.execute("""
+            SELECT id, domain, score, posture, summary_json, created_at
+            FROM recon_history
+            WHERE user_id = %s AND domain = %s
+            ORDER BY created_at DESC
+            LIMIT 1
+        """, (user["id"], domain))
+        row = cursor.fetchone()
+    finally:
+        cursor.close()
+        db.close()
+
+    import json as _json
+    output = io.StringIO()
+    writer = csv.writer(output)
+
+    if not row:
+        writer.writerow(["Domain", "Status", "Message"])
+        writer.writerow([domain, "No Data", "No server audit history found for this domain."])
+    else:
+        try:
+            data = _json.loads(row.get("summary_json") or "{}")
+        except Exception:
+            data = {}
+        findings = data.get("findings", {})
+        breakdown = data.get("score_breakdown", {})
+
+        writer.writerow(["PHISHRECON EXPOSURE AUDIT REPORT"])
+        writer.writerow(["Target Domain", row["domain"]])
+        writer.writerow(["Audit Date", row["created_at"].strftime("%Y-%m-%d %H:%M") if row.get("created_at") else "N/A"])
+        writer.writerow(["Exposure Score", f"{row['score']}/100"])
+        writer.writerow(["Risk Posture", row["posture"]])
+        writer.writerow(["Executive Verdict", data.get("executive_verdict", "N/A")])
+        writer.writerow([])
+
+        writer.writerow(["--- SCORE BREAKDOWN ---"])
+        writer.writerow(["Category", "Score Added", "Reason"])
+        for cat, info in breakdown.items():
+            if isinstance(info, dict):
+                writer.writerow([cat, info.get("points", 0), info.get("reason", "")])
+            else:
+                writer.writerow([cat, info, ""])
+        writer.writerow([])
+
+        writer.writerow(["--- RESOLVING LOOK-ALIKE DOMAINS ---"])
+        writer.writerow(["Domain", "IP Address", "Status"])
+        for la in findings.get("lookalikes", {}).get("live_lookalikes", []):
+            writer.writerow([la.get("domain", ""), la.get("ip", ""), "Resolving"])
+        writer.writerow([])
+
+        writer.writerow(["--- DISCOVERED SUBDOMAINS ---"])
+        writer.writerow(["Subdomain"])
+        for sub in findings.get("subdomains", {}).get("subdomains", []):
+            writer.writerow([sub])
+        writer.writerow([])
+
+        writer.writerow(["--- EMAIL AUTHENTICATION ---"])
+        writer.writerow(["SPF Status", findings.get("email_auth", {}).get("spf", {}).get("status", "N/A")])
+        writer.writerow(["SPF Record", findings.get("email_auth", {}).get("spf", {}).get("raw", "N/A")])
+        writer.writerow(["DMARC Status", findings.get("email_auth", {}).get("dmarc", {}).get("status", "N/A")])
+        writer.writerow(["DMARC Record", findings.get("email_auth", {}).get("dmarc", {}).get("raw", "N/A")])
+        writer.writerow([])
+
+        writer.writerow(["--- SSL/TLS CONFIGURATION ---"])
+        writer.writerow(["Valid", findings.get("ssl", {}).get("valid", "N/A")])
+        writer.writerow(["Issuer", findings.get("ssl", {}).get("issuer", "N/A")])
+        writer.writerow(["Protocol", findings.get("ssl", {}).get("protocol", "N/A")])
+        writer.writerow(["Expiry", findings.get("ssl", {}).get("expiry", "N/A")])
+
+    output.seek(0)
+    from flask import Response
+    return Response(
+        output.getvalue(),
+        mimetype="text/csv",
+        headers={"Content-Disposition": f'attachment; filename="phishrecon_{domain}.csv"'}
+    )
+
+
+@app.route("/api/recon/export/json", methods=["GET"])
+@login_required
+def api_recon_export_json():
+    """Exports the latest PhishRecon audit findings as JSON for SIEM integration."""
+    user = current_user()
+    if not user or user.get("role") not in ("admin", "pro"):
+        return jsonify({"error": "Pro subscription required", "upgrade_url": "/billing"}), 403
+
+    raw_domain = request.args.get("domain", "")
+    domain = normalize_exposure_domain(raw_domain)
+    if not domain:
+        return jsonify({"error": "Invalid domain."}), 400
+
+    db = get_db_connection()
+    cursor = db.cursor(dictionary=True)
+    try:
+        cursor.execute("""
+            SELECT id, domain, score, posture, summary_json, created_at
+            FROM recon_history
+            WHERE user_id = %s AND domain = %s
+            ORDER BY created_at DESC
+            LIMIT 1
+        """, (user["id"], domain))
+        row = cursor.fetchone()
+    finally:
+        cursor.close()
+        db.close()
+
+    if not row:
+        return jsonify({"error": "No audit history found for this domain."}), 404
+
+    import json as _json
+    try:
+        data = _json.loads(row.get("summary_json") or "{}")
+    except Exception:
+        data = {}
+
+    export_obj = {
+        "phishrecon_version": "v1",
+        "domain": row["domain"],
+        "audit_id": row["id"],
+        "created_at": row["created_at"].strftime("%Y-%m-%dT%H:%M:%SZ") if row.get("created_at") else None,
+        "score": row["score"],
+        "posture": row["posture"],
+        "summary": data
+    }
+
+    from flask import Response
+    return Response(
+        _json.dumps(export_obj, indent=2),
+        mimetype="application/json",
+        headers={"Content-Disposition": f'attachment; filename="phishrecon_{domain}.json"'}
+    )
+
+
+@app.route("/api/profile/whitelabel", methods=["POST"])
+@login_required
+def api_profile_whitelabel():
+    """Sets custom white-label company branding for PDF reports (Pro/Admin only)."""
+    user = current_user()
+    if not user or user.get("role") not in ("admin", "pro"):
+        return jsonify({"error": "Pro subscription required", "upgrade_url": "/billing"}), 403
+
+    name = request.form.get("whitelabel_company_name", "").strip()
+    if not name:
+        data = request.get_json(silent=True) or {}
+        name = data.get("whitelabel_company_name", "").strip()
+
+    name = re.sub(r"[<>\x00-\x1f]", "", name)[:100]
+
+    db = get_db_connection()
+    cursor = db.cursor()
+    try:
+        cursor.execute("UPDATE users SET whitelabel_company_name = %s WHERE id = %s", (name or None, user["id"]))
+        db.commit()
+        return jsonify({"success": True, "whitelabel_company_name": name})
+    finally:
+        cursor.close()
+        db.close()
+
+
 @app.route("/robots.txt")
 def serve_robots():
     return app.send_static_file("robots.txt")
+
+
+@app.route("/favicon.ico")
+def serve_favicon():
+    return app.send_static_file("favicon.png")
 
 
 if __name__ == "__main__":

@@ -1,0 +1,1372 @@
+/* ==========================================================================
+   PhishSim AI — Risk Briefing Sheet Design System (Part 7)
+   Concept-first, calm, authoritative executive briefing for Monday morning standups.
+   Uses ONLY design tokens and semantic variables (NO hardcoded hex colors).
+   ========================================================================== */
+
+/* ── 1. Tokens & Root Briefing Canvas ────────────────────────────────── */
+.bf-page {
+  /* Semantic token mapping */
+  --bf-ink: var(--text-primary, #ffffff);
+  --bf-ink-secondary: var(--text-secondary, #94a3b8);
+  --bf-ink-muted: var(--text-muted, #64748b);
+  --bf-paper: var(--bg-surface, rgba(15, 23, 42, 0.7));
+  --bf-paper-elevated: var(--bg-surface-elevated, rgba(30, 41, 59, 0.7));
+  --bf-line: var(--border-subtle, rgba(255, 255, 255, 0.08));
+  --bf-line-strong: var(--border-default, rgba(255, 255, 255, 0.16));
+  --bf-structure: var(--primary, #06b6d4);
+  
+  /* Status semantics */
+  --bf-good: var(--success, #10b981);
+  --bf-warning: var(--warning, #f59e0b);
+  --bf-danger: var(--danger, #ef4444);
+
+  /* Typography voice */
+  --bf-font-voice: 'Newsreader', 'Iowan Old Style', 'Palatino Linotype', Georgia, serif;
+  --bf-font-sans: var(--font-sans, 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
+  --bf-font-mono: var(--font-mono, 'JetBrains Mono', ui-monospace, monospace);
+
+  /* Easing & Timing */
+  --bf-ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --bf-fast: 150ms;
+  --bf-med: 250ms;
+
+  /* Layout container */
+  max-width: 1060px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 32px clamp(16px, 3.5vw, 40px) 96px;
+  box-sizing: border-box;
+  font-family: var(--bf-font-sans);
+  color: var(--bf-ink);
+}
+
+/* Light theme overrides */
+body.light-theme .bf-page {
+  --bf-ink: var(--text-primary, #0f172a);
+  --bf-ink-secondary: var(--text-secondary, #334155);
+  --bf-ink-muted: var(--text-muted, #64748b);
+  --bf-paper: var(--bg-surface, #ffffff);
+  --bf-paper-elevated: var(--bg-surface-elevated, #f8fafc);
+  --bf-line: var(--border-subtle, rgba(0, 0, 0, 0.08));
+  --bf-line-strong: var(--border-default, rgba(0, 0, 0, 0.16));
+}
+
+/* Screen reader utility */
+.bf-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* ── 2. Raised Briefing Sheet ────────────────────────────────────────── */
+.bf-sheet {
+  position: relative;
+  overflow: hidden;
+  background-color: var(--bf-paper);
+  border: 1px solid var(--bf-line-strong);
+  border-radius: 20px;
+  padding: clamp(24px, 4.5vw, 48px);
+  box-sizing: border-box;
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--bf-ink) 5%, transparent),
+              0 1px 2px color-mix(in srgb, black 12%, transparent),
+              0 28px 56px -28px color-mix(in srgb, black 38%, transparent);
+  transition: border-color var(--bf-fast) ease, box-shadow var(--bf-fast) ease;
+}
+
+body.light-theme .bf-sheet {
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--bf-ink) 4%, transparent),
+              0 1px 2px color-mix(in srgb, black 4%, transparent),
+              0 20px 40px -20px color-mix(in srgb, black 10%, transparent);
+}
+
+/* Paper grain texture */
+.bf-sheet::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='bfGrain'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23bfGrain)'/%3E%3C/svg%3E");
+  opacity: 0.025;
+  mix-blend-mode: overlay;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* ── 3. Persistent Notice Bar (Sample State) ─────────────────────────── */
+.bf-notice-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: -48px -48px 36px -48px;
+  padding: 12px 48px;
+  border-bottom: 1px solid var(--bf-line);
+  background-color: color-mix(in srgb, var(--bf-structure) 6%, var(--bf-paper));
+  font-size: 13px;
+  color: var(--bf-ink-secondary);
+  position: relative;
+  z-index: 2;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 900px) {
+  .bf-notice-bar {
+    margin: -32px -32px 24px -32px;
+    padding: 12px 32px;
+  }
+}
+
+@media (max-width: 600px) {
+  .bf-notice-bar {
+    margin: -24px -24px 20px -24px;
+    padding: 10px 20px;
+    font-size: 12px;
+  }
+}
+
+.bf-notice-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.bf-notice-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--bf-structure) 30%, transparent);
+  background-color: color-mix(in srgb, var(--bf-structure) 12%, transparent);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--bf-structure);
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.bf-notice-action {
+  color: var(--bf-structure);
+  text-decoration: none;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  transition: opacity var(--bf-fast) ease;
+}
+
+.bf-notice-action:hover {
+  text-decoration: underline;
+  opacity: 0.85;
+}
+
+/* ── 4. Header Row & Range Control ───────────────────────────────────── */
+.bf-header-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--bf-line);
+  position: relative;
+  z-index: 2;
+  flex-wrap: wrap;
+}
+
+.bf-meta-left {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.bf-domain-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bf-domain-name {
+  font-family: var(--bf-font-mono);
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--bf-ink);
+  letter-spacing: -0.01em;
+}
+
+.bf-coverage-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background-color: color-mix(in srgb, var(--bf-ink) 6%, transparent);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--bf-ink-secondary);
+}
+
+.bf-date-covered {
+  font-size: 12.5px;
+  color: var(--bf-ink-muted);
+}
+
+.bf-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* Date Range Pill Switcher */
+.bf-range-pills {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px;
+  border-radius: 999px;
+  background-color: color-mix(in srgb, var(--bf-ink) 4%, transparent);
+  border: 1px solid var(--bf-line);
+  gap: 2px;
+}
+
+.bf-range-btn {
+  border: none;
+  background: transparent;
+  color: var(--bf-ink-secondary);
+  font-family: var(--bf-font-sans);
+  font-size: 11.5px;
+  font-weight: 500;
+  padding: 4px 10px;
+  border-radius: 999px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all var(--bf-fast) ease;
+  line-height: 1.2;
+}
+
+.bf-range-btn:hover {
+  color: var(--bf-ink);
+}
+
+.bf-range-btn.is-active {
+  background-color: var(--bf-paper-elevated);
+  color: var(--bf-ink);
+  font-weight: 600;
+  box-shadow: 0 1px 3px color-mix(in srgb, black 8%, transparent);
+}
+
+/* Quiet Action Buttons */
+.bf-quiet-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--bf-line);
+  background-color: transparent;
+  color: var(--bf-ink-secondary);
+  font-family: var(--bf-font-sans);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--bf-fast) ease;
+}
+
+.bf-quiet-btn:hover {
+  background-color: color-mix(in srgb, var(--bf-ink) 5%, transparent);
+  color: var(--bf-ink);
+  border-color: var(--bf-line-strong);
+}
+
+.bf-quiet-btn:focus-visible {
+  outline: 2px solid var(--bf-structure);
+  outline-offset: 2px;
+}
+
+/* ── 5. The Editorial Headline ───────────────────────────────────────── */
+.bf-headline-section {
+  padding: 36px 0 28px;
+  position: relative;
+  z-index: 2;
+}
+
+.bf-headline {
+  font-family: var(--bf-font-voice);
+  font-size: clamp(1.6rem, 2.8vw, 2.25rem);
+  font-weight: 500;
+  line-height: 1.35;
+  color: var(--bf-ink);
+  margin: 0 0 14px 0;
+  letter-spacing: -0.015em;
+  opacity: 0;
+  transform: translateY(6px);
+  animation: bfHeadlineFade 600ms var(--bf-ease) forwards;
+}
+
+@keyframes bfHeadlineFade {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.bf-ai-note {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--bf-ink-secondary);
+  line-height: 1.5;
+  padding-top: 6px;
+  flex-wrap: wrap;
+}
+
+.bf-ai-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--bf-ink-muted);
+  border: 1px solid var(--bf-line);
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+.bf-ai-disclaimer {
+  font-size: 12px;
+  color: var(--bf-ink-muted);
+  font-style: italic;
+}
+
+/* ── 6. Two Quiet Figures & Trend Line ───────────────────────────────── */
+.bf-figures-section {
+  padding: 24px 0 36px;
+  border-top: 1px solid var(--bf-line);
+  border-bottom: 1px solid var(--bf-line);
+  position: relative;
+  z-index: 2;
+}
+
+.bf-figures-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+  margin-bottom: 32px;
+}
+
+@media (max-width: 640px) {
+  .bf-figures-grid {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+}
+
+.bf-figure-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.bf-figure-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--bf-ink-secondary);
+  letter-spacing: 0.02em;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bf-figure-tag {
+  font-size: 10.5px;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background-color: color-mix(in srgb, var(--bf-ink) 5%, transparent);
+  color: var(--bf-ink-muted);
+  letter-spacing: 0.02em;
+}
+
+.bf-figure-val-row {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.bf-figure-num {
+  font-family: var(--bf-font-sans);
+  font-variant-numeric: tabular-nums;
+  font-size: clamp(2.4rem, 4vw, 3.2rem);
+  font-weight: 700;
+  color: var(--bf-ink);
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+}
+
+.bf-figure-delta {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--bf-ink-secondary);
+}
+
+.bf-figure-shape {
+  font-size: 12px;
+  display: inline-block;
+  line-height: 1;
+}
+
+/* Trend Line Container */
+.bf-trend-wrap {
+  margin-top: 8px;
+  padding: 20px;
+  background-color: color-mix(in srgb, var(--bf-ink) 2%, transparent);
+  border: 1px solid var(--bf-line);
+  border-radius: 12px;
+}
+
+.bf-trend-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.bf-trend-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--bf-ink-secondary);
+  letter-spacing: 0.02em;
+}
+
+.bf-trend-legend {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 11.5px;
+  color: var(--bf-ink-muted);
+}
+
+.bf-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.bf-legend-line {
+  width: 14px;
+  height: 2px;
+  display: inline-block;
+}
+
+.bf-legend-line.is-report {
+  background-color: var(--bf-structure);
+}
+
+.bf-legend-line.is-click {
+  background-color: var(--bf-warning);
+}
+
+/* SVG Chart Box */
+.bf-chart-svg {
+  width: 100%;
+  height: 120px;
+  overflow: visible;
+  display: block;
+}
+
+.bf-chart-point {
+  cursor: pointer;
+  transition: r var(--bf-fast) ease, stroke var(--bf-fast) ease;
+}
+
+.bf-chart-point:hover, .bf-chart-point:focus {
+  r: 5.5;
+  stroke: var(--bf-paper);
+  stroke-width: 1.5;
+  outline: none;
+}
+
+.bf-trend-inspect {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11.5px;
+  color: var(--bf-ink);
+  background-color: color-mix(in srgb, var(--bf-structure) 12%, transparent);
+  padding: 3px 10px;
+  border-radius: 6px;
+  border: 1px solid color-mix(in srgb, var(--bf-structure) 25%, transparent);
+}
+
+.bf-trend-inspect strong {
+  color: var(--bf-ink);
+  font-weight: 600;
+}
+
+.bf-inspect-date {
+  color: var(--bf-ink-muted);
+}
+
+.bf-inspect-rep {
+  color: var(--bf-structure);
+  font-weight: 600;
+}
+
+.bf-inspect-clk {
+  color: var(--bf-warning);
+  font-weight: 600;
+}
+
+/* Chart X-Axis HTML Labels */
+.bf-chart-x-axis {
+  position: relative;
+  width: 100%;
+  height: 24px;
+  margin-top: 6px;
+  border-top: 1px solid var(--bf-line);
+}
+
+.bf-x-tick {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.bf-x-tick[style*="text-align: left"] {
+  transform: translateX(0);
+  align-items: flex-start;
+}
+
+.bf-x-tick[style*="text-align: right"] {
+  transform: translateX(-100%);
+  align-items: flex-end;
+}
+
+.bf-x-tick-mark {
+  width: 1px;
+  height: 4px;
+  background-color: var(--bf-line-strong);
+  margin-bottom: 4px;
+}
+
+.bf-x-tick-label {
+  font-family: var(--bf-font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--bf-ink-secondary);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+@media (max-width: 600px) {
+  .bf-x-tick:not(.is-mobile-visible) {
+    display: none;
+  }
+}
+
+.bf-few-points-note {
+  font-size: 12.5px;
+  color: var(--bf-ink-muted);
+  line-height: 1.5;
+  padding: 12px 4px 4px;
+}
+
+/* Data table fallback */
+.bf-table-fallback {
+  margin-top: 14px;
+  font-size: 12px;
+  color: var(--bf-ink-muted);
+}
+
+.bf-table-fallback summary {
+  cursor: pointer;
+  user-select: none;
+  font-weight: 500;
+  outline: none;
+}
+
+.bf-table-fallback summary:hover {
+  color: var(--bf-ink);
+}
+
+.bf-table-fallback summary:focus-visible {
+  outline: 2px solid var(--bf-structure);
+  outline-offset: 2px;
+}
+
+.bf-fallback-table {
+  width: 100%;
+  margin-top: 10px;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.bf-fallback-table th,
+.bf-fallback-table td {
+  padding: 6px 10px;
+  text-align: left;
+  border-bottom: 1px solid var(--bf-line);
+}
+
+.bf-fallback-table th {
+  font-weight: 600;
+  color: var(--bf-ink-secondary);
+}
+
+/* ── 7. "Do This Next" ───────────────────────────────────────────────── */
+.bf-section {
+  padding: 36px 0;
+  border-bottom: 1px solid var(--bf-line);
+  position: relative;
+  z-index: 2;
+}
+
+.bf-section-title-row {
+  margin-bottom: 20px;
+}
+
+.bf-section-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--bf-ink);
+  margin: 0 0 4px 0;
+  letter-spacing: -0.01em;
+}
+
+.bf-section-sub {
+  font-size: 13px;
+  color: var(--bf-ink-muted);
+  margin: 0;
+}
+
+.bf-actions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.bf-action-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 16px 20px;
+  border-radius: 12px;
+  border: 1px solid var(--bf-line);
+  background-color: color-mix(in srgb, var(--bf-ink) 2%, transparent);
+  transition: all var(--bf-fast) ease;
+}
+
+.bf-action-row:hover {
+  border-color: var(--bf-line-strong);
+  background-color: color-mix(in srgb, var(--bf-ink) 4%, transparent);
+}
+
+@media (max-width: 720px) {
+  .bf-action-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+  }
+}
+
+.bf-action-content {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
+}
+
+.bf-action-heading-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.bf-action-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--bf-ink);
+}
+
+.bf-pro-pill {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid color-mix(in srgb, var(--bf-warning) 30%, transparent);
+  background-color: color-mix(in srgb, var(--bf-warning) 10%, transparent);
+  color: var(--bf-warning);
+}
+
+.bf-action-why {
+  font-size: 13px;
+  color: var(--bf-ink-secondary);
+  line-height: 1.45;
+}
+
+.bf-action-cta-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.bf-action-btn {
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-family: var(--bf-font-sans);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--bf-line-strong);
+  background-color: var(--bf-paper-elevated);
+  color: var(--bf-ink);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all var(--bf-fast) ease;
+  white-space: nowrap;
+}
+
+.bf-action-btn:hover {
+  border-color: var(--bf-structure);
+  color: var(--bf-structure);
+}
+
+.bf-action-btn:focus-visible {
+  outline: 2px solid var(--bf-structure);
+  outline-offset: 2px;
+}
+
+.bf-action-btn.is-pro-upgrade {
+  color: var(--bf-warning);
+  border-color: color-mix(in srgb, var(--bf-warning) 30%, transparent);
+  background-color: color-mix(in srgb, var(--bf-warning) 6%, transparent);
+}
+
+.bf-action-btn.is-pro-upgrade:hover {
+  background-color: color-mix(in srgb, var(--bf-warning) 12%, transparent);
+}
+
+/* Inline auth test feedback */
+.bf-auth-result {
+  margin-top: 10px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background-color: color-mix(in srgb, var(--bf-ink) 3%, transparent);
+  border: 1px solid var(--bf-line);
+  font-size: 12px;
+  color: var(--bf-ink-secondary);
+  display: none;
+}
+
+.bf-auth-result.is-visible {
+  display: block;
+}
+
+/* ── 8. "What Happened" (Activity Feed Ledger) ────────────────────────── */
+.bf-ledger-group {
+  margin-bottom: 24px;
+}
+
+.bf-ledger-group:last-child {
+  margin-bottom: 0;
+}
+
+.bf-ledger-day {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--bf-ink-muted);
+  margin-bottom: 10px;
+}
+
+.bf-ledger-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  border: 1px solid var(--bf-line);
+  border-radius: 12px;
+  overflow: hidden;
+  background-color: var(--bf-line);
+}
+
+.bf-ledger-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 18px;
+  background-color: var(--bf-paper);
+  font-size: 13px;
+  gap: 16px;
+  transition: background-color var(--bf-fast) ease;
+}
+
+.bf-ledger-item:hover {
+  background-color: color-mix(in srgb, var(--bf-ink) 3%, var(--bf-paper));
+}
+
+@media (max-width: 600px) {
+  .bf-ledger-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+}
+
+.bf-ledger-sentence {
+  color: var(--bf-ink);
+  line-height: 1.4;
+}
+
+.bf-ledger-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 12px;
+  color: var(--bf-ink-muted);
+  flex-shrink: 0;
+}
+
+.bf-ledger-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11.5px;
+  font-weight: 600;
+}
+
+.bf-ledger-badge.type-reported {
+  color: var(--bf-good);
+}
+
+.bf-ledger-badge.type-opened {
+  color: var(--bf-structure);
+}
+
+.bf-ledger-badge.type-clicked {
+  color: var(--bf-warning);
+}
+
+.bf-ledger-badge.type-submitted {
+  color: var(--bf-danger);
+}
+
+/* ── 9. "Who Needs Help" (Admins Only) ───────────────────────────────── */
+.bf-support-details {
+  border: 1px solid var(--bf-line);
+  border-radius: 12px;
+  overflow: hidden;
+  background-color: color-mix(in srgb, var(--bf-ink) 2%, transparent);
+}
+
+.bf-support-summary {
+  padding: 16px 20px;
+  cursor: pointer;
+  user-select: none;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--bf-ink);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  outline: none;
+}
+
+.bf-support-summary:hover {
+  background-color: color-mix(in srgb, var(--bf-ink) 4%, transparent);
+}
+
+.bf-support-summary:focus-visible {
+  outline: 2px solid var(--bf-structure);
+  outline-offset: -2px;
+}
+
+.bf-support-body {
+  padding: 0 20px 20px;
+  border-top: 1px solid var(--bf-line);
+}
+
+.bf-policy-note {
+  padding: 12px 16px;
+  border-radius: 8px;
+  background-color: color-mix(in srgb, var(--bf-ink) 3%, transparent);
+  border: 1px solid var(--bf-line);
+  font-size: 12px;
+  color: var(--bf-ink-secondary);
+  line-height: 1.5;
+  margin: 16px 0;
+}
+
+.bf-policy-quote {
+  font-style: italic;
+  color: var(--bf-ink-muted);
+  margin-top: 4px;
+  display: block;
+}
+
+.bf-support-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+}
+
+.bf-support-table th,
+.bf-support-table td {
+  padding: 8px 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--bf-line);
+}
+
+.bf-support-table th {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--bf-ink-muted);
+  letter-spacing: 0.03em;
+}
+
+.bf-support-table td {
+  color: var(--bf-ink);
+}
+
+/* ── 10. Alerts ──────────────────────────────────────────────────────── */
+.bf-alerts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.bf-alert-card {
+  padding: 16px 20px;
+  border-radius: 12px;
+  border: 1px solid var(--bf-line);
+  background-color: color-mix(in srgb, var(--bf-ink) 2%, transparent);
+}
+
+.bf-alert-card.is-critical {
+  border-color: color-mix(in srgb, var(--bf-danger) 30%, transparent);
+  background-color: color-mix(in srgb, var(--bf-danger) 6%, transparent);
+}
+
+.bf-alert-card.is-high {
+  border-color: color-mix(in srgb, var(--bf-warning) 30%, transparent);
+  background-color: color-mix(in srgb, var(--bf-warning) 6%, transparent);
+}
+
+.bf-alert-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 6px;
+  flex-wrap: wrap;
+}
+
+.bf-alert-title {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--bf-ink);
+}
+
+.bf-alert-time {
+  font-size: 12px;
+  color: var(--bf-ink-muted);
+}
+
+.bf-alert-detail {
+  font-size: 13px;
+  color: var(--bf-ink-secondary);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.bf-no-alerts {
+  padding: 16px 20px;
+  border-radius: 12px;
+  border: 1px dashed var(--bf-line);
+  font-size: 13px;
+  color: var(--bf-ink-muted);
+  text-align: center;
+}
+
+/* ── 11. Decoy Mailbox Side Drawer (Slide-Over Panel) ────────────────── */
+.bf-drawer-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: color-mix(in srgb, black 65%, transparent);
+  backdrop-filter: blur(4px);
+  z-index: 9999;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--bf-med) var(--bf-ease);
+}
+
+.bf-drawer-overlay.is-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.bf-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(100%, 480px);
+  background-color: var(--bf-paper);
+  border-left: 1px solid var(--bf-line-strong);
+  box-shadow: -12px 0 36px color-mix(in srgb, black 40%, transparent);
+  z-index: 10000;
+  transform: translateX(100%);
+  transition: transform var(--bf-med) var(--bf-ease);
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+.bf-drawer-overlay.is-open .bf-drawer {
+  transform: translateX(0);
+}
+
+.bf-drawer-header {
+  padding: 24px 28px;
+  border-bottom: 1px solid var(--bf-line);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.bf-drawer-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--bf-ink);
+  margin: 0;
+}
+
+.bf-drawer-close {
+  background: transparent;
+  border: none;
+  color: var(--bf-ink-muted);
+  font-size: 20px;
+  cursor: pointer;
+  padding: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+}
+
+.bf-drawer-close:hover {
+  color: var(--bf-ink);
+  background-color: color-mix(in srgb, var(--bf-ink) 6%, transparent);
+}
+
+.bf-drawer-body {
+  padding: 24px 28px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.bf-drawer-tabs {
+  display: flex;
+  gap: 8px;
+  border-bottom: 1px solid var(--bf-line);
+  margin-bottom: 20px;
+}
+
+.bf-drawer-tab-btn {
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--bf-ink-secondary);
+  cursor: pointer;
+  transition: all var(--bf-fast) ease;
+}
+
+.bf-drawer-tab-btn.is-active {
+  color: var(--bf-structure);
+  border-bottom-color: var(--bf-structure);
+  font-weight: 600;
+}
+
+.bf-form-group {
+  margin-bottom: 16px;
+}
+
+.bf-form-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--bf-ink-secondary);
+  margin-bottom: 6px;
+}
+
+.bf-form-input {
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--bf-line-strong);
+  background-color: color-mix(in srgb, var(--bf-ink) 3%, transparent);
+  color: var(--bf-ink);
+  font-family: var(--bf-font-sans);
+  font-size: 13px;
+  box-sizing: border-box;
+}
+
+.bf-form-input:focus {
+  outline: none;
+  border-color: var(--bf-structure);
+}
+
+.bf-drawer-footer {
+  padding: 20px 28px;
+  border-top: 1px solid var(--bf-line);
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+/* ── 12. Print Stylesheet (Executive Clean PDF) ──────────────────────── */
+@media print {
+  @page {
+    margin: 14mm 16mm 18mm 16mm;
+    size: A4 portrait;
+  }
+
+  /* Hide all navigation, floating toasts, banners, mascots, and action chrome */
+  nav, .navbar, .nav-mobile-sheet, .footer, footer,
+  #live-toast, .toast, .banner, [id*="banner"], [class*="banner"],
+  [id*="toast"], [class*="toast"], .system-status-pill,
+  #pb-avatar, #pb-panel, #pb-widget, [id*="pb-avatar"], [class*="pb-avatar"],
+  #campaign-strip, .floating-campaign-strip, #campaign-strip-trigger, .campaign-strip-trigger,
+  [id*="lure"], [class*="lure"], .lure-bot,
+  .bf-header-actions, .bf-action-cta-wrap, .bf-drawer-overlay,
+  .bf-quiet-btn, .bf-range-pills, .bf-table-fallback summary,
+  .skip-to-content, #sandbox-warning-banner, .bf-notice-bar {
+    display: none !important;
+  }
+
+  body, html {
+    background: white !important;
+    color: black !important;
+    font-size: 10.5pt !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .bf-page {
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .bf-sheet {
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    background: transparent !important;
+  }
+
+  .bf-sheet::after {
+    display: none !important;
+  }
+
+  .bf-domain-title, .bf-section-title {
+    color: black !important;
+  }
+
+  .bf-meta-sub, .bf-section-sub {
+    color: rgb(75, 85, 99) !important;
+  }
+
+  .bf-headline {
+    opacity: 1 !important;
+    transform: none !important;
+    animation: none !important;
+    color: black !important;
+    font-size: 19pt !important;
+    line-height: 1.25 !important;
+  }
+
+  .bf-ai-note {
+    background: rgb(249, 250, 251) !important;
+    border-left: 3px solid rgb(156, 163, 175) !important;
+    color: rgb(55, 65, 81) !important;
+    page-break-inside: avoid;
+  }
+
+  .bf-figure-card {
+    border: 1px solid rgb(229, 231, 235) !important;
+    background: white !important;
+    page-break-inside: avoid;
+  }
+
+  .bf-figure-num {
+    color: black !important;
+  }
+
+  .bf-figure-label, .bf-figure-delta {
+    color: rgb(75, 85, 99) !important;
+  }
+
+  .bf-trend-card {
+    border: 1px solid rgb(229, 231, 235) !important;
+    background: white !important;
+    page-break-inside: avoid;
+  }
+
+  .bf-trend-title, .bf-trend-legend {
+    color: rgb(75, 85, 99) !important;
+  }
+
+  .bf-chart-x-axis {
+    display: block !important;
+    border-top: 1px solid rgb(229, 231, 235) !important;
+  }
+
+  .bf-x-tick-label {
+    color: rgb(75, 85, 99) !important;
+  }
+
+  .bf-x-tick-mark {
+    background-color: rgb(209, 213, 219) !important;
+  }
+
+  .bf-trend-inspect {
+    display: none !important;
+  }
+
+  .bf-table-fallback {
+    display: block !important;
+    page-break-inside: avoid;
+  }
+
+  .bf-table-fallback details {
+    open: true !important;
+  }
+
+  .bf-table-fallback table {
+    width: 100% !important;
+    color: black !important;
+  }
+
+  .bf-table-fallback th, .bf-table-fallback td {
+    color: black !important;
+    border-color: rgb(229, 231, 235) !important;
+  }
+
+  .bf-actions-grid, .bf-action-card {
+    border: 1px solid rgb(229, 231, 235) !important;
+    background: white !important;
+    page-break-inside: avoid;
+  }
+
+  .bf-action-title, .bf-action-why {
+    color: black !important;
+  }
+
+  .bf-ledger-group {
+    page-break-inside: avoid;
+  }
+
+  .bf-ledger-day {
+    color: rgb(75, 85, 99) !important;
+    border-bottom: 1px solid rgb(209, 213, 219) !important;
+  }
+
+  .bf-ledger-item {
+    border: 1px solid rgb(243, 244, 246) !important;
+    background: white !important;
+  }
+
+  .bf-ledger-sentence {
+    color: black !important;
+  }
+
+  .bf-ledger-meta {
+    color: rgb(75, 85, 99) !important;
+  }
+
+  .bf-alerts-list, .bf-alert-card {
+    border: 1px solid rgb(229, 231, 235) !important;
+    background: white !important;
+    page-break-inside: avoid;
+  }
+
+  .bf-alert-title, .bf-alert-detail {
+    color: black !important;
+  }
+
+  .bf-who-card {
+    border: 1px solid rgb(229, 231, 235) !important;
+    background: white !important;
+    page-break-inside: avoid;
+  }
+
+  .bf-who-summary {
+    color: black !important;
+  }
+
+  .bf-repeat-row {
+    color: black !important;
+    border-bottom: 1px solid rgb(229, 231, 235) !important;
+  }
+
+  /* Running print footer */
+  .bf-print-footer {
+    display: block !important;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 8pt;
+    color: rgb(107, 114, 128);
+    border-top: 1px solid rgb(209, 213, 219);
+    padding-top: 6px;
+    background: white;
+  }
+}
+
+.bf-print-footer {
+  display: none;
+}
+
+/* ── 13. Motion & Reduced Motion ─────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+
+  .bf-headline {
+    opacity: 1 !important;
+    transform: none !important;
+    animation: none !important;
+  }
+}

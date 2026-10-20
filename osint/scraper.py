@@ -36,22 +36,130 @@ def _same_domain(url, domain):
         return False
 
 
-def get_page_source(domain):
-    """Fetches page source using httpx, falls back to Jina AI if content is too thin."""
-    url = f"https://{domain}"
-    
-    html = None
-    direct_timeout = float(os.getenv("OSINT_DIRECT_TIMEOUT_SECONDS", "5"))
-    fallback_timeout = float(os.getenv("OSINT_FALLBACK_TIMEOUT_SECONDS", "7"))
+import socket
+import ssl
+import http.client
+import ipaddress
 
+_CGNAT_NET = ipaddress.ip_network("100.64.0.0/10")
+_IPV6_ULA_NET = ipaddress.ip_network("fc00::/7")
+
+def _is_safe_ip(ip_str):
+    if not ip_str or not isinstance(ip_str, str):
+        return False
     try:
-        with httpx.Client(verify=False, timeout=direct_timeout, follow_redirects=True) as client:
-            response = client.get(url, headers=HEADERS)
-            response.raise_for_status()
-            html = response.text
-    except Exception as e:
-        print(f"httpx direct fetch error: {e}")
-        
+        clean_ip = ip_str.split("%")[0].strip("[]").strip()
+        ip = ipaddress.ip_address(clean_ip)
+        if isinstance(ip, ipaddress.IPv6Address) and ip.ipv4_mapped:
+            ip = ip.ipv4_mapped
+        if not ip.is_global:
+            return False
+        if ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_multicast or ip.is_unspecified or ip.is_reserved:
+            return False
+        if ip.version == 4 and ip in _CGNAT_NET:
+            return False
+        if ip.version == 6 and ip in _IPV6_ULA_NET:
+            return False
+        return True
+    except Exception:
+        return False
+
+
+def safe_fetch_url(url, timeout=4.5, max_redirects=3, headers=None):
+    """
+    Safely fetches HTML over HTTP/HTTPS, preventing SSRF and DNS rebinding:
+    - Resolves target host and strictly validates all returned IPs are public.
+    - Connects directly to the validated IP with proper SNI.
+    - Handles redirects manually, validating host and resolved IPs at every hop.
+    - Blocks loopback, private, link-local, cloud metadata, and CGNAT IPs.
+    """
+    curr_url = url
+    req_headers = dict(headers or HEADERS)
+
+    for hop in range(max_redirects + 1):
+        try:
+            p = urlparse(curr_url)
+            if p.scheme not in ("http", "https"):
+                return None
+            host = (p.hostname or "").strip("[]").lower()
+            if not host:
+                return None
+            port = p.port or (443 if p.scheme == "https" else 80)
+
+            try:
+                addr_infos = socket.getaddrinfo(host, port, socket.AF_UNSPEC, socket.SOCK_STREAM)
+            except Exception:
+                return None
+            if not addr_infos:
+                return None
+
+            # All resolved IPs must be safe
+            for info in addr_infos:
+                if not _is_safe_ip(info[4][0]):
+                    return None
+
+            sock = None
+            for info in addr_infos:
+                target_ip = info[4][0]
+                try:
+                    sock = socket.create_connection((target_ip, port), timeout=timeout)
+                    break
+                except Exception:
+                    continue
+            if not sock:
+                return None
+
+            if p.scheme == "https":
+                ctx = ssl.create_default_context()
+                ctx.check_hostname = False
+                ctx.verify_mode = ssl.CERT_NONE
+                sock = ctx.wrap_socket(sock, server_hostname=host)
+                conn = http.client.HTTPSConnection(host, port=port)
+            else:
+                conn = http.client.HTTPConnection(host, port=port)
+            conn.sock = sock
+
+            req_path = p.path or "/"
+            if p.query:
+                req_path += "?" + p.query
+
+            hdrs = dict(req_headers)
+            hdrs["Host"] = host
+            hdrs["Connection"] = "close"
+
+            conn.request("GET", req_path, headers=hdrs)
+            resp = conn.getresponse()
+            status = resp.status
+
+            if status in (301, 302, 303, 307, 308):
+                loc = resp.getheader("Location")
+                conn.close()
+                if not loc:
+                    return None
+                curr_url = urljoin(curr_url, loc)
+                continue
+
+            if 200 <= status < 300:
+                raw_bytes = resp.read(262144)
+                conn.close()
+                return raw_bytes.decode("utf-8", errors="replace")
+
+            conn.close()
+            return None
+        except Exception:
+            return None
+
+    return None
+
+
+def get_page_source(domain):
+    """Fetches page source safely preventing SSRF. Falls back to Jina AI if content is thin."""
+    url = f"https://{domain}"
+    direct_timeout = float(os.getenv("OSINT_DIRECT_TIMEOUT_SECONDS", "4.5"))
+    fallback_timeout = float(os.getenv("OSINT_FALLBACK_TIMEOUT_SECONDS", "5.5"))
+
+    html = safe_fetch_url(url, timeout=direct_timeout)
+
     needs_fallback = False
     if not html:
         needs_fallback = True
@@ -59,31 +167,22 @@ def get_page_source(domain):
         soup = BeautifulSoup(html, "html.parser")
         meta_desc = soup.find("meta", {"name": "description"})
         paragraphs = soup.find_all("p")
-        
         has_meta = meta_desc and meta_desc.get("content")
         has_paragraphs = len(paragraphs) >= 3
-        
         if not has_meta and not has_paragraphs:
             needs_fallback = True
-            
+
     if needs_fallback:
-        print(f"Content thin or request failed for {domain}, falling back to Jina AI...")
         jina_url = f"https://r.jina.ai/{url}"
         jina_headers = HEADERS.copy()
         jina_headers["X-Return-Format"] = "html"
-        try:
-            with httpx.Client(verify=False, timeout=fallback_timeout, follow_redirects=True) as client:
-                response = client.get(jina_url, headers=jina_headers)
-                response.raise_for_status()
-                html = response.text
-        except Exception as e:
-            print(f"Jina AI fallback error: {e}")
+        html = safe_fetch_url(jina_url, timeout=fallback_timeout, headers=jina_headers)
 
     return html
 
 
 def scrape_company(domain):
-    """Scrapes public company info from their website. Returns a profile dict."""
+    """Scrapes public company info from their website. Returns a profile dict with explicit status."""
     profile = {
         "domain": domain,
         "company_name": "",
@@ -92,7 +191,9 @@ def scrape_company(domain):
         "writing_tone": "",
         "emails": [],
         "links": [],
-        "socials":{}
+        "socials": {},
+        "blocked": False,
+        "fetch_success": False
     }
 
     html = get_page_source(domain)
@@ -120,6 +221,9 @@ def scrape_company(domain):
     if is_blocked_keyword and is_thin:
         profile["blocked"] = True
         return profile
+
+    profile["fetch_success"] = True
+
 
     # --- Company name ---
     raw_title = soup.title.text.strip() if soup.title and soup.title.text else ""
@@ -239,14 +343,10 @@ def scrape_company(domain):
     
     def fetch_subpage(page_url):
         try:
-            print(f"OSINT Scraper crawling subpage: {page_url}")
-            with httpx.Client(verify=False, timeout=4.0, follow_redirects=True) as client:
-                res = client.get(page_url, headers=HEADERS)
-                if res.status_code == 200:
-                    return res.text
-        except Exception as crawl_err:
-            print(f"Error crawling subpage {page_url}: {crawl_err}")
-        return None
+            return safe_fetch_url(page_url, timeout=4.0, max_redirects=2)
+        except Exception:
+            return None
+
 
     if subpages_to_crawl:
         with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:

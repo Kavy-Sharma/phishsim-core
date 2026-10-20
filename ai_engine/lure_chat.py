@@ -21,7 +21,7 @@ SYSTEM_PROMPT = (
     "- Keep replies grounded in what's true about the actual product features of PhishSim:\n"
     "  - PhishRecon: Real-time domain exposure audit, finding resolving lookalikes, subdomains, TLS posture, and public attack surface.\n"
     "  - Threat Sandbox: Run OSINT queries, check credential leaks, simulate campaigns, inspect headers/URLs.\n"
-    "  - AI Risk Advisor: Estimate organizational phishing exposure.\n"
+    "  - Risk Briefing: Estimate organizational phishing exposure and track campaign telemetry.\n"
     "  - Spot the Phish: Compare fake vs. legit emails to train defenses.\n"
     "  - Header Analyzer & URL Decoder: Investigate email headers/URLs.\n"
     "  - Campaign Simulator: Launch and track phishing tests.\n"

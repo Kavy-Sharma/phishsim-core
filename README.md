@@ -30,6 +30,23 @@ Experience a high-fidelity, cyberpunk-inspired control center.
 - **Real-Time Telemetry:** Tracks `Open Rates`, `Click Rates`, and `Report Rates` instantly on the dashboard.
 - **AI Threat Analyst Reports:** Dynamically generates an executive PDF report containing the organization's **Human Security Score™**, vulnerability radars, and AI-driven remediation advice.
 
+## 🌐 PhishRecon — Attack Surface Reconnaissance
+PhishRecon provides an instant, honest, and safe external attack surface audit for any domain before threat actors exploit it.
+
+### Reconnaissance Checks & Data Sources
+| Check | Max Points | Data Sources & Probing Methodology |
+| :--- | :---: | :--- |
+| **Look-alike Domains** | 30 | Permutations, homoglyphs (`rn` for `m`, `0` for `o`), and common security suffixes. Validates IPs to block private/internal addresses (zero SSRF), then performs minimal direct public IP probes without following redirects to classify brand redirects vs. third-party infrastructure. |
+| **Domain Age & Registration** | 20 | Authoritative RDAP with fallback to direct WHOIS servers on port 43 with validated IP targets. |
+| **TLS Certificate Hygiene** | 20 | Direct TLS socket connection to validated target IP with SNI. Validates expiration, chain validity, and protocol. |
+| **Discovered Subdomains** | 15 | Certificate Transparency logs (`crt.sh`, Certspotter, HackerTarget) with strict DNS resolution validation. |
+| **Public Website Surface** | 15 | SSRF-safe crawl of the root landing page to discover publicly exposed corporate emails and metadata. |
+
+### Scoring & Posture
+- **True Maxima:** Total 100 points distributed across the 5 checks (`lookalikes: 30`, `domain_age: 20`, `ssl: 20`, `subdomains: 15`, `surface: 15`). Unassessed checks contribute 0 points.
+- **"Not Enough Data" Threshold:** If fewer than 50 points of checks can be assessed (due to network failure, rate limiting, or DNS failure), the audit reports posture `"Not enough data"`, displays no numeric score (`—`), plots no marker on the track, and does not record the result in history.
+- **Operational Scope & Limits:** PhishRecon uses passive OSINT and safe external probes only. It is not an invasive penetration test, vulnerability scan, or credential tester.
+
 ## 🔐 Advanced Enterprise Security (Profile Section)
 The operator profile is equipped with modern SaaS features to secure the platform itself:
 - **Developer API Keys:** Generate `ps_live_...` API tokens. These keys allow security teams to trigger simulations programmatically via REST API or ingest campaign telemetry straight into their SIEM tools.
