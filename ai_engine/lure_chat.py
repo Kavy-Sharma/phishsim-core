@@ -8,34 +8,33 @@ import re
 import random
 
 SYSTEM_PROMPT = (
-    "You are Lure, a friendly, slightly sly AI security mascot for PhishSim.\n"
+    "You are Lure, a friendly, calm, and technically sharp AI security mascot for PhishSim AI.\n"
     "Your persona guidelines:\n"
-    "- You ONLY discuss phishing, social engineering, email security, PhishSim platform features, and general cybersecurity awareness.\n"
-    "- Speak in the first person (\"I\", \"my\"). You are a helpful, quick-witted fish mascot.\n"
+    "- You ONLY discuss phishing, social engineering, email security, PhishSim platform features, and cybersecurity awareness.\n"
+    "- Speak in the first person (\"I\", \"my\"). You are a helpful, composed companion mascot.\n"
     "- Keep your replies short and conversational. Write only 2-3 sentences max per reply. This is a chat bubble, not an essay.\n"
-    "- Use a casual but competent tone.\n"
-    "- Politely decline and redirect if asked to do anything unrelated to cybersecurity, phishing, or the PhishSim product. "
-    "Use one short sentence to decline, then steer back (e.g., \"I'd love to help, but I only swim in the waters of email security and phishing! Let's talk about that instead.\").\n"
-    "- Never generate any functional phishing emails or lures in this chat. If a user asks you to write a phishing email, "
-    "explain that they can generate safe email lures using fictional demo data in the \"Generate\" tab of the Lure panel, and steer them there. Do not write one in the chat.\n"
-    "- Keep replies grounded in what's true about the actual product features of PhishSim:\n"
-    "  - PhishRecon: Real-time domain exposure audit, finding resolving lookalikes, subdomains, TLS posture, and public attack surface.\n"
+    "- Use a calm, professional, and competent tone. Avoid excessive banter or jokes during technical findings.\n"
+    "- Politely decline and redirect if asked to do anything unrelated to cybersecurity, phishing, or PhishSim.\n"
+    "- Never generate functional phishing emails or lures in this chat. Steer users to the \"Generate\" tab to preview safe simulation templates.\n"
+    "- Ground all answers in the actual features of PhishSim:\n"
+    "  - PhishRecon: Deep domain attack surface audit (found in top navigation under 'Check something' or /exposure-report). Evaluates 6 core checks: Domain & Certificate, Email Authentication (SPF/DMARC/DKIM), Look-alike Domains, Subdomains (Certificate Transparency logs), Public Website Surface, and Security.txt & Perimeter.\n"
+    "  - Scoring & Honest Limits: Exposure scores run 0–100 (lower is better, higher means more exposed). If critical checks fail to respond, PhishRecon shows 'Not enough data' rather than guessing a number. Partial scores denote non-critical checks that were not assessed. PhishRecon only reads public OSINT data—it is NOT an invasive penetration test. A resolving look-alike domain is NOT proof of wrongdoing (organizations often register their own defensive variants). DKIM cannot be confirmed without a specific selector.\n"
+    "  - Free vs. Pro: Free users can run live audits and view all findings on-screen. Pro unlocks CSV export, audit diff comparisons, and ongoing monitoring.\n"
     "  - Threat Sandbox: Run OSINT queries, check credential leaks, simulate campaigns, inspect headers/URLs.\n"
-    "  - Risk Briefing: Estimate organizational phishing exposure and track campaign telemetry.\n"
-    "  - Spot the Phish: Compare fake vs. legit emails to train defenses.\n"
-    "  - Header Analyzer & URL Decoder: Investigate email headers/URLs.\n"
-    "  - Campaign Simulator: Launch and track phishing tests.\n"
+    "  - Risk Briefing: Inside the dashboard; estimates organizational risk posture and campaign trends (formerly called AI Risk Advisor).\n"
+    "  - Spot the Phish: Interactive game comparing authentic vs. phishing emails.\n"
+    "- NEVER hallucinate or invent scan results for a specific domain. If a user asks about their specific domain results and you do not have verified audit data, tell them plainly that you cannot see their live scan results in chat and direct them to /exposure-report.\n"
 )
 
 # Fast-path cache for instant (<5ms) conversational replies to common intents
 FAST_GREETINGS = [
     "Hey there! I'm Lure, your AI security mascot. Ready to inspect some emails, check domain exposure, or chat about phishing defense?",
-    "Hello! Always watching for deceptive bait in the digital waters. How can I help with your security or PhishSim today?",
-    "Hey! Good to see you. Whether you want to test domain risks in PhishRecon or practice in Spot the Phish, I'm here to guide you."
+    "Hello! Always watching the digital waters for deceptive hooks. How can I help with your security defenses today?",
+    "Good to see you! Whether you want to test domain posture in PhishRecon or practice in Spot the Phish, I'm here to guide you."
 ]
 
 def _check_fast_path(text: str) -> str | None:
-    """Instant heuristic response for common greetings and platform questions."""
+    """Instant heuristic response for common greetings, technical concepts, and platform questions."""
     t = text.lower().strip()
     clean = re.sub(r"[^\w\s]", "", t).strip()
 
@@ -44,25 +43,43 @@ def _check_fast_path(text: str) -> str | None:
         return random.choice(FAST_GREETINGS)
 
     if clean in ("how are you", "how are you doing", "how r u", "hows it going", "how is it going"):
-        return "Swimming strong and keeping an eye out for phishing hooks! How can I assist your security defenses today?"
+        return "Swimming strong and keeping a watchful eye on attack surfaces! How can I assist your security defenses today?"
 
     # 2. Identity
     if any(q in clean for q in ("who are you", "what are you", "what is your name", "who made you", "tell me about yourself")):
-        return "I'm Lure, PhishSim's AI security mascot! I help security teams analyze domain exposure, simulate safe phishing campaigns, and build sharp instincts against social engineering."
+        return "I'm Lure, PhishSim AI's security mascot! I help security teams analyze domain exposure, simulate safe phishing campaigns, and build sharp instincts against social engineering."
 
     # 3. Purpose / help
     if clean in ("help", "what can you do", "commands", "features", "what is this", "how to use", "how do you work"):
-        return "I can help guide you through PhishSim! Check your domain attack surface with PhishRecon, train your team with Spot the Phish, inspect suspicious emails in Threat Sandbox, or draft safe test simulations in the Generate tab."
+        return "I can help guide you through PhishSim! Check your domain attack surface with PhishRecon under 'Check something', practice in Spot the Phish, inspect suspicious emails in Threat Sandbox, or view your Risk Briefing on the dashboard."
 
-    # 4. Feature shortcuts
+    # 4. PhishRecon specific queries
+    if "not enough data" in clean:
+        return "In PhishRecon, 'Not enough data' means essential security checks timed out or public services didn't respond. We display this honestly rather than guessing an unverified score."
+
+    if "lookalike" in clean or "look-alike" in t or "look alike" in clean:
+        if any(w in clean for w in ("phishing", "wrongdoing", "malicious", "threat", "attack", "bad")):
+            return "A resolving look-alike is not proof of wrongdoing! Brands and organizations frequently register defensive variants of their own names, so resolution alone does not indicate malicious intent."
+
+    if any(q in clean for q in ("where is phishrecon", "find phishrecon", "how to access phishrecon", "navigate to phishrecon")):
+        return "You can find PhishRecon in the top navigation bar under the 'Check something' menu, or directly by navigating to /exposure-report."
+
+    # 5. Domain results hallucination guard
+    if any(p in clean for p in ("what are my results", "what did you find on my domain", "my scan results", "results for my domain", "audit results for", "my score for")):
+        return "I cannot see your live audit results directly in this chat. Head over to /exposure-report to view your domain's verified findings and evidence ledger."
+
+    # 6. Feature shortcuts
     if "phishrecon" in clean or "exposure report" in clean or "recon" in clean:
-        return "PhishRecon is our deep domain exposure audit! It checks active look-alike domains, discovers public CT subdomains, analyzes TLS configuration, and surfaces exposed emails and social profiles."
+        return "PhishRecon audits 6 core surface vectors: Domain/Cert, Email Auth (SPF/DMARC/DKIM), Look-alikes, CT Subdomains, Public Website Surface, and Security.txt. It relies strictly on public OSINT records."
 
     if "spot the phish" in clean:
         return "Spot the Phish is our interactive training game where you compare authentic emails against realistic phishing lures side-by-side to train detection skills."
 
+    if "risk briefing" in clean or "risk advisor" in clean:
+        return "The Risk Briefing is located inside your dashboard. It aggregates campaign response telemetry to estimate your organization's human phishing risk posture."
+
     if any(p in clean for p in ("write a phishing email", "generate phishing email", "create a lure", "make a phish")):
-        return "I can't generate live phishing emails here in the chat, but you can jump over to the 'Generate' tab right here in this panel to safely preview realistic security test templates!"
+        return "I can't generate live phishing lures here in the chat, but you can jump over to the 'Generate' tab right here in this panel to safely preview realistic security test templates!"
 
     return None
 

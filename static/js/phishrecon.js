@@ -2013,6 +2013,7 @@ function renderSurfaceMap(state) {
             nodeWrap.setAttribute('tabindex', '0');
             nodeWrap.setAttribute('role', 'img');
             nodeWrap.setAttribute('aria-label', `Resolving look-alike: ${cand.domain}, IP: ${cand.ip || 'unknown'}`);
+            nodeWrap.setAttribute('data-tour', 'map-lookalike');
 
             const hitTarget = document.createElementNS(SVG_NS, 'circle');
             hitTarget.setAttribute('cx', String(x));
@@ -2221,6 +2222,7 @@ function renderSurfaceMap(state) {
           if (isSpecial) {
             node.setAttribute('stroke', 'var(--pr-mod)');
             node.setAttribute('stroke-width', '1.5');
+            nodeWrap.setAttribute('data-tour', 'map-subdomain');
           }
 
           if (!isInstant) {
@@ -3884,7 +3886,7 @@ function renderChecksLedger(state) {
 
     const row = document.createElement('div');
     row.className = 'pr-check-row';
-    row.setAttribute('role', 'row');
+    row.setAttribute('role', 'listitem');
     row.setAttribute('tabindex', '0');
     row.setAttribute('data-check-id', chk.id);
     row.onclick = () => handleCheckRowClick(chk.id);
@@ -5488,6 +5490,36 @@ document.addEventListener('DOMContentLoaded', () => {
   window.resetState = resetState;
   window.abortInFlight = abortInFlight;
   window.state = state;
+  window.phishreconState = state;
   window.run = run;
+  window.handleReplaySampleClick = handleReplaySampleClick;
+
+  // Lure Tour Finding Pulse: sequential 600ms pulse per finding using amber token
+  window.lurePulseStartHereFindings = function() {
+    const rows = document.querySelectorAll('#pr-findings-list .pr-finding-row');
+    if (!rows || rows.length === 0) return;
+    rows.forEach((row, idx) => {
+      setTimeout(() => {
+        let bulb = row.querySelector('.pr-lure-pulse-bulb');
+        if (!bulb) {
+          bulb = document.createElement('span');
+          bulb.className = 'pr-lure-pulse-bulb';
+          bulb.setAttribute('aria-hidden', 'true');
+          const marker = row.querySelector('.pr-finding-marker');
+          if (marker) {
+            marker.appendChild(bulb);
+          } else {
+            row.prepend(bulb);
+          }
+        }
+        bulb.classList.remove('is-pulsing');
+        void bulb.offsetWidth;
+        bulb.classList.add('is-pulsing');
+        setTimeout(() => {
+          bulb.classList.remove('is-pulsing');
+        }, 650);
+      }, idx * 700);
+    });
+  };
 
 });

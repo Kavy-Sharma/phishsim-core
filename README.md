@@ -31,21 +31,49 @@ Experience a high-fidelity, cyberpunk-inspired control center.
 - **AI Threat Analyst Reports:** Dynamically generates an executive PDF report containing the organization's **Human Security Score™**, vulnerability radars, and AI-driven remediation advice.
 
 ## 🌐 PhishRecon — Attack Surface Reconnaissance
-PhishRecon provides an instant, honest, and safe external attack surface audit for any domain before threat actors exploit it.
+PhishRecon provides an honest, passive external attack surface audit for any domain before threat actors exploit it.
 
 ### Reconnaissance Checks & Data Sources
 | Check | Max Points | Data Sources & Probing Methodology |
 | :--- | :---: | :--- |
-| **Look-alike Domains** | 30 | Permutations, homoglyphs (`rn` for `m`, `0` for `o`), and common security suffixes. Validates IPs to block private/internal addresses (zero SSRF), then performs minimal direct public IP probes without following redirects to classify brand redirects vs. third-party infrastructure. |
-| **Domain Age & Registration** | 20 | Authoritative RDAP with fallback to direct WHOIS servers on port 43 with validated IP targets. |
-| **TLS Certificate Hygiene** | 20 | Direct TLS socket connection to validated target IP with SNI. Validates expiration, chain validity, and protocol. |
-| **Discovered Subdomains** | 15 | Certificate Transparency logs (`crt.sh`, Certspotter, HackerTarget) with strict DNS resolution validation. |
-| **Public Website Surface** | 15 | SSRF-safe crawl of the root landing page to discover publicly exposed corporate emails and metadata. |
+| **Look-alike Domains** | 25 | Permutations, homoglyphs (`rn` for `m`, `0` for `o`), and common security suffixes. Validates IPs to block private/internal addresses (zero SSRF), then performs minimal direct public IP probes without following redirects to classify brand redirects vs. third-party infrastructure. |
+| **Email Authentication** | 25 | SPF and DMARC enforcement records retrieved via DNS queries. Evaluates SPF lookup counts (RFC 7208 limit of 10) and DMARC enforcement policies (`reject`, `quarantine`, `none`). |
+| **Domain Age & Registration** | 15 | Authoritative RDAP with fallback to direct WHOIS servers on port 43 with validated IP targets. |
+| **TLS Certificate Hygiene** | 15 | Direct TLS socket connection to validated target IP with SNI. Validates expiration, chain validity, and protocol. |
+| **Discovered Subdomains** | 10 | Certificate Transparency logs (`crt.sh`, Certspotter, HackerTarget) with strict DNS resolution validation. |
+| **Public Website Surface** | 10 | SSRF-safe crawl of the root landing page to discover publicly exposed corporate emails and metadata. |
 
 ### Scoring & Posture
-- **True Maxima:** Total 100 points distributed across the 5 checks (`lookalikes: 30`, `domain_age: 20`, `ssl: 20`, `subdomains: 15`, `surface: 15`). Unassessed checks contribute 0 points.
+- **True Maxima:** Total 100 points distributed across the 6 checks (`lookalikes: 25`, `email_auth: 25`, `domain_age: 15`, `ssl: 15`, `subdomains: 10`, `surface: 10`). Unassessed checks contribute 0 points.
 - **"Not Enough Data" Threshold:** If fewer than 50 points of checks can be assessed (due to network failure, rate limiting, or DNS failure), the audit reports posture `"Not enough data"`, displays no numeric score (`—`), plots no marker on the track, and does not record the result in history.
 - **Operational Scope & Limits:** PhishRecon uses passive OSINT and safe external probes only. It is not an invasive penetration test, vulnerability scan, or credential tester.
+
+## 📊 Executive Risk Briefing (`/briefing`)
+The Executive Risk Briefing translates technical simulation telemetry into an honest, narrative-driven assessment for organizational leadership:
+- **Report Rate First:** Displays proactive reporting rate as the primary metric, spotlighting employees who actively defend the organization before evaluating click exposure.
+- **Campaign Trajectory:** Hand-crafted SVG polyline trend chart showing multi-campaign progression over time, with keyboard-accessible data inspection points and an accessible HTML table fallback.
+- **Immediate Defensive Actions:** Actionable remediation recommendations including inline domain SPF/DMARC verification, early-warning decoy mailbox deployment, and targeted micro-training modules for clicked targets.
+- **Supportive Coaching Ledger:** Admin-accessible roster of repeat simulation clickers, framed with constructive coaching language and backed by explicit privacy and data retention policies.
+- **Legacy Compatibility:** Seamless HTTP 301 permanent redirect from `/ai-risk-advisor` to `/briefing`.
+
+## 🧪 Quality Assurance & Test Verification
+The platform is verified across 9 rigorous QA tracks:
+```bash
+# 1. Full Pytest Suite (37 tests across unit, security, and Playwright browser suites)
+pytest tests/
+
+# 2. Automated Accessibility Audit (axe-core 4.9.1 engine via Playwright)
+python scratch/test_accessibility.py
+
+# 3. Responsive Viewport & Reduced-Motion Audit (360px to 1600px)
+python scratch/test_responsive_motion.py
+
+# 4. Live Security Attack & RBAC Verification (SSRF, Pro-Gating, CSRF, Fernet Cipher)
+python scratch/test_live_security_attacks.py
+
+# 5. Route Sweep & Link Crawler (0 500s, 0 broken links across 28 routes)
+python scratch/test_route_sweep.py
+```
 
 ## 🔐 Advanced Enterprise Security (Profile Section)
 The operator profile is equipped with modern SaaS features to secure the platform itself:

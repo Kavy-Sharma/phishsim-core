@@ -621,6 +621,7 @@
         0 0 80px color-mix(in srgb, var(--primary) 12%, transparent);
       backdrop-filter: blur(28px);
       opacity: 0;
+      visibility: hidden;
       transform: translateY(16px) scale(0.97);
       pointer-events: none;
       will-change: transform, opacity, width, height, left, top;
@@ -629,11 +630,13 @@
       line-height: 1.6;
       transition:
         opacity 0.3s ease,
+        visibility 0.3s ease,
         transform 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
     }
     #pb-panel.pb-size-transitioning {
       transition:
         opacity 0.3s ease,
+        visibility 0.3s ease,
         transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
         width 0.35s cubic-bezier(0.16, 1, 0.3, 1),
         height 0.35s cubic-bezier(0.16, 1, 0.3, 1),
@@ -647,6 +650,7 @@
     }
     #pb-panel.pb-open {
       opacity: 1;
+      visibility: visible;
       transform: translateY(0) scale(1);
       pointer-events: auto;
     }
@@ -3974,6 +3978,13 @@
 </style>
 
 <div id="pb-host">
+  <!-- Proactive Callout Strip (Small, Non-modal) -->
+  <div id="pb-callout" role="status" aria-live="polite" aria-hidden="true">
+    <button id="pb-callout-dismiss" type="button" aria-label="Dismiss callout">✕</button>
+    <div id="pb-callout-label">Lure AI</div>
+    <div id="pb-callout-text"></div>
+  </div>
+
   <!-- Unified Lure Speech Popover (First-visit, Insights, Teasers) -->
   <div id="pb-speech-popover" class="pb-speech-popover" role="dialog" aria-live="polite" aria-hidden="true" style="display: none;">
     <div class="pb-popover-header">
@@ -4473,6 +4484,7 @@
             visitorProfile.completedTours = {};
           }
         }
+        window.visitorProfile = visitorProfile;
       } catch (e) {
         console.error("Failed to parse visitor profile:", e);
       }
@@ -4480,6 +4492,7 @@
 
     function saveVisitorProfile() {
       try {
+        window.visitorProfile = visitorProfile;
         localStorage.setItem(PROFILE_KEY, JSON.stringify(visitorProfile));
       } catch (e) {
         console.error("Failed to save visitor profile:", e);
@@ -4753,14 +4766,14 @@
     }
 
     function waitForElement(id, timeoutMs, callback) {
-      const el = document.getElementById(id);
+      const el = document.querySelector(`[data-tour="${id}"]`) || document.getElementById(id);
       if (el) {
         callback(el);
         return;
       }
 
       const observer = new MutationObserver((mutations, obs) => {
-        const target = document.getElementById(id);
+        const target = document.querySelector(`[data-tour="${id}"]`) || document.getElementById(id);
         if (target) {
           obs.disconnect();
           clearTimeout(timeout);
@@ -6538,42 +6551,129 @@
           path: "/password-breach"
         }
       ],
+      phishrecon: [
+        {
+          targetId: "domain-bar",
+          title: "Domain audit bar",
+          text: "Enter any company domain to inspect its public security posture. PhishRecon only reads public records and never performs invasive penetration tests.",
+          path: "/exposure-report"
+        },
+        {
+          targetId: "see-sample",
+          title: "Auditing a sample domain",
+          assistRequired: true,
+          text: "We use acme.example, a fictional company, so you can explore without spending rate limits. Click 'Let Lure do it' or run the sample to view the audit.",
+          path: "/exposure-report",
+          action: (cb) => {
+            if (typeof window.handleReplaySampleClick === 'function') {
+              window.handleReplaySampleClick();
+            } else if (typeof window.run === 'function') {
+              window.run('acme.example', { sample: true, variant: 'default' });
+            } else {
+              const sampleBtn = document.getElementById('pr-see-sample-btn');
+              if (sampleBtn) sampleBtn.click();
+            }
+            if (cb) cb();
+          }
+        },
+        {
+          targetId: "verdict",
+          title: "The verdict headline",
+          text: "This single sentence summarizes your overall exposure in plain language. The provenance line clarifies whether it was rule-based or synthesized by our local AI model.",
+          path: "/exposure-report"
+        },
+        {
+          targetId: "exposure-score",
+          title: "Exposure score instrument",
+          text: "Scores run from 0 to 100, where higher indicates greater exposure. If required checks fail to respond, we display 'Not enough data' rather than guessing a misleading number.",
+          path: "/exposure-report"
+        },
+        {
+          targetId: "surface-map",
+          title: "Observed attack surface",
+          text: "Concentric rings map assets outward from core infrastructure. Red diamonds highlight resolving look-alike domains whose ownership is unverified, while orange markers indicate discovered non-production subdomains.",
+          path: "/exposure-report",
+          action: (cb) => {
+            const lookalikeEl = document.querySelector('[data-tour="map-lookalike"]');
+            const subdomEl = document.querySelector('[data-tour="map-subdomain"]');
+            if (lookalikeEl) lookalikeEl.classList.add('pr-tour-highlight-lookalike');
+            if (subdomEl) subdomEl.classList.add('pr-tour-highlight-subdomain');
+            if (cb) cb();
+          }
+        },
+        {
+          targetId: "start-here",
+          title: "Prioritized next steps",
+          text: "Start here ranks the most impactful remediations based on observed findings. Each recommendation includes plain explanations and the exact DNS or configuration change required.",
+          path: "/exposure-report",
+          action: (cb) => {
+            if (typeof window.lurePulseStartHereFindings === 'function') {
+              window.lurePulseStartHereFindings();
+            }
+            if (cb) cb();
+          }
+        },
+        {
+          targetId: "checks-ledger",
+          title: "Security checks ledger",
+          text: "The ledger details individual letter grades across six core attack vectors. A status of 'Not assessed' indicates a third-party service timed out, preserving scoring integrity.",
+          path: "/exposure-report"
+        },
+        {
+          targetId: "evidence-accordion",
+          title: "Raw evidence details",
+          text: "Each accordion reveals the unmodified public records and server responses behind each check. Expanding a section displays the exact raw records as plain text.",
+          path: "/exposure-report",
+          action: (cb) => {
+            const acc = document.getElementById('pr-evidence-email-auth');
+            if (acc) {
+              acc.open = true;
+              acc.setAttribute('open', '');
+            }
+            if (cb) cb();
+          }
+        },
+        {
+          targetId: "share-print",
+          title: "Exporting and sharing",
+          text: "Copy a permanent signed link to share this audit with colleagues, or generate a clean executive PDF report ready for stakeholders.",
+          path: "/exposure-report"
+        },
+        {
+          targetId: "domain-bar",
+          title: "Audit your organization",
+          text: "You are ready to audit your own domain. Enter it above whenever you wish to inspect your public attack surface.",
+          path: "/exposure-report"
+        }
+      ],
       tool_exposure_report: [
         {
-          targetId: "pr-command-bar",
+          targetId: "domain-bar",
           title: "PhishRecon Exposure Audit",
           text: "Welcome to PhishRecon! This tool conducts a live forensic audit of any company's public domain exposure and attack surface.",
           path: "/exposure-report"
         },
         {
-          targetId: "pr-domain-input",
-          title: "Target Domain Input",
+          targetId: "see-sample",
+          title: "Sample Domain Analysis",
           assistRequired: true,
-          text: "Type any corporate domain here to audit its surface, discovering resolving lookalikes, public CT subdomains, and TLS posture.",
+          text: "We explore acme.example to inspect resolving lookalikes, public CT subdomains, and TLS posture without spending rate limits.",
           path: "/exposure-report",
           action: (cb) => {
-            const input = document.getElementById('pr-domain-input');
-            if (input) {
-              typeIntoInput(input, "stripe.com", () => {
-                setTimeout(() => {
-                  const btn = document.getElementById('pr-audit-btn');
-                  if (btn) btn.click();
-                  if (cb) cb();
-                }, 300);
-              });
-            } else {
-              if (cb) cb();
+            if (typeof window.handleReplaySampleClick === 'function') {
+              window.handleReplaySampleClick();
             }
+            if (cb) cb();
           }
         },
         {
-          targetId: "pr-surface-map-card",
-          title: "Telemetry & Live Synthesis",
-          text: "Watch the audit stream in real time. We concurrently verify certificate transparency logs, probe resolving look-alike mutations, and map public exposure nodes.",
+          targetId: "surface-map",
+          title: "Observed Attack Surface",
+          text: "Watch the audit stream in real time. We map concentric rings representing infrastructure proximity, active lookalikes, and exposed endpoints.",
           path: "/exposure-report"
         },
         {
-          targetId: "pr-exposure-section",
+          targetId: "exposure-score",
           title: "Exposure Score & Findings",
           text: "Here is the composite exposure score, risk posture rating, and prioritized findings checklist to remediate brand spoofing risks.",
           path: "/exposure-report"
@@ -6581,9 +6681,11 @@
       ]
     };
     let wtActive = false;
+    window.wtActive = false;
     let wtCurrentStep = 0;
     let wtSteps = [];
     let wtCurrentPage = 'full_tour';
+    window.wtCurrentPage = 'full_tour';
     let isFirstStep = true;
     let gateListenersInitialized = false;
     let gateIntervalId = null;
@@ -6825,14 +6927,12 @@
           return !!(verdict && verdict.style.display !== 'none');
         }
       }
-      if (wtCurrentPage === 'tool_exposure_report') {
+      if (wtCurrentPage === 'phishrecon' || wtCurrentPage === 'tool_exposure_report') {
         if (stepIdx === 1) {
-          const input = document.getElementById('pr-domain-input');
-          return !!(input && input.value.trim().length > 0);
-        }
-        if (stepIdx === 2) {
           const numeral = document.getElementById('pr-score-numeral');
-          return !!(numeral && numeral.textContent.trim() !== '—');
+          const isScanning = Boolean(window.isPhishReconScanning);
+          const isDone = numeral && numeral.textContent.trim() !== '—' && numeral.textContent.trim() !== '';
+          return !isScanning && Boolean(isDone);
         }
       }
       return true; // Other steps are not gated
@@ -7135,7 +7235,7 @@
             currentTargetId = 'no-campaigns-card';
           }
         }
-        targetEl = document.getElementById(currentTargetId);
+        targetEl = document.querySelector(`[data-tour="${currentTargetId}"]`) || document.getElementById(currentTargetId);
       }
 
       let highlighter = document.getElementById('pb-wt-highlighter');
@@ -7268,11 +7368,24 @@
       highlighter.style.width  = (rect.width  + 10) + 'px';
       highlighter.style.height = (rect.height + 10) + 'px';
 
-      // Mobile: stick below the element
+      // Mobile: stick below the element, clearing provenance line and clamping properly
       if (vw <= 768) {
         if (bubbleEl) bubbleEl.classList.add('pb-mobile-no-arrow');
         const cardLeft = Math.max(margin, (vw - bubbleW) / 2);
-        const cardTop  = Math.min(rect.bottom + gap, vh - hostH - margin);
+        let effectiveBottom = rect.bottom;
+        if (currentTargetId === 'verdict' || currentTargetId === 'pr-verdict-section') {
+          const prov = document.getElementById('pr-verdict-provenance');
+          if (prov && prov.style.display !== 'none') {
+            const pRect = prov.getBoundingClientRect();
+            effectiveBottom = Math.max(effectiveBottom, pRect.bottom);
+          }
+        }
+        let cardTop = effectiveBottom + gap;
+        if (cardTop + hostH > vh - margin && rect.top - hostH - gap >= margin) {
+          cardTop = rect.top - hostH - gap;
+        } else {
+          cardTop = Math.min(cardTop, vh - hostH - margin);
+        }
         swimMascot(cardLeft, cardTop);
         hasPositionedStep = true;
         return;
@@ -7452,6 +7565,14 @@
         category: "Standalone Forensic Tools",
         tier: "standard"
       },
+      phishrecon: {
+        name: "PhishRecon Domain Exposure Tour",
+        desc: "A calm 10-step tour through domain posture scoring, attack surface rings, findings, and evidence details.",
+        icon: "ti ti-radar-2",
+        color: "var(--primary)",
+        category: "Check something",
+        tier: "flagship"
+      },
       tool_exposure_report: {
         name: "Domain Exposure Tour",
         desc: "A 4-step walkthrough of corporate domain attack surface audits, look-alike resolution, and exposure scoring.",
@@ -7466,6 +7587,7 @@
     if (!window.pbTourCategoriesState) {
       window.pbTourCategoriesState = {
         "Core Simulator Tours": true, // Expanded by default
+        "Check something": true,      // PhishRecon category expanded
         "Feature Deep-Dives": false,
         "Standalone Forensic Tools": false
       };
@@ -7481,6 +7603,7 @@
       if (!window.pbTourCategoriesState) {
         window.pbTourCategoriesState = {
           "Core Simulator Tours": true,
+          "Check something": true,
           "Feature Deep-Dives": false,
           "Standalone Forensic Tools": false
         };
@@ -7512,6 +7635,7 @@
       
       const categories = [
         "Core Simulator Tours",
+        "Check something",
         "Feature Deep-Dives",
         "Standalone Forensic Tools"
       ];
@@ -7642,15 +7766,29 @@
       if (typeof pageKey !== 'string' || !WALKTHROUGH_CONFIGS[pageKey]) {
         pageKey = 'getting_started';
       }
+      if (pageKey === 'phishrecon') {
+        const isScanning = Boolean(window.isPhishReconScanning);
+        const isNotSample = typeof window.phishreconState !== 'undefined' && window.phishreconState && window.phishreconState.mode !== 'sample';
+        if (isScanning && isNotSample) {
+          const proceed = window.confirm("A live domain audit is currently in progress. Starting the tour will stop the audit and switch to the sample view. Do you want to continue?");
+          if (!proceed) return;
+          const stopBtn = document.getElementById('pr-stop-btn');
+          if (stopBtn && stopBtn.style.display !== 'none') stopBtn.click();
+        }
+      }
       window.wtUserDragged = false;
       const config = WALKTHROUGH_CONFIGS[pageKey];
       if (!config || config.length === 0) return;
-      initGateListeners();
 
       wtSteps = config;
       wtCurrentStep = 0;
       wtCurrentPage = pageKey;
       wtActive = true;
+      window.wtActive = true;
+      window.wtCurrentPage = pageKey;
+
+      initGateListeners();
+      startGateInterval();
 
       // Save state in localStorage to track it across reloads
       localStorage.setItem('pb_wt_active', 'true');
@@ -7876,10 +8014,10 @@
         const vh = window.innerHeight;
         const isTall = targetRect.height > vh * 0.45;
 
-        if (isTall) {
+        if (isTall || (window.innerWidth <= 768 && targetRect.top > 80)) {
           targetEl.scrollIntoView({ behavior: 'auto', block: 'start' });
           if (window.scrollY > 80) {
-            window.scrollBy({ top: -60, behavior: 'auto' });
+            window.scrollBy({ top: -76, behavior: 'auto' });
           }
         } else {
           targetEl.scrollIntoView({ behavior: 'auto', block: 'center' });
@@ -7931,6 +8069,15 @@
         if (s.subTargets && s.subTargets.length > 0) {
           startSubTargetSequence(s);
         }
+
+        // Automatic step action for non-assist steps (e.g. visual node highlights, findings pulse, accordion reveal)
+        if (s.action && !s.assistRequired) {
+          try {
+            s.action(() => {});
+          } catch (e) {
+            console.warn('[Lure walkthrough automatic action error]:', e);
+          }
+        }
       }
 
     function tryHighlightAndPosition() {
@@ -7956,7 +8103,7 @@
         bubbleEl.style.pointerEvents = 'none';
       }
 
-      const instantTarget = document.getElementById(currentTargetId);
+      const instantTarget = document.querySelector(`[data-tour="${currentTargetId}"]`) || document.getElementById(currentTargetId);
       if (instantTarget) {
         changeMascotState('idle');
         whenLayoutReady(() => {
@@ -8085,7 +8232,11 @@
     };
 
     window.exitWalkthrough = function() {
+      const pageKey = wtCurrentPage;
       cleanupWalkthrough();
+      if (pageKey === 'phishrecon') {
+        return;
+      }
       window.location.href = '/';
     };
 
@@ -8107,11 +8258,18 @@
       sessionStorage.setItem('last_completed_tour', pageKey);
       cleanupWalkthrough();
       
+      if (pageKey === 'phishrecon') {
+        if (window.lureShowRestrainedClosing) {
+          window.lureShowRestrainedClosing("Tour complete. Audit your own domain above whenever you wish.");
+        }
+        return;
+      }
       window.location.href = '/?completed_tour=true';
     };
 
     function cleanupWalkthrough() {
       wtActive = false;
+      window.wtActive = false;
       isFirstStep = true;
       stopSubTargetSequence();
       resetLastScaledTarget();
@@ -8119,8 +8277,12 @@
       localStorage.removeItem('pb_wt_page_key');
       localStorage.removeItem('pb_wt_step_idx');
       
-      // Highlighting managed via floating pb-wt-highlighter div only
+      // Clean up PhishRecon specific tour effects
+      document.querySelectorAll('.pr-tour-highlight-lookalike').forEach(el => el.classList.remove('pr-tour-highlight-lookalike'));
+      document.querySelectorAll('.pr-tour-highlight-subdomain').forEach(el => el.classList.remove('pr-tour-highlight-subdomain'));
+      document.querySelectorAll('.pr-lure-pulse-bulb').forEach(el => el.remove());
 
+      // Highlighting managed via floating pb-wt-highlighter div only
       const highlighter = document.getElementById('pb-wt-highlighter');
       if (highlighter) highlighter.style.display = 'none';
 
@@ -8165,6 +8327,8 @@
         wtSteps = WALKTHROUGH_CONFIGS[pageKey];
         wtCurrentStep = stepIdx;
         wtActive = true;
+        window.wtActive = true;
+        window.wtCurrentPage = pageKey;
 
         // Auto-advance gating check for core_workflow
         if (pageKey === 'core_workflow') {
@@ -9463,6 +9627,28 @@
       return false;
     }
 
+    function checkPhishReconDiscovery() {
+      const isExposurePage = window.location.pathname.includes('/exposure-report') || 
+                             document.body.classList.contains('pr-page-body') ||
+                             document.getElementById('pr-command-form') !== null;
+      if (!isExposurePage) return;
+
+      let offered = false;
+      try {
+        offered = localStorage.getItem('phishrecon_tour_offered') === 'true';
+      } catch (e) {}
+
+      if (offered) return;
+
+      setTimeout(() => {
+        if (wtActive || (typeof isScanActive === 'function' && isScanActive())) return;
+        try {
+          localStorage.setItem('phishrecon_tour_offered', 'true');
+        } catch (e) {}
+        showCallout("New to PhishRecon? Take a quiet 10-step tour of your attack surface.", "phishrecon");
+      }, 1500);
+    }
+
     function initRestrainedMode() {
       const isExposurePage = window.location.pathname.includes('/exposure-report') || 
                              document.body.classList.contains('pr-page-body') ||
@@ -9471,6 +9657,7 @@
       if (isExposurePage && host) {
         host.classList.add('pb-restrained');
       }
+      checkPhishReconDiscovery();
     }
 
     window.lurePulseBulb = function() {

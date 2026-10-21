@@ -805,13 +805,14 @@
     #hero,
     .hero-section {
       display: grid !important;
-      grid-template-columns: 1fr 1fr !important;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
       align-items: center !important;
-      gap: 40px !important;
+      gap: clamp(20px, 3vw, 40px) !important;
       min-height: 90vh !important;
-      padding: 0 6vw !important;
+      padding: 0 clamp(16px, 4vw, 6vw) !important;
       position: relative !important;
       z-index: 2 !important;
+      box-sizing: border-box !important;
     }
 
     #hero::before,
@@ -831,6 +832,7 @@
 
     /* Left col */
     .hero-left {
+      min-width: 0 !important;
       padding-right: 0 !important;
       position: relative !important;
       z-index: 2 !important;
@@ -1106,6 +1108,7 @@
 
     /* Right col — terminal */
     .hero-right {
+      min-width: 0 !important;
       position: relative;
       overflow: visible !important;
     }
@@ -1421,8 +1424,8 @@
     /* Floating corner terminal badge (>_) with Hover & Sticky Popover */
     .t-floating-corner-badge {
       position: absolute;
-      top: -14px;
-      right: -12px;
+      top: -8px;
+      right: 0px;
       z-index: 50;
       width: 44px;
       height: 44px;
@@ -4595,6 +4598,9 @@
                 <i class="ti ti-activity" style="color: var(--primary); font-size: 0.95rem;"></i>
               </div>
               <div id="live-telemetry-container"
+                tabindex="0"
+                role="region"
+                aria-label="Live simulation telemetry log"
                 style="display: flex; flex-direction: column; gap: 8px; color: var(--text-secondary); overflow-y: auto; flex: 1; max-height: 300px; min-height: 220px; scroll-behavior: smooth;">
 
                 <!-- Logs are typewritten here -->
@@ -5677,7 +5683,6 @@
           <div class="holding-badge">
             <i class="ti ti-shield-code" aria-hidden="true"></i>
             <span>Interactive Defense Console</span>
-            <span class="holding-pulse-dot" aria-hidden="true"></span>
           </div>
           <h2 id="holding-heading" class="holding-title">
             Start with what you're <span class="holding-title-highlight">holding.</span>
@@ -5867,7 +5872,7 @@
           <div class="holding-domain-top">
             <div class="holding-domain-badge">
               <i class="ti ti-scan" aria-hidden="true"></i>
-              <label for="holding-domain-input" class="holding-domain-label">Instant Perimeter Audit</label>
+              <label for="holding-domain-input" class="holding-domain-label">Domain Perimeter Audit</label>
             </div>
             <span class="holding-domain-hint">Zero authentication required · Passive DNS &amp; TLS verification</span>
           </div>
@@ -6247,7 +6252,7 @@
       <div class="reveal pricing-toggle-wrap">
         <span id="billing-monthly-label" style="font-size: 0.88rem; font-weight: 700; color: var(--primary); transition: color 0.2s;">Monthly Billing</span>
         <label class="switch-toggle" style="position: relative; display: inline-block; width: 44px; height: 24px; margin: 0;">
-          <input type="checkbox" id="pricing-toggle-switch" style="opacity: 0; width: 0; height: 0;" onchange="togglePricingFrequency(this)">
+          <input type="checkbox" id="pricing-toggle-switch" aria-label="Toggle annual billing" style="opacity: 0; width: 0; height: 0;" onchange="togglePricingFrequency(this)">
           <span style="position: absolute; cursor: pointer; inset: 0; background-color: var(--bg-surface-elevated, rgba(255,255,255,0.1)); border: 1px solid var(--border-subtle, rgba(255,255,255,0.2)); border-radius: 34px; transition: 0.3s; display: flex; align-items: center;">
             <span style="position: absolute; height: 16px; width: 16px; left: 3px; bottom: 3px; background-color: var(--primary); border-radius: 50%; transition: 0.3s;" id="pricing-toggle-dot"></span>
           </span>
@@ -9955,7 +9960,7 @@ ${body}
       if (rect.bottom < 0) {
         scrolledPastTriggered = true;
         sessionStorage.setItem(SCROLL_SESSION_KEY, '1');
-        window.lureShowCallout("Hey! You missed the Lure Lab above. Tap me to generate a live phishing test instantly!");
+        window.lureShowCallout("Explore the Lure Lab above to test an AI phishing scenario.");
       }
     }
 

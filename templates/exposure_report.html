@@ -50,10 +50,6 @@
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
         <span>Download report</span>
       </button>
-      <button type="button" class="pr-btn pr-btn-quiet pr-action-btn pr-condensed-action-btn" id="pr-condensed-summary" title="Copy executive summary to clipboard">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-        <span>Copy summary</span>
-      </button>
       
       <!-- Condensed Overflow Button -->
       <div class="pr-overflow-wrap">
@@ -69,7 +65,7 @@
   <!-- Top Command Bar (Part 3) -->
   <div class="pr-command" id="pr-command">
     <form class="pr-command-form" id="pr-command-form" novalidate>
-      <div class="pr-command-bar" id="pr-command-bar">
+      <div class="pr-command-bar" id="pr-command-bar" data-tour="domain-bar">
         <!-- Input Row Wrapper for Mobile / Desktop -->
         <div class="pr-command-input-row">
           <!-- Favicon Slot (20px) -->
@@ -138,6 +134,7 @@
           type="button"
           class="pr-btn pr-btn-quiet pr-sample-replay-btn"
           id="pr-see-sample-btn"
+          data-tour="see-sample"
           style="display: none;"
         >
           See a sample
@@ -189,7 +186,7 @@
           </div>
 
           <!-- Sheet Header Actions (Desktop Top-Right) -->
-          <div class="pr-meta-actions" id="pr-sheet-actions">
+          <div class="pr-meta-actions" id="pr-sheet-actions" data-tour="share-print">
             <button type="button" class="pr-btn pr-btn-quiet pr-action-btn" id="pr-action-share" title="Copy shareable audit link">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
               <span>Share link</span>
@@ -230,7 +227,7 @@
         </div>
 
         <!-- 2) The Verdict Sentence (Hero Headline - Single <h1> landmark) -->
-        <section class="pr-verdict-section" id="pr-verdict-section">
+        <section class="pr-verdict-section" id="pr-verdict-section" data-tour="verdict">
           <h1 class="pr-verdict hero-h1" id="pr-verdict-title">
             <div class="pr-verdict-stack" id="pr-verdict-stack">
               <!-- Heuristic Layer -->
@@ -263,7 +260,7 @@
         </section>
 
         <!-- 3) Exposure Line Instrument -->
-        <section class="pr-exposure-section" id="pr-exposure-section">
+        <section class="pr-exposure-section" id="pr-exposure-section" data-tour="exposure-score">
           <div class="pr-exposure-instrument">
             <!-- Left: Score number + posture word & shape icon -->
             <div class="pr-exposure-left">
@@ -344,7 +341,7 @@
 
       <!-- Right Column: Surface Map (Part 5 Hand-Built SVG Diagram) -->
       <div class="pr-top-right" id="pr-top-right">
-        <section class="pr-surface-map-card" id="pr-map-card" aria-label="Audited attack surface instrument map">
+        <section class="pr-surface-map-card" id="pr-map-card" data-tour="surface-map" aria-label="Audited attack surface instrument map">
           <div class="pr-map-header">
             <span class="pr-label-micro">Observed attack surface</span>
             <span class="pr-prose-secondary" id="pr-map-stat">Telemetry syncing</span>
@@ -383,9 +380,9 @@
 
               <!-- 2. Ring Data Groups (DOM-refilled on packet arrival) -->
               <!-- Order in DOM: Look-alikes first, then Subdomains, then Surface (for sensible tab order) -->
-              <g id="pr-map-group-lookalikes" class="pr-map-group" aria-label="Look-alike domain nodes"></g>
-              <g id="pr-map-group-subdomains" class="pr-map-group" aria-label="Subdomain nodes"></g>
-              <g id="pr-map-group-surface" class="pr-map-group" aria-label="Public email and profile nodes"></g>
+              <g id="pr-map-group-lookalikes" class="pr-map-group" role="group" aria-label="Look-alike domain nodes"></g>
+              <g id="pr-map-group-subdomains" class="pr-map-group" role="group" aria-label="Subdomain nodes"></g>
+              <g id="pr-map-group-surface" class="pr-map-group" role="group" aria-label="Public email and profile nodes"></g>
 
               <!-- 3. Center Disc & Domain (Always drawn on top) -->
               <g id="pr-map-center-disc" class="pr-map-center">
@@ -421,7 +418,7 @@
          ════════════════════════════════════════════════════════════════ -->
 
     <!-- 1) Start Here Section (.pr-start) -->
-    <section class="pr-start" id="pr-start" aria-labelledby="pr-start-heading">
+    <section class="pr-start" id="pr-start" data-tour="start-here" aria-labelledby="pr-start-heading">
       <div class="pr-start-header">
         <h2 class="pr-start-heading" id="pr-start-heading">Start here</h2>
         <span class="pr-start-sub">Based on the checks below</span>
@@ -449,13 +446,13 @@
     </section>
 
     <!-- 2) The Checks Ledger Section (.pr-checks) -->
-    <section class="pr-checks" id="pr-checks" aria-labelledby="pr-checks-heading">
+    <section class="pr-checks" id="pr-checks" data-tour="checks-ledger" aria-labelledby="pr-checks-heading">
       <div class="pr-section-header">
         <h2 class="pr-checks-heading" id="pr-checks-heading">What we checked</h2>
       </div>
 
       <!-- Exactly 6 fixed rows in fixed order -->
-      <div class="pr-checks-list" id="pr-checks-list" role="table" aria-label="Security checks ledger"></div>
+      <div class="pr-checks-list" id="pr-checks-list" role="list" aria-label="Security checks ledger"></div>
 
       <!-- Legend Line -->
       <div class="pr-checks-legend">
@@ -464,7 +461,7 @@
     </section>
 
     <!-- 3) Evidence Section: Full Detail Accordions (.pr-evidence) -->
-    <section class="pr-evidence" id="pr-evidence" aria-labelledby="pr-evidence-heading">
+    <section class="pr-evidence" id="pr-evidence" data-tour="evidence" aria-labelledby="pr-evidence-heading">
       <h2 id="pr-evidence-heading" style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border-width: 0;">Evidence details</h2>
       <div class="pr-accordions" id="pr-accordions">
         
@@ -485,7 +482,7 @@
         </details>
 
         <!-- Accordion 2: Email Authentication -->
-        <details class="pr-accordion" id="pr-evidence-email-auth" data-check-section="email_auth">
+        <details class="pr-accordion" id="pr-evidence-email-auth" data-tour="evidence-accordion" data-check-section="email_auth">
           <summary class="pr-accordion-summary" tabindex="0">
             <span class="pr-accordion-title">Email authentication</span>
             <span class="pr-accordion-meta" id="pr-meta-email-auth"></span>

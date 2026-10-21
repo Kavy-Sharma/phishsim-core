@@ -599,12 +599,14 @@
         -webkit-backdrop-filter: blur(10px);
         padding: 1.5rem;
         opacity: 0;
+        visibility: hidden;
         pointer-events: none;
-        transition: opacity 0.3s ease;
+        transition: opacity 0.3s ease, visibility 0.3s ease;
     }
 
     .confirm-modal.show {
         opacity: 1;
+        visibility: visible;
         pointer-events: auto;
     }
 
@@ -796,7 +798,7 @@
     <!-- Quiet Risk Briefing Summary Card -->
     <div class="dash-briefing-card" style="margin-bottom: 24px; padding: 18px 24px; border-radius: 12px; border: 1px solid var(--border-subtle); background: var(--bg-surface); display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap;">
         <div style="display: flex; flex-direction: column; gap: 4px; max-width: 820px;">
-            <span style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted);">Weekly Risk Briefing</span>
+            <span style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-secondary);">Weekly Risk Briefing</span>
             <p style="font-family: var(--font-voice, 'Newsreader', serif); font-size: 1.15rem; font-weight: 500; color: var(--text-primary); margin: 0; line-height: 1.4;">
                 {{ briefing_headline or "Continuous analysis of your campaign telemetry, attack trends, and targeted department exposure." }}
             </p>
@@ -941,7 +943,7 @@
                     style="font-family: var(--font-mono); font-size: 10px; color: var(--terminal-info); background: var(--terminal-badge-bg); border: 1px solid var(--terminal-border); padding: 2px 8px; border-radius: 4px;">LIVE
                     FEED</span>
             </div>
-            <div class="terminal-stream-log" id="terminal-logs">
+            <div class="terminal-stream-log" id="terminal-logs" tabindex="0" role="region" aria-label="Live simulation telemetry log">
                 <!-- Logs generated in script -->
             </div>
         </div>
@@ -1156,6 +1158,7 @@
                                     <div class="row-dropdown">
                                         <button type="button" class="row-dropdown-btn"
                                             onclick="toggleRowDropdown(event, 'dropdown-{{ camp.id }}')"
+                                            aria-label="Campaign actions"
                                             style="background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 4px; font-size: 1rem;"><i
                                                 class="ti ti-dots-vertical"></i></button>
                                         <div id="dropdown-{{ camp.id }}" class="row-dropdown-menu">
@@ -1215,6 +1218,7 @@
                         <div class="row-dropdown" style="flex-shrink: 0;">
                             <button type="button" class="row-dropdown-btn"
                                 onclick="toggleRowDropdown(event, 'grid-dropdown-{{ camp.id }}')"
+                                aria-label="Campaign actions"
                                 style="background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 4px; font-size: 1.2rem; transition: color 0.2s;"><i
                                     class="ti ti-dots-vertical"></i></button>
                             <div id="grid-dropdown-{{ camp.id }}" class="row-dropdown-menu"
@@ -1674,9 +1678,9 @@
     <div class="slide-drawer" id="activity-drawer">
         <div class="drawer-header">
             <h3>Activity Feed</h3>
-            <button class="drawer-close" onclick="closeAllDrawers()">&times;</button>
+            <button class="drawer-close" onclick="closeAllDrawers()" aria-label="Close activity feed">&times;</button>
         </div>
-        <div class="drawer-content">
+        <div class="drawer-content" tabindex="0" role="region" aria-label="Recent activity feed">
             <div class="activity-feed" style="display: flex; flex-direction: column; gap: 16px;">
                 {% for act in recent_activities %}
                 <div class="activity-item"

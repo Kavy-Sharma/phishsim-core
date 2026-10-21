@@ -70,7 +70,7 @@ class TestPart3SecurityAndPlumbing(unittest.TestCase):
         self.assertEqual(res.status_code, 200)
         self.assertIn(b"Risk Briefing", res.data)
         # Should show honest empty state when 0 campaigns
-        self.assertIn(b"No campaigns yet", res.data)
+        self.assertTrue(b"No campaigns launched yet" in res.data or b"No campaigns yet" in res.data)
 
     # ────────────────────────────────────────────────────────────────
     # 2. CSRF Enforcement on Remediation Endpoints
