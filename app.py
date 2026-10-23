@@ -3973,6 +3973,12 @@ def dashboard():
             }
         ]
         
+        demo_dept_stats = [
+            {"department": "Finance", "employee_count": 20, "clicks": 1, "reports": 8},
+            {"department": "Operations", "employee_count": 22, "clicks": 6, "reports": 2},
+            {"department": "Engineering", "employee_count": 18, "clicks": 2, "reports": 9}
+        ]
+
         return render_template(
             "dashboard.html",
             campaigns=campaigns,
@@ -3981,6 +3987,7 @@ def dashboard():
             risk_trend=risk_trend,
             demo_summary=demo_summary,
             dept_count=dept_count,
+            dept_stats=demo_dept_stats,
             recent_activities=recent_activities,
             is_demo_preview=True,
             briefing_headline="In your demo baseline, 24.1% of employees reported the lure while 12.5% clicked."
@@ -4050,6 +4057,28 @@ def dashboard():
         cursor.execute(dept_sql, params)
         dept_row = cursor.fetchone()
         dept_count = dept_row["dept_count"] if dept_row else 0
+
+        # Query department stats for People tab if available
+        dept_stats = []
+        try:
+            dept_stats_sql = f"""
+                SELECT 
+                    COALESCE(NULLIF(e.department, ''), 'General') as department,
+                    COUNT(DISTINCT e.id) as employee_count,
+                    COUNT(DISTINCT CASE WHEN ev.event_type = 'click' THEN ev.tracking_id END) as clicks,
+                    COUNT(DISTINCT CASE WHEN ev.event_type = 'report' THEN ev.tracking_id END) as reports
+                FROM employees e
+                JOIN campaigns c ON e.campaign_id = c.id
+                LEFT JOIN emails_sent es ON (es.campaign_id = c.id AND es.recipient_email = e.email)
+                LEFT JOIN events ev ON ev.tracking_id = es.tracking_id
+                {where_clause}
+                GROUP BY COALESCE(NULLIF(e.department, ''), 'General')
+                ORDER BY clicks DESC, employee_count DESC
+            """
+            cursor.execute(dept_stats_sql, params)
+            dept_stats = cursor.fetchall() or []
+        except Exception as e_dept:
+            dept_stats = []
 
         # Aggregate totals for summary bar
         total_employees = sum(c['employee_count'] for c in campaigns)
@@ -4195,6 +4224,7 @@ def dashboard():
             "worst_campaign": None
         }
         dept_count = 0
+        dept_stats = []
         recent_activities = []
     finally:
         cursor.close()
@@ -4203,7 +4233,7 @@ def dashboard():
     # Compute brief headline for dashboard summary card
     launched_c_list = [c for c in campaigns if c.get("status") in ("launched", "launched_with_errors", "completed") and (c.get("emails_sent") or 0) > 0]
     if not launched_c_list:
-        briefing_headline = "Continuous analysis of your campaign telemetry, attack trends, and targeted department exposure."
+        briefing_headline = "Your weekly summary — launch a drill to generate baseline resilience data."
     elif len(launched_c_list) == 1:
         c0 = launched_c_list[0]
         c0_sent = c0["emails_sent"] or 1
@@ -4243,6 +4273,7 @@ def dashboard():
         risk_trend=risk_trend,
         demo_summary=demo_summary,
         dept_count=dept_count,
+        dept_stats=dept_stats,
         recent_activities=recent_activities,
         briefing_headline=briefing_headline
     )

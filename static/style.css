@@ -98,6 +98,9 @@
   --text-secondary: #94A3B8;   /* Refined body text */
   --text-muted:     #64748B;   /* Subtitles & metadata */
   --text-inverse:   #090C15;   /* Text on light button fields */
+  --btn-primary-bg: #00F2FE;   /* Solid primary button background */
+  --btn-primary-bg-hover: #14B8A6;
+  --btn-primary-text: #090C15; /* Dark text on solid primary button (NOT white) */
 
   /* === SPECIAL === */
   --terminal-green: #10B981;
@@ -106,27 +109,28 @@
   --scrollbar-thumb:#1E293B;
 }
 
-:root[data-theme="light"] {
+:root[data-theme="light"],
+body.light-theme {
   /* === BACKGROUNDS === */
-  --bg-base:        #EBF3FC;
-  --bg-surface:     #FFFFFF;
+  --bg-base:        #F8F9FA;   /* Warm off-white page */
+  --bg-surface:     #FFFFFF;   /* White cards */
   --bg-surface-raised:#FFFFFF;
   --bg-surface-elevated:#FFFFFF;
   --bg-elevated:    #F1F5F9;
   --bg-input:       #FFFFFF;
   --bg-hover:       #F1F5F9;
-  --bg-navbar:      rgba(248, 250, 252, 0.85);
+  --bg-navbar:      rgba(248, 249, 250, 0.85);
 
   /* === BORDERS === */
-  --border-subtle:  rgba(0, 0, 0, 0.05);
+  --border-subtle:  rgba(0, 0, 0, 0.06);
   --border-default: #E2E8F0;
-  --border-active:  rgba(2, 132, 199, 0.4);
+  --border-active:  rgba(13, 148, 136, 0.4);
 
-  /* === PRIMARY — Vibrant Cyan / Ocean Blue === */
-  --primary:        #0284C7;
-  --primary-hover:  #0369A1;
-  --primary-dim:    rgba(2, 132, 199, 0.12);
-  --primary-glow:   rgba(2, 132, 199, 0.2);
+  /* === PRIMARY — Accent Teal Darkened for Contrast (AA) === */
+  --primary:        #0D9488;   /* Darkened Teal for AA contrast against white */
+  --primary-hover:  #0F766E;
+  --primary-dim:    rgba(13, 148, 136, 0.12);
+  --primary-glow:   rgba(13, 148, 136, 0.2);
 
   /* === VERDICT SYSTEM === */
   --verdict-safe:          #059669;
@@ -157,7 +161,10 @@
   --text-primary:   #0F172A;
   --text-secondary: #475569;
   --text-muted:     #64748B;
-  --text-inverse:   #F8FAFC;
+  --text-inverse:   #090C15;
+  --btn-primary-bg: #14B8A6;   /* Solid vibrant teal for button background */
+  --btn-primary-bg-hover: #0D9488;
+  --btn-primary-text: #042F2E; /* Dark text on solid teal button (NOT white) */
 
   /* === SPECIAL === */
   --terminal-green: #059669;
@@ -213,6 +220,9 @@ body {
     overflow-x: hidden;
     font-family: var(--font-sans);
     background-color: var(--bg-base);
+    background-image: radial-gradient(ellipse 80% 50% at 50% -10%, rgba(56, 189, 248, 0.04) 0%, transparent 100%);
+    background-repeat: no-repeat;
+    background-attachment: fixed;
     color: var(--text-primary);
     line-height: 1.6;
     min-height: 100vh;
@@ -220,44 +230,25 @@ body {
     flex-direction: column;
 }
 body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    z-index: -2;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
-    pointer-events: none;
-    opacity: 0.06;
-    transform: translateZ(0);
-    will-change: transform;
+    display: none;
 }
 body::after {
-    content: '';
-    position: fixed;
-    inset: 0;
-    z-index: -3;
-    pointer-events: none;
-    background-image:
-        radial-gradient(circle at 8% 8%, rgba(56, 189, 248, 0.07) 0%, transparent 40%),
-        radial-gradient(circle at 92% 92%, rgba(99, 102, 241, 0.06) 0%, transparent 40%),
-        radial-gradient(circle at 50% 50%, rgba(2, 6, 23, 0) 0%, transparent 70%),
-        linear-gradient(rgba(56,189,248,0.025) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(56,189,248,0.025) 1px, transparent 1px);
-    background-size: 100% 100%, 100% 100%, 100% 100%, 60px 60px, 60px 60px;
-    transform: translateZ(0);
-    will-change: transform;
+    display: none;
 }
 
 body.light-theme {
     background-color: var(--bg-base);
+    background-image: radial-gradient(ellipse 80% 50% at 50% -10%, rgba(2, 132, 199, 0.035) 0%, transparent 100%);
+    background-repeat: no-repeat;
+    background-attachment: fixed;
     cursor: default;
 }
 body.light-theme::after {
-    background-image: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-    background-size: 100% 100%;
+    display: none;
 }
 
 /* Global color transitions animation */
-body, header, nav, footer, a, button, input, select, textarea, .card, .panel, .results-panel, .theme-toggle-btn, .navbar, .cyber-hud-bar, .campaign-strip, .stat-box {
+body, header, nav, footer, a, button, input, select, textarea, .card, .panel, .results-panel, .theme-toggle-btn, .navbar, .campaign-strip, .stat-box {
     transition: background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease;
 }
 
@@ -3075,32 +3066,9 @@ body.light-theme h1:not(.hero-h1):not(.pr-verdict), body.light-theme h2:not(.her
     }
 }
 
-/* -- Atmosphere Blobs for Inner Pages -- */
+/* -- Atmosphere Blobs (Deprecated in Part 1) -- */
 .atmosphere-blob {
-    position: fixed;
-    pointer-events: none;
-    z-index: -1;
-    border-radius: 50%;
-    animation: atmospherePulse 25s ease-in-out infinite alternate;
-}
-@keyframes atmospherePulse {
-    0% { transform: scale(1) translate(0, 0); }
-    50% { transform: scale(1.08) translate(40px, -30px); }
-    100% { transform: scale(0.92) translate(-30px, 40px); }
-}
-.atmosphere-blob.blob-1 {
-    top: -200px;
-    left: -200px;
-    width: 800px;
-    height: 800px;
-    background: radial-gradient(circle, rgba(56,189,248,0.28) 0%, transparent 65%);
-}
-.atmosphere-blob.blob-2 {
-    bottom: -200px;
-    right: -200px;
-    width: 900px;
-    height: 900px;
-    background: radial-gradient(circle, rgba(99,102,241,0.22) 0%, transparent 65%);
+    display: none !important;
 }
 .dash-page,
 .analyzer-container,
@@ -3982,7 +3950,6 @@ body.light-theme #terminal-input {
 body::before, 
 body::after, 
 .navbar, 
-.cyber-hud-bar, 
 .window-mockup {
     transform: translateZ(0);
     will-change: transform;
@@ -4368,7 +4335,7 @@ body.light-theme .campaign-grid-card .card-footer {
         color: #000000 !important;
         font-size: 11pt !important;
     }
-    .navbar, .cyber-hud-bar, .header-actions, .table-filters, #manage-toggle, 
+    .navbar, .header-actions, .table-filters, #manage-toggle, 
     .slide-drawer, .drawer-overlay, .theme-toggle-btn, .logo-pulse-dot, 
     .row-dropdown, #sandbox-warning-banner, .btn-primary-filled, .btn-outline {
         display: none !important;
@@ -7043,75 +7010,177 @@ code {
     font-family: var(--font-mono) !important;
 }
 
-/* 3. CLEAN CTA ACTION STYLES (Solid White Primary Fields) */
+/* 3. TACTILE 3D LITERAL PUSHED BUTTON ARCHITECTURE */
 .btn-primary,
 .btn-primary-action,
 .btn-primary-glow,
 .modern-cyber-btn {
-    background: #FFFFFF !important;
-    color: #090C15 !important;
-    border: 1px solid #FFFFFF !important;
+    background: linear-gradient(180deg, var(--btn-primary-bg, var(--primary)) 0%, color-mix(in srgb, var(--btn-primary-bg, var(--primary)) 86%, black) 100%) !important;
+    color: var(--btn-primary-text, var(--text-inverse)) !important;
+    border: 1px solid color-mix(in srgb, var(--btn-primary-bg, var(--primary)) 70%, black) !important;
+    border-bottom: 3.5px solid rgba(0, 0, 0, 0.45) !important;
     font-family: var(--font-sans) !important;
     font-weight: 600 !important;
     border-radius: 8px !important;
-    padding: 0.75rem 1.75rem !important;
-    box-shadow: 0 2px 10px rgba(255, 255, 255, 0.12) !important;
-    transition: var(--transition) !important;
+    padding: 0.65rem 1.5rem !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 3px 0 rgba(0, 0, 0, 0.35), 0 4px 12px var(--primary-glow) !important;
+    transition: transform 120ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 120ms cubic-bezier(0.16, 1, 0.3, 1), border-bottom-width 120ms cubic-bezier(0.16, 1, 0.3, 1) !important;
     cursor: pointer;
     text-decoration: none;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
+    user-select: none;
 }
 
 .btn-primary:hover,
 .btn-primary-action:hover,
 .btn-primary-glow:hover,
 .modern-cyber-btn:hover {
-    background: #F1F5F9 !important;
-    border-color: #F1F5F9 !important;
-    color: #090C15 !important;
-    transform: translateY(-1px) !important;
-    box-shadow: 0 6px 20px rgba(255, 255, 255, 0.2) !important;
+    background: linear-gradient(180deg, var(--btn-primary-bg-hover, var(--primary-hover)) 0%, color-mix(in srgb, var(--btn-primary-bg-hover, var(--primary-hover)) 84%, black) 100%) !important;
+    border-color: color-mix(in srgb, var(--btn-primary-bg-hover, var(--primary-hover)) 65%, black) !important;
+    border-bottom: 4.5px solid rgba(0, 0, 0, 0.5) !important;
+    color: var(--btn-primary-text, var(--text-inverse)) !important;
+    transform: translateY(-1.5px) !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45), 0 4.5px 0 rgba(0, 0, 0, 0.45), 0 8px 22px var(--primary-glow) !important;
 }
 
-/* Light Mode Primary CTA Field */
+.btn-primary:active,
+.btn-primary-action:active,
+.btn-primary-glow:active,
+.modern-cyber-btn:active {
+    transform: translateY(3px) !important;
+    border-bottom: 1px solid #00f2fe !important;
+    border-color: #00f2fe !important;
+    background: linear-gradient(180deg, #00f2fe 0%, #00c6ff 100%) !important;
+    color: #020d18 !important;
+    box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.35), 0 0 24px rgba(0, 242, 254, 0.8), 0 0 45px rgba(0, 242, 254, 0.45) !important;
+}
+
+/* Secondary Button: Raised 3D tactile button with border depth & push feel */
+.btn-secondary,
+.app-btn-secondary {
+    background: var(--bg-surface-raised, #182030) !important;
+    color: var(--text-primary) !important;
+    border: 1px solid var(--border-default) !important;
+    border-bottom: 3.5px solid rgba(0, 0, 0, 0.4) !important;
+    font-family: var(--font-sans) !important;
+    font-weight: 600 !important;
+    border-radius: 8px !important;
+    padding: 0.65rem 1.4rem !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 3px 0 rgba(0, 0, 0, 0.3), 0 3px 8px rgba(0, 0, 0, 0.15) !important;
+    transition: transform 120ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 120ms cubic-bezier(0.16, 1, 0.3, 1), border-bottom-width 120ms cubic-bezier(0.16, 1, 0.3, 1), background 120ms ease, color 120ms ease !important;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    user-select: none;
+}
+
+.btn-secondary:hover,
+.app-btn-secondary:hover {
+    background: var(--bg-hover) !important;
+    border-color: var(--text-muted) !important;
+    border-bottom: 4.5px solid rgba(0, 0, 0, 0.5) !important;
+    color: var(--text-primary) !important;
+    transform: translateY(-1.5px) !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 4.5px 0 rgba(0, 0, 0, 0.35), 0 6px 14px rgba(0, 0, 0, 0.22) !important;
+}
+
+.btn-secondary:active,
+.app-btn-secondary:active {
+    transform: translateY(3px) !important;
+    border-bottom: 1.5px solid #0284c7 !important;
+    border-color: #00f2fe !important;
+    background: linear-gradient(180deg, rgba(0, 242, 254, 0.22) 0%, rgba(14, 165, 233, 0.38) 100%) !important;
+    color: #38bdf8 !important;
+    box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.45), 0 0 20px rgba(0, 242, 254, 0.55) !important;
+}
+
+/* Light Mode 3D Tactile Buttons */
 body.light-theme .btn-primary,
 body.light-theme .btn-primary-action,
 body.light-theme .btn-primary-glow,
 body.light-theme .modern-cyber-btn {
-    background: #090C15 !important;
-    color: #FFFFFF !important;
-    border: 1px solid #090C15 !important;
+    background: linear-gradient(180deg, #14B8A6 0%, #0D9488 100%) !important;
+    color: #042F2E !important;
+    border: 1px solid #0F766E !important;
+    border-bottom: 3.5px solid #042F2E !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), 0 3px 0 rgba(4, 47, 46, 0.35), 0 4px 10px rgba(20, 184, 166, 0.25) !important;
 }
 
 body.light-theme .btn-primary:hover,
 body.light-theme .btn-primary-action:hover,
 body.light-theme .btn-primary-glow:hover,
 body.light-theme .modern-cyber-btn:hover {
-    background: #1E293B !important;
-    border-color: #1E293B !important;
-    color: #FFFFFF !important;
+    background: linear-gradient(180deg, #2DD4BF 0%, #14B8A6 100%) !important;
+    border-color: #0D9488 !important;
+    border-bottom: 4.5px solid #042F2E !important;
+    color: #042F2E !important;
+    transform: translateY(-1.5px) !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), 0 4.5px 0 rgba(4, 47, 46, 0.4), 0 6px 16px rgba(20, 184, 166, 0.35) !important;
+}
+
+body.light-theme .btn-primary:active,
+body.light-theme .btn-primary-action:active,
+body.light-theme .btn-primary-glow:active,
+body.light-theme .modern-cyber-btn:active {
+    transform: translateY(3px) !important;
+    border-bottom: 1px solid #0f766e !important;
+    border-color: #0d9488 !important;
+    background: linear-gradient(180deg, #0d9488 0%, #042f2e 100%) !important;
+    color: #ffffff !important;
+    box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.4), 0 0 20px rgba(20, 184, 166, 0.55) !important;
+}
+
+body.light-theme .btn-secondary,
+body.light-theme .app-btn-secondary {
+    background: #FFFFFF !important;
+    color: #0F172A !important;
+    border: 1px solid #CBD5E1 !important;
+    border-bottom: 3.5px solid #94A3B8 !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8), 0 3px 0 rgba(148, 163, 184, 0.4), 0 3px 8px rgba(0, 0, 0, 0.06) !important;
+    transition: transform 120ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 120ms cubic-bezier(0.16, 1, 0.3, 1), border-bottom-width 120ms cubic-bezier(0.16, 1, 0.3, 1), background 120ms ease, color 120ms ease !important;
+}
+
+body.light-theme .btn-secondary:hover,
+body.light-theme .app-btn-secondary:hover {
+    background: #F8FAFC !important;
+    border-color: #94A3B8 !important;
+    border-bottom: 4.5px solid #64748B !important;
+    color: #0F172A !important;
+    transform: translateY(-1.5px) !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 4.5px 0 rgba(100, 116, 139, 0.4), 0 5px 12px rgba(0, 0, 0, 0.1) !important;
+}
+
+body.light-theme .btn-secondary:active,
+body.light-theme .app-btn-secondary:active {
+    transform: translateY(3px) !important;
+    border-bottom: 1.5px solid #0d9488 !important;
+    border-color: #14b8a6 !important;
+    background: linear-gradient(180deg, rgba(20, 184, 166, 0.18) 0%, rgba(13, 148, 136, 0.3) 100%) !important;
+    color: #0f766e !important;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2), 0 0 16px rgba(20, 184, 166, 0.35) !important;
 }
 
 /* Secondary CTA Field */
-.btn-secondary,
 .btn-outline-glow {
-    background: rgba(255, 255, 255, 0.04) !important;
-    color: #FFFFFF !important;
-    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    background: var(--bg-hover) !important;
+    color: var(--text-primary) !important;
+    border: 1px solid var(--border-default) !important;
     font-family: var(--font-sans) !important;
     font-weight: 600 !important;
-    border-radius: 8px !important;
+    border-radius: var(--radius-btn) !important;
     padding: 0.75rem 1.75rem !important;
     transition: var(--transition) !important;
     backdrop-filter: blur(10px);
 }
 
-.btn-secondary:hover,
 .btn-outline-glow:hover {
-    background: rgba(255, 255, 255, 0.08) !important;
-    border-color: rgba(255, 255, 255, 0.25) !important;
-    color: #FFFFFF !important;
+    background: var(--bg-elevated) !important;
+    border-color: var(--border-active) !important;
+    color: var(--text-primary) !important;
 }

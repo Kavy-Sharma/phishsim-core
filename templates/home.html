@@ -3145,31 +3145,12 @@
       flex-wrap: wrap;
     }
 
-    /* ── FOOTER ── */
-    footer {
+    /* ── FOOTER (Managed via app_shell.css .site-footer) ── */
+    footer.site-footer {
       border-top: 1px solid var(--border);
-      padding: 48px 5% 32px;
       position: relative;
-      z-index: 2;
+      z-index: 10;
       overflow: hidden;
-      background-color: #030712 !important;
-      background-image:
-        radial-gradient(circle at 80% 20%, rgba(6, 182, 212, 0.04) 0%, transparent 50%),
-        radial-gradient(circle at 10% 80%, rgba(99, 102, 241, 0.04) 0%, transparent 50%),
-        linear-gradient(rgba(255, 255, 255, 0.007) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255, 255, 255, 0.007) 1px, transparent 1px) !important;
-      background-size: 100% 100%, 100% 100%, 32px 32px, 32px 32px !important;
-    }
-
-    body.light-theme footer {
-      background-color: #f8fafc !important;
-      border-color: rgba(37, 99, 235, 0.12) !important;
-      background-image:
-        radial-gradient(circle at 80% 20%, rgba(37, 99, 235, 0.03) 0%, transparent 50%),
-        radial-gradient(circle at 10% 80%, rgba(79, 70, 229, 0.03) 0%, transparent 50%),
-        linear-gradient(rgba(37, 99, 235, 0.015) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(37, 99, 235, 0.015) 1px, transparent 1px) !important;
-      background-size: 100% 100%, 100% 100%, 32px 32px, 32px 32px !important;
     }
 
     .footer-grid {
@@ -3555,8 +3536,7 @@
     #testimonials,
     #pricing,
     #cta,
-    #join-beta,
-    footer {
+    #join-beta {
       background: transparent !important;
       background-image: none !important;
     }
@@ -3572,8 +3552,7 @@
     body.light-theme #testimonials,
     body.light-theme #pricing,
     body.light-theme #cta,
-    body.light-theme #join-beta,
-    body.light-theme footer {
+    body.light-theme #join-beta {
       background: transparent !important;
       background-image: none !important;
     }
@@ -6762,103 +6741,7 @@
       }, { passive: true });
     })();
 
-    /* ── THEME TOGGLE (with ripple reveal animation) ── */
-    (function () {
-      const storageKey = 'phishsim-theme';
-      const toggle = document.getElementById('theme-toggle');
-      const tooltip = document.getElementById('theme-tooltip');
-      let tipTimer;
-      let isAnimating = false;
-
-      function showTip(text) {
-        if (!tooltip) return;
-        tooltip.textContent = text;
-        tooltip.classList.add('show');
-        clearTimeout(tipTimer);
-        tipTimer = setTimeout(() => tooltip.classList.remove('show'), 1800);
-      }
-
-      function applyTheme(theme, announce = false) {
-        const isLight = theme === 'light';
-        document.documentElement.setAttribute('data-theme', theme);
-        document.body.classList.toggle('light-theme', isLight);
-        if (toggle) {
-          toggle.setAttribute('aria-label', isLight ? 'Switch to dark mode' : 'Switch to light mode');
-          toggle.setAttribute('title', isLight ? 'Switch to dark mode' : 'Switch to light mode');
-        }
-        localStorage.setItem(storageKey, theme);
-        window.dispatchEvent(new CustomEvent('theme-changed', { detail: { theme } }));
-        if (announce) showTip(isLight ? '☀ Light Mode' : '🌙 Dark Mode');
-      }
-
-      function triggerRipple(theme, fromEl) {
-        if (isAnimating) {
-          applyTheme(theme, true);
-          return;
-        }
-
-        // Get button center for ripple origin
-        const rect = fromEl.getBoundingClientRect();
-        const x = rect.left + rect.width / 2;
-        const y = rect.top + rect.height / 2;
-
-        // Calculate max radius to cover entire viewport
-        const endRadius = Math.hypot(
-          Math.max(x, window.innerWidth - x),
-          Math.max(y, window.innerHeight - y)
-        ) + 30;
-
-        const isLight = theme === 'light';
-
-        const ripple = document.createElement('div');
-        Object.assign(ripple.style, {
-          position: 'fixed',
-          top: '0',
-          left: '0',
-          width: '100vw',
-          height: '100vh',
-          background: isLight
-            ? 'radial-gradient(circle at ' + x + 'px ' + y + 'px, #f0f9ff 0%, #e0f2fe 40%, #bae6fd 100%)'
-            : 'radial-gradient(circle at ' + x + 'px ' + y + 'px, #0f172a 0%, #0a1628 40%, #060b18 100%)',
-          clipPath: `circle(0px at ${x}px ${y}px)`,
-          zIndex: '99999',
-          pointerEvents: 'none',
-          transition: 'clip-path 0.52s cubic-bezier(0.4, 0, 0.2, 1)',
-          willChange: 'clip-path',
-        });
-        document.body.appendChild(ripple);
-        isAnimating = true;
-
-        requestAnimationFrame(() => {
-          requestAnimationFrame(() => {
-            ripple.style.clipPath = `circle(${endRadius}px at ${x}px ${y}px)`;
-          });
-        });
-
-        // Apply theme at midpoint so it's hidden under ripple
-        setTimeout(() => {
-          applyTheme(theme, true);
-        }, 260);
-
-        // Fade ripple out after expansion
-        setTimeout(() => {
-          ripple.style.transition = 'opacity 0.18s ease';
-          ripple.style.opacity = '0';
-          setTimeout(() => {
-            ripple.remove();
-            isAnimating = false;
-          }, 180);
-        }, 480);
-      }
-
-      applyTheme(localStorage.getItem(storageKey) === 'light' ? 'light' : 'dark');
-      if (toggle) {
-        toggle.addEventListener('click', () => {
-          const nextTheme = document.body.classList.contains('light-theme') ? 'dark' : 'light';
-          triggerRipple(nextTheme, toggle);
-        });
-      }
-    })();
+    /* Theme toggle handled globally by base.html via silky-smooth document.startViewTransition */
 
 
     /* ── NEURAL THREAT MAP BACKGROUND ── */

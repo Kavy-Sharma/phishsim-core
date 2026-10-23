@@ -23,7 +23,7 @@
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;1,6..72,400&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700;900&display=swap" rel="stylesheet">
     
     <!-- Tabler Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
@@ -45,8 +45,9 @@
     <!-- DOMPurify for secure client-side HTML sanitization -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.9/purify.min.js"></script>
 
-    <!-- Main Stylesheet -->
+    <!-- Main Stylesheets -->
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css', v='1.0.9-lure-cta') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/app_shell.css', v='1.1.0') }}">
     <style>
         ::view-transition-old(root),
         ::view-transition-new(root) {
@@ -63,7 +64,7 @@
     {% block head_extra %}{% endblock %}
     {% block extra_head %}{% endblock %}
 </head>
-<body class="{% block body_class %}{% endblock %} {% if current_user %}has-hud-bar{% endif %}">
+<body class="{% block body_class %}{% endblock %}">
 
 <!<!-- ═══════════════════════════════════════════════════════════
      TOP PROGRESS BAR & GLOBAL SKELETON HANDLERS
@@ -493,42 +494,63 @@ window.topProgressBar = new TopProgressBar();
     });
 })();
 
-// ── Shared Sitewide Dynamic Toast Notification System ──
+// ── Shared Sitewide Dynamic Toast Notification System (DOM Building) ──
 function showPremiumToast(message, iconClass = 'fa-circle-check', duration = 4000) {
-    let container = document.querySelector('.toast-container');
+    let container = document.querySelector('.app-toast-container') || document.querySelector('.toast-container');
     if (!container) {
         container = document.createElement('div');
-        container.className = 'toast-container';
+        container.className = 'app-toast-container toast-container';
         document.body.appendChild(container);
     }
     
     const toast = document.createElement('div');
-    toast.className = 'premium-toast';
+    toast.className = 'app-toast premium-toast';
     toast.style.cursor = 'grab';
     toast.style.userSelect = 'none';
     
-    let iconHTML = '';
     const ic = (iconClass || '').toString().trim();
+    let toastType = 'info';
+    const iconEl = document.createElement('i');
+    iconEl.className = 'app-toast-icon';
+
     if (!ic || ic === 'success' || ic === 'check' || ic === 'fa-circle-check') {
-        iconHTML = '<i class="fas fa-circle-check toast-success-icon"></i>';
+        toastType = 'success';
+        iconEl.className = 'fas fa-circle-check app-toast-icon';
     } else if (ic === 'danger' || ic === 'error' || ic === 'fa-circle-exclamation') {
-        iconHTML = '<i class="fas fa-circle-exclamation toast-success-icon" style="color:var(--danger, #ef4444);"></i>';
+        toastType = 'danger';
+        iconEl.className = 'fas fa-circle-exclamation app-toast-icon';
     } else if (ic === 'warning' || ic === 'fa-triangle-exclamation') {
-        iconHTML = '<i class="fas fa-triangle-exclamation toast-success-icon" style="color:var(--warning, #f59e0b);"></i>';
+        toastType = 'warning';
+        iconEl.className = 'fas fa-triangle-exclamation app-toast-icon';
     } else if (ic.startsWith('ti-') || ic.startsWith('ti ')) {
-        iconHTML = `<i class="ti ${ic} toast-success-icon"></i>`;
+        iconEl.className = `ti ${ic} app-toast-icon`;
     } else if (ic.startsWith('fa-') || ic.startsWith('fas ') || ic.startsWith('far ')) {
         const fullClass = ic.startsWith('fa') ? ic : 'fas ' + ic;
-        iconHTML = `<i class="${fullClass} toast-success-icon"></i>`;
+        iconEl.className = `${fullClass} app-toast-icon`;
     } else {
-        iconHTML = `<i class="fas ${ic} toast-success-icon"></i>`;
+        iconEl.className = `fas ${ic} app-toast-icon`;
     }
 
-    toast.innerHTML = `
-        ${iconHTML}
-        <span>${message}</span>
-    `;
-    
+    toast.classList.add(toastType);
+    toast.appendChild(iconEl);
+
+    const msgSpan = document.createElement('span');
+    msgSpan.className = 'app-toast-message';
+    msgSpan.textContent = message;
+    toast.appendChild(msgSpan);
+
+    const dismissBtn = document.createElement('button');
+    dismissBtn.type = 'button';
+    dismissBtn.className = 'app-toast-dismiss';
+    dismissBtn.setAttribute('aria-label', 'Dismiss toast');
+    dismissBtn.textContent = '×';
+    dismissBtn.onclick = () => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(-12px)';
+        setTimeout(() => toast.remove(), 250);
+    };
+    toast.appendChild(dismissBtn);
+
     container.appendChild(toast);
     
     if (window.attachDismissGesture) {
@@ -538,12 +560,12 @@ function showPremiumToast(message, iconClass = 'fa-circle-check', duration = 400
     setTimeout(() => {
         if (toast && toast.parentElement) {
             toast.style.animation = 'none';
-            toast.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
+            toast.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
             toast.style.opacity = '0';
-            toast.style.transform = 'translateY(-20px)';
+            toast.style.transform = 'translateY(-16px)';
             setTimeout(() => {
                 if (toast && toast.parentElement) toast.remove();
-            }, 400);
+            }, 300);
         }
     }, duration);
 }
@@ -623,187 +645,21 @@ window.init3DTiltCards = init3DTiltCards;
 </script>
 
 
-    {% if current_user %}
-    <!-- ═══════════════════════════════════════════════════════════
-         SLIM OPERATING SYSTEM STATUS HUD BAR
-         Full-width 40px bar pinned to the bottom of the viewport.
-         ═══════════════════════════════════════════════════════════ -->
-    <div class="cyber-hud-bar" id="cyber-hud">
-        <!-- Left Side: System status -->
-        <div class="hud-left">
-            <span class="hud-pulse-dot"></span>
-            <span class="hud-label">SYSTEM:</span>
-            <span class="hud-value" style="color: #10b981;">ONLINE</span>
-            <span class="hud-separator">|</span>
-            {% if current_user.company_domain == 'demo-corp.com' %}
-            <span class="hud-badge-amber">SANDBOX MODE</span>
-            {% else %}
-            <span class="hud-badge-green" style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); color: #10b981; border-radius: 3px; padding: 1px 6px; font-size: 9px; font-weight: 700; letter-spacing: 0.5px;">LIVE MODE</span>
-            {% endif %}
-        </div>
-        
 
-        
-        <!-- Right Side: Metrics and Signal -->
-        <div class="hud-right">
-            <span class="hud-metric">
-                <span class="hud-label">AGENT</span> <span class="hud-value">ACTIVE</span>
-            </span>
-            <span class="hud-separator">|</span>
-            <span class="hud-metric">
-                <span class="hud-label">ENGINE:</span> <span class="hud-value">READY</span>
-            </span>
-            <span class="hud-separator">|</span>
-            <div class="hud-signal" title="Signal Strength">
-                <span class="signal-bar bar-1"></span>
-                <span class="signal-bar bar-2"></span>
-                <span class="signal-bar bar-3"></span>
-            </div>
-        </div>
-    </div>
-
-    <style>
-    body.has-hud-bar .floating-campaign-strip {
-        bottom: 56px !important;
-    }
-    body.has-hud-bar .campaign-strip-trigger {
-        bottom: 64px !important;
-    }
-    .cyber-hud-bar {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        width: 100%;
-        height: 40px;
-        z-index: 20000;
-        background: rgba(2, 6, 23, 0.75);
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
-        border-top: 1px solid rgba(6, 182, 212, 0.15);
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 0 20px;
-        font-family: var(--font-mono), monospace;
-        font-size: 11px;
-        box-sizing: border-box;
-    }
-    .cyber-hud-bar .hud-left,
-    .cyber-hud-bar .hud-center,
-    .cyber-hud-bar .hud-right {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-    .cyber-hud-bar .hud-label {
-        color: #94a3b8;
-    }
-    .cyber-hud-bar .hud-value {
-        color: #06b6d4;
-        font-weight: 600;
-    }
-    .cyber-hud-bar .hud-separator {
-        color: rgba(255, 255, 255, 0.15);
-        margin: 0 4px;
-    }
-    .cyber-hud-bar .hud-pulse-dot {
-        width: 6px;
-        height: 6px;
-        background-color: #10b981;
-        border-radius: 50%;
-        box-shadow: 0 0 8px #10b981;
-        animation: hudPulseGreen 1.5s infinite ease-in-out;
-    }
-    @keyframes hudPulseGreen {
-        0%, 100% { opacity: 0.6; transform: scale(0.9); }
-        50% { opacity: 1; transform: scale(1.15); box-shadow: 0 0 10px #10b981; }
-    }
-    .cyber-hud-bar .hud-badge-amber {
-        background: rgba(245, 158, 11, 0.1);
-        border: 1px solid rgba(245, 158, 11, 0.3);
-        color: #f59e0b;
-        border-radius: 3px;
-        padding: 1px 6px;
-        font-size: 9px;
-        font-weight: 700;
-        letter-spacing: 0.5px;
-    }
-    .hud-signal {
-        display: flex;
-        align-items: flex-end;
-        gap: 2px;
-        height: 10px;
-        width: 14px;
-    }
-    .hud-signal .signal-bar {
-        width: 3px;
-        background: rgba(6, 182, 212, 0.2);
-        border-radius: 1px;
-    }
-    .hud-signal .signal-bar.bar-1 { height: 4px; }
-    .hud-signal .signal-bar.bar-2 { height: 7px; }
-    .hud-signal .signal-bar.bar-3 { height: 10px; }
-
-    @keyframes signalPulse {
-        0%, 100% { background: rgba(6, 182, 212, 0.2); }
-        33% { background: #06b6d4; }
-    }
-    .hud-signal .signal-bar.bar-1 { animation: signalPulse 1.5s infinite 0s; }
-    .hud-signal .signal-bar.bar-2 { animation: signalPulse 1.5s infinite 0.5s; }
-    .hud-signal .signal-bar.bar-3 { animation: signalPulse 1.5s infinite 1s; }
-    
-    /* Ensure page content has bottom padding when HUD is active */
-    body {
-        padding-bottom: 40px !important;
-    }
-    
-    /* Premium Technical Grid Footer */
-    .site-footer {
-        border-top: 1px solid var(--border-color);
-        background-color: #030712 !important;
-        position: relative;
-        overflow: hidden;
-        background-image: 
-            radial-gradient(circle at 80% 20%, rgba(6, 182, 212, 0.04) 0%, transparent 50%),
-            radial-gradient(circle at 10% 80%, rgba(99, 102, 241, 0.04) 0%, transparent 50%),
-            linear-gradient(rgba(255, 255, 255, 0.007) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(255, 255, 255, 0.007) 1px, transparent 1px) !important;
-        background-size: 100% 100%, 100% 100%, 32px 32px, 32px 32px !important;
-    }
-    body.light-theme .site-footer {
-        background-color: #f8fafc !important;
-        border-color: rgba(37, 99, 235, 0.12) !important;
-        background-image: 
-            radial-gradient(circle at 80% 20%, rgba(37, 99, 235, 0.03) 0%, transparent 50%),
-            radial-gradient(circle at 10% 80%, rgba(79, 70, 229, 0.03) 0%, transparent 50%),
-            linear-gradient(rgba(37, 99, 235, 0.015) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(37, 99, 235, 0.015) 1px, transparent 1px) !important;
-        background-size: 100% 100%, 100% 100%, 32px 32px, 32px 32px !important;
-    }
-    body.light-theme .site-footer h4,
-    body.light-theme .site-footer span:not(.logo-version-badge),
-    body.light-theme .site-footer p {
-        color: #0f172a !important;
-    }
-    body.light-theme .site-footer a {
-        color: #475569 !important;
-    }
-    body.light-theme .site-footer a:hover {
-        color: var(--primary) !important;
-    }
-    </style>
-
-    {% endif %}
 
     <!-- ═══════════════════════════════════════════════════════════
          UNIFIED NAVBAR INCLUDE
          ═══════════════════════════════════════════════════════════ -->
     {% include 'navbar.html' %}
-    
-    {% if request.path != '/' %}
-    <!-- Global Decorative Atmosphere Blobs -->
-    <div class="atmosphere-blob blob-1"></div>
-    <div class="atmosphere-blob blob-2"></div>
+
+    {% if service_status and service_status.degraded %}
+    <div id="service-status-banner" class="app-status-banner warning" role="status">
+        <div class="app-status-banner-content">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+            <span>{{ service_status.message or 'Simulation engine running with degraded performance.' }}</span>
+        </div>
+        <button type="button" class="app-status-banner-dismiss" onclick="this.closest('.app-status-banner').remove()" aria-label="Dismiss status banner">&times;</button>
+    </div>
     {% endif %}
 
     <!-- Keep tooltip div to prevent lower theme toggle script crashes -->
@@ -830,66 +686,293 @@ window.init3DTiltCards = init3DTiltCards;
     {% endif %}
 
     {% block content %}{% endblock %}
-    
+
     {% if request.path not in ['/login', '/signup'] %}
-    <footer class="site-footer" style="padding: 3rem 2rem 1.5rem; margin-top: auto;">
-        <div style="max-width: 1200px; margin: 0 auto;">
-            <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 2.5rem; margin-bottom: 2.5rem;">
+    <footer class="site-footer">
+        <!-- The Filament & Lure Wire Ocean Depth Scene -->
+        <div class="footer-filament-ocean" aria-hidden="true">
+            <!-- Ambient Caustics Glow Layer -->
+            <div class="ocean-caustics-layer"></div>
+
+            <!-- Single Full-Width Responsive Horizon & Ocean Depth SVG -->
+            <svg id="footer-filament-svg" class="filament-full-svg" viewBox="0 0 1440 320" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <!-- Glowing Horizontal Filament Gradient (left edge to right bend) -->
+                    <linearGradient id="oceanFilamentGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stop-color="var(--info)" stop-opacity="0.3"/>
+                        <stop offset="30%" stop-color="var(--primary)" stop-opacity="0.85"/>
+                        <stop offset="70%" stop-color="var(--primary)" stop-opacity="0.95"/>
+                        <stop offset="95%" stop-color="var(--info)" stop-opacity="0.95"/>
+                        <stop offset="100%" stop-color="var(--primary)" stop-opacity="1"/>
+                    </linearGradient>
+
+                    <!-- Downward Plunging String Gradient -->
+                    <linearGradient id="rigWireGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stop-color="var(--primary)" stop-opacity="1"/>
+                        <stop offset="55%" stop-color="var(--info)" stop-opacity="0.9"/>
+                        <stop offset="100%" stop-color="var(--primary)" stop-opacity="1"/>
+                    </linearGradient>
+
+                    <!-- Sub-surface caustic ocean gradient (deep oceanic blue, completely fills from top boundary y=0 downward) -->
+                    <linearGradient id="oceanSubsurfaceGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stop-color="var(--info)" stop-opacity="0.08"/>
+                        <stop offset="40%" stop-color="var(--primary)" stop-opacity="0.03"/>
+                        <stop offset="85%" stop-color="var(--info)" stop-opacity="0.015"/>
+                        <stop offset="100%" stop-color="transparent" stop-opacity="0"/>
+                    </linearGradient>
+
+                    <!-- Bobber float gradients -->
+                    <linearGradient id="rigBobberDomeGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stop-color="var(--primary)" stop-opacity="1"/>
+                        <stop offset="100%" stop-color="color-mix(in srgb, var(--primary) 70%, black)" stop-opacity="1"/>
+                    </linearGradient>
+
+                    <linearGradient id="rigBobberBodyGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stop-color="color-mix(in srgb, var(--primary) 60%, black)" stop-opacity="1"/>
+                        <stop offset="100%" stop-color="var(--bg-base)" stop-opacity="1"/>
+                    </linearGradient>
+
+                    <!-- Neon Glow filter -->
+                    <filter id="neonWireGlow" x="-30%" y="-30%" width="160%" height="160%">
+                        <feGaussianBlur stdDeviation="2" result="blur1"/>
+                        <feGaussianBlur stdDeviation="5" result="blur2"/>
+                        <feMerge>
+                            <feMergeNode in="blur2"/>
+                            <feMergeNode in="blur1"/>
+                            <feMergeNode in="SourceGraphic"/>
+                        </feMerge>
+                    </filter>
+
+                    <!-- Bobber bloom filter -->
+                    <filter id="rigBobberGlow" x="-50%" y="-50%" width="200%" height="200%">
+                        <feGaussianBlur stdDeviation="3.5" result="blurA"/>
+                        <feGaussianBlur stdDeviation="8" result="blurB"/>
+                        <feMerge>
+                            <feMergeNode in="blurB"/>
+                            <feMergeNode in="blurA"/>
+                            <feMergeNode in="SourceGraphic"/>
+                        </feMerge>
+                    </filter>
+                </defs>
+
+                <!-- Underwater atmospheric depth volume starting directly at footer boundary y=0 -->
+                <rect x="0" y="0" width="100%" height="100%" fill="url(#oceanSubsurfaceGrad)" />
+
+                <!-- Bathymetric depth grid lines and coordinates -->
+                <g id="footer-bathymetric-grid"></g>
+
+                <!-- Floating bioluminescent marine snow particles drifting at different depths -->
+                <g id="footer-marine-snow">
+                    <circle class="marine-snow-drift snow-slow" cx="160" cy="85" r="1.3" fill="var(--info)" opacity="0.4"/>
+                    <circle class="marine-snow-drift" cx="360" cy="155" r="1.6" fill="var(--primary)" opacity="0.35"/>
+                    <circle class="marine-snow-drift snow-fast" cx="620" cy="75" r="1.1" fill="var(--info)" opacity="0.4"/>
+                    <circle class="marine-snow-drift snow-slow" cx="890" cy="170" r="1.8" fill="var(--primary)" opacity="0.45"/>
+                    <circle class="marine-snow-drift" cx="1120" cy="110" r="1.3" fill="var(--info)" opacity="0.35"/>
+                </g>
+
+                <!-- Soft water meniscus glow beneath surface wire -->
+                <path id="footer-filament-wire-glow" fill="none" stroke="var(--info)" stroke-width="4.5" stroke-opacity="0.18" stroke-linecap="round" stroke-linejoin="round"/>
+
+                <!-- Continuous Fishing Wire: Horizontal at footer boundary y=1.5 -> curves downward at bendX -> plunges downward to bottom point. No wire after bend! -->
+                <path id="footer-filament-wire" fill="none" stroke="url(#oceanFilamentGrad)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" filter="url(#neonWireGlow)"/>
+
+                <!-- Water Entry Beacon and Sonar Ripples at the right bend curve -->
+                <g id="footer-bend-beacon"></g>
+
+                <!-- Steel Hook & Buoyant Bobber Anchored Exactly at the Bottom Point of the Plunging String -->
+                <g id="footer-hook-anchor">
+                    <g class="footer-hook-motion">
+                        <g class="bobber-float-group" filter="url(#rigBobberGlow)">
+                            <!-- Concentric depth ripples at hook depth -->
+                            <circle class="ocean-ripple ripple-a" cx="0" cy="0" r="14" stroke="var(--primary)" stroke-width="1" stroke-opacity="0.4" fill="none"/>
+                            <circle class="ocean-ripple ripple-b" cx="0" cy="0" r="28" stroke="var(--info)" stroke-width="0.75" stroke-opacity="0.22" fill="none"/>
+
+                            <!-- Buoyant balsa bobber float on the line above the hook -->
+                            <line x1="0" y1="-38" x2="0" y2="-32" stroke="var(--primary)" stroke-width="1.8" stroke-linecap="round"/>
+                            <circle cx="0" cy="-38" r="2" stroke="var(--primary)" stroke-width="1.5" fill="none"/>
+
+                            <!-- Upper float dome -->
+                            <path d="M -7 -20 C -7 -29 -3 -32 0 -32 C 3 -32 7 -29 7 -20 Z" fill="url(#rigBobberDomeGrad)"/>
+                            <!-- Center collar ring -->
+                            <rect x="-8" y="-20" width="16" height="3" rx="1.2" fill="var(--text-primary)" opacity="0.95"/>
+                            <!-- Lower float body -->
+                            <path d="M -7 -17 C -7 -8 -2 -1 0 1 C 2 -1 7 -8 7 -17 Z" fill="url(#rigBobberBodyGrad)"/>
+                            <!-- Specular highlight -->
+                            <path d="M -4 -25 C -2 -28 -1 -29 0 -29" stroke="var(--text-inverse)" stroke-width="1" opacity="0.75" fill="none"/>
+
+                            <!-- Connecting swivel eyelet at the bottom of the string (0, 0) -->
+                            <circle cx="0" cy="2" r="2.2" stroke="var(--primary)" stroke-width="1.5" fill="none"/>
+
+                            <!-- Authentic Steel J-Hook with sharp barb hanging down from the bottom point of the string -->
+                            <path d="M 0 4 L 0 16 C 0 28 12 28 12 16 L 12 12 M 12 12 L 8.5 8.5" 
+                                  stroke="var(--info)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                            <!-- Sharp hook barb gleam -->
+                            <circle cx="8.5" cy="8.5" r="1.1" fill="var(--text-inverse)"/>
+                        </g>
+                    </g>
+                </g>
+            </svg>
+        </div>
+
+        <div class="footer-inner">
+            <div class="footer-grid">
                 <!-- Brand -->
-                <div>
-                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 1rem;">
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
-                        <span style="font-family: var(--font-sans); font-size: 1.2rem; font-weight: 800; color: #fff;">PhishSim<span style="color: var(--primary);">.ai</span></span>
+                <div class="footer-brand">
+                    <a href="/" class="footer-brand-title">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                        <span>PhishSim<span style="color: var(--primary);">.ai</span></span>
+                    </a>
+                    <p class="footer-brand-desc">Autonomous phishing simulation and automated human defense platform.</p>
+                    <div class="footer-status-pill">
+                        <span class="status-indicator-dot"></span>
+                        <span>Fleet Defenses Operational</span>
                     </div>
-                    <p style="color: #475569; font-size: 0.88rem; line-height: 1.6; margin: 0; max-width: 250px;">AI-powered phishing simulation platform. Train your team, measure risk, and build a stronger human firewall.</p>
                 </div>
+
                 <!-- Product -->
                 <div>
-                    <h4 style="color: #fff; font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 1rem; font-family: var(--font-mono);">Product</h4>
-                    <ul style="list-style: none; padding: 0; display: flex; flex-direction: column; gap: 0.6rem;">
-                        <li><a href="/demo-login" style="color: #64748b; font-size: 0.88rem; text-decoration: none; transition: color 0.2s;" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='#64748b'">Live Demo</a></li>
-                        <li><a href="/signup" style="color: #64748b; font-size: 0.88rem; text-decoration: none; transition: color 0.2s;" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='#64748b'">Get Started</a></li>
-                        <li><a href="/#attack-flow" style="color: #64748b; font-size: 0.88rem; text-decoration: none; transition: color 0.2s;" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='#64748b'">How It Works</a></li>
-                        <li><a href="/dashboard" style="color: #64748b; font-size: 0.88rem; text-decoration: none; transition: color 0.2s;" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='#64748b'">Dashboard</a></li>
-                        <li><a href="/exposure-report" style="color: var(--text-muted); font-size: 0.88rem; text-decoration: none; transition: color 0.2s;" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--text-muted)'">PhishRecon Audit</a></li>
+                    <h4 class="footer-column-title"><i class="ti ti-anchor" style="margin-right: 6px; color: var(--primary);"></i> Product</h4>
+                    <ul class="footer-links">
+                        <li><a href="/demo-login">Live Interactive Demo</a></li>
+                        <li><a href="/signup">Get Started Free</a></li>
+                        <li><a href="/#how-it-works">How It Works</a></li>
+                        <li><a href="/dashboard">Security Dashboard</a></li>
+                        <li><a href="/exposure-report">PhishRecon Audit <span class="footer-pill-tag">New</span></a></li>
                     </ul>
                 </div>
-                <!-- Scenarios -->
+
+                <!-- Resources -->
                 <div>
-                    <h4 style="color: #fff; font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 1rem; font-family: var(--font-mono);">Scenarios</h4>
-                    <ul style="list-style: none; padding: 0; display: flex; flex-direction: column; gap: 0.6rem;">
-                        <li><span style="color: #64748b; font-size: 0.88rem;">CEO Fraud</span></li>
-                        <li><span style="color: #64748b; font-size: 0.88rem;">IT Alert</span></li>
-                        <li><span style="color: #64748b; font-size: 0.88rem;">HR Update</span></li>
-                        <li><span style="color: #64748b; font-size: 0.88rem;">Urgent Invoice</span></li>
+                    <h4 class="footer-column-title"><i class="ti ti-radar" style="margin-right: 6px; color: var(--info);"></i> Resources</h4>
+                    <ul class="footer-links">
+                        <li><a href="/threat-analyzer">Threat Analyzer</a></li>
+                        <li><a href="/header-analyzer">Header Analyzer</a></li>
+                        <li><a href="/url-decoder">URL Decoder</a></li>
+                        <li><a href="/password-breach">Password Breach Check</a></li>
+                        <li><a href="/briefing">AI Risk Advisor Briefing</a></li>
+                        <li><a href="/about">About & FAQ</a></li>
                     </ul>
                 </div>
+
                 <!-- Legal -->
                 <div>
-                    <h4 style="color: #fff; font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 1rem; font-family: var(--font-mono);">Legal</h4>
-                    <ul style="list-style: none; padding: 0; display: flex; flex-direction: column; gap: 0.6rem;">
-                        <li><a href="/acceptable-use" style="color: #64748b; font-size: 0.88rem; text-decoration: none; transition: color 0.2s;" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='#64748b'">Authorized Use Only</a></li>
-                        <li><a href="/data-handling-policy" style="color: #64748b; font-size: 0.88rem; text-decoration: none; transition: color 0.2s;" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='#64748b'">No Credentials Collected</a></li>
-                        <li><a href="/consent-policy" style="color: #64748b; font-size: 0.88rem; text-decoration: none; transition: color 0.2s;" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='#64748b'">Consent Required</a></li>
+                    <h4 class="footer-column-title"><i class="ti ti-shield-check" style="margin-right: 6px; color: var(--warning);"></i> Legal</h4>
+                    <ul class="footer-links">
+                        <li><a href="/acceptable-use">Authorized Use Policy</a></li>
+                        <li><a href="/data-handling-policy">Data Handling Policy</a></li>
+                        <li><a href="/consent-policy">Consent Verification</a></li>
+                        <li><a href="/terms">Terms of Service</a></li>
+                        <li><a href="/privacy">Privacy Notice</a></li>
                     </ul>
                 </div>
             </div>
-            <div style="border-top: 1px solid var(--border-color); padding-top: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
-                <p style="color: var(--text-muted); font-size: 0.82rem; margin: 0;">
-                    &copy; 2026 PhishSim AI &mdash; Built by Kavy Sharma. For authorized security training only.
-                    <span style="margin: 0 8px; color: #334155;">|</span>
-                    <a href="/terms" style="color: var(--text-muted); text-decoration: none; transition: color 0.2s;" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--text-muted)'">Terms</a>
-                    <span style="margin: 0 8px; color: #334155;">|</span>
-                    <a href="/privacy" style="color: var(--text-muted); text-decoration: none; transition: color 0.2s;" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--text-muted)'">Privacy</a>
-                    <span style="margin: 0 8px; color: #334155;">|</span>
-                    <a href="/about" style="color: var(--text-muted); text-decoration: none; transition: color 0.2s;" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--text-muted)'">About</a>
-                </p>
-                <div style="display: flex; gap: 1rem;">
-                    <a href="https://github.com/Kavy-Sharma/phishsim-core" target="_blank" rel="noopener noreferrer" aria-label="GitHub Repository" style="color: #334155; font-size: 0.85rem; transition: color 0.2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#334155'"><i class="ti ti-brand-github"></i></a>
+
+            <div class="footer-bottom">
+                <div class="footer-copyright">
+                    <span>&copy; 2026 PhishSim AI. For authorized organizational security training only.</span>
+                    <span>&bull;</span>
+                    <a href="/terms">Terms</a>
+                    <span>&bull;</span>
+                    <a href="/privacy">Privacy</a>
+                    <span>&bull;</span>
+                    <a href="/about">About</a>
+                    <span>&bull;</span>
+                    <a href="/about#faq">Systems</a>
+                    <svg class="filament-star-mark" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                        <path d="M12 0L14.59 9.41L24 12L14.59 14.59L12 24L9.41 14.59L0 12L9.41 9.41L12 0Z"/>
+                    </svg>
+                </div>
+                <div class="footer-social-links">
+                    <span class="footer-uptime-tag"><i class="ti ti-bolt" style="color: var(--primary);"></i> 99.98% Uptime</span>
+                    <a href="https://github.com/Kavy-Sharma/phishsim-core" target="_blank" rel="noopener noreferrer" aria-label="GitHub Repository" class="footer-social-link"><i class="ti ti-brand-github" aria-hidden="true"></i></a>
                 </div>
             </div>
         </div>
     </footer>
+    <script>
+    (function initFooterFishingRig() {
+        function updateFooterFishingRig() {
+            const footer = document.querySelector('.site-footer');
+            const svg = document.getElementById('footer-filament-svg');
+            if (!footer || !svg) return;
+
+            const w = Math.max(320, footer.offsetWidth || window.innerWidth || 1200);
+            const h = Math.max(180, footer.offsetHeight || 300);
+
+            svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+            svg.setAttribute('width', String(w));
+            svg.setAttribute('height', String(h));
+
+            // Wire sits right on the top boundary of the footer
+            const wireY = 1.5;
+            // Bend is almost at the end of the window according to width (e.g. w - 65px)
+            const bendX = Math.max(140, w - 65);
+            // Plunge down into the depths: bottom terminal point of string
+            const bottomY = Math.max(140, Math.min(h - 52, 215));
+
+            // Continuous fishing line:
+            // Horizontal across footer boundary -> smooth curve at bendX -> vertical plunge to bottomY
+            // After bendX, NO horizontal wire exists!
+            const pathD = `M 0 ${wireY} L ${bendX - 22} ${wireY} Q ${bendX} ${wireY} ${bendX} 23.5 C ${bendX + 8} 75 ${bendX - 8} 125 ${bendX} ${bottomY}`;
+            const glowD = `M 0 ${wireY + 1} L ${bendX - 22} ${wireY + 1} Q ${bendX} ${wireY + 1} ${bendX} 24.5 C ${bendX + 8} 76 ${bendX - 8} 126 ${bendX} ${bottomY}`;
+
+            const wireEl = document.getElementById('footer-filament-wire');
+            const glowEl = document.getElementById('footer-filament-wire-glow');
+            if (wireEl) wireEl.setAttribute('d', pathD);
+            if (glowEl) glowEl.setAttribute('d', glowD);
+
+            // Hook is tied directly to the bottom point of the string (bendX, bottomY)
+            const hookAnchor = document.getElementById('footer-hook-anchor');
+            if (hookAnchor) {
+                hookAnchor.setAttribute('transform', `translate(${bendX}, ${bottomY})`);
+            }
+
+            // Water Entry Beacon & Ripples at the right bend
+            const beaconGroup = document.getElementById('footer-bend-beacon');
+            if (beaconGroup) {
+                beaconGroup.innerHTML = `
+                    <circle cx="${bendX}" cy="23.5" r="4" fill="var(--primary)" filter="url(#neonWireGlow)"/>
+                    <circle cx="${bendX}" cy="23.5" r="1.8" fill="var(--text-inverse)"/>
+                    <circle class="ocean-ripple ripple-a" cx="${bendX}" cy="23.5" r="14" stroke="var(--primary)" stroke-width="1.2" stroke-opacity="0.5" fill="none"/>
+                    <circle class="ocean-ripple ripple-b" cx="${bendX}" cy="23.5" r="28" stroke="var(--info)" stroke-width="0.8" stroke-opacity="0.3" fill="none"/>
+                    <circle class="ocean-ripple ripple-c" cx="${bendX}" cy="23.5" r="44" stroke="var(--primary)" stroke-width="0.6" stroke-opacity="0.18" fill="none"/>
+                    <text x="${Math.max(10, bendX - 28)}" y="18" text-anchor="end" fill="var(--text-muted)" font-family="var(--font-mono)" font-size="9" opacity="0.45">0m</text>
+                    <text x="${Math.max(10, bendX - 28)}" y="115" text-anchor="end" fill="var(--text-muted)" font-family="var(--font-mono)" font-size="9" opacity="0.35">-10m</text>
+                    <text x="${Math.max(10, bendX - 28)}" y="${bottomY - 8}" text-anchor="end" fill="var(--text-muted)" font-family="var(--font-mono)" font-size="9" opacity="0.28">-20m</text>
+                `;
+            }
+
+            // Bathymetric depth grid lines (stopping at bendX)
+            const gridGroup = document.getElementById('footer-bathymetric-grid');
+            if (gridGroup) {
+                gridGroup.innerHTML = `
+                    <line x1="0" y1="65" x2="${bendX}" y2="65" stroke="var(--info)" stroke-dasharray="2 10" stroke-width="0.75" stroke-opacity="0.14"/>
+                    <line x1="0" y1="135" x2="${bendX}" y2="135" stroke="var(--info)" stroke-dasharray="2 10" stroke-width="0.75" stroke-opacity="0.11"/>
+                    <line x1="0" y1="205" x2="${bendX}" y2="205" stroke="var(--info)" stroke-dasharray="2 10" stroke-width="0.75" stroke-opacity="0.08"/>
+                    <text x="24" y="16" fill="var(--text-muted)" font-family="var(--font-mono)" font-size="10" opacity="0.45">0m</text>
+                    <text x="24" y="30" fill="var(--text-muted)" font-family="var(--font-mono)" font-size="8" opacity="0.22">X: 234.10092</text>
+                    <text x="24" y="40" fill="var(--text-muted)" font-family="var(--font-mono)" font-size="8" opacity="0.22">Y: 23.001000</text>
+                    <text x="24" y="135" fill="var(--text-muted)" font-family="var(--font-mono)" font-size="10" opacity="0.32">-10m</text>
+                    <text x="24" y="205" fill="var(--text-muted)" font-family="var(--font-mono)" font-size="10" opacity="0.25">-20m</text>
+                `;
+            }
+        }
+
+        window.updateFooterFishingRig = updateFooterFishingRig;
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', updateFooterFishingRig);
+        } else {
+            updateFooterFishingRig();
+        }
+        window.addEventListener('resize', updateFooterFishingRig);
+        window.addEventListener('load', updateFooterFishingRig);
+
+        const footerEl = document.querySelector('.site-footer');
+        if (footerEl && window.ResizeObserver) {
+            new ResizeObserver(updateFooterFishingRig).observe(footerEl);
+        }
+    })();
+    </script>
     {% endif %}
     <script>
         (function() {
@@ -1132,71 +1215,6 @@ window.init3DTiltCards = init3DTiltCards;
             })();
         });
     </script>
-    {% if current_user and latest_active_campaign %}
-    <!-- Floating Persistent Active Campaign Strip -->
-    <div class="floating-campaign-strip collapsed" id="campaign-strip">
-        <div class="strip-content">
-            <div class="strip-pulse-dot status-{{ latest_active_campaign.status }}" title="Status: {{ latest_active_campaign.status }}"></div>
-            <div class="strip-text" style="color: var(--text-main);">
-                <span style="font-weight: 700; color: var(--accent-cyan);">Latest Campaign:</span> 
-                <strong>{{ latest_active_campaign.name }}</strong> 
-                <span style="color: var(--text-muted); margin: 0 8px;">|</span>
-                <span>Sent: <strong style="color: var(--text-main);">{{ latest_active_campaign.sent }}</strong></span>
-                <span style="color: var(--text-muted); margin: 0 8px;">|</span>
-                <span>Click Rate: <strong style="color: {% if latest_active_campaign.click_rate >= 20 %}#ef4444{% elif latest_active_campaign.click_rate >= 5 %}#f59e0b{% else %}#10b981{% endif %};">{{ latest_active_campaign.click_rate }}%</strong></span>
-            </div>
-            <a href="/campaign-report/{{ latest_active_campaign.id }}" class="strip-action-btn">
-                View Report <i class="ti ti-chart-bar" style="vertical-align: middle; margin-left: 2px;"></i>
-            </a>
-            <button type="button" class="strip-close-btn" onclick="closeCampaignStrip()" aria-label="Close campaign strip">
-                <i class="ti ti-x"></i>
-            </button>
-        </div>
-    </div>
-    
-    <!-- Floating Open Trigger Icon -->
-    <div class="campaign-strip-trigger" id="campaign-strip-trigger" onclick="openCampaignStrip()" title="Open Latest Campaign Strip">
-        <i class="ti ti-chart-line"></i>
-    </div>
-
-    <script>
-    function closeCampaignStrip() {
-        const strip = document.getElementById('campaign-strip');
-        const trigger = document.getElementById('campaign-strip-trigger');
-        if (strip && trigger) {
-            strip.classList.add('collapsed');
-            trigger.classList.add('visible');
-            localStorage.setItem('campaign_strip_closed', 'true');
-        }
-    }
-    
-    function openCampaignStrip() {
-        const strip = document.getElementById('campaign-strip');
-        const trigger = document.getElementById('campaign-strip-trigger');
-        if (strip && trigger) {
-            strip.classList.remove('collapsed');
-            trigger.classList.remove('visible');
-            localStorage.setItem('campaign_strip_closed', 'false');
-        }
-    }
-
-    document.addEventListener("DOMContentLoaded", function() {
-        const strip = document.getElementById('campaign-strip');
-        const trigger = document.getElementById('campaign-strip-trigger');
-        const isClosed = localStorage.getItem('campaign_strip_closed');
-        
-        if (strip && trigger) {
-            if (isClosed === 'true') {
-                strip.classList.add('collapsed');
-                trigger.classList.add('visible');
-            } else {
-                strip.classList.remove('collapsed');
-                trigger.classList.remove('visible');
-            }
-        }
-    });
-    </script>
-    {% endif %}
     <!-- Global Holographic Cursor Dot -->
     <div class="cursor-glow-dot" id="cursor-glow-dot"></div>
     <script>
@@ -1654,12 +1672,97 @@ window.init3DTiltCards = init3DTiltCards;
 
     document.addEventListener('DOMContentLoaded', () => {
         // Attach gesture to existing elements
-        const selectors = ['.swipeable-alert', '.flash-message', '.sandbox-banner', '.premium-toast', '.cyber-hud-bar', '.floating-campaign-strip'];
+        const selectors = ['.swipeable-alert', '.flash-message', '.sandbox-banner', '.premium-toast', '.floating-campaign-strip'];
         selectors.forEach(selector => {
             document.querySelectorAll(selector).forEach(el => {
                 window.attachDismissGesture(el);
             });
         });
+
+        // ── Auto-hide Lure mascot when any modal/dialog is open ──
+        function checkAppModalState() {
+            const hasOpenModal = !!(
+                document.querySelector('dialog[open]:not(#command-palette-dialog)') ||
+                document.querySelector('.app-confirm-dialog[open]') ||
+                document.querySelector('.modal.show') ||
+                document.querySelector('.confirm-modal.show') ||
+                document.querySelector('.modal-backdrop') ||
+                document.querySelector('.pb-modal-backdrop') ||
+                document.querySelector('.modal.is-active, .dialog.is-active') ||
+                document.querySelector('#profile-confirm-modal:not([style*="display: none"]):not([style*="display:none"])') ||
+                document.querySelector('#otp-verify-modal:not([style*="display: none"]):not([style*="display:none"])') ||
+                document.querySelector('#ta-confirm-modal:not([style*="display: none"]):not([style*="display:none"])')
+            );
+            document.body.classList.toggle('has-modal-open', hasOpenModal);
+        }
+        window.checkAppModalState = checkAppModalState;
+        checkAppModalState();
+
+        const modalObserver = new MutationObserver(checkAppModalState);
+        modalObserver.observe(document.body, { attributes: true, subtree: true, attributeFilter: ['style', 'class', 'open', 'aria-hidden'] });
+
+        // ── Global Accessible Confirm Dialog Helper ──
+        window.showConfirmDialog = function({ title, message, confirmText = 'Confirm', isDestructive = false, onConfirm }) {
+            let dialog = document.getElementById('global-confirm-dialog');
+            if (!dialog) {
+                dialog = document.createElement('dialog');
+                dialog.id = 'global-confirm-dialog';
+                dialog.className = 'app-confirm-dialog';
+                document.body.appendChild(dialog);
+            }
+            while (dialog.firstChild) dialog.removeChild(dialog.firstChild);
+
+            const header = document.createElement('div');
+            header.className = 'confirm-dialog-header';
+
+            const icon = document.createElement('div');
+            icon.className = `confirm-dialog-icon ${isDestructive ? 'danger' : 'warning'}`;
+            const iconI = document.createElement('i');
+            iconI.className = isDestructive ? 'fas fa-triangle-exclamation' : 'fas fa-circle-question';
+            icon.appendChild(iconI);
+            header.appendChild(icon);
+
+            const titleEl = document.createElement('h3');
+            titleEl.className = 'confirm-dialog-title';
+            titleEl.textContent = title;
+            header.appendChild(titleEl);
+            dialog.appendChild(header);
+
+            const desc = document.createElement('p');
+            desc.className = 'confirm-dialog-desc';
+            desc.textContent = message;
+            dialog.appendChild(desc);
+
+            const actions = document.createElement('div');
+            actions.className = 'confirm-dialog-actions';
+
+            const cancelBtn = document.createElement('button');
+            cancelBtn.type = 'button';
+            cancelBtn.className = 'btn btn-secondary';
+            cancelBtn.textContent = 'Cancel';
+            cancelBtn.onclick = () => dialog.close();
+            actions.appendChild(cancelBtn);
+
+            const confirmBtn = document.createElement('button');
+            confirmBtn.type = 'button';
+            confirmBtn.className = isDestructive ? 'btn btn-destructive' : 'btn btn-primary';
+            confirmBtn.textContent = confirmText;
+            confirmBtn.onclick = () => {
+                dialog.close();
+                if (typeof onConfirm === 'function') onConfirm();
+            };
+            actions.appendChild(confirmBtn);
+
+            dialog.appendChild(actions);
+
+            if (typeof dialog.showModal === 'function') {
+                dialog.showModal();
+            } else {
+                dialog.setAttribute('open', '');
+            }
+            checkAppModalState();
+            dialog.addEventListener('close', () => checkAppModalState(), { once: true });
+        };
 
         // Setup MutationObserver to watch for dynamically added notifications
         const observer = new MutationObserver((mutations) => {

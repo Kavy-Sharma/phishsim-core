@@ -4834,6 +4834,20 @@
     if (host && host.parentNode !== document.body) {
       document.body.appendChild(host);
     }
+    // Restore dragged position if previously placed anywhere on the website
+    try {
+      const savedX = localStorage.getItem('lure_mascot_x');
+      const savedY = localStorage.getItem('lure_mascot_y');
+      if (savedX !== null && savedY !== null && host) {
+        const x = Math.max(4, Math.min(parseInt(savedX, 10), window.innerWidth - 110));
+        const y = Math.max(4, Math.min(parseInt(savedY, 10), window.innerHeight - 110));
+        host.style.setProperty('position', 'fixed', 'important');
+        host.style.setProperty('left', x + 'px', 'important');
+        host.style.setProperty('top', y + 'px', 'important');
+        host.style.setProperty('right', 'auto', 'important');
+        host.style.setProperty('bottom', 'auto', 'important');
+      }
+    } catch(err) {}
     const panel     = document.getElementById('pb-panel');
     const teaser    = document.getElementById('pb-teaser');
     const fvPopover = document.getElementById('pb-first-visit-popover');
@@ -5091,7 +5105,12 @@
       const badge = document.getElementById('pb-avatar-badge');
       if (!badge) return;
 
-      if (unseenCalloutsCount === 0) {
+      const callout = document.getElementById('pb-callout');
+      const popover = document.getElementById('pb-speech-popover');
+      const hasActiveMsg = (callout && callout.classList.contains('pb-show')) ||
+                           (popover && popover.style.display !== 'none');
+
+      if (unseenCalloutsCount === 0 || !hasActiveMsg) {
         badge.style.display = 'none';
         badge.textContent = '';
         badge.className = '';
@@ -5506,25 +5525,21 @@
       }
     });
 
-    /* ── Bounded drag — pointer events (not HTML5 drag API) ─────
-       Bound zone: right 25% of viewport, full height
-       Disabled on mobile (≤768px)                                */
-    const DRAG_ZONE_FRAC = 0.25; // right 25%
-    const DRAG_MARGIN    = 10;   // px from viewport edges
+    /* ── Unrestricted Anywhere Drag — pointer & mouse events ───
+       Allow dragging Lure mascot anywhere across the entire viewport */
     let drag = null;
-
-    function isMobile() { return window.innerWidth <= 768; }
 
     if (window.PointerEvent) {
       document.getElementById('pb-drag-handle').addEventListener('pointerdown', startDrag);
       avatar.addEventListener('pointerdown', startDrag);
-      document.addEventListener('pointermove', onDragMove);
-      document.addEventListener('pointerup', onDragEnd);
+      window.addEventListener('pointermove', onDragMove, { passive: false });
+      window.addEventListener('pointerup', onDragEnd);
+      window.addEventListener('pointercancel', onDragEnd);
     } else {
       document.getElementById('pb-drag-handle').addEventListener('mousedown', startDrag);
       avatar.addEventListener('mousedown', startDrag);
-      document.addEventListener('mousemove', onDragMove);
-      document.addEventListener('mouseup', onDragEnd);
+      window.addEventListener('mousemove', onDragMove);
+      window.addEventListener('mouseup', onDragEnd);
     }
 
     // Also allow dragging from the bubble header during tour mode
@@ -5545,17 +5560,15 @@
     }
 
     function startDrag(e) {
-      if (isMobile()) return;
       if (panel.classList.contains('pb-panel-maximized')) return;
-      if (e.target.closest('.pb-icon-btn') || e.target.closest('.pb-tab-btn') || e.target.closest('button')) return;
       
-      const targetEl = e.currentTarget;
-      if (e.pointerId && targetEl.setPointerCapture) {
-        try { targetEl.setPointerCapture(e.pointerId); } catch(err) {}
-      }
-
       const isPanel = Boolean(e.target.closest('#pb-drag-handle'));
       if (isPanel) {
+        if (e.target.closest('.pb-icon-btn') || e.target.closest('.pb-tab-btn') || e.target.closest('button')) return;
+        const targetEl = e.currentTarget;
+        if (e.pointerId && targetEl.setPointerCapture) {
+          try { targetEl.setPointerCapture(e.pointerId); } catch(err) {}
+        }
         const panelR = panel.getBoundingClientRect();
         drag = {
           pointerId: e.pointerId || null,
@@ -5570,6 +5583,11 @@
           hasMoved:  false
         };
       } else {
+        // Dragging the Lure mascot avatar
+        const targetEl = e.currentTarget;
+        if (e.pointerId && targetEl.setPointerCapture) {
+          try { targetEl.setPointerCapture(e.pointerId); } catch(err) {}
+        }
         const hostR = host.getBoundingClientRect();
         const avatarW = avatar.offsetWidth || 110;
         const avatarH = avatar.offsetHeight || 110;
@@ -5589,12 +5607,15 @@
     }
 
     function onDragMove(e) {
-      if (!drag || isMobile()) return;
+      if (!drag) return;
       const dx = e.clientX - drag.startX;
       const dy = e.clientY - drag.startY;
 
       if (!drag.hasMoved && (Math.abs(dx) > 3 || Math.abs(dy) > 3)) {
         drag.hasMoved = true;
+        if (!drag.isPanel && host) {
+          host.classList.add('pb-dragging');
+        }
       }
 
       if (!drag.hasMoved) return;
@@ -5621,10 +5642,10 @@
         return;
       }
 
-      // Drag mascot avatar
+      // Drag mascot avatar anywhere across the whole website!
       let newLeft = drag.origLeft + dx;
       let newTop  = drag.origTop  + dy;
-      const margin = 8;
+      const margin = 6;
 
       newLeft = Math.max(margin, Math.min(newLeft, window.innerWidth - drag.avatarW - margin));
       newTop  = Math.max(margin, Math.min(newTop, window.innerHeight - drag.avatarH - margin));
@@ -5645,10 +5666,21 @@
         try { drag.target.releasePointerCapture(drag.pointerId); } catch(err) {}
       }
       const wasDragged = drag.hasMoved;
+      const wasPanel   = drag.isPanel;
       drag = null;
+      if (host) host.classList.remove('pb-dragging');
+
       if (wasDragged) {
         preventClick = true;
-        setTimeout(() => { preventClick = false; }, 50);
+        setTimeout(() => { preventClick = false; }, 80);
+
+        if (!wasPanel && host) {
+          try {
+            const hostR = host.getBoundingClientRect();
+            localStorage.setItem('lure_mascot_x', Math.round(hostR.left));
+            localStorage.setItem('lure_mascot_y', Math.round(hostR.top));
+          } catch(err) {}
+        }
       }
     }
 
@@ -8827,6 +8859,8 @@
       calloutEl.setAttribute('aria-hidden', 'true');
       calloutEl.style.cursor = 'default';
       calloutTourCallback = null;
+      unseenCalloutsCount = 0;
+      updateAvatarBadge();
     }
 
     // Dismiss callout when mouse moves back down into the viewport
