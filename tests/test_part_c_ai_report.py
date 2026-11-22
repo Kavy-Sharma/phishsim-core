@@ -122,12 +122,28 @@ def test_reports_demo_and_campaign_report_endpoints():
     assert res_zero.status_code == 200
 
 
+def ensure_test_user_id():
+    db = get_db_connection()
+    c = db.cursor(dictionary=True)
+    c.execute("SELECT id FROM users LIMIT 1")
+    row = c.fetchone()
+    if not row:
+        c.execute("INSERT INTO users (name, email, role) VALUES ('Admin', 'admin@phishsim.ai', 'admin')")
+        db.commit()
+        uid = c.lastrowid
+    else:
+        uid = row["id"]
+    c.close()
+    db.close()
+    return uid
+
+
 def test_pdf_export_route():
     """Verify /download-report/0 returns clean PDF bytes with 200 OK."""
     with app.test_client() as client:
         # Log in as demo or simulate user session
         with client.session_transaction() as sess:
-            sess["user_id"] = 1
+            sess["user_id"] = ensure_test_user_id()
         
         res = client.get("/download-report/0")
         assert res.status_code == 200
@@ -139,7 +155,7 @@ def test_csv_export_route():
     """Verify /export-campaign-csv/0 returns CSV attachment with telemetry headers."""
     with app.test_client() as client:
         with client.session_transaction() as sess:
-            sess["user_id"] = 1
+            sess["user_id"] = ensure_test_user_id()
         
         res = client.get("/export-campaign-csv/0")
         assert res.status_code == 200
@@ -153,7 +169,7 @@ def test_remediation_action_api_endpoint():
     """Verify POST /api/campaign/<id>/action/<key> executes and returns JSON."""
     with app.test_client() as client:
         with client.session_transaction() as sess:
-            sess["user_id"] = 1
+            sess["user_id"] = ensure_test_user_id()
         
         # In test mode or with csrf disabled for test
         res = client.post("/api/campaign/0/action/assign_training", headers={"X-Requested-With": "XMLHttpRequest"})

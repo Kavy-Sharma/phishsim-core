@@ -1193,26 +1193,50 @@ window.init3DTiltCards = init3DTiltCards;
                 tooltipTimeout = setTimeout(() => { tooltip.classList.remove("show"); }, 2200);
             }
 
+            function resolveTheme(pref) {
+                if (pref === "system") {
+                    const systemDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+                    return systemDark ? "dark" : "light";
+                }
+                return pref === "light" ? "light" : "dark";
+            }
+
             function applyTheme(theme, showMsg = true) {
-                const isLight = theme === "light";
-                document.documentElement.setAttribute("data-theme", theme);
+                const effective = resolveTheme(theme);
+                const isLight = effective === "light";
+                document.documentElement.setAttribute("data-theme", effective);
                 body.classList.toggle("light-theme", isLight);
                 if (toggle) {
                     toggle.setAttribute("aria-label", isLight ? "Switch to dark mode" : "Switch to light mode");
                     toggle.setAttribute("title", isLight ? "Switch to dark mode" : "Switch to light mode");
                 }
                 localStorage.setItem(storageKey, theme);
+                localStorage.setItem("theme", theme);
                 
                 if (showMsg && tooltip) {
-                    showTooltip(isLight ? "Light Mode" : "Dark Mode", isLight);
+                    const label = theme === "system" ? `System (${isLight ? "Light" : "Dark"})` : (isLight ? "Light Mode" : "Dark Mode");
+                    showTooltip(label, isLight);
                 }
 
                 // Dispatch event so other scripts (like charts) can re-render
-                window.dispatchEvent(new CustomEvent('theme-changed', { detail: { theme } }));
+                window.dispatchEvent(new CustomEvent('theme-changed', { detail: { theme, effectiveTheme: effective } }));
             }
 
-            const savedTheme = localStorage.getItem(storageKey) || localStorage.getItem("theme");
-            applyTheme(savedTheme === "light" ? "light" : "dark", false);
+            // Expose globally so preferences panel can trigger it directly
+            window.applyPhishSimTheme = applyTheme;
+
+            // Listen for OS system theme changes
+            if (window.matchMedia) {
+                window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", (e) => {
+                    const current = localStorage.getItem(storageKey) || localStorage.getItem("theme") || "system";
+                    if (current === "system") {
+                        applyTheme("system", false);
+                    }
+                });
+            }
+
+            const savedTheme = localStorage.getItem(storageKey) || localStorage.getItem("theme") || "system";
+            applyTheme(savedTheme, false);
         })();
     </script>
     <script>

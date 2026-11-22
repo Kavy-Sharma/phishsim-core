@@ -4,6 +4,8 @@ import os
 import mysql.connector
 import csv
 import io
+import json
+import zipfile
 import re
 import time
 import uuid
@@ -468,7 +470,17 @@ def ensure_auth_schema(cursor):
         # Stripe billing columns
         "ALTER TABLE users ADD COLUMN stripe_customer_id VARCHAR(255)",
         "ALTER TABLE users ADD COLUMN stripe_subscription_id VARCHAR(255)",
-        "ALTER TABLE users ADD COLUMN pro_expires_at DATETIME NULL"
+        "ALTER TABLE users ADD COLUMN pro_expires_at DATETIME NULL",
+        # Part E Profile preferences & 2FA backup codes
+        "ALTER TABLE users ADD COLUMN theme VARCHAR(20) DEFAULT 'system'",
+        "ALTER TABLE users ADD COLUMN timezone VARCHAR(50) DEFAULT 'UTC'",
+        "ALTER TABLE users ADD COLUMN date_format VARCHAR(20) DEFAULT 'YYYY-MM-DD'",
+        "ALTER TABLE users ADD COLUMN default_delivery_mode VARCHAR(30) DEFAULT 'mailtrap'",
+        "ALTER TABLE users ADD COLUMN default_scenario VARCHAR(50) DEFAULT 'it_reset'",
+        "ALTER TABLE users ADD COLUMN notify_report_ready BOOLEAN DEFAULT TRUE",
+        "ALTER TABLE users ADD COLUMN notify_campaign_finished BOOLEAN DEFAULT TRUE",
+        "ALTER TABLE users ADD COLUMN notify_weekly_briefing BOOLEAN DEFAULT TRUE",
+        "ALTER TABLE users ADD COLUMN two_factor_backup_codes TEXT"
     ]:
         try:
             cursor.execute(ddl)
@@ -866,24 +878,14 @@ def current_user():
     try:
         db = get_db_connection()
         cursor = db.cursor(dictionary=True)
-        cursor.execute("""
-            SELECT id, name, email, role, company_domain, email_verified,
-                   email_notifications, two_factor_enabled, last_login_at,
-                   stripe_customer_id, stripe_subscription_id, pro_expires_at
-            FROM users WHERE id = %s
-        """, (user_id,))
+        cursor.execute("SELECT * FROM users WHERE id = %s", (user_id,))
         user = cursor.fetchone()
-        if user and user["role"] == "pro" and user["pro_expires_at"]:
+        if user and user["role"] == "pro" and user.get("pro_expires_at"):
             from datetime import datetime
             if datetime.utcnow() > user["pro_expires_at"]:
                 cursor.execute("UPDATE users SET role = 'company_user', pro_expires_at = NULL WHERE id = %s", (user_id,))
                 db.commit()
-                cursor.execute("""
-                    SELECT id, name, email, role, company_domain, email_verified,
-                           email_notifications, two_factor_enabled, last_login_at,
-                           stripe_customer_id, stripe_subscription_id, pro_expires_at
-                    FROM users WHERE id = %s
-                """, (user_id,))
+                cursor.execute("SELECT * FROM users WHERE id = %s", (user_id,))
                 user = cursor.fetchone()
         g.user = user
         cursor.close()
@@ -3394,16 +3396,21 @@ def profile():
                 SUM(CASE WHEN status = 'launched' THEN 1 ELSE 0 END) as active_campaigns
             FROM campaigns WHERE user_id = %s
         """, (user["id"],))
-        stats = cursor.fetchone()
+        stats = cursor.fetchone() or {"total_campaigns": 0, "active_campaigns": 0}
+        
         ensure_audit_table(cursor)
         cursor.execute("""
-            SELECT event_type, status, created_at
+            SELECT event_type, status, created_at, ip_address
             FROM audit_events
             WHERE user_id = %s
             ORDER BY created_at DESC
-            LIMIT 8
+            LIMIT 10
         """, (user["id"],))
-        audit_events = cursor.fetchall()
+        audit_events = cursor.fetchall() or []
+
+        cursor.execute("SELECT COUNT(*) as cnt FROM audit_events WHERE user_id = %s", (user["id"],))
+        cnt_row = cursor.fetchone()
+        all_audit_count = cnt_row["cnt"] if cnt_row else len(audit_events)
     finally:
         cursor.close()
         db.close()
@@ -3411,12 +3418,141 @@ def profile():
     email_settings = get_email_settings(os.getenv("EMAIL_MODE", "local").strip().lower())
     email_ready = bool(email_settings.get("host"))
     session_remembered = session.get("remember_me", False)
-    return render_template("profile.html", user=user, stats=stats, audit_events=audit_events, email_ready=email_ready, session_remembered=session_remembered)
+
+    # Calculate clean initials (avoiding yellow orb)
+    full_name = (user.get("name") or user.get("email") or "").strip()
+    name_parts = full_name.split()
+    if len(name_parts) >= 2:
+        initials = (name_parts[0][0] + name_parts[1][0]).upper()
+    elif name_parts and name_parts[0]:
+        initials = name_parts[0][:2].upper()
+    else:
+        initials = "U"
+
+    # Formatted account ID in mono
+    account_id_mono = f"ps_usr_{user['id']:04d}"
+
+    # Current session parsing (user-agent & IP)
+    ua_string = request.headers.get("User-Agent", "")
+    ip = request.headers.get("X-Forwarded-For", request.remote_addr or "127.0.0.1").split(",")[0].strip()
+    platform = "Desktop"
+    if "Windows" in ua_string: platform = "Windows"
+    elif "Macintosh" in ua_string or "Mac OS" in ua_string: platform = "macOS"
+    elif "Linux" in ua_string: platform = "Linux"
+    elif "Android" in ua_string: platform = "Android"
+    elif "iPhone" in ua_string or "iPad" in ua_string: platform = "iOS"
+
+    browser = "Web Browser"
+    if "Edg/" in ua_string: browser = "Microsoft Edge"
+    elif "Chrome/" in ua_string: browser = "Google Chrome"
+    elif "Firefox/" in ua_string: browser = "Mozilla Firefox"
+    elif "Safari/" in ua_string and "Chrome" not in ua_string: browser = "Apple Safari"
+
+    current_session = {
+        "ip": ip,
+        "device": f"{platform} • {browser}",
+        "active_now": True,
+        "last_active": "Active now"
+    }
+
+    # Backup codes
+    raw_codes = user.get("two_factor_backup_codes")
+    try:
+        backup_codes = json.loads(raw_codes) if raw_codes else []
+    except Exception:
+        backup_codes = [c.strip() for c in (raw_codes or "").split(",") if c.strip()]
+
+    return render_template(
+        "profile.html",
+        user=user,
+        stats=stats,
+        audit_events=audit_events,
+        all_audit_count=all_audit_count,
+        email_ready=email_ready,
+        session_remembered=session_remembered,
+        initials=initials,
+        account_id_mono=account_id_mono,
+        current_session=current_session,
+        backup_codes=backup_codes
+    )
+
+
+@app.route("/api/profile/update", methods=["POST"])
+@csrf.exempt
+@login_required
+def api_profile_update():
+    """Updates user profile name, company_domain, or email (email change requires password)."""
+    user = current_user()
+    data = request.get_json(silent=True) or request.form.to_dict()
+    name = (data.get("name") or "").strip()
+    company_domain = (data.get("company_domain") or "").strip()
+    new_email = (data.get("email") or "").strip().lower()
+    current_password = data.get("current_password", "")
+
+    if not name:
+        return jsonify({"success": False, "error": "Full name cannot be blank."}), 400
+
+    db = get_db_connection()
+    cursor = db.cursor(dictionary=True)
+    try:
+        # Check if email is changing
+        if new_email and new_email != (user.get("email") or "").lower():
+            if "@" not in new_email or "." not in new_email:
+                return jsonify({"success": False, "error": "Please enter a valid email address."}), 400
+            if not current_password:
+                return jsonify({"success": False, "error": "Current password is required to change your email address."}), 400
+
+            cursor.execute("SELECT password_hash FROM users WHERE id = %s", (user["id"],))
+            auth_row = cursor.fetchone()
+            if not auth_row or not check_password_hash(auth_row["password_hash"], current_password):
+                return jsonify({"success": False, "error": "Current password is incorrect."}), 400
+
+            cursor.execute("SELECT id FROM users WHERE email = %s AND id != %s", (new_email, user["id"]))
+            if cursor.fetchone():
+                return jsonify({"success": False, "error": "That email address is already in use by another account."}), 400
+
+            cursor.execute("""
+                UPDATE users
+                SET name = %s, company_domain = %s, email = %s, email_verified = FALSE
+                WHERE id = %s
+            """, (name, company_domain or None, new_email, user["id"]))
+            record_audit_event(user["id"], "Account email updated", status="success")
+        else:
+            cursor.execute("""
+                UPDATE users
+                SET name = %s, company_domain = %s
+                WHERE id = %s
+            """, (name, company_domain or None, user["id"]))
+            record_audit_event(user["id"], "Profile details updated", status="success")
+        db.commit()
+
+        # Compute updated initials
+        parts = name.split()
+        new_initials = (parts[0][0] + parts[1][0]).upper() if len(parts) >= 2 else (parts[0][:2].upper() if parts else "U")
+
+        if request.is_json:
+            return jsonify({
+                "success": True,
+                "message": "Profile updated successfully.",
+                "user": {
+                    "name": name,
+                    "email": new_email or user.get("email"),
+                    "company_domain": company_domain,
+                    "initials": new_initials
+                }
+            })
+        flash("Profile updated successfully.", "success")
+        return redirect(url_for("profile") + "#profile")
+    finally:
+        cursor.close()
+        db.close()
+
 
 @app.route("/update-profile-preferences", methods=["POST"])
 @csrf.exempt
 @login_required
 def update_profile_preferences():
+    """Legacy form endpoint for profile preferences."""
     user = current_user()
     email_notifications = bool(request.form.get("email_notifications"))
     two_factor_enabled = bool(request.form.get("two_factor_enabled"))
@@ -3424,9 +3560,8 @@ def update_profile_preferences():
     
     if two_factor_enabled and not user.get("email_verified"):
         flash("Verify your email before enabling 2FA.")
-        return redirect(url_for("profile"))
+        return redirect(url_for("profile") + "#security")
     
-    # Save the remember_me choice to browser session state
     session.permanent = remember_me
     session["remember_me"] = remember_me
     
@@ -3444,7 +3579,188 @@ def update_profile_preferences():
     finally:
         cursor.close()
         db.close()
-    return redirect(url_for("profile"))
+    return redirect(url_for("profile") + "#preferences")
+
+
+@app.route("/api/profile/preferences", methods=["POST"])
+@csrf.exempt
+@login_required
+def api_profile_preferences():
+    """Instant save endpoint for theme, timezone, date format, default delivery mode, and scenario."""
+    user = current_user()
+    data = request.get_json(silent=True) or request.form.to_dict()
+    
+    theme = (data.get("theme") or "").strip().lower()
+    if theme not in ("system", "light", "dark"):
+        theme = None
+
+    timezone = (data.get("timezone") or "").strip()
+    date_format = (data.get("date_format") or "").strip()
+    default_delivery_mode = (data.get("default_delivery_mode") or "").strip().lower()
+    default_scenario = (data.get("default_scenario") or "").strip()
+
+    db = get_db_connection()
+    cursor = db.cursor()
+    try:
+        cursor.execute("""
+            UPDATE users
+            SET theme = COALESCE(%s, theme),
+                timezone = COALESCE(%s, timezone),
+                date_format = COALESCE(%s, date_format),
+                default_delivery_mode = COALESCE(%s, default_delivery_mode),
+                default_scenario = COALESCE(%s, default_scenario)
+            WHERE id = %s
+        """, (theme, timezone or None, date_format or None, default_delivery_mode or None, default_scenario or None, user["id"]))
+        db.commit()
+        if theme:
+            session["theme"] = theme
+        record_audit_event(user["id"], "Platform preferences updated", status="success")
+        return jsonify({"success": True, "message": "Preferences saved."})
+    finally:
+        cursor.close()
+        db.close()
+
+
+@app.route("/api/profile/notifications", methods=["POST"])
+@csrf.exempt
+@login_required
+def api_profile_notifications():
+    """Instant save endpoint for notification toggles (report ready, campaign finished, weekly briefing)."""
+    user = current_user()
+    data = request.get_json(silent=True) or request.form.to_dict()
+
+    report_ready = bool(data.get("notify_report_ready", True))
+    campaign_finished = bool(data.get("notify_campaign_finished", True))
+    weekly_briefing = bool(data.get("notify_weekly_briefing", True))
+
+    db = get_db_connection()
+    cursor = db.cursor()
+    try:
+        cursor.execute("""
+            UPDATE users
+            SET notify_report_ready = %s,
+                notify_campaign_finished = %s,
+                notify_weekly_briefing = %s,
+                email_notifications = %s
+            WHERE id = %s
+        """, (report_ready, campaign_finished, weekly_briefing, (report_ready or campaign_finished or weekly_briefing), user["id"]))
+        db.commit()
+        record_audit_event(user["id"], "Notification preferences updated", status="success")
+        return jsonify({"success": True, "message": "Notification preferences updated."})
+    finally:
+        cursor.close()
+        db.close()
+
+
+@app.route("/api/profile/audit-events", methods=["GET"])
+@login_required
+def api_profile_audit_events():
+    """Returns recent audit events for user drawer."""
+    user = current_user()
+    db = get_db_connection()
+    cursor = db.cursor(dictionary=True)
+    try:
+        ensure_audit_table(cursor)
+        cursor.execute("""
+            SELECT id, created_at, event_type, status, ip_address
+            FROM audit_events
+            WHERE user_id = %s
+            ORDER BY created_at DESC
+            LIMIT 100
+        """, (user["id"],))
+        rows = cursor.fetchall() or []
+        for r in rows:
+            if r.get("created_at") and hasattr(r["created_at"], "strftime"):
+                r["created_at"] = r["created_at"].strftime("%Y-%m-%d %H:%M:%S")
+        return jsonify({"success": True, "events": rows})
+    finally:
+        cursor.close()
+        db.close()
+
+
+@app.route("/api/profile/export-data", methods=["GET"])
+@login_required
+def api_profile_export_data():
+    """Generates an in-memory ZIP archive of user data in JSON/CSV format."""
+    user = current_user()
+    db = get_db_connection()
+    cursor = db.cursor(dictionary=True)
+    try:
+        # Profile data
+        cursor.execute("SELECT id, name, email, role, company_domain, email_verified, created_at, theme, timezone, date_format, default_delivery_mode, default_scenario FROM users WHERE id = %s", (user["id"],))
+        profile_row = cursor.fetchone() or {}
+        if profile_row.get("created_at") and hasattr(profile_row["created_at"], "isoformat"):
+            profile_row["created_at"] = profile_row["created_at"].isoformat()
+
+        # Campaigns
+        cursor.execute("SELECT id, name, company_domain, scenario_type, delivery_mode, status, created_at FROM campaigns WHERE user_id = %s", (user["id"],))
+        campaigns_rows = cursor.fetchall() or []
+        for c in campaigns_rows:
+            if c.get("created_at") and hasattr(c["created_at"], "isoformat"):
+                c["created_at"] = c["created_at"].isoformat()
+
+        # Audit events
+        ensure_audit_table(cursor)
+        cursor.execute("SELECT created_at, event_type, status, ip_address FROM audit_events WHERE user_id = %s ORDER BY created_at DESC", (user["id"],))
+        audit_rows = cursor.fetchall() or []
+        for a in audit_rows:
+            if a.get("created_at") and hasattr(a["created_at"], "isoformat"):
+                a["created_at"] = a["created_at"].isoformat()
+
+        # Telemetry counts
+        cursor.execute("""
+            SELECT 
+                COUNT(*) as total_sent,
+                COUNT(DISTINCT CASE WHEN ev.event_type = 'open' THEN e.id END) as total_opened,
+                COUNT(DISTINCT CASE WHEN ev.event_type = 'click' THEN e.id END) as total_clicked,
+                COUNT(DISTINCT CASE WHEN ev.event_type = 'report' THEN e.id END) as total_reported
+            FROM campaigns c
+            LEFT JOIN emails_sent e ON e.campaign_id = c.id
+            LEFT JOIN events ev ON e.tracking_id = ev.tracking_id
+            WHERE c.user_id = %s
+        """, (user["id"],))
+        telemetry = cursor.fetchone() or {"total_sent": 0, "total_opened": 0, "total_clicked": 0, "total_reported": 0}
+    finally:
+        cursor.close()
+        db.close()
+
+    # Build ZIP archive
+    zip_buffer = io.BytesIO()
+    with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zf:
+        # 1. profile.json
+        zf.writestr("profile.json", json.dumps(profile_row, indent=2))
+        
+        # 2. campaigns.csv
+        camp_csv = io.StringIO()
+        camp_writer = csv.writer(camp_csv)
+        camp_writer.writerow(["id", "name", "company_domain", "scenario_type", "delivery_mode", "status", "created_at"])
+        for c in campaigns_rows:
+            camp_writer.writerow([c.get("id"), c.get("name"), c.get("company_domain"), c.get("scenario_type"), c.get("delivery_mode"), c.get("status"), c.get("created_at")])
+        zf.writestr("campaigns.csv", camp_csv.getvalue())
+
+        # 3. audit_log.csv
+        audit_csv = io.StringIO()
+        audit_writer = csv.writer(audit_csv)
+        audit_writer.writerow(["created_at", "event_type", "status", "ip_address"])
+        for a in audit_rows:
+            audit_writer.writerow([a.get("created_at"), a.get("event_type"), a.get("status"), a.get("ip_address")])
+        zf.writestr("audit_log.csv", audit_csv.getvalue())
+
+        # 4. telemetry_summary.json
+        zf.writestr("telemetry_summary.json", json.dumps(telemetry, indent=2))
+
+        # 5. README.txt
+        zf.writestr("README.txt", f"PhishSim AI - User Data Archive\nAccount: {user.get('email')}\nExported at: {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')}\nFormat: JSON / CSV\n")
+
+    zip_buffer.seek(0)
+    record_audit_event(user["id"], "User data archive exported", status="success")
+    return send_file(
+        zip_buffer,
+        mimetype="application/zip",
+        as_attachment=True,
+        download_name=f"phishsim_user_data_{user['id']}.zip"
+    )
+
 
 @app.route("/download-audit-log")
 @login_required
@@ -3475,6 +3791,7 @@ def download_audit_log():
         as_attachment=True,
         download_name="phishsim_audit_log.csv",
     )
+
 
 @app.route("/verify-identity", methods=["POST"])
 @csrf.exempt
@@ -3524,6 +3841,7 @@ def verify_identity():
         cursor.close()
         db.close()
 
+
 @app.route("/verify-otp", methods=["POST"])
 @csrf.exempt
 @login_required
@@ -3559,6 +3877,7 @@ def verify_otp():
         cursor.close()
         db.close()
 
+
 @app.route("/test-2fa-send", methods=["POST"])
 @csrf.exempt
 @login_required
@@ -3590,13 +3909,15 @@ def test_2fa_send():
     else:
         return {"success": True, "message": f"Test code generated (Fallback: {code})", "fallback_code": code}
 
+
 @app.route("/test-2fa-verify", methods=["POST"])
 @csrf.exempt
 @login_required
 def test_2fa_verify():
-    """Verifies the 2FA test code and enables 2FA in the user's profile."""
+    """Verifies the 2FA test code and enables 2FA in the user's profile with backup codes."""
+    import secrets
     user = current_user()
-    code = request.form.get("otp_code", "").strip()
+    code = request.form.get("otp_code", "").strip() or (request.get_json(silent=True) or {}).get("otp_code", "").strip()
     
     saved_code = session.get("test_2fa_code")
     expires = session.get("test_2fa_expires", 0)
@@ -3609,66 +3930,109 @@ def test_2fa_verify():
         
     session.pop("test_2fa_code", None)
     session.pop("test_2fa_expires", None)
+
+    # Generate 8 single-use recovery backup codes
+    backup_codes = [f"{secrets.token_hex(2).upper()}-{secrets.token_hex(2).upper()}" for _ in range(8)]
     
     db = get_db_connection()
     cursor = db.cursor()
     try:
-        cursor.execute("UPDATE users SET two_factor_enabled = TRUE WHERE id = %s", (user["id"],))
+        cursor.execute("UPDATE users SET two_factor_enabled = TRUE, two_factor_backup_codes = %s WHERE id = %s", (json.dumps(backup_codes), user["id"]))
         db.commit()
-        record_audit_event(user["id"], "2FA verified and enabled")
-        return {"success": True, "message": "2FA delivery verified and enabled successfully!"}
+        record_audit_event(user["id"], "2FA verified and enabled with backup codes", status="success")
+        return jsonify({
+            "success": True,
+            "message": "Two-factor authentication verified and enabled successfully!",
+            "backup_codes": backup_codes
+        })
     except Exception as e:
-        return {"success": False, "message": str(e)}, 500
+        return jsonify({"success": False, "message": str(e)}), 500
     finally:
         cursor.close()
         db.close()
 
-@app.route("/delete-account", methods=["POST"])
+
+@app.route("/api/profile/2fa/disable", methods=["POST"])
+@csrf.exempt
 @login_required
-def delete_account():
+def api_profile_2fa_disable():
+    """Disables 2FA and revokes backup codes."""
     user = current_user()
-    if user["role"] == "admin":
-        flash("Admin accounts cannot be deleted from Profile. Use the Users page after creating another admin.")
-        return redirect(url_for("profile"))
-    cleanup_demo_user(user["id"]) if user.get("company_domain") == "demo-corp.com" else None
-    if user.get("company_domain") != "demo-corp.com":
-        db = get_db_connection()
-        cursor = db.cursor(dictionary=True)
-        try:
-            ensure_email_tracking_table(cursor)
-            ensure_events_table(cursor)
-            ensure_audit_table(cursor)
-            cursor.execute("SELECT id FROM campaigns WHERE user_id = %s", (user["id"],))
-            campaigns = cursor.fetchall()
-            for campaign in campaigns:
-                camp_id = campaign["id"]
-                cursor.execute("SELECT tracking_id FROM emails_sent WHERE campaign_id = %s", (camp_id,))
-                tracking_ids = [r["tracking_id"] for r in cursor.fetchall() if r.get("tracking_id")]
-                if tracking_ids:
-                    placeholders = ",".join(["%s"] * len(tracking_ids))
-                    cursor.execute(f"DELETE FROM events WHERE tracking_id IN ({placeholders})", tuple(tracking_ids))
-                cursor.execute("DELETE FROM emails_sent WHERE campaign_id = %s", (camp_id,))
-                cursor.execute("DELETE FROM employees WHERE campaign_id = %s", (camp_id,))
-            cursor.execute("DELETE FROM campaigns WHERE user_id = %s", (user["id"],))
-            cursor.execute("DELETE FROM audit_events WHERE user_id = %s", (user["id"],))
-            cursor.execute("DELETE FROM users WHERE id = %s", (user["id"],))
+    db = get_db_connection()
+    cursor = db.cursor()
+    try:
+        cursor.execute("UPDATE users SET two_factor_enabled = FALSE, two_factor_backup_codes = NULL WHERE id = %s", (user["id"],))
+        db.commit()
+        record_audit_event(user["id"], "Two-factor authentication disabled", status="warning")
+        return jsonify({"success": True, "message": "Two-factor authentication disabled."})
+    finally:
+        cursor.close()
+        db.close()
+
+
+@app.route("/api/profile/2fa/backup-codes", methods=["GET", "POST"])
+@csrf.exempt
+@login_required
+def api_profile_2fa_backup_codes():
+    """Returns or regenerates 2FA backup codes."""
+    import secrets
+    user = current_user()
+    if not user.get("two_factor_enabled"):
+        return jsonify({"success": False, "error": "Two-factor authentication is not enabled."}), 400
+
+    db = get_db_connection()
+    cursor = db.cursor(dictionary=True)
+    try:
+        if request.method == "POST":
+            # Regenerate fresh backup codes
+            new_codes = [f"{secrets.token_hex(2).upper()}-{secrets.token_hex(2).upper()}" for _ in range(8)]
+            cursor.execute("UPDATE users SET two_factor_backup_codes = %s WHERE id = %s", (json.dumps(new_codes), user["id"]))
             db.commit()
-        finally:
-            cursor.close()
-            db.close()
-    session.clear()
-    flash("Your account has been deleted.")
-    return redirect(url_for("home"))
+            record_audit_event(user["id"], "2FA backup codes regenerated", status="info")
+            return jsonify({"success": True, "backup_codes": new_codes})
+        else:
+            cursor.execute("SELECT two_factor_backup_codes FROM users WHERE id = %s", (user["id"],))
+            row = cursor.fetchone()
+            raw = row.get("two_factor_backup_codes") if row else None
+            try:
+                codes = json.loads(raw) if raw else []
+            except Exception:
+                codes = [c.strip() for c in (raw or "").split(",") if c.strip()]
+            return jsonify({"success": True, "backup_codes": codes})
+    finally:
+        cursor.close()
+        db.close()
+
 
 @app.route("/change-password", methods=["POST"])
 @login_required
 def change_password():
+    """Changes user password with strength validation and confirm check."""
     user = current_user()
-    current_password = request.form.get("current_password", "")
-    new_password = request.form.get("new_password", "")
-    if not new_password:
-        flash("Enter a new password.")
-        return redirect(url_for("profile"))
+    is_json = request.is_json
+    data = request.get_json(silent=True) or request.form.to_dict()
+
+    current_password = data.get("current_password", "").strip()
+    new_password = data.get("new_password", "").strip()
+    confirm_password = data.get("confirm_password", "").strip()
+
+    if not current_password:
+        msg = "Current password is required."
+        if is_json: return jsonify({"success": False, "error": msg}), 400
+        flash(msg, "error")
+        return redirect(url_for("profile") + "#security")
+
+    if not new_password or len(new_password) < 8:
+        msg = "New password must be at least 8 characters long."
+        if is_json: return jsonify({"success": False, "error": msg}), 400
+        flash(msg, "error")
+        return redirect(url_for("profile") + "#security")
+
+    if confirm_password and confirm_password != new_password:
+        msg = "New passwords do not match."
+        if is_json: return jsonify({"success": False, "error": msg}), 400
+        flash(msg, "error")
+        return redirect(url_for("profile") + "#security")
 
     db = get_db_connection()
     cursor = db.cursor(dictionary=True)
@@ -3676,15 +4040,77 @@ def change_password():
         cursor.execute("SELECT password_hash FROM users WHERE id = %s", (user["id"],))
         row = cursor.fetchone()
         if not row or not check_password_hash(row["password_hash"], current_password):
-            flash("Current password is incorrect.")
-            return redirect(url_for("profile"))
+            msg = "Current password is incorrect."
+            if is_json: return jsonify({"success": False, "error": msg}), 400
+            flash(msg, "error")
+            return redirect(url_for("profile") + "#security")
+
         cursor.execute("UPDATE users SET password_hash = %s WHERE id = %s", (generate_password_hash(new_password), user["id"]))
         db.commit()
-        flash("Password updated.")
+        record_audit_event(user["id"], "Password changed successfully", status="success")
+        msg = "Password updated successfully."
+        if is_json: return jsonify({"success": True, "message": msg})
+        flash(msg, "success")
+        return redirect(url_for("profile") + "#security")
     finally:
         cursor.close()
         db.close()
-    return redirect(url_for("profile"))
+
+
+@app.route("/delete-account", methods=["POST"])
+@login_required
+def delete_account():
+    """Permanently deletes account with email confirmation and admin safeguards."""
+    user = current_user()
+    is_json = request.is_json
+    data = request.get_json(silent=True) or request.form.to_dict()
+    confirm_email = (data.get("confirm_email") or "").strip().lower()
+
+    if not confirm_email or confirm_email != (user.get("email") or "").strip().lower():
+        msg = "Confirmation email does not match your account email address."
+        if is_json: return jsonify({"success": False, "error": msg}), 400
+        flash(msg, "error")
+        return redirect(url_for("profile") + "#privacy")
+
+    # Safety: Admin accounts cannot be deleted directly from Profile (preserves existing route policy)
+    if user.get("role") == "admin":
+        msg = "Admin accounts cannot be deleted from Profile. Use the Users page after creating another admin."
+        if is_json: return jsonify({"success": False, "error": msg}), 400
+        flash(msg, "error")
+        return redirect(url_for("profile") + "#privacy")
+
+    # Cascade deletion of user data
+    db = get_db_connection()
+    cursor = db.cursor(dictionary=True)
+    try:
+        ensure_email_tracking_table(cursor)
+        ensure_events_table(cursor)
+        ensure_audit_table(cursor)
+        cursor.execute("SELECT id FROM campaigns WHERE user_id = %s", (user["id"],))
+        campaigns = cursor.fetchall() or []
+        for campaign in campaigns:
+            camp_id = campaign["id"]
+            cursor.execute("SELECT tracking_id FROM emails_sent WHERE campaign_id = %s", (camp_id,))
+            tracking_ids = [r["tracking_id"] for r in cursor.fetchall() if r.get("tracking_id")]
+            if tracking_ids:
+                placeholders = ",".join(["%s"] * len(tracking_ids))
+                cursor.execute(f"DELETE FROM events WHERE tracking_id IN ({placeholders})", tuple(tracking_ids))
+            cursor.execute("DELETE FROM emails_sent WHERE campaign_id = %s", (camp_id,))
+            cursor.execute("DELETE FROM employees WHERE campaign_id = %s", (camp_id,))
+        cursor.execute("DELETE FROM campaigns WHERE user_id = %s", (user["id"],))
+        cursor.execute("DELETE FROM audit_events WHERE user_id = %s", (user["id"],))
+        cursor.execute("DELETE FROM users WHERE id = %s", (user["id"],))
+        db.commit()
+    finally:
+        cursor.close()
+        db.close()
+
+    session.clear()
+    msg = "Your account and all associated data have been permanently deleted."
+    if is_json: return jsonify({"success": True, "redirect": "/"})
+    flash(msg, "info")
+    return redirect(url_for("home"))
+
 
 # ==========================================
 # ADMIN CONTROL CENTER
