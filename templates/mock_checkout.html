@@ -1,320 +1,438 @@
 {% extends 'base.html' %}
 
-{% block title %}Simulated Checkout - PhishSim AI{% endblock %}
+{% block title %}Checkout — PhishSim AI{% endblock %}
 
 {% block content %}
 <style>
-.checkout-page {
-    min-height: calc(100vh - 120px);
+.checkout-wrapper {
+    min-height: calc(100vh - 140px);
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 3rem 1.5rem;
-    position: relative;
-    z-index: 1;
+    padding: 2.5rem 1.5rem;
 }
 
-.checkout-card {
-    max-width: 520px;
+.checkout-container {
+    max-width: 960px;
     width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1.15fr;
     border-radius: 16px;
-    border: 1px solid rgba(148,220,255,0.18);
-    background: linear-gradient(145deg, rgba(255,255,255,0.06), rgba(255,255,255,0.015)), rgba(5,7,15,0.85);
-    box-shadow: 0 30px 90px rgba(0,0,0,0.5), 0 0 50px rgba(6,182,212,0.1);
-    backdrop-filter: blur(20px);
+    background: var(--bg-surface, #ffffff);
+    border: 1px solid var(--border-default, rgba(226, 232, 240, 0.8));
+    box-shadow: 0 20px 45px rgba(0, 0, 0, 0.08);
     overflow: hidden;
 }
 
-.checkout-header {
-    padding: 1.8rem 2rem;
-    border-bottom: 1px solid rgba(148,220,255,0.1);
-    background: rgba(2,6,23,0.5);
+@media (max-width: 820px) {
+    .checkout-container {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Left Column - Order Summary */
+.checkout-summary {
+    padding: 2.5rem;
+    background: var(--bg-hover, rgba(248, 250, 252, 0.6));
+    border-right: 1px solid var(--border-default, rgba(226, 232, 240, 0.8));
     display: flex;
-    align-items: center;
+    flex-direction: column;
     justify-content: space-between;
 }
 
-.checkout-title {
-    margin: 0;
-    font-size: 1.35rem;
-    font-weight: 800;
-    color: #fff;
-    letter-spacing: 0.5px;
+@media (max-width: 820px) {
+    .checkout-summary {
+        border-right: none;
+        border-bottom: 1px solid var(--border-default, rgba(226, 232, 240, 0.8));
+        padding: 2rem;
+    }
 }
 
-.checkout-badge {
-    background: rgba(245,158,11,0.12);
-    border: 1px solid rgba(245,158,11,0.25);
-    color: #f59e0b;
-    font-family: var(--font-mono);
-    font-size: 0.72rem;
-    font-weight: 700;
-    padding: 3px 10px;
-    border-radius: 99px;
-    text-transform: uppercase;
-}
-
-.checkout-body {
-    padding: 2rem;
-}
-
-.summary-box {
-    background: rgba(255,255,255,0.02);
-    border: 1px solid rgba(255,255,255,0.06);
-    border-radius: 12px;
-    padding: 1.2rem;
+.back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text-muted, #64748b);
+    text-decoration: none;
+    font-size: 0.85rem;
+    font-weight: 500;
     margin-bottom: 2rem;
+    transition: color 0.2s ease;
+}
+
+.back-link:hover {
+    color: var(--text-primary, #0f172a);
+}
+
+.product-brand {
+    font-size: 0.82rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted, #64748b);
+    margin-bottom: 0.5rem;
+}
+
+.product-title {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--text-primary, #0f172a);
+    margin: 0 0 0.5rem 0;
+    font-family: var(--font-sans);
+}
+
+.product-price-block {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    margin-bottom: 1.5rem;
+}
+
+.price-main {
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: var(--text-primary, #0f172a);
+    font-family: var(--font-sans);
+}
+
+.price-interval {
+    font-size: 0.95rem;
+    color: var(--text-muted, #64748b);
+}
+
+.summary-table {
+    margin: 1.5rem 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
 }
 
 .summary-row {
     display: flex;
     justify-content: space-between;
-    margin-bottom: 8px;
+    align-items: center;
     font-size: 0.9rem;
+    color: var(--text-secondary, #334155);
 }
 
 .summary-row.total {
-    margin-top: 12px;
+    border-top: 1px solid var(--border-default, rgba(226, 232, 240, 0.8));
     padding-top: 12px;
-    border-top: 1px dashed rgba(255,255,255,0.1);
-    font-weight: 700;
+    margin-top: 6px;
     font-size: 1.05rem;
-    color: var(--accent-cyan);
+    font-weight: 700;
+    color: var(--text-primary, #0f172a);
 }
 
-.checkout-form-group {
+.test-mode-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(245, 158, 11, 0.1);
+    color: #d97706;
+    border: 1px solid rgba(245, 158, 11, 0.25);
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-top: 1rem;
+    align-self: flex-start;
+}
+
+/* Right Column - Form */
+.checkout-form-pane {
+    padding: 2.5rem;
+}
+
+@media (max-width: 820px) {
+    .checkout-form-pane {
+        padding: 2rem;
+    }
+}
+
+.form-section-title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--text-primary, #0f172a);
+    margin: 0 0 1.5rem 0;
+    font-family: var(--font-sans);
+}
+
+.form-group {
     margin-bottom: 1.25rem;
 }
 
-.checkout-form-group label {
+.form-group label {
     display: block;
-    margin-bottom: 8px;
-    color: var(--text-muted);
-    font-family: var(--font-mono);
-    font-size: 0.74rem;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text-secondary, #475569);
+    margin-bottom: 6px;
 }
 
-.checkout-input-wrap {
+.form-control-input {
+    width: 100%;
+    padding: 10px 14px;
+    border-radius: 8px;
+    border: 1px solid var(--border-default, #cbd5e1);
+    background: var(--bg-surface, #ffffff);
+    color: var(--text-primary, #0f172a);
+    font-size: 0.95rem;
+    font-family: inherit;
+    box-sizing: border-box;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.form-control-input:focus {
+    outline: none;
+    border-color: var(--primary, #2563eb);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+.card-fields-container {
+    border: 1px solid var(--border-default, #cbd5e1);
+    border-radius: 8px;
+    overflow: hidden;
+    background: var(--bg-surface, #ffffff);
+}
+
+.card-number-row {
     position: relative;
+    border-bottom: 1px solid var(--border-default, #cbd5e1);
 }
 
-.checkout-input-wrap i {
+.card-number-row input {
+    border: none;
+    border-radius: 0;
+    padding-right: 40px;
+}
+
+.card-icon {
     position: absolute;
-    left: 14px;
+    right: 12px;
     top: 50%;
     transform: translateY(-50%);
-    color: rgba(56,189,248,0.5);
+    color: var(--text-muted, #94a3b8);
+    font-size: 1.1rem;
     pointer-events: none;
 }
 
-.checkout-input-wrap input {
-    width: 100%;
-    padding: 12px 14px 12px 42px;
-    border-radius: 8px;
-    border: 1px solid rgba(148,220,255,0.12);
-    background: rgba(0,0,0,0.3);
-    color: #fff;
-    outline: none;
-    font-family: var(--font-sans);
-    transition: all 0.25s ease;
-}
-
-.checkout-input-wrap input:focus {
-    border-color: rgba(56,189,248,0.5);
-    box-shadow: 0 0 10px rgba(56,189,248,0.15);
-    background: rgba(56,189,248,0.03);
-}
-
-.checkout-row {
+.card-extra-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 16px;
 }
 
-.checkout-btn {
+.card-extra-row input:first-child {
+    border: none;
+    border-right: 1px solid var(--border-default, #cbd5e1);
+    border-radius: 0;
+}
+
+.card-extra-row input:last-child {
+    border: none;
+    border-radius: 0;
+}
+
+.btn-pay {
     width: 100%;
-    padding: 14px;
+    padding: 13px;
+    background: var(--primary, #2563eb);
+    color: #ffffff;
+    font-size: 1rem;
+    font-weight: 600;
     border-radius: 8px;
     border: none;
-    font-size: 0.88rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all 0.2s ease;
     margin-top: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
 }
 
-.checkout-btn.primary {
-    background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%);
-    color: #fff;
-    box-shadow: 0 4px 20px rgba(6,182,212,0.3);
+.btn-pay:hover {
+    background: var(--primary-hover, #1d4ed8);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
 }
 
-.checkout-btn.primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 25px rgba(6,182,212,0.45);
-}
-
-.checkout-btn.secondary {
-    background: transparent;
-    color: var(--text-muted);
-    border: 1px solid rgba(255,255,255,0.1);
-    margin-top: 0.5rem;
-}
-
-.checkout-btn.secondary:hover {
-    background: rgba(255,255,255,0.03);
-    color: #fff;
-}
-
-.info-note {
-    margin-top: 1.5rem;
-    padding: 10px 14px;
-    background: rgba(6,182,212,0.06);
-    border: 1px solid rgba(6,182,212,0.15);
-    border-radius: 8px;
+.checkout-footer-notice {
+    text-align: center;
     font-size: 0.78rem;
-    color: var(--text-muted);
-    line-height: 1.5;
+    color: var(--text-muted, #64748b);
+    margin-top: 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
 }
 
-body.light-theme .checkout-card {
-    background: #ffffff;
-    border-color: rgba(37,99,235,0.18);
-    box-shadow: 0 30px 90px rgba(37,99,235,0.08);
+/* Dark theme overrides */
+body:not(.light-theme) .checkout-container {
+    background: #0f172a;
+    border-color: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 20px 45px rgba(0, 0, 0, 0.5);
 }
-body.light-theme .checkout-header {
-    background: rgba(241,245,249,0.5);
-    border-bottom-color: rgba(37,99,235,0.1);
+body:not(.light-theme) .checkout-summary {
+    background: rgba(255, 255, 255, 0.02);
+    border-color: rgba(255, 255, 255, 0.08);
 }
-body.light-theme .checkout-title {
-    color: #0f172a;
+body:not(.light-theme) .product-title,
+body:not(.light-theme) .price-main,
+body:not(.light-theme) .form-section-title,
+body:not(.light-theme) .summary-row.total {
+    color: #f8fafc;
 }
-body.light-theme .checkout-input-wrap input {
-    background: #fff;
-    color: #0f172a;
-    border-color: #cbd5e1;
+body:not(.light-theme) .summary-row {
+    color: #cbd5e1;
 }
-body.light-theme .checkout-input-wrap input:focus {
-    border-color: #2563eb;
-    background: rgba(37,99,235,0.02);
+body:not(.light-theme) .form-group label {
+    color: #94a3b8;
 }
-body.light-theme .summary-box {
-    background: #f8fafc;
-    border-color: #e2e8f0;
+body:not(.light-theme) .form-control-input,
+body:not(.light-theme) .card-fields-container {
+    background: rgba(0, 0, 0, 0.25);
+    border-color: rgba(255, 255, 255, 0.12);
+    color: #f8fafc;
 }
-body.light-theme .checkout-btn.secondary {
-    border-color: #cbd5e1;
+body:not(.light-theme) .card-number-row,
+body:not(.light-theme) .card-extra-row input:first-child,
+body:not(.light-theme) .summary-row.total {
+    border-color: rgba(255, 255, 255, 0.1);
 }
-body.light-theme .checkout-btn.secondary:hover {
-    background: #f1f5f9;
-    color: #0f172a;
+body:not(.light-theme) .form-control-input:focus {
+    border-color: #3b82f6;
+    background: rgba(59, 130, 246, 0.05);
 }
 </style>
 
-<div class="checkout-page">
-    <div class="checkout-card">
-        <div class="checkout-header">
-            <h2 class="checkout-title"><i class="ti ti-credit-card" style="margin-right:8px; vertical-align:middle;"></i>Secure Checkout</h2>
-            <span class="checkout-badge">Developer Sandbox</span>
-        </div>
-        
-        <div class="checkout-body">
-            <div class="summary-box">
-                <div class="summary-row">
-                    <span style="color: var(--text-muted);">Subscription Plan</span>
-                    <strong style="color: var(--text-main);">PhishSim.ai PRO Flat</strong>
-                </div>
-                <div class="summary-row">
-                    <span style="color: var(--text-muted);">Capacity</span>
-                    <strong style="color: var(--text-main);">Up to 50 employees</strong>
-                </div>
-                <div class="summary-row total">
-                    <span>Total Due Now</span>
-                    <span>$24.00 / month</span>
-                </div>
-            </div>
-            
-            <form action="{{ url_for('billing_mock_charge') }}" method="POST">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <div class="checkout-form-group">
-                    <label for="card_name">Cardholder Name</label>
-                    <div class="checkout-input-wrap">
-                        <input type="text" id="card_name" placeholder="John Doe" required>
-                        <i class="ti ti-user"></i>
-                    </div>
-                </div>
-                
-                <div class="checkout-form-group">
-                    <label for="card_number">Card Number</label>
-                    <div class="checkout-input-wrap">
-                        <input type="text" id="card_number" placeholder="4242 4242 4242 4242" pattern="[0-9\s]{16,19}" required>
-                        <i class="ti ti-credit-card"></i>
-                    </div>
-                </div>
-                
-                <div class="checkout-row">
-                    <div class="checkout-form-group">
-                        <label for="card_expiry">Expiry Date</label>
-                        <div class="checkout-input-wrap">
-                            <input type="text" id="card_expiry" placeholder="MM/YY" pattern="(0[1-9]|1[0-2])\/[0-9]{2}" required>
-                            <i class="ti ti-calendar"></i>
-                        </div>
-                    </div>
-                    
-                    <div class="checkout-form-group">
-                        <label for="card_cvv">CVV</label>
-                        <div class="checkout-input-wrap">
-                            <input type="password" id="card_cvv" placeholder="•••" pattern="[0-9]{3,4}" required>
-                            <i class="ti ti-shield"></i>
-                        </div>
-                    </div>
-                </div>
-                
-                <button type="submit" class="checkout-btn primary">
-                    <i class="ti ti-lock" style="margin-right: 6px;"></i> Complete Simulated Payment
-                </button>
-                
-                <a href="/billing" class="checkout-btn secondary" style="display: block; text-align: center; text-decoration: none; line-height: 1.2;">
-                    Cancel Payment
+<div class="checkout-wrapper">
+    <div class="checkout-container">
+        <!-- Left Column: Order Summary -->
+        <div class="checkout-summary">
+            <div>
+                <a href="{{ url_for('billing_portal') }}" class="back-link">
+                    <i class="ti ti-arrow-left"></i> Return to billing
                 </a>
-            </form>
-            
-            <div class="info-note">
-                <i class="ti ti-info-circle" style="color: var(--accent-cyan); margin-right: 4px; vertical-align: middle;"></i>
-                <strong>Stripe Developer Note:</strong> This is a local simulation. To trigger live/sandbox Stripe Checkout screens, define a valid <code>STRIPE_SECRET_KEY</code> inside your <code>.env</code> file.
+                <div class="product-brand">PhishSim AI Security</div>
+                <h1 class="product-title">PhishSim.ai Pro</h1>
+                <div class="product-price-block">
+                    <span class="price-main">$24.00</span>
+                    <span class="price-interval">per month</span>
+                </div>
+
+                <div class="summary-table">
+                    <div class="summary-row">
+                        <span>PhishSim.ai Pro (Monthly)</span>
+                        <span>$24.00</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>Seats included</span>
+                        <span>50 employees</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>Subtotal</span>
+                        <span>$24.00</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>Tax</span>
+                        <span>$0.00</span>
+                    </div>
+                    <div class="summary-row total">
+                        <span>Total due today</span>
+                        <span>$24.00</span>
+                    </div>
+                </div>
+
+                <p style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.5; margin-top: 1rem;">
+                    Renews automatically each month. Cancel anytime in your billing settings.
+                </p>
             </div>
+
+            <div class="test-mode-pill">
+                <i class="ti ti-info-circle"></i> Test mode — no real card charged
+            </div>
+        </div>
+
+        <!-- Right Column: Payment Form -->
+        <div class="checkout-form-pane">
+            <h2 class="form-section-title">Payment details</h2>
+
+            <form action="{{ url_for('billing_mock_charge') }}" method="POST" id="checkout-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                <div class="form-group">
+                    <label for="checkout-email">Email</label>
+                    <input type="email" id="checkout-email" name="email" class="form-control-input" value="{{ user.email }}" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Card information</label>
+                    <div class="card-fields-container">
+                        <div class="card-number-row">
+                            <input type="text" id="checkout-card-number" class="form-control-input" placeholder="1234 1234 1234 1234" maxlength="19" required>
+                            <i class="ti ti-credit-card card-icon"></i>
+                        </div>
+                        <div class="card-extra-row">
+                            <input type="text" id="checkout-card-expiry" class="form-control-input" placeholder="MM / YY" maxlength="7" required>
+                            <input type="text" id="checkout-card-cvc" class="form-control-input" placeholder="CVC" maxlength="4" required>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="checkout-card-name">Name on card</label>
+                    <input type="text" id="checkout-card-name" name="name_on_card" class="form-control-input" value="{{ user.name or '' }}" placeholder="Jane Doe" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="checkout-country">Country or region</label>
+                    <select id="checkout-country" name="country" class="form-control-input">
+                        <option value="US" selected>United States</option>
+                        <option value="CA">Canada</option>
+                        <option value="GB">United Kingdom</option>
+                        <option value="AU">Australia</option>
+                        <option value="DE">Germany</option>
+                        <option value="FR">France</option>
+                        <option value="IN">India</option>
+                        <option value="OTHER">Other</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="btn-pay" id="btn-submit-payment">
+                    <i class="ti ti-lock"></i> Pay $24.00
+                </button>
+
+                <div class="checkout-footer-notice">
+                    <i class="ti ti-shield-lock"></i> Simulated checkout • 256-bit encryption
+                </div>
+            </form>
         </div>
     </div>
 </div>
 
 <script>
 // Format card number with spaces
-document.getElementById('card_number').addEventListener('input', function (e) {
-    let target = e.target;
-    let position = target.selectionEnd;
-    let length = target.value.length;
-    
-    target.value = target.value.replace(/[^\d]/g, '').replace(/(.{4})/g, '$1 ').trim();
-    
-    let diff = target.value.length - length;
-    if (diff > 0) {
-        target.setSelectionRange(position + diff, position + diff);
+document.getElementById('checkout-card-number').addEventListener('input', function (e) {
+    let value = e.target.value.replace(/\D/g, '');
+    let formatted = value.match(/.{1,4}/g)?.join(' ') || '';
+    e.target.value = formatted.slice(0, 19);
+});
+
+// Format expiry with slash
+document.getElementById('checkout-card-expiry').addEventListener('input', function (e) {
+    let value = e.target.value.replace(/\D/g, '');
+    if (value.length >= 2) {
+        e.target.value = value.slice(0, 2) + ' / ' + value.slice(2, 4);
+    } else {
+        e.target.value = value;
     }
 });
 
-// Format expiry date with slash
-document.getElementById('card_expiry').addEventListener('input', function (e) {
-    let target = e.target;
-    let val = target.value.replace(/[^\d]/g, '');
-    if (val.length >= 2) {
-        target.value = val.slice(0, 2) + '/' + val.slice(2, 4);
-    } else {
-        target.value = val;
-    }
+// Digits only for CVC
+document.getElementById('checkout-card-cvc').addEventListener('input', function (e) {
+    e.target.value = e.target.value.replace(/\D/g, '').slice(0, 4);
 });
 </script>
 {% endblock %}

@@ -5818,7 +5818,14 @@ def billing_portal():
     db = get_db_connection()
     cursor = db.cursor(dictionary=True)
     
-    # campaigns run
+    # campaigns run this month
+    cursor.execute("""
+        SELECT COUNT(*) as count FROM campaigns 
+        WHERE user_id = %s AND created_at >= DATE_FORMAT(NOW(), '%%Y-%%m-01')
+    """, (user["id"],))
+    campaigns_this_month = cursor.fetchone()["count"]
+
+    # total campaigns count
     cursor.execute("SELECT COUNT(*) as count FROM campaigns WHERE user_id = %s", (user["id"],))
     campaigns_count = cursor.fetchone()["count"]
     
@@ -5830,57 +5837,105 @@ def billing_portal():
         WHERE c.user_id = %s
     """, (user["id"],))
     targets_count = cursor.fetchone()["count"]
+
+    # recon audits count
+    try:
+        cursor.execute("SELECT COUNT(*) as count FROM recon_history WHERE user_id = %s", (user["id"],))
+        recon_count = cursor.fetchone()["count"]
+    except Exception:
+        recon_count = 0
     
     cursor.close()
     db.close()
     
-    # Defaults
-    stripe_status = "active" if user.get("role") in ("pro", "admin") else "inactive"
-    next_billing = "N/A"
-    stripe_invoices = []
-    
-    # Next billing date fallback: 1 month from now
-    from datetime import datetime, timedelta
-    fallback_billing = (datetime.utcnow() + timedelta(days=30)).strftime("%B %d, %Y")
-    next_billing = fallback_billing
-    
     import stripe
     stripe.api_key = os.environ.get("STRIPE_SECRET_KEY", "sk_test_mock_secret_key_phishsim")
+    is_test_mode = stripe.api_key.startswith("sk_test_mock") or not os.environ.get("STRIPE_SECRET_KEY")
+    is_pro = user.get("role") in ("pro", "admin")
+
+    # Defaults
+    stripe_status = "active" if is_pro else "inactive"
+    from datetime import datetime, timedelta
+    fallback_billing = (datetime.utcnow() + timedelta(days=30)).strftime("%B %d, %Y")
+    next_billing = fallback_billing if is_pro else None
+    stripe_invoices = []
     
-    if user.get("stripe_subscription_id") and not stripe.api_key.startswith("sk_test_mock"):
+    trial_expires = None
+    trial_days_left = None
+    renewal_text = "Free tier evaluation"
+
+    if user.get("pro_expires_at"):
+        trial_expires = user["pro_expires_at"].strftime("%B %d, %Y")
+        days = (user["pro_expires_at"] - datetime.utcnow()).days
+        trial_days_left = max(0, days)
+        renewal_text = f"Trial ends in {trial_days_left} days ({trial_expires})"
+    elif is_pro:
+        renewal_text = f"Renews on {fallback_billing}"
+
+    if user.get("stripe_subscription_id") and not is_test_mode:
         try:
             sub = stripe.Subscription.retrieve(user["stripe_subscription_id"])
-            stripe_status = sub.status  # e.g., active, past_due, trialing, etc.
+            stripe_status = sub.status
             period_end = datetime.utcfromtimestamp(sub.current_period_end)
             next_billing = period_end.strftime("%B %d, %Y")
+            renewal_text = f"Renews on {next_billing}"
             
-            # Fetch last 5 invoices
-            invoices = stripe.Invoice.list(customer=user.get("stripe_customer_id"), limit=5)
+            invoices = stripe.Invoice.list(customer=user.get("stripe_customer_id"), limit=10)
             for inv in invoices.get("data", []):
                 inv_date = datetime.utcfromtimestamp(inv.created).strftime("%Y-%m-%d")
                 stripe_invoices.append({
                     "date": inv_date,
+                    "description": "PhishSim.ai Pro Subscription",
                     "amount": f"${inv.amount_due / 100:.2f}",
                     "status": inv.status.upper(),
-                    "hosted_invoice_url": inv.hosted_invoice_url or "#"
+                    "hosted_invoice_url": inv.hosted_invoice_url or "#",
+                    "is_test": False
                 })
         except Exception as e:
             print(f"Failed to fetch live Stripe billing details: {e}")
             stripe_status = "active"
             next_billing = fallback_billing
-            
-    trial_expires = None
-    trial_days_left = None
-    if user.get("pro_expires_at"):
-        trial_expires = user["pro_expires_at"].strftime("%B %d, %Y")
-        days = (user["pro_expires_at"] - datetime.utcnow()).days
-        trial_days_left = max(0, days)
+    elif is_pro and is_test_mode:
+        stripe_invoices.append({
+            "date": datetime.utcnow().strftime("%Y-%m-%d"),
+            "description": "PhishSim.ai Pro Subscription (Test mode)",
+            "amount": "$24.00",
+            "status": "PAID (TEST)",
+            "hosted_invoice_url": "#",
+            "is_test": True
+        })
+
+    # Limits and percentages for usage meters
+    seats_max = 50
+    seats_used = min(targets_count, seats_max)
+    seats_pct = min(100, round((targets_count / seats_max) * 100)) if seats_max else 0
+
+    campaigns_limit_label = "Unlimited" if is_pro else "3 max"
+    campaigns_pct = 100 if is_pro else min(100, round((campaigns_this_month / 3) * 100))
+
+    targets_pct = min(100, round((targets_count / seats_max) * 100)) if seats_max else 0
+
+    recon_limit_label = "Unlimited" if is_pro else "15 / day"
+    recon_pct = 100 if is_pro else min(100, round((recon_count / 15) * 100))
 
     return render_template(
         "billing.html", 
-        user=user, 
-        campaigns_count=campaigns_count, 
+        user=user,
+        is_pro=is_pro,
+        is_test_mode=is_test_mode,
+        renewal_text=renewal_text,
+        seats_used=seats_used,
+        seats_max=seats_max,
+        seats_pct=seats_pct,
+        campaigns_this_month=campaigns_this_month,
+        campaigns_count=campaigns_count,
+        campaigns_limit_label=campaigns_limit_label,
+        campaigns_pct=campaigns_pct,
         targets_count=targets_count,
+        targets_pct=targets_pct,
+        recon_count=recon_count,
+        recon_limit_label=recon_limit_label,
+        recon_pct=recon_pct,
         next_billing=next_billing,
         stripe_status=stripe_status,
         stripe_invoices=stripe_invoices,
@@ -5955,8 +6010,10 @@ def billing_mock_charge():
     finally:
         cursor.close()
         db.close()
-    flash("Congratulations! Simulated checkout succeeded. Your account has been upgraded to PhishSim.ai PRO.")
-    return redirect(url_for("dashboard"))
+    from flask import g
+    g.pop('user', None)
+    flash("Payment successful! Your account has been upgraded to PhishSim.ai Pro.", "success")
+    return redirect(url_for("billing_success"))
 
 # Stripe Success Callback
 @app.route("/billing/success")
@@ -5998,11 +6055,8 @@ def billing_success():
         finally:
             cursor.close()
             db.close()
-        flash("Congratulations! Stripe checkout succeeded. Your account has been upgraded to PhishSim.ai PRO.", "success")
-    else:
-        flash("Payment verification failed. Please contact support.", "danger")
-        
-    return redirect(url_for("dashboard"))
+            
+    return render_template("billing_success.html", user=user)
 
 # Billing: Stripe Customer Portal redirect
 @app.route("/billing/portal", methods=["POST"])
@@ -6098,13 +6152,18 @@ def stripe_webhook():
 @login_required
 def cancel_subscription():
     user = current_user()
+    cancel_reason = request.form.get("cancel_reason", "").strip()
     db = get_db_connection()
     cursor = db.cursor()
-    cursor.execute("UPDATE users SET role = 'company_user', stripe_subscription_id = NULL WHERE id = %s", (user["id"],))
+    cursor.execute("UPDATE users SET role = 'company_user', stripe_subscription_id = NULL, pro_expires_at = NULL WHERE id = %s", (user["id"],))
     db.commit()
+    audit_msg = f"Cancelled Pro subscription (Reason: {cancel_reason})" if cancel_reason else "Cancelled Pro subscription"
+    record_audit_event(user["id"], audit_msg)
     cursor.close()
     db.close()
-    flash("Your PRO subscription has been cancelled. Your account is now downgraded to the Free tier.")
+    from flask import g
+    g.pop('user', None)
+    flash("Your subscription has been cancelled. Your account is now on the Free tier.", "info")
     return redirect(url_for("billing_portal"))
 
 # Billing: Free activation for self-deployment
@@ -6115,14 +6174,21 @@ def activate_free_pro():
     user = current_user()
     db = get_db_connection()
     cursor = db.cursor()
-    cursor.execute("UPDATE users SET role = 'pro' WHERE id = %s", (user["id"],))
+    cursor.execute("""
+        UPDATE users 
+        SET role = 'pro', pro_expires_at = DATE_ADD(NOW(), INTERVAL 30 DAY) 
+        WHERE id = %s
+    """, (user["id"],))
     db.commit()
+    record_audit_event(user["id"], "Activated 30-day Pro trial")
     cursor.close()
     db.close()
-    flash("Success! Free Developer Pro License activated. All advanced features are now unlocked.")
+    from flask import g
+    g.pop('user', None)
+    flash("Success! Your 30-day Pro trial has been activated. All Pro features are now unlocked.", "success")
     return redirect(url_for("billing_portal"))
 
-# Billing: 1-Month Free Trial Activation
+# Billing: 30-Day Free Trial Activation
 @app.route("/billing/activate-trial", methods=["POST"])
 @csrf.exempt
 @login_required
@@ -6137,9 +6203,12 @@ def activate_trial():
         WHERE id = %s
     """, (user["id"],))
     db.commit()
+    record_audit_event(user["id"], "Activated 30-day Pro trial")
     cursor.close()
     db.close()
-    flash("Success! Your 1-Month Free Trial has been activated. You now have full access to all PRO features.")
+    from flask import g
+    g.pop('user', None)
+    flash("Success! Your 30-day Pro trial has been activated. All Pro features are now unlocked.", "success")
     return redirect(url_for("billing_portal"))
 
 # Billing: Contact Sales form submission
