@@ -132,7 +132,7 @@
         </a>
 
         <!-- Tab 2: Campaigns -->
-        <a href="/dashboard#campaigns"
+        <a href="/campaigns"
            class="app-nav-tab {% if is_camp_active %}active{% endif %}"
            data-tab="campaigns"
            role="menuitem"
@@ -309,7 +309,7 @@
       <!-- 4. Upgrade Button (For Free users only) -->
       {% if current_user.role not in ('admin', 'pro') %}
       <a href="/billing" class="btn btn-sm btn-secondary app-upgrade-btn" id="app-upgrade-btn">
-        <i class="ti ti-crown" style="margin-right: 4px; color: var(--warning);"></i>Upgrade
+        <i class="ti ti-crown app-upgrade-icon"></i>Upgrade
       </a>
       {% endif %}
 
@@ -324,8 +324,8 @@
                 aria-label="User account menu"
                 title="{{ current_user.name }}">
           <span class="app-avatar-circle">
-            {% set name_parts = current_user.name.split(' ') %}
-            {% if name_parts|length > 1 %}{{ name_parts[0][0]|upper }}{{ name_parts[1][0]|upper }}{% else %}{{ current_user.name[:2]|upper }}{% endif %}
+            {% set name_parts = (current_user.name or 'User').split(' ') %}
+            {% if name_parts|length > 1 %}{{ name_parts[0][0]|upper }}{{ name_parts[1][0]|upper }}{% else %}{{ (current_user.name or 'US')[:2]|upper }}{% endif %}
           </span>
         </button>
 
@@ -340,6 +340,7 @@
                 <span class="badge badge-info">Pro Plan</span>
               {% else %}
                 <span class="badge badge-neutral">Free Plan</span>
+                <a href="/billing" class="app-account-upgrade-pill" id="avatar-upgrade-link">Upgrade</a>
               {% endif %}
             </div>
           </div>
@@ -411,7 +412,7 @@
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"></rect><rect x="14" y="3" width="7" height="5"></rect><rect x="14" y="12" width="7" height="9"></rect><rect x="3" y="16" width="7" height="5"></rect></svg>
     <span>Dashboard</span>
   </a>
-  <a href="/dashboard#campaigns" class="app-bottom-tab {% if is_camp_active %}active{% endif %}">
+  <a href="/campaigns" class="app-bottom-tab {% if is_camp_active %}active{% endif %}">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
     <span>Campaigns</span>
   </a>
@@ -760,6 +761,56 @@
       </button>
     </div>
     <div class="nav-mobile-body">
+      <!-- Group 1: Check Something (Accordion) -->
+      <div class="nav-mobile-accordion">
+        <button type="button" class="nav-mobile-acc-trigger" id="acc-trigger-check" aria-expanded="true" aria-controls="acc-content-check">
+          <span>Check something</span>
+          <i class="ti ti-chevron-down acc-caret" aria-hidden="true"></i>
+        </button>
+        <div class="nav-mobile-acc-content open" id="acc-content-check">
+          {% for item in check_items %}
+            <a href="{{ item.href }}" class="nav-mobile-item" onclick="closeMobileMenu()">
+              <div class="nav-item-icon-box icon-{{ item.color }}" aria-hidden="true">
+                <i class="ti {{ item.icon }}"></i>
+              </div>
+              <div class="nav-mobile-item-info">
+                <div class="nav-mobile-item-title-row">
+                  <span class="nav-mobile-item-title">{{ item.title }}</span>
+                  {% if item.badge == 'new' %}
+                    <span class="nav-badge-recon-new">New</span>
+                  {% endif %}
+                </div>
+                <span class="nav-mobile-item-desc">{{ item.desc }}</span>
+              </div>
+              <i class="ti ti-chevron-right nav-mobile-arrow" aria-hidden="true"></i>
+            </a>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Group 2: Train Your Team (Accordion) -->
+      <div class="nav-mobile-accordion">
+        <button type="button" class="nav-mobile-acc-trigger" id="acc-trigger-train" aria-expanded="false" aria-controls="acc-content-train">
+          <span>Train your team</span>
+          <i class="ti ti-chevron-down acc-caret" aria-hidden="true"></i>
+        </button>
+        <div class="nav-mobile-acc-content" id="acc-content-train">
+          {% for item in train_items %}
+            <a href="{{ item.href }}" class="nav-mobile-item" onclick="closeMobileMenu()">
+              <div class="nav-item-icon-box icon-{{ item.color }}" aria-hidden="true">
+                <i class="ti {{ item.icon }}"></i>
+              </div>
+              <div class="nav-mobile-item-info">
+                <span class="nav-mobile-item-title">{{ item.title }}</span>
+                <span class="nav-mobile-item-desc">{{ item.desc }}</span>
+              </div>
+              <i class="ti ti-chevron-right nav-mobile-arrow" aria-hidden="true"></i>
+            </a>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Plain Links -->
       <div class="nav-mobile-plain-links">
         {% for item in plain_links %}
           <a href="{{ item.href }}" class="nav-mobile-plain-item" onclick="closeMobileMenu()">
@@ -768,7 +819,7 @@
         {% endfor %}
         <div style="padding: 1rem 0;">
           <a href="/login" class="nav-mobile-signin-btn" onclick="closeMobileMenu()">Sign in</a>
-          <a href="/signup" class="btn btn-primary" style="display: block; text-align: center; margin-top: 8px;" onclick="closeMobileMenu()">Get Started</a>
+          <a href="/signup" class="btn btn-primary" style="display: block; text-align: center; margin-top: 8px;" onclick="closeMobileMenu()">Get started</a>
         </div>
       </div>
     </div>
@@ -810,24 +861,7 @@
   </div>
 </dialog>
 
-<!-- Sandbox Banner below navbar (if in demo environment) -->
-{% if current_user and current_user.company_domain == 'demo-corp.com' %}
-<div id="sandbox-warning-banner" class="sandbox-banner" style="background: var(--warning-dim); border-bottom: 1px solid rgba(251, 146, 60, 0.3); color: var(--warning); font-family: var(--font-heading); font-size: 0.8125rem; font-weight: 500; height: 36px; box-sizing: border-box; padding: 0 24px; display: flex; align-items: center; justify-content: center; z-index: 999; position: relative; width: 100%;">
-  <span style="flex-grow: 1; text-align: center;">Sandbox Mode &mdash; Demo environment. Data is illustrative only.</span>
-  <button type="button" onclick="dismissSandboxBanner()" style="background: none; border: none; color: var(--warning); font-size: 1.2rem; cursor: pointer; padding: 0 4px; display: flex; align-items: center; justify-content: center; line-height: 1; opacity: 0.7;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.7'" aria-label="Dismiss banner">&times;</button>
-</div>
-<script>
-  if (sessionStorage.getItem('sandbox-banner-dismissed') === 'true') {
-    var b = document.getElementById('sandbox-warning-banner');
-    if (b) b.style.display = 'none';
-  }
-  function dismissSandboxBanner() {
-    var b = document.getElementById('sandbox-warning-banner');
-    if (b) b.style.display = 'none';
-    sessionStorage.setItem('sandbox-banner-dismissed', 'true');
-  }
-</script>
-{% endif %}
+
 
 <!-- ═══════════════════════════════════════════════════════════════
      NAVBAR INTERACTION CONTROLLER SCRIPT
@@ -1201,7 +1235,7 @@
 
     // Pages & Tools
     { title: 'Dashboard', desc: 'Main team resilience benchmarks & trend lines', href: '/dashboard', group: 'Navigation', icon: 'M3 3h7v9H3zm11 0h7v5h-7zm0 8h7v9h-7zM3 15h7v5H3z' },
-    { title: 'Campaigns', desc: 'Simulation drills, metrics, and report status', href: '/dashboard#campaigns', group: 'Navigation', icon: 'M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z' },
+    { title: 'Campaigns', desc: 'Simulation drills, metrics, and report status', href: '/campaigns', group: 'Navigation', icon: 'M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z' },
     { title: 'Threat Analyzer', desc: 'Scan suspicious emails & files for malware', href: '/threat-analyzer', group: 'Tools', icon: 'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z' },
     { title: 'Header Analyzer', desc: 'Inspect SPF, DKIM & email transit hops', href: '/header-analyzer', group: 'Tools', icon: 'M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z' },
     { title: 'URL Decoder', desc: 'Safely unmask hidden links and redirect hops', href: '/url-decoder', group: 'Tools', icon: 'M10 13a5 5 0 0 0 7.54.54l3-3' },
@@ -1212,9 +1246,12 @@
   let filteredPalette = [];
   let paletteSelectedIndex = 0;
 
+  let lastFocusedBeforePalette = null;
+
   window.openCommandPalette = function() {
     if (!paletteDialog) return;
-    paletteDialog.showModal();
+    lastFocusedBeforePalette = document.activeElement;
+    paletteDialog.setAttribute('open', '');
     if (paletteInput) {
       paletteInput.value = '';
       filterPaletteResults('');
@@ -1224,7 +1261,11 @@
 
   window.closeCommandPalette = function() {
     if (!paletteDialog) return;
-    paletteDialog.close();
+    paletteDialog.removeAttribute('open');
+    if (lastFocusedBeforePalette && typeof lastFocusedBeforePalette.focus === 'function') {
+      lastFocusedBeforePalette.focus();
+      lastFocusedBeforePalette = null;
+    }
   };
 
   function filterPaletteResults(query) {
@@ -1374,10 +1415,31 @@
       );
       if (!inDialog) closeCommandPalette();
     });
+
+    paletteDialog.addEventListener('keydown', function(e) {
+      if (e.key === 'Tab') {
+        const focusables = Array.from(paletteDialog.querySelectorAll('button:not([disabled]), [href], input:not([disabled]), [tabindex]:not([tabindex="-1"]), .palette-item'));
+        if (focusables.length === 0) return;
+        const first = focusables[0];
+        const last = focusables[focusables.length - 1];
+        if (e.shiftKey) {
+          if (document.activeElement === first || !paletteDialog.contains(document.activeElement)) {
+            e.preventDefault();
+            last.focus();
+          }
+        } else {
+          if (document.activeElement === last || !paletteDialog.contains(document.activeElement)) {
+            e.preventDefault();
+            first.focus();
+          }
+        }
+      }
+    });
   }
 
   // 7. Global Shortcuts: ⌘K, Ctrl+K, and / (outside inputs)
   document.addEventListener('keydown', function(e) {
+    if (e.defaultPrevented) return;
     const activeTag = (document.activeElement && document.activeElement.tagName) || '';
     const isTyping = (activeTag === 'INPUT' || activeTag === 'TEXTAREA' || (document.activeElement && document.activeElement.isContentEditable));
 
@@ -1388,8 +1450,12 @@
       return;
     }
 
-    // / key opens search when not typing
+    // / key opens search when not typing (yields to in-page search if present)
     if (e.key === '/' && !isTyping) {
+      const pageSearch = document.getElementById('campaign-search-input');
+      if (pageSearch) {
+        return; // Yield to in-page campaign search handler
+      }
       e.preventDefault();
       openCommandPalette();
     }
@@ -1408,5 +1474,72 @@
       if (trigger) trigger.click();
     }
   };
+
+  // 9. Mobile Full-Screen Sheet (Marketing)
+  const hamburgerBtn = document.getElementById('nav-hamburger-btn');
+  const mobileSheet = document.getElementById('nav-mobile-sheet');
+  const mobileClose = document.getElementById('nav-mobile-close');
+
+  window.openMobileMenu = function() {
+    if (!mobileSheet) return;
+    mobileSheet.classList.add('active');
+    document.body.classList.add('nav-scroll-locked');
+    if (hamburgerBtn) hamburgerBtn.setAttribute('aria-expanded', 'true');
+    if (mobileClose) mobileClose.focus();
+  };
+
+  window.closeMobileMenu = function() {
+    if (!mobileSheet) return;
+    mobileSheet.classList.remove('active');
+    document.body.classList.remove('nav-scroll-locked');
+    if (hamburgerBtn) {
+      hamburgerBtn.setAttribute('aria-expanded', 'false');
+      hamburgerBtn.focus();
+    }
+  };
+
+  if (hamburgerBtn) {
+    hamburgerBtn.addEventListener('click', function() {
+      if (mobileSheet && mobileSheet.classList.contains('active')) {
+        closeMobileMenu();
+      } else {
+        openMobileMenu();
+      }
+    });
+  }
+
+  // Mobile Accordion toggles
+  document.querySelectorAll('.nav-mobile-acc-trigger').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      const isExpanded = btn.getAttribute('aria-expanded') === 'true';
+      btn.setAttribute('aria-expanded', isExpanded ? 'false' : 'true');
+      const targetId = btn.getAttribute('aria-controls');
+      const content = document.getElementById(targetId);
+      if (content) {
+        content.classList.toggle('open', !isExpanded);
+      }
+    });
+  });
+
+  // Focus trap for mobile sheet & Escape key
+  if (mobileSheet) {
+    mobileSheet.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        closeMobileMenu();
+      } else if (e.key === 'Tab') {
+        const focusables = Array.from(mobileSheet.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'));
+        if (!focusables.length) return;
+        const first = focusables[0];
+        const last = focusables[focusables.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    });
+  }
 })();
 </script>

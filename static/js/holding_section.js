@@ -425,6 +425,11 @@
       domain: 'Perimeter attack surface map'
     };
 
+    var manualSelectionLocked = false;
+    function lockManualSelection() {
+      manualSelectionLocked = true;
+    }
+
     function activateTab(targetKey, focusTab) {
       clearVignetteTimers();
 
@@ -465,71 +470,25 @@
           p.textContent = ''; // clear unmounted panel
         }
       }
-    }
 
-    // ── Scroll-Driven Progress (Desktop >= 1000px Only) ──
-    var isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-    var userManualSelection = false;
-    var resumeScrollTimer = null;
-
-    function lockManualSelection() {
-      userManualSelection = true;
-      clearTimeout(resumeScrollTimer);
-      resumeScrollTimer = setTimeout(function () {
-        userManualSelection = false;
-      }, 1500);
-    }
-
-    function handleScrollProgress() {
-      if (isTouch || window.innerWidth < 1000 || userManualSelection) return;
-      var rect = section.getBoundingClientRect();
-      var windowHeight = window.innerHeight || 800;
-
-      // When section top is above or near navbar (top <= 120px)
-      if (rect.top > 140) {
-        var currentActiveAbove = section.querySelector('.holding-tab-item.is-active');
-        if (currentActiveAbove && currentActiveAbove.getAttribute('data-target') !== 'email') {
-          activateTab('email', false);
+      // Update matching tool CTA bar
+      var ctas = section.querySelectorAll('.holding-tool-cta');
+      for (var c = 0; c < ctas.length; c++) {
+        var cta = ctas[c];
+        var isCtaMatch = cta.getAttribute('data-cta') === targetKey;
+        cta.classList.toggle('is-active', isCtaMatch);
+        if (isCtaMatch) {
+          cta.removeAttribute('hidden');
+        } else {
+          cta.setAttribute('hidden', 'true');
         }
-        return;
-      }
-
-      var totalScrollable = rect.height - windowHeight;
-      if (totalScrollable <= 0) return;
-
-      var scrolled = 120 - rect.top;
-      var progress = Math.max(0, Math.min(0.999, scrolled / totalScrollable));
-
-      var stepKeys = ['email', 'link', 'password', 'domain'];
-      var targetIdx = Math.min(3, Math.floor(progress * 4));
-      var targetKey = stepKeys[targetIdx];
-
-      var currentActive = section.querySelector('.holding-tab-item.is-active');
-      var curKey = currentActive ? currentActive.getAttribute('data-target') : null;
-
-      if (targetKey && targetKey !== curKey) {
-        activateTab(targetKey, false);
       }
     }
-
-    window.addEventListener('scroll', handleScrollProgress, { passive: true });
 
     // Tab Click handlers
     for (var k = 0; k < tabs.length; k++) {
       (function (tab) {
         tab.addEventListener('click', function (e) {
-          // If clicked on the tool link span, navigate to the tool
-          var toolLink = e.target.closest('.holding-tab-link');
-          if (toolLink) {
-            e.preventDefault();
-            e.stopPropagation();
-            var href = toolLink.getAttribute('data-href');
-            if (href) {
-              window.location.href = href;
-              return;
-            }
-          }
-
           e.preventDefault();
           lockManualSelection();
           var target = tab.getAttribute('data-target');

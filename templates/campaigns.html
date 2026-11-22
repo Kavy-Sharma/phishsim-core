@@ -1,0 +1,817 @@
+{% extends 'base.html' %}
+{% block title %}Campaigns — PhishSim AI{% endblock %}
+{% block body_class %}dash-view campaigns-view{% endblock %}
+{% block content %}
+
+<div class="dash-page dash-page-container" id="campaigns-page-container">
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         1. PAGE HEADER (Title, counts, primary action, compare trigger)
+         ═══════════════════════════════════════════════════════════════ -->
+    <header class="page-header dash-page-header">
+        <div class="page-header-content">
+            <div class="dash-title-row">
+                <h1 class="page-header-title">Campaigns</h1>
+                <span class="badge badge-neutral" id="campaigns-total-badge">{{ counts.all }}</span>
+                {% if is_demo_preview %}
+                <span class="badge badge-warning" id="camp-sample-data-badge"><i class="ti ti-info-circle"></i> Sample data</span>
+                {% endif %}
+            </div>
+            <p class="dash-date">
+                {{ current_date or 'Simulation Management' }}
+            </p>
+        </div>
+        <div class="page-header-actions dash-header-actions">
+            <button type="button" class="btn btn-secondary" id="btn-open-compare" onclick="handleOpenCompareModal()" disabled title="Select two finished campaigns to compare side by side">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="18" rx="1"></rect><rect x="14" y="3" width="7" height="18" rx="1"></rect></svg>
+                <span id="compare-btn-text">Compare (select 2)</span>
+            </button>
+            <a href="/new-campaign" class="btn btn-primary" id="btn-create-campaign">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                <span>New campaign</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         2. TOOLBAR: Search, Saved views, Date range, Sort, View toggle
+         ═══════════════════════════════════════════════════════════════ -->
+    <div class="campaigns-toolbar-wrapper">
+        <div class="campaigns-toolbar">
+            <!-- Search input with '/' shortcut badge -->
+            <div class="search-wrapper">
+                <input type="text" id="campaigns-search-input" class="filter-input" placeholder="Search campaigns..." oninput="filterCampaigns()" aria-label="Search campaigns">
+                <span class="search-shortcut-badge">/</span>
+            </div>
+
+            <!-- Saved Views Chips with honest counts -->
+            <div class="filter-chips-row" role="radiogroup" aria-label="Campaign saved views">
+                <button type="button" class="filter-chip active" data-view="all" onclick="setSavedView('all', this)">
+                    All ({{ counts.all }})
+                </button>
+                <button type="button" class="filter-chip" data-view="running" onclick="setSavedView('running', this)">
+                    Running ({{ counts.running }})
+                </button>
+                <button type="button" class="filter-chip" data-view="needs_attention" onclick="setSavedView('needs_attention', this)" title="Campaigns with click rate above 20%">
+                    Needs attention ({{ counts.needs_attention }})
+                </button>
+                <button type="button" class="filter-chip" data-view="finished" onclick="setSavedView('finished', this)">
+                    Finished ({{ counts.finished }})
+                </button>
+                <button type="button" class="filter-chip" data-view="draft" onclick="setSavedView('draft', this)">
+                    Draft ({{ counts.draft }})
+                </button>
+            </div>
+
+            <!-- Date Range Filter -->
+            <div class="sort-select-wrapper">
+                <select id="campaigns-date-select" class="sort-select" onchange="filterCampaigns()" aria-label="Filter by date range">
+                    <option value="all">All time</option>
+                    <option value="30d">Last 30 days</option>
+                    <option value="90d">Last 90 days</option>
+                    <option value="year">This year</option>
+                </select>
+            </div>
+
+            <!-- Sort Dropdown -->
+            <div class="sort-select-wrapper">
+                <select id="campaigns-sort-select" class="sort-select" onchange="sortCampaigns(this.value)" aria-label="Sort campaigns">
+                    <option value="newest">Newest</option>
+                    <option value="oldest">Oldest</option>
+                    <option value="click_desc">Highest click rate</option>
+                    <option value="report_desc">Highest report rate</option>
+                    <option value="name_asc">Name (A–Z)</option>
+                </select>
+            </div>
+
+            <!-- View Toggle: List / Grid -->
+            <div class="view-toggle-segmented" role="radiogroup" aria-label="Campaign view layout">
+                <button type="button" class="view-toggle-btn active" id="view-toggle-list" role="radio" aria-checked="true" tabindex="0" onclick="setCampaignsView('list')" title="List view" aria-label="List view">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+                </button>
+                <button type="button" class="view-toggle-btn" id="view-toggle-grid" role="radio" aria-checked="false" tabindex="-1" onclick="setCampaignsView('grid')" title="Grid view" aria-label="Grid view">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Floating Bulk Action Bar (Visible when checkboxes are active) -->
+        <div class="bulk-action-bar" id="bulk-action-bar" style="display: none;">
+            <div class="bulk-action-info">
+                <span id="bulk-count-label">0 campaigns selected</span>
+            </div>
+            <div class="bulk-action-btns">
+                <button type="button" class="btn btn-sm btn-primary" id="bulk-compare-btn" onclick="handleOpenCompareModal()" disabled>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="18"></rect><rect x="14" y="3" width="7" height="18"></rect></svg>
+                    <span>Compare side by side</span>
+                </button>
+                <button type="button" class="btn btn-sm btn-secondary" onclick="deselectAllCampaigns()">Deselect all</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         3. CAMPAIGNS CONTENT (List View & Grid View)
+         ═══════════════════════════════════════════════════════════════ -->
+    <div class="campaigns-view-container">
+
+        <!-- LIST VIEW (Default Active) -->
+        <div class="campaigns-view-pane" id="pane-view-list">
+            <div class="app-table-wrapper">
+                <table class="app-table" id="campaigns-table">
+                    <caption class="sr-only">Phishing Simulation Campaigns</caption>
+                    <thead>
+                        <tr>
+                            <th scope="col" class="th-select">
+                                <input type="checkbox" id="campaign-select-all" onclick="toggleSelectAll(this)" aria-label="Select all campaigns">
+                            </th>
+                            <th scope="col" class="th-name">Name &amp; scenario</th>
+                            <th scope="col">Status</th>
+                            <th scope="col" class="th-progress">Funnel progress</th>
+                            <th scope="col" class="th-num">Sent</th>
+                            <th scope="col" class="th-num">Opened</th>
+                            <th scope="col" class="th-num">Clicked</th>
+                            <th scope="col" class="th-num">Reported</th>
+                            <th scope="col" class="th-num">Date</th>
+                            <th scope="col" class="th-action">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="campaigns-table-body">
+                        {% if campaigns and campaigns | length > 0 %}
+                            {% for c in campaigns %}
+                            {% set is_fin = is_campaign_finished(c) %}
+                            {% set c_st = (c.status or 'draft') | lower %}
+                            {% set c_sent = c.emails_sent or 0 %}
+                            {% set c_open = c.opens or 0 %}
+                            {% set c_click = c.clicks or 0 %}
+                            {% set c_report = c.reports or 0 %}
+                            {% set c_cr = c.click_rate or 0.0 %}
+                            {% set c_rr = c.report_rate or 0.0 %}
+                            {% set c_or = c.open_rate or 0.0 %}
+
+                            <tr class="campaign-row" 
+                                data-id="{{ c.id }}"
+                                data-name="{{ c.name | lower }}"
+                                data-status="{{ 'finished' if is_fin else c_st }}"
+                                data-is-finished="{{ '1' if is_fin else '0' }}"
+                                data-click-rate="{{ c_cr }}"
+                                data-report-rate="{{ c_rr }}"
+                                data-sent="{{ c_sent }}"
+                                data-created="{{ c.created_at or '' }}">
+                                <td class="td-select">
+                                    <input type="checkbox" class="campaign-checkbox" data-id="{{ c.id }}" data-is-finished="{{ '1' if is_fin else '0' }}" onchange="handleRowSelect(this)" aria-label="Select {{ c.name }}">
+                                </td>
+                                <td class="td-name">
+                                    <div class="camp-cell-name-wrap">
+                                        <a href="/campaign-report/{{ c.id }}" class="camp-link-title">{{ c.name }}</a>
+                                        <div class="camp-meta-subline">
+                                            <span class="camp-scenario-chip">{{ c.scenario_type | scenario_label }}</span>
+                                            {% if c.company_domain %}
+                                            <span class="camp-domain-tag">{{ c.company_domain }}</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    {% if is_fin %}
+                                    <span class="badge badge-success"><span class="campaign-status-dot badge-dot-success"></span>Finished</span>
+                                    {% elif c_st in ('launching', 'running', 'in_progress') %}
+                                    <span class="badge badge-info"><span class="campaign-status-dot pulse badge-dot-info"></span>Running</span>
+                                    {% elif c_st == 'scheduled' %}
+                                    <span class="badge badge-neutral"><span class="campaign-status-dot badge-dot-neutral"></span>Scheduled</span>
+                                    {% else %}
+                                    <span class="badge badge-neutral"><span class="campaign-status-dot badge-dot-neutral"></span>Draft</span>
+                                    {% endif %}
+                                </td>
+                                <td class="td-progress">
+                                    {% if c_sent > 0 %}
+                                    <div class="funnel-progress-wrap" title="Sent: {{ c_sent }} · Opened: {{ c_open }} · Clicked: {{ c_click }} · Reported: {{ c_report }}">
+                                        <div class="funnel-bar-track">
+                                            <div class="funnel-fill-open" style="width: {{ [c_or, 100] | min }}%;"></div>
+                                            <div class="funnel-fill-click" style="width: {{ [c_cr, 100] | min }}%;"></div>
+                                            <div class="funnel-fill-report" style="width: {{ [c_rr, 100] | min }}%;"></div>
+                                        </div>
+                                        <span class="funnel-summary-label mono-data">{{ c_cr }}% click / {{ c_rr }}% rep</span>
+                                    </div>
+                                    {% else %}
+                                    <span class="text-muted" style="font-size: var(--text-xs);">No targets dispatched</span>
+                                    {% endif %}
+                                </td>
+                                <td class="mono-data">{{ c_sent }}</td>
+                                <td class="mono-data">{{ c_open }} <span class="sub-stat">({{ c_or }}%)</span></td>
+                                <td class="mono-data {% if c_cr > 20.0 %}text-danger{% elif c_cr > 0 %}text-warning{% endif %}">
+                                    {{ c_click }} <span class="sub-stat">({{ c_cr }}%)</span>
+                                </td>
+                                <td class="mono-data {% if c_report > 0 %}text-success{% endif %}">
+                                    {{ c_report }} <span class="sub-stat">({{ c_rr }}%)</span>
+                                </td>
+                                <td class="mono-data">{{ (c.created_at ~ '')[:10] if c.created_at else '—' }}</td>
+                                <td class="td-action">
+                                    <div class="camp-actions-dropdown">
+                                        <a href="/campaign-report/{{ c.id }}" class="btn btn-sm btn-secondary" title="View details & report">
+                                            <span>Report</span>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- GRID VIEW (Starts with .hidden) -->
+        <div class="campaigns-view-pane hidden" id="pane-view-grid" style="display:none;">
+            <div class="campaigns-grid-container" id="campaigns-grid-body">
+                {% if campaigns and campaigns | length > 0 %}
+                    {% for c in campaigns %}
+                    {% set is_fin = is_campaign_finished(c) %}
+                    {% set c_st = (c.status or 'draft') | lower %}
+                    {% set c_sent = c.emails_sent or 0 %}
+                    {% set c_click = c.clicks or 0 %}
+                    {% set c_report = c.reports or 0 %}
+                    {% set c_cr = c.click_rate or 0.0 %}
+                    {% set c_rr = c.report_rate or 0.0 %}
+
+                    <div class="card campaign-grid-card"
+                         data-id="{{ c.id }}"
+                         data-name="{{ c.name | lower }}"
+                         data-status="{{ 'finished' if is_fin else c_st }}"
+                         data-is-finished="{{ '1' if is_fin else '0' }}"
+                         data-click-rate="{{ c_cr }}"
+                         data-report-rate="{{ c_rr }}"
+                         data-sent="{{ c_sent }}"
+                         data-created="{{ c.created_at or '' }}">
+                        <!-- Top: Checkbox, Status & Scenario -->
+                        <div class="grid-card-top">
+                            <div class="grid-card-top-left">
+                                <input type="checkbox" class="campaign-checkbox grid-card-cb" data-id="{{ c.id }}" data-is-finished="{{ '1' if is_fin else '0' }}" onchange="handleRowSelect(this)" aria-label="Select {{ c.name }}">
+                                {% if is_fin %}
+                                <span class="badge badge-success"><span class="campaign-status-dot badge-dot-success"></span>Finished</span>
+                                {% elif c_st in ('launching', 'running', 'in_progress') %}
+                                <span class="badge badge-info"><span class="campaign-status-dot pulse badge-dot-info"></span>Running</span>
+                                {% elif c_st == 'scheduled' %}
+                                <span class="badge badge-neutral"><span class="campaign-status-dot badge-dot-neutral"></span>Scheduled</span>
+                                {% else %}
+                                <span class="badge badge-neutral"><span class="campaign-status-dot badge-dot-neutral"></span>Draft</span>
+                                {% endif %}
+                            </div>
+                            <span class="camp-scenario-chip">{{ c.scenario_type | scenario_label }}</span>
+                        </div>
+
+                        <!-- Main: Title & Domain -->
+                        <div class="grid-card-main">
+                            <h3 class="grid-card-title"><a href="/campaign-report/{{ c.id }}">{{ c.name }}</a></h3>
+                            <p class="grid-card-domain">{{ c.company_domain or 'Organization' }} &middot; {{ c_sent }} recipients</p>
+                        </div>
+
+                        <!-- Readiness Score -->
+                        {% if is_fin and c.hss %}
+                        <div class="grid-card-readiness">
+                            <div class="grid-readiness-pill score-{{ c.hss.tier }}">
+                                <span class="readiness-label">Readiness:</span>
+                                <strong class="readiness-value">{{ c.hss.score }}/100</strong>
+                            </div>
+                            {% if c.delta_score is not none %}
+                            <span class="metric-delta-chip {% if c.delta_score > 0 %}good{% elif c.delta_score < 0 %}warning{% else %}steady{% endif %}" title="Score vs prior drill">
+                                {{ '+' if c.delta_score > 0 else '' }}{{ c.delta_score }} pts
+                            </span>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+
+                        <!-- 3-Column Stats Box -->
+                        <div class="grid-card-stats-panel">
+                            <div class="grid-stat-box">
+                                <span class="grid-stat-label">Click rate</span>
+                                <span class="grid-stat-num mono-data {% if c_cr > 20.0 %}text-danger{% elif c_cr > 0 %}text-warning{% endif %}">{{ c_cr }}%</span>
+                            </div>
+                            <div class="grid-stat-box">
+                                <span class="grid-stat-label">Report rate</span>
+                                <span class="grid-stat-num mono-data {% if c_rr > 0 %}text-success{% endif %}">{{ c_rr }}%</span>
+                            </div>
+                            <div class="grid-stat-box">
+                                <span class="grid-stat-label">Dispatched</span>
+                                <span class="grid-stat-num mono-data">{{ c_sent }}</span>
+                            </div>
+                        </div>
+
+                        <!-- Footer: Date & Report Action -->
+                        <div class="grid-card-bottom">
+                            <span class="grid-card-date mono-data">{{ (c.created_at ~ '')[:10] if c.created_at else '—' }}</span>
+                            <a href="/campaign-report/{{ c.id }}" class="btn btn-sm btn-secondary">
+                                <span>Report</span>
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="M12 5l7 7-7 7"></path></svg>
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Honest Empty State -->
+        <div class="empty-state card" id="campaigns-empty-state" style="{% if campaigns and campaigns | length > 0 %}display: none;{% endif %}">
+            <div class="empty-state-icon">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+            </div>
+            <h3 class="empty-state-title" id="camp-empty-title">
+                {% if counts.all == 0 %}No campaigns yet{% else %}No matching campaigns{% endif %}
+            </h3>
+            <p class="empty-state-description" id="camp-empty-desc">
+                {% if counts.all == 0 %}
+                Launch your first security drill to begin evaluating workforce resilience and vulnerability benchmarks.
+                {% else %}
+                Try adjusting your search keywords, saved view, or date range filter to locate campaigns.
+                {% endif %}
+            </p>
+            <div class="empty-state-action">
+                {% if counts.all == 0 %}
+                <a href="/new-campaign" class="btn btn-primary"><span>Launch first drill</span></a>
+                {% else %}
+                <button type="button" class="btn btn-secondary" onclick="resetAllFilters()"><span>Reset filters</span></button>
+                {% endif %}
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     4. COMPARE MODAL DIALOG (Redesigned Side-by-side Funnel & Score)
+     ═══════════════════════════════════════════════════════════════ -->
+<dialog class="compare-dialog" id="compare-modal" aria-labelledby="compare-modal-title">
+    <div class="compare-modal-inner">
+        <!-- Header -->
+        <div class="compare-modal-header">
+            <div class="compare-modal-title-group">
+                <div class="compare-title-row">
+                    <h2 class="compare-modal-title" id="compare-modal-title">Campaign Comparison</h2>
+                    <span class="badge badge-info">Side-by-side analysis</span>
+                </div>
+                <p class="compare-modal-subtitle">Direct conversion funnel, resilience score, and employee vulnerability delta.</p>
+            </div>
+            <button type="button" class="compare-modal-close" onclick="closeCompareModal()" aria-label="Close dialog">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+        </div>
+
+        <!-- Body -->
+        <div class="compare-modal-body" id="compare-modal-body">
+            <div class="compare-loading-state" id="compare-loading">
+                <div class="spinner-dot"></div>
+                <span>Evaluating comparison telemetry...</span>
+            </div>
+
+            <div class="compare-content" id="compare-content-view" style="display: none;">
+                <!-- Narrative Callout -->
+                <div class="compare-narrative-banner" id="compare-narrative-box">
+                    <div class="compare-narrative-icon" aria-hidden="true">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                    </div>
+                    <div class="compare-narrative-text" id="compare-summary-text">—</div>
+                </div>
+
+                <!-- Side-by-Side Cards -->
+                <div class="compare-cards-grid">
+                    <!-- Campaign A -->
+                    <div class="compare-camp-card" id="card-camp-a">
+                        <div class="compare-camp-header">
+                            <span class="badge badge-neutral">Baseline</span>
+                            <h3 class="compare-camp-name" id="cmp-a-name">—</h3>
+                            <p class="compare-camp-meta" id="cmp-a-meta">—</p>
+                        </div>
+                        <div class="compare-camp-score-card">
+                            <div class="compare-score-box">
+                                <span class="compare-score-val" id="cmp-a-score">—</span>
+                                <span class="compare-score-label">Readiness score</span>
+                            </div>
+                        </div>
+                        <div class="compare-funnel-list" id="cmp-a-funnel">
+                            <!-- Funnel rows injected via JS -->
+                        </div>
+                    </div>
+
+                    <!-- Campaign B -->
+                    <div class="compare-camp-card" id="card-camp-b">
+                        <div class="compare-camp-header">
+                            <span class="badge badge-info">Comparison</span>
+                            <h3 class="compare-camp-name" id="cmp-b-name">—</h3>
+                            <p class="compare-camp-meta" id="cmp-b-meta">—</p>
+                        </div>
+                        <div class="compare-camp-score-card">
+                            <div class="compare-score-box">
+                                <div class="compare-score-row-with-delta">
+                                    <span class="compare-score-val" id="cmp-b-score">—</span>
+                                    <span class="metric-delta-chip" id="cmp-score-delta-chip">—</span>
+                                </div>
+                                <span class="compare-score-label">Readiness score</span>
+                            </div>
+                        </div>
+                        <div class="compare-funnel-list" id="cmp-b-funnel">
+                            <!-- Funnel rows injected via JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="compare-modal-footer">
+            <button type="button" class="btn btn-secondary" onclick="closeCompareModal()"><span>Close comparison</span></button>
+        </div>
+    </div>
+</dialog>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     5. JAVASCRIPT: Filtering, Views, Sorting, Comparison
+     ═══════════════════════════════════════════════════════════════ -->
+<script>
+(function() {
+    let currentSavedView = 'all';
+    let selectedCampaignIds = new Set();
+    let currentSort = 'newest';
+
+    // ── 1. View Toggle (List vs Grid) ─────────────────────────────────
+    window.setCampaignsView = function(viewMode) {
+        const listPane = document.getElementById('pane-view-list');
+        const gridPane = document.getElementById('pane-view-grid');
+        const btnList = document.getElementById('view-toggle-list');
+        const btnGrid = document.getElementById('view-toggle-grid');
+        if (!listPane || !gridPane) return;
+
+        if (viewMode === 'grid') {
+            if (btnList) { btnList.classList.remove('active'); btnList.setAttribute('aria-checked', 'false'); }
+            if (btnGrid) { btnGrid.classList.add('active'); btnGrid.setAttribute('aria-checked', 'true'); }
+            listPane.classList.add('hidden');
+            gridPane.classList.remove('hidden');
+            gridPane.style.opacity = '1';
+            try { localStorage.setItem('phishsim_campaigns_view', 'grid'); } catch(e){}
+        } else {
+            if (btnGrid) { btnGrid.classList.remove('active'); btnGrid.setAttribute('aria-checked', 'false'); }
+            if (btnList) { btnList.classList.add('active'); btnList.setAttribute('aria-checked', 'true'); }
+            gridPane.classList.add('hidden');
+            listPane.classList.remove('hidden');
+            listPane.style.opacity = '1';
+            try { localStorage.setItem('phishsim_campaigns_view', 'list'); } catch(e){}
+        }
+    };
+
+    // Restore saved view preference
+    try {
+        const savedView = localStorage.getItem('phishsim_campaigns_view');
+        if (savedView === 'grid') {
+            setCampaignsView('grid');
+        } else {
+            setCampaignsView('list');
+        }
+    } catch(e){}
+
+    // ── 2. Saved Views Filter ─────────────────────────────────────────
+    window.setSavedView = function(viewKey, btn) {
+        currentSavedView = viewKey;
+        document.querySelectorAll('.filter-chips-row .filter-chip').forEach(c => c.classList.remove('active'));
+        if (btn) btn.classList.add('active');
+        filterCampaigns();
+    };
+
+    // ── 3. Unified Filtering (Search + Saved View + Date Range) ───────
+    window.filterCampaigns = function() {
+        const searchInput = document.getElementById('campaigns-search-input');
+        const query = searchInput ? searchInput.value.toLowerCase().trim() : '';
+        const dateSelect = document.getElementById('campaigns-date-select');
+        const dateFilter = dateSelect ? dateSelect.value : 'all';
+
+        const now = new Date();
+        const cutoffDate = new Date();
+        if (dateFilter === '30d') cutoffDate.setDate(now.getDate() - 30);
+        else if (dateFilter === '90d') cutoffDate.setDate(now.getDate() - 90);
+        else if (dateFilter === 'year') cutoffDate.setFullYear(now.getFullYear(), 0, 1);
+
+        let visibleCount = 0;
+
+        // Filter both Table rows and Grid cards
+        const allItems = document.querySelectorAll('.campaign-row, .campaign-grid-card');
+        allItems.forEach(item => {
+            const name = item.getAttribute('data-name') || '';
+            const status = item.getAttribute('data-status') || '';
+            const isFin = item.getAttribute('data-is-finished') === '1';
+            const clickRate = parseFloat(item.getAttribute('data-click-rate')) || 0;
+            const createdStr = item.getAttribute('data-created') || '';
+            const itemDate = createdStr ? new Date(createdStr) : null;
+
+            // Search query match
+            const matchesQuery = !query || name.includes(query);
+
+            // Saved view match
+            let matchesView = false;
+            if (currentSavedView === 'all') {
+                matchesView = true;
+            } else if (currentSavedView === 'running') {
+                matchesView = ['launching', 'running', 'in_progress'].includes(status);
+            } else if (currentSavedView === 'needs_attention') {
+                matchesView = isFin && clickRate > 20.0;
+            } else if (currentSavedView === 'finished') {
+                matchesView = isFin;
+            } else if (currentSavedView === 'draft') {
+                matchesView = status === 'draft';
+            }
+
+            // Date match
+            let matchesDate = true;
+            if (dateFilter !== 'all' && itemDate && !isNaN(itemDate.getTime())) {
+                matchesDate = itemDate >= cutoffDate;
+            }
+
+            if (matchesQuery && matchesView && matchesDate) {
+                item.style.display = '';
+                if (item.classList.contains('campaign-row')) visibleCount++;
+            } else {
+                item.style.display = 'none';
+            }
+        });
+
+        // Toggle empty state
+        const emptyState = document.getElementById('campaigns-empty-state');
+        const totalBadges = document.getElementById('campaigns-total-badge');
+        if (emptyState) {
+            if (visibleCount === 0) {
+                emptyState.style.display = 'flex';
+                const emptyTitle = document.getElementById('camp-empty-title');
+                const emptyDesc = document.getElementById('camp-empty-desc');
+                if (emptyTitle && emptyDesc) {
+                    emptyTitle.textContent = query ? 'No matching campaigns' : 'No campaigns in this view';
+                    emptyDesc.textContent = query 
+                        ? `No campaigns match "${query}". Try refining your keywords.`
+                        : 'There are no campaigns matching the selected view or date range.';
+                }
+            } else {
+                emptyState.style.display = 'none';
+            }
+        }
+    };
+
+    // ── 4. Sorting ────────────────────────────────────────────────────
+    window.sortCampaigns = function(sortKey) {
+        currentSort = sortKey;
+        const tableBody = document.getElementById('campaigns-table-body');
+        const gridBody = document.getElementById('campaigns-grid-body');
+
+        const sortElements = (container, selector) => {
+            if (!container) return;
+            const items = Array.from(container.querySelectorAll(selector));
+            items.sort((a, b) => {
+                if (sortKey === 'newest') {
+                    return (b.getAttribute('data-created') || '').localeCompare(a.getAttribute('data-created') || '');
+                } else if (sortKey === 'oldest') {
+                    return (a.getAttribute('data-created') || '').localeCompare(b.getAttribute('data-created') || '');
+                } else if (sortKey === 'click_desc') {
+                    return (parseFloat(b.getAttribute('data-click-rate')) || 0) - (parseFloat(a.getAttribute('data-click-rate')) || 0);
+                } else if (sortKey === 'report_desc') {
+                    return (parseFloat(b.getAttribute('data-report-rate')) || 0) - (parseFloat(a.getAttribute('data-report-rate')) || 0);
+                } else if (sortKey === 'name_asc') {
+                    return (a.getAttribute('data-name') || '').localeCompare(b.getAttribute('data-name') || '');
+                }
+                return 0;
+            });
+            items.forEach(item => container.appendChild(item));
+        };
+
+        sortElements(tableBody, '.campaign-row');
+        sortElements(gridBody, '.campaign-grid-card');
+    };
+
+    // ── 5. Bulk Selection & Compare Trigger ───────────────────────────
+    window.handleRowSelect = function(cb) {
+        const id = parseInt(cb.getAttribute('data-id'));
+        if (cb.checked) {
+            selectedCampaignIds.add(id);
+        } else {
+            selectedCampaignIds.delete(id);
+        }
+        syncCheckboxes();
+        updateBulkUI();
+    };
+
+    window.toggleSelectAll = function(masterCb) {
+        const isChecked = masterCb.checked;
+        const visibleCheckboxes = Array.from(document.querySelectorAll('.campaign-row:not([style*="display: none"]) .campaign-checkbox'));
+        visibleCheckboxes.forEach(cb => {
+            const id = parseInt(cb.getAttribute('data-id'));
+            cb.checked = isChecked;
+            if (isChecked) selectedCampaignIds.add(id);
+            else selectedCampaignIds.delete(id);
+        });
+        syncCheckboxes();
+        updateBulkUI();
+    };
+
+    window.deselectAllCampaigns = function() {
+        selectedCampaignIds.clear();
+        syncCheckboxes();
+        updateBulkUI();
+    };
+
+    function syncCheckboxes() {
+        document.querySelectorAll('.campaign-checkbox').forEach(cb => {
+            const id = parseInt(cb.getAttribute('data-id'));
+            cb.checked = selectedCampaignIds.has(id);
+        });
+        const masterCb = document.getElementById('campaign-select-all');
+        if (masterCb) {
+            const totalVisible = document.querySelectorAll('.campaign-row:not([style*="display: none"])').length;
+            masterCb.checked = totalVisible > 0 && selectedCampaignIds.size >= totalVisible;
+        }
+    }
+
+    function updateBulkUI() {
+        const count = selectedCampaignIds.size;
+        const bulkBar = document.getElementById('bulk-action-bar');
+        const countLabel = document.getElementById('bulk-count-label');
+        const bulkCompareBtn = document.getElementById('bulk-compare-btn');
+        const headerCompareBtn = document.getElementById('btn-open-compare');
+        const headerCompareText = document.getElementById('compare-btn-text');
+
+        if (count > 0) {
+            if (bulkBar) bulkBar.style.display = 'flex';
+            if (countLabel) countLabel.textContent = `${count} campaign${count > 1 ? 's' : ''} selected`;
+        } else {
+            if (bulkBar) bulkBar.style.display = 'none';
+        }
+
+        // Comparison requires exactly 2 finished campaigns
+        const finishedSelected = Array.from(selectedCampaignIds).filter(id => {
+            const el = document.querySelector(`.campaign-row[data-id="${id}"]`);
+            return el && el.getAttribute('data-is-finished') === '1';
+        });
+
+        const canCompare = finishedSelected.length === 2;
+
+        if (headerCompareBtn) {
+            headerCompareBtn.disabled = !canCompare;
+            if (headerCompareText) {
+                if (finishedSelected.length === 2) headerCompareText.textContent = 'Compare 2 selected';
+                else if (count === 1) headerCompareText.textContent = 'Select 1 more to compare';
+                else headerCompareText.textContent = 'Compare (select 2)';
+            }
+        }
+
+        if (bulkCompareBtn) {
+            bulkCompareBtn.disabled = !canCompare;
+        }
+    }
+
+    window.resetAllFilters = function() {
+        const searchInput = document.getElementById('campaigns-search-input');
+        if (searchInput) searchInput.value = '';
+        const dateSelect = document.getElementById('campaigns-date-select');
+        if (dateSelect) dateSelect.value = 'all';
+        setSavedView('all', document.querySelector('[data-view="all"]'));
+    };
+
+    // ── 6. Side-by-Side Comparison Modal ──────────────────────────────
+    window.handleOpenCompareModal = function() {
+        const finishedSelected = Array.from(selectedCampaignIds).filter(id => {
+            const el = document.querySelector(`.campaign-row[data-id="${id}"]`);
+            return el && el.getAttribute('data-is-finished') === '1';
+        });
+
+        if (finishedSelected.length !== 2) {
+            if (typeof window.showToast === 'function') {
+                window.showToast('Please select exactly two finished campaigns to compare side by side.', 'warning');
+            } else {
+                console.warn('Please select exactly two finished campaigns to compare side by side.');
+            }
+            return;
+        }
+
+        const ids = finishedSelected;
+        const modal = document.getElementById('compare-modal');
+        const loading = document.getElementById('compare-loading');
+        const content = document.getElementById('compare-content-view');
+
+        if (modal && typeof modal.showModal === 'function') {
+            modal.showModal();
+        } else if (modal) {
+            modal.setAttribute('open', '');
+        }
+
+        if (loading) loading.style.display = 'flex';
+        if (content) content.style.display = 'none';
+
+        // Fetch server comparison computation
+        fetch(`/api/campaigns/compare?c1=${ids[0]}&c2=${ids[1]}`)
+            .then(res => res.json())
+            .then(data => {
+                if (!data.ok) {
+                    if (typeof window.showToast === 'function') {
+                        window.showToast(data.error || 'Failed to compare campaigns.', 'error');
+                    }
+                    closeCompareModal();
+                    return;
+                }
+                renderCompareData(data);
+            })
+            .catch(err => {
+                console.error(err);
+                if (typeof window.showToast === 'function') {
+                    window.showToast('Comparison error occurred.', 'error');
+                }
+                closeCompareModal();
+            });
+    };
+
+    function renderCompareData(data) {
+        const loading = document.getElementById('compare-loading');
+        const content = document.getElementById('compare-content-view');
+        if (loading) loading.style.display = 'none';
+        if (content) content.style.display = 'block';
+
+        const c1 = data.campaign1;
+        const c2 = data.campaign2;
+        const deltas = data.deltas;
+
+        // Factual summary narrative
+        const summaryText = document.getElementById('compare-summary-text');
+        if (summaryText) summaryText.textContent = data.summary;
+
+        // Populate Card A
+        document.getElementById('cmp-a-name').textContent = c1.name;
+        document.getElementById('cmp-a-meta').textContent = `${c1.scenario} · ${c1.sent} targets · ${c1.created_at.slice(0, 10)}`;
+        document.getElementById('cmp-a-score').textContent = `${c1.score}/100`;
+
+        // Populate Card B
+        document.getElementById('cmp-b-name').textContent = c2.name;
+        document.getElementById('cmp-b-meta').textContent = `${c2.scenario} · ${c2.sent} targets · ${c2.created_at.slice(0, 10)}`;
+        document.getElementById('cmp-b-score').textContent = `${c2.score}/100`;
+
+        // Score delta chip
+        const scoreChip = document.getElementById('cmp-score-delta-chip');
+        if (scoreChip) {
+            const sDel = deltas.score;
+            scoreChip.textContent = `${sDel > 0 ? '+' : ''}${sDel} pts`;
+            scoreChip.className = `metric-delta-chip ${sDel > 0 ? 'good' : (sDel < 0 ? 'warning' : 'steady')}`;
+        }
+
+        // Funnel Visualizations
+        const renderFunnel = (c) => `
+            <div class="compare-funnel-step">
+                <div class="cmp-fn-label">
+                    <span class="cmp-fn-step-name">Dispatched</span>
+                    <strong class="mono-data">${c.sent}</strong>
+                </div>
+                <div class="cmp-fn-track"><div class="cmp-fn-fill fill-sent" style="width: 100%;"></div></div>
+            </div>
+            <div class="compare-funnel-step">
+                <div class="cmp-fn-label">
+                    <span class="cmp-fn-step-name">Opened</span>
+                    <strong class="mono-data">${c.opened} <span class="sub-stat">(${c.open_rate}%)</span></strong>
+                </div>
+                <div class="cmp-fn-track"><div class="cmp-fn-fill fill-open" style="width: ${Math.min(c.open_rate, 100)}%;"></div></div>
+            </div>
+            <div class="compare-funnel-step">
+                <div class="cmp-fn-label">
+                    <span class="cmp-fn-step-name">Clicked</span>
+                    <strong class="mono-data ${c.click_rate > 20 ? 'text-danger' : (c.click_rate > 0 ? 'text-warning' : '')}">${c.clicked} <span class="sub-stat">(${c.click_rate}%)</span></strong>
+                </div>
+                <div class="cmp-fn-track"><div class="cmp-fn-fill fill-click" style="width: ${Math.min(c.click_rate, 100)}%;"></div></div>
+            </div>
+            <div class="compare-funnel-step">
+                <div class="cmp-fn-label">
+                    <span class="cmp-fn-step-name">Reported</span>
+                    <strong class="mono-data ${c.reported > 0 ? 'text-success' : ''}">${c.reported} <span class="sub-stat">(${c.report_rate}%)</span></strong>
+                </div>
+                <div class="cmp-fn-track"><div class="cmp-fn-fill fill-report" style="width: ${Math.min(c.report_rate, 100)}%;"></div></div>
+            </div>
+        `;
+
+        document.getElementById('cmp-a-funnel').innerHTML = renderFunnel(c1);
+        document.getElementById('cmp-b-funnel').innerHTML = renderFunnel(c2);
+    }
+
+    window.closeCompareModal = function() {
+        const modal = document.getElementById('compare-modal');
+        if (!modal) return;
+        if (typeof modal.close === 'function') {
+            modal.close();
+        } else {
+            modal.removeAttribute('open');
+        }
+    };
+
+    // Global keyboard shortcut '/' to focus search
+    document.addEventListener('keydown', function(e) {
+        if (e.key === '/' && !['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) {
+            const input = document.getElementById('campaigns-search-input');
+            if (input) {
+                e.preventDefault();
+                input.focus();
+            }
+        }
+    });
+
+})();
+</script>
+
+{% endblock %}

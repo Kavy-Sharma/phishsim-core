@@ -4,15 +4,42 @@
 {% block content %}
 
 <!-- ═══════════════════════════════════════════════════════════════
+     DASHBOARD SKELETON (0 Cumulative Layout Shift, Matches Final Size)
+     ═══════════════════════════════════════════════════════════════ -->
+<div class="dash-page dash-page-container dashboard-skeleton-layout" id="dashboard-skeleton" aria-hidden="true">
+    <div class="skeleton-dash-header">
+        <div class="skeleton skel-header-title"></div>
+        <div class="skeleton skel-header-btn"></div>
+    </div>
+    <div class="skeleton-dash-tabs">
+        <div class="skeleton skel-tab-item"></div>
+        <div class="skeleton skel-tab-item"></div>
+        <div class="skeleton skel-tab-item"></div>
+        <div class="skeleton skel-tab-item"></div>
+    </div>
+    <div class="skeleton-hero-grid">
+        <div class="skeleton skeleton-hero-card"></div>
+        <div class="skeleton skeleton-stream-card"></div>
+    </div>
+    <div class="skeleton-metrics-strip">
+        <div class="skeleton skeleton-metric-card"></div>
+        <div class="skeleton skeleton-metric-card"></div>
+        <div class="skeleton skeleton-metric-card"></div>
+    </div>
+    <div class="skeleton skeleton-campaigns-section"></div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
      DASHBOARD MAIN CONTAINER
      ═══════════════════════════════════════════════════════════════ -->
-<div class="dash-page" id="dashboard-content" style="max-width: 1300px; width: 100%; margin: 0 auto; padding: 1.75rem 1.5rem; box-sizing: border-box;">
+<div class="dash-page dash-page-container" id="dashboard-content">
 
-    {% set user_first_name = (current_user.name.split(' ')[0] if current_user and current_user.name else 'Priya') %}
+    {% set user_first_name = (current_user.name.split(' ')[0] if current_user and current_user.name else '') %}
     {% set is_demo = (is_demo_preview or (current_user and current_user.company_domain == 'demo-corp.com')) and not request.args.get('empty') %}
     {% set has_campaigns = ((campaigns and campaigns | length > 0) or is_demo) and not request.args.get('empty') %}
+    {% set finished_count = (finished_campaigns_count if finished_campaigns_count is defined else (campaigns | selectattr('status', 'in', ['completed', 'launched', 'launched_with_errors']) | list | length)) %}
 
-    {# Compute Base Metrics #}
+    {# Compute Base Metrics strictly from real data #}
     {% set total_sent = (campaigns | map(attribute='emails_sent') | select('number') | sum) if campaigns else 0 %}
     {% set total_clicks = (campaigns | map(attribute='clicks') | select('number') | sum) if campaigns else 0 %}
     {% set total_reports = (campaigns | map(attribute='reports') | select('number') | sum) if campaigns else 0 %}
@@ -20,37 +47,50 @@
 
     {% set report_val = (24.1 if is_demo else (((total_reports / total_sent * 100) | round(1)) if total_sent > 0 else 0.0)) %}
     {% set click_val = (12.5 if is_demo else (((total_clicks / total_sent * 100) | round(1)) if total_sent > 0 else (global_stats.global_risk if global_stats else 0.0))) %}
-    {% set readiness_val = (78 if is_demo else (global_hss.score if global_hss else ([100 - (click_val | round | int), 10] | max))) %}
+    {% set readiness_val = (readiness_val if readiness_val is defined and readiness_val is not none else (75 if is_demo else (global_hss.score if global_hss else 50))) %}
 
-    {# Deltas vs prior drill #}
-    {% set delta_rep = 3.4 if is_demo else 1.8 %}
-    {% set delta_clk = -2.1 if is_demo else -1.2 %}
-    {% set delta_readiness = 5 if is_demo else 3 %}
+    {# Deltas vs prior drill strictly from server computation #}
+    {% set delta_rep = delta_rep if delta_rep is defined else (3.4 if is_demo else none) %}
+    {% set delta_clk = delta_clk if delta_clk is defined else (-2.1 if is_demo else none) %}
+    {% set delta_readiness = delta_readiness if delta_readiness is defined else (5 if is_demo else none) %}
 
     {# Verdict on readiness #}
-    {% if delta_readiness > 0 or readiness_val >= 75 %}
-        {% set readiness_verdict = "Getting safer" %}
-        {% set delta_readiness_class = "positive" %}
-    {% elif delta_readiness == 0 or (readiness_val >= 60 and readiness_val < 75) %}
-        {% set readiness_verdict = "Holding steady" %}
-        {% set delta_readiness_class = "steady" %}
+    {% if delta_readiness is not none %}
+        {% if delta_readiness > 0 or readiness_val >= 75 %}
+            {% set readiness_verdict = "Getting safer" %}
+            {% set delta_readiness_class = "positive" %}
+        {% elif delta_readiness == 0 or (readiness_val >= 60 and readiness_val < 75) %}
+            {% set readiness_verdict = "Holding steady" %}
+            {% set delta_readiness_class = "steady" %}
+        {% else %}
+            {% set readiness_verdict = "Needs attention" %}
+            {% set delta_readiness_class = "warning" %}
+        {% endif %}
     {% else %}
-        {% set readiness_verdict = "Needs attention" %}
-        {% set delta_readiness_class = "warning" %}
+        {% if readiness_val >= 75 %}
+            {% set readiness_verdict = "Getting safer" %}
+            {% set delta_readiness_class = "positive" %}
+        {% elif readiness_val >= 60 %}
+            {% set readiness_verdict = "Holding steady" %}
+            {% set delta_readiness_class = "steady" %}
+        {% else %}
+            {% set readiness_verdict = "Needs attention" %}
+            {% set delta_readiness_class = "warning" %}
+        {% endif %}
     {% endif %}
 
-    {# Count campaign statuses for filter chips #}
+    {# Count campaign statuses for filter chips with unified finished helper #}
     {% set ns = namespace(all=0, running=0, scheduled=0, finished=0, draft=0) %}
     {% if campaigns %}
         {% for c in campaigns %}
             {% set ns.all = ns.all + 1 %}
             {% set c_st = c.status or 'draft' %}
-            {% if c_st in ('launched', 'launching') %}
+            {% if is_campaign_finished(c) %}
+                {% set ns.finished = ns.finished + 1 %}
+            {% elif c_st in ('launching', 'running', 'in_progress') %}
                 {% set ns.running = ns.running + 1 %}
             {% elif c_st == 'scheduled' %}
                 {% set ns.scheduled = ns.scheduled + 1 %}
-            {% elif c_st in ('completed', 'launched_with_errors') %}
-                {% set ns.finished = ns.finished + 1 %}
             {% elif c_st == 'draft' %}
                 {% set ns.draft = ns.draft + 1 %}
             {% else %}
@@ -58,29 +98,34 @@
             {% endif %}
         {% endfor %}
     {% elif is_demo %}
-        {% set ns.all = 2 %}
+        {% set ns.all = 6 %}
         {% set ns.running = 1 %}
-        {% set ns.finished = 1 %}
+        {% set ns.finished = 4 %}
     {% endif %}
 
     <!-- ═══════════════════════════════════════════════════════════════
          2.1 HEADER (Time-aware greeting, date, single primary button)
          ═══════════════════════════════════════════════════════════════ -->
-    <header class="page-header" style="border-bottom: none; margin-bottom: 0.5rem; padding-bottom: 0;">
+    <header class="page-header dash-page-header">
         <div class="page-header-content">
-            <h1 class="page-header-title" id="dash-greeting">
-                Good morning, {{ user_first_name }}
-            </h1>
+            <div class="dash-title-row">
+                <h1 class="page-header-title" id="dash-greeting">
+                    Good morning{{ ', ' ~ user_first_name if user_first_name else '' }}
+                </h1>
+                {% if is_demo %}
+                <span class="badge badge-warning" id="dash-sample-data-badge"><i class="ti ti-info-circle"></i> Sample data</span>
+                {% endif %}
+            </div>
             <p class="dash-date" id="dash-current-date">
-                Thursday, October 22, 2026
+                {{ current_date or 'Today' }}
             </p>
         </div>
-        <div class="page-header-actions" style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-            <a href="/briefing" class="btn btn-secondary" title="View AI Risk Advisor weekly intelligence">
+        <div class="page-header-actions dash-header-actions">
+            <a href="/briefing" class="btn btn-secondary dash-header-secondary-btn" title="View AI Risk Advisor weekly intelligence">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
                 <span>Briefing</span>
             </a>
-            <button type="button" class="btn btn-secondary" onclick="openExportModal()" title="Export reports & audit logs">
+            <button type="button" class="btn btn-secondary dash-header-secondary-btn" onclick="openExportModal()" title="Export reports & audit logs">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
                 <span>Export Report</span>
             </button>
@@ -106,7 +151,7 @@
         </a>
         <a href="#people" class="tab-item" data-tab="people" onclick="handleTabClick(event, 'people')">
             <span>People</span>
-            {% if dept_count and dept_count > 0 %}
+            {% if dept_count and (dept_count | int(0)) > 0 %}
             <span class="badge badge-neutral tab-count-badge">{{ dept_count }}</span>
             {% endif %}
         </a>
@@ -122,23 +167,23 @@
 
         <!-- "⋯" More Menu at the right of the tab row (Briefing, Export, Print) -->
         <div class="tab-more-menu-wrapper">
-            <button type="button" class="tab-item tab-more-btn" id="dash-tab-more-btn" onclick="toggleTabMoreMenu(event)" aria-label="More options" aria-haspopup="true" aria-expanded="false">
+            <button type="button" class="tab-item tab-more-btn" id="dash-tab-more-btn" onclick="toggleTabMoreMenu(event)" aria-label="More options" aria-haspopup="menu" aria-expanded="false">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <circle cx="12" cy="12" r="1.5"></circle>
                     <circle cx="6" cy="12" r="1.5"></circle>
                     <circle cx="18" cy="12" r="1.5"></circle>
                 </svg>
             </button>
-            <div class="tab-more-dropdown" id="dash-tab-more-dropdown" style="display: none;">
-                <a href="/briefing" class="tab-more-link" title="Open executive briefing">
+            <div class="tab-more-dropdown" id="dash-tab-more-dropdown" role="menu" aria-label="More dashboard options">
+                <a href="/briefing" class="tab-more-link" role="menuitem" tabindex="-1" title="Open executive briefing">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
                     <span>Open briefing</span>
                 </a>
-                <button type="button" class="tab-more-link" onclick="openExportModal(); closeTabMoreMenu();" title="Export reports">
+                <button type="button" class="tab-more-link" role="menuitem" tabindex="-1" onclick="openExportModal(); closeTabMoreMenu();" title="Export reports">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
                     <span>Export report</span>
                 </button>
-                <button type="button" class="tab-more-link" onclick="window.print(); closeTabMoreMenu();" title="Print screen">
+                <button type="button" class="tab-more-link" role="menuitem" tabindex="-1" onclick="window.print(); closeTabMoreMenu();" title="Print screen">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
                     <span>Print</span>
                 </button>
@@ -150,18 +195,20 @@
          TAB CONTENT: OVERVIEW TAB PANE
          ═══════════════════════════════════════════════════════════════ -->
     <div class="dash-tab-pane" id="tab-pane-overview">
-        {% if has_campaigns %}
-            <!-- Weekly Risk Briefing Banner (Restored from Image 2) -->
+        {% if has_campaigns and (finished_count > 0 or is_demo) %}
+            {% if briefing_headline %}
+            <!-- Weekly Risk Briefing Banner -->
             <div class="dash-risk-banner" id="dash-weekly-risk-banner">
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <span class="dash-risk-banner-tag">WEEKLY RISK BRIEFING</span>
-                    <span class="dash-risk-banner-text">{{ briefing_headline or "Click exposure rose across latest period, signaling need for targeted refresher training." }}</span>
+                <div class="dash-banner-left">
+                    <span class="dash-risk-banner-tag">Weekly risk briefing</span>
+                    <span class="dash-risk-banner-text">{{ briefing_headline }}</span>
                 </div>
                 <a href="/briefing" class="dash-risk-banner-link">
                     <span>Open the briefing</span>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
                 </a>
             </div>
+            {% endif %}
 
             <div class="dash-hero-grid">
                 <!-- ═══════════════════════════════════════════════════════════
@@ -205,6 +252,7 @@
                         <!-- Under the ring: rule-based verdict + delta arrow -->
                         <div class="readiness-verdict-box">
                             <p class="readiness-verdict-text">{{ readiness_verdict }}</p>
+                            {% if delta_readiness is not none %}
                             <div class="readiness-delta-line {{ delta_readiness_class }}">
                                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                     {% if delta_readiness > 0 %}
@@ -217,23 +265,28 @@
                                 </svg>
                                 <span>{{ '+' if delta_readiness > 0 else '' }}{{ delta_readiness }} points since last campaign</span>
                             </div>
+                            {% else %}
+                            <div class="readiness-delta-line steady">
+                                <span>Run one more campaign to see a trend</span>
+                            </div>
+                            {% endif %}
                         </div>
                     </div>
 
                     <!-- RIGHT ZONE: Trend chart (last 8 campaigns) -->
                     <div class="readiness-trend-zone">
-                        {% if ns.all >= 2 %}
+                        {% if (trend_points and trend_points | length >= 2) or (is_demo and ns.all >= 2) %}
                         <div class="trend-chart-header">
                             <div>
                                 <span class="trend-chart-title" id="trend-metric-title">Team readiness trend</span>
-                                <span class="trend-chart-subtitle" style="margin-left: 8px;">Last 8 campaigns</span>
+                                <span class="trend-chart-subtitle trend-subtitle-spacing">Last 8 campaigns</span>
                             </div>
-                            <span class="mono-data" style="font-size: 0.75rem; color: var(--text-muted);" id="trend-latest-val-label">Latest: {{ readiness_val }} pts</span>
+                            <span class="mono-data trend-latest-val-label" id="trend-latest-val-label">Latest: {{ readiness_val }} pts</span>
                         </div>
 
                         <!-- Inline SVG Trend Chart -->
                         <div class="trend-chart-wrapper" id="trend-chart-container" onmousemove="handleTrendChartHover(event)" onmouseleave="handleTrendChartLeave()" onclick="handleTrendChartTouch(event)">
-                            <svg viewBox="0 0 540 140" class="trend-svg" id="hero-trend-svg" preserveAspectRatio="none">
+                            <svg viewBox="0 0 540 140" class="trend-svg" id="hero-trend-svg" preserveAspectRatio="none" role="img" aria-label="Team readiness trend chart: score {{ readiness_val }} out of 100">
                                 <defs>
                                     <!-- Area Gradient Fill -->
                                     <linearGradient id="trend-fill-gradient" x1="0" y1="0" x2="0" y2="1">
@@ -253,10 +306,10 @@
                                 <text x="20" y="118" class="trend-grid-label">0</text>
 
                                 <!-- Soft gradient area fill -->
-                                <path id="trend-area-path" fill="url(#trend-fill-gradient)" d="M 40 85 C 100 80, 160 72, 220 68 C 280 64, 340 50, 400 42 C 460 38, 490 32, 510 28 L 510 115 L 40 115 Z"></path>
+                                <path id="trend-area-path" fill="url(#trend-fill-gradient)" d="M 40 85 L 510 28 L 510 115 L 40 115 Z"></path>
 
                                 <!-- Smooth trend line (draws left -> right in 700 ms) -->
-                                <path id="trend-line-path" class="trend-path trend-path-animated" stroke="var(--primary)" d="M 40 85 C 100 80, 160 72, 220 68 C 280 64, 340 50, 400 42 C 460 38, 490 32, 510 28"></path>
+                                <path id="trend-line-path" class="trend-path trend-path-animated" stroke="var(--primary)" d="M 40 85 L 510 28"></path>
 
                                 <!-- Vertical hover guide line (hidden by default) -->
                                 <line id="trend-guide-line" x1="0" y1="15" x2="0" y2="115" class="trend-guide-line"></line>
@@ -268,23 +321,17 @@
                                 <circle id="trend-halo-glow" cx="510" cy="28" r="9" class="trend-halo-glow" fill="var(--primary)"></circle>
                                 <circle id="trend-halo-dot" cx="510" cy="28" r="4.5" class="trend-halo-dot" stroke="var(--primary)"></circle>
 
-                                <!-- X Axis Labels -->
-                                <text x="40" y="132" class="trend-x-label">May 10</text>
-                                <text x="120" y="132" class="trend-x-label">Jun 02</text>
-                                <text x="200" y="132" class="trend-x-label">Jun 24</text>
-                                <text x="280" y="132" class="trend-x-label">Jul 15</text>
-                                <text x="360" y="132" class="trend-x-label">Jul 28</text>
-                                <text x="440" y="132" class="trend-x-label">Aug 01</text>
-                                <text x="510" y="132" class="trend-x-label">Latest</text>
+                                <!-- Dynamic X Axis Labels rendered from real points -->
+                                <g id="trend-x-labels-group"></g>
                             </svg>
 
                             <!-- Tooltip Card with campaign name, date, readiness, report rate, click rate -->
                             <div class="trend-tooltip-card" id="trend-tooltip-card">
-                                <div class="trend-tooltip-name" id="tt-camp-name">Executive CEO Fraud Test</div>
-                                <div class="trend-tooltip-date" id="tt-camp-date">Aug 01, 2026</div>
-                                <div class="trend-tooltip-stat"><span>Readiness:</span> <strong id="tt-readiness">78 / 100</strong></div>
-                                <div class="trend-tooltip-stat"><span>Report rate:</span> <strong id="tt-report">24.1%</strong></div>
-                                <div class="trend-tooltip-stat"><span>Click rate:</span> <strong id="tt-click">12.5%</strong></div>
+                                <div class="trend-tooltip-name" id="tt-camp-name">—</div>
+                                <div class="trend-tooltip-date" id="tt-camp-date">—</div>
+                                <div class="trend-tooltip-stat"><span>Readiness:</span> <strong id="tt-readiness">—</strong></div>
+                                <div class="trend-tooltip-stat"><span>Report rate:</span> <strong id="tt-report">—</strong></div>
+                                <div class="trend-tooltip-stat"><span>Click rate:</span> <strong id="tt-click">—</strong></div>
                             </div>
                         </div>
 
@@ -335,7 +382,7 @@
                 <!-- Footer Summary with direct link to Activity tab -->
                 <div class="ai-stream-footer">
                     <div class="stream-footer-info">
-                        <span class="stream-footer-count" id="ai-event-counter">60</span>
+                        <span class="stream-footer-count" id="ai-event-counter">{{ total_sent }}</span>
                         <span>recipients evaluated</span>
                     </div>
                     <a href="#activity" class="stream-footer-link" onclick="handleTabClick(event, 'activity')">
@@ -355,26 +402,34 @@
                 <div class="card hero-stat-card metric-card-interactive" onclick="switchHeroTrendMetric('report_rate')" title="Click to filter trend chart to Report rate" data-metric="report-rate">
                     <div class="hero-stat-header">
                         <span class="hero-stat-title card-label">Report rate</span>
-                        <span class="metric-delta-chip {% if delta_rep >= 0 %}good{% else %}warning{% endif %}" title="Change vs prior drill">
+                        {% if delta_rep is not none %}
+                        <span class="metric-delta-chip {% if delta_rep > 0 %}good{% elif delta_rep < 0 %}warning{% else %}steady{% endif %}" title="Change vs prior drill">
                             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                <polyline points="{% if delta_rep >= 0 %}18 15 12 9 6 15{% else %}6 9 12 15 18 9{% endif %}"></polyline>
+                                {% if delta_rep > 0 %}
+                                <polyline points="18 15 12 9 6 15"></polyline>
+                                {% elif delta_rep < 0 %}
+                                <polyline points="6 9 12 15 18 9"></polyline>
+                                {% else %}
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                                {% endif %}
                             </svg>
                             <span>{{ '+' if delta_rep > 0 else '' }}{{ delta_rep }} pts vs last</span>
                         </span>
+                        {% endif %}
                     </div>
                     <div class="hero-stat-body">
                         <span class="stat-value hero-stat-value js-countup" data-target="{{ report_val }}" data-suffix="%">{{ report_val }}%</span>
                         <div class="hero-stat-sublabel">
-                            <span class="sublabel-pill good">✓ Outperforming</span>
-                            <span class="sublabel-desc">20.7% industry avg</span>
+                            <span class="sublabel-desc">{{ total_reports }} of {{ total_sent }} recipients reported</span>
                         </div>
                     </div>
-                    <!-- Small clean sparkline (last-point dot only) -->
+                    <!-- Small clean sparkline (solid dot with halo on latest point) -->
                     <div class="sparkline-container" title="Report rate trend over past drills">
-                        <svg viewBox="0 0 160 36" class="sparkline-svg" preserveAspectRatio="none">
+                        <svg viewBox="0 0 160 36" class="sparkline-svg" preserveAspectRatio="none" role="img" aria-label="Report rate sparkline: {{ report_val }}%">
                             <path class="sparkline-path positive" d="M 0 30 L 26 27 L 53 25 L 80 21 L 106 18 L 133 13 L 160 7"></path>
-                            <!-- Last-point dot only -->
-                            <circle cx="160" cy="7" r="3.5" class="sparkline-dot" stroke="var(--success)"></circle>
+                            <!-- Last-point dot with halo only -->
+                            <circle cx="160" cy="7" r="6" class="sparkline-halo" fill="var(--success)"></circle>
+                            <circle cx="160" cy="7" r="3" class="sparkline-dot" fill="var(--success)"></circle>
                         </svg>
                     </div>
                 </div>
@@ -383,26 +438,36 @@
                 <div class="card hero-stat-card metric-card-interactive" onclick="switchHeroTrendMetric('click_rate')" title="Click to filter trend chart to Click rate" data-metric="click-rate">
                     <div class="hero-stat-header">
                         <span class="hero-stat-title card-label">Click rate</span>
-                        <span class="metric-delta-chip {% if delta_clk <= 0 %}good{% elif click_val > 25.0 %}danger{% else %}warning{% endif %}" title="Change vs prior drill">
+                        {% if delta_clk is not none %}
+                        <span class="metric-delta-chip {% if delta_clk < 0 %}good{% elif delta_clk > 0 %}danger{% else %}steady{% endif %}" title="Change vs prior drill">
                             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                <polyline points="{% if delta_clk <= 0 %}18 15 12 9 6 15{% else %}6 9 12 15 18 9{% endif %}"></polyline>
+                                {% if delta_clk < 0 %}
+                                <!-- Click rate decreased: Down-arrow direction + Good/Green colour -->
+                                <polyline points="6 9 12 15 18 9"></polyline>
+                                {% elif delta_clk > 0 %}
+                                <!-- Click rate increased: Up-arrow direction + Danger/Red colour -->
+                                <polyline points="18 15 12 9 6 15"></polyline>
+                                {% else %}
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                                {% endif %}
                             </svg>
-                            <span>{{ delta_clk }} pts vs last</span>
+                            <span>{{ '+' if delta_clk > 0 else '' }}{{ delta_clk }} pts vs last</span>
                         </span>
+                        {% endif %}
                     </div>
                     <div class="hero-stat-body">
                         <span class="stat-value hero-stat-value js-countup" data-target="{{ click_val }}" data-suffix="%">{{ click_val }}%</span>
                         <div class="hero-stat-sublabel">
-                            <span class="sublabel-pill {% if click_val > 25.0 %}danger{% else %}info{% endif %}">🛡 Controlled</span>
-                            <span class="sublabel-desc">Down 14% this quarter</span>
+                            <span class="sublabel-desc">{{ total_clicks }} of {{ total_sent }} recipients clicked</span>
                         </div>
                     </div>
-                    <!-- Small clean sparkline (last-point dot only) -->
+                    <!-- Small clean sparkline (solid dot with halo on latest point) -->
                     <div class="sparkline-container" title="Click rate trend over past drills">
-                        <svg viewBox="0 0 160 36" class="sparkline-svg" preserveAspectRatio="none">
+                        <svg viewBox="0 0 160 36" class="sparkline-svg" preserveAspectRatio="none" role="img" aria-label="Click rate sparkline: {{ click_val }}%">
                             <path class="sparkline-path {% if click_val > 25.0 %}danger{% else %}positive{% endif %}" d="M 0 8 L 26 12 L 53 16 L 80 20 L 106 24 L 133 28 L 160 30"></path>
-                            <!-- Last-point dot only -->
-                            <circle cx="160" cy="30" r="3.5" class="sparkline-dot" stroke="var(--info)"></circle>
+                            <!-- Last-point dot with halo only -->
+                            <circle cx="160" cy="30" r="6" class="sparkline-halo" fill="var(--info)"></circle>
+                            <circle cx="160" cy="30" r="3" class="sparkline-dot" fill="var(--info)"></circle>
                         </svg>
                     </div>
                 </div>
@@ -411,24 +476,32 @@
                 <div class="card hero-stat-card metric-card-interactive" onclick="switchHeroTrendMetric('readiness')" title="Click to filter trend chart to Readiness score" data-metric="readiness-score">
                     <div class="hero-stat-header">
                         <span class="hero-stat-title card-label">{{ 'People reached' if total_employees_count > 0 else 'Campaigns run' }}</span>
+                        {% if ns.running > 0 %}
                         <span class="metric-delta-chip good" title="Audience engagement">
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="18 15 12 9 6 15"></polyline></svg>
+                            <span class="campaign-status-dot pulse badge-dot-info"></span>
                             <span>Active</span>
                         </span>
+                        {% endif %}
                     </div>
                     <div class="hero-stat-body">
                         <span class="stat-value hero-stat-value js-countup" data-target="{{ total_employees_count if total_employees_count > 0 else ns.all }}">{{ total_employees_count if total_employees_count > 0 else ns.all }}</span>
                         <div class="hero-stat-sublabel">
-                            <span class="sublabel-pill primary">● 100% Reach</span>
-                            <span class="sublabel-desc">All active departments</span>
+                            <span class="sublabel-desc">
+                                {% if dept_count and (dept_count | int(0)) > 0 %}
+                                {{ total_sent }} dispatched across {{ dept_count }} department{{ 's' if dept_count != 1 else '' }}
+                                {% else %}
+                                {{ total_employees_count if total_employees_count > 0 else ns.all }} in directory
+                                {% endif %}
+                            </span>
                         </div>
                     </div>
-                    <!-- Small clean sparkline (last-point dot only) -->
+                    <!-- Small clean sparkline (solid dot with halo on latest point) -->
                     <div class="sparkline-container" title="Audience engagement trend">
-                        <svg viewBox="0 0 160 36" class="sparkline-svg" preserveAspectRatio="none">
+                        <svg viewBox="0 0 160 36" class="sparkline-svg" preserveAspectRatio="none" role="img" aria-label="People reached sparkline: {{ total_employees_count if total_employees_count > 0 else ns.all }} recipients reached">
                             <path class="sparkline-path positive" d="M 0 28 L 30 25 L 60 22 L 90 18 L 120 14 L 140 10 L 160 6"></path>
-                            <!-- Last-point dot only -->
-                            <circle cx="160" cy="6" r="3.5" class="sparkline-dot" stroke="var(--primary)"></circle>
+                            <!-- Last-point dot with halo only -->
+                            <circle cx="160" cy="6" r="6" class="sparkline-halo" fill="var(--primary)"></circle>
+                            <circle cx="160" cy="6" r="3" class="sparkline-dot" fill="var(--primary)"></circle>
                         </svg>
                     </div>
                 </div>
@@ -522,21 +595,13 @@
                     <span>Suggested next step</span>
                 </span>
                 <p class="next-action-text" id="next-action-sentence">
-                    {% if not has_campaigns %}
-                    Send your first campaign to a small team to set a baseline.
-                    {% elif is_demo %}
-                    Finance clicked 3× more than other teams &mdash; run a CEO-fraud drill for them.
-                    {% elif click_val > 20.0 %}
-                    High click exposure of {{ click_val }}% detected &mdash; dispatch a targeted credential harvesting drill.
-                    {% else %}
-                    Team resilience improved to {{ readiness_val }}/100 &mdash; schedule an executive spear-phishing test to maintain readiness.
-                    {% endif %}
+                    {{ suggested_next_step.text if suggested_next_step else ('Send your first campaign to a small team to set a baseline.' if not has_campaigns else 'Dispatch an IT password reset drill to evaluate workforce credential resilience.') }}
                 </p>
                 <span class="next-action-note">Written by a language model. It can be wrong.</span>
             </div>
             <div>
-                <a href="/new-campaign?scenario=ceo_fraud&department=Finance" class="btn btn-secondary" id="btn-run-targeted-drill">
-                    <span>Run targeted drill</span>
+                <a href="{{ suggested_next_step.cta_url if suggested_next_step else '/new-campaign?scenario=it_reset' }}" class="btn btn-secondary" id="btn-run-targeted-drill">
+                    <span>{{ suggested_next_step.cta_text if suggested_next_step else 'Run targeted drill' }}</span>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
                 </a>
             </div>
@@ -575,7 +640,7 @@
     <!-- ═══════════════════════════════════════════════════════════════
          TAB CONTENT: CAMPAIGNS TAB PANE (Full Width)
          ═══════════════════════════════════════════════════════════════ -->
-    <div class="dash-tab-pane" id="tab-pane-campaigns" style="display: none;">
+    <div class="dash-tab-pane" id="tab-pane-campaigns">
         <div id="full-campaigns-container">
             <!-- Will house the full width campaigns section -->
         </div>
@@ -584,7 +649,7 @@
     <!-- ═══════════════════════════════════════════════════════════════
          TAB CONTENT: PEOPLE TAB PANE (2.7)
          ═══════════════════════════════════════════════════════════════ -->
-    <div class="dash-tab-pane" id="tab-pane-people" style="display: none;">
+    <div class="dash-tab-pane" id="tab-pane-people">
         <section class="section" id="people-section">
             <div class="section-header">
                 <div>
@@ -601,14 +666,15 @@
 
             {% if dept_stats and dept_stats | length > 0 %}
             <div class="app-table-wrapper">
-                <table class="app-table people-exposure-table">
+                <table class="app-table people-exposure-table" id="departments-table">
+                    <caption class="sr-only">Department Risk Breakdown</caption>
                     <thead>
                         <tr>
-                            <th style="min-width: 180px;">Department</th>
-                            <th>Team size</th>
-                            <th>Clicks</th>
-                            <th>Reports</th>
-                            <th>Exposure risk</th>
+                            <th scope="col" class="col-dept-name">Department</th>
+                            <th scope="col">Team size</th>
+                            <th scope="col">Clicks</th>
+                            <th scope="col">Reports</th>
+                            <th scope="col">Exposure risk</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -618,16 +684,16 @@
                         {% set d_rep = d.reports or 0 %}
                         {% set d_risk = ((d_clk / d_emp * 100) | round | int) if d_emp > 0 else 0 %}
                         <tr>
-                            <td style="font-weight: 600; color: var(--text-primary);">{{ d.department }}</td>
+                            <th scope="row" class="dept-name-cell">{{ d.department }}</th>
                             <td class="mono-data">{{ d.employee_count }}</td>
-                            <td class="mono-data" style="color: {% if d_clk > 0 %}var(--warning){% else %}inherit{% endif %};">{{ d_clk }}</td>
-                            <td class="mono-data" style="color: {% if d_rep > 0 %}var(--success){% else %}inherit{% endif %};">{{ d_rep }}</td>
+                            <td class="mono-data {% if d_clk > 0 %}text-warning{% endif %}">{{ d_clk }}</td>
+                            <td class="mono-data {% if d_rep > 0 %}text-success{% endif %}">{{ d_rep }}</td>
                             <td>
-                                <div style="display: flex; align-items: center; gap: 8px;">
+                                <div class="people-risk-wrap">
                                     <div class="people-risk-bar">
-                                        <div class="people-risk-fill" style="width: {{ [d_risk, 100] | min }}%; background-color: {% if d_risk > 25 %}var(--danger){% elif d_risk > 15 %}var(--warning){% else %}var(--success){% endif %};"></div>
+                                        <div class="people-risk-fill {% if d_risk > 25 %}risk-danger{% elif d_risk > 15 %}risk-warning{% else %}risk-success{% endif %}" data-progress="{{ [d_risk, 100] | min }}"></div>
                                     </div>
-                                    <span class="mono-data" style="font-size: 0.75rem;">{{ d_risk }}%</span>
+                                    <span class="mono-data people-risk-pct">{{ d_risk }}%</span>
                                 </div>
                             </td>
                         </tr>
@@ -637,7 +703,7 @@
             </div>
             {% else %}
             <!-- Truthful empty state for People tab -->
-            <div class="empty-state card" style="padding: 3rem 1.5rem;">
+            <div class="empty-state card people-empty-padded">
                 <div class="empty-state-icon">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
                 </div>
@@ -654,7 +720,7 @@
     <!-- ═══════════════════════════════════════════════════════════════
          TAB CONTENT: ACTIVITY TAB PANE (2.7 Grouped Daily Timeline)
          ═══════════════════════════════════════════════════════════════ -->
-    <div class="dash-tab-pane" id="tab-pane-activity" style="display: none;">
+    <div class="dash-tab-pane" id="tab-pane-activity">
         <section class="section" id="activity-section">
             <div class="section-header">
                 <div>
@@ -674,27 +740,27 @@
             <div class="activity-timeline-container" id="activity-timeline-list">
                 <div class="timeline-day-group">
                     <div class="timeline-day-header">Recent events</div>
-                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                    <div class="activity-list-stack">
                         {% for act in recent_activities %}
                         <div class="timeline-event-row" data-event-type="{{ act.event_type }}" title="Recorded: {{ act.created_at }}">
                             <div class="timeline-event-icon">
                                 {% if act.event_type == 'click' %}
-                                <span style="color: var(--danger); font-size: 0.9375rem;">⚠</span>
+                                <span class="act-badge-danger">⚠</span>
                                 {% elif act.event_type == 'report' %}
-                                <span style="color: var(--success); font-size: 0.9375rem;">🛡</span>
+                                <span class="act-badge-success">🛡</span>
                                 {% else %}
-                                <span style="color: var(--primary); font-size: 0.9375rem;">✉</span>
+                                <span class="act-badge-primary">✉</span>
                                 {% endif %}
                             </div>
-                            <div style="flex: 1; display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
-                                <span style="font-family: var(--font-sans); font-size: 0.8125rem; color: var(--text-primary);">
+                            <div class="act-meta-row">
+                                <span class="act-event-text">
                                     {% if act.entry_type == 'event' %}
                                         <strong>{{ act.employee_name or 'Recipient' }}</strong> ({{ act.employee_department or 'Staff' }}) {{ act.event_type }}ed lure in <em>{{ act.campaign_name }}</em>
                                     {% else %}
                                         Drill <strong>{{ act.campaign_name }}</strong> created by {{ act.owner_name or 'Security Lead' }}
                                     {% endif %}
                                 </span>
-                                <span class="mono-data" style="font-size: 0.75rem; color: var(--text-muted);" title="{{ act.created_at }}">
+                                <span class="mono-data act-timestamp-text" title="{{ act.created_at }}">
                                     {{ (act.created_at | string)[:16] }}
                                 </span>
                             </div>
@@ -705,7 +771,7 @@
             </div>
             {% else %}
             <!-- Truthful empty state for Activity tab -->
-            <div class="empty-state card" style="padding: 3rem 1.5rem;">
+            <div class="empty-state card people-empty-padded">
                 <div class="empty-state-icon">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
                 </div>
@@ -719,25 +785,37 @@
     <!-- ═══════════════════════════════════════════════════════════════
          2.6 CAMPAIGNS MAIN SECTION (Common component for List and Grid)
          ═══════════════════════════════════════════════════════════════ -->
-    <section class="section" id="campaigns-section" style="margin-top: 2rem;">
+    <section class="section dash-campaigns-section" id="campaigns-section">
         <!-- Thin inline strip inside campaigns section when a campaign is running (2.8) -->
         {% if ns.running > 0 %}
         <div class="running-campaign-inline-strip" id="running-campaign-strip">
-            <div style="display: flex; align-items: center; gap: 8px;">
-                <span class="campaign-status-dot pulse" style="width: 8px; height: 8px; border-radius: 50%; background: var(--info); display: inline-block;"></span>
-                <span><strong>Active drill running:</strong> Telemetry streaming in real time</span>
+            <div class="dash-running-strip-content">
+                <span class="campaign-status-dot pulse dash-running-dot"></span>
+                <span><strong>Active drill running:</strong> Activity streaming in real time</span>
             </div>
-            <a href="#campaigns" onclick="filterCampaignStatus('running', document.querySelector('[data-filter=\'running\']'))" style="color: var(--primary); font-weight: 600; text-decoration: none; font-size: 0.75rem;">View active drill &rarr;</a>
+            <a href="#campaigns" onclick="filterCampaignStatus('running', document.querySelector('[data-filter=\'running\']'))" class="dash-running-strip-link">View active drill &rarr;</a>
         </div>
         {% endif %}
 
-        <div class="section-header" style="align-items: center;">
-            <div style="display: flex; align-items: baseline; gap: 10px;">
+        <!-- Recent Drills Preview Banner linking to Campaigns Hub -->
+        <div class="dash-campaigns-preview-banner">
+            <div class="dash-camp-banner-text">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="18" rx="1"></rect><rect x="14" y="3" width="7" height="18" rx="1"></rect></svg>
+                <span><strong>Recent Drills Preview</strong> — Quick snapshot of your latest campaigns. Open the full Hub for deep filtering, search, and side-by-side comparison.</span>
+            </div>
+            <a href="/campaigns" class="btn btn-sm btn-secondary">
+                <span>Open Campaigns Hub</span>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="M12 5l7 7-7 7"></path></svg>
+            </a>
+        </div>
+
+        <div class="section-header dash-section-header">
+            <div class="dash-section-title-wrap">
                 <h2 class="section-title">Campaigns</h2>
                 <span class="badge badge-neutral" id="campaigns-total-badge">{{ ns.all }}</span>
                 <!-- Live update status -->
-                <span class="live-update-badge" id="live-update-badge" style="margin-left: 8px;">
-                    <span class="badge-dot" style="background-color: var(--success); width: 6px; height: 6px; border-radius: 50%; display: inline-block;"></span>
+                <span class="live-update-badge live-update-badge-spacing" id="live-update-badge" aria-live="polite" aria-atomic="true">
+                    <span class="badge-dot badge-dot-success"></span>
                     <span id="update-timestamp-text">Updated just now</span>
                 </span>
             </div>
@@ -746,7 +824,7 @@
             <div class="campaigns-toolbar">
                 <!-- Search input with '/' shortcut badge -->
                 <div class="search-wrapper">
-                    <input type="text" id="campaign-search-input" class="filter-input" placeholder="Search campaigns..." oninput="handleCampaignSearch(this.value)" style="height: 32px; padding: 0 32px 0 10px; font-size: 0.8125rem; border-radius: 8px; border: 1px solid var(--border-default); background: var(--bg-surface); color: var(--text-primary); outline: none;">
+                    <input type="text" id="campaign-search-input" class="filter-input" placeholder="Search campaigns..." oninput="handleCampaignSearch(this.value)">
                     <span class="search-shortcut-badge">/</span>
                 </div>
 
@@ -770,13 +848,13 @@
                     </select>
                 </div>
 
-                <!-- View Toggle: List / Grid (Segmented Control) -->
-                <div class="view-toggle-segmented" role="group" aria-label="View toggle">
-                    <button type="button" class="view-toggle-btn active" id="view-toggle-list" onclick="setCampaignsView('list')" title="List view" aria-label="List view">
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+                <!-- View Toggle: List / Grid (Segmented Radio Group) -->
+                <div class="view-toggle-segmented" role="radiogroup" aria-label="Campaign view layout">
+                    <button type="button" class="view-toggle-btn active" id="view-toggle-list" role="radio" aria-checked="true" tabindex="0" onclick="setCampaignsView('list')" title="List view" aria-label="List view">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
                     </button>
-                    <button type="button" class="view-toggle-btn" id="view-toggle-grid" onclick="setCampaignsView('grid')" title="Grid view" aria-label="Grid view">
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                    <button type="button" class="view-toggle-btn" id="view-toggle-grid" role="radio" aria-checked="false" tabindex="-1" onclick="setCampaignsView('grid')" title="Grid view" aria-label="Grid view">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
                     </button>
                 </div>
             </div>
@@ -791,45 +869,46 @@
             <div class="campaigns-view-pane" id="pane-view-list">
                 <div class="app-table-wrapper">
                     <table class="app-table" id="campaigns-table">
+                        <caption class="sr-only">Phishing Campaigns</caption>
                         <thead>
                             <tr>
-                                <th style="width: 36px; text-align: center;">
+                                <th scope="col" class="th-select">
                                     <input type="checkbox" id="campaign-select-all" onclick="toggleSelectAllCampaigns(this)" aria-label="Select all campaigns">
                                 </th>
-                                <th style="min-width: 220px;">
+                                <th scope="col" class="th-name">
                                     <button type="button" class="table-sort-btn" onclick="handleHeaderSort('name')">
                                         <span>Name</span>
                                         <span class="sort-indicator" id="sort-ind-name">↕</span>
                                     </button>
                                 </th>
-                                <th>Status</th>
-                                <th style="min-width: 110px;">Progress</th>
-                                <th style="text-align: right;">
+                                <th scope="col">Status</th>
+                                <th scope="col" class="th-progress">Progress</th>
+                                <th scope="col" class="th-num">
                                     <button type="button" class="table-sort-btn" onclick="handleHeaderSort('sent')">
                                         <span>Sent</span>
                                         <span class="sort-indicator" id="sort-ind-sent">↕</span>
                                     </button>
                                 </th>
-                                <th style="text-align: right;">Opened</th>
-                                <th style="text-align: right;">
+                                <th scope="col" class="th-num">Opened</th>
+                                <th scope="col" class="th-num">
                                     <button type="button" class="table-sort-btn" onclick="handleHeaderSort('clicks')">
                                         <span>Clicked</span>
                                         <span class="sort-indicator" id="sort-ind-clicks">↕</span>
                                     </button>
                                 </th>
-                                <th style="text-align: right;">
+                                <th scope="col" class="th-num">
                                     <button type="button" class="table-sort-btn" onclick="handleHeaderSort('reports')">
                                         <span>Reported</span>
                                         <span class="sort-indicator" id="sort-ind-reports">↕</span>
                                     </button>
                                 </th>
-                                <th style="text-align: right;">
+                                <th scope="col" class="th-num">
                                     <button type="button" class="table-sort-btn" onclick="handleHeaderSort('date')">
                                         <span>Date</span>
                                         <span class="sort-indicator" id="sort-ind-date">↕</span>
                                     </button>
                                 </th>
-                                <th style="text-align: right; width: 80px;">Action</th>
+                                <th scope="col" class="th-action">Action</th>
                             </tr>
                         </thead>
                         <tbody id="campaigns-table-body">
@@ -843,21 +922,23 @@
                                 {% set st = camp.status or 'draft' %}
 
                                 {# Map status to group #}
-                                {% if st in ('launched', 'launching') %}
+                                {% if is_campaign_finished(camp) %}
+                                    {% set st_group = 'finished' %}
+                                {% elif st in ('launched', 'launching') %}
                                     {% set st_group = 'running' %}
                                 {% elif st == 'scheduled' %}
                                     {% set st_group = 'scheduled' %}
-                                {% elif st in ('completed', 'launched_with_errors') %}
-                                    {% set st_group = 'finished' %}
                                 {% elif st == 'draft' %}
                                     {% set st_group = 'draft' %}
+                                {% elif st == 'failed' %}
+                                    {% set st_group = 'failed' %}
                                 {% else %}
                                     {% set st_group = 'finished' %}
                                 {% endif %}
 
                                 {% set progress_pct = [((sent_count / total_emp * 100) | round | int), 100] | min if total_emp > 0 else 0 %}
 
-                                <tr class="campaign-row table-row-stagger"
+                                <tr class="campaign-row table-row-stagger td-clickable"
                                     data-id="{{ camp.id }}"
                                     data-name="{{ camp.name | lower }}"
                                     data-status-group="{{ st_group }}"
@@ -865,38 +946,37 @@
                                     data-clicks="{{ clicks_count }}"
                                     data-reports="{{ reports_count }}"
                                     data-date="{{ (camp.created_at | string)[:10] if camp.created_at else '' }}"
-                                    style="cursor: pointer; --row-index: {{ loop.index0 if loop.index0 < 10 else 9 }};"
                                     onclick="handleRowNavigate(event, '/campaign-report/{{ camp.id }}')">
                                     
                                     <!-- Checkbox Column -->
-                                    <td style="text-align: center;" onclick="event.stopPropagation();">
-                                        <input type="checkbox" class="campaign-row-checkbox" data-campaign-id="{{ camp.id }}" data-campaign-name="{{ camp.name }}" onchange="handleRowSelectChange(this)">
+                                    <td class="td-select" onclick="event.stopPropagation();">
+                                        <input type="checkbox" class="campaign-row-checkbox" data-campaign-id="{{ camp.id }}" data-campaign-name="{{ camp.name }}" onchange="handleRowSelectChange(this)" aria-label="Select {{ camp.name }}">
                                     </td>
 
                                     <!-- Name + Scenario Subtitle -->
-                                    <td>
-                                        <div style="display: flex; flex-direction: column; gap: 2px;">
-                                            <span style="font-family: var(--font-heading); font-size: 0.9375rem; font-weight: 600; color: var(--text-primary);">
+                                    <th scope="row" class="campaign-cell-name">
+                                        <div class="campaign-meta-stack">
+                                            <span class="campaign-title-strong">
                                                 {{ camp.name }}
                                             </span>
-                                            <span style="font-family: var(--font-sans); font-size: 0.75rem; color: var(--text-muted);">
-                                                {{ (camp.scenario_type or 'General Pretext') | replace('_', ' ') | title }} &bull; {{ camp.company_domain or 'Internal Drill' }}
+                                            <span class="campaign-domain-subtext">
+                                                {{ (camp.scenario_type or 'General Pretext') | scenario_label }} &bull; {{ camp.company_domain or 'Internal Drill' }}
                                             </span>
                                         </div>
-                                    </td>
+                                    </th>
 
                                     <!-- Status Badge -->
                                     <td>
                                         {% if st_group == 'running' %}
-                                        <span class="badge badge-status-running"><span class="campaign-status-dot pulse" style="width: 6px; height: 6px; border-radius: 50%; background: var(--info); display: inline-block;"></span> Running</span>
+                                        <span class="badge badge-status-running"><span class="campaign-status-dot pulse badge-dot-info"></span> Running</span>
                                         {% elif st_group == 'scheduled' %}
                                         <span class="badge badge-status-scheduled"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg> Scheduled</span>
                                         {% elif st_group == 'finished' %}
-                                        <span class="badge badge-status-finished"><span class="badge-dot" style="background: var(--success); width: 6px; height: 6px; border-radius: 50%; display: inline-block;"></span> Finished</span>
+                                        <span class="badge badge-status-finished"><span class="badge-dot badge-dot-success"></span> Finished</span>
                                         {% elif st_group == 'draft' %}
                                         <span class="badge badge-status-draft">Draft</span>
                                         {% elif st == 'failed' %}
-                                        <span class="badge badge-status-failed"><span class="badge-dot" style="background: var(--danger); width: 6px; height: 6px; border-radius: 50%; display: inline-block;"></span> Failed</span>
+                                        <span class="badge badge-status-failed"><span class="badge-dot badge-dot-danger"></span> Failed</span>
                                         {% else %}
                                         <span class="badge badge-neutral">{{ st.replace('_', ' ') }}</span>
                                         {% endif %}
@@ -904,40 +984,40 @@
 
                                     <!-- Progress Bar (Thin sent / total) -->
                                     <td>
-                                        <div style="display: flex; flex-direction: column; gap: 3px;">
+                                        <div class="campaign-progress-stack">
                                             <div class="campaign-progress-bar">
-                                                <div class="campaign-progress-fill" style="width: {{ progress_pct }}%;"></div>
+                                                <div class="campaign-progress-fill" data-progress="{{ progress_pct }}"></div>
                                             </div>
-                                            <span class="mono-data" style="font-size: 0.6875rem; color: var(--text-muted);">{{ sent_count }}/{{ total_emp }} sent</span>
+                                            <span class="mono-data campaign-progress-sublabel">{{ sent_count }}/{{ total_emp }} sent</span>
                                         </div>
                                     </td>
 
                                     <!-- Numbers (JetBrains Mono tabular) -->
-                                    <td class="mono-data" style="text-align: right;">{{ sent_count }}</td>
-                                    <td class="mono-data" style="text-align: right;">{{ opens_count }}</td>
-                                    <td class="mono-data" style="text-align: right; color: {% if clicks_count > 0 %}var(--warning){% else %}inherit{% endif %};">{{ clicks_count }}</td>
-                                    <td class="mono-data" style="text-align: right; color: {% if reports_count > 0 %}var(--success){% else %}inherit{% endif %};">{{ reports_count }}</td>
+                                    <td class="mono-data td-num">{{ sent_count }}</td>
+                                    <td class="mono-data td-num">{{ opens_count }}</td>
+                                    <td class="mono-data td-num {% if clicks_count > 0 %}text-warning{% endif %}">{{ clicks_count }}</td>
+                                    <td class="mono-data td-num {% if reports_count > 0 %}text-success{% endif %}">{{ reports_count }}</td>
 
                                     <!-- Date (JetBrains Mono tabular) -->
-                                    <td class="mono-data" style="text-align: right;">{{ (camp.created_at | string)[:10] if camp.created_at else '—' }}</td>
+                                    <td class="mono-data td-num">{{ (camp.created_at | string)[:10] if camp.created_at else '—' }}</td>
 
                                     <!-- "⋯" Row Menu -->
-                                    <td style="text-align: right;" onclick="event.stopPropagation();">
-                                        <div style="position: relative; display: inline-block;">
+                                    <td class="td-action" onclick="event.stopPropagation();">
+                                        <div class="row-menu-wrapper">
                                             <button type="button" class="btn btn-sm btn-tertiary" onclick="toggleCampaignRowMenu(event, 'row-menu-{{ camp.id }}')" aria-label="More campaign actions" aria-haspopup="true">
                                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>
                                             </button>
-                                            <div id="row-menu-{{ camp.id }}" class="row-dropdown-menu" style="display: none; position: absolute; right: 0; top: 100%; z-index: 100; background: var(--bg-surface-raised); border: 1px solid var(--border-default); border-radius: 8px; padding: 4px; box-shadow: 0 8px 24px rgba(0,0,0,0.25); min-width: 130px; text-align: left;">
-                                                <a href="/campaign-report/{{ camp.id }}" class="btn btn-sm btn-tertiary" style="width: 100%; justify-content: flex-start; text-decoration: none;">Open report</a>
-                                                <a href="/reports-demo" class="btn btn-sm btn-tertiary" style="width: 100%; justify-content: flex-start; text-decoration: none;">View emails</a>
-                                                <form action="/clone-campaign/{{ camp.id }}" method="POST" style="margin: 0;">
+                                            <div id="row-menu-{{ camp.id }}" class="row-dropdown-menu">
+                                                <a href="/campaign-report/{{ camp.id }}" class="btn btn-sm btn-tertiary dropdown-action-btn">Open report</a>
+                                                <a href="/campaign-emails/{{ camp.id }}" class="btn btn-sm btn-tertiary dropdown-action-btn">View emails</a>
+                                                <form action="/clone-campaign/{{ camp.id }}" method="POST" class="dropdown-action-form">
                                                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                                    <button type="submit" class="btn btn-sm btn-tertiary" style="width: 100%; justify-content: flex-start;">Duplicate</button>
+                                                    <button type="submit" class="btn btn-sm btn-tertiary dropdown-action-btn">Duplicate</button>
                                                 </form>
                                                 {% if st == 'draft' %}
-                                                <form action="/delete-campaign/{{ camp.id }}" method="POST" style="margin: 0;" onsubmit="handleDeleteSubmit(event, '{{ camp.name }}')">
+                                                <form action="/delete-campaign/{{ camp.id }}" method="POST" class="dropdown-action-form" onsubmit="handleDeleteSubmit(event, '{{ camp.name }}')">
                                                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                                    <button type="submit" class="btn btn-sm btn-destructive" style="width: 100%; justify-content: flex-start; color: var(--danger);">Delete draft</button>
+                                                    <button type="submit" class="btn btn-sm btn-destructive dropdown-action-btn btn-danger-text">Delete draft</button>
                                                 </form>
                                                 {% endif %}
                                             </div>
@@ -947,9 +1027,9 @@
                                 {% endfor %}
                             {% else %}
                                 <tr id="empty-table-placeholder">
-                                    <td colspan="10" style="padding: 2.5rem 1rem; text-align: center;">
-                                        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;">
-                                            <p style="font-family: var(--font-sans); font-size: 0.875rem; color: var(--text-muted); margin: 0;">
+                                    <td colspan="10" class="td-empty-padded">
+                                        <div class="table-empty-box">
+                                            <p class="table-empty-msg">
                                                 No campaigns created yet.
                                             </p>
                                             <a href="/new-campaign" class="btn btn-sm btn-secondary">Create first campaign</a>
@@ -974,14 +1054,16 @@
                         {% set reports_count = camp.reports or 0 %}
                         {% set st = camp.status or 'draft' %}
 
-                        {% if st in ('launched', 'launching') %}
+                        {% if is_campaign_finished(camp) %}
+                            {% set st_group = 'finished' %}
+                        {% elif st in ('launched', 'launching') %}
                             {% set st_group = 'running' %}
                         {% elif st == 'scheduled' %}
                             {% set st_group = 'scheduled' %}
-                        {% elif st in ('completed', 'launched_with_errors') %}
-                            {% set st_group = 'finished' %}
                         {% elif st == 'draft' %}
                             {% set st_group = 'draft' %}
+                        {% elif st == 'failed' %}
+                            {% set st_group = 'failed' %}
                         {% else %}
                             {% set st_group = 'finished' %}
                         {% endif %}
@@ -1002,31 +1084,20 @@
                             <div>
                                 <!-- Card Header: Icon tile + Name + Status badge -->
                                 <div class="campaign-card-header">
-                                    <div style="display: flex; gap: 10px; align-items: flex-start; min-width: 0;">
+                                    <div class="card-header-inner">
                                         <div class="campaign-card-icon-tile">
-                                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
                                         </div>
-                                        <div style="min-width: 0;">
-                                            <h3 class="campaign-card-name" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="{{ camp.name }}">{{ camp.name }}</h3>
-                                            <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin-bottom: 4px;">
-                                                <span class="campaign-card-meta">{{ (camp.created_at | string)[:10] if camp.created_at else 'Active' }} &bull; {{ total_emp }} recipients</span>
-                                            </div>
-                                            <div class="campaign-card-tags" style="display: flex; gap: 5px; flex-wrap: wrap;">
-                                                {% if camp.scenario_type %}
-                                                <span class="dash-pill-tag scenario">{{ camp.scenario_type | replace('_', ' ') }}</span>
-                                                {% endif %}
-                                                {% if camp.company_domain %}
-                                                <span class="dash-pill-tag domain">{{ camp.company_domain }}</span>
-                                                {% endif %}
-                                                {% if camp.delivery_mode %}
-                                                <span class="dash-pill-tag mode">{{ camp.delivery_mode }}</span>
-                                                {% endif %}
+                                        <div class="card-title-container">
+                                            <h3 class="campaign-card-name card-name-truncated" title="{{ camp.name }}">{{ camp.name }}</h3>
+                                            <div class="card-meta-line muted-scenario-line">
+                                                <span class="campaign-card-meta">{{ camp.scenario_type | scenario_label }} &bull; {{ total_emp }} recipient{{ 's' if total_emp != 1 else '' }}</span>
                                             </div>
                                         </div>
                                     </div>
                                     <div>
                                         {% if st_group == 'running' %}
-                                        <span class="badge badge-status-running"><span class="campaign-status-dot pulse" style="width: 6px; height: 6px; border-radius: 50%; background: var(--info); display: inline-block;"></span> Running</span>
+                                        <span class="badge badge-status-running"><span class="campaign-status-dot pulse badge-dot-info"></span> Running</span>
                                         {% elif st_group == 'scheduled' %}
                                         <span class="badge badge-status-scheduled">Scheduled</span>
                                         {% elif st_group == 'finished' %}
@@ -1043,32 +1114,46 @@
                                 <div class="mini-funnel-grid" aria-label="Funnel: {{ sent_count }} sent, {{ open_pct }}% opened, {{ click_pct }}% clicked, {{ report_pct }}% reported">
                                     <div class="funnel-col">
                                         <span class="funnel-label">Sent</span>
-                                        <div class="funnel-bar-track"><div class="funnel-bar-fill sent" style="width: 100%;"></div></div>
+                                        <div class="funnel-bar-track"><div class="funnel-bar-fill sent" data-progress="100"></div></div>
                                         <span class="funnel-val">{{ sent_count }}</span>
                                     </div>
                                     <div class="funnel-col">
                                         <span class="funnel-label">Open</span>
-                                        <div class="funnel-bar-track"><div class="funnel-bar-fill opened" style="width: {{ open_pct }}%;"></div></div>
+                                        <div class="funnel-bar-track"><div class="funnel-bar-fill opened" data-progress="{{ open_pct }}"></div></div>
                                         <span class="funnel-val">{{ open_pct }}%</span>
                                     </div>
                                     <div class="funnel-col">
                                         <span class="funnel-label">Click</span>
-                                        <div class="funnel-bar-track"><div class="funnel-bar-fill clicked" style="width: {{ click_pct }}%;"></div></div>
+                                        <div class="funnel-bar-track"><div class="funnel-bar-fill clicked" data-progress="{{ click_pct }}"></div></div>
                                         <span class="funnel-val">{{ click_pct }}%</span>
                                     </div>
                                     <div class="funnel-col">
                                         <span class="funnel-label">Report</span>
-                                        <div class="funnel-bar-track"><div class="funnel-bar-fill reported" style="width: {{ report_pct }}%;"></div></div>
+                                        <div class="funnel-bar-track"><div class="funnel-bar-fill reported" data-progress="{{ report_pct }}"></div></div>
                                         <span class="funnel-val">{{ report_pct }}%</span>
                                     </div>
                                 </div>
 
                                 <!-- Headline Stat: Report rate with delta -->
                                 <div class="campaign-card-headline-stat">
-                                    <span style="font-family: var(--font-sans); font-size: 0.75rem; color: var(--text-muted);">Report Rate</span>
-                                    <div style="display: flex; align-items: baseline; gap: 6px;">
-                                        <span class="mono-data" style="font-size: 1.125rem; font-weight: 700; color: var(--text-primary);">{{ report_pct }}%</span>
-                                        <span class="metric-delta-chip good" style="font-size: 0.6875rem;">+2.4 pts</span>
+                                    <span class="card-report-stat-label">Report rate</span>
+                                    <div class="card-report-stat-val-row">
+                                        <span class="mono-data card-report-stat-number">{{ report_pct }}%</span>
+                                        {% if camp.delta_report is defined and camp.delta_report is not none %}
+                                            {% if camp.delta_report > 0 %}
+                                            <span class="metric-delta-chip good card-delta-chip-sm" title="Change vs prior drill">
+                                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="18 15 12 9 6 15"></polyline></svg>
+                                                <span>+{{ camp.delta_report }} pts</span>
+                                            </span>
+                                            {% elif camp.delta_report < 0 %}
+                                            <span class="metric-delta-chip warning card-delta-chip-sm" title="Change vs prior drill">
+                                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                                                <span>{{ camp.delta_report }} pts</span>
+                                            </span>
+                                            {% else %}
+                                            <span class="metric-delta-chip steady card-delta-chip-sm">0.0 pts</span>
+                                            {% endif %}
+                                        {% endif %}
                                     </div>
                                 </div>
                             </div>
@@ -1076,20 +1161,20 @@
                             <!-- Footer actions -->
                             <div class="campaign-card-footer">
                                 {% if st_group == 'draft' %}
-                                <a href="/new-campaign?id={{ camp.id }}" class="btn btn-sm btn-secondary" style="width: 100%; justify-content: center;">Continue setup</a>
+                                <a href="/new-campaign?id={{ camp.id }}" class="btn btn-sm btn-secondary card-continue-btn">Continue setup</a>
                                 {% else %}
-                                <div style="display: flex; gap: 6px; align-items: center;">
+                                <div class="card-actions-left">
                                     <a href="/campaign-report/{{ camp.id }}" class="btn btn-sm btn-secondary">Open report</a>
-                                    <a href="/campaign-report/{{ camp.id }}#preview" class="btn btn-sm btn-tertiary" style="font-size: 0.75rem; text-decoration: none;">Preview</a>
+                                    <a href="/campaign-report/{{ camp.id }}#preview" class="btn btn-sm btn-tertiary card-preview-link">Preview</a>
                                 </div>
-                                <div style="position: relative;">
+                                <div class="row-menu-wrapper">
                                     <button type="button" class="btn btn-sm btn-tertiary" onclick="toggleCampaignRowMenu(event, 'grid-menu-{{ camp.id }}')" aria-label="Campaign options">
-                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>
                                     </button>
-                                    <div id="grid-menu-{{ camp.id }}" class="row-dropdown-menu" style="display: none; position: absolute; right: 0; bottom: 100%; z-index: 100; background: var(--bg-surface-raised); border: 1px solid var(--border-default); border-radius: 8px; padding: 4px; box-shadow: 0 8px 24px rgba(0,0,0,0.25); min-width: 120px;">
-                                        <form action="/clone-campaign/{{ camp.id }}" method="POST" style="margin: 0;">
+                                    <div id="grid-menu-{{ camp.id }}" class="row-dropdown-menu grid-placement">
+                                        <form action="/clone-campaign/{{ camp.id }}" method="POST" class="dropdown-action-form">
                                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                            <button type="submit" class="btn btn-sm btn-tertiary" style="width: 100%; justify-content: flex-start;">Duplicate</button>
+                                            <button type="submit" class="btn btn-sm btn-tertiary dropdown-action-btn">Duplicate</button>
                                         </form>
                                     </div>
                                 </div>
@@ -1102,32 +1187,14 @@
             </div>
 
             <!-- Empty search/filter matches fallback -->
-            <div id="no-campaigns-match" class="empty-state card" style="display: none; padding: 2.5rem 1rem; margin-top: 1rem;">
-                <p class="empty-state-title" style="font-size: 0.9375rem;">No campaigns match your filters</p>
-                <p class="empty-state-description" style="font-size: 0.8125rem;">Try adjusting your search terms or clearing the status filter.</p>
+            <div id="no-campaigns-match" class="empty-state card empty-matches-box">
+                <p class="empty-state-title empty-matches-title">No campaigns match your filters</p>
+                <p class="empty-state-description empty-matches-desc">Try adjusting your search terms or clearing the status filter.</p>
                 </div>
             </div>
         </div>
     </section>
-
-    <!-- Cyber Telemetry Status Bar (Bottom of Dashboard - Image 2 & 3 Feature) -->
-    <div class="dash-cyber-telemetry-bar" aria-label="System operational status">
-        <div class="cyber-telemetry-left">
-            <span class="cyber-status-beacon" aria-hidden="true"></span>
-            <span style="color: var(--success); font-weight: 700;">SYSTEM: ONLINE</span>
-            <span style="opacity: 0.35;">|</span>
-            <span class="cyber-mode-chip">SANDBOX MODE</span>
-            <span style="opacity: 0.35;">|</span>
-            <span>DEFENSE GRID: ACTIVE</span>
-        </div>
-        <div class="cyber-telemetry-right">
-            <span>AGENT: <strong style="color: var(--primary);">ACTIVE</strong></span>
-            <span style="opacity: 0.35;">|</span>
-            <span>ENGINE: <strong style="color: var(--success);">READY</strong></span>
-            <span style="opacity: 0.35;">|</span>
-            <span style="letter-spacing: 2px; color: var(--primary); font-weight: 700;">..|ll</span>
-        </div>
-    </div>
+</div>
 
 </div>
 
@@ -1144,12 +1211,12 @@
 <!-- ═══════════════════════════════════════════════════════════════
      KEYBOARD SHORTCUTS MODAL SHEET (2.9 Accessible via '?')
      ═══════════════════════════════════════════════════════════════ -->
-<dialog id="shortcuts-dialog" class="shortcuts-modal app-confirm-dialog">
-    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem;">
-        <h3 style="font-family: var(--font-heading); font-size: 1.125rem; font-weight: 700; color: var(--text-primary); margin: 0;">Keyboard shortcuts</h3>
-        <button type="button" class="btn btn-sm btn-tertiary" onclick="document.getElementById('shortcuts-dialog').close()" aria-label="Close shortcuts">✕</button>
+<dialog id="shortcuts-dialog" class="shortcuts-modal app-confirm-dialog" aria-labelledby="shortcuts-dialog-title">
+    <div class="shortcuts-modal-header">
+        <h3 id="shortcuts-dialog-title" class="shortcuts-modal-title">Keyboard shortcuts</h3>
+        <button type="button" class="btn btn-sm btn-tertiary" onclick="closeShortcutsModal()" aria-label="Close shortcuts">✕</button>
     </div>
-    <div style="display: flex; flex-direction: column; margin-bottom: 1.5rem;">
+    <div class="shortcuts-list-container">
         <div class="shortcut-row"><span>New campaign</span><kbd class="shortcut-key">N</kbd></div>
         <div class="shortcut-row"><span>Focus search</span><kbd class="shortcut-key">/</kbd></div>
         <div class="shortcut-row"><span>Go to Campaigns tab</span><kbd class="shortcut-key">G then C</kbd></div>
@@ -1157,39 +1224,39 @@
         <div class="shortcut-row"><span>Show shortcuts</span><kbd class="shortcut-key">?</kbd></div>
         <div class="shortcut-row"><span>Close modal / Escape</span><kbd class="shortcut-key">Esc</kbd></div>
     </div>
-    <div style="text-align: right;">
-        <button type="button" class="btn btn-secondary" onclick="document.getElementById('shortcuts-dialog').close()">Close</button>
+    <div class="dialog-actions-right">
+        <button type="button" class="btn btn-secondary" onclick="closeShortcutsModal()">Close</button>
     </div>
 </dialog>
 
 <!-- ═══════════════════════════════════════════════════════════════
      EXPORT REPORT MODAL
      ═══════════════════════════════════════════════════════════════ -->
-<dialog id="dashboard-export-dialog" class="app-confirm-dialog" style="max-width: 480px;">
+<dialog id="dashboard-export-dialog" class="app-confirm-dialog export-dialog-box" aria-labelledby="export-dialog-title">
     <div class="confirm-dialog-header">
         <div class="confirm-dialog-icon warning">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
         </div>
-        <h3 class="confirm-dialog-title">Export Dashboard & Reports</h3>
+        <h3 id="export-dialog-title" class="confirm-dialog-title">Export Dashboard & Reports</h3>
     </div>
     <p class="confirm-dialog-desc">Select an export option below to download executive reports or save a printable summary.</p>
     
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 1.5rem;">
-        <button type="button" class="card-interactive" onclick="window.print(); document.getElementById('dashboard-export-dialog').close();" style="display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 1rem; background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 12px; cursor: pointer; text-align: center;">
+    <div class="export-grid-options">
+        <button type="button" class="card-interactive export-card-btn" onclick="window.print(); closeExportModal();">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
-            <span style="font-family: var(--font-sans); font-size: 0.875rem; font-weight: 600; color: var(--text-primary);">Print Summary</span>
-            <span style="font-family: var(--font-sans); font-size: 0.75rem; color: var(--text-muted);">Save screen view as PDF</span>
+            <span class="export-card-title">Print Summary</span>
+            <span class="export-card-desc">Save screen view as PDF</span>
         </button>
 
-        <a href="/reports-demo" class="card-interactive" style="display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 1rem; background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 12px; text-decoration: none; text-align: center;">
+        <a href="/reports-demo" class="card-interactive export-card-btn">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
-            <span style="font-family: var(--font-sans); font-size: 0.875rem; font-weight: 600; color: var(--text-primary);">Audit Reports</span>
-            <span style="font-family: var(--font-sans); font-size: 0.75rem; color: var(--text-muted);">Browse formal reports</span>
+            <span class="export-card-title">Audit Reports</span>
+            <span class="export-card-desc">Browse formal reports</span>
         </a>
     </div>
 
     <div class="confirm-dialog-actions">
-        <button type="button" class="btn btn-secondary" onclick="document.getElementById('dashboard-export-dialog').close()">Close</button>
+        <button type="button" class="btn btn-secondary" onclick="closeExportModal()">Close</button>
     </div>
 </dialog>
 
@@ -1212,7 +1279,7 @@
             } else if (hour >= 17 || hour < 5) {
                 timeGreeting = 'Good evening';
             }
-            greetingEl.textContent = `${timeGreeting}, ${name}`;
+            greetingEl.textContent = name ? `${timeGreeting}, ${name}` : timeGreeting;
         }
 
         const dateEl = document.getElementById('dash-current-date');
@@ -1287,19 +1354,32 @@
         const dropdown = document.getElementById('dash-tab-more-dropdown');
         const btn = document.getElementById('dash-tab-more-btn');
         if (!dropdown || !btn) return;
-        const isOpen = dropdown.style.display === 'flex';
-        dropdown.style.display = isOpen ? 'none' : 'flex';
-        btn.setAttribute('aria-expanded', !isOpen);
+        const isOpen = dropdown.classList.contains('open') || dropdown.style.display === 'flex';
+        if (isOpen) {
+            dropdown.classList.remove('open');
+            dropdown.style.display = 'none';
+            btn.setAttribute('aria-expanded', 'false');
+        } else {
+            dropdown.classList.add('open');
+            dropdown.style.display = 'flex';
+            btn.setAttribute('aria-expanded', 'true');
+        }
     };
 
     window.closeTabMoreMenu = function() {
         const dropdown = document.getElementById('dash-tab-more-dropdown');
         const btn = document.getElementById('dash-tab-more-btn');
-        if (dropdown) dropdown.style.display = 'none';
+        if (dropdown) {
+            dropdown.classList.remove('open');
+            dropdown.style.display = 'none';
+        }
         if (btn) btn.setAttribute('aria-expanded', 'false');
     };
 
     document.addEventListener('click', (e) => {
+        if (!e.target.closest('#dash-header-more-wrap')) {
+            if (window.closeDashHeaderMore) window.closeDashHeaderMore();
+        }
         if (!e.target.closest('.tab-more-menu-wrapper')) {
             window.closeTabMoreMenu();
         }
@@ -1373,66 +1453,85 @@
         requestAnimationFrame(step);
     }
 
-    // ── 6. Trend Chart Metric Switcher & Hover Interactions ──────────
-    const trendDatasets = {
-        readiness: {
-            title: 'Team readiness trend',
-            unit: 'pts',
-            lineD: 'M 40 85 C 100 80, 160 72, 220 68 C 280 64, 340 50, 400 42 C 460 38, 490 32, 510 28',
-            areaD: 'M 40 85 C 100 80, 160 72, 220 68 C 280 64, 340 50, 400 42 C 460 38, 490 32, 510 28 L 510 115 L 40 115 Z',
-            color: 'var(--primary)',
-            dashArray: 'none',
-            latestVal: '{{ readiness_val }} pts',
-            latestPt: { x: 510, y: 28 },
-            points: [
-                { x: 40, y: 85, name: 'Q1 Baseline', date: 'May 10', readiness: 64, report: 15.0, click: 21.0 },
-                { x: 120, y: 78, name: 'IT Security Check', date: 'Jun 02', readiness: 68, report: 17.5, click: 18.2 },
-                { x: 200, y: 72, name: 'Urgent Wire Pretext', date: 'Jun 24', readiness: 71, report: 19.0, click: 16.0 },
-                { x: 280, y: 64, name: 'Payroll Update Drill', date: 'Jul 15', readiness: 73, report: 20.8, click: 14.5 },
-                { x: 360, y: 48, name: 'Password Reset Test', date: 'Jul 28', readiness: 88, report: 58.3, click: 11.1 },
-                { x: 440, y: 38, name: 'Spear Phish Test', date: 'Aug 01', readiness: 76, report: 22.0, click: 13.0 },
-                { x: 510, y: 28, name: 'Executive CEO Fraud', date: 'Latest', readiness: {{ readiness_val }}, report: {{ report_val }}, click: {{ click_val }} }
-            ]
-        },
-        report_rate: {
-            title: 'Report rate trend',
-            unit: '%',
-            lineD: 'M 40 98 C 100 92, 160 88, 220 84 C 280 78, 340 70, 400 58 C 460 48, 490 42, 510 38',
-            areaD: 'M 40 98 C 100 92, 160 88, 220 84 C 280 78, 340 70, 400 58 C 460 48, 490 42, 510 38 L 510 115 L 40 115 Z',
-            color: 'var(--success)',
-            dashArray: '6 3',
-            latestVal: '{{ report_val }}%',
-            latestPt: { x: 510, y: 38 },
-            points: [
-                { x: 40, y: 98, name: 'Q1 Baseline', date: 'May 10', readiness: 64, report: 15.0, click: 21.0 },
-                { x: 120, y: 92, name: 'IT Security Check', date: 'Jun 02', readiness: 68, report: 17.5, click: 18.2 },
-                { x: 200, y: 88, name: 'Urgent Wire Pretext', date: 'Jun 24', readiness: 71, report: 19.0, click: 16.0 },
-                { x: 280, y: 84, name: 'Payroll Update Drill', date: 'Jul 15', readiness: 73, report: 20.8, click: 14.5 },
-                { x: 360, y: 58, name: 'Password Reset Test', date: 'Jul 28', readiness: 88, report: 58.3, click: 11.1 },
-                { x: 440, y: 48, name: 'Spear Phish Test', date: 'Aug 01', readiness: 76, report: 22.0, click: 13.0 },
-                { x: 510, y: 38, name: 'Executive CEO Fraud', date: 'Latest', readiness: {{ readiness_val }}, report: {{ report_val }}, click: {{ click_val }} }
-            ]
-        },
-        click_rate: {
-            title: 'Click rate trend',
-            unit: '%',
-            lineD: 'M 40 38 C 100 44, 160 52, 220 58 C 280 66, 340 76, 400 86 C 460 92, 490 98, 510 102',
-            areaD: 'M 40 38 C 100 44, 160 52, 220 58 C 280 66, 340 76, 400 86 C 460 92, 490 98, 510 102 L 510 115 L 40 115 Z',
-            color: 'var(--info)',
-            dashArray: '2 3',
-            latestVal: '{{ click_val }}%',
-            latestPt: { x: 510, y: 102 },
-            points: [
-                { x: 40, y: 38, name: 'Q1 Baseline', date: 'May 10', readiness: 64, report: 15.0, click: 21.0 },
-                { x: 120, y: 44, name: 'IT Security Check', date: 'Jun 02', readiness: 68, report: 17.5, click: 18.2 },
-                { x: 200, y: 52, name: 'Urgent Wire Pretext', date: 'Jun 24', readiness: 71, report: 19.0, click: 16.0 },
-                { x: 280, y: 58, name: 'Payroll Update Drill', date: 'Jul 15', readiness: 73, report: 20.8, click: 14.5 },
-                { x: 360, y: 76, name: 'Password Reset Test', date: 'Jul 28', readiness: 88, report: 58.3, click: 11.1 },
-                { x: 440, y: 92, name: 'Spear Phish Test', date: 'Aug 01', readiness: 76, report: 22.0, click: 13.0 },
-                { x: 510, y: 102, name: 'Executive CEO Fraud', date: 'Latest', readiness: {{ readiness_val }}, report: {{ report_val }}, click: {{ click_val }} }
-            ]
+    // ── 6. Trend Chart Metric Switcher & Dynamic Data Construction ──
+    const rawTrendPoints = {{ (trend_points or []) | tojson }};
+    const trendDatasets = {};
+
+    function buildTrendDatasets() {
+        if (!rawTrendPoints || rawTrendPoints.length < 2) return;
+        
+        const n = rawTrendPoints.length;
+        const xMin = 40;
+        const xMax = 500;
+        const yMin = 25;
+        const yMax = 115;
+
+        function calcY(val) {
+            const clamped = Math.min(Math.max(val, 0), 100);
+            return Math.round(yMax - (clamped / 100) * (yMax - yMin));
         }
-    };
+
+        const configs = [
+            { key: 'readiness', title: 'Team readiness trend', unit: 'pts', color: 'var(--primary)', dash: 'none', getter: p => p.readiness },
+            { key: 'report_rate', title: 'Report rate trend', unit: '%', color: 'var(--success)', dash: '6 3', getter: p => p.report },
+            { key: 'click_rate', title: 'Click rate trend', unit: '%', color: 'var(--info)', dash: '2 3', getter: p => p.click }
+        ];
+
+        configs.forEach(cfg => {
+            const pts = rawTrendPoints.map((p, idx) => {
+                const x = Math.round(xMin + (idx / (n - 1)) * (xMax - xMin));
+                const val = cfg.getter(p);
+                const y = calcY(val);
+                return {
+                    x: x,
+                    y: y,
+                    name: p.name,
+                    date: p.date,
+                    readiness: p.readiness,
+                    report: p.report,
+                    click: p.click,
+                    val: val
+                };
+            });
+
+            let lineD = `M ${pts[0].x} ${pts[0].y}`;
+            for (let i = 1; i < pts.length; i++) {
+                const prev = pts[i - 1];
+                const curr = pts[i];
+                const cpX = (prev.x + curr.x) / 2;
+                lineD += ` C ${cpX} ${prev.y}, ${cpX} ${curr.y}, ${curr.x} ${curr.y}`;
+            }
+            const last = pts[pts.length - 1];
+            const areaD = `${lineD} L ${last.x} ${yMax} L ${pts[0].x} ${yMax} Z`;
+
+            trendDatasets[cfg.key] = {
+                title: cfg.title,
+                unit: cfg.unit,
+                lineD: lineD,
+                areaD: areaD,
+                color: cfg.color,
+                dashArray: cfg.dash,
+                latestVal: `${last.val} ${cfg.unit}`.trim(),
+                latestPt: { x: last.x, y: last.y },
+                points: pts
+            };
+        });
+
+        const xLabelsGroup = document.getElementById('trend-x-labels-group');
+        if (xLabelsGroup && trendDatasets['readiness']) {
+            while (xLabelsGroup.firstChild) xLabelsGroup.removeChild(xLabelsGroup.firstChild);
+            trendDatasets['readiness'].points.forEach(pt => {
+                const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                text.setAttribute('x', pt.x);
+                text.setAttribute('y', '132');
+                text.setAttribute('class', 'trend-grid-label');
+                text.setAttribute('text-anchor', 'middle');
+                text.textContent = pt.date;
+                xLabelsGroup.appendChild(text);
+            });
+        }
+    }
+    buildTrendDatasets();
 
     let activeTrendMetric = 'readiness';
 
@@ -1450,6 +1549,10 @@
         const latestValEl = document.getElementById('trend-latest-val-label');
         if (titleEl) titleEl.textContent = data.title;
         if (latestValEl) latestValEl.textContent = `Latest: ${data.latestVal}`;
+        const heroSvg = document.getElementById('hero-trend-svg');
+        if (heroSvg) {
+            heroSvg.setAttribute('aria-label', `${data.title}: latest score ${data.latestVal} across 8 campaigns`);
+        }
 
         // Update SVG paths & styles
         const linePath = document.getElementById('trend-line-path');
@@ -1606,7 +1709,11 @@
         // Cross-fade in 200 ms
         if (viewMode === 'grid') {
             btnList.classList.remove('active');
+            btnList.setAttribute('aria-checked', 'false');
+            btnList.setAttribute('tabindex', '-1');
             btnGrid.classList.add('active');
+            btnGrid.setAttribute('aria-checked', 'true');
+            btnGrid.setAttribute('tabindex', '0');
             listPane.style.opacity = '0';
             setTimeout(() => {
                 listPane.classList.add('hidden');
@@ -1615,7 +1722,11 @@
             }, 200);
         } else {
             btnGrid.classList.remove('active');
+            btnGrid.setAttribute('aria-checked', 'false');
+            btnGrid.setAttribute('tabindex', '-1');
             btnList.classList.add('active');
+            btnList.setAttribute('aria-checked', 'true');
+            btnList.setAttribute('tabindex', '0');
             gridPane.style.opacity = '0';
             setTimeout(() => {
                 gridPane.classList.add('hidden');
@@ -1635,6 +1746,25 @@
         }
         if (viewChoice === 'grid') {
             window.setCampaignsView('grid');
+        } else {
+            window.setCampaignsView('list');
+        }
+
+        const viewGroup = document.querySelector('.view-toggle-segmented');
+        if (viewGroup) {
+            viewGroup.addEventListener('keydown', function(e) {
+                const listBtn = document.getElementById('view-toggle-list');
+                const gridBtn = document.getElementById('view-toggle-grid');
+                if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    window.setCampaignsView('grid');
+                    if (gridBtn) gridBtn.focus();
+                } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    window.setCampaignsView('list');
+                    if (listBtn) listBtn.focus();
+                }
+            });
         }
     }
 
@@ -1937,96 +2067,58 @@
         // '?': show shortcuts sheet
         if (key === '?') {
             e.preventDefault();
-            const dialog = document.getElementById('shortcuts-dialog');
-            if (dialog) {
-                if (typeof dialog.showModal === 'function') dialog.showModal();
-                else dialog.setAttribute('open', '');
-            }
+            window.openShortcutsModal();
             return;
         }
 
         // Esc: close shortcuts dialog or menu
         if (key === 'Escape') {
-            const shortcutsDialog = document.getElementById('shortcuts-dialog');
-            if (shortcutsDialog && shortcutsDialog.open) shortcutsDialog.close();
+            window.closeShortcutsModal();
+            window.closeExportModal();
             window.closeTabMoreMenu();
         }
     });
 
-    // ── 15b. AI Simulation Stream Terminal (Interactive Cyber Radar) ──
-    let aiStreamTimer = null;
-    let aiStreamPaused = false;
-    let aiEventCount = 1429;
+    // ── 15b. Simulation Activity Stream (Real events only, zero mock timer) ──
+    const rawActivities = {{ (recent_activities or []) | tojson }};
 
     function initAiSimulationStream() {
         const body = document.getElementById('ai-stream-body');
         if (!body) return;
 
-        const initialEvents = [
-            {
-                type: 'report',
-                headline: 'Lure reported by Julia Roberts',
-                subtext: 'Executive drill &bull; +3 readiness pts',
-                time: 'Just now'
-            },
-            {
-                type: 'dispatch',
-                headline: 'Simulation drill dispatched',
-                subtext: 'Q3 Benefit Advisory &bull; 15 targets',
-                time: '2m ago'
-            },
-            {
-                type: 'shield',
-                headline: 'Early warning triggered',
-                subtext: 'Reported in 42s &bull; Finance team',
-                time: '5m ago'
-            },
-            {
-                type: 'train',
-                headline: 'Micro-training assigned',
-                subtext: 'Credential hygiene &bull; 1 click flagged',
-                time: '11m ago'
-            },
-            {
-                type: 'score',
-                headline: 'Readiness score updated',
-                subtext: 'Index reached 78/100 &bull; Getting safer',
-                time: '18m ago'
-            }
-        ];
+        while (body.firstChild) body.removeChild(body.firstChild);
 
-        const dynamicEvents = [
-            {
-                type: 'report',
-                headline: 'Phishing drill reported',
-                subtext: 'alex.rivera@demo-corp.com &bull; +2 pts',
-                time: 'Just now'
-            },
-            {
-                type: 'dispatch',
-                headline: 'Autonomous drill delivered',
-                subtext: 'Vendor Invoice &bull; Engineering cohort',
-                time: 'Just now'
-            },
-            {
-                type: 'train',
-                headline: 'Refresher training completed',
-                subtext: 'Link verification &bull; 100% test score',
-                time: 'Just now'
-            },
-            {
-                type: 'shield',
-                headline: 'Zero-day lure prevented',
-                subtext: 'Reported via PhishSim Button',
-                time: 'Just now'
-            },
-            {
-                type: 'score',
-                headline: 'Security posture updated',
-                subtext: 'Human risk exposure dropped 14%',
-                time: 'Just now'
-            }
-        ];
+        if (!rawActivities || rawActivities.length === 0) {
+            const emptyWrap = document.createElement('div');
+            emptyWrap.className = 'empty-feed-placeholder';
+
+            const emptyIcon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            emptyIcon.setAttribute('viewBox', '0 0 24 24');
+            emptyIcon.setAttribute('width', '24');
+            emptyIcon.setAttribute('height', '24');
+            emptyIcon.setAttribute('fill', 'none');
+            emptyIcon.setAttribute('stroke', 'currentColor');
+            emptyIcon.setAttribute('stroke-width', '1.5');
+            emptyIcon.setAttribute('class', 'empty-feed-icon');
+            emptyIcon.innerHTML = '<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line>';
+
+            const emptyTitle = document.createElement('div');
+            emptyTitle.className = 'empty-feed-title';
+            emptyTitle.textContent = 'No simulation activity yet';
+
+            const emptyDesc = document.createElement('div');
+            emptyDesc.className = 'empty-feed-desc';
+            emptyDesc.textContent = 'Recipient opens, clicks, reports, and drill launches will stream here.';
+
+            emptyWrap.appendChild(emptyIcon);
+            emptyWrap.appendChild(emptyTitle);
+            emptyWrap.appendChild(emptyDesc);
+            body.appendChild(emptyWrap);
+
+            const counterEl = document.getElementById('ai-event-counter');
+            if (counterEl) counterEl.textContent = '0';
+            return;
+        }
 
         const iconMap = {
             report: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><polyline points="9 12 11 14 15 10"></polyline></svg>',
@@ -2036,46 +2128,95 @@
             score: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>'
         };
 
-        let dynamicIndex = 0;
-        let eventCount = 60;
-
-        function renderRow(evt) {
+        function renderRow(act) {
             const row = document.createElement('div');
             row.className = 'ai-log-row';
-            row.innerHTML = `
-                <div class="ai-event-icon-badge type-${evt.type}">
-                    ${iconMap[evt.type] || iconMap.shield}
-                </div>
-                <div class="ai-event-content">
-                    <span class="ai-event-headline">${evt.headline}</span>
-                    <span class="ai-event-subtext">${evt.subtext}</span>
-                </div>
-                <span class="ai-event-time">${evt.time}</span>
-            `;
+
+            let type = 'shield';
+            let headline = '';
+            let subtext = '';
+
+            if (act.entry_type === 'event') {
+                if (act.event_type === 'report') {
+                    type = 'report';
+                    headline = `Lure reported by ${act.employee_name || 'Recipient'}`;
+                    subtext = `${act.campaign_name || 'Campaign'} · ${act.employee_department || 'Staff'}`;
+                } else if (act.event_type === 'click') {
+                    type = 'train';
+                    headline = `Lure clicked by ${act.employee_name || 'Recipient'}`;
+                    subtext = `${act.campaign_name || 'Campaign'} · ${act.employee_department || 'Staff'}`;
+                } else if (act.event_type === 'open') {
+                    type = 'shield';
+                    headline = `Simulation opened by ${act.employee_name || 'Recipient'}`;
+                    subtext = `${act.campaign_name || 'Campaign'} · ${act.employee_department || 'Staff'}`;
+                } else {
+                    type = 'shield';
+                    headline = `Lure interaction: ${act.event_type}`;
+                    subtext = `${act.campaign_name || 'Campaign'} · ${act.employee_department || 'Staff'}`;
+                }
+            } else {
+                type = 'dispatch';
+                headline = `Simulation created: ${act.campaign_name || 'Drill'}`;
+                subtext = `By ${act.owner_name || 'Security Admin'} · Ready for dispatch`;
+            }
+
+            const iconBadge = document.createElement('div');
+            iconBadge.className = 'ai-event-icon-badge type-' + type;
+            iconBadge.innerHTML = iconMap[type] || iconMap.shield;
+
+            const content = document.createElement('div');
+            content.className = 'ai-event-content';
+
+            const hlEl = document.createElement('span');
+            hlEl.className = 'ai-event-headline';
+            hlEl.textContent = headline;
+
+            const subEl = document.createElement('span');
+            subEl.className = 'ai-event-subtext';
+            subEl.textContent = subtext;
+
+            content.appendChild(hlEl);
+            content.appendChild(subEl);
+
+            let timeStr = 'Recent';
+            if (act.created_at) {
+                try {
+                    const dt = new Date(act.created_at);
+                    if (!isNaN(dt.getTime())) {
+                        const diffMin = Math.round((Date.now() - dt.getTime()) / 60000);
+                        if (diffMin < 2) timeStr = 'Just now';
+                        else if (diffMin < 60) timeStr = `${diffMin}m ago`;
+                        else if (diffMin < 1440) timeStr = `${Math.round(diffMin / 60)}h ago`;
+                        else timeStr = dt.toLocaleDateString([], { month: 'short', day: 'numeric' });
+                    }
+                } catch(e) {}
+            }
+
+            const timeEl = document.createElement('span');
+            timeEl.className = 'ai-event-time';
+            timeEl.textContent = timeStr;
+
+            row.appendChild(iconBadge);
+            row.appendChild(content);
+            row.appendChild(timeEl);
             return row;
         }
 
-        body.innerHTML = '';
-        initialEvents.forEach(evt => {
-            body.appendChild(renderRow(evt));
+        rawActivities.slice(0, 10).forEach(act => {
+            body.appendChild(renderRow(act));
         });
 
-        if (aiStreamTimer) clearInterval(aiStreamTimer);
-        aiStreamTimer = setInterval(() => {
-            const nextEvt = dynamicEvents[dynamicIndex % dynamicEvents.length];
-            dynamicIndex++;
-            eventCount++;
+        const counterEl = document.getElementById('ai-event-counter');
+        if (counterEl) counterEl.textContent = rawActivities.length.toString();
+    }
 
-            const newRow = renderRow(nextEvt);
-            body.insertBefore(newRow, body.firstChild);
-
-            while (body.children.length > 8) {
-                body.removeChild(body.lastChild);
+    function initProgressFills() {
+        document.querySelectorAll('[data-progress]').forEach(el => {
+            const pct = el.getAttribute('data-progress');
+            if (pct !== null) {
+                el.style.width = pct + '%';
             }
-
-            const counterEl = document.getElementById('ai-event-counter');
-            if (counterEl) counterEl.textContent = eventCount.toLocaleString();
-        }, 5000);
+        });
     }
 
     // ── 16. Reveal Dashboard & Dismiss Skeleton ───────────────────────
@@ -2085,6 +2226,7 @@
         if (skeleton) skeleton.style.display = 'none';
         if (content) content.style.display = 'block';
 
+        initProgressFills();
         initGreetingAndDate();
         initRingGauge();
         initCountUp();
@@ -2103,14 +2245,95 @@
         setTimeout(revealDashboard, 120);
     }
 
+    // ── 17. Modal Focus Traps & Restoration ──────────────────────────
+    let lastFocusedBeforeExport = null;
+    let lastFocusedBeforeShortcuts = null;
+
     window.openExportModal = function() {
         const dialog = document.getElementById('dashboard-export-dialog');
-        if (dialog && typeof dialog.showModal === 'function') {
+        if (!dialog) return;
+        lastFocusedBeforeExport = document.activeElement;
+        if (typeof dialog.showModal === 'function') {
             dialog.showModal();
-        } else if (dialog) {
+        } else {
             dialog.setAttribute('open', '');
         }
+        requestAnimationFrame(() => {
+            const focusables = dialog.querySelectorAll('button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])');
+            if (focusables.length > 0) focusables[0].focus();
+        });
     };
+
+    window.closeExportModal = function() {
+        const dialog = document.getElementById('dashboard-export-dialog');
+        if (!dialog) return;
+        if (typeof dialog.close === 'function') {
+            dialog.close();
+        } else {
+            dialog.removeAttribute('open');
+        }
+        if (lastFocusedBeforeExport && typeof lastFocusedBeforeExport.focus === 'function') {
+            lastFocusedBeforeExport.focus();
+            lastFocusedBeforeExport = null;
+        }
+    };
+
+    window.openShortcutsModal = function() {
+        const dialog = document.getElementById('shortcuts-dialog');
+        if (!dialog) return;
+        lastFocusedBeforeShortcuts = document.activeElement;
+        if (typeof dialog.showModal === 'function') {
+            dialog.showModal();
+        } else {
+            dialog.setAttribute('open', '');
+        }
+        requestAnimationFrame(() => {
+            const focusables = dialog.querySelectorAll('button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])');
+            if (focusables.length > 0) focusables[0].focus();
+        });
+    };
+
+    window.closeShortcutsModal = function() {
+        const dialog = document.getElementById('shortcuts-dialog');
+        if (!dialog) return;
+        if (typeof dialog.close === 'function') {
+            dialog.close();
+        } else {
+            dialog.removeAttribute('open');
+        }
+        if (lastFocusedBeforeShortcuts && typeof lastFocusedBeforeShortcuts.focus === 'function') {
+            lastFocusedBeforeShortcuts.focus();
+            lastFocusedBeforeShortcuts = null;
+        }
+    };
+
+    // Trap focus inside dialogs
+    [document.getElementById('shortcuts-dialog'), document.getElementById('dashboard-export-dialog')].forEach(dialog => {
+        if (!dialog) return;
+        dialog.addEventListener('keydown', function(e) {
+            if (e.key === 'Tab') {
+                const focusables = Array.from(dialog.querySelectorAll('button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])')).filter(el => el.offsetWidth > 0 || el.offsetHeight > 0 || el.getClientRects().length > 0);
+                if (focusables.length === 0) return;
+                const first = focusables[0];
+                const last = focusables[focusables.length - 1];
+                if (e.shiftKey) {
+                    if (document.activeElement === first || !dialog.contains(document.activeElement)) {
+                        e.preventDefault();
+                        last.focus();
+                    }
+                } else {
+                    if (document.activeElement === last || !dialog.contains(document.activeElement)) {
+                        e.preventDefault();
+                        first.focus();
+                    }
+                }
+            } else if (e.key === 'Escape') {
+                e.preventDefault();
+                if (dialog.id === 'shortcuts-dialog') window.closeShortcutsModal();
+                if (dialog.id === 'dashboard-export-dialog') window.closeExportModal();
+            }
+        });
+    });
 
 })();
 </script>

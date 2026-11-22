@@ -177,7 +177,7 @@
 <div class="billing-container">
     <div style="padding: 1.5rem 0 1rem 0; animation: fadeInDown 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;">
         <h1 class="page-title" style="font-family: var(--font-sans); font-size: 2.5rem; font-weight: 800; margin: 0 0 0.5rem 0;">Billing & Subscriptions</h1>
-        <p class="page-subtitle" style="font-size: 1rem; margin: 0; color: var(--text-muted);">Manage your plans, live Stripe receipts, and premium security operator settings.</p>
+        <p class="page-subtitle" style="font-size: 1rem; margin: 0; color: var(--text-muted);">Manage your plans, live Stripe receipts, and workspace security settings.</p>
     </div>
 
     {% if current_user.role in ('pro', 'admin') %}
@@ -205,7 +205,7 @@
                                 <i class="ti ti-info-circle"></i> {{ stripe_status | upper }}
                             </span>
                             {% endif %}
-                            <h2 style="font-size:1.6rem; color:var(--text-main); margin:8px 0 0; font-family:var(--font-sans);">PRO Operator flat rate</h2>
+                            <h2 style="font-size:1.6rem; color:var(--text-main); margin:8px 0 0; font-family:var(--font-sans);">PRO flat rate</h2>
                         </div>
                         <div style="text-align:right;">
                             <span style="font-size:1.9rem; color:var(--text-main); font-weight:800; font-family:var(--font-sans);">$24</span>
@@ -233,7 +233,7 @@
                     </div>
 
                     <div style="border-top:1px solid rgba(255,255,255,0.06); padding-top:1.5rem; margin-bottom:1.8rem;">
-                        <h4 style="font-family:var(--font-mono); font-size:0.75rem; color:#64748b; margin:0 0 12px; text-transform:uppercase; letter-spacing:0.5px;">Subscription Telemetry</h4>
+                        <h4 style="font-family:var(--font-mono); font-size:0.75rem; color:#64748b; margin:0 0 12px; text-transform:uppercase; letter-spacing:0.5px;">Subscription usage</h4>
                         <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; font-size:0.85rem; color:#cbd5e1; margin-bottom: 12px;">
                             <div>Campaigns Run: <strong>{{ campaigns_count }}</strong></div>
                             <div>Employees Simulated: <strong>{{ targets_count }}</strong></div>
@@ -390,7 +390,7 @@
                         <div id="content-tab-sandbox" class="tab-content-panel" style="display: none;">
                             <p style="color:var(--text-muted); font-size:0.92rem; line-height:1.6; margin-bottom:1.5rem;">
                                 <strong>What is Sandbox Activation?</strong><br>
-                                This is a developer utility designed for self-hosting, local debugging, or offline evaluation. Clicking the button below bypasses external Stripe checkout processors entirely and updates your local database instance to grant immediate, lifetime **PRO Operator** privileges. Recommended for testing the recurrence engine locally.
+                                This is a developer utility designed for self-hosting, local debugging, or offline evaluation. Clicking the button below bypasses external Stripe checkout processors entirely and updates your local database instance to grant immediate, lifetime **PRO** privileges. Recommended for testing the recurrence engine locally.
                             </p>
                             <form action="/billing/activate-free" method="POST" id="sandbox-form">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -541,7 +541,7 @@
         card.style.borderColor = 'rgba(16, 185, 129, 0.35)';
         card.style.boxShadow = '0 25px 60px rgba(0,0,0,0.55), 0 0 35px rgba(16, 185, 129, 0.08)';
         title.textContent = 'Activate Sandbox PRO Mode?';
-        desc.innerHTML = 'This will bypass external payment checks and instantly activate **PRO Operator** privileges on this local database instance. This is designed for testing and offline evaluation.';
+        desc.innerHTML = 'This will bypass external payment checks and instantly activate **PRO** privileges on this local database instance. This is designed for testing and offline evaluation.';
         btnYes.textContent = 'Yes, Activate Sandbox';
         btnYes.style.background = 'linear-gradient(135deg, #10b981, #059669)';
 

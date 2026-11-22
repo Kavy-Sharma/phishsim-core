@@ -2,6 +2,8 @@ import json
 import os
 import sys
 import time
+import socket
+import subprocess
 import urllib.request
 import pytest
 from playwright.sync_api import sync_playwright
@@ -12,6 +14,51 @@ os.makedirs(ARTIFACTS_DIR, exist_ok=True)
 BASE_URL = "http://127.0.0.1:5050"
 
 AXE_CDN = "https://cdnjs.cloudflare.com/ajax/libs/axe-core/4.8.4/axe.min.js"
+
+
+def is_port_open(host="127.0.0.1", port=5050):
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    try:
+        s.settimeout(1.0)
+        s.connect((host, port))
+        s.close()
+        return True
+    except Exception:
+        return False
+
+
+def ensure_server_running():
+    if is_port_open():
+        print(f"[SERVER] Server is already running on {BASE_URL}")
+        return None
+    
+    print("[SERVER] Starting Flask server on port 5050...")
+    scratch_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "scratch")
+    os.makedirs(scratch_dir, exist_ok=True)
+    log_file = open(os.path.join(scratch_dir, "flask_server.log"), "w", encoding="utf-8")
+    proc = subprocess.Popen(
+        [sys.executable, "app.py"],
+        stdout=log_file,
+        stderr=subprocess.STDOUT,
+        cwd=os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    )
+    
+    for _ in range(50):
+        if is_port_open():
+            print(f"[SERVER] Flask server ready on {BASE_URL}")
+            return proc
+        time.sleep(0.5)
+    
+    raise RuntimeError("Could not start Flask server on port 5050")
+
+
+@pytest.fixture(scope="module", autouse=True)
+def run_flask_server():
+    proc = ensure_server_running()
+    yield
+    if proc:
+        print("[SERVER] Terminating spawned Flask server...")
+        proc.terminate()
 
 
 def get_axe_script():
@@ -26,28 +73,30 @@ def get_axe_script():
 
 def safe_screenshot(p, path):
     try:
-        p.screenshot(path=path, timeout=5000, animations="disabled")
+        p.screenshot(path=path)
     except Exception:
         try:
-            p.locator("body").screenshot(path=path, timeout=5000, animations="disabled")
+            p.locator("body").screenshot(path=path)
         except Exception as e:
             print(f"Warning: safe_screenshot failed for {path}: {e}")
 
 
 def test_navbar_full_suite():
+    ensure_server_running()
     axe_source = get_axe_script()
 
     with sync_playwright() as p:
-        browser = p.chromium.launch(channel="chrome", headless=True, args=["--disable-remote-fonts"])
+        browser = p.chromium.launch(headless=True, args=["--disable-remote-fonts"])
 
         # ══════════════════════════════════════════════════════════════
         # 1. DESKTOP TESTS (1440x900) - DARK & LIGHT THEMES
         # ══════════════════════════════════════════════════════════════
         for theme in ["dark", "light"]:
-            print(f"\n--- Testing Desktop Navbar ({theme.upper()} THEME) ---")
+            print(f"\n--- Testing Desktop Navbar ({theme.upper()} THEME) ---", flush=True)
             ctx = browser.new_context(viewport={"width": 1440, "height": 900})
             page = ctx.new_page()
 
+            print("Navigating to BASE_URL...", flush=True)
             page.goto(BASE_URL, wait_until="domcontentloaded")
             page.wait_for_timeout(600)
 
@@ -64,30 +113,33 @@ def test_navbar_full_suite():
             # A. Default State Screenshot
             default_shot = os.path.join(ARTIFACTS_DIR, f"desktop_navbar_{theme}_default.png")
             safe_screenshot(page, default_shot)
-            print(f"Captured: {default_shot}")
+            print(f"Captured: {default_shot}", flush=True)
 
             # Verify Try Demo button is visible on homepage when guest
+            print("Checking try_demo button...", flush=True)
             try_demo = page.locator("#nav-try-demo-btn")
             assert try_demo.is_visible(), "Try Demo button should be visible on homepage for guest"
             try_demo.hover()
             page.wait_for_timeout(200)
             try_demo_shot = os.path.join(ARTIFACTS_DIR, f"desktop_navbar_{theme}_try_demo_hover.png")
             safe_screenshot(page, try_demo_shot)
-            print(f"Captured: {try_demo_shot}")
+            print(f"Captured: {try_demo_shot}", flush=True)
 
             # B. Condensed State on Scroll (>24px)
+            print("Scrolling to test condensed state...", flush=True)
             page.evaluate("window.scrollTo(0, 100);")
             page.wait_for_timeout(300)
             is_scrolled = page.evaluate("() => document.getElementById('navbar').classList.contains('scrolled')")
             assert is_scrolled, "Navbar failed to gain .scrolled class after scrolling past 24px"
             nav_height = page.evaluate("() => document.getElementById('navbar').offsetHeight")
-            print(f"Navbar height when scrolled: {nav_height}px")
+            print(f"Navbar height when scrolled: {nav_height}px", flush=True)
             assert nav_height <= 60, f"Expected navbar condensed height <=60px, got {nav_height}px"
 
             page.evaluate("window.scrollTo(0, 0);")
             page.wait_for_timeout(200)
 
             # C. Mouse Hover: "Check something" Popover & Vignette updates
+            print("Testing hover popovers...", flush=True)
             trigger_check = page.locator("#nav-trigger-check")
             trigger_train = page.locator("#nav-trigger-train")
             surface = page.locator("#nav-popover-surface")
@@ -98,7 +150,7 @@ def test_navbar_full_suite():
             check_open = trigger_check.get_attribute("aria-expanded")
             assert check_open == "true", "Trigger check aria-expanded should be true"
 
-            # Check that PhishRecon "New" badge is present
+            print("Checking recon badge...", flush=True)
             recon_badge = page.locator(".nav-badge-recon-new").first
             assert recon_badge.is_visible(), "PhishRecon 'New' badge should be visible (within 30 days)"
 
@@ -162,6 +214,7 @@ def test_navbar_full_suite():
             page.wait_for_timeout(100)
 
             # Escape closes and returns focus to trigger
+            print("Pressing Escape to close popover...", flush=True)
             page.keyboard.press("Escape")
             page.wait_for_timeout(200)
             surface_open_class = page.evaluate("() => document.getElementById('nav-popover-surface').classList.contains('open')")
@@ -170,23 +223,26 @@ def test_navbar_full_suite():
             assert focused_id == "nav-trigger-check", f"Focus should return to nav-trigger-check, got {focused_id}"
 
             # G. Command Palette: Press "/" shortcut
+            print("Pressing / for Command Palette...", flush=True)
             page.keyboard.press("/")
             page.wait_for_timeout(250)
-            palette = page.locator("#nav-command-palette")
+            palette = page.locator("#command-palette-dialog, #nav-command-palette")
             assert palette.is_visible(), "Command palette should open upon pressing '/'"
 
-            palette_input = page.locator("#nav-palette-input")
+            print("Filling search input with 'email'...", flush=True)
+            palette_input = page.locator("#command-palette-input, #nav-palette-input")
             palette_input.fill("email")
             page.wait_for_timeout(200)
-            results = page.locator("#nav-palette-results .nav-palette-item")
+            results = page.locator("#command-palette-results .palette-item, #nav-palette-results .nav-palette-item")
             assert results.count() >= 1, "Fuzzy search for 'email' should return matching tools"
 
             # Screenshot: Command Palette
             palette_shot = os.path.join(ARTIFACTS_DIR, f"desktop_navbar_{theme}_command_palette.png")
             safe_screenshot(page, palette_shot)
-            print(f"Captured: {palette_shot}")
+            print(f"Captured: {palette_shot}", flush=True)
 
             # Close palette on Escape
+            print("Closing Command Palette...", flush=True)
             page.keyboard.press("Escape")
             page.wait_for_timeout(200)
             assert not palette.is_visible(), "Command palette should close on Escape"

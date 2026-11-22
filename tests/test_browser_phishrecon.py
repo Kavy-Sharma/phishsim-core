@@ -2,6 +2,8 @@ import json
 import os
 import sys
 import time
+import socket
+import subprocess
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
@@ -10,10 +12,38 @@ from playwright.sync_api import sync_playwright
 ARTIFACTS_DIR = r"C:\Users\user\.gemini\antigravity-ide\brain\4a12513e-979f-43a2-833d-a42f1dbd9591"
 
 
+def is_port_open(host="127.0.0.1", port=5050):
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.settimeout(0.5)
+    try:
+        s.connect((host, port))
+        s.close()
+        return True
+    except (socket.error, ConnectionRefusedError):
+        return False
+
+
+def ensure_server_running():
+    if is_port_open():
+        return None
+    proc = subprocess.Popen(
+        [sys.executable, "app.py"],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        cwd=os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    )
+    for _ in range(50):
+        if is_port_open():
+            return proc
+        time.sleep(0.5)
+    raise RuntimeError("Could not start Flask server on port 5050")
+
+
 def run_browser_verification():
+    proc = ensure_server_running()
     print("Starting Playwright browser verification for PhishRecon Part 2...")
     with sync_playwright() as p:
-        browser = p.chromium.launch(channel="chrome", headless=True)
+        browser = p.chromium.launch(headless=True)
 
         # ── 1. Desktop & Hostile Packet Injection Test ──────────────────
         print("\n--- TEST A: Hostile Packet Replay & XSS Proof ---")

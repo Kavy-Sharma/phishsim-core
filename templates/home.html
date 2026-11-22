@@ -4289,20 +4289,19 @@
             <span class="t-prompt-symbol">❯</span>
             <div class="t-input-wrapper">
               <span id="t-ghost" class="t-ghost"></span>
-              <input type="text" id="t-input" placeholder="" autocomplete="off" spellcheck="false" aria-label="Terminal input">
+              <input type="text" id="t-input" placeholder="Try typing 'osint demo-corp.com' or tap an action below..." autocomplete="off" spellcheck="false" aria-label="Terminal input">
             </div>
           </div>
 
           <!-- Interactive Suggestion Chips Bar -->
           <div class="terminal-chips" style="position: relative; z-index: 2;">
-            <span class="term-chip-label"><i class="ti ti-bolt" style="color:var(--primary); margin-right:4px;"></i> Quick Actions:</span>
-            <button type="button" class="term-chip" onclick="runSuggestedCmd('help')"><i class="ti ti-help-circle" style="color:#38bdf8;"></i> help</button>
-            <button type="button" class="term-chip" onclick="runSuggestedCmd('osint demo-corp.com')"><i class="ti ti-radar" style="color:#c084fc;"></i> osint demo-corp.com</button>
-            <button type="button" class="term-chip" onclick="runSuggestedCmd('run_agent')"><i class="ti ti-player-play" style="color:#34d399;"></i> run_agent</button>
-            <button type="button" class="term-chip" onclick="runSuggestedCmd('campaign list')"><i class="ti ti-list-check" style="color:#818cf8;"></i> campaign list</button>
-            <button type="button" class="term-chip" onclick="runSuggestedCmd('status')"><i class="ti ti-activity" style="color:#fbbf24;"></i> status</button>
-            <button type="button" class="term-chip" onclick="runSuggestedCmd('banner')"><i class="ti ti-terminal-2" style="color:#38bdf8;"></i> banner</button>
-            <button type="button" class="term-chip" onclick="runSuggestedCmd('matrix')"><i class="ti ti-matrix" style="color:#22c55e;"></i> matrix</button>
+            <span class="term-chip-label"><i class="ti ti-bolt" style="color:var(--primary); margin-right:4px;"></i> Quick Commands:</span>
+            <button type="button" class="term-chip" onclick="runSuggestedCmd('osint demo-corp.com')" title="Audit domain attack surface &amp; employee vectors"><i class="ti ti-radar" style="color:#c084fc;"></i> osint demo-corp.com</button>
+            <button type="button" class="term-chip" onclick="runSuggestedCmd('run_agent')" title="Launch automated AI simulation drill"><i class="ti ti-player-play" style="color:#34d399;"></i> run_agent</button>
+            <button type="button" class="term-chip" onclick="runSuggestedCmd('matrix')" title="Trigger cyber matrix rain"><i class="ti ti-matrix" style="color:#22c55e;"></i> matrix</button>
+            <button type="button" class="term-chip" onclick="runSuggestedCmd('campaign list')" title="List active security drills"><i class="ti ti-list-check" style="color:#818cf8;"></i> campaign list</button>
+            <button type="button" class="term-chip" onclick="runSuggestedCmd('status')" title="Check defense runtime services"><i class="ti ti-activity" style="color:#fbbf24;"></i> status</button>
+            <button type="button" class="term-chip" onclick="runSuggestedCmd('help')" title="View all CLI capabilities"><i class="ti ti-help-circle" style="color:#38bdf8;"></i> help</button>
           </div>
         </div>
       </div>
@@ -5646,14 +5645,6 @@
 
   <!-- START WITH WHAT YOU'RE HOLDING (REPLACES THREAT-INTEL-SUITE) -->
   <section id="threat-intel-suite" class="holding-section" aria-labelledby="holding-heading">
-    <!-- Scroll Step Waypoints for Desktop Scroll-Driven Progress -->
-    <div class="holding-scroll-tracker" aria-hidden="true">
-      <div class="holding-scroll-step" data-step-target="email" style="top: 0; height: 25%;"></div>
-      <div class="holding-scroll-step" data-step-target="link" style="top: 25%; height: 25%;"></div>
-      <div class="holding-scroll-step" data-step-target="password" style="top: 50%; height: 25%;"></div>
-      <div class="holding-scroll-step" data-step-target="domain" style="top: 75%; height: 25%;"></div>
-    </div>
-
     <div class="holding-container">
       
       <!-- Left Column: Sticky Navigator -->
@@ -5846,32 +5837,105 @@
 
         </div>
 
-        <!-- Domain Audit Input Form (Directly under the stage) -->
-        <div class="holding-domain-cta" id="holding-domain-cta">
-          <div class="holding-domain-top">
-            <div class="holding-domain-badge">
-              <i class="ti ti-scan" aria-hidden="true"></i>
-              <label for="holding-domain-input" class="holding-domain-label">Domain Perimeter Audit</label>
+        <!-- Contextual Action Bars for each Tool Mode -->
+        <div class="holding-tool-cta-container">
+          <!-- 1. Email Mode CTA -->
+          <div class="holding-tool-cta is-active" id="holding-cta-email" data-cta="email">
+            <div class="holding-domain-top">
+              <div class="holding-domain-badge">
+                <i class="ti ti-mail-search" aria-hidden="true"></i>
+                <span class="holding-domain-label">Email Threat &amp; Header Forensics</span>
+              </div>
+              <span class="holding-domain-hint">RFC 5322 transit analysis · DKIM, SPF &amp; spoofed header flags</span>
             </div>
-            <span class="holding-domain-hint">Zero authentication required · Passive DNS &amp; TLS verification</span>
+            <div class="holding-cta-actions">
+              <a href="/threat-analyzer" class="btn btn-primary holding-action-pill">
+                <i class="ti ti-shield-bolt"></i>
+                <span>Open Threat Analyzer</span>
+                <i class="ti ti-arrow-right"></i>
+              </a>
+              <a href="/header-analyzer" class="btn btn-secondary holding-action-pill">
+                <i class="ti ti-mail-search"></i>
+                <span>Inspect Raw Headers</span>
+              </a>
+            </div>
           </div>
-          <form id="holding-domain-form" class="holding-domain-form" novalidate>
-            <div class="holding-input-wrap">
-              <i class="ti ti-world holding-input-icon" aria-hidden="true"></i>
-              <input type="text"
-                     id="holding-domain-input"
-                     class="holding-domain-input"
-                     placeholder="Enter domain (e.g. acme.com or corp.co.uk)"
-                     autocomplete="off"
-                     spellcheck="false"
-                     aria-describedby="holding-domain-error">
-              <button type="submit" class="holding-domain-btn" id="holding-domain-submit">
-                <span>Run Free Audit</span>
-                <i class="ti ti-arrow-right" aria-hidden="true"></i>
-              </button>
+
+          <!-- 2. Link Mode CTA -->
+          <div class="holding-tool-cta" id="holding-cta-link" data-cta="link" hidden>
+            <div class="holding-domain-top">
+              <div class="holding-domain-badge">
+                <i class="ti ti-link" aria-hidden="true"></i>
+                <span class="holding-domain-label">URL Destination &amp; Redirect Tracer</span>
+              </div>
+              <span class="holding-domain-hint">Zero execution risk · Trace multi-hop redirects &amp; landing pages</span>
             </div>
-            <p id="holding-domain-error" class="holding-domain-error" role="alert" style="display: none;"></p>
-          </form>
+            <form action="/url-decoder" method="GET" class="holding-domain-form" novalidate>
+              <div class="holding-input-wrap">
+                <i class="ti ti-link holding-input-icon" aria-hidden="true"></i>
+                <input type="text"
+                       name="url"
+                       class="holding-domain-input"
+                       placeholder="Enter shortened or suspicious link (e.g. bit.ly/3x8Qp9)"
+                       autocomplete="off"
+                       spellcheck="false">
+                <button type="submit" class="holding-domain-btn">
+                  <span>Trace Redirects</span>
+                  <i class="ti ti-arrow-right" aria-hidden="true"></i>
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <!-- 3. Password Mode CTA -->
+          <div class="holding-tool-cta" id="holding-cta-password" data-cta="password" hidden>
+            <div class="holding-domain-top">
+              <div class="holding-domain-badge">
+                <i class="ti ti-key" aria-hidden="true"></i>
+                <span class="holding-domain-label">K-Anonymity Credential Check</span>
+              </div>
+              <span class="holding-domain-hint">Zero password transmission · 800M+ exposed credential records</span>
+            </div>
+            <div class="holding-cta-actions">
+              <a href="/password-breach" class="btn btn-primary holding-action-pill">
+                <i class="ti ti-lock-check"></i>
+                <span>Check Password Exposure Database</span>
+                <i class="ti ti-arrow-right"></i>
+              </a>
+              <span class="holding-pill-note">
+                <i class="ti ti-shield-check" style="color: var(--success, #10b981);"></i>
+                <span>Evaluated anonymously via SHA-1 5-character prefix matching</span>
+              </span>
+            </div>
+          </div>
+
+          <!-- 4. Domain Mode CTA -->
+          <div class="holding-tool-cta" id="holding-domain-cta" data-cta="domain" hidden>
+            <div class="holding-domain-top">
+              <div class="holding-domain-badge">
+                <i class="ti ti-radar" aria-hidden="true"></i>
+                <label for="holding-domain-input" class="holding-domain-label">Domain Perimeter Audit (PhishRecon)</label>
+              </div>
+              <span class="holding-domain-hint">Zero authentication required · Passive DNS, TLS &amp; look-alikes</span>
+            </div>
+            <form id="holding-domain-form" class="holding-domain-form" novalidate>
+              <div class="holding-input-wrap">
+                <i class="ti ti-world holding-input-icon" aria-hidden="true"></i>
+                <input type="text"
+                       id="holding-domain-input"
+                       class="holding-domain-input"
+                       placeholder="Enter company domain (e.g. acme.com or corp.co.uk)"
+                       autocomplete="off"
+                       spellcheck="false"
+                       aria-describedby="holding-domain-error">
+                <button type="submit" class="holding-domain-btn" id="holding-domain-submit">
+                  <span>Scan Domain Perimeter</span>
+                  <i class="ti ti-arrow-right" aria-hidden="true"></i>
+                </button>
+              </div>
+              <p id="holding-domain-error" class="holding-domain-error" role="alert" style="display: none;"></p>
+            </form>
+          </div>
         </div>
 
       </div>
@@ -6074,7 +6138,7 @@
           style="flex:1;min-width:260px;padding:0.9rem 1.2rem;border-radius:var(--radius-sm, 10px);border:1px solid var(--border-subtle, var(--border));background:var(--bg-input);color:var(--text-primary);font-family:var(--font-sans);font-size:0.95rem;outline:none;transition:border-color 0.25s;">
         <button type="submit" class="btn-primary btn-scan"
           style="padding:0.9rem 1.8rem;border-radius:var(--radius-sm, 10px);font-weight:700;border:none;font-size:0.95rem;cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:8px;color:#fff;transition:all 0.25s;">
-          <i class="ti ti-radar"></i> Run Free Domain Scan
+          <i class="ti ti-radar"></i> Scan Domain Perimeter
         </button>
       </form>
 
@@ -7499,14 +7563,8 @@
       const authHtml = getStatusHtml(health ? health.auth : null, '[ONLINE]', '#10b981');
 
       const lines = [
-        { text: '<span style="color: rgba(255,255,255,0.6);">[*] Initializing PhishSim security runtime...</span>', delay: 0 },
-        { text: `[*] OpenRouter / LLM engine............... ${llmHtml}`, delay: 200 },
-        { text: `[*] MySQL tracking telemetry............. ${dbHtml}`, delay: 200 },
-        { text: `[*] SMTP dispatch relay agent............ ${smtpHtml}`, delay: 200 },
-        { text: `[*] Autonomous simulation worker......... ${workerHtml}`, delay: 200 },
-        { text: `[*] MITRE ATT&CK scenario catalog........ <span style="color:#10b981;font-weight:bold;">[100+ LOADED]</span>`, delay: 200 },
-        { text: `[*] Role-based auth module............... ${authHtml}`, delay: 200 },
-        { text: '<span style="color: var(--border-subtle, rgba(255,255,255,0.1));">────────────────────────────────────────────────</span>', delay: 200 },
+        { text: '<span style="color: var(--primary); font-weight: 600;">[●]</span> <span style="color: #f8fafc; font-weight: 600;">PhishSim Security Runtime v2.4</span> &bull; <span style="color: #10b981; font-weight: bold;">[ONLINE]</span>', delay: 0 },
+        { text: '<span style="color: rgba(255,255,255,0.72); font-size: 11px;">Interactive Defense Console &bull; Type <code style="color: var(--primary); font-weight: 600;">help</code> or tap a quick action below to run real-time scans:</span>', delay: 100 }
       ];
 
       let currentIdx = 0;
@@ -7518,7 +7576,7 @@
             lineDiv.className = 't-line';
             lineDiv.style.fontSize = '11px';
             lineDiv.style.lineHeight = '1.35';
-            lineDiv.style.margin = '1px 0';
+            lineDiv.style.margin = '2px 0';
             lineDiv.innerHTML = lineData.text;
             appendTerminalNode(lineDiv);
             if (body) body.scrollTop = 0;
@@ -7526,18 +7584,8 @@
             showNextLine();
           }, lineData.delay);
         } else {
-          setTimeout(() => {
-            const helpDiv = document.createElement('div');
-            helpDiv.className = 't-line t-info';
-            helpDiv.style.fontSize = '11px';
-            helpDiv.style.lineHeight = '1.35';
-            helpDiv.style.margin = '1px 0';
-            helpDiv.innerHTML = `Type 'help' to see available commands.
-Authenticate with 'login' to access live features.
-<span style="color: color-mix(in srgb, var(--primary) 20.0%, transparent);">────────────────────────────────────────────────</span>`;
-            appendTerminalNode(helpDiv);
-            if (body) body.scrollTop = 0;
-          }, 300);
+          // Keep input prompt and suggestions in direct view without any scrolling
+          if (body) body.scrollTop = 0;
         }
       }
       showNextLine();
@@ -7680,15 +7728,30 @@ Authenticate with 'login' to access live features.
     function runSuggestedCmd(cmdText) {
       const input = document.getElementById('t-input');
       if (!input) return;
-      input.value = cmdText;
-      input.dispatchEvent(new Event('input', { bubbles: true }));
-      const event = new KeyboardEvent('keypress', {
-        key: 'Enter',
-        keyCode: 13,
-        bubbles: true,
-        cancelable: true
-      });
-      input.dispatchEvent(event);
+      if (typeof playKeyClickSound === 'function') playKeyClickSound();
+      input.value = '';
+      input.focus();
+      let charIdx = 0;
+      function typeNext() {
+        if (charIdx < cmdText.length) {
+          input.value += cmdText.charAt(charIdx);
+          input.dispatchEvent(new Event('input', { bubbles: true }));
+          if (typeof playKeyClickSound === 'function') playKeyClickSound();
+          charIdx++;
+          setTimeout(typeNext, 20);
+        } else {
+          setTimeout(() => {
+            const event = new KeyboardEvent('keypress', {
+              key: 'Enter',
+              keyCode: 13,
+              bubbles: true,
+              cancelable: true
+            });
+            input.dispatchEvent(event);
+          }, 80);
+        }
+      }
+      typeNext();
     }
 
     const scrollyLogs = [

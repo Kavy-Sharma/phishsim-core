@@ -23,13 +23,30 @@
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    {% if not (current_user or session.get('user_id')) %}
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;1,6..72,400&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+    {% endif %}
     
+    <!-- Defensive resilience stubs so blocked network never triggers undefined reference errors -->
+    <script>
+        window.DOMPurify = window.DOMPurify || { sanitize: function(s) { return s; } };
+        window.countUp = window.countUp || {
+            CountUp: function(target, val, opts) {
+                this.target = typeof target === 'string' ? document.getElementById(target) : target;
+                this.val = val;
+                this.start = function() {
+                    if (this.target) this.target.textContent = (this.val || 0) + (opts && opts.suffix ? opts.suffix : '');
+                };
+            }
+        };
+        window.VanillaTilt = window.VanillaTilt || { init: function() {} };
+    </script>
+
     <!-- Tabler Icons -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='vendor/tabler-icons/tabler-icons.min.css') }}">
     
     <!-- FontAwesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='vendor/font-awesome/all.min.css') }}">
 
     <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
     <link rel="alternate icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}">
@@ -37,17 +54,17 @@
     <link rel="apple-touch-icon" href="{{ url_for('static', filename='favicon.png') }}">
     
     <!-- Vanilla Tilt for 3D Cards -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/vanilla-tilt/1.8.0/vanilla-tilt.min.js"></script>
+    <script src="{{ url_for('static', filename='vendor/vanilla-tilt/vanilla-tilt.min.js') }}"></script>
     
     <!-- CountUp JS -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/countup.js/2.8.0/countUp.umd.js"></script>
+    <script src="{{ url_for('static', filename='vendor/countup/countUp.umd.js') }}"></script>
 
     <!-- DOMPurify for secure client-side HTML sanitization -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.9/purify.min.js"></script>
+    <script src="{{ url_for('static', filename='vendor/dompurify/purify.min.js') }}"></script>
 
     <!-- Main Stylesheets -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css', v='1.0.9-lure-cta') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/app_shell.css', v='1.1.0') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css', v='1.4.0-cachebust') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/app_shell.css', v='1.6.0-cachebust') }}">
     <style>
         ::view-transition-old(root),
         ::view-transition-new(root) {
@@ -66,7 +83,7 @@
 </head>
 <body class="{% block body_class %}{% endblock %}">
 
-<!<!-- ═══════════════════════════════════════════════════════════
+<!-- ═══════════════════════════════════════════════════════════
      TOP PROGRESS BAR & GLOBAL SKELETON HANDLERS
      ═══════════════════════════════════════════════════════════ -->
 <script>
@@ -495,7 +512,7 @@ window.topProgressBar = new TopProgressBar();
 })();
 
 // ── Shared Sitewide Dynamic Toast Notification System (DOM Building) ──
-function showPremiumToast(message, iconClass = 'fa-circle-check', duration = 4000) {
+function showPremiumToast(message, iconOrType = 'info', titleOrDuration, maybeDuration) {
     let container = document.querySelector('.app-toast-container') || document.querySelector('.toast-container');
     if (!container) {
         container = document.createElement('div');
@@ -503,71 +520,127 @@ function showPremiumToast(message, iconClass = 'fa-circle-check', duration = 400
         document.body.appendChild(container);
     }
     
-    const toast = document.createElement('div');
-    toast.className = 'app-toast premium-toast';
-    toast.style.cursor = 'grab';
-    toast.style.userSelect = 'none';
-    
-    const ic = (iconClass || '').toString().trim();
+    // Normalize arguments: can be called as:
+    // showPremiumToast(msg, 'warning')
+    // showPremiumToast(msg, 'warning', 10000)
+    // showPremiumToast(msg, 'warning', 'Custom Title', 10000)
+    let rawType = (iconOrType || 'info').toString().toLowerCase().trim();
     let toastType = 'info';
-    const iconEl = document.createElement('i');
-    iconEl.className = 'app-toast-icon';
+    let defaultTitle = 'Notice';
+    let duration = typeof titleOrDuration === 'number' ? titleOrDuration : (typeof maybeDuration === 'number' ? maybeDuration : null);
+    let title = typeof titleOrDuration === 'string' ? titleOrDuration : null;
 
-    if (!ic || ic === 'success' || ic === 'check' || ic === 'fa-circle-check') {
+    if (rawType.includes('success') || rawType.includes('check')) {
         toastType = 'success';
-        iconEl.className = 'fas fa-circle-check app-toast-icon';
-    } else if (ic === 'danger' || ic === 'error' || ic === 'fa-circle-exclamation') {
+        defaultTitle = title || 'Success';
+    } else if (rawType.includes('danger') || rawType.includes('error')) {
         toastType = 'danger';
-        iconEl.className = 'fas fa-circle-exclamation app-toast-icon';
-    } else if (ic === 'warning' || ic === 'fa-triangle-exclamation') {
+        defaultTitle = title || 'Action Required';
+    } else if (rawType.includes('warn') || rawType.includes('triangle')) {
         toastType = 'warning';
-        iconEl.className = 'fas fa-triangle-exclamation app-toast-icon';
-    } else if (ic.startsWith('ti-') || ic.startsWith('ti ')) {
-        iconEl.className = `ti ${ic} app-toast-icon`;
-    } else if (ic.startsWith('fa-') || ic.startsWith('fas ') || ic.startsWith('far ')) {
-        const fullClass = ic.startsWith('fa') ? ic : 'fas ' + ic;
-        iconEl.className = `${fullClass} app-toast-icon`;
+        defaultTitle = title || 'Attention Required';
     } else {
-        iconEl.className = `fas ${ic} app-toast-icon`;
+        toastType = 'info';
+        defaultTitle = title || 'Notification';
     }
 
-    toast.classList.add(toastType);
-    toast.appendChild(iconEl);
+    const toast = document.createElement('div');
+    toast.className = `app-toast premium-toast toast-${toastType}`;
+    toast.setAttribute('role', toastType === 'danger' ? 'alert' : 'status');
+    toast.setAttribute('aria-live', toastType === 'danger' ? 'assertive' : 'polite');
 
-    const msgSpan = document.createElement('span');
-    msgSpan.className = 'app-toast-message';
-    msgSpan.textContent = message;
-    toast.appendChild(msgSpan);
-
-    const dismissBtn = document.createElement('button');
-    dismissBtn.type = 'button';
-    dismissBtn.className = 'app-toast-dismiss';
-    dismissBtn.setAttribute('aria-label', 'Dismiss toast');
-    dismissBtn.textContent = '×';
-    dismissBtn.onclick = () => {
-        toast.style.opacity = '0';
-        toast.style.transform = 'translateY(-12px)';
-        setTimeout(() => toast.remove(), 250);
+    // SVGs for guaranteed crisp rendering on all platforms
+    const iconSvgs = {
+        success: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>',
+        danger: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>',
+        warning: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>',
+        info: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>'
     };
-    toast.appendChild(dismissBtn);
 
+    const iconBox = document.createElement('div');
+    iconBox.className = `app-toast-icon-badge badge-${toastType}`;
+    iconBox.innerHTML = iconSvgs[toastType] || iconSvgs.info;
+    toast.appendChild(iconBox);
+
+    // Text container (Title + Message)
+    const textContainer = document.createElement('div');
+    textContainer.className = 'app-toast-content';
+
+    const titleEl = document.createElement('div');
+    titleEl.className = 'app-toast-title';
+    titleEl.textContent = defaultTitle;
+    textContainer.appendChild(titleEl);
+
+    const msgEl = document.createElement('div');
+    msgEl.className = 'app-toast-message';
+    msgEl.textContent = message;
+    textContainer.appendChild(msgEl);
+
+    toast.appendChild(textContainer);
+
+    // Explicit close button
+    const closeBtn = document.createElement('button');
+    closeBtn.type = 'button';
+    closeBtn.className = 'app-toast-dismiss-btn';
+    closeBtn.setAttribute('aria-label', 'Dismiss alert');
+    closeBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
+    closeBtn.onclick = (e) => {
+        if (e) e.stopPropagation();
+        dismissToast(toast);
+    };
+    toast.appendChild(closeBtn);
+
+    // Bottom progress countdown bar
+    const progressTrack = document.createElement('div');
+    progressTrack.className = 'app-toast-progress';
+    const progressBar = document.createElement('div');
+    progressBar.className = `app-toast-progress-bar bar-${toastType}`;
+    progressTrack.appendChild(progressBar);
+    toast.appendChild(progressTrack);
+
+    // Add to container
     container.appendChild(toast);
-    
-    if (window.attachDismissGesture) {
-        window.attachDismissGesture(toast);
+
+    // Duration calculation:
+    // Warnings and errors get 12 seconds so users never miss them.
+    // Success/info get 8.5 seconds.
+    // Lengthy messages get bonus reading time.
+    const msgLen = (message || '').length;
+    const baseDuration = (toastType === 'danger' || toastType === 'warning') ? 12000 : 8500;
+    const bonusTime = Math.min(8000, Math.max(0, (msgLen - 40) * 50));
+    const finalDuration = duration || (baseDuration + bonusTime);
+
+    progressBar.style.animationDuration = `${finalDuration}ms`;
+
+    let dismissTimer = null;
+    function startTimer(ms) {
+        clearTimeout(dismissTimer);
+        dismissTimer = setTimeout(() => {
+            dismissToast(toast);
+        }, ms);
     }
-    
-    setTimeout(() => {
-        if (toast && toast.parentElement) {
-            toast.style.animation = 'none';
-            toast.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
-            toast.style.opacity = '0';
-            toast.style.transform = 'translateY(-16px)';
-            setTimeout(() => {
-                if (toast && toast.parentElement) toast.remove();
-            }, 300);
-        }
-    }, duration);
+
+    function dismissToast(el) {
+        clearTimeout(dismissTimer);
+        if (!el || !el.parentElement) return;
+        el.classList.add('toast-dismissing');
+        setTimeout(() => {
+            if (el && el.parentElement) el.remove();
+        }, 280);
+    }
+
+    startTimer(finalDuration);
+
+    // Hover pauses timer completely
+    toast.addEventListener('mouseenter', () => {
+        clearTimeout(dismissTimer);
+        progressBar.style.animationPlayState = 'paused';
+    });
+    // Unhover resumes with at least 5 seconds remaining
+    toast.addEventListener('mouseleave', () => {
+        progressBar.style.animationPlayState = 'running';
+        startTimer(5000);
+    });
 }
 window.showPremiumToast = showPremiumToast;
 window.showToast = showPremiumToast;
@@ -651,6 +724,26 @@ window.init3DTiltCards = init3DTiltCards;
          UNIFIED NAVBAR INCLUDE
          ═══════════════════════════════════════════════════════════ -->
     {% include 'navbar.html' %}
+ 
+    {% if session.get('is_demo') and request.path != '/' %}
+    <div id="demo-session-ribbon" class="sandbox-banner" role="status" aria-label="Demo sandbox active">
+        <div class="demo-session-inner">
+            <div class="demo-session-tag">
+                <span class="demo-pulse-dot" aria-hidden="true"></span>
+                <span>DEMO MODE</span>
+            </div>
+            <div class="demo-session-text sandbox-banner-text">
+                <strong>Sandbox Mode</strong> &mdash; Demo environment. Data is illustrative only.
+            </div>
+            <div class="demo-session-action">
+                <a href="/exit-demo" class="demo-exit-btn" id="demo-exit-btn" title="End demo session and return to home page">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    <span>Close Session</span>
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
 
     {% if service_status and service_status.degraded %}
     <div id="service-status-banner" class="app-status-banner warning" role="status">
@@ -688,6 +781,99 @@ window.init3DTiltCards = init3DTiltCards;
     {% block content %}{% endblock %}
 
     {% if request.path not in ['/login', '/signup'] %}
+    {% if current_user %}
+    <footer class="site-footer site-footer-slim">
+        <!-- The Filament & Lure Wire Ocean Depth Scene -->
+        <div class="footer-filament-ocean" aria-hidden="true">
+            <div class="ocean-caustics-layer"></div>
+            <svg id="footer-filament-svg" class="filament-full-svg" viewBox="0 0 1440 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <linearGradient id="oceanFilamentGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stop-color="var(--info)" stop-opacity="0.3"/>
+                        <stop offset="30%" stop-color="var(--primary)" stop-opacity="0.85"/>
+                        <stop offset="70%" stop-color="var(--primary)" stop-opacity="0.95"/>
+                        <stop offset="95%" stop-color="var(--info)" stop-opacity="0.95"/>
+                        <stop offset="100%" stop-color="var(--primary)" stop-opacity="1"/>
+                    </linearGradient>
+                    <linearGradient id="oceanSubsurfaceGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stop-color="var(--info)" stop-opacity="0.08"/>
+                        <stop offset="40%" stop-color="var(--primary)" stop-opacity="0.03"/>
+                        <stop offset="85%" stop-color="var(--info)" stop-opacity="0.015"/>
+                        <stop offset="100%" stop-color="transparent" stop-opacity="0"/>
+                    </linearGradient>
+                    <linearGradient id="rigBobberDomeGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stop-color="var(--primary)" stop-opacity="1"/>
+                        <stop offset="100%" stop-color="color-mix(in srgb, var(--primary) 70%, black)" stop-opacity="1"/>
+                    </linearGradient>
+                    <linearGradient id="rigBobberBodyGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stop-color="color-mix(in srgb, var(--primary) 60%, black)" stop-opacity="1"/>
+                        <stop offset="100%" stop-color="var(--bg-base)" stop-opacity="1"/>
+                    </linearGradient>
+                    <filter id="neonWireGlow" x="-30%" y="-30%" width="160%" height="160%">
+                        <feGaussianBlur stdDeviation="2" result="blur1"/>
+                        <feGaussianBlur stdDeviation="5" result="blur2"/>
+                        <feMerge>
+                            <feMergeNode in="blur2"/>
+                            <feMergeNode in="blur1"/>
+                            <feMergeNode in="SourceGraphic"/>
+                        </feMerge>
+                    </filter>
+                    <filter id="rigBobberGlow" x="-50%" y="-50%" width="200%" height="200%">
+                        <feGaussianBlur stdDeviation="3.5" result="blurA"/>
+                        <feGaussianBlur stdDeviation="8" result="blurB"/>
+                        <feMerge>
+                            <feMergeNode in="blurB"/>
+                            <feMergeNode in="blurA"/>
+                            <feMergeNode in="SourceGraphic"/>
+                        </feMerge>
+                    </filter>
+                </defs>
+                <rect x="0" y="0" width="100%" height="100%" fill="url(#oceanSubsurfaceGrad)" />
+                <g id="footer-bathymetric-grid"></g>
+                <path id="footer-filament-wire-glow" fill="none" stroke="var(--info)" stroke-width="4.5" stroke-opacity="0.18" stroke-linecap="round" stroke-linejoin="round"/>
+                <path id="footer-filament-wire" fill="none" stroke="url(#oceanFilamentGrad)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" filter="url(#neonWireGlow)"/>
+                <g id="footer-bend-beacon"></g>
+                <g id="footer-hook-anchor">
+                    <g class="footer-hook-motion">
+                        <g class="bobber-float-group" filter="url(#rigBobberGlow)">
+                            <ellipse class="ocean-ripple ripple-a" cx="0" cy="0" rx="16" ry="6.5" stroke="var(--primary)" stroke-width="1.1" stroke-opacity="0.45" fill="none"/>
+                            <ellipse class="ocean-ripple ripple-b" cx="0" cy="0" rx="30" ry="11.5" stroke="var(--info)" stroke-width="0.8" stroke-opacity="0.25" fill="none"/>
+                            <line x1="0" y1="-38" x2="0" y2="-32" stroke="var(--primary)" stroke-width="1.8" stroke-linecap="round"/>
+                            <circle cx="0" cy="-38" r="2" stroke="var(--primary)" stroke-width="1.5" fill="none"/>
+                            <path d="M -7 -20 C -7 -29 -3 -32 0 -32 C 3 -32 7 -29 7 -20 Z" fill="url(#rigBobberDomeGrad)"/>
+                            <rect x="-8" y="-20" width="16" height="3" rx="1.2" fill="var(--text-primary)" opacity="0.95"/>
+                            <path d="M -7 -17 C -7 -8 -2 -1 0 1 C 2 -1 7 -8 7 -17 Z" fill="url(#rigBobberBodyGrad)"/>
+                            <path d="M -4 -25 C -2 -28 -1 -29 0 -29" stroke="var(--text-inverse)" stroke-width="1" opacity="0.75" fill="none"/>
+                            <circle cx="0" cy="2" r="2.2" stroke="var(--primary)" stroke-width="1.5" fill="none"/>
+                            <path d="M 0 4 L 0 16 C 0 28 12 28 12 16 L 12 12 M 12 12 L 8.5 8.5" stroke="var(--info)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                            <circle cx="8.5" cy="8.5" r="1.1" fill="var(--text-inverse)"/>
+                        </g>
+                    </g>
+                </g>
+            </svg>
+        </div>
+        <div class="footer-slim-inner">
+            <div class="footer-slim-brand">
+                <a href="/" class="footer-brand-title">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                    <span>PhishSim<span style="color: var(--primary);">.ai</span></span>
+                </a>
+            </div>
+            <div class="footer-slim-links">
+                <span>&copy; 2026 PhishSim AI</span>
+                <span>&bull;</span>
+                <a href="/terms">Terms</a>
+                <span>&bull;</span>
+                <a href="/privacy">Privacy</a>
+                <span>&bull;</span>
+                <a href="/about">About</a>
+            </div>
+            <div class="footer-social-links">
+                <a href="https://github.com/Kavy-Sharma/phishsim-core" target="_blank" rel="noopener noreferrer" aria-label="GitHub Repository" class="footer-social-link"><i class="ti ti-brand-github" aria-hidden="true"></i></a>
+            </div>
+        </div>
+    </footer>
+    {% else %}
     <footer class="site-footer">
         <!-- The Filament & Lure Wire Ocean Depth Scene -->
         <div class="footer-filament-ocean" aria-hidden="true">
@@ -784,8 +970,8 @@ window.init3DTiltCards = init3DTiltCards;
                     <g class="footer-hook-motion">
                         <g class="bobber-float-group" filter="url(#rigBobberGlow)">
                             <!-- Concentric depth ripples at hook depth -->
-                            <circle class="ocean-ripple ripple-a" cx="0" cy="0" r="14" stroke="var(--primary)" stroke-width="1" stroke-opacity="0.4" fill="none"/>
-                            <circle class="ocean-ripple ripple-b" cx="0" cy="0" r="28" stroke="var(--info)" stroke-width="0.75" stroke-opacity="0.22" fill="none"/>
+                            <ellipse class="ocean-ripple ripple-a" cx="0" cy="0" rx="16" ry="6.5" stroke="var(--primary)" stroke-width="1.1" stroke-opacity="0.45" fill="none"/>
+                            <ellipse class="ocean-ripple ripple-b" cx="0" cy="0" rx="30" ry="11.5" stroke="var(--info)" stroke-width="0.8" stroke-opacity="0.25" fill="none"/>
 
                             <!-- Buoyant balsa bobber float on the line above the hook -->
                             <line x1="0" y1="-38" x2="0" y2="-32" stroke="var(--primary)" stroke-width="1.8" stroke-linecap="round"/>
@@ -825,7 +1011,7 @@ window.init3DTiltCards = init3DTiltCards;
                     <p class="footer-brand-desc">Autonomous phishing simulation and automated human defense platform.</p>
                     <div class="footer-status-pill">
                         <span class="status-indicator-dot"></span>
-                        <span>Fleet Defenses Operational</span>
+                        <span>All systems operational</span>
                     </div>
                 </div>
 
@@ -876,19 +1062,17 @@ window.init3DTiltCards = init3DTiltCards;
                     <a href="/privacy">Privacy</a>
                     <span>&bull;</span>
                     <a href="/about">About</a>
-                    <span>&bull;</span>
-                    <a href="/about#faq">Systems</a>
                     <svg class="filament-star-mark" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                         <path d="M12 0L14.59 9.41L24 12L14.59 14.59L12 24L9.41 14.59L0 12L9.41 9.41L12 0Z"/>
                     </svg>
                 </div>
                 <div class="footer-social-links">
-                    <span class="footer-uptime-tag"><i class="ti ti-bolt" style="color: var(--primary);"></i> 99.98% Uptime</span>
                     <a href="https://github.com/Kavy-Sharma/phishsim-core" target="_blank" rel="noopener noreferrer" aria-label="GitHub Repository" class="footer-social-link"><i class="ti ti-brand-github" aria-hidden="true"></i></a>
                 </div>
             </div>
         </div>
     </footer>
+    {% endif %}
     <script>
     (function initFooterFishingRig() {
         function updateFooterFishingRig() {
@@ -896,65 +1080,76 @@ window.init3DTiltCards = init3DTiltCards;
             const svg = document.getElementById('footer-filament-svg');
             if (!footer || !svg) return;
 
+            const isSlim = footer.classList.contains('site-footer-slim');
             const w = Math.max(320, footer.offsetWidth || window.innerWidth || 1200);
-            const h = Math.max(180, footer.offsetHeight || 300);
+            const h = isSlim ? Math.max(54, footer.offsetHeight || 58) : Math.max(180, footer.offsetHeight || 300);
 
             svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
             svg.setAttribute('width', String(w));
             svg.setAttribute('height', String(h));
 
-            // Wire sits right on the top boundary of the footer
             const wireY = 1.5;
-            // Bend is almost at the end of the window according to width (e.g. w - 65px)
-            const bendX = Math.max(140, w - 65);
-            // Plunge down into the depths: bottom terminal point of string
-            const bottomY = Math.max(140, Math.min(h - 52, 215));
+            const bendX = isSlim ? Math.max(140, w - 46) : Math.max(140, w - 65);
+            const bottomY = isSlim ? Math.min(h - 10, 36) : Math.max(140, Math.min(h - 52, 215));
 
-            // Continuous fishing line:
-            // Horizontal across footer boundary -> smooth curve at bendX -> vertical plunge to bottomY
-            // After bendX, NO horizontal wire exists!
-            const pathD = `M 0 ${wireY} L ${bendX - 22} ${wireY} Q ${bendX} ${wireY} ${bendX} 23.5 C ${bendX + 8} 75 ${bendX - 8} 125 ${bendX} ${bottomY}`;
-            const glowD = `M 0 ${wireY + 1} L ${bendX - 22} ${wireY + 1} Q ${bendX} ${wireY + 1} ${bendX} 24.5 C ${bendX + 8} 76 ${bendX - 8} 126 ${bendX} ${bottomY}`;
+            let pathD, glowD;
+            if (isSlim) {
+                pathD = `M 0 ${wireY} L ${bendX - 16} ${wireY} Q ${bendX} ${wireY} ${bendX} ${bottomY}`;
+                glowD = `M 0 ${wireY + 1} L ${bendX - 16} ${wireY + 1} Q ${bendX} ${wireY + 1} ${bendX} ${bottomY}`;
+            } else {
+                pathD = `M 0 ${wireY} L ${bendX - 22} ${wireY} Q ${bendX} ${wireY} ${bendX} 23.5 C ${bendX + 8} 75 ${bendX - 8} 125 ${bendX} ${bottomY}`;
+                glowD = `M 0 ${wireY + 1} L ${bendX - 22} ${wireY + 1} Q ${bendX} ${wireY + 1} ${bendX} 24.5 C ${bendX + 8} 76 ${bendX - 8} 126 ${bendX} ${bottomY}`;
+            }
 
             const wireEl = document.getElementById('footer-filament-wire');
             const glowEl = document.getElementById('footer-filament-wire-glow');
             if (wireEl) wireEl.setAttribute('d', pathD);
             if (glowEl) glowEl.setAttribute('d', glowD);
 
-            // Hook is tied directly to the bottom point of the string (bendX, bottomY)
             const hookAnchor = document.getElementById('footer-hook-anchor');
             if (hookAnchor) {
-                hookAnchor.setAttribute('transform', `translate(${bendX}, ${bottomY})`);
+                const scale = isSlim ? ' scale(0.65)' : '';
+                hookAnchor.setAttribute('transform', `translate(${bendX}, ${bottomY})${scale}`);
             }
 
-            // Water Entry Beacon & Ripples at the right bend
             const beaconGroup = document.getElementById('footer-bend-beacon');
             if (beaconGroup) {
-                beaconGroup.innerHTML = `
-                    <circle cx="${bendX}" cy="23.5" r="4" fill="var(--primary)" filter="url(#neonWireGlow)"/>
-                    <circle cx="${bendX}" cy="23.5" r="1.8" fill="var(--text-inverse)"/>
-                    <circle class="ocean-ripple ripple-a" cx="${bendX}" cy="23.5" r="14" stroke="var(--primary)" stroke-width="1.2" stroke-opacity="0.5" fill="none"/>
-                    <circle class="ocean-ripple ripple-b" cx="${bendX}" cy="23.5" r="28" stroke="var(--info)" stroke-width="0.8" stroke-opacity="0.3" fill="none"/>
-                    <circle class="ocean-ripple ripple-c" cx="${bendX}" cy="23.5" r="44" stroke="var(--primary)" stroke-width="0.6" stroke-opacity="0.18" fill="none"/>
-                    <text x="${Math.max(10, bendX - 28)}" y="18" text-anchor="end" fill="var(--text-muted)" font-family="var(--font-mono)" font-size="9" opacity="0.45">0m</text>
-                    <text x="${Math.max(10, bendX - 28)}" y="115" text-anchor="end" fill="var(--text-muted)" font-family="var(--font-mono)" font-size="9" opacity="0.35">-10m</text>
-                    <text x="${Math.max(10, bendX - 28)}" y="${bottomY - 8}" text-anchor="end" fill="var(--text-muted)" font-family="var(--font-mono)" font-size="9" opacity="0.28">-20m</text>
-                `;
+                if (isSlim) {
+                    beaconGroup.innerHTML = `
+                        <circle cx="${bendX}" cy="${bottomY}" r="3" fill="var(--primary)" filter="url(#neonWireGlow)"/>
+                        <circle cx="${bendX}" cy="${bottomY}" r="1.3" fill="var(--text-inverse)"/>
+                        <ellipse class="ocean-ripple ripple-a" cx="${bendX}" cy="${bottomY}" rx="12" ry="4.5" stroke="var(--primary)" stroke-width="1" stroke-opacity="0.6" fill="none"/>
+                        <ellipse class="ocean-ripple ripple-b" cx="${bendX}" cy="${bottomY}" rx="22" ry="8" stroke="var(--info)" stroke-width="0.8" stroke-opacity="0.35" fill="none"/>
+                    `;
+                } else {
+                    beaconGroup.innerHTML = `
+                        <circle cx="${bendX}" cy="23.5" r="4" fill="var(--primary)" filter="url(#neonWireGlow)"/>
+                        <circle cx="${bendX}" cy="23.5" r="1.8" fill="var(--text-inverse)"/>
+                        <ellipse class="ocean-ripple ripple-a" cx="${bendX}" cy="23.5" rx="16" ry="6" stroke="var(--primary)" stroke-width="1.2" stroke-opacity="0.6" fill="none"/>
+                        <ellipse class="ocean-ripple ripple-b" cx="${bendX}" cy="23.5" rx="32" ry="11.5" stroke="var(--info)" stroke-width="0.9" stroke-opacity="0.38" fill="none"/>
+                        <ellipse class="ocean-ripple ripple-c" cx="${bendX}" cy="23.5" rx="52" ry="18" stroke="var(--primary)" stroke-width="0.65" stroke-opacity="0.22" fill="none"/>
+                        <ellipse class="ocean-ripple ripple-d" cx="${bendX}" cy="23.5" rx="74" ry="25" stroke="var(--info)" stroke-width="0.45" stroke-opacity="0.14" fill="none"/>
+                        <text x="${Math.max(10, bendX - 28)}" y="18" text-anchor="end" fill="var(--text-muted)" font-family="var(--font-mono)" font-size="9" opacity="0.45">0m</text>
+                        <text x="${Math.max(10, bendX - 28)}" y="115" text-anchor="end" fill="var(--text-muted)" font-family="var(--font-mono)" font-size="9" opacity="0.35">-10m</text>
+                        <text x="${Math.max(10, bendX - 28)}" y="${bottomY - 8}" text-anchor="end" fill="var(--text-muted)" font-family="var(--font-mono)" font-size="9" opacity="0.28">-20m</text>
+                    `;
+                }
             }
 
-            // Bathymetric depth grid lines (stopping at bendX)
             const gridGroup = document.getElementById('footer-bathymetric-grid');
             if (gridGroup) {
-                gridGroup.innerHTML = `
-                    <line x1="0" y1="65" x2="${bendX}" y2="65" stroke="var(--info)" stroke-dasharray="2 10" stroke-width="0.75" stroke-opacity="0.14"/>
-                    <line x1="0" y1="135" x2="${bendX}" y2="135" stroke="var(--info)" stroke-dasharray="2 10" stroke-width="0.75" stroke-opacity="0.11"/>
-                    <line x1="0" y1="205" x2="${bendX}" y2="205" stroke="var(--info)" stroke-dasharray="2 10" stroke-width="0.75" stroke-opacity="0.08"/>
-                    <text x="24" y="16" fill="var(--text-muted)" font-family="var(--font-mono)" font-size="10" opacity="0.45">0m</text>
-                    <text x="24" y="30" fill="var(--text-muted)" font-family="var(--font-mono)" font-size="8" opacity="0.22">X: 234.10092</text>
-                    <text x="24" y="40" fill="var(--text-muted)" font-family="var(--font-mono)" font-size="8" opacity="0.22">Y: 23.001000</text>
-                    <text x="24" y="135" fill="var(--text-muted)" font-family="var(--font-mono)" font-size="10" opacity="0.32">-10m</text>
-                    <text x="24" y="205" fill="var(--text-muted)" font-family="var(--font-mono)" font-size="10" opacity="0.25">-20m</text>
-                `;
+                if (isSlim) {
+                    gridGroup.innerHTML = '';
+                } else {
+                    gridGroup.innerHTML = `
+                        <line x1="0" y1="65" x2="${bendX}" y2="65" stroke="var(--info)" stroke-dasharray="2 10" stroke-width="0.75" stroke-opacity="0.14"/>
+                        <line x1="0" y1="135" x2="${bendX}" y2="135" stroke="var(--info)" stroke-dasharray="2 10" stroke-width="0.75" stroke-opacity="0.11"/>
+                        <line x1="0" y1="205" x2="${bendX}" y2="205" stroke="var(--info)" stroke-dasharray="2 10" stroke-width="0.75" stroke-opacity="0.08"/>
+                        <text x="24" y="16" fill="var(--text-muted)" font-family="var(--font-mono)" font-size="10" opacity="0.45">0m</text>
+                        <text x="24" y="135" fill="var(--text-muted)" font-family="var(--font-mono)" font-size="10" opacity="0.32">-10m</text>
+                        <text x="24" y="205" fill="var(--text-muted)" font-family="var(--font-mono)" font-size="10" opacity="0.25">-20m</text>
+                    `;
+                }
             }
         }
 
@@ -1491,7 +1686,10 @@ window.init3DTiltCards = init3DTiltCards;
             [260, 340, 0.07, 0.11, 0.7],
         ];
 
-        var CYAN_RGB = '6,182,212'; // --app-cyan #06b6d4 decomposed
+        function getRippleRgb() {
+            var isLight = document.documentElement.getAttribute('data-theme') === 'light' || document.body.classList.contains('light-theme');
+            return isLight ? '8,145,178' : '6,182,212';
+        }
 
         /* ── DROP STATE ───────────────────────────────────────────────────── */
         var drops = [];
@@ -1518,6 +1716,7 @@ window.init3DTiltCards = init3DTiltCards;
         function tick(now) {
             ctx.clearRect(0, 0, cvs.width, cvs.height);
             var alive = false;
+            var rippleRgb = getRippleRgb();
 
             for (var d = drops.length - 1; d >= 0; d--) {
                 var drop = drops[d];
@@ -1539,11 +1738,15 @@ window.init3DTiltCards = init3DTiltCards;
                     /* line thins slightly as the wave travels outward */
                     var lw = ring.lw0 * (1 - progress * 0.45);
 
+                    ctx.save();
+                    ctx.translate(drop.x, drop.y);
+                    ctx.scale(1, 0.74); /* organic water pond perspective curvature */
                     ctx.beginPath();
-                    ctx.arc(drop.x, drop.y, ring.r, 0, Math.PI * 2);
-                    ctx.strokeStyle = 'rgba(' + CYAN_RGB + ',' + opacity.toFixed(3) + ')';
+                    ctx.arc(0, 0, ring.r, 0, Math.PI * 2);
+                    ctx.strokeStyle = 'rgba(' + rippleRgb + ',' + opacity.toFixed(3) + ')';
                     ctx.lineWidth = lw;
                     ctx.stroke();
+                    ctx.restore();
 
                     dropAlive = alive = true;
                 }
@@ -1584,6 +1787,7 @@ window.init3DTiltCards = init3DTiltCards;
         // Touch Events
         element.addEventListener('touchstart', (e) => {
             startY = e.touches[0].clientY;
+            currentY = startY; // Avoid false delta on tap without move
             isDragging = true;
             element.style.transition = 'none';
             element.style.cursor = 'grabbing';
@@ -1625,6 +1829,7 @@ window.init3DTiltCards = init3DTiltCards;
         element.addEventListener('mousedown', (e) => {
             if (e.button !== 0) return; // Only left click
             startY = e.clientY;
+            currentY = startY; // Avoid false delta on click without drag
             isDragging = true;
             element.style.transition = 'none';
             element.style.cursor = 'grabbing';
@@ -1693,7 +1898,10 @@ window.init3DTiltCards = init3DTiltCards;
                 document.querySelector('#otp-verify-modal:not([style*="display: none"]):not([style*="display:none"])') ||
                 document.querySelector('#ta-confirm-modal:not([style*="display: none"]):not([style*="display:none"])')
             );
-            document.body.classList.toggle('has-modal-open', hasOpenModal);
+            const isCurrentlyOpen = document.body.classList.contains('has-modal-open');
+            if (isCurrentlyOpen !== hasOpenModal) {
+                document.body.classList.toggle('has-modal-open', hasOpenModal);
+            }
         }
         window.checkAppModalState = checkAppModalState;
         checkAppModalState();

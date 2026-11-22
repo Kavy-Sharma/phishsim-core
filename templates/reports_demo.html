@@ -254,13 +254,14 @@
 </style>
 
 <!-- Load Chart.js -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="{{ url_for('static', filename='vendor/chartjs/chart.umd.min.js') }}"></script>
 
 <div class="report-page demo-report">
   <!-- Topbar -->
   <div class="demo-topbar">
     <a href="/" class="back-link"><i class="ti ti-arrow-left"></i> Back to Home</a>
     <div style="display:flex;align-items:center;gap:.7rem;flex-wrap:wrap;">
+      <span class="badge badge-warning" id="demo-sample-data-badge"><i class="ti ti-info-circle"></i> Sample data</span>
       <span class="report-chip"><i class="ti ti-eye" style="margin-right:4px;"></i> Interactive Preview</span>
       <span style="font-size:.75rem;color:var(--text-muted);font-style:italic;font-family:var(--font-sans);">* Demo data shown. Real reports generate from your live campaign results.</span>
     </div>
@@ -286,7 +287,7 @@
         <!-- Hero Banner -->
         <div class="report-hero" id="wt-report-hero-demo" style="margin-bottom: 0; width: auto; max-width: none;">
           <div class="report-hero-text">
-            <div class="report-eyebrow">Agentic AI Report</div>
+            <div class="report-eyebrow">Simulated Campaign Report</div>
             <h1 class="report-title">Your campaign report, explained before the data exists.</h1>
             <p class="report-summary">This is a full structural replica of the real AI report. Every panel exists in the real version, but here numbers are replaced with explanations of what they mean and how they help your team act faster.</p>
           </div>
@@ -310,7 +311,7 @@
         <!-- Actions bar -->
         <div class="report-actions" style="margin-bottom: 0;">
           <button class="rpt-action-btn" style="background:linear-gradient(135deg,#1d4ed8,#06b6d4);color:#fff;opacity:.55;" data-tip="Downloads a formatted PDF for board/compliance review."><i class="ti ti-file-type-pdf"></i> PDF Report</button>
-          <button class="rpt-action-btn" style="background:linear-gradient(135deg,#15803d,#22c55e);color:#fff;opacity:.55;" data-tip="Exports full employee telemetry as CSV for SIEM ingestion."><i class="ti ti-table-export"></i> CSV Evidence</button>
+          <button class="rpt-action-btn" style="background:linear-gradient(135deg,#15803d,#22c55e);color:#fff;opacity:.55;" data-tip="Exports full employee activity logs as CSV for SIEM ingestion."><i class="ti ti-table-export"></i> CSV Evidence</button>
           <button class="rpt-action-btn" style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);color:#94a3b8;opacity:.55;" data-tip="Opens the original campaign emails as sent for audit purposes."><i class="ti ti-mail-opened"></i> View Emails</button>
           <button class="rpt-action-btn" style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);color:#94a3b8;opacity:.55;" data-tip="Returns to your main campaign dashboard."><i class="ti ti-layout-dashboard"></i> Dashboard</button>
         </div>
@@ -618,7 +619,7 @@
         </div>
       </div>
 
-      <!-- Employee Telemetry / PRO locked -->
+      <!-- Employee Activity / PRO locked -->
       <div class="report-panel">
         <h2><i class="ti ti-table" style="color:var(--primary);"></i> Per-Employee Security Log</h2>
         <p style="color:#8892b0;font-size:.86rem;margin-bottom:1rem;">Full per-employee event log: who opened, who clicked, who reported, with timestamp, IP region, and user-agent data for forensic review.</p>

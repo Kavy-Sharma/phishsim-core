@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}PhishSim - Operator Profile{% endblock %}
+{% block title %}PhishSim - User Profile{% endblock %}
 {% block content %}
 <style>
 /* Premium Profile Layout */
@@ -125,7 +125,7 @@ body.light-theme .audit-table td { color: #334155; border-color: #f1f5f9; }
                         <span class="window-dot yellow"></span>
                         <span class="window-dot green"></span>
                     </div>
-                    <span class="window-title">operator_identity.key</span>
+                    <span class="window-title">account_identity.key</span>
                 </div>
                 <div class="window-body" style="padding: 2rem;">
                     <div class="profile-header">
@@ -464,7 +464,7 @@ body.light-theme .toggle-bg { background-color: #cbd5e1 !important; }
 </style>
 
 <!-- Chart.js Injection -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 
 <script>
 // Custom modal logic
@@ -707,23 +707,23 @@ function verify2faTestCode() {
 </script>
 
 <!-- Email Verification Modal -->
-<div class="confirm-modal" id="otp-verify-modal" aria-hidden="true" style="position:fixed; inset:0; z-index:50000; display:none; align-items:center; justify-content:center; background:rgba(2,6,23,0.72); backdrop-filter:blur(10px); padding:1.5rem;">
-    <div class="confirm-box" style="width:min(420px,100%); background:rgba(10,16,38,0.96); border:1px solid rgba(6,182,212,0.28); border-radius:18px; padding:1.5rem; box-shadow:0 24px 70px rgba(0,0,0,0.5);">
-        <h3 style="color:#fff; margin:0 0 0.5rem; font-family:var(--font-sans); display:flex; align-items:center; gap:8px;">
-            <i class="fas fa-shield-alt" style="color:#06b6d4;"></i> Verify Identity
+<div class="confirm-modal" id="otp-verify-modal" aria-hidden="true" style="position:fixed; inset:0; z-index:50000; display:none; align-items:center; justify-content:center; background:color-mix(in srgb, var(--bg-base) 80%, transparent); backdrop-filter:blur(10px); padding:1.5rem;">
+    <div class="confirm-box" style="width:min(420px,100%); background:var(--bg-surface); border:1px solid var(--border-default); border-radius:18px; padding:1.5rem; box-shadow:0 24px 70px rgba(0,0,0,0.5);">
+        <h3 style="color:var(--text-primary); margin:0 0 0.5rem; font-family:var(--font-heading); display:flex; align-items:center; gap:8px;">
+            <i class="ti ti-shield-check" style="color:var(--primary);"></i> Verify identity
         </h3>
-        <p id="otp-message" style="color:#94a3b8; margin:0 0 1.2rem; font-size:0.9rem;">We sent a 6-digit verification code to your email.</p>
+        <p id="otp-message" style="color:var(--text-secondary); margin:0 0 1.2rem; font-size:0.9rem;">We sent a 6-digit verification code to your email.</p>
         
         <div style="margin-bottom:1.5rem;">
             <input type="text" id="otp-input" placeholder="••••••" maxlength="6" 
-                style="width:100%; background:rgba(255,255,255,0.03); border:1px solid rgba(6,182,212,0.3); border-radius:10px; padding:12px; font-family:var(--font-mono); font-size:1.5rem; color:#fff; letter-spacing:8px; text-align:center; outline:none; box-sizing:border-box;">
-            <div id="otp-error" style="color:#ef4444; font-size:0.8rem; margin-top:6px; display:none;"></div>
-            <div id="otp-fallback" style="color:#eab308; font-size:0.8rem; margin-top:6px; display:none; font-family:monospace; background:rgba(234,179,8,0.08); padding:6px 10px; border-radius:6px; border:1px dashed rgba(234,179,8,0.2);"></div>
+                style="width:100%; background:var(--bg-surface-raised); border:1px solid var(--border-subtle); border-radius:10px; padding:12px; font-family:var(--font-mono); font-size:1.5rem; color:var(--text-primary); letter-spacing:8px; text-align:center; outline:none; box-sizing:border-box;">
+            <div id="otp-error" style="color:var(--danger); font-size:0.8rem; margin-top:6px; display:none;"></div>
+            <div id="otp-fallback" style="color:var(--warning); font-size:0.8rem; margin-top:6px; display:none; font-family:var(--font-mono); background:var(--warning-dim); padding:6px 10px; border-radius:6px; border:1px dashed color-mix(in srgb, var(--warning) 30%, transparent);"></div>
         </div>
         
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.8rem;">
-            <button type="button" onclick="closeOtpModal()" style="border:0; border-radius:10px; padding:12px; cursor:pointer; color:#cbd5e1; font-weight:700; font-family:var(--font-sans); background:rgba(148,163,184,0.14);">Cancel</button>
-            <button type="button" id="otp-confirm-btn" onclick="submitOtpCode()" style="border:0; border-radius:10px; padding:12px; cursor:pointer; color:#fff; font-weight:700; font-family:var(--font-sans); background:linear-gradient(135deg,#06b6d4,#3b82f6);">Verify</button>
+            <button type="button" onclick="closeOtpModal()" style="border:0; border-radius:10px; padding:12px; cursor:pointer; color:var(--text-secondary); font-weight:600; font-family:var(--font-heading); background:var(--bg-surface-raised);">Cancel</button>
+            <button type="button" id="otp-confirm-btn" onclick="submitOtpCode()" style="border:0; border-radius:10px; padding:12px; cursor:pointer; color:var(--text-inverse); font-weight:600; font-family:var(--font-heading); background:var(--primary);">Verify</button>
         </div>
     </div>
 </div>

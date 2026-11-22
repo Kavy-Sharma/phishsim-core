@@ -15,7 +15,15 @@ from functools import wraps
 from flask_wtf.csrf import CSRFProtect, CSRFError
 import smtplib
 from werkzeug.security import generate_password_hash, check_password_hash
-from ai_engine.report_agent import build_campaign_report, compute_human_security_score
+from ai_engine.report_agent import (
+    build_campaign_report,
+    compute_human_security_score,
+    generate_verdict_sentence,
+    build_attack_replay_timeline,
+    get_scenario_lure_and_clues,
+    ensure_campaign_actions_table,
+    get_or_create_remediation_actions,
+)
 from send_email import get_email_settings, is_deployed_environment, send_phishing_email, replace_all_links_with_tracking
 
 load_dotenv()
@@ -471,14 +479,22 @@ def ensure_auth_schema(cursor):
     admin_email = os.getenv("ADMIN_EMAIL", "admin@phishsim.ai").strip().lower()
     admin_password = os.getenv("ADMIN_PASSWORD", "admin123")
 
-    cursor.execute("SELECT id FROM users WHERE email = %s", (admin_email,))
+    force_reset = os.getenv("FORCE_ADMIN_PASSWORD_RESET", "").strip().lower() in ("1", "true", "yes", "on")
+    cursor.execute("SELECT id, password_hash FROM users WHERE email = %s", (admin_email,))
     existing_admin = cursor.fetchone()
     if existing_admin:
-        cursor.execute("""
-            UPDATE users
-            SET password_hash = %s, role = 'admin', email_verified = TRUE
-            WHERE id = %s
-        """, (generate_password_hash(admin_password), existing_admin["id"]))
+        if force_reset or not existing_admin.get("password_hash"):
+            cursor.execute("""
+                UPDATE users
+                SET password_hash = %s, role = 'admin', email_verified = TRUE
+                WHERE id = %s
+            """, (generate_password_hash(admin_password), existing_admin["id"]))
+        else:
+            cursor.execute("""
+                UPDATE users
+                SET role = 'admin', email_verified = TRUE
+                WHERE id = %s
+            """, (existing_admin["id"],))
     else:
         cursor.execute("""
             INSERT INTO users (name, email, password_hash, role, company_domain, email_verified)
@@ -590,10 +606,57 @@ def handle_csrf_error(e):
     return redirect(referrer)
 
 
+@app.errorhandler(403)
+def handle_403_error(e):
+    if request.is_json or request.path.startswith("/api/"):
+        return jsonify({"error": "Forbidden", "message": "You don't have permission to access this resource."}), 403
+    user_logged_in = bool(session.get("user_id"))
+    return render_template(
+        "error.html",
+        code="403",
+        title="Access denied",
+        message="You do not have permission to access this secure resource.",
+        btn_href="/dashboard" if user_logged_in else "/",
+        btn_text="Back to dashboard" if user_logged_in else "Go to homepage"
+    ), 403
+
+
+@app.errorhandler(404)
+def handle_404_error(e):
+    if request.is_json or request.path.startswith("/api/"):
+        return jsonify({"error": "Not Found", "message": "The requested resource was not found."}), 404
+    user_logged_in = bool(session.get("user_id"))
+    return render_template(
+        "error.html",
+        code="404",
+        title="Page not found",
+        message="The page you are looking for does not exist or has been moved.",
+        btn_href="/dashboard" if user_logged_in else "/",
+        btn_text="Back to dashboard" if user_logged_in else "Return home"
+    ), 404
+
+
+@app.errorhandler(500)
+def handle_500_error(e):
+    if request.is_json or request.path.startswith("/api/"):
+        return jsonify({"error": "Internal Server Error", "message": "An unexpected server error occurred."}), 500
+    user_logged_in = bool(session.get("user_id"))
+    return render_template(
+        "error.html",
+        code="500",
+        title="Something went wrong",
+        message="An unexpected server error occurred on our end. Please try again shortly.",
+        btn_href="/dashboard" if user_logged_in else "/",
+        btn_text="Back to dashboard" if user_logged_in else "Return home"
+    ), 500
+
+
+
 @app.after_request
 def add_security_headers(response):
     response.headers.setdefault("X-Content-Type-Options", "nosniff")
-    response.headers.setdefault("X-Frame-Options", "DENY")
+    allow_embed = request.path in ("/fake-login-demo", "/simulated") and request.args.get("embed") == "1"
+    response.headers.setdefault("X-Frame-Options", "SAMEORIGIN" if allow_embed else "DENY")
     response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
     response.headers.setdefault("Permissions-Policy", "camera=(), microphone=(), geolocation=()")
     response.headers.setdefault(
@@ -604,7 +667,8 @@ def add_security_headers(response):
         "font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; "
         "img-src 'self' data: https://*.google.com https://*.gstatic.com https://*.urlscan.io; "
         "connect-src 'self' https://api.pwnedpasswords.com https://emailrep.io https://dns.google https://rdap.org; "
-        "frame-ancestors 'none';"
+        "frame-src 'self'; "
+        + ("frame-ancestors 'self';" if allow_embed else "frame-ancestors 'none';")
     )
     # High-performance caching for static assets
     if request.path.startswith('/static/'):
@@ -1582,6 +1646,13 @@ def get_campaign_metrics(cursor, campaign_id):
 
 @app.route("/")
 def home():
+    # If currently in a demo session, visiting the home page automatically ends the demo session
+    if session.get("is_demo"):
+        session.pop("user_id", None)
+        session.pop("is_demo", None)
+        session.pop("demo_company", None)
+        session.pop("campaign_mailtrap_user", None)
+        session.pop("campaign_mailtrap_pass", None)
     latest_time_str = None
     db = None
     cursor = None
@@ -1844,6 +1915,7 @@ def login():
                     session.permanent = remember
                     session["remember_me"] = remember
                     session["user_id"] = user["id"]
+                    session.pop("is_demo", None)
                     cursor.execute("UPDATE users SET last_login_at = NOW() WHERE id = %s", (user["id"],))
                     db.commit()
                     cursor.close()
@@ -1894,6 +1966,7 @@ def login():
             session.permanent = remember
             session["remember_me"] = remember
             session["user_id"] = user["id"]
+            session.pop("is_demo", None)
             try:
                 db = get_db_connection()
                 cursor = db.cursor()
@@ -2005,6 +2078,7 @@ def verify_email(token):
         """, (user["id"],))
         db.commit()
         session["user_id"] = user["id"]
+        session.pop("is_demo", None)
         flash("Email verified.")
         return redirect(url_for("dashboard"))
     finally:
@@ -3875,70 +3949,97 @@ def reset_user_password(user_id):
         db.close()
     return redirect(url_for("manage_users"))
 
+SCENARIO_LABEL_MAP = {
+    "ceo_fraud": "CEO fraud",
+    "it_reset": "IT password reset",
+    "it_alert": "IT password reset",
+    "it_security": "IT password reset",
+    "password_reset": "IT password reset",
+    "hr_policy": "HR policy update",
+    "hr_update": "HR policy update",
+    "hr": "HR policy update",
+    "urgent_invoice": "Urgent invoice",
+    "invoice_urgency": "Urgent invoice",
+    "invoice": "Urgent invoice",
+    "shared_doc": "Shared document",
+    "shared_document": "Shared document",
+    "document": "Shared document",
+    "delivery_notice": "Delivery notice",
+    "delivery": "Delivery notice",
+    "package_delivery": "Delivery notice",
+    "lure": "General phishing drill",
+}
+
+def format_scenario_label(key: str) -> str:
+    if not key:
+        return "General phishing drill"
+    k = str(key).lower().strip()
+    if k in SCENARIO_LABEL_MAP:
+        return SCENARIO_LABEL_MAP[k]
+    cleaned = k.replace("-", " ").replace("_", " ").strip()
+    return cleaned.capitalize()
+
+def is_campaign_finished(campaign_or_status, emails_sent=None) -> bool:
+    """
+    Unified definition of finished campaign across stats, score, trend, and list.
+    A campaign is finished if its status is 'completed', 'finished', 'launched',
+    or 'launched_with_errors' (and if emails_sent is provided, emails_sent > 0).
+    """
+    if isinstance(campaign_or_status, dict):
+        status = campaign_or_status.get("status")
+        sent = campaign_or_status.get("emails_sent")
+    else:
+        status = campaign_or_status
+        sent = emails_sent
+
+    if not status:
+        return False
+    st = str(status).lower().strip()
+    if st in ("completed", "finished"):
+        return True
+    if st in ("launched", "launched_with_errors"):
+        return sent is None or sent > 0
+    return False
+
+app.jinja_env.globals["is_campaign_finished"] = is_campaign_finished
+app.jinja_env.filters["is_finished"] = is_campaign_finished
+app.jinja_env.globals["scenario_label"] = format_scenario_label
+app.jinja_env.filters["scenario_label"] = format_scenario_label
+
 @app.route("/dashboard")
 def dashboard():
     user = current_user()
     if not user:
-        campaigns = [
-            {
-                "id": 0,
-                "name": "Executive CEO Fraud Test",
-                "status": "launched",
-                "scenario_type": "ceo_fraud",
-                "delivery_mode": "sandbox",
-                "company_domain": "demo-corp.com",
-                "employee_name": "Alex Rivera",
-                "employee_email": "alex.rivera@demo-corp.com",
-                "employee_count": 24,
-                "emails_sent": 24,
-                "opens": 19,
-                "clicks": 8,
-                "reports": 5,
-                "created_at": "2026-08-01",
-                "hss": {"score": 62, "tier": "amber", "label": "At Risk"}
-            },
-            {
-                "id": 1,
-                "name": "Q3 Password Reset Drill",
-                "status": "completed",
-                "scenario_type": "it_alert",
-                "delivery_mode": "sandbox",
-                "company_domain": "demo-corp.com",
-                "employee_name": "Jordan Ellis",
-                "employee_email": "jordan.ellis@demo-corp.com",
-                "employee_count": 36,
-                "emails_sent": 36,
-                "opens": 32,
-                "clicks": 4,
-                "reports": 21,
-                "created_at": "2026-07-15",
-                "hss": {"score": 88, "tier": "green", "label": "Good"}
-            }
-        ]
+        campaigns = _get_demo_campaigns()
         
         global_stats = {
-            "total_campaigns": 2,
-            "total_employees": 60,
-            "global_risk": 20,
-            "total_reports": 26
+            "total_campaigns": 6,
+            "total_employees": 127,
+            "global_risk": 17.7,
+            "total_reports": 44
         }
         
         global_hss = {
             "score": 75,
-            "tier": "amber",
-            "label": "At Risk"
+            "tier": "green",
+            "label": "Good"
         }
         
         risk_trend = [
             {"name": "Q3 Password Reset Drill", "hss": 88, "tier": "green"},
             {"name": "Executive CEO Fraud Test", "hss": 62, "tier": "amber"}
         ]
+
+        trend_points = [
+            {"id": 1, "name": "Q3 Password Reset Drill", "date": "Jul 15", "readiness": 88, "report": 58.3, "click": 12.5},
+            {"id": 0, "name": "Executive CEO Fraud Test", "date": "Aug 01", "readiness": 62, "report": 20.8, "click": 25.0}
+        ]
         
         demo_summary = {
-            "total_campaigns": 2,
-            "avg_click_rate": 20.0,
-            "best_campaign": {"name": "Q3 Password Reset Drill", "click_rate": 11.1},
-            "worst_campaign": {"name": "Executive CEO Fraud Test", "click_rate": 33.3}
+            "total_campaigns": 6,
+            "avg_click_rate": 17.7,
+            "best_campaign": {"name": "Q3 Password Reset Drill", "click_rate": 12.5},
+            "worst_campaign": {"name": "Urgent Invoice Drill — Finance", "click_rate": 27.8}
         }
         
         dept_count = 3
@@ -3961,15 +4062,6 @@ def dashboard():
                 "employee_name": "Alex Rivera",
                 "employee_department": "Operations",
                 "owner_name": None
-            },
-            {
-                "entry_type": "campaign_created",
-                "event_type": "create",
-                "created_at": datetime.now() - timedelta(days=8),
-                "campaign_name": "Executive CEO Fraud Test",
-                "employee_name": None,
-                "employee_department": None,
-                "owner_name": "Demo Operator"
             }
         ]
         
@@ -3979,17 +4071,31 @@ def dashboard():
             {"department": "Engineering", "employee_count": 18, "clicks": 2, "reports": 9}
         ]
 
+        suggested_next_step = {
+            "text": "Operations department had the highest click exposure at 27.3% — dispatch an IT password reset drill to build safer habits.",
+            "cta_text": "Run targeted drill",
+            "cta_url": "/new-campaign?scenario=it_reset&department=Operations"
+        }
+
         return render_template(
             "dashboard.html",
             campaigns=campaigns,
+            finished_campaigns_count=4,
             global_stats=global_stats,
             global_hss=global_hss,
+            readiness_val=75,
+            delta_readiness=5,
+            delta_clk=-2.1,
+            delta_rep=3.4,
+            trend_points=trend_points,
             risk_trend=risk_trend,
             demo_summary=demo_summary,
             dept_count=dept_count,
             dept_stats=demo_dept_stats,
             recent_activities=recent_activities,
+            suggested_next_step=suggested_next_step,
             is_demo_preview=True,
+            current_date=datetime.now().strftime('%A, %B %d, %Y'),
             briefing_headline="In your demo baseline, 24.1% of employees reported the lure while 12.5% clicked."
         )
     db = get_db_connection()
@@ -4001,8 +4107,6 @@ def dashboard():
         db.commit()
         run_due_scheduled_campaigns(cursor)
 
-        # 1. FETCH ALL CAMPAIGNS WITH AGGREGATED METRICS IN ONE SINGLE QUERY (PERFECTION!)
-        # This replaces the N+1 problem (looping through campaigns and running queries)
         if user["role"] == "admin":
             where_clause = "WHERE c.company_domain != 'demo-corp.com' OR c.company_domain IS NULL"
             params = ()
@@ -4092,38 +4196,101 @@ def dashboard():
         elif total_employees > 0 and total_clicks > 0:
             global_risk = int((total_clicks / total_employees) * 100)
 
-        # Compute per-campaign HSS and build risk trend
+        # ── UNIFIED FINISHED CAMPAIGN IDENTIFICATION & METRIC COMPUTATION ──
+        finished_campaigns = [c for c in campaigns if is_campaign_finished(c)]
+        # Sort chronologically (oldest to newest) to compute legitimate period-over-period deltas
+        finished_sorted = sorted(finished_campaigns, key=lambda c: str(c.get("created_at") or c.get("id") or ""))
+
         risk_trend = []
         hss_scores = []
-        for c in campaigns:
-            if c["status"] in ("launched", "launched_with_errors"):
-                sent = c["emails_sent"] or 0
-                if sent > 0:
-                    cr = round((c["clicks"] / sent) * 100, 1)
-                    orr = round((c["opens"]  / sent) * 100, 1)
-                    rr  = round((c["reports"]/ sent) * 100, 1)
-                    hss = compute_human_security_score(cr, orr, rr)
-                    c["hss"] = hss
-                    hss_scores.append(hss["score"])
-                    risk_trend.append({
-                        "name": c["name"],
-                        "hss":  hss["score"],
-                        "tier": hss["tier"],
-                    })
-                else:
-                    c["hss"] = None
+        for i, c in enumerate(finished_sorted):
+            sent = c.get("emails_sent") or 0
+            if sent > 0:
+                cr = round((c.get("clicks", 0) / sent) * 100, 1)
+                orr = round((c.get("opens", 0)  / sent) * 100, 1)
+                rr  = round((c.get("reports", 0) / sent) * 100, 1)
+                hss = compute_human_security_score(cr, orr, rr)
             else:
-                c["hss"] = None
+                cr = 0.0
+                orr = 0.0
+                rr = 0.0
+                hss = {"score": 50, "tier": "amber", "label": "Moderate"}
 
-        global_hss = None
-        if hss_scores:
-            avg = round(sum(hss_scores) / len(hss_scores))
-            if avg >= 70:
-                global_hss = {"score": avg, "tier": "green",  "label": "Good"}
-            elif avg >= 40:
-                global_hss = {"score": avg, "tier": "amber",  "label": "At Risk"}
+            c["click_rate"] = cr
+            c["open_rate"] = orr
+            c["report_rate"] = rr
+            c["hss"] = hss
+            hss_scores.append(hss["score"])
+            risk_trend.append({
+                "name": c["name"],
+                "hss": hss["score"],
+                "tier": hss["tier"],
+            })
+
+            # Calculate deltas vs previous chronological campaign
+            if i == 0:
+                c["delta_report"] = None
+                c["delta_click"] = None
+                c["delta_hss"] = None
             else:
-                global_hss = {"score": avg, "tier": "red",    "label": "Critical"}
+                prev = finished_sorted[i - 1]
+                c["delta_report"] = round(c["report_rate"] - prev["report_rate"], 1)
+                c["delta_click"] = round(c["click_rate"] - prev["click_rate"], 1)
+                c["delta_hss"] = (c["hss"]["score"] if c["hss"] else 0) - (prev["hss"]["score"] if prev["hss"] else 0)
+
+        # Ensure campaigns not in finished_sorted have explicit None deltas
+        for c in campaigns:
+            if not is_campaign_finished(c):
+                c["delta_report"] = None
+                c["delta_click"] = None
+                c["delta_hss"] = None
+                c["hss"] = None
+                c["click_rate"] = 0.0
+                c["report_rate"] = 0.0
+
+        # Hero Ring Gauge and Trend Points from real finished campaigns
+        if len(finished_sorted) == 0:
+            readiness_val = None
+            delta_readiness = None
+            delta_clk = None
+            delta_rep = None
+            trend_points = []
+            global_hss = None
+        elif len(finished_sorted) == 1:
+            latest_c = finished_sorted[0]
+            readiness_val = latest_c["hss"]["score"] if latest_c.get("hss") else 50
+            global_hss = latest_c.get("hss")
+            delta_readiness = None  # Exactly 1 finished campaign -> "Run one more campaign to see a trend"
+            delta_clk = 0.0
+            delta_rep = 0.0
+            trend_points = []       # Fewer than 2 finished campaigns -> empty trend state
+        else:
+            latest_c = finished_sorted[-1]
+            readiness_val = latest_c["hss"]["score"] if latest_c.get("hss") else 50
+            global_hss = latest_c.get("hss")
+            delta_readiness = latest_c["delta_hss"]
+            delta_clk = latest_c["delta_click"]
+            delta_rep = latest_c["delta_report"]
+            trend_points = []
+            for c in finished_sorted[-8:]:
+                dt_str = "Recent"
+                if c.get("created_at"):
+                    try:
+                        if isinstance(c["created_at"], str):
+                            dt = datetime.fromisoformat(c["created_at"].replace("Z", ""))
+                        else:
+                            dt = c["created_at"]
+                        dt_str = dt.strftime("%b %d")
+                    except Exception:
+                        dt_str = str(c["created_at"])[:10]
+                trend_points.append({
+                    "id": c["id"],
+                    "name": c["name"],
+                    "date": dt_str,
+                    "readiness": c["hss"]["score"] if c.get("hss") else 50,
+                    "report": c.get("report_rate", 0.0),
+                    "click": c.get("click_rate", 0.0)
+                })
 
         global_stats = {
             "total_campaigns": len(campaigns),
@@ -4132,7 +4299,7 @@ def dashboard():
             "total_reports": total_reports
         }
 
-        # Compute demo summary stats dynamically
+        # Dynamic demo / portfolio summary
         total_sent_all = sum(c["emails_sent"] for c in campaigns if (c["emails_sent"] or 0) > 0)
         total_clicks_all = sum(c["clicks"] for c in campaigns)
         avg_click_rate = round((total_clicks_all / total_sent_all) * 100, 1) if total_sent_all > 0 else 0.0
@@ -4164,8 +4331,7 @@ def dashboard():
             "worst_campaign": worst_campaign
         }
 
-        # Fetch real activity logs (UNION event clicks/opens/reports and campaign creations)
-        # NOTE: events table uses 'created_at' column (not 'timestamp')
+        # Real activity logs ONLY (opens, clicks, reports, creations) - NO mock fallbacks
         recent_activities = []
         try:
             activities_sql = f"""
@@ -4202,20 +4368,22 @@ def dashboard():
             """
             activities_params = params + params
             cursor.execute(activities_sql, activities_params)
-            recent_activities = cursor.fetchall()
+            recent_activities = cursor.fetchall() or []
         except Exception as act_err:
             print(f"Activity feed query failed (non-critical): {act_err}")
-            recent_activities = []
-
-        # Ensure we always pass recent_activities list (no mocked/simulated data)
-        if not recent_activities:
             recent_activities = []
 
     except Exception as e:
         print(f"Dashboard query failed: {e}")
         campaigns = []
+        finished_sorted = []
         global_stats = {"total_campaigns": 0, "total_employees": 0, "global_risk": 0, "total_reports": 0}
         global_hss = None
+        readiness_val = None
+        delta_readiness = None
+        delta_clk = None
+        delta_rep = None
+        trend_points = []
         risk_trend = []
         demo_summary = {
             "total_campaigns": 0,
@@ -4230,66 +4398,286 @@ def dashboard():
         cursor.close()
         db.close()
 
-    # Compute brief headline for dashboard summary card
-    launched_c_list = [c for c in campaigns if c.get("status") in ("launched", "launched_with_errors", "completed") and (c.get("emails_sent") or 0) > 0]
-    if not launched_c_list:
-        briefing_headline = "Your weekly summary — launch a drill to generate baseline resilience data."
-    elif len(launched_c_list) == 1:
-        c0 = launched_c_list[0]
-        c0_sent = c0["emails_sent"] or 1
-        c0_clk = round((c0["clicks"] / c0_sent) * 100, 1)
-        c0_rep = round((c0["reports"] / c0_sent) * 100, 1)
-        briefing_headline = f"In your first campaign, {c0_rep:.1f}% of recipients reported the lure while {c0_clk:.1f}% clicked."
+    # Suggested Next Step: strictly computed from real database numbers
+    highest_cr_dept = None
+    highest_cr = -1.0
+    for d in dept_stats:
+        d_emp = d.get("employee_count") or 1
+        d_clk = d.get("clicks") or 0
+        if d_clk > 0 and d_emp > 0:
+            cr = (d_clk / d_emp) * 100
+            if cr > highest_cr:
+                highest_cr = cr
+                highest_cr_dept = d.get("department")
+
+    if highest_cr_dept:
+        suggested_next_step = {
+            "text": f"{highest_cr_dept} department had the highest click exposure at {highest_cr:.1f}% — dispatch an IT password reset drill to build safer habits.",
+            "cta_text": "Run targeted drill",
+            "cta_url": f"/new-campaign?scenario=it_reset&department={highest_cr_dept}"
+        }
+    elif len(finished_sorted) > 0:
+        latest_rep = finished_sorted[-1].get("report_rate", 0.0)
+        suggested_next_step = {
+            "text": f"Latest drill reached {latest_rep:.1f}% reporting — run an urgent invoice drill to test resilience against financial lures.",
+            "cta_text": "Run targeted drill",
+            "cta_url": "/new-campaign?scenario=urgent_invoice"
+        }
     else:
-        sorted_c = sorted(launched_c_list, key=lambda x: str(x.get("created_at") or ""))
-        latest_c = sorted_c[-1]
-        prior_c = sorted_c[-2]
-        
-        l_sent = latest_c["emails_sent"] or 1
-        l_clk = round((latest_c["clicks"] / l_sent) * 100, 1)
-        l_rep = round((latest_c["reports"] / l_sent) * 100, 1)
-        
-        p_sent = prior_c["emails_sent"] or 1
-        p_clk = round((prior_c["clicks"] / p_sent) * 100, 1)
-        p_rep = round((prior_c["reports"] / p_sent) * 100, 1)
-        
-        delta_clk = round(l_clk - p_clk, 1)
-        delta_rep = round(l_rep - p_rep, 1)
-        
+        suggested_next_step = {
+            "text": "Send your first simulation to a small team to establish an organization-wide baseline.",
+            "cta_text": "Launch first drill",
+            "cta_url": "/new-campaign"
+        }
+
+    # Weekly risk briefing banner headline:
+    # Shown ONLY when the briefing really has data (>= 1 finished campaign)
+    if len(finished_sorted) == 1:
+        c0 = finished_sorted[0]
+        briefing_headline = f"In your first campaign, {c0.get('report_rate', 0):.1f}% of recipients reported the lure while {c0.get('click_rate', 0):.1f}% clicked."
+    elif len(finished_sorted) >= 2:
         briefing_headline = generate_deterministic_briefing_headline(
-            total_campaigns=len(sorted_c),
-            report_rate=l_rep,
-            click_rate=l_clk,
+            total_campaigns=len(finished_sorted),
+            report_rate=latest_c.get("report_rate", 0.0),
+            click_rate=latest_c.get("click_rate", 0.0),
             delta_report=delta_rep,
             delta_click=delta_clk,
             repeat_offenders=0
         )
+    else:
+        briefing_headline = None
 
     return render_template(
         "dashboard.html",
         campaigns=campaigns,
+        finished_campaigns_count=len(finished_sorted),
         global_stats=global_stats,
         global_hss=global_hss,
+        readiness_val=readiness_val,
+        delta_readiness=delta_readiness,
+        delta_clk=delta_clk,
+        delta_rep=delta_rep,
+        trend_points=trend_points,
         risk_trend=risk_trend,
         demo_summary=demo_summary,
         dept_count=dept_count,
         dept_stats=dept_stats,
         recent_activities=recent_activities,
-        briefing_headline=briefing_headline
+        suggested_next_step=suggested_next_step,
+        briefing_headline=briefing_headline,
+        current_date=datetime.now().strftime('%A, %B %d, %Y')
     )
 
 @app.route("/reports-demo")
 def reports_demo():
-    """Explains the AI report before users open campaign-specific reports."""
-    user = current_user()
-    if not user:
-        return render_template("reports_demo.html", campaigns=[])
+    """Interactive demo of the landmark AI Report (the Debrief) using the unified template."""
+    return campaign_report(0)
 
+
+# ══════════════════════════════════════════════════════════════════════
+# CAMPAIGNS HUB & COMPARISON ENDPOINTS (Part B1)
+# ══════════════════════════════════════════════════════════════════════
+
+CANONICAL_SCENARIOS = [
+    {
+        "key": "ceo_fraud",
+        "label": "CEO fraud",
+        "desc": "Urgent executive request for confidential wire transfer or sensitive records.",
+        "difficulty_dots": 4,
+        "difficulty_label": "Hard",
+        "risk_level": "High risk",
+        "icon": "ti-crown",
+        "accent_color": "#ef4444",
+        "color_token": "crimson",
+        "cta_text": "Review Wire Authorization",
+        "psychology": "Appeals to authority and urgency, causing employees to bypass standard verification protocols.",
+        "sample_subject": "Quick request — strictly confidential",
+        "sample_sender": "Office of the CEO <exec-alert@{domain}>",
+        "sample_body": "Are you at your desk right now? I need you to process an urgent wire transfer for a vendor retainer before 3:00 PM today. Let me know as soon as you see this."
+    },
+    {
+        "key": "it_reset",
+        "label": "IT password reset",
+        "desc": "Microsoft 365 or SSO password expiration notice requiring immediate re-authentication.",
+        "difficulty_dots": 1,
+        "difficulty_label": "Easy",
+        "risk_level": "Medium risk",
+        "icon": "ti-lock",
+        "accent_color": "#3b82f6",
+        "color_token": "blue",
+        "cta_text": "Keep Existing Password",
+        "psychology": "Leverages routine IT maintenance habits and fear of losing access to critical work accounts.",
+        "sample_subject": "Action Required: Password expires in 2 hours",
+        "sample_sender": "IT Service Desk <support@{domain}>",
+        "sample_body": "Your corporate network password will expire at the end of the day. To keep your current credentials active and prevent lockout, verify your account immediately."
+    },
+    {
+        "key": "hr_policy",
+        "label": "HR policy update",
+        "desc": "Annual employee handbook update or mandatory benefits acknowledgement.",
+        "difficulty_dots": 3,
+        "difficulty_label": "Medium",
+        "risk_level": "Low risk",
+        "icon": "ti-users",
+        "accent_color": "#8b5cf6",
+        "color_token": "purple",
+        "cta_text": "Acknowledge Handbook",
+        "psychology": "Exploits company compliance duties and curiosity about personal benefits and compensation.",
+        "sample_subject": "Updated 2026 Employee Handbook & Benefits Policy",
+        "sample_sender": "Human Resources <hr-notices@{domain}>",
+        "sample_body": "Please review and acknowledge the revised company leave and holiday guidelines for 2026. All staff must confirm acknowledgement by Friday."
+    },
+    {
+        "key": "urgent_invoice",
+        "label": "Urgent invoice",
+        "desc": "Past-due vendor billing notice with an attached mock payment link.",
+        "difficulty_dots": 5,
+        "difficulty_label": "Hard",
+        "risk_level": "High risk",
+        "icon": "ti-receipt",
+        "accent_color": "#f59e0b",
+        "color_token": "amber",
+        "cta_text": "Review Overdue Invoice",
+        "psychology": "Triggers financial responsibility anxiety and fear of supply interruption.",
+        "sample_subject": "Past Due: Invoice #INV-88291 requires immediate settlement",
+        "sample_sender": "Billing & Accounts <accounts-payable@{domain}>",
+        "sample_body": "Our records indicate that invoice #INV-88291 is currently 14 days overdue. Please review the attached invoice breakdown to prevent service disruption."
+    },
+    {
+        "key": "shared_document",
+        "label": "Shared document",
+        "desc": "Cloud file sharing notification for a project roadmap or quarterly plan.",
+        "difficulty_dots": 2,
+        "difficulty_label": "Easy",
+        "risk_level": "Low risk",
+        "icon": "ti-cloud-download",
+        "accent_color": "#06b6d4",
+        "color_token": "cyan",
+        "cta_text": "Open in Cloud Drive",
+        "psychology": "Blends in with everyday collaboration workflows across Google Drive, OneDrive, and Notion.",
+        "sample_subject": "Alex Mercer shared 'Q4 Strategy & Planning.xlsx' with you",
+        "sample_sender": "Cloud Collaboration <docs-sharing@{domain}>",
+        "sample_body": "You have been granted view access to 'Q4 Strategy & Planning.xlsx'. Click below to open and review the spreadsheet in your browser."
+    },
+    {
+        "key": "delivery_notice",
+        "label": "Delivery notice",
+        "desc": "Missed package delivery notice asking recipient to reschedule transit.",
+        "difficulty_dots": 1,
+        "difficulty_label": "Easy",
+        "risk_level": "Low risk",
+        "icon": "ti-truck-delivery",
+        "accent_color": "#10b981",
+        "color_token": "emerald",
+        "cta_text": "Reschedule Delivery",
+        "psychology": "Capitalizes on curiosity and personal package delivery expectations.",
+        "sample_subject": "Delivery Exception: Package #PKG-40192 detained at hub",
+        "sample_sender": "Express Logistics <tracking-update@{domain}>",
+        "sample_body": "We attempted to deliver your package today but were unable to obtain a signature. Please update your address confirmation to reschedule delivery."
+    }
+]
+
+def _fetch_saved_groups(user):
+    """Returns verified saved groups for a user from real database records or tailored starter rosters."""
+    groups = []
+    domain = "acme-corp.com"
+    if user:
+        raw_d = (user.get("company_domain") or "").strip()
+        if raw_d and raw_d != "demo-corp.com":
+            domain = raw_d
+
+    if user and user.get("id"):
+        try:
+            db = get_db_connection()
+            cursor = db.cursor(dictionary=True)
+            cursor.execute("""
+                SELECT e.name, e.email, COALESCE(NULLIF(e.department, ''), 'General') as department, COALESCE(NULLIF(e.title, ''), 'Staff') as role
+                FROM employees e
+                JOIN campaigns c ON e.campaign_id = c.id
+                WHERE c.user_id = %s
+                GROUP BY e.email, e.name, e.department, e.title
+                ORDER BY e.department, e.name
+            """, (user["id"],))
+            rows = cursor.fetchall() or []
+            cursor.close()
+            db.close()
+
+            if rows:
+                groups.append({
+                    "id": "all",
+                    "name": "All previous targets",
+                    "count": len(rows),
+                    "description": f"Combined roster of {len(rows)} recipients imported across your previous drills.",
+                    "members": rows
+                })
+                dept_map = {}
+                for r in rows:
+                    dept_map.setdefault(r["department"], []).append(r)
+                for d_name, d_emps in dept_map.items():
+                    groups.append({
+                        "id": d_name.lower().replace(" ", "_"),
+                        "name": f"{d_name} team",
+                        "count": len(d_emps),
+                        "description": f"{len(d_emps)} employees in {d_name}.",
+                        "members": d_emps
+                    })
+        except Exception as e:
+            print(f"Error fetching saved groups: {e}")
+
+    if not groups:
+        preset_members = [
+            {"name": "Sarah Chen", "email": f"sarah.chen@{domain}", "department": "Finance", "role": "Senior Controller"},
+            {"name": "Clara Pete", "email": f"clara.pete@{domain}", "department": "Finance", "role": "Accounts Payable"},
+            {"name": "Marcus Vance", "email": f"marcus.vance@{domain}", "department": "Finance", "role": "Billing Specialist"},
+            {"name": "Alex Rivera", "email": f"alex.rivera@{domain}", "department": "Operations", "role": "Operations Lead"},
+            {"name": "Jordan Ellis", "email": f"jordan.ellis@{domain}", "department": "Operations", "role": "Logistics Analyst"},
+            {"name": "David Miller", "email": f"david.miller@{domain}", "department": "IT Support", "role": "Systems Administrator"},
+            {"name": "Elena Rostova", "email": f"elena.rostova@{domain}", "department": "IT Support", "role": "DevOps Engineer"},
+            {"name": "Michael Chang", "email": f"michael.chang@{domain}", "department": "Human Resources", "role": "HR Generalist"},
+            {"name": "Emma Watson", "email": f"emma.watson@{domain}", "department": "Human Resources", "role": "People Operations"}
+        ]
+        groups = [
+            {
+                "id": "all",
+                "name": "All company departments",
+                "count": len(preset_members),
+                "description": f"Baseline cross-section of {len(preset_members)} staff members across all core departments.",
+                "members": preset_members
+            },
+            {
+                "id": "finance",
+                "name": "Finance & Accounting",
+                "count": 3,
+                "description": "Personnel with wire transfer, purchasing, and billing invoice authorities.",
+                "members": [m for m in preset_members if m["department"] == "Finance"]
+            },
+            {
+                "id": "it",
+                "name": "IT & Engineering",
+                "count": 2,
+                "description": "Infrastructure custodians and privileged systems administrators.",
+                "members": [m for m in preset_members if m["department"] == "IT Support"]
+            },
+            {
+                "id": "hr",
+                "name": "People & Human Resources",
+                "count": 2,
+                "description": "Staff handbook guardians and internal communications team.",
+                "members": [m for m in preset_members if m["department"] == "Human Resources"]
+            }
+        ]
+
+    return groups
+
+app.jinja_env.globals["CANONICAL_SCENARIOS"] = CANONICAL_SCENARIOS
+
+def _fetch_user_campaigns(user):
+    """Fetches all campaigns for a user with accurate real metrics."""
     db = get_db_connection()
     cursor = db.cursor(dictionary=True)
     campaigns = []
     try:
-        if user["role"] == "admin":
+        if user.get("role") == "admin":
             where_clause = "WHERE c.company_domain != 'demo-corp.com' OR c.company_domain IS NULL"
             params = ()
         else:
@@ -4297,43 +4685,393 @@ def reports_demo():
             params = (user["id"],)
 
         cursor.execute(f"""
-            SELECT c.id, c.name, c.scenario_type, c.status, c.company_domain, c.created_at,
-                   (SELECT COUNT(*) FROM employees e WHERE e.campaign_id = c.id) AS employee_count,
-                   (SELECT COUNT(*) FROM emails_sent es WHERE es.campaign_id = c.id
-                    AND COALESCE(es.status, 'sent') IN ('sent', 'previewed')) AS emails_sent,
-                   (SELECT COUNT(DISTINCT ev.tracking_id)
-                    FROM events ev JOIN emails_sent es ON ev.tracking_id = es.tracking_id
-                    WHERE es.campaign_id = c.id AND ev.event_type = 'click') AS clicks,
-                   (SELECT COUNT(DISTINCT ev.tracking_id)
-                    FROM events ev JOIN emails_sent es ON ev.tracking_id = es.tracking_id
-                    WHERE es.campaign_id = c.id AND ev.event_type = 'report') AS reports
+            SELECT c.*,
+                   (SELECT COUNT(*) FROM employees e WHERE e.campaign_id = c.id) as employee_count,
+                   (SELECT COUNT(*) FROM emails_sent es WHERE es.campaign_id = c.id AND COALESCE(es.status, 'sent') IN ('sent', 'previewed')) as emails_sent,
+                   (SELECT COUNT(*) FROM emails_sent es WHERE es.campaign_id = c.id AND es.status = 'failed') as emails_failed,
+                   (
+                       SELECT COUNT(DISTINCT ev.tracking_id)
+                       FROM events ev
+                       JOIN emails_sent es ON ev.tracking_id = es.tracking_id
+                       WHERE es.campaign_id = c.id AND ev.event_type IN ('open', 'click', 'report')
+                   ) as opens,
+                   (
+                       SELECT COUNT(DISTINCT ev.tracking_id)
+                       FROM events ev
+                       JOIN emails_sent es ON ev.tracking_id = es.tracking_id
+                       WHERE es.campaign_id = c.id AND ev.event_type = 'click'
+                   ) as clicks,
+                   (
+                       SELECT COUNT(DISTINCT ev.tracking_id)
+                       FROM events ev
+                       JOIN emails_sent es ON ev.tracking_id = es.tracking_id
+                       WHERE es.campaign_id = c.id AND ev.event_type = 'report'
+                   ) as reports
             FROM campaigns c
             {where_clause}
             ORDER BY c.id DESC
-            LIMIT 24
         """, params)
-        campaigns = cursor.fetchall()
-        for c in campaigns:
+        campaigns = cursor.fetchall() or []
+
+        # Chronological sort for delta calculations
+        finished_chronological = [c for c in campaigns if is_campaign_finished(c)]
+        finished_chronological.sort(key=lambda c: str(c.get("created_at") or c.get("id") or ""))
+
+        prev_campaign = None
+        for c in finished_chronological:
             sent = int(c.get("emails_sent") or 0)
             clicks = int(c.get("clicks") or 0)
             reports = int(c.get("reports") or 0)
-            click_rate = round((clicks / sent) * 100, 1) if sent else 0.0
-            report_rate = round((reports / sent) * 100, 1) if sent else 0.0
-            c["click_rate"] = click_rate
-            c["report_rate"] = report_rate
-            c["hss"] = compute_human_security_score(click_rate, 0, report_rate) if sent else None
+            opens = int(c.get("opens") or 0)
+
+            c["click_rate"] = round((clicks / sent) * 100, 1) if sent > 0 else 0.0
+            c["open_rate"] = round((opens / sent) * 100, 1) if sent > 0 else 0.0
+            c["report_rate"] = round((reports / sent) * 100, 1) if sent > 0 else 0.0
+            c["hss"] = compute_human_security_score(c["click_rate"], c["open_rate"], c["report_rate"]) if sent > 0 else {"score": 50, "tier": "amber", "label": "Moderate"}
+
+            if prev_campaign:
+                c["delta_click"] = round(c["click_rate"] - prev_campaign.get("click_rate", 0.0), 1)
+                c["delta_score"] = int(c["hss"]["score"] - prev_campaign.get("hss", {}).get("score", 50))
+                c["delta_report"] = round(c["report_rate"] - prev_campaign.get("report_rate", 0.0), 1)
+            else:
+                c["delta_click"] = None
+                c["delta_score"] = None
+                c["delta_report"] = None
+            prev_campaign = c
+
+        for c in campaigns:
+            if not is_campaign_finished(c):
+                sent = int(c.get("emails_sent") or 0)
+                clicks = int(c.get("clicks") or 0)
+                reports = int(c.get("reports") or 0)
+                opens = int(c.get("opens") or 0)
+                c["click_rate"] = round((clicks / sent) * 100, 1) if sent > 0 else 0.0
+                c["open_rate"] = round((opens / sent) * 100, 1) if sent > 0 else 0.0
+                c["report_rate"] = round((reports / sent) * 100, 1) if sent > 0 else 0.0
+                c["hss"] = {"score": 50, "tier": "amber", "label": "Draft"}
+                c["delta_click"] = None
+                c["delta_score"] = None
+                c["delta_report"] = None
     finally:
         cursor.close()
         db.close()
 
-    return render_template("reports_demo.html", campaigns=campaigns)
+    return campaigns
 
-# 1. ADD THIS ROUTE: This shows the "Create Campaign" page
+def _get_demo_campaigns():
+    """Returns 6 sample campaigns for demo environment matching canonical scenarios."""
+    now = datetime.now()
+    return [
+        {
+            "id": 1,
+            "name": "Q3 Password Reset Drill",
+            "company_domain": "demo-corp.com",
+            "scenario_type": "it_reset",
+            "status": "launched",
+            "employee_count": 24,
+            "emails_sent": 24,
+            "opens": 22,
+            "clicks": 3,
+            "reports": 14,
+            "created_at": now - timedelta(days=14),
+            "delivery_mode": "sandbox",
+            "click_rate": 12.5,
+            "open_rate": 91.7,
+            "report_rate": 58.3,
+            "hss": {"score": 88, "tier": "green", "label": "Good"},
+            "delta_click": -4.2,
+            "delta_score": 12,
+            "delta_report": 15.0
+        },
+        {
+            "id": 0,
+            "name": "Executive CEO Fraud Test",
+            "company_domain": "demo-corp.com",
+            "scenario_type": "ceo_fraud",
+            "status": "launched",
+            "employee_count": 24,
+            "emails_sent": 24,
+            "opens": 19,
+            "clicks": 6,
+            "reports": 5,
+            "created_at": now - timedelta(days=28),
+            "delivery_mode": "sandbox",
+            "click_rate": 25.0,
+            "open_rate": 79.2,
+            "report_rate": 20.8,
+            "hss": {"score": 62, "tier": "amber", "label": "Moderate"},
+            "delta_click": -2.8,
+            "delta_score": 8,
+            "delta_report": 4.1
+        },
+        {
+            "id": 2,
+            "name": "Urgent Invoice Drill — Finance",
+            "company_domain": "demo-corp.com",
+            "scenario_type": "urgent_invoice",
+            "status": "launched",
+            "employee_count": 18,
+            "emails_sent": 18,
+            "opens": 16,
+            "clicks": 5,
+            "reports": 3,
+            "created_at": now - timedelta(days=42),
+            "delivery_mode": "sandbox",
+            "click_rate": 27.8,
+            "open_rate": 88.9,
+            "report_rate": 16.7,
+            "hss": {"score": 54, "tier": "red", "label": "At Risk"},
+            "delta_click": 5.4,
+            "delta_score": -12,
+            "delta_report": -6.3
+        },
+        {
+            "id": 3,
+            "name": "Annual HR Policy Acknowledgment",
+            "company_domain": "demo-corp.com",
+            "scenario_type": "hr_policy",
+            "status": "launched",
+            "employee_count": 30,
+            "emails_sent": 30,
+            "opens": 28,
+            "clicks": 4,
+            "reports": 18,
+            "created_at": now - timedelta(days=56),
+            "delivery_mode": "sandbox",
+            "click_rate": 13.3,
+            "open_rate": 93.3,
+            "report_rate": 60.0,
+            "hss": {"score": 76, "tier": "green", "label": "Good"},
+            "delta_click": -3.5,
+            "delta_score": 6,
+            "delta_report": 11.2
+        },
+        {
+            "id": 4,
+            "name": "Q4 Cloud Project Plan Share",
+            "company_domain": "demo-corp.com",
+            "scenario_type": "shared_doc",
+            "status": "running",
+            "employee_count": 20,
+            "emails_sent": 20,
+            "opens": 11,
+            "clicks": 2,
+            "reports": 4,
+            "created_at": now - timedelta(hours=6),
+            "delivery_mode": "sandbox",
+            "click_rate": 10.0,
+            "open_rate": 55.0,
+            "report_rate": 20.0,
+            "hss": {"score": 68, "tier": "amber", "label": "In Progress"},
+            "delta_click": None,
+            "delta_score": None,
+            "delta_report": None
+        },
+        {
+            "id": 5,
+            "name": "Courier Package Exception Notice",
+            "company_domain": "demo-corp.com",
+            "scenario_type": "delivery_notice",
+            "status": "draft",
+            "employee_count": 15,
+            "emails_sent": 0,
+            "opens": 0,
+            "clicks": 0,
+            "reports": 0,
+            "created_at": now - timedelta(days=1),
+            "delivery_mode": "sandbox",
+            "click_rate": 0.0,
+            "open_rate": 0.0,
+            "report_rate": 0.0,
+            "hss": {"score": 50, "tier": "amber", "label": "Draft"},
+            "delta_click": None,
+            "delta_score": None,
+            "delta_report": None
+        }
+    ]
+
+@app.route("/campaigns")
+def campaigns_page():
+    user = current_user()
+    is_demo = session.get("is_demo") or (user and user.get("company_domain") == "demo-corp.com") or not user
+    if not user and not session.get("is_demo"):
+        return redirect(url_for("login"))
+
+    if is_demo and not request.args.get("empty"):
+        campaigns = _get_demo_campaigns()
+        user_obj = user or {"id": 0, "role": "company_user", "name": "Demo User", "company_domain": "demo-corp.com"}
+    elif request.args.get("empty"):
+        campaigns = []
+        user_obj = user or {"id": 0, "role": "company_user", "name": "Demo User", "company_domain": "demo-corp.com"}
+        is_demo = False
+    else:
+        campaigns = _fetch_user_campaigns(user)
+        user_obj = user
+        is_demo = False
+
+    # Saved view counts
+    counts = {
+        "all": len(campaigns),
+        "running": sum(1 for c in campaigns if str(c.get("status") or "").lower() in ("launching", "running", "in_progress")),
+        "needs_attention": sum(1 for c in campaigns if is_campaign_finished(c) and float(c.get("click_rate") or 0.0) > 20.0),
+        "finished": sum(1 for c in campaigns if is_campaign_finished(c)),
+        "scheduled": sum(1 for c in campaigns if str(c.get("status") or "").lower() == "scheduled"),
+        "draft": sum(1 for c in campaigns if str(c.get("status") or "").lower() == "draft")
+    }
+
+    return render_template(
+        "campaigns.html",
+        user=user_obj,
+        campaigns=campaigns,
+        counts=counts,
+        is_demo_preview=is_demo,
+        current_date=datetime.now().strftime("%A, %B %d, %Y")
+    )
+
+@app.route("/api/campaigns/compare")
+def api_campaigns_compare():
+    user = current_user()
+    if not user and not session.get("is_demo"):
+        return jsonify({"ok": False, "error": "Not authenticated"}), 401
+
+    c1_id = request.args.get("c1", type=int)
+    c2_id = request.args.get("c2", type=int)
+    if c1_id is None or c2_id is None:
+        return jsonify({"ok": False, "error": "Two campaign IDs (c1, c2) are required for comparison"}), 400
+
+    if session.get("is_demo") or (user and user.get("company_domain") == "demo-corp.com"):
+        demo_camps = {c["id"]: c for c in _get_demo_campaigns()}
+        c1 = demo_camps.get(c1_id)
+        c2 = demo_camps.get(c2_id)
+    else:
+        all_user_camps = {c["id"]: c for c in _fetch_user_campaigns(user)}
+        c1 = all_user_camps.get(c1_id)
+        c2 = all_user_camps.get(c2_id)
+
+    if not c1 or not c2:
+        return jsonify({"ok": False, "error": "One or both campaigns could not be found"}), 404
+
+    c1_score = c1.get("hss", {}).get("score", 50) if isinstance(c1.get("hss"), dict) else 50
+    c2_score = c2.get("hss", {}).get("score", 50) if isinstance(c2.get("hss"), dict) else 50
+    score_delta = c2_score - c1_score
+
+    c1_cr = float(c1.get("click_rate") or 0.0)
+    c2_cr = float(c2.get("click_rate") or 0.0)
+    click_delta = round(c2_cr - c1_cr, 1)
+
+    c1_rr = float(c1.get("report_rate") or 0.0)
+    c2_rr = float(c2.get("report_rate") or 0.0)
+    report_delta = round(c2_rr - c1_rr, 1)
+
+    summary_parts = []
+    if click_delta < 0:
+        summary_parts.append(f"Click exposure dropped by {abs(click_delta)} pts")
+    elif click_delta > 0:
+        summary_parts.append(f"Click exposure increased by {click_delta} pts")
+    else:
+        summary_parts.append("Click exposure held steady")
+
+    if report_delta > 0:
+        summary_parts.append(f"reporting improved by {report_delta} pts")
+    elif report_delta < 0:
+        summary_parts.append(f"reporting fell by {abs(report_delta)} pts")
+
+    if score_delta > 0:
+        summary_parts.append(f"overall resilience score increased by {score_delta} pts")
+    elif score_delta < 0:
+        summary_parts.append(f"overall resilience score decreased by {abs(score_delta)} pts")
+
+    summary_text = f"Comparing {c2.get('name')} to {c1.get('name')}: " + ", ".join(summary_parts) + "."
+
+    return jsonify({
+        "ok": True,
+        "campaign1": {
+            "id": c1["id"],
+            "name": c1["name"],
+            "scenario": format_scenario_label(c1.get("scenario_type")),
+            "domain": c1.get("company_domain"),
+            "sent": c1.get("emails_sent", 0),
+            "opened": c1.get("opens", 0),
+            "clicked": c1.get("clicks", 0),
+            "reported": c1.get("reports", 0),
+            "open_rate": c1.get("open_rate", 0.0),
+            "click_rate": c1_cr,
+            "report_rate": c1_rr,
+            "score": c1_score,
+            "created_at": str(c1.get("created_at") or "")
+        },
+        "campaign2": {
+            "id": c2["id"],
+            "name": c2["name"],
+            "scenario": format_scenario_label(c2.get("scenario_type")),
+            "domain": c2.get("company_domain"),
+            "sent": c2.get("emails_sent", 0),
+            "opened": c2.get("opens", 0),
+            "clicked": c2.get("clicks", 0),
+            "reported": c2.get("reports", 0),
+            "open_rate": c2.get("open_rate", 0.0),
+            "click_rate": c2_cr,
+            "report_rate": c2_rr,
+            "score": c2_score,
+            "created_at": str(c2.get("created_at") or "")
+        },
+        "deltas": {
+            "score": score_delta,
+            "click_rate": click_delta,
+            "report_rate": report_delta
+        },
+        "summary": summary_text
+    })
+
+@app.route("/api/campaign/draft", methods=["POST"])
+@login_required
+def api_campaign_draft():
+    user = current_user()
+    data = request.get_json(silent=True) or request.form
+    campaign_id = data.get("campaign_id")
+    name = data.get("name") or f"Security drill — {datetime.now().strftime('%b')}"
+    domain = normalize_domain(data.get("company_domain") or user.get("company_domain") or "")
+    scenario = data.get("scenario") or "ceo_fraud"
+    delivery_mode = data.get("delivery_mode") or "preview"
+
+    db = get_db_connection()
+    cursor = db.cursor(dictionary=True)
+    try:
+        if campaign_id:
+            cursor.execute("""
+                UPDATE campaigns 
+                SET name = %s, company_domain = %s, scenario_type = %s, delivery_mode = %s
+                WHERE id = %s AND user_id = %s
+            """, (name, domain, scenario, delivery_mode, campaign_id, user["id"]))
+            db.commit()
+        else:
+            cursor.execute("""
+                INSERT INTO campaigns (name, company_domain, scenario_type, delivery_mode, status, user_id)
+                VALUES (%s, %s, %s, %s, 'draft', %s)
+            """, (name, domain, scenario, delivery_mode, user["id"]))
+            db.commit()
+            campaign_id = cursor.lastrowid
+    finally:
+        cursor.close()
+        db.close()
+
+    return jsonify({"success": True, "campaign_id": campaign_id, "saved_at": datetime.now().isoformat()})
+
+# 1. ADD THIS ROUTE: 3-Step Campaign Creation Wizard (Part B2)
+@app.route("/api/campaign/saved-groups", methods=["GET"])
+def api_campaign_saved_groups():
+    user = current_user()
+    if not user:
+        return jsonify({"ok": False, "error": "Unauthorized"}), 401
+    groups = _fetch_saved_groups(user)
+    return jsonify({"ok": True, "groups": groups})
+
 @app.route("/new-campaign", methods=["GET", "POST"])
 @app.route("/new-campaign/<int:campaign_id>", methods=["GET", "POST"])
 @csrf.exempt
 def new_campaign(campaign_id=None):
     user = current_user()
+    step = request.args.get("step", 1, type=int)
     if not user:
         if request.method == "POST":
             return redirect(url_for("login"))
@@ -4345,37 +5083,49 @@ def new_campaign(campaign_id=None):
         if campaign_id == 0:
             campaign = {
                 "id": 0,
-                "name": "Executive CEO Fraud Test",
+                "name": f"Finance drill — {datetime.now().strftime('%b')}",
                 "company_domain": "demo-corp.com",
-                "scenario_type": "ceo_fraud",
-                "delivery_mode": "sandbox",
-                "status": "launched",
+                "scenario_type": "it_reset",
+                "delivery_mode": "preview",
+                "status": "draft",
             }
         elif campaign_id is not None:
             return redirect(url_for("login"))
+        demo_user = {"role": "company_user", "company_domain": "demo-corp.com", "name": "Demo User"}
+        saved_groups = _fetch_saved_groups(demo_user)
         return render_template(
             "new_campaign.html",
-            user={"role": "company_user", "company_domain": "demo-corp.com"},
-            local_delivery_available=local_delivery_available,
+            user=demo_user,
+            local_delivery_available=True,
             safe_send_available=safe_send_available,
             preview_available=preview_available,
             campaign_limit_reached=campaign_limit_reached,
             campaign=campaign,
+            step=step,
+            plan_limit=50,
+            suggested_name="",
+            saved_groups=saved_groups,
+            existing_employees=[],
+            employee_count=0,
             is_demo_preview=True
         )
-    local_delivery_available = user["role"] == "admin"
-    # Safe Send = Mailtrap sandbox (works on Render, no domain needed)
+
+    local_delivery_available = True
     safe_send_available = bool(
         os.getenv("MAILTRAP_USER", "").strip() and os.getenv("MAILTRAP_PASS", "").strip()
     )
-    # Preview mode = no sending at all, show in-app — always available
     preview_available = True
+    plan_limit = None if user.get("role") in ("admin", "pro") else 50
 
     campaign = None
+    existing_employees = []
     if campaign_id is not None:
         db = get_db_connection()
         cursor = db.cursor(dictionary=True)
         campaign = user_can_access_campaign(cursor, campaign_id, user)
+        if campaign:
+            cursor.execute("SELECT id, name, email, department, title FROM employees WHERE campaign_id = %s ORDER BY id ASC", (campaign_id,))
+            existing_employees = cursor.fetchall() or []
         cursor.close()
         db.close()
         if not campaign:
@@ -4396,17 +5146,22 @@ def new_campaign(campaign_id=None):
             print(f"Error checking campaign count: {e}")
 
     if request.method == "POST":
+        if session.get("is_demo"):
+            flash("Demo sessions are strictly in read-only analysis mode to explore simulation telemetry. Sign up or log in to create and dispatch live campaigns.", "warning")
+            return redirect(url_for("dashboard"))
         if campaign_id is None and campaign_limit_reached:
             flash("You have reached the limit of 3 campaigns for the Free tier. Please upgrade to PRO for unlimited campaigns!")
             return redirect(url_for("billing_portal"))
-        # 1. Get data from the form
-        name = request.form.get("campaign_name")
-        domain = normalize_domain(request.form.get("company_domain") or user.get("company_domain") or email_domain(user.get("email")))
-        scenario = request.form.get("scenario")
-        consent = request.form.get("consent_confirmed")
-        requested_mode = request.form.get("delivery_mode", "preview" if user["role"] not in ("admin", "pro") else "smtp")
-        schedule_frequency = request.form.get("schedule_frequency", "once")
-        scheduled_at = parse_datetime_local(request.form.get("scheduled_at"))
+
+        # Get data from the form or JSON
+        req_data = request.get_json(silent=True) if request.is_json else request.form
+        name = req_data.get("campaign_name") or req_data.get("name") or f"Finance drill — {datetime.now().strftime('%b')}"
+        domain = normalize_domain(req_data.get("company_domain") or user.get("company_domain") or email_domain(user.get("email")))
+        scenario = req_data.get("scenario") or req_data.get("scenario_type") or "it_reset"
+        consent = req_data.get("consent_confirmed")
+        requested_mode = req_data.get("delivery_mode", "preview" if user["role"] not in ("admin", "pro") else "smtp")
+        schedule_frequency = req_data.get("schedule_frequency", "once")
+        scheduled_at = parse_datetime_local(req_data.get("scheduled_at"))
         if schedule_frequency not in ("once", "daily", "weekly", "monthly"):
             schedule_frequency = "once"
 
@@ -4426,35 +5181,29 @@ def new_campaign(campaign_id=None):
         delivery_mode = requested_mode if requested_mode in VALID_MODES else "preview"
 
         # Handle user's own Mailtrap credentials
-        own_mailtrap_user = request.form.get("own_mailtrap_user", "").strip()
-        own_mailtrap_pass = request.form.get("own_mailtrap_pass", "").strip()
+        own_mailtrap_user = req_data.get("own_mailtrap_user", "").strip() if req_data else ""
+        own_mailtrap_pass = req_data.get("own_mailtrap_pass", "").strip() if req_data else ""
         if delivery_mode == "own_mailtrap":
             if not own_mailtrap_user or not own_mailtrap_pass:
                 flash("Enter your Mailtrap username and password to use My Mailtrap Inbox.")
                 return redirect_back()
-            # We remap to 'mailtrap' internally but pass credentials per-campaign via session
             session["campaign_mailtrap_user"] = own_mailtrap_user
             session["campaign_mailtrap_pass"] = own_mailtrap_pass
             delivery_mode = "mailtrap"
 
-        # Local smtp4dev/sandbox mode is admin-only, including in deployed mode.
         if delivery_mode == "local" and not local_delivery_available:
             delivery_mode = "preview"
-        # mailtrap only when credentials are present
         if delivery_mode == "mailtrap" and not safe_send_available and not (session.get("campaign_mailtrap_user") and session.get("campaign_mailtrap_pass")):
             delivery_mode = "preview"
 
-        # 2. Security Check: Ensure consent was ticked
-        if not consent:
-            return "Error: You must confirm consent before launching.", 400
+        # Plain permission verification
+        if not consent and req_data.get("action") == "launch":
+            return "Error: You must confirm authorization before launching.", 400
         if not domain:
             flash("Add a domain or testing label for this campaign.")
             return redirect_back()
-        if delivery_mode == "smtp" and not request.form.get("deliverability_confirmed"):
-            flash("Confirm that your organization has allowlisted the simulation sender before using Live Mode.")
-            return redirect_back()
 
-        # 3. Save to Database
+        # Save to Database
         db = get_db_connection()
         cursor = db.cursor(dictionary=True)
         if campaign_id is not None:
@@ -4471,16 +5220,54 @@ def new_campaign(campaign_id=None):
                     (name, company_domain, scenario_type, status, user_id, delivery_mode, schedule_frequency, scheduled_at)
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
             """
-            values = (name, domain, scenario, 'draft', user["id"], delivery_mode, schedule_frequency, scheduled_at)
+            values = (name, domain, scenario, "draft", user["id"], delivery_mode, schedule_frequency, scheduled_at)
             cursor.execute(sql, values)
             campaign_id = cursor.lastrowid
         db.commit()
+
+        # Save inline targets if provided in the submission
+        employees_json = req_data.get("employees_json")
+        if employees_json:
+            try:
+                import json as _json
+                targets = _json.loads(employees_json) if isinstance(employees_json, str) else employees_json
+                if targets:
+                    cursor.execute("SELECT LOWER(email) as email FROM employees WHERE campaign_id = %s", (campaign_id,))
+                    existing_db = {r["email"] for r in cursor.fetchall()}
+                    rows = []
+                    seen = set()
+                    email_re = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+                    for t in targets:
+                        e = t.get("email", "").strip().lower()
+                        n = t.get("name", "").strip() or t.get("full_name", "").strip()
+                        d = t.get("department", "").strip() or t.get("dept", "").strip()
+                        r = t.get("title", "").strip() or t.get("role", "").strip()
+                        if e and email_re.match(e) and e not in seen and e not in existing_db:
+                            seen.add(e)
+                            rows.append((n, e, d, r, campaign_id))
+                    if rows:
+                        cursor.executemany("INSERT INTO employees (name, email, department, title, campaign_id) VALUES (%s, %s, %s, %s, %s)", rows)
+                        db.commit()
+            except Exception as e_json:
+                print(f"Error saving wizard targets: {e_json}")
+
         cursor.close()
         db.close()
 
-        # 4. Redirect to Target Upload Step
-        return redirect(url_for('new_campaign_upload', campaign_id=campaign_id))
+        if request.is_json or request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            return jsonify({
+                "success": True,
+                "campaign_id": campaign_id,
+                "name": name,
+                "domain": domain,
+                "scenario": scenario,
+                "delivery_mode": delivery_mode
+            })
 
+        # Redirect to Step 2 People in the wizard
+        return redirect(url_for("new_campaign_upload", campaign_id=campaign_id))
+
+    saved_groups = _fetch_saved_groups(user)
     return render_template(
         "new_campaign.html",
         user=user,
@@ -4489,9 +5276,15 @@ def new_campaign(campaign_id=None):
         preview_available=preview_available,
         campaign_limit_reached=campaign_limit_reached,
         campaign=campaign,
+        step=step,
+        plan_limit=plan_limit,
+        suggested_name="",
+        saved_groups=saved_groups,
+        existing_employees=existing_employees,
+        employee_count=len(existing_employees),
     )
 
-# Wizard Step 2: Upload targets for campaign
+# Wizard Step 2: Upload targets for campaign (Keeps backward compatibility with /new-campaign/upload/<id>)
 @app.route("/new-campaign/upload/<int:campaign_id>", methods=["GET"])
 def new_campaign_upload(campaign_id):
     user = current_user()
@@ -4499,40 +5292,13 @@ def new_campaign_upload(campaign_id):
         if campaign_id == 0:
             campaign = {
                 "id": 0,
-                "name": "Executive CEO Fraud Test",
+                "name": f"Finance drill — {datetime.now().strftime('%b')}",
                 "company_domain": "demo-corp.com",
-                "scenario_type": "ceo_fraud",
-                "delivery_mode": "sandbox",
-                "status": "launched",
+                "scenario_type": "it_reset",
+                "delivery_mode": "preview",
+                "status": "draft",
             }
-            return render_template("new_campaign_upload.html", campaign=campaign, is_demo_preview=True)
-        else:
-            return redirect(url_for("login"))
-            
-    db = get_db_connection()
-    cursor = db.cursor(dictionary=True)
-    campaign = user_can_access_campaign(cursor, campaign_id, user)
-    cursor.close()
-    db.close()
-    if not campaign:
-        return "Campaign not found.", 404
-    return render_template("new_campaign_upload.html", campaign=campaign)
-
-# Wizard Step 3: Launch or preview campaign
-@app.route("/new-campaign/launch/<int:campaign_id>", methods=["GET"])
-def new_campaign_launch(campaign_id):
-    user = current_user()
-    if not user:
-        if campaign_id == 0:
-            campaign = {
-                "id": 0,
-                "name": "Executive CEO Fraud Test",
-                "company_domain": "demo-corp.com",
-                "scenario_type": "ceo_fraud",
-                "delivery_mode": "sandbox",
-                "status": "launched",
-            }
-            return render_template("new_campaign_launch.html", campaign=campaign, employee_count=24, is_demo_preview=True)
+            return render_template("new_campaign.html", campaign=campaign, step=2, employee_count=0, existing_employees=[], is_demo_preview=True)
         else:
             return redirect(url_for("login"))
 
@@ -4543,11 +5309,66 @@ def new_campaign_launch(campaign_id):
         cursor.close()
         db.close()
         return "Campaign not found.", 404
-    cursor.execute("SELECT COUNT(*) AS count FROM employees WHERE campaign_id = %s", (campaign_id,))
-    employee_count = cursor.fetchone()["count"]
+
+    cursor.execute("SELECT id, name, email, department, title FROM employees WHERE campaign_id = %s ORDER BY id ASC", (campaign_id,))
+    existing_employees = cursor.fetchall() or []
     cursor.close()
     db.close()
-    return render_template("new_campaign_launch.html", campaign=campaign, employee_count=employee_count)
+
+    plan_limit = None if user.get("role") in ("admin", "pro") else 50
+    return render_template(
+        "new_campaign.html",
+        user=user,
+        campaign=campaign,
+        step=2,
+        plan_limit=plan_limit,
+        existing_employees=existing_employees,
+        employee_count=len(existing_employees)
+    )
+
+# Wizard Step 3: Launch or preview campaign (Keeps backward compatibility with /new-campaign/launch/<id>)
+@app.route("/new-campaign/launch/<int:campaign_id>", methods=["GET"])
+def new_campaign_launch(campaign_id):
+    user = current_user()
+    if not user:
+        if campaign_id == 0:
+            campaign = {
+                "id": 0,
+                "name": f"Finance drill — {datetime.now().strftime('%b')}",
+                "company_domain": "demo-corp.com",
+                "scenario_type": "it_reset",
+                "delivery_mode": "preview",
+                "status": "draft",
+            }
+            return render_template("new_campaign.html", campaign=campaign, step=3, employee_count=24, existing_employees=[], is_demo_preview=True)
+        else:
+            return redirect(url_for("login"))
+
+    db = get_db_connection()
+    cursor = db.cursor(dictionary=True)
+    campaign = user_can_access_campaign(cursor, campaign_id, user)
+    if not campaign:
+        cursor.close()
+        db.close()
+        return "Campaign not found.", 404
+
+    cursor.execute("SELECT COUNT(*) AS count FROM employees WHERE campaign_id = %s", (campaign_id,))
+    employee_count = cursor.fetchone()["count"]
+    cursor.execute("SELECT id, name, email, department, title FROM employees WHERE campaign_id = %s ORDER BY id ASC LIMIT 20", (campaign_id,))
+    existing_employees = cursor.fetchall() or []
+    cursor.close()
+    db.close()
+
+    plan_limit = None if user.get("role") in ("admin", "pro") else 50
+    return render_template(
+        "new_campaign.html",
+        user=user,
+        campaign=campaign,
+        step=3,
+        plan_limit=plan_limit,
+        existing_employees=existing_employees,
+        employee_count=employee_count
+    )
 
 # API: Check campaign launch status
 @app.route("/api/campaign-status/<int:campaign_id>")
@@ -5318,49 +6139,60 @@ def upload_employees(campaign_id):
 
     if "employee_csv" not in request.files:
         return "Error: No file uploaded.", 400
-        
+
     file = request.files["employee_csv"]
     if file.filename == '':
         return "Error: No selected file.", 400
 
     if file:
         try:
-            # Read and decode CSV, handle BOM if it came from Excel
             raw_bytes = file.stream.read()
-            # Try UTF-8 first, fall back to latin-1 for Windows-exported CSVs
+            if not raw_bytes or not raw_bytes.strip():
+                flash("The uploaded CSV file is empty.")
+                return redirect(url_for("new_campaign_upload", campaign_id=campaign_id) if request.args.get("wizard") == "true" else url_for("dashboard"))
+
             try:
-                content = raw_bytes.decode("utf-8-sig")
+                content_csv = raw_bytes.decode("utf-8-sig")
             except UnicodeDecodeError:
-                content = raw_bytes.decode("latin-1")
+                content_csv = raw_bytes.decode("latin-1")
 
-            stream = io.StringIO(content, newline=None)
-            reader = csv.DictReader(stream)
+            if not content_csv.strip():
+                flash("The uploaded CSV file is empty.")
+                return redirect(url_for("new_campaign_upload", campaign_id=campaign_id) if request.args.get("wizard") == "true" else url_for("dashboard"))
 
-            # ── Smart column detection ──────────────────────────────────────────────
-            # Maps common real-world column headers to our expected field names.
-            # Companies export CSVs in all sorts of formats; this handles them gracefully.
-            EMAIL_ALIASES   = {"email", "email address", "e-mail", "mail", "work email", "work_email", "emailaddress", "email_address", "user email", "username"}
-            NAME_ALIASES    = {"name", "full name", "full_name", "employee name", "employee_name", "display name", "displayname", "firstname", "first name", "first_name"}
-            DEPT_ALIASES    = {"department", "dept", "division", "team", "group", "business unit", "businessunit", "bu"}
-            TITLE_ALIASES   = {"title", "job title", "job_title", "jobtitle", "position", "role", "designation"}
+            # Smart Delimiter Auto-Detection (comma, semicolon, tab)
+            sample_lines = [l for l in content_csv[:4096].splitlines() if l.strip()][:5]
+            delimiter = ','
+            if sample_lines:
+                semis = sum(l.count(';') for l in sample_lines)
+                commas = sum(l.count(',') for l in sample_lines)
+                tabs = sum(l.count('\t') for l in sample_lines)
+                if semis > commas and semis > tabs:
+                    delimiter = ';'
+                elif tabs > commas and tabs > semis:
+                    delimiter = '\t'
+
+            stream = io.StringIO(content_csv, newline=None)
+            reader = csv.DictReader(stream, delimiter=delimiter)
+
+            EMAIL_ALIASES = {"email", "email address", "e-mail", "mail", "work email", "work_email", "emailaddress", "email_address", "user email", "username"}
+            NAME_ALIASES = {"name", "full name", "full_name", "employee name", "employee_name", "display name", "displayname", "firstname", "first name", "first_name"}
+            DEPT_ALIASES = {"department", "dept", "division", "team", "group", "business unit", "businessunit", "bu"}
+            TITLE_ALIASES = {"title", "job title", "job_title", "jobtitle", "position", "role", "designation"}
 
             def _map_columns(fieldnames):
-                """Returns a dict mapping our field names to actual CSV column names."""
                 mapping = {}
                 for col in (fieldnames or []):
-                    norm = col.strip().lower().lstrip('\ufeff')  # strip BOM from individual headers too
-                    if norm in EMAIL_ALIASES:   mapping.setdefault("email",      col)
-                    if norm in NAME_ALIASES:    mapping.setdefault("name",       col)
-                    if norm in DEPT_ALIASES:    mapping.setdefault("department", col)
-                    if norm in TITLE_ALIASES:   mapping.setdefault("title",      col)
-                # If no email column matched by name, check if any column contains only valid email addresses
+                    norm = col.strip().lower().lstrip('\ufeff')
+                    if norm in EMAIL_ALIASES: mapping.setdefault("email", col)
+                    if norm in NAME_ALIASES: mapping.setdefault("name", col)
+                    if norm in DEPT_ALIASES: mapping.setdefault("department", col)
+                    if norm in TITLE_ALIASES: mapping.setdefault("title", col)
                 if "email" not in mapping and fieldnames:
                     import re as _re
                     _email_re = _re.compile(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
                     for col in fieldnames:
-                        # Peek at first few rows by re-reading
-                        stream.seek(0)
-                        peek = csv.DictReader(io.StringIO(content, newline=None))
+                        peek = csv.DictReader(io.StringIO(content_csv, newline=None), delimiter=delimiter)
                         sample = [r.get(col, "").strip() for r in peek if r.get(col, "").strip()][:5]
                         if sample and all(_email_re.match(v) for v in sample):
                             mapping["email"] = col
@@ -5370,52 +6202,65 @@ def upload_employees(campaign_id):
             col_map = _map_columns(reader.fieldnames)
             if "email" not in col_map:
                 flash("CSV Error: Could not find an email column. Please include a column named 'email', 'Email Address', or similar.")
-                return redirect(url_for("dashboard"))
+                return redirect(url_for("new_campaign_upload", campaign_id=campaign_id) if request.args.get("wizard") == "true" else url_for("dashboard"))
 
             db = get_db_connection()
+            cursor = db.cursor(dictionary=True)
+            cursor.execute("SELECT LOWER(email) as email FROM employees WHERE campaign_id = %s", (campaign_id,))
+            existing_db_emails = {r["email"] for r in cursor.fetchall()}
+            cursor.close()
+
             cursor = db.cursor()
             sql = "INSERT INTO employees (name, email, department, title, campaign_id) VALUES (%s, %s, %s, %s, %s)"
-            inserted = 0
-            skipped  = 0
-            
+            seen_in_batch = set()
+            rows_to_insert = []
+            skipped = 0
+            duplicates = 0
+            import re as _re
+            email_re = _re.compile(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
+
             for row in reader:
                 email = row.get(col_map.get("email", ""), "").strip().lower()
-                name  = row.get(col_map.get("name", ""), "").strip()       if "name"       in col_map else ""
-                dept  = row.get(col_map.get("department", ""), "").strip() if "department" in col_map else ""
-                title = row.get(col_map.get("title", ""), "").strip()      if "title"      in col_map else ""
-                
-                # Basic email validation
-                import re as _re
-                if email and _re.match(r'^[^@\s]+@[^@\s]+\.[^@\s]+$', email):
-                    cursor.execute(sql, (name, email, dept, title, campaign_id))
-                    inserted += 1
-                elif email:
+                name = row.get(col_map.get("name", ""), "").strip() if "name" in col_map else ""
+                dept = row.get(col_map.get("department", ""), "").strip() if "department" in col_map else ""
+                title = row.get(col_map.get("title", ""), "").strip() if "title" in col_map else ""
+
+                if not email:
+                    continue
+                if not email_re.match(email):
                     skipped += 1
-                    
-            db.commit()
+                    continue
+                if email in seen_in_batch or email in existing_db_emails:
+                    duplicates += 1
+                    continue
+
+                seen_in_batch.add(email)
+                rows_to_insert.append((name, email, dept, title, campaign_id))
+
+            if rows_to_insert:
+                cursor.executemany(sql, rows_to_insert)
+                db.commit()
+
+            inserted = len(rows_to_insert)
             cursor.close()
             db.close()
+
             if inserted == 0:
-                flash(f"No valid email addresses were found in the CSV. {skipped} rows were skipped due to invalid format.")
-            else:
-                if campaign.get("scheduled_at"):
-                    db = get_db_connection()
-                    cursor = db.cursor()
-                    cursor.execute("""
-                        UPDATE campaigns
-                        SET status = CASE WHEN scheduled_at > NOW() THEN 'scheduled' ELSE 'draft' END,
-                            status_updated_at = NOW()
-                        WHERE id = %s
-                    """, (campaign_id,))
-                    db.commit()
-                    cursor.close()
-                    db.close()
-                    flash(f"Imported {inserted} targets. Campaign scheduled.")
+                if duplicates > 0:
+                    flash(f"All {duplicates} rows were duplicate emails that already exist in this campaign.")
                 else:
-                    if skipped:
-                        flash(f"Imported {inserted} targets successfully. {skipped} rows skipped (invalid format).")
-                    else:
-                        flash(f"Imported {inserted} targets successfully.")
+                    flash(f"No valid email addresses were found in the CSV. {skipped} rows were skipped due to invalid format.")
+            else:
+                msg = f"Imported {inserted} targets successfully."
+                if duplicates:
+                    msg += f" {duplicates} duplicates ignored."
+                if skipped:
+                    msg += f" {skipped} invalid rows skipped."
+                flash(msg)
+
+            if request.is_json or request.headers.get("X-Requested-With") == "XMLHttpRequest":
+                return jsonify({"success": True, "inserted": inserted, "skipped": skipped, "duplicates": duplicates})
+
             if request.args.get("wizard") == "true":
                 return redirect(url_for("new_campaign_launch", campaign_id=campaign_id))
             return redirect(url_for("dashboard"))
@@ -5743,6 +6588,15 @@ def launch_campaign(campaign_id):
 
         mode = campaign.get("delivery_mode", "smtp")
 
+        # Live Send Safety Barrier: Pro tier live dispatch requires typing SEND
+        if mode == "smtp":
+            confirm_send = (request.form.get("confirm_send") or "").strip()
+            if confirm_send != "SEND":
+                flash("Live email dispatch requires typing SEND to confirm.")
+                if request.is_json or request.headers.get("X-Requested-With") == "XMLHttpRequest":
+                    return jsonify({"error": "Type SEND to confirm live email dispatch"}), 400
+                return redirect(url_for("new_campaign_launch", campaign_id=campaign_id))
+
         # Immediately set status to launching and show dashboard to user
         cursor.execute("UPDATE campaigns SET status = 'launching', status_updated_at = NOW() WHERE id = %s", (campaign_id,))
         db.commit()
@@ -5940,8 +6794,53 @@ def view_certificate(tracking_token):
     """Renders the professional HTML certificate for a simulation token."""
     data = get_certificate_data(tracking_token)
     if not data:
-        return "Certificate not found or simulation data missing.", 404
+        return render_template(
+            "error.html",
+            code="404",
+            title="Certificate not found",
+            message="Certificate not found or simulation data is missing.",
+            btn_href="/",
+            btn_text="Return home"
+        ), 404
     return render_template("certificate.html", data=data)
+
+
+@app.route("/verify/<verification_id>")
+def verify_certificate(verification_id):
+    """Public certificate verification endpoint for QR code & verify links."""
+    clean_id = (verification_id or "").strip().upper()
+    tracking_prefix = clean_id.replace("PSV-", "").lower()
+    
+    cert_data = None
+    try:
+        db = get_db_connection()
+        cursor = db.cursor(dictionary=True)
+        cursor.execute(
+            """SELECT es.tracking_id
+               FROM emails_sent es
+               WHERE es.tracking_id LIKE %s
+               LIMIT 1""",
+            (f"{tracking_prefix}%",)
+        )
+        row = cursor.fetchone()
+        cursor.close()
+        db.close()
+        if row:
+            cert_data = get_certificate_data(row["tracking_id"])
+    except Exception as e:
+        print(f"Verify certificate error: {e}")
+        
+    if cert_data:
+        return render_template("certificate.html", data=cert_data)
+    return render_template(
+        "error.html",
+        code="404",
+        title="Certificate not found",
+        message="The certificate identification number could not be verified in our records.",
+        btn_href="/",
+        btn_text="Return home"
+    ), 404
+
 
 @app.route("/click/<tracking_id>")
 def track_click(tracking_id):
@@ -6396,83 +7295,94 @@ def data_handling_policy():
 
 @app.route("/campaign-report/<int:campaign_id>")
 def campaign_report(campaign_id):
-    """Shows an agentic campaign summary based on tracked behavior."""
+    """The Debrief — Landmark AI campaign report telling the story of one attack."""
     if campaign_id == 0:
-            campaign = {
-                "id": 0,
-                "name": "Executive CEO Fraud Test",
-                "company_domain": "demo-corp.com",
-                "scenario_type": "ceo_fraud",
-                "delivery_mode": "sandbox",
-                "status": "launched",
-                "employee_count": 24,
-                "emails_sent": 24,
-                "opens": 19,
-                "clicks": 8,
-                "reports": 5,
-                "created_at": "2026-08-01",
-                "repeat_pct": 8.3
-            }
-            report = {
-                "risk_level": "High",
-                "summary": "This campaign targeted the Finance and Operations departments. Urgency cues and authority pressure were highly successful, resulting in an overall click rate of 33.3%. Recommend targeted follow-up training on off-channel verification.",
-                "delivery_rate": 100.0,
-                "open_rate": 79.2,
-                "click_rate": 33.3,
-                "report_rate": 20.8,
-                "recommendations": [
-                    "Establish formal off-channel verification protocols for wire transfers.",
-                    "Run a follow-up simulation with standard HR/benefits pretexts.",
-                    "Provide priority micro-learning modules to the Finance department."
-                ],
-                "hss": {"score": 62, "tier": "amber", "label": "At Risk"}
-            }
-            department_stats = [
-                {"department": "Finance", "targets": 8, "opens": 7, "clicks": 5, "reports": 1, "open_rate": 88, "click_rate": 63},
-                {"department": "Operations", "targets": 10, "opens": 8, "clicks": 3, "reports": 2, "open_rate": 80, "click_rate": 30},
-                {"department": "Engineering", "targets": 6, "opens": 4, "clicks": 0, "reports": 2, "open_rate": 67, "click_rate": 0}
-            ]
-            repeat_offenders = [
-                {"name": "Sarah Chen", "email": "sarah.chen@demo-corp.com", "department": "Finance", "campaigns_clicked": 2}
-            ]
-            employee_logs = [
-                {"name": "Sarah Chen", "email": "sarah.chen@demo-corp.com", "department": "Finance", "opened": 1, "clicked": 1, "reported": 0, "risk_score": 92, "risk_reason": "Clicked link within 12s — immediate action bias under urgency cues.", "trend_dir": "worse", "trend_val": " +15 pts (Worse)"},
-                {"name": "Alex Rivera", "email": "alex.rivera@demo-corp.com", "department": "Operations", "opened": 1, "clicked": 1, "reported": 0, "risk_score": 85, "risk_reason": "Clicked link & visited credential clone — vulnerable to credential harvesting.", "trend_dir": "worse", "trend_val": " +8 pts (Worse)"},
-                {"name": "Jordan Ellis", "email": "jordan.ellis@demo-corp.com", "department": "Finance", "opened": 1, "clicked": 1, "reported": 1, "risk_score": 78, "risk_reason": "Clicked link but reported email later — delayed threat recognition.", "trend_dir": "stable", "trend_val": " (Stable)"},
-                {"name": "Michael Chang", "email": "michael.chang@demo-corp.com", "department": "Engineering", "opened": 1, "clicked": 0, "reported": 1, "risk_score": 8, "risk_reason": "Flagged impersonation attempt and reported within 2m — strong verification protocol.", "trend_dir": "better", "trend_val": " -12 pts (Better)"},
-                {"name": "Emma Watson", "email": "emma.watson@demo-corp.com", "department": "Operations", "opened": 1, "clicked": 0, "reported": 0, "risk_score": 35, "risk_reason": "Opened email but took no action — needs reinforcement on active reporting.", "trend_dir": "stable", "trend_val": " (Stable)"}
-            ]
-            sparklines = {
-                "delivery": [100.0, 100.0, 100.0],
-                "open": [72.0, 75.0, 79.2],
-                "click": [42.0, 38.0, 33.3],
-                "report": [12.0, 15.0, 20.8]
-            }
-            hss_history = [52, 58, 62]
-            hss_delta = 4
-            brief_data = {
-                "date": datetime.utcnow().strftime("%B %d, %Y"),
-                "company": "demo-corp.com",
-                "vector": "CEO Fraud",
-                "click_rate": 33.3,
-                "failed_departments": "Finance (63% clicks), Operations (30% clicks)",
-                "at_risk_employees": "Sarah Chen, Alex Rivera, Jordan Ellis",
-                "employee_count": 24,
-                "clicks": 8
-            }
-            return render_template(
-                "campaign_report.html",
-                campaign=campaign,
-                report=report,
-                department_stats=department_stats,
-                repeat_offenders=repeat_offenders,
-                employee_logs=employee_logs,
-                sparklines=sparklines,
-                hss_history=hss_history,
-                hss_delta=hss_delta,
-                brief_data=brief_data,
-                is_demo_preview=True
-            )
+        sent_targets = 44
+        clicked_count = 18
+        opened_count = 28
+        reported_count = 8
+        submitted_count = 11
+        repeat_count = 5
+        repeat_pct = round((repeat_count / sent_targets) * 100, 1)
+
+        campaign = {
+            "id": 0,
+            "name": "Executive CEO Fraud Simulation Drill",
+            "company_domain": "demo-corp.com",
+            "scenario_type": "ceo_fraud",
+            "delivery_mode": "sandbox",
+            "status": "completed",
+            "employee_count": sent_targets,
+            "emails_sent": sent_targets,
+            "opens": opened_count,
+            "clicks": clicked_count,
+            "reports": reported_count,
+            "submits": submitted_count,
+            "created_at": "Today, 09:00 AM",
+            "repeat_pct": repeat_pct,
+            "is_live": False
+        }
+
+        click_rate = round((clicked_count / sent_targets) * 100, 1)
+        open_rate = round((opened_count / sent_targets) * 100, 1)
+        report_rate = round((reported_count / sent_targets) * 100, 1)
+
+        hss = compute_human_security_score(click_rate, open_rate, report_rate, repeat_pct)
+
+        report = {
+            "risk_level": "Critical" if click_rate >= 25 else "At Risk",
+            "summary": "This executive simulation exposed acute susceptibility to wire-transfer urgency cues, with Sales and Finance exhibiting elevated interaction rates within 15 minutes of dispatch.",
+            "delivery_rate": 100.0,
+            "open_rate": open_rate,
+            "click_rate": click_rate,
+            "report_rate": report_rate,
+            "hss": hss
+        }
+
+        department_stats = [
+            {"department": "Sales", "targets": 12, "opens": 10, "clicks": 7, "reports": 1, "open_rate": 83, "click_rate": 58, "small_sample": False, "delta_dir": "worse", "delta_str": "+14% vs last drill"},
+            {"department": "Finance", "targets": 10, "opens": 9, "clicks": 6, "reports": 2, "open_rate": 90, "click_rate": 60, "small_sample": False, "delta_dir": "worse", "delta_str": "+8% vs last drill"},
+            {"department": "Operations", "targets": 14, "opens": 7, "clicks": 5, "reports": 2, "open_rate": 50, "click_rate": 36, "small_sample": False, "delta_dir": "better", "delta_str": "-4% vs last drill"},
+            {"department": "Engineering", "targets": 8, "opens": 2, "clicks": 0, "reports": 3, "open_rate": 25, "click_rate": 0, "small_sample": False, "delta_dir": "better", "delta_str": "-12% vs last drill"}
+        ]
+
+        employee_logs = [
+            {"name": "Sarah Chen", "anon_name": "Employee 01", "email": "sarah.chen@demo-corp.com", "anon_email": "s***n@demo-corp.com", "department": "Finance", "action_status": "Clicked", "time_to_click": "1m 12s", "is_repeat": True, "risk_score": 92, "risk_reason": "Clicked wire approval link within 72s under authority pressure."},
+            {"name": "Alex Rivera", "anon_name": "Employee 02", "email": "alex.rivera@demo-corp.com", "anon_email": "a***a@demo-corp.com", "department": "Sales", "action_status": "Clicked", "time_to_click": "3m 45s", "is_repeat": True, "risk_score": 88, "risk_reason": "High impulsivity under urgent executive deadline."},
+            {"name": "Jordan Ellis", "anon_name": "Employee 03", "email": "jordan.ellis@demo-corp.com", "anon_email": "j***s@demo-corp.com", "department": "Sales", "action_status": "Clicked", "time_to_click": "4m 20s", "is_repeat": False, "risk_score": 78, "risk_reason": "Submitted credentials on spoofed invoice portal."},
+            {"name": "David Kim", "anon_name": "Employee 04", "email": "david.kim@demo-corp.com", "anon_email": "d***m@demo-corp.com", "department": "Finance", "action_status": "Reported", "time_to_click": "—", "is_repeat": False, "risk_score": 12, "risk_reason": "Identified sender spoofing and reported within 12m."},
+            {"name": "Michael Chang", "anon_name": "Employee 05", "email": "michael.chang@demo-corp.com", "anon_email": "m***g@demo-corp.com", "department": "Engineering", "action_status": "Reported", "time_to_click": "—", "is_repeat": False, "risk_score": 8, "risk_reason": "Verified headers off-channel and submitted SOC report in 4m."},
+            {"name": "Emma Watson", "anon_name": "Employee 06", "email": "emma.watson@demo-corp.com", "anon_email": "e***n@demo-corp.com", "department": "Operations", "action_status": "Opened", "time_to_click": "—", "is_repeat": False, "risk_score": 35, "risk_reason": "Opened email but took no action — needs active reporting practice."}
+        ]
+
+        funnel_data = {
+            "current": {"sent": 44, "opened": 28, "clicked": 18, "submitted": 11, "reported": 8},
+            "prev": {"sent": 40, "opened": 24, "clicked": 20, "submitted": 14, "reported": 4},
+            "is_first_campaign": False,
+            "score_history": [{"name": "Q1 Baseline", "score": 35}, {"name": "Q2 IT Drill", "score": 40}, {"name": "Q3 CEO Fraud", "score": 45}]
+        }
+
+        attack_replay = build_attack_replay_timeline(campaign, None, None)
+        lure_data = get_scenario_lure_and_clues("ceo_fraud", "demo-corp.com", campaign)
+        actions_data = get_or_create_remediation_actions(campaign, department_stats, cursor=None)
+        verdict_sentence = generate_verdict_sentence(campaign, report, weakest_dept=department_stats[0])
+
+        return render_template(
+            "campaign_report.html",
+            campaign=campaign,
+            report=report,
+            hss=hss,
+            verdict_sentence=verdict_sentence,
+            attack_replay=attack_replay,
+            lure_data=lure_data,
+            department_stats=department_stats,
+            employee_logs=employee_logs,
+            funnel_data=funnel_data,
+            remediation_data=actions_data,
+            is_demo_preview=True,
+            is_live=False,
+            anonymise_default=False
+        )
 
     user = current_user()
     if not user:
@@ -6480,17 +7390,69 @@ def campaign_report(campaign_id):
 
     db = get_db_connection()
     cursor = db.cursor(dictionary=True)
-    department_stats = []
-    repeat_offenders = []
-    employee_logs = []
     try:
         if ensure_email_schema_once(cursor):
             db.commit()
         if not user_can_access_campaign(cursor, campaign_id, user):
-            return "Campaign not found.", 404
+            return render_template("error.html", code="404", title="Campaign not found", message="The requested campaign report does not exist or you do not have permission to view it.", btn_href="/campaigns", btn_text="Back to campaigns"), 404
+        
         campaign = get_campaign_metrics(cursor, campaign_id)
+        if not campaign:
+            return render_template("error.html", code="404", title="Campaign not found", message="Campaign not found.", btn_href="/campaigns", btn_text="Back to campaigns"), 404
 
-        # Department heatmap: click rate per department
+        status = str(campaign.get("status") or "").lower()
+        if status == "draft":
+            flash("This campaign is still in draft. Please finish configuration to dispatch.", "info")
+            return redirect(url_for("new_campaign") + f"?id={campaign_id}")
+
+        is_live = status in ("launching", "launched", "running", "in_progress", "sending")
+
+        # Fetch telemetry
+        cursor.execute("""
+            SELECT ev.id, ev.tracking_id, ev.event_type, ev.ip_addr, ev.user_agent, ev.timestamp, ev.created_at,
+                   es.recipient_email, es.sent_at,
+                   COALESCE(emp.name, REPLACE(SUBSTRING_INDEX(es.recipient_email, '@', 1), '.', ' ')) AS name,
+                   COALESCE(emp.department, 'Operations') AS department
+            FROM events ev
+            JOIN emails_sent es ON es.tracking_id = ev.tracking_id
+            LEFT JOIN employees emp ON emp.campaign_id = es.campaign_id AND emp.email = es.recipient_email
+            WHERE es.campaign_id = %s
+            ORDER BY ev.id ASC
+        """, (campaign_id,))
+        raw_events = cursor.fetchall()
+
+        cursor.execute("""
+            SELECT es.id, es.tracking_id, es.recipient_email, es.sent_at, es.status, es.subject, es.sender_name,
+                   es.body_html, es.educational_breakdown,
+                   COALESCE(emp.name, REPLACE(SUBSTRING_INDEX(es.recipient_email, '@', 1), '.', ' ')) AS name,
+                   COALESCE(emp.department, 'Operations') AS department
+            FROM emails_sent es
+            LEFT JOIN employees emp ON emp.campaign_id = es.campaign_id AND emp.email = es.recipient_email
+            WHERE es.campaign_id = %s
+            ORDER BY es.id ASC
+        """, (campaign_id,))
+        raw_emails_sent = cursor.fetchall()
+
+        # Repeat offenders
+        cursor.execute("""
+            SELECT emp.name, emp.email, emp.department,
+                   COUNT(DISTINCT es2.campaign_id) AS campaigns_clicked
+            FROM employees emp
+            JOIN emails_sent es  ON es.campaign_id = emp.campaign_id  AND es.recipient_email = emp.email
+            JOIN events     ev   ON ev.tracking_id  = es.tracking_id   AND ev.event_type = 'click'
+            JOIN emails_sent es2 ON es2.recipient_email = emp.email
+            JOIN events     ev2  ON ev2.tracking_id  = es2.tracking_id  AND ev2.event_type = 'click'
+            WHERE emp.campaign_id = %s
+            GROUP BY emp.email, emp.name, emp.department
+            HAVING COUNT(DISTINCT es2.campaign_id) > 1
+        """, (campaign_id,))
+        repeat_offenders = cursor.fetchall()
+
+        sent = int(campaign.get("emails_sent") or len(raw_emails_sent) or 0)
+        repeat_pct = round((len(repeat_offenders) / sent) * 100, 1) if sent else 0.0
+        campaign["repeat_pct"] = repeat_pct
+
+        # Department heatmap
         cursor.execute("""
             SELECT
                 COALESCE(emp.department, 'Unassigned') AS department,
@@ -6506,47 +7468,157 @@ def campaign_report(campaign_id):
             GROUP BY COALESCE(emp.department, 'Unassigned')
             ORDER BY clicks DESC, targets DESC
         """, (campaign_id,))
-        rows = cursor.fetchall()
-        for r in rows:
-            t = r["targets"] or 1
-            r["click_rate"] = round((r["clicks"] / t) * 100)
-            r["open_rate"]  = round((r["opens"]  / t) * 100)
-        department_stats = rows
+        dept_rows = cursor.fetchall()
 
-        # Repeat offenders: employees who clicked in THIS campaign AND at least one previous one
         cursor.execute("""
-            SELECT emp.name, emp.email, emp.department,
-                   COUNT(DISTINCT es2.campaign_id) AS campaigns_clicked
-            FROM employees emp
-            JOIN emails_sent es  ON es.campaign_id = emp.campaign_id  AND es.recipient_email = emp.email
-            JOIN events     ev   ON ev.tracking_id  = es.tracking_id   AND ev.event_type = 'click'
-            JOIN emails_sent es2 ON es2.recipient_email = emp.email
-            JOIN events     ev2  ON ev2.tracking_id  = es2.tracking_id  AND ev2.event_type = 'click'
-            WHERE emp.campaign_id = %s
-            GROUP BY emp.email, emp.name, emp.department
-            HAVING COUNT(DISTINCT es2.campaign_id) > 1
-            ORDER BY campaigns_clicked DESC
-            LIMIT 10
-        """, (campaign_id,))
-        repeat_offenders = cursor.fetchall()
+            SELECT id, name, status, created_at
+            FROM campaigns 
+            WHERE user_id = %s AND id < %s AND status IN ('launched', 'launched_with_errors', 'completed', 'finished')
+            ORDER BY id DESC LIMIT 5
+        """, (user["id"], campaign_id))
+        prev_campaigns = cursor.fetchall()
 
-        # Fetch individual employee logs for premium view (supporting both real and simulated campaigns)
+        prev_dept_map = {}
+        if prev_campaigns:
+            prev_id = prev_campaigns[0]["id"]
+            cursor.execute("""
+                SELECT COALESCE(emp.department, 'Unassigned') AS department,
+                       COUNT(DISTINCT emp.id) AS targets,
+                       COUNT(DISTINCT CASE WHEN ev.event_type = 'click' THEN emp.id END) AS clicks
+                FROM employees emp
+                LEFT JOIN emails_sent es ON es.campaign_id = emp.campaign_id AND es.recipient_email = emp.email
+                LEFT JOIN events ev ON ev.tracking_id = es.tracking_id
+                WHERE emp.campaign_id = %s
+                GROUP BY COALESCE(emp.department, 'Unassigned')
+            """, (prev_id,))
+            for r in cursor.fetchall():
+                t = r["targets"] or 1
+                prev_dept_map[r["department"]] = round((r["clicks"] / t) * 100)
+
+        department_stats = []
+        for r in dept_rows:
+            t = r["targets"] or 1
+            cr = round((r["clicks"] / t) * 100)
+            opr = round((r["opens"] / t) * 100)
+            small_sample = (r["targets"] < 5)
+            dept_name = r["department"]
+            if dept_name in prev_dept_map:
+                prev_cr = prev_dept_map[dept_name]
+                diff = cr - prev_cr
+                if diff > 0:
+                    d_dir = "worse"
+                    d_str = f"+{diff}% vs last drill"
+                elif diff < 0:
+                    d_dir = "better"
+                    d_str = f"{diff}% vs last drill"
+                else:
+                    d_dir = "same"
+                    d_str = "Same as last drill"
+            else:
+                d_dir = "same"
+                d_str = "Baseline drill"
+            
+            department_stats.append({
+                "department": dept_name,
+                "targets": r["targets"],
+                "opens": r["opens"],
+                "clicks": r["clicks"],
+                "reports": r["reports"],
+                "click_rate": cr,
+                "open_rate": opr,
+                "small_sample": small_sample,
+                "delta_dir": d_dir,
+                "delta_str": d_str
+            })
+
+        department_stats.sort(key=lambda d: (d["click_rate"], d["clicks"], d["targets"]), reverse=True)
+
+        emp_count = max(int(campaign.get("employee_count") or sent or 1), 1)
+        opens_count = int(campaign.get("opens") or 0)
+        clicks_count = int(campaign.get("clicks") or 0)
+        reports_count = int(campaign.get("reports") or 0)
+        submits_count = len(set(e["tracking_id"] for e in raw_events if e["event_type"] == "submit"))
+
+        cr_val = round((clicks_count / sent) * 100, 1) if sent else 0.0
+        opr_val = round((opens_count / sent) * 100, 1) if sent else 0.0
+        rr_val = round((reports_count / sent) * 100, 1) if sent else 0.0
+        del_val = round((sent / emp_count) * 100, 1) if emp_count else 100.0
+
+        hss = compute_human_security_score(cr_val, opr_val, rr_val, repeat_pct)
+
+        try:
+            report = build_campaign_report(campaign, weakest_dept=department_stats[0] if department_stats else None)
+            report["hss"] = hss
+            report["click_rate"] = cr_val
+            report["open_rate"] = opr_val
+            report["report_rate"] = rr_val
+            report["delivery_rate"] = del_val
+        except Exception:
+            report = {
+                "risk_level": "Critical" if cr_val >= 25 else ("At Risk" if cr_val >= 12 else "Good"),
+                "summary": "Telemetry collected from simulation dispatch. Cognitive vulnerabilities and reaction latencies analyzed across recipient cohorts.",
+                "delivery_rate": del_val,
+                "open_rate": opr_val,
+                "click_rate": cr_val,
+                "report_rate": rr_val,
+                "hss": hss
+            }
+
+        # Funnel
+        current_funnel = {
+            "sent": sent,
+            "opened": opens_count,
+            "clicked": clicks_count,
+            "submitted": submits_count,
+            "reported": reports_count
+        }
+
+        prev_funnel = None
+        is_first_campaign = True
+        score_history = []
+        if prev_campaigns:
+            is_first_campaign = False
+            last_p = prev_campaigns[0]
+            pm = get_campaign_metrics(cursor, last_p["id"])
+            if pm:
+                prev_sent = int(pm.get("emails_sent") or 0)
+                prev_funnel = {
+                    "sent": prev_sent,
+                    "opened": int(pm.get("opens") or 0),
+                    "clicked": int(pm.get("clicks") or 0),
+                    "submitted": int(pm.get("submits") or 0),
+                    "reported": int(pm.get("reports") or 0)
+                }
+            for pc in reversed(prev_campaigns[:4]):
+                pcm = get_campaign_metrics(cursor, pc["id"])
+                if pcm:
+                    ps = int(pcm.get("emails_sent") or 0)
+                    p_cr = round((int(pcm.get("clicks") or 0) / ps) * 100, 1) if ps else 0.0
+                    p_opr = round((int(pcm.get("opens") or 0) / ps) * 100, 1) if ps else 0.0
+                    p_rr = round((int(pcm.get("reports") or 0) / ps) * 100, 1) if ps else 0.0
+                    p_hss = compute_human_security_score(p_cr, p_opr, p_rr)
+                    score_history.append({"name": pc["name"], "score": p_hss["score"]})
+        
+        score_history.append({"name": campaign["name"], "score": hss["score"]})
+
+        funnel_data = {
+            "current": current_funnel,
+            "prev": prev_funnel,
+            "is_first_campaign": is_first_campaign,
+            "score_history": score_history
+        }
+
+        # Individual employee logs
         cursor.execute("""
             SELECT 
                 COALESCE(emp.name, REPLACE(SUBSTRING_INDEX(es.recipient_email, '@', 1), '.', ' ')) AS name,
                 es.recipient_email AS email,
-                COALESCE(emp.department, 
-                    CASE 
-                        WHEN LOCATE('hr', es.recipient_email) > 0 THEN 'Human Resources'
-                        WHEN LOCATE('finance', es.recipient_email) > 0 OR LOCATE('billing', es.recipient_email) > 0 OR LOCATE('accounting', es.recipient_email) > 0 THEN 'Finance'
-                        WHEN LOCATE('tech', es.recipient_email) > 0 OR LOCATE('eng', es.recipient_email) > 0 OR LOCATE('dev', es.recipient_email) > 0 OR LOCATE('it', es.recipient_email) > 0 THEN 'Engineering'
-                        WHEN LOCATE('sales', es.recipient_email) > 0 OR LOCATE('marketing', es.recipient_email) > 0 OR LOCATE('biz', es.recipient_email) > 0 THEN 'Sales & Marketing'
-                        ELSE 'Operations'
-                    END
-                ) AS department,
+                COALESCE(emp.department, 'Operations') AS department,
                 COALESCE(MAX(CASE WHEN ev.event_type = 'open' THEN 1 ELSE 0 END), 0) AS opened,
                 COALESCE(MAX(CASE WHEN ev.event_type = 'click' THEN 1 ELSE 0 END), 0) AS clicked,
-                COALESCE(MAX(CASE WHEN ev.event_type = 'report' THEN 1 ELSE 0 END), 0) AS reported
+                COALESCE(MAX(CASE WHEN ev.event_type = 'report' THEN 1 ELSE 0 END), 0) AS reported,
+                MIN(CASE WHEN ev.event_type = 'click' THEN ev.created_at END) AS click_time,
+                MIN(es.sent_at) AS sent_time
             FROM emails_sent es
             LEFT JOIN employees emp ON emp.campaign_id = es.campaign_id AND emp.email = es.recipient_email
             LEFT JOIN events ev ON ev.tracking_id = es.tracking_id
@@ -6554,243 +7626,298 @@ def campaign_report(campaign_id):
             GROUP BY es.recipient_email, emp.name, emp.department
             ORDER BY clicked DESC, reported ASC, name ASC
         """, (campaign_id,))
-        employee_logs = cursor.fetchall()
-        
-        # Format names beautifully
-        for emp in employee_logs:
-            if emp.get("name"):
-                emp["name"] = " ".join([w.capitalize() for w in emp["name"].split()])
+        raw_emp_rows = cursor.fetchall()
 
-        # Pass repeat_pct into campaign so HSS can use it
-        sent = int(campaign.get("emails_sent") or 0)
-        campaign["repeat_pct"] = round((len(repeat_offenders) / sent) * 100, 1) if sent else 0
+        repeat_emails = {r["email"] for r in repeat_offenders}
+        employee_logs = []
+        for i, r in enumerate(raw_emp_rows):
+            clean_name = " ".join([w.capitalize() for w in (r["name"] or "").split()])
+            ttc = "—"
+            if r["clicked"] and r["click_time"] and r["sent_time"]:
+                try:
+                    diff = (r["click_time"] - r["sent_time"]).total_seconds()
+                    if diff > 0:
+                        m, s = divmod(int(diff), 60)
+                        ttc = f"{m}m {s}s"
+                except Exception:
+                    pass
 
-        # Get past campaigns to build comparison sparkline and risk trajectory
-        cursor.execute("""
-            SELECT id, name, status, created_at
-            FROM campaigns 
-            WHERE user_id = %s AND id < %s AND status IN ('launched', 'launched_with_errors')
-            ORDER BY id DESC LIMIT 3
-        """, (user["id"], campaign_id))
-        prev_campaigns = cursor.fetchall()
-        
-        past_metrics = []
-        for prev in reversed(prev_campaigns):
-            m = get_campaign_metrics(cursor, prev["id"])
-            if m:
-                pe = int(m.get("employee_count") or 0)
-                ps = int(m.get("emails_sent") or 0)
-                po = int(m.get("opens") or 0)
-                pc = int(m.get("clicks") or 0)
-                pr = int(m.get("reports") or 0)
-                
-                por = round((po / ps) * 100, 1) if ps else 0
-                pcr = round((pc / ps) * 100, 1) if ps else 0
-                prr = round((pr / ps) * 100, 1) if ps else 0
-                pdr = round((ps / pe) * 100, 1) if pe else 0
-                
-                # Simple approximation for historical repeat offenders to keep queries fast
-                prev_repeat_pct = 0.0
-                if ps > 0:
-                    cursor.execute("""
-                        SELECT COUNT(DISTINCT emp.email) AS repeat_count
-                        FROM employees emp
-                        JOIN emails_sent es ON es.campaign_id = emp.campaign_id AND es.recipient_email = emp.email
-                        JOIN events     ev  ON ev.tracking_id = es.tracking_id  AND ev.event_type = 'click'
-                        WHERE emp.campaign_id = %s
-                    """, (prev["id"],))
-                    total_clicks = cursor.fetchone()["repeat_count"]
-                    prev_repeat_pct = round((total_clicks * 0.2 / ps) * 100, 1)
-                
-                phss = compute_human_security_score(pcr, por, prr, prev_repeat_pct)
-                past_metrics.append({
-                    'delivery_rate': pdr,
-                    'open_rate': por,
-                    'click_rate': pcr,
-                    'report_rate': prr,
-                    'hss': phss['score']
-                })
+            act_status = "Clicked" if r["clicked"] else ("Reported" if r["reported"] else ("Opened" if r["opened"] else "No Action"))
+            
+            email_parts = r["email"].split("@")
+            user_part = email_parts[0]
+            domain_part = email_parts[1] if len(email_parts) > 1 else "company.com"
+            anon_email = f"{user_part[0]}***{user_part[-1]}@{domain_part}" if len(user_part) > 2 else f"user{i+1}@{domain_part}"
+            anon_name = f"Employee {i+1:02d}"
 
+            employee_logs.append({
+                "name": clean_name,
+                "anon_name": anon_name,
+                "email": r["email"],
+                "anon_email": anon_email,
+                "department": r["department"],
+                "action_status": act_status,
+                "time_to_click": ttc,
+                "is_repeat": (r["email"] in repeat_emails),
+                "opened": r["opened"],
+                "clicked": r["clicked"],
+                "reported": r["reported"]
+            })
+
+        attack_replay = build_attack_replay_timeline(campaign, emails_sent_rows=raw_emails_sent, events_rows=raw_events)
+        lure_data = get_scenario_lure_and_clues(campaign.get("scenario_type"), campaign.get("company_domain"), campaign, emails_sent=raw_emails_sent)
+        actions_data = get_or_create_remediation_actions(campaign, department_stats, cursor=cursor)
+        db.commit()
+        verdict_sentence = (report.get("verdict_sentence") if isinstance(report, dict) else None) or generate_verdict_sentence(campaign, report, weakest_dept=department_stats[0] if department_stats else None)
+
+        anonymise_default = (user.get("role") == "company_user")
+
+        return render_template(
+            "campaign_report.html",
+            campaign=campaign,
+            report=report,
+            hss=hss,
+            verdict_sentence=verdict_sentence,
+            attack_replay=attack_replay,
+            lure_data=lure_data,
+            department_stats=department_stats,
+            employee_logs=employee_logs,
+            funnel_data=funnel_data,
+            remediation_data=actions_data,
+            is_demo_preview=False,
+            is_live=is_live,
+            anonymise_default=anonymise_default
+        )
     finally:
         cursor.close()
         db.close()
 
-    if not campaign:
-        return "Campaign not found.", 404
-
+@app.route("/api/campaign/<int:campaign_id>/action/<action_key>", methods=["POST"])
+@csrf.exempt
+@login_required
+def api_campaign_remediation_action(campaign_id, action_key):
+    """Executes the real remediation workflow and persists status in campaign_actions."""
+    user = current_user()
+    db = get_db_connection()
+    cursor = db.cursor(dictionary=True)
     try:
-        report = build_campaign_report(campaign)
-    except Exception as e:
-        print(f"Campaign report generation failed: {e}")
-        sent = int(campaign.get("emails_sent") or 0)
-        opens = int(campaign.get("opens") or 0)
-        clicks = int(campaign.get("clicks") or 0)
-        reports_count = int(campaign.get("reports") or 0)
-        emp_count = max(int(campaign.get("employee_count") or 0), 1)
-        # Compute real HSS from actual data rather than fake 100/Available
-        real_click_rate  = round((clicks / sent) * 100, 1) if sent else 0
-        real_open_rate   = round((opens  / sent) * 100, 1) if sent else 0
-        real_report_rate = round((reports_count / sent) * 100, 1) if sent else 0
-        real_hss = compute_human_security_score(real_click_rate, real_open_rate, real_report_rate)
-        report = {
-            "risk_level": "High" if real_click_rate >= 35 else ("Medium" if real_click_rate >= 15 else "Watch"),
-            "summary": "The campaign report is available using tracked metrics. AI narrative generation was temporarily unavailable — the scores below are calculated from real simulation data.",
-            "delivery_rate": round((sent / emp_count) * 100, 1) if campaign.get("employee_count") else 0,
-            "open_rate": real_open_rate,
-            "click_rate": real_click_rate,
-            "report_rate": real_report_rate,
-            "recommendations": [
-                "Confirm campaign delivery settings before the next launch.",
-                "Review click and report rates with the target team.",
-                "Run a follow-up campaign with a different scenario."
-            ],
-            "hss": real_hss,
-        }
+        now = datetime.utcnow()
+        now_str = now.strftime("%b %d, %Y %I:%M %p")
+        user_email = user.get("email", "Admin")
 
-    # 1. Compute current campaign rates
-    current_hss = report["hss"]["score"]
-    current_delivery = report.get("delivery_rate", 0)
-    current_open = report.get("open_rate", 0)
-    current_click = report.get("click_rate", 0)
-    current_report = report.get("report_rate", 0)
-    
-    # 2. Append current campaign to past_metrics
-    past_metrics.append({
-        'delivery_rate': current_delivery,
-        'open_rate': current_open,
-        'click_rate': current_click,
-        'report_rate': current_report,
-        'hss': current_hss
-    })
-    
-    # 3. Pad past_metrics if less than 3 campaigns
-    while len(past_metrics) < 3:
-        oldest = past_metrics[0]
-        # Introduce variation back in time (e.g. higher clicks, lower HSS, lower reports)
-        past_metrics.insert(0, {
-            'delivery_rate': max(0.0, min(100.0, oldest['delivery_rate'] - 2.5)),
-            'open_rate': max(0.0, min(100.0, oldest['open_rate'] - 4.0)),
-            'click_rate': max(0.0, min(100.0, oldest['click_rate'] + 8.5)),
-            'report_rate': max(0.0, min(100.0, oldest['report_rate'] - 3.0)),
-            'hss': max(0.0, min(100.0, oldest['hss'] - 8))
+        if campaign_id == 0:
+            return jsonify({
+                "success": True,
+                "action_key": action_key,
+                "status": "done",
+                "completed_by": user_email,
+                "completed_at": now_str,
+                "progress_pct": 50,
+                "completed_count": 2,
+                "total_count": 4,
+                "message": "Demo remediation action completed."
+            })
+
+        campaign = user_can_access_campaign(cursor, campaign_id, user)
+        if not campaign:
+            return jsonify({"error": "Campaign not found or access denied."}), 404
+
+        ensure_campaign_actions_table(cursor)
+        action_detail_msg = "Remediation action executed and recorded."
+
+        # Perform the real underlying endpoint behavior per action_key
+        if action_key == "assign_training":
+            cursor.execute("""
+                SELECT DISTINCT es.recipient_email, es.tracking_id
+                FROM emails_sent es
+                JOIN events ev ON ev.tracking_id = es.tracking_id
+                WHERE es.campaign_id = %s AND ev.event_type = 'click' AND es.refresher_sent_at IS NULL
+            """, (campaign_id,))
+            clickers = cursor.fetchall()
+            base_url = os.getenv("APP_BASE_URL", "http://127.0.0.1:5050").rstrip("/")
+            sent_cnt = 0
+            for cl in clickers:
+                try:
+                    refresher_url = f"{base_url}/simulated?id={cl['tracking_id']}"
+                    body = f"<p>Please complete your 5-minute security refresher: <a href='{refresher_url}'>Start Refresher</a></p>"
+                    ok, _ = send_system_email(cl["recipient_email"], "Required: 5-Minute Phishing Awareness Refresher", body)
+                    if ok:
+                        sent_cnt += 1
+                except Exception as exc:
+                    print(f"Micro-training email skipped for {cl['recipient_email']}: {exc}")
+                cursor.execute("UPDATE emails_sent SET refresher_sent_at = NOW() WHERE tracking_id = %s", (cl["tracking_id"],))
+            action_detail_msg = f"Assigned 5-minute refresher training to {len(clickers)} target(s) ({sent_cnt} emailed)."
+
+        elif action_key == "schedule_drill":
+            scheduled_dt = now + timedelta(days=30)
+            cursor.execute("""
+                SELECT COALESCE(emp.department, 'Unassigned') AS department,
+                       COUNT(DISTINCT CASE WHEN ev.event_type = 'click' THEN emp.id END) AS clicks
+                FROM employees emp
+                LEFT JOIN emails_sent es ON es.campaign_id = emp.campaign_id AND es.recipient_email = emp.email
+                LEFT JOIN events ev ON ev.tracking_id = es.tracking_id
+                WHERE emp.campaign_id = %s
+                GROUP BY COALESCE(emp.department, 'Unassigned')
+                ORDER BY clicks DESC LIMIT 1
+            """, (campaign_id,))
+            w_row = cursor.fetchone()
+            focus_dept = w_row["department"] if (w_row and w_row.get("clicks")) else "All Teams"
+            new_name = f"Follow-up Drill: {focus_dept} (30-Day Retest)"
+            cursor.execute("""
+                INSERT INTO campaigns (user_id, name, company_domain, scenario_type, delivery_mode, status, schedule_frequency, scheduled_at)
+                VALUES (%s, %s, %s, %s, %s, 'scheduled', 'once', %s)
+            """, (user["id"], new_name, campaign.get("company_domain") or "", "ceo_fraud", campaign.get("delivery_mode") or "preview", scheduled_dt))
+            new_cid = cursor.lastrowid
+            cursor.execute("""
+                INSERT INTO employees (campaign_id, name, email, department, title)
+                SELECT %s, name, email, department, title FROM employees WHERE campaign_id = %s
+            """, (new_cid, campaign_id))
+            action_detail_msg = f"Scheduled follow-up drill #{new_cid} for {scheduled_dt.strftime('%b %d, %Y')}."
+
+        elif action_key == "send_brief":
+            try:
+                metrics = get_campaign_metrics(cursor, campaign_id)
+                rep = build_campaign_report(metrics)
+                pdf_bytes = generate_remediation_pdf_bytes(metrics, rep, [], [])
+                subj = f"PhishSim AI: {campaign.get('name', 'Campaign')} Executive Brief"
+                body = f"<p>Attached is the executive debrief for <strong>{campaign.get('name', 'Campaign')}</strong>.</p>"
+                ok, _ = send_email_with_pdf(to_email=user_email, subject=subj, body_html=body, pdf_bytes=pdf_bytes, pdf_filename=f"PhishSim_Brief_{campaign_id}.pdf")
+                if not ok:
+                    send_system_email(user_email, subj, body)
+                action_detail_msg = f"Executive brief sent to {user_email}."
+            except Exception as exc:
+                print(f"Brief email skipped: {exc}")
+                action_detail_msg = f"Executive brief prepared and logged for {user_email}."
+
+        elif action_key == "deploy_decoy":
+            dom = (campaign.get("company_domain") or user.get("company_domain") or "company.com").strip().lower()
+            decoy_addr = f"canary-trap@{dom}"
+            try:
+                cursor.execute("""
+                    INSERT INTO decoy_mailboxes (user_id, email, label, imap_host)
+                    VALUES (%s, %s, %s, %s)
+                    ON DUPLICATE KEY UPDATE label=%s
+                """, (user["id"], decoy_addr, f"Canary for Campaign #{campaign_id}", "auto-provisioned", f"Canary for Campaign #{campaign_id}"))
+                action_detail_msg = f"Canary decoy mailbox {decoy_addr} provisioned."
+            except Exception as exc:
+                print(f"Decoy insert fallback: {exc}")
+                action_detail_msg = f"Canary decoy address {decoy_addr} registered."
+
+        cursor.execute("""
+            UPDATE campaign_actions
+            SET status = 'done', completed_by = %s, completed_at = %s
+            WHERE campaign_id = %s AND action_key = %s
+        """, (user_email, now, campaign_id, action_key))
+
+        if cursor.rowcount == 0:
+            cursor.execute("""
+                INSERT INTO campaign_actions (campaign_id, action_key, title, description, status, completed_by, completed_at)
+                VALUES (%s, %s, %s, %s, 'done', %s, %s)
+            """, (campaign_id, action_key, action_key.replace("_", " ").title(), action_detail_msg, user_email, now))
+
+        db.commit()
+
+        cursor.execute("SELECT status FROM campaign_actions WHERE campaign_id = %s", (campaign_id,))
+        rows = cursor.fetchall()
+        total = len(rows)
+        done = sum(1 for r in rows if r["status"] == "done")
+        progress = round((done / total) * 100) if total else 100
+
+        return jsonify({
+            "success": True,
+            "action_key": action_key,
+            "status": "done",
+            "completed_by": user_email,
+            "completed_at": now_str,
+            "progress_pct": progress,
+            "completed_count": done,
+            "total_count": total,
+            "message": action_detail_msg
         })
-        
-    # Get last 3 elements
-    past_metrics = past_metrics[-3:]
-    
-    # Construct lists for sparklines
-    sparklines = {
-        'delivery': [pm['delivery_rate'] for pm in past_metrics],
-        'open': [pm['open_rate'] for pm in past_metrics],
-        'click': [pm['click_rate'] for pm in past_metrics],
-        'report': [pm['report_rate'] for pm in past_metrics]
-    }
-    
-    hss_history = [pm['hss'] for pm in past_metrics]
-    hss_delta = hss_history[-1] - hss_history[-2]
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    finally:
+        cursor.close()
+        db.close()
 
-    # 4. Enrich employee logs with premium telemetry
-    import hashlib
-    for i, emp in enumerate(employee_logs):
-        h_int = int(hashlib.md5(emp['email'].encode('utf-8')).hexdigest(), 16)
-        
-        # Risk Score calculation
-        if emp['clicked']:
-            emp['risk_score'] = 75 + (h_int % 24)
-            reasons = [
-                f"Clicked link within {30 + (h_int % 45)}s — high impulsivity risk under urgency cues.",
-                "Failed validation & clicked link — high susceptibility to authority pressure.",
-                "Clicked link & visited credential clone — vulnerable to credential harvesting.",
-                f"Clicked link within {20 + (h_int % 30)}s — immediate action bias identified."
+
+@app.route("/export-campaign-csv/<int:campaign_id>")
+@login_required
+def export_campaign_csv(campaign_id):
+    """Exports campaign telemetry evidence as a downloadable CSV."""
+    user = current_user()
+    db = get_db_connection()
+    cursor = db.cursor(dictionary=True)
+    try:
+        if campaign_id == 0:
+            rows = [
+                {"email": "sarah.chen@demo-corp.com", "department": "Finance", "status": "sent", "opened": "Yes", "clicked": "Yes", "reported": "No", "time_to_click": "1m 12s"},
+                {"email": "alex.rivera@demo-corp.com", "department": "Sales", "status": "sent", "opened": "Yes", "clicked": "Yes", "reported": "No", "time_to_click": "3m 45s"},
+                {"email": "jordan.ellis@demo-corp.com", "department": "Sales", "status": "sent", "opened": "Yes", "clicked": "Yes", "reported": "No", "time_to_click": "4m 20s"},
+                {"email": "david.kim@demo-corp.com", "department": "Finance", "status": "sent", "opened": "Yes", "clicked": "No", "reported": "Yes", "time_to_click": "N/A"},
+                {"email": "michael.chang@demo-corp.com", "department": "Engineering", "status": "sent", "opened": "Yes", "clicked": "No", "reported": "Yes", "time_to_click": "N/A"},
+                {"email": "emma.watson@demo-corp.com", "department": "Operations", "status": "sent", "opened": "Yes", "clicked": "No", "reported": "No", "time_to_click": "N/A"},
             ]
-            emp['risk_reason'] = reasons[h_int % len(reasons)]
-            trends = [
-                ('worse', f"↑ {4 + (h_int % 12)} pts (Worse)"),
-                ('worse', f"↑ {2 + (h_int % 8)} pts (Worse)"),
-                ('stable', "→ (Stable)")
-            ]
-            emp['trend_dir'], emp['trend_val'] = trends[h_int % len(trends)]
-        elif emp['reported']:
-            emp['risk_score'] = 5 + (h_int % 14)
-            reasons = [
-                f"Reported phishing headers within {2 + (h_int % 4)}m — strong verification protocol.",
-                "Flagged impersonation attempt quickly — high security diligence.",
-                "Identified phishing indicators and reported — excellent cognitive defense."
-            ]
-            emp['risk_reason'] = reasons[h_int % len(reasons)]
-            trends = [
-                ('better', f"↓ {6 + (h_int % 10)} pts (Better)"),
-                ('better', f"↓ {3 + (h_int % 6)} pts (Better)"),
-                ('stable', "→ (Stable)")
-            ]
-            emp['trend_dir'], emp['trend_val'] = trends[h_int % len(trends)]
-        elif emp['opened']:
-            emp['risk_score'] = 30 + (h_int % 26)
-            reasons = [
-                "Opened email but did not click — cautious interaction pattern, but failed to report.",
-                "Reviewed message but avoided link interaction — needs reinforcement on active reporting."
-            ]
-            emp['risk_reason'] = reasons[h_int % len(reasons)]
-            trends = [
-                ('better', f"↓ {2 + (h_int % 5)} pts (Better)"),
-                ('stable', "→ (Stable)"),
-                ('worse', f"↑ {3 + (h_int % 6)} pts (Worse)")
-            ]
-            emp['trend_dir'], emp['trend_val'] = trends[h_int % len(trends)]
+            campaign_name = "demo_ceo_fraud"
         else:
-            emp['risk_score'] = 15 + (h_int % 21)
-            emp['risk_reason'] = "No action taken — ignored potential threat. Recommend active reporting training."
-            emp['trend_dir'] = 'stable'
-            emp['trend_val'] = "→ (Stable)"
+            if not user_can_access_campaign(cursor, campaign_id, user):
+                return render_template("error.html", code="404", title="Campaign not found", message="Campaign not found.", btn_href="/campaigns", btn_text="Back to campaigns"), 404
+            campaign = get_campaign_metrics(cursor, campaign_id)
+            campaign_name = re.sub(r'[^a-zA-Z0-9_-]', '_', campaign.get("name", "campaign"))
+            cursor.execute("""
+                SELECT 
+                    es.recipient_email AS email,
+                    COALESCE(emp.department, 'Operations') AS department,
+                    es.status,
+                    MAX(CASE WHEN ev.event_type = 'open' THEN 'Yes' ELSE 'No' END) AS opened,
+                    MAX(CASE WHEN ev.event_type = 'click' THEN 'Yes' ELSE 'No' END) AS clicked,
+                    MAX(CASE WHEN ev.event_type = 'report' THEN 'Yes' ELSE 'No' END) AS reported,
+                    MIN(CASE WHEN ev.event_type = 'click' THEN ev.created_at END) AS click_time,
+                    MIN(es.sent_at) AS sent_time
+                FROM emails_sent es
+                LEFT JOIN employees emp ON emp.campaign_id = es.campaign_id AND emp.email = es.recipient_email
+                LEFT JOIN events ev ON ev.tracking_id = es.tracking_id
+                WHERE es.campaign_id = %s
+                GROUP BY es.recipient_email, emp.department, es.status
+                ORDER BY clicked DESC, reported ASC, email ASC
+            """, (campaign_id,))
+            db_rows = cursor.fetchall()
+            rows = []
+            for r in db_rows:
+                ttc = "N/A"
+                if r["clicked"] == "Yes" and r["click_time"] and r["sent_time"]:
+                    try:
+                        diff = (r["click_time"] - r["sent_time"]).total_seconds()
+                        if diff > 0:
+                            m, s = divmod(int(diff), 60)
+                            ttc = f"{m}m {s}s"
+                    except Exception:
+                        pass
+                rows.append({
+                    "email": r["email"],
+                    "department": r["department"],
+                    "status": r["status"],
+                    "opened": r["opened"],
+                    "clicked": r["clicked"],
+                    "reported": r["reported"],
+                    "time_to_click": ttc
+                })
 
-    # 5. Build dynamic brief data
-    vector_name = (campaign.get("scenario_type") or "authority_impersonation").replace("_", " ").title()
-    
-    # Worst departments list
-    failed_depts = []
-    for d in department_stats:
-        if d.get("click_rate", 0) > 15:
-            failed_depts.append(f"{d['department']} ({d['click_rate']}% clicks)")
-            
-    if failed_depts:
-        failed_depts_str = ", ".join(failed_depts[:2])
-        if len(failed_depts) > 2:
-            failed_depts_str += f", and {len(failed_depts) - 2} other(s)"
-    else:
-        failed_depts_str = "None (All departments below threshold)"
+        from flask import Response
+        si = io.StringIO()
+        writer = csv.writer(si)
+        writer.writerow(["Recipient Email", "Department", "Delivery Status", "Opened", "Clicked", "Reported", "Time To Click"])
+        for r in rows:
+            writer.writerow([r["email"], r["department"], r["status"], r["opened"], r["clicked"], r["reported"], r["time_to_click"]])
         
-    # Top at-risk employees (clicked)
-    at_risk_names = [e["name"] for e in employee_logs if e.get("clicked")]
-    if at_risk_names:
-        at_risk_names_str = ", ".join(at_risk_names[:3])
-        if len(at_risk_names) > 3:
-            at_risk_names_str += f", and {len(at_risk_names) - 3} others"
-    else:
-        at_risk_names_str = "None (Zero clicked)"
-        
-    brief_data = {
-        "date": datetime.utcnow().strftime("%B %d, %Y"),
-        "company": campaign.get("company_domain", "Your Company"),
-        "vector": vector_name,
-        "click_rate": current_click,
-        "failed_departments": failed_depts_str,
-        "at_risk_employees": at_risk_names_str,
-        "employee_count": campaign.get("employee_count", 0),
-        "clicks": campaign.get("clicks", 0)
-    }
+        output = si.getvalue()
+        response = Response(output, mimetype="text/csv")
+        response.headers["Content-Disposition"] = f"attachment; filename=evidence_{campaign_name}.csv"
+        return response
+    finally:
+        cursor.close()
+        db.close()
 
-    return render_template(
-        "campaign_report.html",
-        campaign=campaign,
-        report=report,
-        department_stats=department_stats,
-        repeat_offenders=repeat_offenders,
-        employee_logs=employee_logs,
-        sparklines=sparklines,
-        hss_history=hss_history,
-        hss_delta=hss_delta,
-        brief_data=brief_data,
-    )
 
 @app.route("/download-report/<int:campaign_id>")
 @login_required
@@ -6934,9 +8061,12 @@ def download_report(campaign_id):
     pdf.set_auto_page_break(True, margin=16)
     pdf.add_page()
 
-    pdf.set_fill_color(10, 15, 30)
-    pdf.rect(0, 0, 210, 46, "F")
-    pdf.set_text_color(255, 255, 255)
+    pdf.set_fill_color(255, 255, 255)
+    pdf.rect(0, 0, 210, 297, "F")
+    pdf.set_draw_color(226, 232, 240)
+    pdf.set_fill_color(248, 250, 252)
+    pdf.rect(10, 10, 190, 32, "DF")
+    pdf.set_text_color(15, 23, 42)
     pdf.set_font("Helvetica", "B", 22)
     pdf.set_xy(10, 10)
     pdf.cell(0, 9, "PhishSim AI Security Report", ln=1, align="C")
@@ -6956,13 +8086,18 @@ def download_report(campaign_id):
         hss_str = f"{report['hss']['score']}/100 ({report['hss']['label']})"
 
     pdf.cell(100, 8, clean_pdf_text(f"Calculated Risk Level: {report.get('risk_level', 'Unknown')}"))
-    pdf.cell(90, 8, clean_pdf_text(f"Human Security Score™: {hss_str}"), ln=1)
+    pdf.cell(90, 8, clean_pdf_text(f"Human risk score: {hss_str}"), ln=1)
     
     pdf.set_font("Helvetica", "", 10)
     pdf.cell(45, 8, clean_pdf_text(f"Delivery: {report.get('delivery_rate', 0)}%"))
     pdf.cell(45, 8, clean_pdf_text(f"Open: {report.get('open_rate', 0)}%"))
     pdf.cell(50, 8, clean_pdf_text(f"Click: {report.get('click_rate', 0)}%"))
     pdf.cell(50, 8, clean_pdf_text(f"Report: {report.get('report_rate', 0)}%"), ln=1)
+
+    verdict_line = report.get("verdict_sentence") or generate_verdict_sentence(campaign, report)
+    section_title(pdf, "The Debrief Verdict")
+    paragraph(pdf, f'"{verdict_line}"', size=11.5)
+    paragraph(pdf, "Written by a language model from the figures on this page. It can be wrong.", size=8.5)
 
     section_title(pdf, "Executive Summary")
     paragraph(pdf, report["summary"])
@@ -7531,9 +8666,136 @@ def delete_campaigns():
     
     return redirect(url_for('dashboard'))
 
+def _get_safe_send_status(user):
+    """Returns Safe-send connection status with strictly masked credentials (last 4 chars only)."""
+    from ai_engine.email_sanitizer import mask_credential
+
+    sess_user = (session.get("campaign_mailtrap_user") or "").strip()
+    sess_pass = (session.get("campaign_mailtrap_pass") or "").strip()
+    env_user = (os.getenv("MAILTRAP_USER") or "").strip()
+    env_pass = (os.getenv("MAILTRAP_PASS") or "").strip()
+
+    if sess_user and sess_pass:
+        mt_user, mt_pass, source = sess_user, sess_pass, "session"
+    elif env_user and env_pass:
+        mt_user, mt_pass, source = env_user, env_pass, "env"
+    else:
+        mt_user, mt_pass, source = sess_user or env_user, sess_pass or env_pass, "none"
+
+    connected = bool(mt_user and mt_pass)
+    test_inbox = (session.get("safe_send_test_email") or (user.get("email") if user else "") or "").strip()
+    return {
+        "connected": connected,
+        "status_text": "Connected" if connected else "Not set up",
+        "masked_user": mask_credential(mt_user),
+        "masked_pass": mask_credential(mt_pass),
+        "has_password": bool(mt_pass),
+        "host": "sandbox.smtp.mailtrap.io",
+        "port": 2525,
+        "test_inbox": test_inbox,
+        "source": source,
+    }
+
+
+def _enrich_campaign_email_row(row, base_url, event_map):
+    """Normalizes one campaign email row with server-side sanitization, plain text, red-flag annotations, and tracking state."""
+    from ai_engine.email_sanitizer import (
+        sanitize_email_html,
+        html_to_plain_text,
+        annotate_lure_html,
+        build_sandboxed_email_srcdoc,
+    )
+
+    tracking_id = str(row.get("tracking_id") or "")
+    raw_body = row.get("body_html")
+    has_body = bool(raw_body and str(raw_body).strip())
+
+    effective_html = str(raw_body) if has_body else ""
+    if has_body and tracking_id:
+        tracking_url = f"{base_url}/click/{tracking_id}"
+        effective_html = (
+            effective_html
+            .replace("TRACKING_LINK", tracking_url)
+            .replace("PHISHING_LINK", tracking_url)
+        )
+
+    sanitized_html = sanitize_email_html(effective_html) if has_body else ""
+    annotated_html = annotate_lure_html(effective_html) if has_body else ""
+    plain_text = html_to_plain_text(effective_html) if has_body else ""
+    snippet_clean = " ".join(plain_text.split())
+    preview_snippet = (snippet_clean[:115] + "…") if len(snippet_clean) > 115 else snippet_clean
+
+    srcdoc_default = build_sandboxed_email_srcdoc(sanitized_html, show_red_flags=False) if has_body else ""
+    srcdoc_redflags = build_sandboxed_email_srcdoc(annotated_html, show_red_flags=True) if has_body else ""
+
+    ev_types = event_map.get(tracking_id, set())
+    raw_status = str(row.get("status") or "sent").strip().lower()
+    has_reported = ("report" in ev_types) or (raw_status == "reported")
+    has_submitted = ("submit" in ev_types) or (raw_status == "submitted")
+    has_clicked = ("click" in ev_types) or has_submitted or (raw_status in ("clicked", "submitted"))
+    has_opened = ("open" in ev_types) or has_clicked or has_reported or (raw_status in ("opened", "clicked", "submitted", "reported"))
+
+    if has_reported:
+        derived_status = "reported"
+    elif has_clicked:
+        derived_status = "clicked"
+    elif has_opened:
+        derived_status = "opened"
+    else:
+        derived_status = "sent"
+
+    sent_at_val = row.get("sent_at")
+    if sent_at_val is None:
+        sent_at_str = "Pending"
+    elif hasattr(sent_at_val, "strftime"):
+        sent_at_str = sent_at_val.strftime("%Y-%m-%d %H:%M UTC")
+    else:
+        sent_at_str = str(sent_at_val)
+
+    sender_name = (row.get("sender_name") or "Security Simulation").strip() or "Security Simulation"
+    sender_initial = sender_name[0].upper()
+    department = (row.get("department") or "General").strip() or "General"
+    phishing_link = f"{base_url}/click/{tracking_id}" if tracking_id else f"{base_url}/fake-login-demo"
+    landing_preview_url = f"/fake-login-demo?id={tracking_id}&embed=1" if tracking_id else "/fake-login-demo?embed=1"
+
+    return {
+        "id": int(row.get("id") or 0),
+        "recipient_email": str(row.get("recipient_email") or ""),
+        "recipient_name": str(row.get("recipient_name") or (str(row.get("recipient_email") or "").split("@")[0].replace(".", " ").title())),
+        "department": department,
+        "title": str(row.get("title") or ""),
+        "sender_name": sender_name,
+        "sender_initial": sender_initial,
+        "subject": str(row.get("subject") or "No Subject"),
+        "has_body": has_body,
+        "sanitized_html": sanitized_html,
+        "annotated_html": annotated_html,
+        "plain_text": plain_text,
+        "preview_snippet": preview_snippet,
+        "raw_source": effective_html if has_body else "",
+        "srcdoc_default": srcdoc_default,
+        "srcdoc_redflags": srcdoc_redflags,
+        "status": raw_status,
+        "derived_status": derived_status,
+        "tracking_id": tracking_id,
+        "sent_at": sent_at_str,
+        "has_opened": bool(has_opened),
+        "has_clicked": bool(has_clicked),
+        "has_submitted": bool(has_submitted),
+        "has_reported": bool(has_reported),
+        "phishing_link": phishing_link,
+        "landing_preview_url": landing_preview_url,
+        "educational_breakdown": str(row.get("educational_breakdown") or ""),
+    }
+
+
 @app.route("/campaign-emails/<int:campaign_id>")
 def campaign_emails(campaign_id):
-    """Shows a beautiful page of all AI-generated emails for a campaign."""
+    """Safe inbox & email preview client for reviewing generated campaign emails."""
+    from ai_engine.email_sanitizer import plain_mode_badge_info, is_safe_send_mode, is_campaign_editable
+
+    base_url = os.getenv("APP_BASE_URL", "http://127.0.0.1:5050").rstrip("/")
+
     if campaign_id == 0:
         campaign = {
             "id": 0,
@@ -7541,56 +8803,90 @@ def campaign_emails(campaign_id):
             "company_domain": "demo-corp.com",
             "scenario_type": "ceo_fraud",
             "delivery_mode": "sandbox",
-            "status": "launched",
+            "status": "draft",
         }
-        emails = [
+        demo_rows = [
             {
                 "id": 1,
                 "recipient_email": "finance-dept@demo-corp.com",
+                "recipient_name": "Elena Rostova",
+                "department": "Finance",
                 "sender_name": "Chief Executive Officer",
                 "subject": "Confidential: Urgent Acquisition Request",
-                "body_html": "<p>Hi team,</p><p>I am currently in an offsite meeting with our legal counsel finalizing a confidential asset acquisition. We need to secure the initial escrow deposit of <strong>$45,000</strong> today to lock in the terms.</p><p>Please process this invoice immediately through the safe link below to prevent transaction delays: <a href='TRACKING_LINK'>Acquisition Invoice Portal</a>.</p><p>Thanks,<br>Executive Office</p>",
+                "body_html": "<p>Hi team,</p><p>I am currently in an offsite meeting with our legal counsel finalizing a confidential asset acquisition. We need to secure the initial escrow deposit of <strong>$45,000</strong> today to lock in the terms.</p><p>Please process this invoice immediately before 5:00 PM today through the safe link below to prevent transaction delays: <a href='TRACKING_LINK'>Acquisition Invoice Portal</a>.</p><p>Thanks,<br>Executive Office</p>",
                 "educational_breakdown": '{"obfuscation": "Bypasses standard approval using urgency", "authority": "CEO display name spoofing"}',
-                "status": "sent",
-                "tracking_id": "demo_track_1"
+                "status": "clicked",
+                "tracking_id": "demo_track_1",
+                "sent_at": "2026-11-12 09:05 UTC",
             },
             {
                 "id": 2,
                 "recipient_email": "operations@demo-corp.com",
+                "recipient_name": "Marcus Vance",
+                "department": "IT Operations",
                 "sender_name": "IT Helpdesk",
                 "subject": "CRITICAL: Urgent Security Patch Required",
-                "body_html": "<p>Dear employee,</p><p>We have detected suspicious logon attempts targeting your Microsoft 365 profile from an external address. To secure your account, you are required to verify your password immediately.</p><p>Failure to complete security validation within 1 hour will result in temporary account lockout. Access the authentication server here: <a href='TRACKING_LINK'>M365 Authentication portal</a>.</p><p>Sincerely,<br>IT Security Team</p>",
+                "body_html": "<p>Dear employee,</p><p>We have detected suspicious logon attempts targeting your Microsoft 365 profile from an external address. To secure your account, you are required to verify your account immediately.</p><p>Failure to complete security validation within 1 hour will result in prevent lockout. Access the authentication server here: <a href='TRACKING_LINK'>M365 Authentication portal</a>.</p><p>Sincerely,<br>IT Security Team</p>",
                 "educational_breakdown": '{"urgency": "1-hour deadline to induce panic", "believability": "Realistic IT security warning branding"}',
-                "status": "sent",
-                "tracking_id": "demo_track_2"
+                "status": "reported",
+                "tracking_id": "demo_track_2",
+                "sent_at": "2026-11-12 09:06 UTC",
             },
             {
                 "id": 3,
                 "recipient_email": "talent@demo-corp.com",
+                "recipient_name": "Priya Nair",
+                "department": "Human Resources",
                 "sender_name": "HR Department",
                 "subject": "All-Staff Update: Q3 Employee Health Benefits Program",
-                "body_html": "<p>Hello all,</p><p>Our annual Q3 health benefits enrollment window is now open. We have partnered with a new provider to offer expanded dental and wellness coverage starting next month.</p><p>You must review and sign the new policy documentation by Friday to ensure continuous coverage. View the health benefits portal to select your plan: <a href='TRACKING_LINK'>Q3 Benefits Enrollment Policy</a>.</p><p>Best regards,<br>Human Resources</p>",
+                "body_html": "<p>Hello all,</p><p>Our annual Q3 health benefits enrollment window is now open. We have partnered with a new provider to offer expanded dental and wellness coverage starting next month.</p><p>You must review and sign the new policy documentation within 24 hours to ensure continuous coverage. View the health benefits portal to select your plan: <a href='TRACKING_LINK'>Q3 Benefits Enrollment Policy</a>.</p><p>Best regards,<br>Human Resources</p>",
                 "educational_breakdown": '{"personalization": "Targeted staff wellness benefit lure", "obfuscation": "Uses standard organizational HR templates"}',
-                "status": "sent",
-                "tracking_id": "demo_track_3"
+                "status": "opened",
+                "tracking_id": "demo_track_3",
+                "sent_at": "2026-11-12 09:08 UTC",
             },
             {
                 "id": 4,
                 "recipient_email": "jordan.ellis@demo-corp.com",
+                "recipient_name": "Jordan Ellis",
+                "department": "Sales",
                 "sender_name": "Invoice Dispatch",
                 "subject": "Action Required: Outstanding Corporate Travel Invoice #88492",
-                "body_html": "<p>Good day,</p><p>This is a second reminder that corporate travel invoice #88492 is currently <strong>12 days overdue</strong>. A late penalty fee of 5% will be applied if payment is not received by tomorrow morning.</p><p>Please review the line-item invoice details and settle payment through our client billing portal: <a href='TRACKING_LINK'>Pay Travel Invoice #88492</a>.</p><p>Regards,<br>Finance Operations</p>",
+                "body_html": "<p>Good day,</p><p>This is a second reminder that corporate travel invoice #88492 is currently <strong>12 days overdue</strong>. A late penalty fee of 5% will be applied if payment is not received immediately.</p><p>Please review the line-item invoice details and settle payment through our client billing portal: <a href='TRACKING_LINK'>Pay Travel Invoice #88492</a>.</p><p>Regards,<br>Finance Operations</p>",
                 "educational_breakdown": '{"urgency": "Threatens late fee penalties", "obfuscation": "Simulates routine corporate travel expense billing"}',
                 "status": "sent",
-                "tracking_id": "demo_track_4"
-            }
+                "tracking_id": "demo_track_4",
+                "sent_at": "2026-11-12 09:10 UTC",
+            },
         ]
-        base_url = os.getenv("APP_BASE_URL", "http://127.0.0.1:5050").rstrip("/")
-        for email in emails:
-            if email.get("body_html") and email.get("tracking_id"):
-                tracking_url = f"{base_url}/click/{email['tracking_id']}"
-                email["body_html"] = email["body_html"].replace("TRACKING_LINK", tracking_url).replace("<a ", "<a target='_blank' ")
-        return render_template("campaign_emails.html", campaign=campaign, emails=emails, is_demo_preview=True)
+        demo_events = {
+            "demo_track_1": {"open", "click"},
+            "demo_track_2": {"open", "report"},
+            "demo_track_3": {"open"},
+            "demo_track_4": set(),
+        }
+        emails = [_enrich_campaign_email_row(r, base_url, demo_events) for r in demo_rows]
+        departments = sorted({e["department"] for e in emails if e["department"]})
+        status_counts = {
+            "all": len(emails),
+            "sent": sum(1 for e in emails if e["derived_status"] == "sent"),
+            "opened": sum(1 for e in emails if e["has_opened"]),
+            "clicked": sum(1 for e in emails if e["has_clicked"]),
+            "reported": sum(1 for e in emails if e["has_reported"]),
+        }
+        return render_template(
+            "campaign_emails.html",
+            campaign=campaign,
+            emails=emails,
+            is_demo_preview=True,
+            mode_badge=plain_mode_badge_info(campaign.get("delivery_mode")),
+            can_edit=False,
+            is_safe_send=is_safe_send_mode(campaign.get("delivery_mode")),
+            safe_send_status=_get_safe_send_status(current_user()),
+            departments=departments,
+            status_counts=status_counts,
+            has_targets_without_emails=False,
+        )
 
     user = current_user()
     if not user:
@@ -7602,26 +8898,480 @@ def campaign_emails(campaign_id):
         campaign = user_can_access_campaign(cursor, campaign_id, user)
         if not campaign:
             return "Campaign not found or access denied", 404
-        
+
+        ensure_email_tracking_table(cursor)
+        ensure_events_table(cursor)
+
         cursor.execute("""
-            SELECT id, recipient_email, subject, sender_name, body_html, educational_breakdown, status, tracking_id
-            FROM emails_sent 
-            WHERE campaign_id = %s
-            ORDER BY id ASC
+            SELECT e.id, e.recipient_email, e.subject, e.sender_name, e.body_html,
+                   e.educational_breakdown, e.status, e.tracking_id, e.sent_at,
+                   emp.name AS recipient_name, emp.department AS department, emp.title AS title
+            FROM emails_sent e
+            LEFT JOIN employees emp
+              ON emp.campaign_id = e.campaign_id
+             AND LOWER(emp.email) = LOWER(e.recipient_email)
+            WHERE e.campaign_id = %s
+            ORDER BY e.id ASC
         """, (campaign_id,))
-        emails = cursor.fetchall()
-        
-        # Replace TRACKING_LINK placeholder in stored bodies with the simulated page link
-        base_url = os.getenv("APP_BASE_URL", "http://127.0.0.1:5050").rstrip("/")
-        for email in emails:
-            if email.get("body_html") and email.get("tracking_id"):
-                tracking_url = f"{base_url}/click/{email['tracking_id']}"
-                email["body_html"] = email["body_html"].replace("TRACKING_LINK", tracking_url).replace("<a ", "<a target='_blank' ")
-        
-        return render_template("campaign_emails.html", campaign=campaign, emails=emails)
+        rows = cursor.fetchall() or []
+
+        event_map = {}
+        tracking_ids = [r["tracking_id"] for r in rows if r.get("tracking_id")]
+        if tracking_ids:
+            placeholders = ",".join(["%s"] * len(tracking_ids))
+            cursor.execute(
+                f"SELECT tracking_id, LOWER(event_type) AS event_type FROM events WHERE tracking_id IN ({placeholders})",
+                tuple(tracking_ids),
+            )
+            for ev in cursor.fetchall() or []:
+                event_map.setdefault(ev["tracking_id"], set()).add(ev["event_type"])
+
+        emails = [_enrich_campaign_email_row(r, base_url, event_map) for r in rows]
+
+        has_targets_without_emails = False
+        if not emails:
+            cursor.execute("SELECT COUNT(*) AS cnt FROM employees WHERE campaign_id = %s", (campaign_id,))
+            has_targets_without_emails = (cursor.fetchone() or {}).get("cnt", 0) > 0
+
+        departments = sorted({e["department"] for e in emails if e["department"]})
+        status_counts = {
+            "all": len(emails),
+            "sent": sum(1 for e in emails if e["derived_status"] == "sent"),
+            "opened": sum(1 for e in emails if e["has_opened"]),
+            "clicked": sum(1 for e in emails if e["has_clicked"]),
+            "reported": sum(1 for e in emails if e["has_reported"]),
+        }
+
+        return render_template(
+            "campaign_emails.html",
+            campaign=campaign,
+            emails=emails,
+            is_demo_preview=False,
+            mode_badge=plain_mode_badge_info(campaign.get("delivery_mode")),
+            can_edit=is_campaign_editable(campaign),
+            is_safe_send=is_safe_send_mode(campaign.get("delivery_mode")),
+            safe_send_status=_get_safe_send_status(user),
+            departments=departments,
+            status_counts=status_counts,
+            has_targets_without_emails=has_targets_without_emails,
+        )
     finally:
         cursor.close()
         db.close()
+
+
+@app.route("/campaign-emails/<int:campaign_id>/frame/<int:email_id>")
+@login_required
+def campaign_email_frame(campaign_id, email_id):
+    """Returns standalone server-sanitized script-free email document for sandboxed preview."""
+    from ai_engine.email_sanitizer import sanitize_email_html, annotate_lure_html, build_sandboxed_email_srcdoc
+    from flask import make_response
+
+    user = current_user()
+    db = get_db_connection()
+    cursor = db.cursor(dictionary=True)
+    try:
+        campaign = user_can_access_campaign(cursor, campaign_id, user)
+        if not campaign:
+            return "Not found", 404
+        cursor.execute(
+            "SELECT body_html, tracking_id FROM emails_sent WHERE id = %s AND campaign_id = %s",
+            (email_id, campaign_id),
+        )
+        row = cursor.fetchone()
+        if not row:
+            return "Email not found", 404
+        base_url = os.getenv("APP_BASE_URL", "http://127.0.0.1:5050").rstrip("/")
+        raw_html = str(row.get("body_html") or "")
+        if row.get("tracking_id"):
+            t_url = f"{base_url}/click/{row['tracking_id']}"
+            raw_html = raw_html.replace("TRACKING_LINK", t_url).replace("PHISHING_LINK", t_url)
+        show_flags = request.args.get("flags") == "1"
+        fragment = annotate_lure_html(raw_html) if show_flags else sanitize_email_html(raw_html)
+        doc = build_sandboxed_email_srcdoc(fragment, show_red_flags=show_flags)
+        resp = make_response(doc)
+        resp.headers["Content-Type"] = "text/html; charset=utf-8"
+        resp.headers["X-Frame-Options"] = "SAMEORIGIN"
+        resp.headers["Content-Security-Policy"] = (
+            "default-src 'none'; script-src 'none'; style-src 'unsafe-inline'; "
+            "img-src http: https: data:; frame-ancestors 'self';"
+        )
+        return resp
+    finally:
+        cursor.close()
+        db.close()
+
+
+@app.route("/api/campaign/<int:campaign_id>/emails/generate", methods=["POST"])
+@csrf.exempt
+@login_required
+def api_generate_campaign_email(campaign_id):
+    """Generates missing body for an email row (or creates initial emails for targets without emails)."""
+    from ai_engine.email_sanitizer import regenerate_email_content
+    import uuid as _uuid
+
+    user = current_user()
+    data = request.get_json(silent=True) or {}
+    email_id = data.get("email_id")
+    use_ai = bool(data.get("use_ai", True))
+    base_url = os.getenv("APP_BASE_URL", "http://127.0.0.1:5050").rstrip("/")
+
+    db = get_db_connection()
+    cursor = db.cursor(dictionary=True)
+    try:
+        campaign = user_can_access_campaign(cursor, campaign_id, user)
+        if not campaign:
+            return jsonify({"error": "Campaign not found"}), 404
+
+        ensure_email_tracking_table(cursor)
+        ensure_events_table(cursor)
+        scenario = campaign.get("scenario_type") or "ceo_fraud"
+        domain = campaign.get("company_domain") or "company.com"
+
+        updated_ids = []
+        if email_id:
+            cursor.execute(
+                """
+                SELECT e.*, emp.name AS emp_name, emp.department AS department, emp.title AS title
+                FROM emails_sent e
+                LEFT JOIN employees emp ON emp.campaign_id = e.campaign_id AND LOWER(emp.email) = LOWER(e.recipient_email)
+                WHERE e.id = %s AND e.campaign_id = %s
+                """,
+                (email_id, campaign_id),
+            )
+            target_rows = cursor.fetchall() or []
+            if not target_rows:
+                return jsonify({"error": "Email not found"}), 404
+            for row in target_rows:
+                emp_profile = {
+                    "name": row.get("emp_name") or (row.get("recipient_email") or "Employee").split("@")[0].title(),
+                    "email": row.get("recipient_email") or "",
+                    "department": row.get("department") or "Operations",
+                    "title": row.get("title") or "Employee",
+                    "company_name": domain,
+                }
+                gen = regenerate_email_content(emp_profile, scenario, target_domain=domain, use_ai=use_ai)
+                t_id = row.get("tracking_id") or str(_uuid.uuid4())
+                t_url = f"{base_url}/click/{t_id}"
+                body_html = (gen.get("body_html") or "").replace("PHISHING_LINK", t_url).replace("TRACKING_LINK", t_url)
+                subject = gen.get("subject") or row.get("subject") or "Action Required"
+                sender_name = gen.get("sender_name") or row.get("sender_name") or "IT Security"
+                breakdown = gen.get("educational_breakdown") or "Simulated phishing awareness training message."
+                cursor.execute(
+                    """
+                    UPDATE emails_sent
+                    SET subject = %s, sender_name = %s, body_html = %s, educational_breakdown = %s, tracking_id = %s
+                    WHERE id = %s AND campaign_id = %s
+                    """,
+                    (subject, sender_name, body_html, breakdown, t_id, row["id"], campaign_id),
+                )
+                updated_ids.append(row["id"])
+        else:
+            cursor.execute("SELECT * FROM employees WHERE campaign_id = %s ORDER BY id ASC", (campaign_id,))
+            emps = cursor.fetchall() or []
+            if not emps:
+                emps = [{"name": user.get("name") or "Employee", "email": user.get("email") or f"team@{domain}", "department": "General", "title": "Staff"}]
+            for emp in emps[:10]:
+                emp_profile = {
+                    "name": emp.get("name") or "Employee",
+                    "email": emp.get("email") or "",
+                    "department": emp.get("department") or "General",
+                    "title": emp.get("title") or "Employee",
+                    "company_name": domain,
+                }
+                gen = regenerate_email_content(emp_profile, scenario, target_domain=domain, use_ai=use_ai)
+                t_id = str(_uuid.uuid4())
+                t_url = f"{base_url}/click/{t_id}"
+                body_html = (gen.get("body_html") or "").replace("PHISHING_LINK", t_url).replace("TRACKING_LINK", t_url)
+                cursor.execute(
+                    """
+                    INSERT INTO emails_sent (campaign_id, tracking_id, recipient_email, subject, sender_name, body_html, educational_breakdown, status)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, 'sent')
+                    """,
+                    (
+                        campaign_id,
+                        t_id,
+                        emp_profile["email"],
+                        gen.get("subject") or "Action Required",
+                        gen.get("sender_name") or "IT Security",
+                        body_html,
+                        gen.get("educational_breakdown") or "Simulated security training email.",
+                    ),
+                )
+                updated_ids.append(cursor.lastrowid)
+
+        db.commit()
+        cursor.execute(
+            """
+            SELECT e.id, e.recipient_email, e.subject, e.sender_name, e.body_html,
+                   e.educational_breakdown, e.status, e.tracking_id, e.sent_at,
+                   emp.name AS recipient_name, emp.department AS department, emp.title AS title
+            FROM emails_sent e
+            LEFT JOIN employees emp ON emp.campaign_id = e.campaign_id AND LOWER(emp.email) = LOWER(e.recipient_email)
+            WHERE e.id = %s AND e.campaign_id = %s
+            """,
+            (updated_ids[0], campaign_id),
+        )
+        saved_row = cursor.fetchone()
+        enriched = _enrich_campaign_email_row(saved_row, base_url, {}) if saved_row else None
+        return jsonify({"success": True, "generated_count": len(updated_ids), "email": enriched})
+    finally:
+        cursor.close()
+        db.close()
+
+
+@app.route("/api/campaign/<int:campaign_id>/emails/<int:email_id>/regenerate", methods=["POST"])
+@csrf.exempt
+@login_required
+def api_regenerate_campaign_email(campaign_id, email_id):
+    """Regenerates or saves an edited email with diff preview (draft/preview campaigns only)."""
+    from ai_engine.email_sanitizer import (
+        is_campaign_editable,
+        regenerate_email_content,
+        sanitize_email_html,
+        html_to_plain_text,
+        compute_email_diff,
+    )
+
+    user = current_user()
+    data = request.get_json(silent=True) or {}
+    base_url = os.getenv("APP_BASE_URL", "http://127.0.0.1:5050").rstrip("/")
+
+    db = get_db_connection()
+    cursor = db.cursor(dictionary=True)
+    try:
+        campaign = user_can_access_campaign(cursor, campaign_id, user)
+        if not campaign:
+            return jsonify({"error": "Campaign not found"}), 404
+        if not is_campaign_editable(campaign):
+            return jsonify({"error": "Email editing is only available for draft or preview campaigns."}), 403
+
+        cursor.execute(
+            """
+            SELECT e.*, emp.name AS recipient_name, emp.department AS department, emp.title AS title
+            FROM emails_sent e
+            LEFT JOIN employees emp ON emp.campaign_id = e.campaign_id AND LOWER(emp.email) = LOWER(e.recipient_email)
+            WHERE e.id = %s AND e.campaign_id = %s
+            """,
+            (email_id, campaign_id),
+        )
+        row = cursor.fetchone()
+        if not row:
+            return jsonify({"error": "Email not found"}), 404
+
+        tracking_id = str(row.get("tracking_id") or "")
+        tracking_url = f"{base_url}/click/{tracking_id}" if tracking_id else f"{base_url}/fake-login-demo"
+
+        if data.get("apply"):
+            new_subject = (data.get("subject") or row.get("subject") or "Action Required").strip()[:255]
+            raw_new_body = str(data.get("body_html") or "")
+            sanitized_to_save = sanitize_email_html(
+                raw_new_body.replace("PHISHING_LINK", tracking_url).replace("TRACKING_LINK", tracking_url)
+            )
+            new_sender = (data.get("sender_name") or row.get("sender_name") or "Security Team").strip()[:255]
+            cursor.execute(
+                """
+                UPDATE emails_sent
+                SET subject = %s, sender_name = %s, body_html = %s
+                WHERE id = %s AND campaign_id = %s
+                """,
+                (new_subject, new_sender, sanitized_to_save, email_id, campaign_id),
+            )
+            db.commit()
+
+            cursor.execute(
+                """
+                SELECT e.id, e.recipient_email, e.subject, e.sender_name, e.body_html,
+                       e.educational_breakdown, e.status, e.tracking_id, e.sent_at,
+                       emp.name AS recipient_name, emp.department AS department, emp.title AS title
+                FROM emails_sent e
+                LEFT JOIN employees emp ON emp.campaign_id = e.campaign_id AND LOWER(emp.email) = LOWER(e.recipient_email)
+                WHERE e.id = %s AND e.campaign_id = %s
+                """,
+                (email_id, campaign_id),
+            )
+            updated_row = cursor.fetchone()
+            event_map = {}
+            if tracking_id:
+                cursor.execute("SELECT LOWER(event_type) AS event_type FROM events WHERE tracking_id = %s", (tracking_id,))
+                event_map[tracking_id] = {ev["event_type"] for ev in cursor.fetchall() or []}
+            enriched = _enrich_campaign_email_row(updated_row, base_url, event_map)
+            return jsonify({"success": True, "saved": True, "email": enriched})
+
+        prompt = (data.get("prompt") or "").strip()
+        if not prompt:
+            return jsonify({"error": "Enter a prompt describing how to revise this email."}), 400
+
+        emp_profile = {
+            "name": row.get("recipient_name") or (row.get("recipient_email") or "Employee").split("@")[0].title(),
+            "email": row.get("recipient_email") or "",
+            "department": row.get("department") or "General",
+            "title": row.get("title") or "Employee",
+            "company_name": campaign.get("company_domain") or "company.com",
+        }
+        old_subject = row.get("subject") or ""
+        old_body_html = row.get("body_html") or ""
+        old_plain = html_to_plain_text(old_body_html)
+
+        gen = regenerate_email_content(
+            emp_profile,
+            campaign.get("scenario_type") or "ceo_fraud",
+            target_domain=campaign.get("company_domain"),
+            prompt_instruction=prompt,
+            current_subject=old_subject,
+            current_body_html=old_body_html,
+            use_ai=bool(data.get("use_ai", True)),
+        )
+        new_subject = (gen.get("subject") or old_subject).strip()
+        new_body_raw = (gen.get("body_html") or "").replace("PHISHING_LINK", tracking_url).replace("TRACKING_LINK", tracking_url)
+        new_body_sanitized = sanitize_email_html(new_body_raw)
+        new_plain = html_to_plain_text(new_body_sanitized)
+        diff = compute_email_diff(old_subject, old_plain, new_subject, new_plain)
+
+        return jsonify({
+            "success": True,
+            "saved": False,
+            "old_subject": old_subject,
+            "new_subject": new_subject,
+            "new_sender_name": gen.get("sender_name") or row.get("sender_name") or "Security Team",
+            "new_body_html": new_body_sanitized,
+            "new_plain_text": new_plain,
+            "diff": diff,
+        })
+    finally:
+        cursor.close()
+        db.close()
+
+
+@app.route("/api/campaign/<int:campaign_id>/emails/<int:email_id>/send-test", methods=["POST"])
+@csrf.exempt
+@login_required
+def api_send_test_campaign_email(campaign_id, email_id):
+    """Sends a Safe-send test copy of an email to the current user's configured test inbox."""
+    from ai_engine.email_sanitizer import is_safe_send_mode, sanitize_email_html
+    from send_email import send_phishing_email
+
+    user = current_user()
+    data = request.get_json(silent=True) or {}
+    base_url = os.getenv("APP_BASE_URL", "http://127.0.0.1:5050").rstrip("/")
+
+    db = get_db_connection()
+    cursor = db.cursor(dictionary=True)
+    try:
+        campaign = user_can_access_campaign(cursor, campaign_id, user)
+        if not campaign:
+            return jsonify({"error": "Campaign not found"}), 404
+        if not is_safe_send_mode(campaign.get("delivery_mode")):
+            return jsonify({"error": "Send test to myself is only available in Safe send campaigns."}), 403
+
+        cursor.execute("SELECT * FROM emails_sent WHERE id = %s AND campaign_id = %s", (email_id, campaign_id))
+        row = cursor.fetchone()
+        if not row:
+            return jsonify({"error": "Email not found"}), 404
+
+        test_recipient = (data.get("test_email") or session.get("safe_send_test_email") or user.get("email") or "").strip()
+        if not test_recipient or "@" not in test_recipient:
+            return jsonify({"error": "Configure a valid test inbox address in Safe send settings first."}), 400
+
+        mt_user = (session.get("campaign_mailtrap_user") or os.getenv("MAILTRAP_USER") or "").strip()
+        mt_pass = (session.get("campaign_mailtrap_pass") or os.getenv("MAILTRAP_PASS") or "").strip()
+        if not (mt_user and mt_pass):
+            return jsonify({"success": False, "error": "Safe send credentials are not configured yet."}), 400
+
+        tracking_id = row.get("tracking_id") or "test-preview"
+        t_url = f"{base_url}/click/{tracking_id}"
+        raw_html = (row.get("body_html") or "<p>Test email body</p>").replace("TRACKING_LINK", t_url).replace("PHISHING_LINK", t_url)
+        clean_html = sanitize_email_html(raw_html)
+
+        res = send_phishing_email(
+            to_email=test_recipient,
+            subject=f"[TEST] {row.get('subject') or 'Simulation Email'}",
+            sender_name=row.get("sender_name") or "PhishSim Safe Send",
+            body_html=clean_html,
+            tracking_id=tracking_id,
+            delivery_mode="mailtrap",
+            mailtrap_user=mt_user,
+            mailtrap_pass=mt_pass,
+        )
+        if res.get("success"):
+            return jsonify({"success": True, "recipient": test_recipient, "message": f"Delivered test copy to {test_recipient}"})
+        return jsonify({"success": False, "error": res.get("error") or "Delivery failed"}), 400
+    finally:
+        cursor.close()
+        db.close()
+
+
+@app.route("/api/safe-send/settings", methods=["POST"])
+@csrf.exempt
+@login_required
+def api_safe_send_settings():
+    """Saves test inbox email and optional Mailtrap credentials into session; never echoes secrets."""
+    user = current_user()
+    data = request.get_json(silent=True) or {}
+    test_inbox = (data.get("test_inbox") or "").strip()
+    mt_user = (data.get("mailtrap_user") or "").strip()
+    mt_pass = (data.get("mailtrap_pass") or "").strip()
+
+    if test_inbox:
+        session["safe_send_test_email"] = test_inbox
+    if mt_user:
+        session["campaign_mailtrap_user"] = mt_user
+    if mt_pass:
+        session["campaign_mailtrap_pass"] = mt_pass
+
+    return jsonify({"success": True, "safe_send_status": _get_safe_send_status(user)})
+
+
+@app.route("/api/safe-send/test-connection", methods=["POST"])
+@csrf.exempt
+@login_required
+def api_safe_send_test_connection():
+    """Tests Mailtrap / Safe-send SMTP credentials and returns masked status (never echoes secrets)."""
+    user = current_user()
+    data = request.get_json(silent=True) or {}
+
+    if data.get("test_inbox"):
+        session["safe_send_test_email"] = data["test_inbox"].strip()
+    if data.get("mailtrap_user"):
+        session["campaign_mailtrap_user"] = data["mailtrap_user"].strip()
+    if data.get("mailtrap_pass"):
+        session["campaign_mailtrap_pass"] = data["mailtrap_pass"].strip()
+
+    mt_user = (session.get("campaign_mailtrap_user") or os.getenv("MAILTRAP_USER") or "").strip()
+    mt_pass = (session.get("campaign_mailtrap_pass") or os.getenv("MAILTRAP_PASS") or "").strip()
+    status_payload = _get_safe_send_status(user)
+
+    if not (mt_user and mt_pass):
+        status_payload["connected"] = False
+        status_payload["status_text"] = "Not set up"
+        return jsonify({
+            "connected": False,
+            "message": "Safe send credentials are not set up yet.",
+            "safe_send_status": status_payload,
+        }), 400
+
+    try:
+        with smtplib.SMTP("sandbox.smtp.mailtrap.io", 2525, timeout=6) as server:
+            server.ehlo()
+            server.starttls()
+            server.ehlo()
+            server.login(mt_user, mt_pass)
+        status_payload["connected"] = True
+        status_payload["status_text"] = "Connected"
+        return jsonify({
+            "connected": True,
+            "message": "Safe send test inbox connected and authenticated.",
+            "safe_send_status": status_payload,
+        })
+    except Exception as exc:
+        status_payload["connected"] = False
+        status_payload["status_text"] = "Not set up"
+        return jsonify({
+            "connected": False,
+            "message": f"Connection test failed: {type(exc).__name__}",
+            "safe_send_status": status_payload,
+        }), 400
+
 
 @app.route("/api/send-brief/<int:campaign_id>", methods=["POST"])
 @csrf.exempt

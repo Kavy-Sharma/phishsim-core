@@ -1,364 +1,101 @@
 {% extends 'base.html' %}
 
-{% block title %}Vigilance Reward - PhishSim AI{% endblock %}
+{% block title %}Great Catch — PhishSim AI{% endblock %}
 
 {% block content %}
+<main class="awareness-page-container">
+    <div class="awareness-card">
+        <!-- Shield Success Icon -->
+        <div class="awareness-icon-badge" style="color: var(--success); background: color-mix(in srgb, var(--success) 12%, transparent); border-color: color-mix(in srgb, var(--success) 25%, transparent);">
+            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                <path d="m9 12 2 2 4-4"></path>
+            </svg>
+        </div>
 
-<style>
-@keyframes popIn {
-    0% { opacity: 0; transform: scale(0.8); }
-    100% { opacity: 1; transform: scale(1); }
-}
+        <h1 class="awareness-title">Great catch — threat reported</h1>
+        <p class="awareness-subtitle">
+            This was a practice test. You successfully identified and reported it. Here are 3 clues you spotted:
+        </p>
 
-/* Light theme overrides for thank you page elements */
-body.light-theme #thank-you-card-container > div {
-    background: #ffffff !important;
-    border-color: #cbd5e1 !important;
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.06) !important;
-}
-body.light-theme #thank-you-card-container h1 {
-    color: #0f172a !important;
-}
-body.light-theme #thank-you-card-container p {
-    color: #334155 !important;
-}
-body.light-theme #thank-you-card-container strong {
-    color: #0f172a !important;
-}
-body.light-theme #thank-you-card-container .inner-box {
-    background: #f8fafc !important;
-    border-color: #cbd5e1 !important;
-    color: #334155 !important;
-}
-body.light-theme #thank-you-card-container .points-box {
-    background: rgba(16, 185, 129, 0.05) !important;
-    border-color: rgba(16, 185, 129, 0.2) !important;
-}
-body.light-theme #thank-you-card-container .points-text-primary {
-    color: #0f172a !important;
-}
-</style>
+        <!-- 3 clues -->
+        <div class="awareness-clues-section">
+            <div class="awareness-clue-item">
+                <span class="awareness-clue-num" style="background: color-mix(in srgb, var(--success) 14%, transparent); color: var(--success); border-color: color-mix(in srgb, var(--success) 30%, transparent);">1</span>
+                <div>
+                    <strong>Lookalike sender address</strong>
+                    <p>The sender address differed from your organization's legitimate email domain.</p>
+                </div>
+            </div>
+            <div class="awareness-clue-item">
+                <span class="awareness-clue-num" style="background: color-mix(in srgb, var(--success) 14%, transparent); color: var(--success); border-color: color-mix(in srgb, var(--success) 30%, transparent);">2</span>
+                <div>
+                    <strong>Artificial urgency</strong>
+                    <p>The subject line and copy tried to induce a rushed decision.</p>
+                </div>
+            </div>
+            <div class="awareness-clue-item">
+                <span class="awareness-clue-num" style="background: color-mix(in srgb, var(--success) 14%, transparent); color: var(--success); border-color: color-mix(in srgb, var(--success) 30%, transparent);">3</span>
+                <div>
+                    <strong>Destination link mismatch</strong>
+                    <p>The underlying link targeted an unverified testing domain.</p>
+                </div>
+            </div>
+        </div>
 
-<div style="background: var(--bg-base); min-height: 100vh; padding: 2rem; box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+        <!-- Score Pill -->
+        <div style="background: color-mix(in srgb, var(--success) 8%, var(--bg-surface)); border: 1px solid color-mix(in srgb, var(--success) 22%, transparent); border-radius: 10px; padding: 12px 16px; margin-bottom: 24px; display: inline-flex; align-items: center; gap: 10px;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--success);">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+            </svg>
+            <span style="font-size: 0.88rem; font-weight: 600; color: var(--text-primary);">+5 vigilance points recorded</span>
+        </div>
 
-    <!-- ═══════════════════════════════════════════════════════════
-         STAGE 1: 500px Center Warning Card (Email Report Window)
-         ═══════════════════════════════════════════════════════════ -->
-    <div id="thank-you-card-container" style="max-width: 500px; width: 100%; box-sizing: border-box; animation: popIn 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;">
-        <div style="
-            background: var(--bg-surface);
-            border-top: 4px solid var(--success);
-            border-radius: var(--radius-xl, 24px);
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
-            padding: 48px;
-            text-align: center;
-        ">
-            <!-- Shield Checkmark SVG Icon -->
-            <div style="color: var(--success); margin-bottom: 24px; display: inline-flex; justify-content: center; align-items: center;">
-                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <div style="display: flex; flex-direction: column; gap: 10px; width: 100%;">
+            <a href="/certificate/{{ tracking_id }}" target="_blank" class="btn-primary-filled" style="display: flex; width: 100%; text-decoration: none; justify-content: center; align-items: center; gap: 8px; padding: 12px 20px; border-radius: 8px; font-weight: 600;">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                    <path d="m9 12 2 2 4-4"></path>
+                    <path d="M8 11h8"></path>
+                    <path d="M8 15h8"></path>
                 </svg>
-            </div>
-
-            <h1 style="
-                font-family: 'Space Grotesk', sans-serif;
-                font-size: 1.5rem;
-                font-weight: 700;
-                color: var(--text-primary);
-                margin: 0 0 16px 0;
-                line-height: 1.3;
-            ">Great catch — threat reported</h1>
-
-            <p style="
-                font-family: 'Space Grotesk', sans-serif;
-                font-weight: 400;
-                font-size: 1rem;
-                color: var(--text-secondary);
-                line-height: 1.6;
-                margin: 0 0 24px 0;
-            ">
-                You correctly identified and reported this phishing simulation. Your security instincts are sharp.
-            </p>
-
-            <!-- Divider -->
-            <div class="divider" style="border-top: 1px solid var(--border-subtle, rgba(255,255,255,0.08)); margin: 24px 0;"></div>
-
-            <!-- Security Score Boost Indicator -->
-            <div class="points-box" style="
-                background: rgba(16, 185, 129, 0.08);
-                border: 1px solid rgba(16, 185, 129, 0.2);
-                border-radius: 12px;
-                padding: 16px;
-                margin-bottom: 32px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                gap: 12px;
-            ">
-                <div style="font-size: 28px; color: var(--success); display: flex; align-items: center;">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="12" cy="12" r="10"></circle>
-                        <line x1="12" y1="8" x2="12" y2="16"></line>
-                        <line x1="8" y1="12" x2="16" y2="12"></line>
-                    </svg>
-                </div>
-                <div style="text-align: left;">
-                    <div class="points-text-primary" style="font-size: 15px; font-weight: 700; color: var(--text-primary); font-family: 'Space Grotesk', sans-serif;">+5 points</div>
-                    <div style="font-size: 11px; color: var(--text-muted);">added to your profile</div>
-                </div>
-            </div>
-
-            <a href="/simulated?id={{ tracking_id }}&view=briefing" class="btn-primary-filled" style="
-                width: 100%;
-                padding: 12px 24px;
-                font-size: 14px;
-                font-weight: 600;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                gap: 8px;
-                border-radius: 8px;
-                text-decoration: none;
-                font-family: 'Space Grotesk', sans-serif;
-                box-sizing: border-box;
-                margin-bottom: 12px;
-            ">
-                View Your Security Briefing
+                <span>View certificate</span>
             </a>
-            
-            <!-- Secondary Certificate action -->
-            <a href="/certificate/{{ tracking_id }}" target="_blank" class="btn-outline" style="
-                width: 100%;
-                padding: 12px 24px;
-                font-size: 14px;
-                font-weight: 600;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                gap: 8px;
-                border-radius: 8px;
-                text-decoration: none;
-                font-family: 'Space Grotesk', sans-serif;
-                border: 1px solid rgba(16, 185, 129, 0.3);
-                color: var(--success) !important;
-                background: rgba(16, 185, 129, 0.03);
-                box-sizing: border-box;
-            ">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><path d="M8 11h8"></path><path d="M8 15h8"></path></svg>
-                View &amp; Print Certificate
+            <a href="/simulated?id={{ tracking_id }}&view=briefing" class="btn-outline" style="display: flex; width: 100%; text-decoration: none; justify-content: center; padding: 12px 20px; border-radius: 8px; font-weight: 600;">
+                Review practice briefing
             </a>
         </div>
     </div>
+</main>
 
-</div>
-
-<!-- Confetti Script -->
-<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 <script>
-    // Web Audio API victory sound synthesizer
-    function playVictorySound() {
+    // Lightweight Web Audio celebration chime (zero external dependencies)
+    (function playVictoryChime() {
         try {
             const AudioContext = window.AudioContext || window.webkitAudioContext;
             if (!AudioContext) return;
-            const audioCtx = new AudioContext();
+            const ctx = new AudioContext();
+            const now = ctx.currentTime;
             
-            const now = audioCtx.currentTime;
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.type = 'sine';
             
-            // Oscillator 1 (Primary Chime)
-            const osc1 = audioCtx.createOscillator();
-            const gain1 = audioCtx.createGain();
-            osc1.connect(gain1);
-            gain1.connect(audioCtx.destination);
-            osc1.type = 'sine';
+            osc.frequency.setValueAtTime(523.25, now);
+            osc.frequency.setValueAtTime(659.25, now + 0.08);
+            osc.frequency.setValueAtTime(783.99, now + 0.16);
+            osc.frequency.setValueAtTime(1046.50, now + 0.24);
             
-            // Rising major arpeggio
-            osc1.frequency.setValueAtTime(523.25, now); // C5
-            osc1.frequency.setValueAtTime(659.25, now + 0.08); // E5
-            osc1.frequency.setValueAtTime(783.99, now + 0.16); // G5
-            osc1.frequency.setValueAtTime(1046.50, now + 0.24); // C6
+            gain.gain.setValueAtTime(0, now);
+            gain.gain.linearRampToValueAtTime(0.15, now + 0.04);
+            gain.gain.exponentialRampToValueAtTime(0.005, now + 0.7);
             
-            gain1.gain.setValueAtTime(0, now);
-            gain1.gain.linearRampToValueAtTime(0.2, now + 0.04);
-            gain1.gain.exponentialRampToValueAtTime(0.01, now + 0.7);
-            
-            osc1.start(now);
-            osc1.stop(now + 0.7);
-            
-            // Oscillator 2 (Sparkle)
-            const osc2 = audioCtx.createOscillator();
-            const gain2 = audioCtx.createGain();
-            osc2.connect(gain2);
-            gain2.connect(audioCtx.destination);
-            osc2.type = 'triangle';
-            osc2.frequency.setValueAtTime(1046.50, now + 0.24);
-            osc2.frequency.linearRampToValueAtTime(2093.00, now + 0.45);
-            
-            gain2.gain.setValueAtTime(0, now + 0.24);
-            gain2.gain.linearRampToValueAtTime(0.1, now + 0.28);
-            gain2.gain.exponentialRampToValueAtTime(0.01, now + 0.6);
-            
-            osc2.start(now + 0.24);
-            osc2.stop(now + 0.6);
-            
+            osc.start(now);
+            osc.stop(now + 0.7);
         } catch (e) {
-            console.log("Web Audio blocked or unsupported:", e);
+            // Audio context silently ignored if autoplay policy restricts
         }
-    }
-
-    // Fire confetti and play chime on load
-    window.addEventListener('load', () => {
-        // Play victory chime
-        playVictorySound();
-
-        // Confetti burst
-        const duration = 2.5 * 1000;
-        const end = Date.now() + duration;
-
-        (function frame() {
-            confetti({
-                particleCount: 4,
-                angle: 60,
-                spread: 55,
-                origin: { x: 0, y: 0.8 },
-                colors: ['#22c55e', '#10b981', '#34d399', '#06b6d4']
-            });
-            confetti({
-                particleCount: 4,
-                angle: 120,
-                spread: 55,
-                origin: { x: 1, y: 0.8 },
-                colors: ['#22c55e', '#10b981', '#34d399', '#06b6d4']
-            });
-
-            if (Date.now() < end) {
-                requestAnimationFrame(frame);
-            }
-        }());
-    });
-
-    // Ensure audio works via a quick page interaction fallback
-    document.body.addEventListener('click', () => {
-        playVictorySound();
-    }, { once: true });
-
-    // Client-side HTML5 Canvas certificate generation and download
-    function generateCertificate() {
-        const canvas = document.createElement("canvas");
-        canvas.width = 1200;
-        canvas.height = 800;
-        const ctx = canvas.getContext("2d");
-        
-        // 1. Background Fill
-        ctx.fillStyle = "#030712"; // Deep space background
-        ctx.fillRect(0, 0, 1200, 800);
-        
-        // Draw gridlines
-        ctx.strokeStyle = "rgba(6, 182, 212, 0.04)";
-        ctx.lineWidth = 1;
-        for (let x = 0; x < 1200; x += 40) {
-            ctx.beginPath();
-            ctx.moveTo(x, 0);
-            ctx.lineTo(x, 800);
-            ctx.stroke();
-        }
-        for (let y = 0; y < 800; y += 40) {
-            ctx.beginPath();
-            ctx.moveTo(0, y);
-            ctx.lineTo(1200, y);
-            ctx.stroke();
-        }
-        
-        // 2. Borders
-        ctx.strokeStyle = "#10b981"; // Emerald
-        ctx.lineWidth = 8;
-        ctx.strokeRect(30, 30, 1140, 740);
-        
-        ctx.strokeStyle = "#06b6d4"; // Cyan
-        ctx.lineWidth = 2;
-        ctx.strokeRect(45, 45, 1110, 710);
-        
-        // Corner accent bars
-        ctx.fillStyle = "#10b981";
-        // Top-Left
-        ctx.fillRect(20, 20, 60, 6);
-        ctx.fillRect(20, 20, 6, 60);
-        // Top-Right
-        ctx.fillRect(1120, 20, 60, 6);
-        ctx.fillRect(1174, 20, 6, 60);
-        // Bottom-Left
-        ctx.fillRect(20, 774, 60, 6);
-        ctx.fillRect(20, 720, 6, 60);
-        // Bottom-Right
-        ctx.fillRect(1120, 774, 60, 6);
-        ctx.fillRect(1174, 720, 6, 60);
-
-        // 3. Texts
-        ctx.fillStyle = "#94a3b8";
-        ctx.font = "bold 15px monospace";
-        ctx.textAlign = "center";
-        ctx.fillText("PHISHSIM.AI // GLOBAL WORKFORCE SECURITY INTEGRITY", 600, 100);
-        
-        ctx.fillStyle = "#10b981";
-        ctx.font = "800 42px sans-serif";
-        ctx.fillText("CERTIFICATE OF VIGILANCE", 600, 165);
-        
-        ctx.fillStyle = "#64748b";
-        ctx.font = "500 18px sans-serif";
-        ctx.fillText("THIS CERTIFICATE OF CYBERSECURITY EXCELLENCE IS AWARDED TO:", 600, 250);
-        
-        // Name
-        ctx.fillStyle = "#ffffff";
-        ctx.font = "bold 48px sans-serif";
-        ctx.shadowColor = "#10b981";
-        ctx.shadowBlur = 15;
-        const nameVal = "{{ recipient_name }}".toUpperCase();
-        ctx.fillText(nameVal, 600, 335);
-        ctx.shadowBlur = 0; // reset shadow
-        
-        // Description
-        ctx.fillStyle = "#cbd5e1";
-        ctx.font = "18px sans-serif";
-        ctx.fillText("for successfully identifying, reporting, and neutralizing a simulated", 600, 420);
-        ctx.fillText("spear-phishing vector, reinforcing organizational resilience.", 600, 450);
-        
-        // Verification & Date
-        const now = new Date();
-        const dateStr = now.toLocaleDateString("en-US", { year: 'numeric', month: 'long', day: 'numeric' });
-        
-        ctx.fillStyle = "#64748b";
-        ctx.font = "14px monospace";
-        ctx.fillText(`DATE OF VERIFICATION: ${dateStr.toUpperCase()}`, 600, 530);
-        
-        // Verification Hash
-        const hashVal = "SHA256:" + Array.from({length: 40}, () => Math.floor(Math.random()*16).toString(16)).join("").toUpperCase();
-        ctx.fillText(`VERIFICATION HASH: ${hashVal}`, 600, 560);
-        
-        // Signatures
-        ctx.strokeStyle = "#334155";
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.moveTo(350, 670);
-        ctx.lineTo(550, 670);
-        ctx.moveTo(650, 670);
-        ctx.lineTo(850, 670);
-        ctx.stroke();
-        
-        ctx.fillStyle = "#64748b";
-        ctx.font = "13px sans-serif";
-        ctx.fillText("PhishSim.ai Security Core", 450, 690);
-        ctx.fillText("Threat Simulation Agent", 750, 690);
-        
-        ctx.fillStyle = "#22d3ee";
-        ctx.font = "italic 16px Georgia";
-        ctx.fillText("Automated System Verification", 450, 660);
-        ctx.fillText("AI Generation Engine", 750, 660);
-        
-        // Trigger Download
-        const link = document.createElement("a");
-        link.download = `PhishSim_Vigilance_Certificate_${nameVal.replace(/\s+/g, '_')}.png`;
-        link.href = canvas.toDataURL("image/png");
-        link.click();
-    }
+    })();
 </script>
 {% endblock %}

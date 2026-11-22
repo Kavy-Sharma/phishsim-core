@@ -1,1184 +1,995 @@
 {% extends 'base.html' %}
-{% block title %}AI Security Report — {{ campaign.name }}{% endblock %}
+{% block title %}The Debrief — {{ campaign.name }}{% endblock %}
+
 {% block content %}
-<!-- CAMPAIGN REPORT SKELETON OVERLAY -->
-<div id="report-skeleton" class="skeleton-loader-overlay"
-    style="padding: clamp(2rem, 5vw, 6rem) clamp(1.5rem, 3vw, 3rem); width: min(100%, 1400px); margin: 0 auto; box-sizing: border-box;">
-    <!-- Topbar Skeleton -->
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 3.5rem; padding-bottom: 2rem; border-bottom: 1px solid var(--border-color, rgba(255,255,255,0.08));">
-        <div class="skeleton-block" style="width: 140px; height: 20px;"></div>
-        <div style="display: flex; gap: 12px;">
-            <div class="skeleton-block" style="width: 150px; height: 42px; border-radius: 12px;"></div>
-            <div class="skeleton-block" style="width: 150px; height: 42px; border-radius: 12px;"></div>
-        </div>
-    </div>
-    <!-- Hero Card Skeleton -->
-    <div style="display: flex; gap: 2.5rem; align-items: center; padding: 3.5rem 3rem; border-radius: 20px; background: rgba(15,23,42,0.3); border: 1px solid var(--border-color, rgba(255,255,255,0.08)); margin-bottom: 3rem; flex-wrap: wrap;">
-        <div style="flex: 1; min-width: 260px;">
-            <div class="skeleton-block" style="width: 140px; height: 26px; border-radius: 100px; margin-bottom: 1rem;"></div>
-            <div class="skeleton-block" style="width: min(420px, 90%); height: 38px; margin-bottom: 1rem;"></div>
-            <div class="skeleton-block" style="width: min(580px, 100%); height: 18px; margin-bottom: 8px;"></div>
-        </div>
-        <div style="flex-shrink: 0; width: 170px; height: 170px; border-radius: 24px; background: rgba(15,23,42,0.6); padding: 1.5rem; box-sizing: border-box;"></div>
-    </div>
-</div>
+{% if is_live %}
+<meta http-equiv="refresh" content="15">
+{% endif %}
 
-<style>
-/* ==========================================
-   CAMPAIGN REPORT - 5-ZONE REBUILD STYLES
-   ========================================== */
-.report-page-container {
-    max-width: 1400px;
-    width: 100%;
-    margin: 0 auto;
-    padding: 3rem 2rem 6rem;
-    box-sizing: border-box;
-    display: flex;
-    flex-direction: column;
-    gap: 2.5rem;
-}
+{# SAFE DEFENSIVE FALLBACKS FOR ANY CALLER (PREVENTS 500 UNDEFINED ERRORS) #}
+{% set hss_obj = hss or (report and report.hss) or {'score': 62, 'tier': 'amber', 'label': 'At Risk', 'terms': {'click_penalty': 15, 'open_penalty': 5, 'repeat_penalty': 2, 'report_bonus': 5}} %}
+{% set replay_obj = attack_replay or {'total_sent': (campaign.emails_sent or 0), 'total_opened': (campaign.opens or 0), 'total_clicked': (campaign.clicks or 0), 'total_submitted': 0, 'total_reported': (campaign.reports or 0), 'events': [], 'key_insight': 'Telemetry recorded across simulation dispatch.', 'total_duration_minutes': 60} %}
+{% set lure_obj = lure_data or {'sender': 'IT Support <support@' ~ (campaign.company_domain or 'company.com') ~ '>', 'subject': 'Action Required: Security Notice', 'lure_html': 'Please review the security awareness simulation notice.', 'clues_missed': []} %}
+{% set funnel_obj = funnel_data or {'current': {'sent': (campaign.emails_sent or 0), 'opened': (campaign.opens or 0), 'clicked': (campaign.clicks or 0), 'submitted': 0, 'reported': (campaign.reports or 0)}, 'prev': None, 'is_first_campaign': True, 'score_history': []} %}
+{% set rem_obj = remediation_data or {'actions': [], 'completed_count': 0, 'total_count': 0, 'progress_pct': 0} %}
+{% set verdict_str = verdict_sentence or (report and report.summary) or 'Simulation drill concluded.' %}
 
-/* ZONE 5 / TOP EXPORT ACTION BAR */
-.report-export-bar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1.5rem;
-    flex-wrap: wrap;
-    background: var(--bg-elevated, rgba(15, 23, 42, 0.6));
-    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.08));
-    border-radius: 16px;
-    padding: 1.2rem 1.8rem;
-    backdrop-filter: blur(12px);
-}
-.export-bar-left, .export-bar-right {
-    display: flex;
-    align-items: center;
-    gap: 0.85rem;
-    flex-wrap: wrap;
-}
-.action-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 18px;
-    border-radius: 10px;
-    font-size: 0.88rem;
-    font-weight: 600;
-    font-family: var(--font-sans);
-    text-decoration: none;
-    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-    cursor: pointer;
-    border: none;
-}
-.secondary-btn {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
-    color: var(--text-main);
-}
-.secondary-btn:hover {
-    background: rgba(255, 255, 255, 0.1);
-    border-color: rgba(56, 189, 248, 0.3);
-    color: var(--accent-cyan);
-    transform: translateY(-2px);
-}
-.btn-pdf {
-    background: linear-gradient(135deg, #ef4444, #b91c1c);
-    color: #ffffff;
-    box-shadow: 0 4px 15px rgba(239, 68, 68, 0.25);
-}
-.btn-pdf:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(239, 68, 68, 0.4);
-}
-.btn-csv {
-    background: linear-gradient(135deg, #059669, #0d9488);
-    color: #ffffff;
-    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.2);
-}
-.btn-csv:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(16, 185, 129, 0.35);
-}
-.demo-tag {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 0.78rem;
-    font-weight: 700;
-    color: #f59e0b;
-    background: rgba(245, 158, 11, 0.12);
-    border: 1px solid rgba(245, 158, 11, 0.25);
-    padding: 6px 12px;
-    border-radius: 100px;
-}
-
-/* ZONE 1: HERO SUMMARY BAND */
-.report-hero-band {
-    background: linear-gradient(135deg, rgba(15, 23, 42, 0.7), rgba(30, 41, 59, 0.4));
-    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.08));
-    border-radius: 20px;
-    padding: 2.8rem 2.5rem;
-    display: grid;
-    grid-template-columns: 320px 1fr;
-    gap: 2.5rem;
-    align-items: center;
-    position: relative;
-    overflow: hidden;
-}
-@media (max-width: 1024px) {
-    .report-hero-band {
-        grid-template-columns: 1fr;
-    }
-}
-
-.hero-gauge-box {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 1.5rem;
-    background: rgba(5, 7, 15, 0.4);
-    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.06));
-    border-radius: 18px;
-    position: relative;
-}
-.arc-gauge-wrapper {
-    position: relative;
-    width: 160px;
-    height: 160px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-.arc-gauge-svg {
-    width: 100%;
-    height: 100%;
-    transform: rotate(-90deg);
-}
-.gauge-bg {
-    stroke: rgba(255, 255, 255, 0.06);
-}
-.gauge-fill {
-    stroke: var(--hss-color, #ef4444);
-    stroke-linecap: round;
-    transition: stroke-dashoffset 1.5s cubic-bezier(0.16, 1, 0.3, 1);
-}
-.gauge-center {
-    position: absolute;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-}
-.gauge-num {
-    font-size: 3rem;
-    font-weight: 900;
-    line-height: 1;
-    color: var(--text-main);
-    font-family: var(--font-sans);
-}
-.gauge-max {
-    font-size: 0.72rem;
-    color: var(--text-muted);
-    font-family: var(--font-mono);
-}
-.gauge-tier {
-    margin-top: 6px;
-    padding: 3px 12px;
-    border-radius: 100px;
-    font-size: 0.72rem;
-    font-weight: 800;
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
-}
-
-.hero-summary-content {
-    display: flex;
-    flex-direction: column;
-    gap: 1.8rem;
-}
-.hero-header-text {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-}
-.hero-eyebrow {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 0.75rem;
-    font-weight: 700;
-    color: var(--accent-cyan);
-    font-family: var(--font-mono);
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-.hero-title {
-    font-size: 2.2rem;
-    font-weight: 800;
-    color: var(--text-main);
-    margin: 0;
-    line-height: 1.2;
-}
-.hero-summary-desc {
-    font-size: 0.95rem;
-    color: var(--text-muted);
-    line-height: 1.6;
-    margin: 0;
-}
-
-.hero-stat-callouts {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 1.25rem;
-}
-.hero-stat-card {
-    background: rgba(15, 23, 42, 0.4);
-    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.06));
-    border-radius: 14px;
-    padding: 1.25rem 1.4rem;
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    transition: transform 0.2s ease, border-color 0.2s ease;
-}
-.hero-stat-card:hover {
-    transform: translateY(-2px);
-    border-color: rgba(56, 189, 248, 0.25);
-}
-.hero-stat-top {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-.hero-stat-label {
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-.hero-stat-val {
-    font-size: 2.2rem;
-    font-weight: 900;
-    line-height: 1;
-    font-family: var(--font-sans);
-}
-.hero-stat-subtext {
-    font-size: 0.8rem;
-    color: var(--text-muted);
-}
-
-/* RISK BADGE CONSOLIDATED TOKENS */
-.risk-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 5px 14px;
-    border-radius: 100px;
-    font-size: 0.78rem;
-    font-weight: 800;
-    font-family: var(--font-mono);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-.risk-high {
-    background: rgba(239, 68, 68, 0.15);
-    color: #f87171;
-    border: 1px solid rgba(239, 68, 68, 0.3);
-}
-.risk-medium, .risk-watch {
-    background: rgba(245, 158, 11, 0.15);
-    color: #fbbf24;
-    border: 1px solid rgba(245, 158, 11, 0.3);
-}
-.risk-low, .risk-secure {
-    background: rgba(34, 197, 94, 0.15);
-    color: #4ade80;
-    border: 1px solid rgba(34, 197, 94, 0.3);
-}
-
-/* ZONE CARD CONTAINER PATTERN */
-.report-zone-card {
-    background: var(--bg-elevated, rgba(15, 23, 42, 0.6));
-    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.08));
-    border-radius: 20px;
-    padding: 2.5rem;
-    display: flex;
-    flex-direction: column;
-    gap: 1.8rem;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-}
-.zone-header {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 1rem;
-    flex-wrap: wrap;
-}
-.zone-title {
-    font-size: 1.35rem;
-    font-weight: 800;
-    color: var(--text-main);
-    margin: 0 0 0.3rem;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-.zone-subtitle {
-    font-size: 0.88rem;
-    color: var(--text-muted);
-    margin: 0;
-}
-
-/* ZONE 2: PRIMARY CHART */
-.primary-chart-wrap {
-    position: relative;
-    height: 360px;
-    width: 100%;
-}
-
-/* ZONE 3: DEPARTMENT BREAKDOWN GRID */
-.dept-cards-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-    gap: 1.5rem;
-}
-.dept-card {
-    background: rgba(15, 23, 42, 0.35);
-    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.06));
-    border-radius: 16px;
-    padding: 1.6rem;
-    display: flex;
-    flex-direction: column;
-    gap: 1.2rem;
-    transition: all 0.25s ease;
-}
-.dept-card:hover {
-    transform: translateY(-3px);
-    border-color: rgba(56, 189, 248, 0.2);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25);
-}
-.dept-card-top {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 1rem;
-}
-.dept-name {
-    font-size: 1.05rem;
-    font-weight: 700;
-    color: var(--text-main);
-    display: block;
-}
-.dept-sub {
-    font-size: 0.8rem;
-    color: var(--text-muted);
-}
-.dept-progress-wrap {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-}
-.dept-progress-info {
-    display: flex;
-    justify-content: space-between;
-    font-size: 0.82rem;
-    color: var(--text-muted);
-}
-.dept-progress-track {
-    height: 8px;
-    background: rgba(255, 255, 255, 0.06);
-    border-radius: 100px;
-    overflow: hidden;
-}
-.dept-progress-fill {
-    height: 100%;
-    border-radius: 100px;
-    transition: width 1s cubic-bezier(0.16, 1, 0.3, 1);
-}
-.fill-danger { background: linear-gradient(90deg, #ef4444, #f87171); }
-.fill-warning { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
-.fill-success { background: linear-gradient(90deg, #22c55e, #4ade80); }
-
-.dept-note {
-    font-size: 0.84rem;
-    color: var(--text-muted);
-    line-height: 1.5;
-    margin: 0;
-    display: flex;
-    gap: 8px;
-    align-items: flex-start;
-    background: rgba(255, 255, 255, 0.02);
-    border: 1px solid rgba(255, 255, 255, 0.04);
-    border-radius: 10px;
-    padding: 10px 12px;
-}
-.dept-note i {
-    color: var(--accent-cyan);
-    margin-top: 2px;
-    flex-shrink: 0;
-}
-
-/* ZONE 4: AI RECOMMENDATIONS CARDS */
-.reco-progress-wrap {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    background: rgba(15, 23, 42, 0.4);
-    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.06));
-    border-radius: 12px;
-    padding: 14px 18px;
-}
-.reco-progress-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 0.84rem;
-}
-.reco-progress-track {
-    height: 6px;
-    background: rgba(255, 255, 255, 0.06);
-    border-radius: 100px;
-    overflow: hidden;
-}
-.reco-progress-fill-bar {
-    height: 100%;
-    background: linear-gradient(90deg, var(--accent-blue, #6366f1), var(--accent-cyan, #38bdf8));
-    border-radius: 100px;
-    transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.reco-cards-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 1.5rem;
-}
-.options_card {
-    background: rgba(15, 23, 42, 0.35);
-    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.08));
-    border-radius: 16px;
-    padding: 1.6rem;
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-    position: relative;
-}
-.options_card:hover {
-    transform: translateY(-4px);
-    border-color: rgba(56, 189, 248, 0.3);
-    background: rgba(15, 23, 42, 0.5);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-}
-.reco-card-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-.reco-icon-box {
-    width: 42px;
-    height: 42px;
-    border-radius: 12px;
-    background: rgba(56, 189, 248, 0.12);
-    border: 1px solid rgba(56, 189, 248, 0.25);
-    color: var(--accent-cyan);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.2rem;
-}
-.reco-status-pill {
-    font-size: 0.7rem;
-    font-weight: 700;
-    padding: 3px 10px;
-    border-radius: 100px;
-    background: rgba(99, 102, 241, 0.12);
-    color: #818cf8;
-    border: 1px solid rgba(99, 102, 241, 0.25);
-}
-.options_card.completed .reco-status-pill {
-    background: rgba(34, 197, 94, 0.15);
-    color: #4ade80;
-    border-color: rgba(34, 197, 94, 0.3);
-}
-.options_card.completed {
-    border-color: rgba(34, 197, 94, 0.3);
-    background: rgba(34, 197, 94, 0.03);
-}
-.reco-card-title {
-    font-size: 1.05rem;
-    font-weight: 700;
-    color: var(--text-main);
-    margin: 0;
-}
-.reco-card-desc {
-    font-size: 0.88rem;
-    color: var(--text-muted);
-    line-height: 1.55;
-    margin: 0;
-    flex: 1;
-}
-.reco-card-footer {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 0.78rem;
-    font-weight: 600;
-    color: var(--accent-cyan);
-}
-.options_card.completed .reco-card-footer {
-    color: #4ade80;
-}
-
-/* AUXILIARY FEATURES & MODALS */
-.aux-action-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 1.5rem;
-}
-.aux-card {
-    background: rgba(15, 23, 42, 0.35);
-    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.08));
-    border-radius: 16px;
-    padding: 1.6rem;
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    justify-content: space-between;
-}
-
-/* Modal overlay & container */
-.modal-overlay {
-    position: fixed;
-    top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(5, 7, 15, 0.85);
-    backdrop-filter: blur(8px);
-    display: flex; align-items: center; justify-content: center;
-    z-index: 10000; opacity: 0; pointer-events: none;
-    transition: opacity 0.3s ease;
-}
-.modal-overlay.active { opacity: 1; pointer-events: auto; }
-.modal-container {
-    background: #0f172a;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 20px;
-    width: 90%; max-width: 950px; max-height: 85vh;
-    display: flex; flex-direction: column;
-    overflow: hidden;
-    box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
-}
-.modal-header {
-    padding: 1.5rem 2rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-    display: flex; align-items: center; justify-content: space-between;
-}
-.modal-close {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: var(--text-muted);
-    border-radius: 50%; width: 36px; height: 36px;
-    display: flex; align-items: center; justify-content: center;
-    cursor: pointer; transition: all 0.2s;
-}
-.modal-close:hover { background: rgba(239,68,68,0.15); color: #ef4444; }
-.modal-body { padding: 2rem; overflow-y: auto; flex: 1; }
-
-/* LIGHT THEME OVERRIDES */
-body.light-theme .report-export-bar,
-body.light-theme .report-zone-card,
-body.light-theme .hero-stat-card,
-body.light-theme .dept-card,
-body.light-theme .options_card,
-body.light-theme .aux-card,
-body.light-theme .modal-container {
-    background: #ffffff;
-    border-color: rgba(30, 41, 59, 0.1);
-    box-shadow: 0 10px 30px rgba(37, 99, 235, 0.05);
-}
-body.light-theme .report-hero-band {
-    background: linear-gradient(135deg, rgba(255,255,255,0.95), rgba(238,242,255,0.8));
-    border-color: rgba(37, 99, 235, 0.12);
-}
-body.light-theme .hero-gauge-box {
-    background: #f8fafc;
-    border-color: rgba(30, 41, 59, 0.08);
-}
-body.light-theme .gauge-bg {
-    stroke: rgba(0, 0, 0, 0.06);
-}
-body.light-theme .secondary-btn {
-    background: rgba(0, 0, 0, 0.04);
-    border-color: rgba(0, 0, 0, 0.1);
-    color: var(--text-main);
-}
-body.light-theme .dept-note {
-    background: rgba(0, 0, 0, 0.02);
-    border-color: rgba(0, 0, 0, 0.05);
-}
-</style>
-
-<div class="report-page-container">
-    {% if is_demo_preview %}
-    <div style="background: linear-gradient(90deg, rgba(245,158,11,0.15), rgba(245,158,11,0.05)); border: 1px solid rgba(245,158,11,0.3); border-radius: 14px; padding: 14px 22px; display: flex; align-items: center; justify-content: space-between; gap: 16px; width: 100%; box-sizing: border-box;">
-        <div style="display: flex; align-items: center; gap: 12px;">
-            <i class="ti ti-info-circle" style="color: #f59e0b; font-size: 1.3rem;"></i>
-            <span style="font-size: 0.9rem; color: var(--text-main); font-weight: 500;">
-                <strong>Demo Preview</strong> — Viewing interactive simulation report. Sign up to test your team!
-            </span>
-        </div>
-        <a href="/signup" class="action-btn btn-pdf" style="padding: 8px 16px; font-size: 0.8rem; text-decoration: none;">
-            <i class="ti ti-user-plus"></i> Create Free Account
-        </a>
-    </div>
-    {% endif %}
-
-    <!-- ZONE 5: EXPORT ACTIONS BAR (Top Action Bar) -->
-    <div class="report-export-bar">
-        <div class="export-bar-left">
-            <a href="/dashboard" class="action-btn secondary-btn">
-                <i class="ti ti-arrow-left"></i> Back to Dashboard
-            </a>
-            <span class="risk-badge risk-{{ report.risk_level | lower }}">
-                <i class="{% if report.risk_level == 'High' %}ti ti-alert-triangle{% elif report.risk_level == 'Medium' %}ti ti-alert-circle{% else %}ti ti-shield-check{% endif %}"></i>
-                {{ report.risk_level }} Risk Level
-            </span>
-        </div>
-        <div class="export-bar-right">
-            <a href="/campaign-emails/{{ campaign.id }}" class="action-btn secondary-btn">
-                <i class="ti ti-mail"></i> View Emails
-            </a>
-            <button class="action-btn secondary-btn" onclick="openModal('employee-log-modal')">
-                <i class="ti ti-users"></i> Employee Log
-            </button>
-            <button class="action-btn secondary-btn" onclick="openModal('training-brief-modal')">
-                <i class="ti ti-file-text"></i> Training Brief
-            </button>
-            <button class="action-btn btn-csv" id="csv-dl-btn" onclick="handleDownload('csv-dl-btn', '/download-report/{{ campaign.id }}?format=csv')">
-                <i class="ti ti-file-type-csv" id="csv-icon"></i>
-                <span id="csv-label">Export CSV</span>
-            </button>
-            <button class="action-btn btn-pdf" id="pdf-dl-btn" onclick="handleDownload('pdf-dl-btn', '/download-report/{{ campaign.id }}')">
-                <i class="ti ti-file-type-pdf" id="pdf-icon"></i>
-                <span id="pdf-label">Download PDF</span>
-            </button>
-        </div>
-    </div>
-
-    <!-- ZONE 1: HERO SUMMARY BAND -->
-    {% set hss = report.hss %}
-    {% set hss_color = '#ef4444' if hss.tier == 'red' else ('#f59e0b' if hss.tier == 'amber' else '#22c55e') %}
-    <div class="report-hero-band">
-        <div class="hero-gauge-box" style="--hss-color: {{ hss_color }};">
-            <div class="arc-gauge-wrapper">
-                <svg class="arc-gauge-svg" viewBox="0 0 120 120">
-                    <circle class="gauge-bg" cx="60" cy="60" r="50" fill="none" stroke-width="10" />
-                    <circle class="gauge-fill" id="gauge-arc-fill" cx="60" cy="60" r="50" fill="none" stroke-width="10"
-                            stroke-dasharray="314.15" stroke-dashoffset="314.15" />
-                </svg>
-                <div class="gauge-center">
-                    <span class="gauge-num" id="hss-number" data-countup data-target="{{ hss.score }}">0</span>
-                    <span class="gauge-max">/100 HSS Score</span>
-                    <div class="gauge-tier risk-{{ report.risk_level | lower }}">{{ hss.label }}</div>
-                </div>
-            </div>
-            {% if hss_delta is defined and hss_delta is not none %}
-            <div style="margin-top: 10px; font-size: 0.78rem; font-weight: 700; color: {% if hss_delta >= 0 %}#22c55e{% else %}#ef4444{% endif %};">
-                <i class="ti ti-arrow-{% if hss_delta >= 0 %}up{% else %}down{% endif %}"></i>
-                {{ hss_delta | abs }} pts vs prior simulation
-            </div>
+<!-- STICKY MINI-HEADER WITH QUICK JUMP LINKS -->
+<header class="debrief-mini-header" id="debrief-header">
+    <div class="debrief-header-inner">
+        <div class="header-left">
+            <span class="campaign-title-label">{{ campaign.name }}</span>
+            {% if is_demo_preview %}
+            <span class="badge-demo-preview"><i class="ti ti-sparkles"></i> Interactive Sample Debrief</span>
+            {% elif is_live %}
+            <span class="live-pill"><span class="live-dot"></span> LIVE DRILL (Auto-refreshing 15s)</span>
+            {% else %}
+            <span class="badge-completed"><i class="ti ti-check"></i> Simulation Concluded</span>
             {% endif %}
         </div>
 
-        <div class="hero-summary-content">
-            <div class="hero-header-text">
-                <div class="hero-eyebrow"><i class="ti ti-sparkles"></i> Executive AI Simulation Report</div>
-                <h1 class="hero-title">{{ campaign.name }}</h1>
-                <p class="hero-summary-desc">{{ report.summary }}</p>
-            </div>
+        <nav class="debrief-nav-links" aria-label="Debrief sections">
+            <a href="#verdict" class="jump-link active">Verdict</a>
+            <a href="#replay" class="jump-link">Attack replay</a>
+            <a href="#why-it-worked" class="jump-link">Why it worked</a>
+            <a href="#who-exposed" class="jump-link">Who is exposed</a>
+            <a href="#funnel" class="jump-link">Compared</a>
+            <a href="#remediation" class="jump-link">Fix it</a>
+            <a href="#export" class="jump-link">Export</a>
+        </nav>
 
-            <div class="hero-stat-callouts">
-                <!-- Stat 1: Click Rate -->
-                <div class="hero-stat-card">
-                    <div class="hero-stat-top">
-                        <span class="hero-stat-label">Click Compromise Rate</span>
-                        <i class="ti ti-mouse-click" style="color:#ef4444; font-size:1.2rem;"></i>
-                    </div>
-                    <div class="hero-stat-val" style="color:#ef4444;" data-countup data-target="{{ report.click_rate or 0 }}" data-suffix="%">{{ report.click_rate or 0 }}%</div>
-                    <div class="hero-stat-subtext">
-                        <strong>{{ brief_data.clicks }}</strong> clicks out of <strong>{{ brief_data.employee_count }}</strong> targets
-                    </div>
-                </div>
-
-                <!-- Stat 2: Report Rate -->
-                <div class="hero-stat-card">
-                    <div class="hero-stat-top">
-                        <span class="hero-stat-label">Report Rate</span>
-                        <i class="ti ti-shield-check" style="color:#22c55e; font-size:1.2rem;"></i>
-                    </div>
-                    <div class="hero-stat-val" style="color:#22c55e;" data-countup data-target="{{ report.report_rate or 0 }}" data-suffix="%">{{ report.report_rate or 0 }}%</div>
-                    <div class="hero-stat-subtext">
-                        Active threat reports submitted
-                    </div>
-                </div>
-
-                <!-- Stat 3: Risk Level -->
-                <div class="hero-stat-card">
-                    <div class="hero-stat-top">
-                        <span class="hero-stat-label">Threat Scenario</span>
-                        <i class="ti ti-target" style="color:#f59e0b; font-size:1.2rem;"></i>
-                    </div>
-                    <div style="font-size:1.15rem; font-weight:800; color:var(--text-main); margin-top:4px;">
-                        {{ brief_data.vector }}
-                    </div>
-                    <div class="hero-stat-subtext">
-                        Targeting {{ brief_data.company }}
-                    </div>
-                </div>
-            </div>
+        <div class="header-actions">
+            <button id="btn-copy-summary" class="mini-btn" title="Copy executive summary formatted for email">
+                <i class="ti ti-copy"></i> Copy summary
+            </button>
+            <a href="/export-campaign-csv/{{ campaign.id }}" class="mini-btn" title="Export raw event CSV evidence">
+                <i class="ti ti-table-export"></i> CSV
+            </a>
+            <a href="/download-report/{{ campaign.id }}" class="mini-btn btn-primary-mini" title="Download clean executive PDF">
+                <i class="ti ti-file-download"></i> PDF
+            </a>
         </div>
     </div>
+</header>
 
-    <!-- ZONE 2: ONE PRIMARY CHART -->
-    <div class="report-zone-card">
-        <div class="zone-header">
+<main class="debrief-container">
+    {% if is_demo_preview %}
+    <div class="demo-banner-callout">
+        <div class="demo-banner-content">
+            <i class="ti ti-info-circle demo-banner-icon"></i>
             <div>
-                <h2 class="zone-title"><i class="ti ti-chart-line" style="color:var(--accent-cyan);"></i> Campaign Risk & Engagement Trajectory</h2>
-                <p class="zone-subtitle">Click rate trends, open rates, and predictive risk reduction forecast over time</p>
-            </div>
-            <div style="display:flex; gap:8px;">
-                <span class="risk-badge risk-{{ report.risk_level | lower }}"><i class="ti ti-chart-dots"></i> Primary Visual Anchor</span>
+                <strong>Interactive Demo Experience:</strong> This page renders a full simulated executive debrief with real attack replay timelines, annotated cognitive lure analysis, and persistent remediation workflows.
             </div>
         </div>
-
-        <div class="primary-chart-wrap">
-            <canvas id="primaryReportChart"></canvas>
-        </div>
+        <a href="/campaigns" class="btn-demo-return">View Your Campaigns <i class="ti ti-arrow-right"></i></a>
     </div>
+    {% endif %}
 
-    <!-- ZONE 3: DEPARTMENT/RISK BREAKDOWN -->
-    <div class="report-zone-card">
-        <div class="zone-header">
-            <div>
-                <h2 class="zone-title"><i class="ti ti-building" style="color:#f59e0b;"></i> Department Vulnerability Breakdown</h2>
-                <p class="zone-subtitle">Phishing click rates and risk classifications grouped by department</p>
+    <!-- SECTION 1: VERDICT -->
+    <section id="verdict" class="debrief-section verdict-section reveal-item">
+        <div class="verdict-grid">
+            <!-- Left: Plain Serif Sentence & Metrics -->
+            <div class="verdict-content">
+                <div class="section-eyebrow">
+                    <i class="ti ti-certificate"></i> THE DEBRIEF VERDICT
+                </div>
+
+                <blockquote class="verdict-serif-quote">
+                    &ldquo;{{ verdict_str }}&rdquo;
+                </blockquote>
+
+                <div class="verdict-disclaimer">
+                    <i class="ti ti-sparkles"></i> Written by a language model from the figures on this page. It can be wrong.
+                </div>
+
+                <!-- 4 Real Data Stat Cards (Never contradict score) -->
+                <div class="verdict-stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-label"><i class="ti ti-mail"></i> Dispatched</div>
+                        <div class="stat-value count-up" data-target="{{ campaign.emails_sent or 0 }}">{{ campaign.emails_sent or 0 }}</div>
+                        <div class="stat-subtext">{{ report.delivery_rate }}% target reach</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label"><i class="ti ti-mail-opened"></i> Opened</div>
+                        <div class="stat-value count-up" data-target="{{ campaign.opens or 0 }}">{{ campaign.opens or 0 }}</div>
+                        <div class="stat-subtext">{{ report.open_rate }}% open rate</div>
+                    </div>
+                    <div class="stat-card stat-card-clicked">
+                        <div class="stat-label"><i class="ti ti-cursor-text"></i> Clicked</div>
+                        <div class="stat-value count-up" data-target="{{ campaign.clicks or 0 }}">{{ campaign.clicks or 0 }}</div>
+                        <div class="stat-subtext">{{ report.click_rate }}% click rate</div>
+                    </div>
+                    <div class="stat-card stat-card-reported">
+                        <div class="stat-label"><i class="ti ti-shield-check"></i> Reported</div>
+                        <div class="stat-value count-up" data-target="{{ campaign.reports or 0 }}">{{ campaign.reports or 0 }}</div>
+                        <div class="stat-subtext">{{ report.report_rate }}% reported promptly</div>
+                    </div>
+                </div>
             </div>
-            <span style="font-size:0.82rem; font-family:var(--font-mono); color:var(--text-muted);">
-                {{ department_stats|length }} Departments Evaluated
-            </span>
+
+            <!-- Right: Human Risk Score Ring & Calculation Drawer -->
+            <div class="verdict-score-card">
+                <div class="score-card-header">
+                    <span class="score-title">Human risk score</span>
+                    <span class="score-tier-badge tier-{{ hss_obj.tier }}">{{ hss_obj.label }}</span>
+                </div>
+
+                <div class="ring-container">
+                    <svg class="score-ring-svg" viewBox="0 0 160 160" width="160" height="160">
+                        <circle class="ring-bg" cx="80" cy="80" r="68"></circle>
+                        <circle class="ring-progress tier-stroke-{{ hss_obj.tier }}" id="score-ring-circle" cx="80" cy="80" r="68"
+                                style="stroke-dasharray: 427.26; stroke-dashoffset: 427.26;"
+                                data-score="{{ hss_obj.score }}"></circle>
+                    </svg>
+                    <div class="ring-center-content">
+                        <span class="ring-number count-up" id="ring-score-val" data-target="{{ hss_obj.score }}">{{ hss_obj.score }}</span>
+                        <span class="ring-max">/ 100</span>
+                    </div>
+                </div>
+
+                <details class="score-drawer">
+                    <summary class="score-drawer-summary">
+                        <span><i class="ti ti-calculator"></i> How this is calculated</span>
+                        <i class="ti ti-chevron-down drawer-icon"></i>
+                    </summary>
+                    <div class="score-drawer-body">
+                        <div class="drawer-term-row">
+                            <span class="term-name">Base resilience benchmark</span>
+                            <span class="term-pts pts-positive">+100.0 pts</span>
+                        </div>
+                        <div class="drawer-term-row">
+                            <span class="term-name">Click penalty ({{ report.click_rate }}% rate)</span>
+                            <span class="term-pts pts-negative">-{{ hss_obj.terms.click_penalty or 0 }} pts</span>
+                        </div>
+                        <div class="drawer-term-row">
+                            <span class="term-name">Open exposure ({{ report.open_rate }}% rate)</span>
+                            <span class="term-pts pts-negative">-{{ hss_obj.terms.open_penalty or 0 }} pts</span>
+                        </div>
+                        <div class="drawer-term-row">
+                            <span class="term-name">Repeat clicker liability</span>
+                            <span class="term-pts pts-negative">-{{ hss_obj.terms.repeat_penalty or 0 }} pts</span>
+                        </div>
+                        <div class="drawer-term-row">
+                            <span class="term-name">Prompt reporting credit</span>
+                            <span class="term-pts pts-positive">+{{ hss_obj.terms.report_bonus or 0 }} pts</span>
+                        </div>
+                        {% if hss_obj.terms.capped_reason %}
+                        <div class="drawer-cap-warning">
+                            <i class="ti ti-alert-triangle"></i> {{ hss_obj.terms.capped_reason }}
+                        </div>
+                        {% endif %}
+                    </div>
+                </details>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION 2: ATTACK REPLAY (THE WOW) -->
+    <section id="replay" class="debrief-section replay-section reveal-item">
+        <div class="section-header-row">
+            <div>
+                <h2 class="section-title"><i class="ti ti-player-play"></i> Attack replay</h2>
+                <p class="section-subtitle">Real second-by-second timeline of employee engagement across 5 telemetry lanes.</p>
+            </div>
+            <div class="replay-controls">
+                <button id="btn-replay-play" class="replay-action-btn" aria-label="Replay attack unfolding over 8 seconds">
+                    <i class="ti ti-player-play" id="replay-btn-icon"></i> <span id="replay-btn-text">Replay (8s)</span>
+                </button>
+            </div>
         </div>
 
-        <div class="dept-cards-grid">
-            {% for dept in department_stats %}
-            {% set cr = dept.click_rate %}
-            <div class="dept-card">
-                <div class="dept-card-top">
-                    <div>
-                        <span class="dept-name">{{ dept.department }}</span>
-                        <span class="dept-sub">{{ dept.clicks }} of {{ dept.targets }} employees clicked</span>
+        <!-- Live Counters Bar -->
+        <div class="replay-counters-bar" role="region" aria-label="Attack live counters">
+            <div class="live-counter">
+                <span class="counter-dot dot-sent"></span>
+                <span class="counter-num" id="live-cnt-sent">{{ replay_obj.total_sent }}</span>
+                <span class="counter-label">Dispatched</span>
+            </div>
+            <div class="live-counter">
+                <span class="counter-dot dot-opened"></span>
+                <span class="counter-num" id="live-cnt-opened">{{ replay_obj.total_opened }}</span>
+                <span class="counter-label">Opened</span>
+            </div>
+            <div class="live-counter">
+                <span class="counter-dot dot-clicked"></span>
+                <span class="counter-num" id="live-cnt-clicked">{{ replay_obj.total_clicked }}</span>
+                <span class="counter-label">Clicked</span>
+            </div>
+            <div class="live-counter">
+                <span class="counter-dot dot-submitted"></span>
+                <span class="counter-num" id="live-cnt-submitted">{{ replay_obj.total_submitted }}</span>
+                <span class="counter-label">Submitted</span>
+            </div>
+            <div class="live-counter">
+                <span class="counter-dot dot-reported"></span>
+                <span class="counter-num" id="live-cnt-reported">{{ replay_obj.total_reported }}</span>
+                <span class="counter-label">Reported</span>
+            </div>
+        </div>
+
+        <!-- Interactive SVG Timeline -->
+        <div class="timeline-visual-card" tabindex="0" aria-label="Horizontal attack timeline. Use replay button or scrub slider.">
+            <!-- Scrubber Slider -->
+            <div class="scrubber-container">
+                <span class="scrub-label">T+0m</span>
+                <input type="range" id="replay-scrubber" min="0" max="100" value="100" step="0.5" class="scrub-range-input" aria-label="Timeline scrubber">
+                <span class="scrub-label">T+{{ replay_obj.total_duration_minutes }}m</span>
+            </div>
+
+            <div class="timeline-svg-wrapper" id="timeline-svg-box">
+                <!-- SVG Canvas Built From Real Timestamps -->
+                <svg class="timeline-svg" id="attack-timeline-svg" viewBox="0 0 1000 240" preserveAspectRatio="none">
+                    <!-- Background Grid Lines -->
+                    <line x1="120" y1="35"  x2="980" y2="35"  class="lane-line"></line>
+                    <line x1="120" y1="80"  x2="980" y2="80"  class="lane-line"></line>
+                    <line x1="120" y1="125" x2="980" y2="125" class="lane-line"></line>
+                    <line x1="120" y1="170" x2="980" y2="170" class="lane-line"></line>
+                    <line x1="120" y1="215" x2="980" y2="215" class="lane-line"></line>
+
+                    <!-- Lane Labels -->
+                    <text x="15" y="40"  class="lane-title lane-sent">Dispatched</text>
+                    <text x="15" y="85"  class="lane-title lane-opened">Opened</text>
+                    <text x="15" y="130" class="lane-title lane-clicked">Clicked</text>
+                    <text x="15" y="175" class="lane-title lane-submitted">Submitted</text>
+                    <text x="15" y="220" class="lane-title lane-reported">Reported</text>
+
+                    <!-- Events Rendered As Interactive Dots -->
+                    {% for ev in replay_obj.events %}
+                    {% set cx_val = 120 + (ev.pct_pos * 8.6) %}
+                    {% if ev.lane == 'sent' %}{% set cy_val = 35 %}
+                    {% elif ev.lane == 'opened' %}{% set cy_val = 80 %}
+                    {% elif ev.lane == 'clicked' %}{% set cy_val = 125 %}
+                    {% elif ev.lane == 'submitted' %}{% set cy_val = 170 %}
+                    {% else %}{% set cy_val = 215 %}{% endif %}
+
+                    <circle class="event-dot dot-lane-{{ ev.lane }}"
+                            cx="{{ cx_val }}" cy="{{ cy_val }}" r="6"
+                            data-pct="{{ ev.pct_pos }}"
+                            data-recipient="{{ ev.recipient }}"
+                            data-dept="{{ ev.department }}"
+                            data-time="{{ ev.display_time }}"
+                            data-lane="{{ ev.lane }}"
+                            data-tta="{{ ev.time_to_action }}"
+                            tabindex="0"
+                            role="graphics-symbol"
+                            aria-label="{{ ev.lane|capitalize }}: {{ ev.recipient }} ({{ ev.department }}) at {{ ev.display_time }}"></circle>
+                    {% endfor %}
+
+                    <!-- Moving Playhead -->
+                    <line x1="980" y1="10" x2="980" y2="230" class="timeline-playhead" id="timeline-playhead-line"></line>
+                </svg>
+
+                <!-- Floating Tooltip Box -->
+                <div class="dot-hover-popover" id="timeline-popover" style="display: none;">
+                    <div class="popover-lane" id="pop-lane">Clicked</div>
+                    <div class="popover-person" id="pop-person">Sarah Chen</div>
+                    <div class="popover-meta" id="pop-meta">Finance — T+1m 12s</div>
+                </div>
+            </div>
+
+            <!-- Key Insight Callout Box -->
+            <div class="replay-insight-banner">
+                <i class="ti ti-bulb insight-icon"></i>
+                <div class="insight-text">
+                    <strong>Telemetry Insight:</strong> {{ replay_obj.key_insight }}
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION 3: WHY IT WORKED -->
+    <section id="why-it-worked" class="debrief-section why-it-worked-section reveal-item">
+        <div class="section-header-row">
+            <div>
+                <h2 class="section-title"><i class="ti ti-microscope"></i> Why it worked</h2>
+                <p class="section-subtitle">Cognitive lure anatomy and psychological triggers identified by the AI engine.</p>
+            </div>
+            <div>
+                <label class="toggle-flags-label" for="toggle-trigger-highlights">
+                    <input type="checkbox" id="toggle-trigger-highlights">
+                    <span>Show what to look for (reveal all triggers)</span>
+                </label>
+            </div>
+        </div>
+
+        <div class="lure-analysis-grid">
+            <!-- Left: Delivered Email With Highlights -->
+            <div class="lure-email-card">
+                <div class="email-envelope-bar">
+                    <div class="envelope-row">
+                        <span class="env-label">From:</span>
+                        <span class="env-value">{{ lure_obj.sender | safe }}</span>
                     </div>
-                    <span class="risk-badge risk-{% if cr >= 35 %}high{% elif cr >= 15 %}medium{% else %}low{% endif %}">
-                        {% if cr >= 35 %}HIGH RISK{% elif cr >= 15 %}MODERATE{% else %}RESILIENT{% endif %}
+                    <div class="envelope-row">
+                        <span class="env-label">Subject:</span>
+                        <span class="env-value font-semibold">{{ lure_obj.subject | safe }}</span>
+                    </div>
+                </div>
+
+                <div class="email-body-content" id="lure-email-body">
+                    {{ lure_obj.lure_html | safe }}
+                </div>
+            </div>
+
+            <!-- Right: Ranked Clues Missed -->
+            <div class="clues-ranked-panel">
+                <div class="clues-header">
+                    <h3 class="clues-title"><i class="ti ti-list-check"></i> Clues people missed</h3>
+                    <span class="clues-count">{{ lure_obj.clues_missed | length }} vectors identified</span>
+                </div>
+
+                <div class="clues-list">
+                    {% for clue in lure_obj.clues_missed %}
+                    <div class="clue-card clue-sev-{{ clue.severity }}">
+                        <div class="clue-top">
+                            <span class="clue-rank">#{{ loop.index }}</span>
+                            <span class="clue-trigger-badge">{{ clue.trigger }}</span>
+                            <span class="clue-weight">{{ clue.click_weight }}</span>
+                        </div>
+                        <h4 class="clue-name">{{ clue.title }}</h4>
+                        <p class="clue-desc">{{ clue.description }}</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION 4: WHO IS EXPOSED -->
+    <section id="who-exposed" class="debrief-section who-exposed-section reveal-item">
+        <div class="section-header-row">
+            <div>
+                <h2 class="section-title"><i class="ti ti-users"></i> Who is exposed</h2>
+                <p class="section-subtitle">Department vulnerability rankings and recipient behavioral telemetry.</p>
+            </div>
+            <div>
+                <label class="toggle-flags-label" for="toggle-anonymise">
+                    <input type="checkbox" id="toggle-anonymise" {% if anonymise_default %}checked{% endif %}>
+                    <span>Anonymise employee names</span>
+                </label>
+            </div>
+        </div>
+
+        <div class="exposure-layout">
+            <!-- Department Heat Map -->
+            <div class="dept-heatmap-card">
+                <h3 class="card-inner-title"><i class="ti ti-chart-bar"></i> Department click-rate breakdown</h3>
+
+                <div class="dept-bars-list">
+                    {% for dept in department_stats %}
+                    <div class="dept-bar-item">
+                        <div class="dept-meta-row">
+                            <span class="dept-name">
+                                {{ dept.department }}
+                                {% if dept.small_sample %}
+                                <span class="small-sample-warning" title="Sample size is below 5 people — rate may have high statistical variance.">
+                                    <i class="ti ti-alert-triangle"></i> Small sample ({{ dept.targets }})
+                                </span>
+                                {% endif %}
+                            </span>
+                            <div class="dept-rates">
+                                <span class="dept-click-pct font-mono">{{ dept.click_rate }}% clicked</span>
+                                <span class="dept-delta delta-{{ dept.delta_dir }}">
+                                    {% if dept.delta_dir == 'worse' %}&#8593;{% elif dept.delta_dir == 'better' %}&#8595;{% else %}&#8594;{% endif %}
+                                    {{ dept.delta_str }}
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="dept-bar-track">
+                            <div class="dept-bar-fill {% if dept.click_rate >= 25 %}fill-danger{% elif dept.click_rate >= 12 %}fill-warning{% else %}fill-success{% endif %}"
+                                 style="width: {{ dept.click_rate }}%;"></div>
+                        </div>
+
+                        <div class="dept-sub-info">
+                            <span>{{ dept.clicks }} of {{ dept.targets }} targets interacted</span>
+                            <span>{{ dept.reports }} reported</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Individual Personnel Table -->
+            <div class="people-table-card">
+                <div class="people-card-header">
+                    <h3 class="card-inner-title"><i class="ti ti-user-exclamation"></i> Individual Simulation Log</h3>
+                    <div class="privacy-note">
+                        <i class="ti ti-shield-lock"></i> Privacy compliant: handles masked for company_user view
+                    </div>
+                </div>
+
+                <div class="people-table-wrap">
+                    <table class="debrief-table">
+                        <thead>
+                            <tr>
+                                <th>Recipient</th>
+                                <th>Department</th>
+                                <th>Action Taken</th>
+                                <th>Time to Click</th>
+                                <th>Profile Flag</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for emp in employee_logs %}
+                            <tr>
+                                <td class="emp-identity-cell">
+                                    <span class="emp-name" data-real="{{ emp.name }}" data-anon="{{ emp.anon_name }}">
+                                        {% if anonymise_default %}{{ emp.anon_name }}{% else %}{{ emp.name }}{% endif %}
+                                    </span>
+                                    <span class="emp-email" data-real="{{ emp.email }}" data-anon="{{ emp.anon_email }}">
+                                        {% if anonymise_default %}{{ emp.anon_email }}{% else %}{{ emp.email }}{% endif %}
+                                    </span>
+                                </td>
+                                <td>{{ emp.department }}</td>
+                                <td>
+                                    <span class="action-pill act-{{ emp.action_status | lower }}">
+                                        {{ emp.action_status }}
+                                    </span>
+                                </td>
+                                <td class="font-mono">{{ emp.time_to_click }}</td>
+                                <td>
+                                    {% if emp.is_repeat %}
+                                    <span class="badge-repeat-clicker"><i class="ti ti-repeat"></i> Repeat clicker</span>
+                                    {% else %}
+                                    <span class="badge-standard">Standard</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION 5: COMPARED WITH LAST TIME -->
+    <section id="funnel" class="debrief-section funnel-section reveal-item">
+        <div class="section-header-row">
+            <div>
+                <h2 class="section-title"><i class="ti ti-filter"></i> Compared with last time</h2>
+                <p class="section-subtitle">Multi-stage engagement funnel compared to the prior simulation.</p>
+            </div>
+        </div>
+
+        {% if funnel_obj.is_first_campaign %}
+        <div class="baseline-honest-notice">
+            <i class="ti ti-flag notice-icon"></i>
+            <div>
+                <strong>Benchmark Baseline Campaign:</strong> This is your organisation's initial simulation run. Subsequent drills will automatically overlay comparative ghosted funnel stages and longitudinal score trends.
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="funnel-container-grid">
+            <!-- 5 Funnel Stages -->
+            <div class="funnel-stages-card">
+                <div class="funnel-stages-list">
+                    <!-- Sent -->
+                    <div class="funnel-stage-row">
+                        <div class="stage-info">
+                            <span class="stage-name">1. Dispatched</span>
+                            <span class="stage-val">{{ funnel_obj.current.sent }} sent</span>
+                        </div>
+                        <div class="funnel-bars-pair">
+                            {% if funnel_obj.prev %}
+                            <div class="funnel-bar-ghost" style="width: 100%;" title="Previous: {{ funnel_obj.prev.sent }} targets"></div>
+                            {% endif %}
+                            <div class="funnel-bar-current" style="width: 100%;"></div>
+                        </div>
+                    </div>
+
+                    <!-- Opened -->
+                    {% set open_pct = (funnel_obj.current.opened / (funnel_obj.current.sent or 1) * 100) | round %}
+                    <div class="funnel-stage-row">
+                        <div class="stage-info">
+                            <span class="stage-name">2. Opened</span>
+                            <span class="stage-val">{{ funnel_obj.current.opened }} ({{ open_pct }}%)</span>
+                        </div>
+                        <div class="funnel-bars-pair">
+                            {% if funnel_obj.prev %}
+                            {% set prev_open_pct = (funnel_obj.prev.opened / (funnel_obj.prev.sent or 1) * 100) | round %}
+                            <div class="funnel-bar-ghost" style="width: {{ prev_open_pct }}%;" title="Previous: {{ prev_open_pct }}%"></div>
+                            {% endif %}
+                            <div class="funnel-bar-current fill-opened" style="width: {{ open_pct }}%;"></div>
+                        </div>
+                    </div>
+
+                    <!-- Clicked -->
+                    {% set click_pct = (funnel_obj.current.clicked / (funnel_obj.current.sent or 1) * 100) | round %}
+                    <div class="funnel-stage-row">
+                        <div class="stage-info">
+                            <span class="stage-name">3. Clicked</span>
+                            <span class="stage-val">{{ funnel_obj.current.clicked }} ({{ click_pct }}%)</span>
+                        </div>
+                        <div class="funnel-bars-pair">
+                            {% if funnel_obj.prev %}
+                            {% set prev_click_pct = (funnel_obj.prev.clicked / (funnel_obj.prev.sent or 1) * 100) | round %}
+                            <div class="funnel-bar-ghost" style="width: {{ prev_click_pct }}%;" title="Previous: {{ prev_click_pct }}%"></div>
+                            {% endif %}
+                            <div class="funnel-bar-current fill-clicked" style="width: {{ click_pct }}%;"></div>
+                        </div>
+                    </div>
+
+                    <!-- Submitted -->
+                    {% set sub_pct = (funnel_obj.current.submitted / (funnel_obj.current.sent or 1) * 100) | round %}
+                    <div class="funnel-stage-row">
+                        <div class="stage-info">
+                            <span class="stage-name">4. Submitted Credentials</span>
+                            <span class="stage-val">{{ funnel_obj.current.submitted }} ({{ sub_pct }}%)</span>
+                        </div>
+                        <div class="funnel-bars-pair">
+                            {% if funnel_obj.prev %}
+                            {% set prev_sub_pct = (funnel_obj.prev.submitted / (funnel_obj.prev.sent or 1) * 100) | round %}
+                            <div class="funnel-bar-ghost" style="width: {{ prev_sub_pct }}%;" title="Previous: {{ prev_sub_pct }}%"></div>
+                            {% endif %}
+                            <div class="funnel-bar-current fill-submitted" style="width: {{ sub_pct }}%;"></div>
+                        </div>
+                    </div>
+
+                    <!-- Reported -->
+                    {% set rep_pct = (funnel_obj.current.reported / (funnel_obj.current.sent or 1) * 100) | round %}
+                    <div class="funnel-stage-row">
+                        <div class="stage-info">
+                            <span class="stage-name">5. Reported to SOC</span>
+                            <span class="stage-val">{{ funnel_obj.current.reported }} ({{ rep_pct }}%)</span>
+                        </div>
+                        <div class="funnel-bars-pair">
+                            {% if funnel_obj.prev %}
+                            {% set prev_rep_pct = (funnel_obj.prev.reported / (funnel_obj.prev.sent or 1) * 100) | round %}
+                            <div class="funnel-bar-ghost" style="width: {{ prev_rep_pct }}%;" title="Previous: {{ prev_rep_pct }}%"></div>
+                            {% endif %}
+                            <div class="funnel-bar-current fill-reported" style="width: {{ rep_pct }}%;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                {% if funnel_obj.prev %}
+                <div class="funnel-legend">
+                    <span class="legend-item"><span class="legend-box box-current"></span> Current Drill</span>
+                    <span class="legend-item"><span class="legend-box box-ghost"></span> Prior Drill (Ghosted)</span>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Score History Trajectory -->
+            <div class="score-trend-card">
+                <h3 class="card-inner-title"><i class="ti ti-trending-up"></i> Score History Trajectory</h3>
+                <div class="trend-steps-list">
+                    {% for h in funnel_obj.score_history %}
+                    <div class="trend-step-item">
+                        <div class="trend-bullet"></div>
+                        <div class="trend-step-body">
+                            <span class="trend-step-name">{{ h.name }}</span>
+                            <span class="trend-step-score font-mono">{{ h.score }}/100</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION 6: FIX IT -->
+    <section id="remediation" class="debrief-section fix-it-section reveal-item">
+        <div class="section-header-row">
+            <div>
+                <h2 class="section-title"><i class="ti ti-tools"></i> Fix it — Prioritised Remediation</h2>
+                <p class="section-subtitle">Real remediation workflows. Action execution is persisted to organizational records.</p>
+            </div>
+            <div class="progress-indicator-box">
+                <span class="prog-label" id="prog-text-label">{{ rem_obj.completed_count }} of {{ rem_obj.total_count }} actions completed</span>
+                <div class="prog-bar-track">
+                    <div class="prog-bar-fill" id="action-progress-fill" style="width: {{ rem_obj.progress_pct }}%;"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="action-cards-grid">
+            {% for action in rem_obj.actions %}
+            <div class="action-card {% if action.status == 'done' %}action-done{% endif %}" id="card-act-{{ action.action_key }}">
+                <div class="action-top">
+                    <span class="priority-badge">Priority {{ action.priority }}</span>
+                    <span class="status-pill status-{{ action.status }}" id="badge-status-{{ action.action_key }}">
+                        {{ action.status | capitalize }}
                     </span>
                 </div>
 
-                <div class="dept-progress-wrap">
-                    <div class="dept-progress-info">
-                        <span>Click Rate</span>
-                        <strong style="color: {% if cr >= 35 %}#f87171{% elif cr >= 15 %}#fbbf24{% else %}#4ade80{% endif %}; font-weight: 800;">{{ cr }}%</strong>
+                <h3 class="action-title">{{ action.title }}</h3>
+                <p class="action-desc">{{ action.description }}</p>
+
+                <div class="action-footer">
+                    <div class="action-meta-info" id="meta-info-{{ action.action_key }}">
+                        {% if action.status == 'done' and action.completed_by %}
+                        <span class="done-note"><i class="ti ti-check"></i> Done by {{ action.completed_by }} ({{ action.completed_at }})</span>
+                        {% endif %}
                     </div>
-                    <div class="dept-progress-track">
-                        <div class="dept-progress-fill {% if cr >= 35 %}fill-danger{% elif cr >= 15 %}fill-warning{% else %}fill-success{% endif %}"
-                             style="width: {{ [cr, 100]|min }}%;"></div>
-                    </div>
-                </div>
 
-                <p class="dept-note">
-                    <i class="ti ti-info-circle"></i>
-                    {% if cr >= 35 %}
-                        High vulnerability to CFO urgency & authority pretexts. Priority micro-learning recommended.
-                    {% elif cr >= 15 %}
-                        Moderate risk exposure. Responded to urgency cues but demonstrated partial verification.
-                    {% else %}
-                        Strong security posture. Minimal click interactions with active threat reporting.
-                    {% endif %}
-                </p>
-            </div>
-            {% endfor %}
-        </div>
-    </div>
-
-    <!-- ZONE 4: AI RECOMMENDATIONS CARDS -->
-    <div class="report-zone-card">
-        <div class="zone-header">
-            <div>
-                <h2 class="zone-title"><i class="ti ti-bulb" style="color:var(--accent-purple);"></i> AI Security Countermeasures</h2>
-                <p class="zone-subtitle">Distinct actionable recommendations tailored to campaign findings. Click any card to mark as mitigated.</p>
-            </div>
-            <div class="reco-status-pill" id="reco-pct-badge" style="font-size:0.8rem; padding:4px 12px;">0% Mitigated</div>
-        </div>
-
-        <div class="reco-progress-wrap">
-            <div class="reco-progress-header">
-                <span style="font-weight:600; color:var(--text-main);">Remediation Action Plan Progress</span>
-                <span id="reco-pct-text" style="color:var(--accent-cyan); font-weight:700; font-family:var(--font-mono);">0% Completed</span>
-            </div>
-            <div class="reco-progress-track">
-                <div class="reco-progress-fill-bar" id="reco-progress-bar" style="width: 0%;"></div>
-            </div>
-        </div>
-
-        <div class="reco-cards-grid">
-            {% for item in report.recommendations %}
-            <div class="options_card" onclick="toggleRecoCard(this)">
-                <div class="reco-card-header">
-                    <div class="reco-icon-box">
-                        <i class="{% if loop.index == 1 %}ti ti-shield-lock{% elif loop.index == 2 %}ti ti-school{% elif loop.index == 3 %}ti ti-bell-check{% else %}ti ti-user-check{% endif %}"></i>
-                    </div>
-                    <span class="reco-status-pill">Pending</span>
-                </div>
-                <h3 class="reco-card-title">Recommendation {{ loop.index }}</h3>
-                <p class="reco-card-desc">{{ item }}</p>
-                <div class="reco-card-footer">
-                    <i class="ti ti-check-circle"></i> Click to mark mitigated
-                </div>
-            </div>
-            {% endfor %}
-        </div>
-    </div>
-
-    <!-- AUXILIARY PANELS (Per-Employee Log, Training Brief & AI Reasoning) -->
-    <div class="aux-action-grid">
-        <div class="aux-card">
-            <div>
-                <h3 style="font-size:1.1rem; color:var(--text-main); margin:0 0 0.5rem; display:flex; align-items:center; gap:8px;">
-                    <i class="ti ti-users" style="color:var(--accent-blue);"></i> Per-Employee Log
-                </h3>
-                <p style="font-size:0.85rem; color:var(--text-muted); margin:0; line-height:1.5;">
-                    View individual telemetry, risk scores, and trend directions for all {{ brief_data.employee_count }} target users.
-                </p>
-            </div>
-            <button class="action-btn secondary-btn" onclick="openModal('employee-log-modal')" style="width:100%; justify-content:center;">
-                <i class="ti ti-arrows-maximize"></i> Open Per-Employee Security Log
-            </button>
-        </div>
-
-        <div class="aux-card">
-            <div>
-                <h3 style="font-size:1.1rem; color:var(--text-main); margin:0 0 0.5rem; display:flex; align-items:center; gap:8px;">
-                    <i class="ti ti-file-invoice" style="color:var(--accent-purple);"></i> Executive Training Brief
-                </h3>
-                <p style="font-size:0.85rem; color:var(--text-muted); margin:0; line-height:1.5;">
-                    Auto-generated remediation action plan & executive brief ready for team distribution.
-                </p>
-            </div>
-            <button class="action-btn secondary-btn" onclick="openModal('training-brief-modal')" style="width:100%; justify-content:center;">
-                <i class="ti ti-file-text"></i> Open Training Brief
-            </button>
-        </div>
-    </div>
-</div>
-
-<!-- MODAL: PER-EMPLOYEE LOG -->
-<div id="employee-log-modal" class="modal-overlay">
-    <div class="modal-container">
-        <div class="modal-header">
-            <h2 style="margin: 0; font-family: var(--font-sans); font-size: 1.3rem; display: flex; align-items: center; gap: 10px; color: var(--text-main);">
-                <i class="ti ti-users" style="color:var(--accent-blue);"></i> Per-Employee Security Log
-            </h2>
-            <button class="modal-close" onclick="closeModal('employee-log-modal')">
-                <i class="ti ti-x"></i>
-            </button>
-        </div>
-        <div class="modal-body">
-            <div style="overflow-x: auto;">
-                <table style="width:100%; border-collapse:collapse; font-size:0.85rem; text-align:left; min-width: 780px;">
-                    <thead>
-                        <tr style="border-bottom: 1px solid var(--border-color); color: var(--text-muted); font-family: var(--font-mono); font-size:0.75rem; text-transform:uppercase;">
-                            <th style="padding: 12px 8px;">Employee</th>
-                            <th style="padding: 12px 8px;">Department</th>
-                            <th style="padding: 12px 8px; text-align:center;">Status</th>
-                            <th style="padding: 12px 8px; text-align:center;">Risk Score</th>
-                            <th style="padding: 12px 8px;">Risk Reason</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for emp in employee_logs %}
-                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.03);">
-                            <td style="padding: 12px 8px;">
-                                <div style="font-weight: 600; color: var(--text-main);">{{ emp.name or 'Unknown Target' }}</div>
-                                <div style="font-size: 0.72rem; color: var(--text-muted); font-family: var(--font-mono);">{{ emp.email }}</div>
-                            </td>
-                            <td style="padding: 12px 8px; color: var(--text-muted);">{{ emp.department or 'General' }}</td>
-                            <td style="padding: 12px 8px; text-align:center;">
-                                {% if emp.clicked %}
-                                    <span class="risk-badge risk-high" style="font-size:0.7rem; padding:2px 8px;">Clicked</span>
-                                {% elif emp.reported %}
-                                    <span class="risk-badge risk-low" style="font-size:0.7rem; padding:2px 8px;">Reported</span>
-                                {% elif emp.opened %}
-                                    <span class="risk-badge risk-medium" style="font-size:0.7rem; padding:2px 8px;">Opened</span>
-                                {% else %}
-                                    <span style="font-size:0.7rem; color:var(--text-muted);">No Action</span>
-                                {% endif %}
-                            </td>
-                            <td style="padding: 12px 8px; text-align:center;">
-                                <span style="font-weight:700; font-size:0.8rem; padding:2px 6px; border-radius:4px; background:rgba(255,255,255,0.05);">
-                                    {{ emp.risk_score }}
-                                </span>
-                            </td>
-                            <td style="padding: 12px 8px; color: var(--text-muted); font-size: 0.8rem;">{{ emp.risk_reason }}</td>
-                        </tr>
+                    <button class="action-btn-exec {% if action.status == 'done' %}btn-completed{% endif %}"
+                            id="btn-exec-{{ action.action_key }}"
+                            data-campaign-id="{{ campaign.id }}"
+                            data-action-key="{{ action.action_key }}"
+                            {% if action.status == 'done' %}disabled{% endif %}>
+                        {% if action.status == 'done' %}
+                        <i class="ti ti-check"></i> Completed
                         {% else %}
-                        <tr>
-                            <td colspan="5" style="text-align:center; padding: 2rem; color: var(--text-muted);">No employee telemetry tracked.</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                        <i class="ti ti-player-play"></i> {{ action.button_label }}
+                        {% endif %}
+                    </button>
+                </div>
             </div>
+            {% endfor %}
         </div>
-    </div>
-</div>
+    </section>
 
-<!-- MODAL: EXECUTIVE TRAINING BRIEF -->
-<div id="training-brief-modal" class="modal-overlay">
-    <div class="modal-container" style="max-width: 800px;">
-        <div class="modal-header">
-            <h2 style="margin: 0; font-family: var(--font-sans); font-size: 1.3rem; display: flex; align-items: center; gap: 10px; color: var(--text-main);">
-                <i class="ti ti-file-invoice" style="color:var(--accent-purple);"></i> Executive Remediation Brief
-            </h2>
-            <button class="modal-close" onclick="closeModal('training-brief-modal')">
-                <i class="ti ti-x"></i>
-            </button>
-        </div>
-        <div class="modal-body" style="padding: 2rem;">
-            <div style="font-family: var(--font-mono); font-size: 0.72rem; color: var(--accent-purple); font-weight: bold; text-transform: uppercase;">
-                PHISHSIM AI • Threat Mitigation Plan
+    <!-- SECTION 7: SHARE & EXPORT -->
+    <section id="export" class="debrief-section export-section reveal-item">
+        <div class="section-header-row">
+            <div>
+                <h2 class="section-title"><i class="ti ti-share"></i> Share & export</h2>
+                <p class="section-subtitle">Board-ready PDF reports, evidence exports, and structured executive copy.</p>
             </div>
-            <h3 style="font-size: 1.3rem; color: var(--text-main); margin: 6px 0 1rem;">Action Plan: {{ brief_data.vector }}</h3>
-            <p style="font-size: 0.9rem; color: var(--text-muted); line-height: 1.6;">
-                Remediation action plan compiled following the <strong>{{ brief_data.vector }}</strong> simulation campaign targeting <strong>{{ brief_data.company }}</strong>. Recorded compromise rate: <strong>{{ brief_data.click_rate }}%</strong> across {{ brief_data.employee_count }} employees.
-            </p>
-            <h4 style="font-size:1rem; color:var(--text-main); margin-top:1.5rem;">Recommended Remediation Steps:</h4>
-            <ol style="color:var(--text-muted); font-size:0.88rem; line-height:1.7; padding-left:1.2rem;">
-                <li><strong>Targeted Department Briefings:</strong> Conduct focused sessions for {{ brief_data.failed_departments }}.</li>
-                <li><strong>Out-of-Band Confirmation Protocol:</strong> Establish mandatory secondary checks for wire transfers and credential updates.</li>
-                <li><strong>Active Threat Reporting:</strong> Train staff to use the report button immediately upon detecting urgency cues.</li>
-            </ol>
-            <div style="display:flex; gap:10px; margin-top:2rem;">
-                <button class="action-btn btn-pdf" onclick="handleDownload('pdf-dl-btn', '/download-report/{{ campaign.id }}')">
-                    <i class="ti ti-file-type-pdf"></i> Download PDF Brief
+        </div>
+
+        <div class="export-options-grid">
+            <!-- 1. Executive PDF -->
+            <div class="export-tile">
+                <div class="tile-icon-box icon-pdf"><i class="ti ti-file-type-pdf"></i></div>
+                <h3 class="tile-title">One-Page Executive PDF</h3>
+                <p class="tile-desc">Clean, white corporate styling matching on-screen telemetry. Formatted for leadership review.</p>
+                <a href="/download-report/{{ campaign.id }}" class="tile-action-btn btn-export-pdf">
+                    <i class="ti ti-file-download"></i> Download Executive PDF
+                </a>
+            </div>
+
+            <!-- 2. CSV Evidence -->
+            <div class="export-tile">
+                <div class="tile-icon-box icon-csv"><i class="ti ti-file-spreadsheet"></i></div>
+                <h3 class="tile-title">Raw Telemetry CSV</h3>
+                <p class="tile-desc">Full recipient logs, reaction latencies, department breakdowns, and audit evidence.</p>
+                <a href="/export-campaign-csv/{{ campaign.id }}" class="tile-action-btn btn-export-csv">
+                    <i class="ti ti-table-export"></i> Download CSV Evidence
+                </a>
+            </div>
+
+            <!-- 3. Copy Summary -->
+            <div class="export-tile">
+                <div class="tile-icon-box icon-copy"><i class="ti ti-copy"></i></div>
+                <h3 class="tile-title">Copy Summary for Email</h3>
+                <p class="tile-desc">Copies structured, unbranded executive debrief text directly to your clipboard for email or Slack.</p>
+                <button id="btn-copy-summary-tile" class="tile-action-btn btn-export-copy">
+                    <i class="ti ti-copy"></i> Copy Summary
                 </button>
-                <button class="action-btn secondary-btn" onclick="closeModal('training-brief-modal')">Close</button>
             </div>
         </div>
-    </div>
-</div>
+    </section>
+</main>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<!-- TOAST NOTIFICATION -->
+<div id="debrief-toast" class="debrief-toast" role="status" aria-live="polite"></div>
+
+<!-- VANILLA JS INTERACTIVITY: REPLAY, ANIMATIONS, ANONYMISE, ACTIONS -->
 <script>
-// --- GAUGE ANIMATION ---
-(function animateGauge() {
-    const gaugeFill = document.getElementById('gauge-arc-fill');
-    const hssNumberEl = document.getElementById('hss-number');
-    if (!gaugeFill || !hssNumberEl) return;
-    
-    const targetScore = parseInt(hssNumberEl.dataset.target || '0', 10);
-    // Circumference = 2 * PI * 50 = 314.15
-    const circumference = 314.15;
-    const offset = circumference - (targetScore / 100) * circumference;
-    
-    setTimeout(() => {
-        gaugeFill.style.strokeDashoffset = offset;
-    }, 200);
-
-    let current = 0;
-    const step = Math.max(1, Math.ceil(targetScore / 30));
-    const timer = setInterval(() => {
-        current = Math.min(current + step, targetScore);
-        hssNumberEl.textContent = current;
-        if (current >= targetScore) clearInterval(timer);
-    }, 30);
-})();
-
-// --- ZONE 2: PRIMARY CHART JS ---
 document.addEventListener('DOMContentLoaded', function() {
-    const ctx = document.getElementById('primaryReportChart')?.getContext('2d');
-    if (!ctx) return;
-
-    const getGridColor = () => document.body.classList.contains('light-theme') ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.06)';
-    const getTextColor = () => document.body.classList.contains('light-theme') ? '#475569' : '#94a3b8';
-
-    const primaryChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: ['Baseline', 'Week 1', 'Week 2 (Campaign)', 'Week 3 (Projected)', 'Week 4 (Target)'],
-            datasets: [
-                {
-                    label: 'Phishing Click Rate (%)',
-                    data: [
-                        Math.min(100, {{ report.click_rate or 0 }} + 12),
-                        Math.min(100, {{ report.click_rate or 0 }} + 5),
-                        {{ report.click_rate or 0 }},
-                        Math.max(0, {{ (report.click_rate or 0) * 0.6 }}),
-                        Math.max(0, {{ (report.click_rate or 0) * 0.25 }})
-                    ],
-                    borderColor: '#ef4444',
-                    backgroundColor: 'rgba(239, 68, 68, 0.08)',
-                    fill: true,
-                    tension: 0.4,
-                    borderWidth: 3,
-                    pointBackgroundColor: '#ef4444',
-                    pointRadius: 5
-                },
-                {
-                    label: 'Security Report Rate (%)',
-                    data: [
-                        10,
-                        15,
-                        {{ report.report_rate or 0 }},
-                        Math.min(100, {{ report.report_rate or 0 }} + 18),
-                        Math.min(100, {{ report.report_rate or 0 }} + 32)
-                    ],
-                    borderColor: '#22c55e',
-                    backgroundColor: 'rgba(34, 197, 94, 0.08)',
-                    fill: true,
-                    tension: 0.4,
-                    borderWidth: 3,
-                    pointBackgroundColor: '#22c55e',
-                    pointRadius: 5
-                }
-            ]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            layout: { padding: { top: 10, bottom: 5, left: 10, right: 15 } },
-            scales: {
-                y: {
-                    min: 0, max: 100,
-                    grid: { color: getGridColor() },
-                    ticks: { color: getTextColor(), callback: val => val + '%' }
-                },
-                x: {
-                    grid: { display: false },
-                    ticks: { color: getTextColor() }
-                }
-            },
-            plugins: {
-                legend: {
-                    display: true,
-                    position: 'top',
-                    labels: { color: getTextColor(), font: { family: 'var(--font-sans)', size: 12 }, boxWidth: 12 }
-                },
-                tooltip: {
-                    mode: 'index',
-                    intersect: false
+    // 1. COUNT-UP ANIMATION FOR HERO NUMBERS & SCORE RING
+    const prefersReducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    function animateCountUp() {
+        if (prefersReducedMotion) {
+            const ring = document.getElementById('score-ring-circle');
+            if (ring) {
+                const score = parseFloat(ring.getAttribute('data-score') || '0');
+                const circumference = 2 * Math.PI * 68;
+                ring.style.strokeDashoffset = circumference - (score / 100) * circumference;
+            }
+            return;
+        }
+        const counters = document.querySelectorAll('.count-up');
+        counters.forEach(counter => {
+            const target = parseFloat(counter.getAttribute('data-target') || '0');
+            if (isNaN(target)) return;
+            const duration = 900;
+            const startTime = performance.now();
+            function updateNumber(now) {
+                const elapsed = now - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                const ease = 1 - Math.pow(1 - progress, 3);
+                const current = Math.round(target * ease);
+                counter.textContent = current;
+                if (progress < 1) {
+                    requestAnimationFrame(updateNumber);
+                } else {
+                    counter.textContent = target;
                 }
             }
-        }
-    });
+            requestAnimationFrame(updateNumber);
+        });
 
-    window.addEventListener('theme-changed', () => {
-        primaryChart.options.scales.y.grid.color = getGridColor();
-        primaryChart.options.scales.y.ticks.color = getTextColor();
-        primaryChart.options.scales.x.ticks.color = getTextColor();
-        primaryChart.options.plugins.legend.labels.color = getTextColor();
-        primaryChart.update();
-    });
-});
-
-// --- ZONE 4: AI RECOMMENDATION CARD TOGGLE ---
-function toggleRecoCard(card) {
-    const isCompleted = card.classList.toggle('completed');
-    const statusPill = card.querySelector('.reco-status-pill');
-    const footerText = card.querySelector('.reco-card-footer');
-
-    if (isCompleted) {
-        if (statusPill) statusPill.textContent = 'Mitigated';
-        if (footerText) footerText.innerHTML = '<i class="ti ti-check-double"></i> Threat Mitigated';
-        if (typeof showPremiumToast === 'function') {
-            showPremiumToast('Mitigation action implemented!', 'fa-circle-check');
-        }
-    } else {
-        if (statusPill) statusPill.textContent = 'Pending';
-        if (footerText) footerText.innerHTML = '<i class="ti ti-check-circle"></i> Click to mark mitigated';
-    }
-    updateRecoProgress();
-}
-
-function updateRecoProgress() {
-    const allCards = document.querySelectorAll('.options_card');
-    const completedCards = document.querySelectorAll('.options_card.completed');
-    const pct = allCards.length ? Math.round((completedCards.length / allCards.length) * 100) : 0;
-
-    const badge = document.getElementById('reco-pct-badge');
-    const text = document.getElementById('reco-pct-text');
-    const bar = document.getElementById('reco-progress-bar');
-
-    if (badge) badge.textContent = `${pct}% Mitigated`;
-    if (text) text.textContent = `${pct}% Completed`;
-    if (bar) bar.style.width = `${pct}%`;
-}
-
-// --- EXPORT DOWNLOAD HANDLER ---
-function handleDownload(btnId, url) {
-    const btn = document.getElementById(btnId);
-    if (!btn || btn.dataset.loading) return;
-    btn.dataset.loading = '1';
-    const iconEl = btn.querySelector('i');
-    const labelEl = btn.querySelector('span');
-    const origIcon = iconEl ? iconEl.className : '';
-    const origLabel = labelEl ? labelEl.textContent : '';
-    
-    if (iconEl) iconEl.className = 'ti ti-loader-2';
-    if (labelEl) labelEl.textContent = ' Preparing...';
-    btn.style.opacity = '0.8';
-
-    setTimeout(() => {
-        window.location.href = url;
-        setTimeout(() => {
-            if (iconEl) iconEl.className = 'ti ti-check-circle';
-            if (labelEl) labelEl.textContent = ' Downloaded!';
-            btn.style.opacity = '1';
-            if (typeof showPremiumToast === 'function') {
-                showPremiumToast('Security report exported successfully!', 'fa-circle-check');
-            }
+        // Score Ring Animation (900ms)
+        const ring = document.getElementById('score-ring-circle');
+        if (ring) {
+            const score = parseFloat(ring.getAttribute('data-score') || '0');
+            const circumference = 2 * Math.PI * 68; // ~427.26
+            const offset = circumference - (score / 100) * circumference;
             setTimeout(() => {
-                if (iconEl) iconEl.className = origIcon;
-                if (labelEl) labelEl.textContent = origLabel;
-                delete btn.dataset.loading;
-            }, 2500);
-        }, 1200);
-    }, 800);
-}
-
-// --- MODAL CONTROLS ---
-function openModal(id) {
-    const modal = document.getElementById(id);
-    if (modal) {
-        modal.classList.add('active');
-        document.body.style.overflow = 'hidden';
+                ring.style.transition = 'stroke-dashoffset 900ms cubic-bezier(0.16, 1, 0.3, 1)';
+                ring.style.strokeDashoffset = offset;
+            }, 50);
+        }
     }
-}
+    animateCountUp();
 
-function closeModal(id) {
-    const modal = document.getElementById(id);
-    if (modal) {
-        modal.classList.remove('active');
-        document.body.style.overflow = '';
+    // 2. SCROLL REVEAL STAGGER (fade + 12px once)
+    const revealItems = document.querySelectorAll('.reveal-item');
+    if ('IntersectionObserver' in window) {
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('revealed');
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.1 });
+        revealItems.forEach(item => observer.observe(item));
+    } else {
+        revealItems.forEach(item => item.classList.add('revealed'));
     }
-}
 
-document.addEventListener('DOMContentLoaded', () => {
-    document.querySelectorAll('.modal-overlay').forEach(overlay => {
-        overlay.addEventListener('click', (e) => {
-            if (e.target === overlay) closeModal(overlay.id);
+    // 3. ATTACK REPLAY ANIMATION (8s Playhead & Moving Counters)
+    const replayBtn = document.getElementById('btn-replay-play');
+    const scrubber = document.getElementById('replay-scrubber');
+    const playhead = document.getElementById('timeline-playhead-line');
+    const dots = document.querySelectorAll('.event-dot');
+    const cntSent = document.getElementById('live-cnt-sent');
+    const cntOpened = document.getElementById('live-cnt-opened');
+    const cntClicked = document.getElementById('live-cnt-clicked');
+    const cntSubmitted = document.getElementById('live-cnt-submitted');
+    const cntReported = document.getElementById('live-cnt-reported');
+
+    let isPlaying = false;
+    let animId = null;
+
+    function setReplayState(pct) {
+        if (scrubber) scrubber.value = pct;
+        const xPos = 120 + (pct * 8.6);
+        if (playhead) {
+            playhead.setAttribute('x1', xPos);
+            playhead.setAttribute('x2', xPos);
+        }
+
+        let sent = 0, opened = 0, clicked = 0, submitted = 0, reported = 0;
+        dots.forEach(dot => {
+            const dotPct = parseFloat(dot.getAttribute('data-pct') || '0');
+            const lane = dot.getAttribute('data-lane');
+            if (dotPct <= pct) {
+                dot.style.opacity = '1';
+                dot.style.transform = 'scale(1)';
+                if (lane === 'sent') sent++;
+                else if (lane === 'opened') opened++;
+                else if (lane === 'clicked') clicked++;
+                else if (lane === 'submitted') submitted++;
+                else if (lane === 'reported') reported++;
+            } else {
+                dot.style.opacity = '0.15';
+                dot.style.transform = 'scale(0.7)';
+            }
+        });
+
+        if (cntSent) cntSent.textContent = sent;
+        if (cntOpened) cntOpened.textContent = opened;
+        if (cntClicked) cntClicked.textContent = clicked;
+        if (cntSubmitted) cntSubmitted.textContent = submitted;
+        if (cntReported) cntReported.textContent = reported;
+    }
+
+    if (replayBtn) {
+        replayBtn.addEventListener('click', function() {
+            if (isPlaying) {
+                cancelAnimationFrame(animId);
+                isPlaying = false;
+                document.getElementById('replay-btn-text').textContent = 'Replay (8s)';
+                return;
+            }
+            isPlaying = true;
+            document.getElementById('replay-btn-text').textContent = 'Pause';
+            const duration = 8000;
+            const start = performance.now();
+
+            function tick(now) {
+                const elapsed = now - start;
+                const progress = Math.min(elapsed / duration, 1);
+                setReplayState(progress * 100);
+
+                if (progress < 1 && isPlaying) {
+                    animId = requestAnimationFrame(tick);
+                } else {
+                    isPlaying = false;
+                    document.getElementById('replay-btn-text').textContent = 'Replay (8s)';
+                }
+            }
+            animId = requestAnimationFrame(tick);
+        });
+    }
+
+    if (scrubber) {
+        scrubber.addEventListener('input', function() {
+            if (isPlaying) {
+                cancelAnimationFrame(animId);
+                isPlaying = false;
+                document.getElementById('replay-btn-text').textContent = 'Replay (8s)';
+            }
+            setReplayState(parseFloat(scrubber.value));
+        });
+    }
+
+    // 4. TIMELINE DOT HOVER POPOVER
+    const popover = document.getElementById('timeline-popover');
+    const popLane = document.getElementById('pop-lane');
+    const popPerson = document.getElementById('pop-person');
+    const popMeta = document.getElementById('pop-meta');
+
+    dots.forEach(dot => {
+        dot.addEventListener('mouseenter', function(e) {
+            if (!popover) return;
+            const lane = dot.getAttribute('data-lane');
+            const rec = dot.getAttribute('data-recipient');
+            const dept = dot.getAttribute('data-dept');
+            const tta = dot.getAttribute('data-tta');
+            const time = dot.getAttribute('data-time');
+
+            popLane.textContent = lane.toUpperCase();
+            popLane.className = 'popover-lane lane-tag-' + lane;
+            popPerson.textContent = rec;
+            popMeta.textContent = `${dept} — ${time} (${tta})`;
+
+            const rect = dot.getBoundingClientRect();
+            const parentRect = document.getElementById('timeline-svg-box').getBoundingClientRect();
+            popover.style.left = (rect.left - parentRect.left + 10) + 'px';
+            popover.style.top = (rect.top - parentRect.top - 50) + 'px';
+            popover.style.display = 'block';
+        });
+
+        dot.addEventListener('mouseleave', function() {
+            if (popover) popover.style.display = 'none';
         });
     });
+
+    // 4b. TAP / CLICK SUPPORT ON PSYCHOLOGICAL TRIGGER HIGHLIGHTS
+    document.querySelectorAll('.trigger-highlight').forEach(mark => {
+        mark.setAttribute('tabindex', '0');
+        mark.addEventListener('click', function(ev) {
+            ev.stopPropagation();
+            const wasActive = mark.classList.contains('show-tip');
+            document.querySelectorAll('.trigger-highlight.show-tip').forEach(m => m.classList.remove('show-tip'));
+            if (!wasActive) mark.classList.add('show-tip');
+        });
+    });
+    document.addEventListener('click', function() {
+        document.querySelectorAll('.trigger-highlight.show-tip').forEach(m => m.classList.remove('show-tip'));
+    });
+
+    // 5. WHY IT WORKED TRIGGER HIGHLIGHT TOGGLE
+    const toggleTriggers = document.getElementById('toggle-trigger-highlights');
+    if (toggleTriggers) {
+        toggleTriggers.addEventListener('change', function() {
+            const marks = document.querySelectorAll('.trigger-highlight');
+            marks.forEach(m => {
+                if (toggleTriggers.checked) {
+                    m.classList.add('force-active');
+                } else {
+                    m.classList.remove('force-active');
+                }
+            });
+        });
+    }
+
+    // 6. ANONYMISE NAMES TOGGLE
+    const toggleAnon = document.getElementById('toggle-anonymise');
+    if (toggleAnon) {
+        toggleAnon.addEventListener('change', function() {
+            const isAnon = toggleAnon.checked;
+            document.querySelectorAll('.emp-name').forEach(el => {
+                el.textContent = isAnon ? el.getAttribute('data-anon') : el.getAttribute('data-real');
+            });
+            document.querySelectorAll('.emp-email').forEach(el => {
+                el.textContent = isAnon ? el.getAttribute('data-anon') : el.getAttribute('data-real');
+            });
+        });
+    }
+
+    // 7. TOAST NOTIFICATION HELPER
+    function showToast(msg) {
+        const toast = document.getElementById('debrief-toast');
+        if (!toast) return;
+        toast.textContent = msg;
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 3500);
+    }
+
+    // 8. REMEDIATION ACTION BUTTON PERSISTENCE
+    document.querySelectorAll('.action-btn-exec').forEach(btn => {
+        btn.addEventListener('click', function() {
+            if (btn.disabled) return;
+            const campId = btn.getAttribute('data-campaign-id');
+            const actionKey = btn.getAttribute('data-action-key');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="ti ti-loader animate-spin"></i> Processing...';
+
+            fetch(`/api/campaign/${campId}/action/${actionKey}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token() }}'
+                }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    btn.classList.add('btn-completed');
+                    btn.innerHTML = '<i class="ti ti-check"></i> Completed';
+                    
+                    const card = document.getElementById('card-act-' + actionKey);
+                    if (card) card.classList.add('action-done');
+
+                    const badge = document.getElementById('badge-status-' + actionKey);
+                    if (badge) {
+                        badge.className = 'status-pill status-done';
+                        badge.textContent = 'Done';
+                    }
+
+                    const meta = document.getElementById('meta-info-' + actionKey);
+                    if (meta) {
+                        meta.innerHTML = `<span class="done-note"><i class="ti ti-check"></i> Done by ${data.completed_by} (${data.completed_at})</span>`;
+                    }
+
+                    if (data.progress_pct !== undefined) {
+                        const bar = document.getElementById('action-progress-fill');
+                        if (bar) bar.style.width = data.progress_pct + '%';
+                        const label = document.getElementById('prog-text-label');
+                        if (label) label.textContent = `${data.completed_count} of ${data.total_count} actions completed`;
+                    }
+
+                    showToast('Remediation action recorded successfully.');
+                } else {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="ti ti-alert-triangle"></i> Retry';
+                    showToast('Action failed: ' + (data.error || 'Server error'));
+                }
+            })
+            .catch(err => {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="ti ti-alert-triangle"></i> Retry';
+                showToast('Network error while recording action.');
+            });
+        });
+    });
+
+    // 9. COPY SUMMARY TO CLIPBOARD
+    function copyExecutiveSummary() {
+        const summaryText = `PhishSim AI Executive Debrief — {{ campaign.name }}\n` +
+            `Domain: {{ campaign.company_domain }}\n` +
+            `Verdict: "{{ verdict_str }}"\n\n` +
+            `Key Metrics:\n` +
+            `• Human Risk Score: {{ hss_obj.score }}/100 ({{ hss_obj.label }})\n` +
+            `• Dispatched: {{ campaign.emails_sent or 0 }} targets ({{ report.delivery_rate }}% delivery)\n` +
+            `• Opened: {{ campaign.opens or 0 }} ({{ report.open_rate }}%)\n` +
+            `• Clicked: {{ campaign.clicks or 0 }} ({{ report.click_rate }}%)\n` +
+            `• Reported: {{ campaign.reports or 0 }} ({{ report.report_rate }}%)\n\n` +
+            `Telemetry Insight:\n` +
+            `{{ replay_obj.key_insight }}\n\n` +
+            `Remediation Progress: {{ rem_obj.completed_count }}/{{ rem_obj.total_count }} actions completed.`;
+
+        navigator.clipboard.writeText(summaryText).then(() => {
+            showToast('Executive debrief summary copied to clipboard.');
+        }).catch(() => {
+            showToast('Failed to copy summary to clipboard.');
+        });
+    }
+
+    const btnCopyTop = document.getElementById('btn-copy-summary');
+    const btnCopyTile = document.getElementById('btn-copy-summary-tile');
+    if (btnCopyTop) btnCopyTop.addEventListener('click', copyExecutiveSummary);
+    if (btnCopyTile) btnCopyTile.addEventListener('click', copyExecutiveSummary);
 });
 </script>
 {% endblock %}

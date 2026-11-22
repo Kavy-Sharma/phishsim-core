@@ -12,7 +12,7 @@ SYSTEM_PROMPT = (
     "Your persona guidelines:\n"
     "- You ONLY discuss phishing, social engineering, email security, PhishSim platform features, and cybersecurity awareness.\n"
     "- Speak in the first person (\"I\", \"my\"). You are a helpful, composed companion mascot.\n"
-    "- Keep your replies short and conversational. Write only 2-3 sentences max per reply. This is a chat bubble, not an essay.\n"
+    "- Keep your replies focused and conversational (typically 2-4 sentences). Always finish your thought completely. Ensure all sentences and thoughts are fully concluded before stopping. Never cut off mid-sentence, mid-word, or leave hanging list headers.\n"
     "- Use a calm, professional, and competent tone. Avoid excessive banter or jokes during technical findings.\n"
     "- Politely decline and redirect if asked to do anything unrelated to cybersecurity, phishing, or PhishSim.\n"
     "- Never generate functional phishing emails or lures in this chat. Steer users to the \"Generate\" tab to preview safe simulation templates.\n"
@@ -33,6 +33,26 @@ FAST_GREETINGS = [
     "Good to see you! Whether you want to test domain posture in PhishRecon or practice in Spot the Phish, I'm here to guide you."
 ]
 
+def ensure_complete_sentences(text: str) -> str:
+    """Guarantees returned response does not cut off mid-thought or mid-sentence."""
+    if not text:
+        return text
+    t = text.strip()
+    if t.endswith(('.', '!', '?', '"', '”', '`', ')')):
+        return t
+    if t.endswith(':'):
+        lines = t.split('\n')
+        if len(lines) > 1 and lines[-1].strip().endswith(':'):
+            return '\n'.join(lines[:-1]).strip()
+        return t.rstrip(':').strip() + '.'
+    last_punct = max(t.rfind('. '), t.rfind('! '), t.rfind('? '), t.rfind('.\n'), t.rfind('!\n'), t.rfind('?\n'))
+    if last_punct != -1:
+        return t[:last_punct + 1].strip()
+    last_direct = max(t.rfind('.'), t.rfind('!'), t.rfind('?'))
+    if last_direct != -1:
+        return t[:last_direct + 1].strip()
+    return t + '.'
+
 def _check_fast_path(text: str) -> str | None:
     """Instant heuristic response for common greetings, technical concepts, and platform questions."""
     t = text.lower().strip()
@@ -52,6 +72,13 @@ def _check_fast_path(text: str) -> str | None:
     # 3. Purpose / help
     if clean in ("help", "what can you do", "commands", "features", "what is this", "how to use", "how do you work"):
         return "I can help guide you through PhishSim! Check your domain attack surface with PhishRecon under 'Check something', practice in Spot the Phish, inspect suspicious emails in Threat Sandbox, or view your Risk Briefing on the dashboard."
+
+    # 3b. Dashboard / Page Explanation
+    if any(q in clean for q in ("what is this webpage", "what is this page", "what page is this", "about this webpage", "about this page")):
+        return "This is the PhishSim AI dashboard — your central command center for email security and phishing simulation. Here you can track organization-wide drill readiness, analyze click and report rate trends, review recent simulated scenarios, and access automated security briefings."
+
+    if any(q in clean for q in ("tell me more", "can you tell me more", "explain more", "more details", "what else")):
+        return "PhishSim AI combines continuous phishing simulation with deep OSINT attack surface auditing. You can run automated security drills to measure real employee resilience, scan suspicious emails in Threat Analyzer, trace hidden redirect hops with URL Decoder, or map your organization's external DNS and mail security posture in PhishRecon."
 
     # 4. PhishRecon specific queries
     if "not enough data" in clean:
@@ -116,10 +143,10 @@ def generate_lure_chat_response(message: str, history: list, page_context: str =
     # 3. Add current user message
     messages.append({"role": "user", "content": message})
 
-    # 4. Call high-speed chat racer (under 2 seconds)
+    # 4. Call high-speed chat racer with generous token allowance and sentence completion
     reply = None
     try:
-        reply = _call_chat_fast(messages, max_tokens=150, timeout=2.5)
+        reply = _call_chat_fast(messages, max_tokens=500, timeout=5.5)
     except Exception as e:
         print(f"[lure_chat] Exception in fast chat race: {e}")
 
@@ -138,4 +165,4 @@ def generate_lure_chat_response(message: str, history: list, page_context: str =
             "in PhishRecon or practice detecting deceptive bait in Spot the Phish."
         )
 
-    return reply.strip()
+    return ensure_complete_sentences(reply.strip())

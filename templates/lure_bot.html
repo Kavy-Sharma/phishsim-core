@@ -9715,5 +9715,20 @@
     window.addEventListener('DOMContentLoaded', initRestrainedMode);
     initRestrainedMode();
 
+    // Auto-hide mascot whenever any dialog is open
+    function checkOpenDialogs() {
+      const hasOpenDialog = !!document.querySelector('dialog[open]:not(#command-palette-dialog), .modal.show, .confirm-modal.show, .app-confirm-dialog[open], .app-confirm-dialog.is-active');
+      const isCurrentlyOpen = document.body.classList.contains('has-modal-open');
+      if (isCurrentlyOpen !== hasOpenDialog) {
+        document.body.classList.toggle('has-modal-open', hasOpenDialog);
+      }
+    }
+    try {
+      const dialogObserver = new MutationObserver(checkOpenDialogs);
+      dialogObserver.observe(document.body, { subtree: true, attributes: true, attributeFilter: ['open', 'class'] });
+      window.addEventListener('DOMContentLoaded', checkOpenDialogs);
+      checkOpenDialogs();
+    } catch(e) {}
+
   })();
 </script>

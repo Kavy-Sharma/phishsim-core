@@ -11,15 +11,15 @@
     <div class="auth-card signup-card">
         <div class="auth-card-body">
             <!-- Premium Cyber Logo Mark -->
-            <svg class="auth-logo-mark" width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: block; margin: 0 auto 24px;">
+            <svg class="auth-logo-mark" width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" >
                 <defs>
                     <linearGradient id="cyberShieldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
                         <stop offset="0%" stop-color="var(--primary)" />
-                        <stop offset="100%" stop-color="#818CF8" />
+                        <stop offset="100%" stop-color="var(--info)" />
                     </linearGradient>
                     <linearGradient id="cyberGlow" x1="0%" y1="0%" x2="100%" y2="100%">
                         <stop offset="0%" stop-color="var(--primary)" stop-opacity="0.25" />
-                        <stop offset="100%" stop-color="#818CF8" stop-opacity="0.05" />
+                        <stop offset="100%" stop-color="var(--info)" stop-opacity="0.05" />
                     </linearGradient>
                     <filter id="cyberNeonGlow" x="-20%" y="-20%" width="140%" height="140%">
                         <feGaussianBlur stdDeviation="2.5" result="blur" />
@@ -46,7 +46,7 @@
             <!-- Flash messages -->
             {% with messages = get_flashed_messages() %}
                 {% if messages %}
-                    <div class="form-alert" style="margin-bottom: 1.2rem; padding: 12px 14px; border-radius: 10px; border: 1px solid rgba(248,113,113,0.3); background: rgba(248,113,113,0.11); color: #fecaca; font-size: 0.9rem;">
+                    <div class="form-alert alert-danger">
                         <i class="ti ti-alert-triangle" style="margin-right:8px;"></i>{{ messages[0] }}
                     </div>
                 {% endif %}
@@ -55,9 +55,9 @@
             <form method="POST">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <!-- Grid Row 1: Name & Email -->
-                <div class="auth-grid-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 12px;">
+                <div class="auth-grid-row">
                     <!-- Full name input -->
-                    <div class="auth-form-group" style="margin-bottom: 0 !important;">
+                    <div class="auth-form-group">
                         <label class="form-label" for="name">Full name</label>
                         <div class="auth-input-wrap">
                             <input class="form-input" type="text" id="name" name="name" placeholder="Alex Rivera" autocomplete="name" required>
@@ -65,7 +65,7 @@
                     </div>
 
                     <!-- Work email input -->
-                    <div class="auth-form-group" style="margin-bottom: 0 !important;">
+                    <div class="auth-form-group">
                         <label class="form-label" for="email">Work email</label>
                         <div class="auth-input-wrap">
                             <input class="form-input" type="email" id="email" name="email" placeholder="you@company.com" autocomplete="username" autocapitalize="none" spellcheck="false" required>
@@ -74,9 +74,9 @@
                 </div>
 
                 <!-- Grid Row 2: Company & Domain -->
-                <div class="auth-grid-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 12px;">
+                <div class="auth-grid-row">
                     <!-- Company name input -->
-                    <div class="auth-form-group" style="margin-bottom: 0 !important;">
+                    <div class="auth-form-group">
                         <label class="form-label" for="company_name">Company name</label>
                         <div class="auth-input-wrap">
                             <input class="form-input" type="text" id="company_name" name="company_name" placeholder="Acme Corp" autocomplete="organization">
@@ -84,7 +84,7 @@
                     </div>
 
                     <!-- Company domain input -->
-                    <div class="auth-form-group" style="margin-bottom: 0 !important;">
+                    <div class="auth-form-group">
                         <label class="form-label" for="company_domain">Primary domain</label>
                         <div class="auth-input-wrap">
                             <input class="form-input" type="text" id="company_domain" name="company_domain" placeholder="acme.com" required title="Used to generate realistic phishing simulations">
@@ -99,30 +99,28 @@
                         <input class="form-input" type="password" id="password" name="password" placeholder="••••••••••" autocomplete="new-password" required oninput="checkPasswordStrength(this.value)">
                     </div>
                     <!-- Password strength meter container -->
-                    <div class="strength-meter-container" style="margin-top: 8px;">
-                        <div class="strength-bar" style="display: flex; gap: 4px; height: 4px; background: transparent;">
-                            <div class="strength-segment" style="flex: 1; height: 100%; background: var(--border-subtle); border-radius: 2px; transition: background 0.25s;"></div>
-                            <div class="strength-segment" style="flex: 1; height: 100%; background: var(--border-subtle); border-radius: 2px; transition: background 0.25s;"></div>
-                            <div class="strength-segment" style="flex: 1; height: 100%; background: var(--border-subtle); border-radius: 2px; transition: background 0.25s;"></div>
-                            <div class="strength-segment" style="flex: 1; height: 100%; background: var(--border-subtle); border-radius: 2px; transition: background 0.25s;"></div>
+                    <div class="strength-meter-container">
+                        <div class="strength-bar">
+                            <div class="strength-segment"></div>
+                            <div class="strength-segment"></div>
+                            <div class="strength-segment"></div>
+                            <div class="strength-segment"></div>
                         </div>
-                        <div style="display: flex; justify-content: flex-end; margin-top: 4px;">
-                            <span id="strength-label" style="font-family: 'Space Grotesk', sans-serif; font-size: 11px; font-weight: 500; color: var(--text-muted);">Too short</span>
-                        </div>
+                        <div class="strength-label-wrap"><span id="strength-label" class="strength-label">Too short</span></div>
                     </div>
                 </div>
 
                 <!-- Terms and privacy policy checkbox -->
-                <div class="auth-form-group" style="margin-top: 24px; margin-bottom: 24px;">
-                    <label class="auth-checkbox-label" style="font-size: var(--text-sm); line-height: 1.4;">
-                        <input type="checkbox" name="agree" value="y" required style="margin-top: 3px;"> 
-                        <span>I agree to the <a href="/terms" target="_blank" style="color: var(--primary); text-decoration: none; font-weight: 500;">Terms of Service</a> and <a href="/privacy" target="_blank" style="color: var(--primary); text-decoration: none; font-weight: 500;">Privacy Policy</a></span>
+                <div class="auth-form-group">
+                    <label class="auth-checkbox-label">
+                        <input type="checkbox" name="agree" value="y" required>
+                        <span>I agree to the <a href="/terms" target="_blank">Terms of Service</a> and <a href="/privacy" target="_blank">Privacy Policy</a></span>
                     </label>
                 </div>
 
                 <!-- Primary button -->
                 <button type="submit" class="auth-submit-btn">
-                    Create Account
+                    Create account
                 </button>
             </form>
 

@@ -10,15 +10,15 @@
     <div class="auth-card">
         <div class="auth-card-body">
             <!-- Premium Cyber Logo Mark -->
-            <svg class="auth-logo-mark" width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: block; margin: 0 auto 24px;">
+            <svg class="auth-logo-mark" width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <defs>
                     <linearGradient id="cyberShieldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
                         <stop offset="0%" stop-color="var(--primary)" />
-                        <stop offset="100%" stop-color="#818CF8" />
+                        <stop offset="100%" stop-color="var(--info)" />
                     </linearGradient>
                     <linearGradient id="cyberGlow" x1="0%" y1="0%" x2="100%" y2="100%">
                         <stop offset="0%" stop-color="var(--primary)" stop-opacity="0.25" />
-                        <stop offset="100%" stop-color="#818CF8" stop-opacity="0.05" />
+                        <stop offset="100%" stop-color="var(--info)" stop-opacity="0.05" />
                     </linearGradient>
                     <filter id="cyberNeonGlow" x="-20%" y="-20%" width="140%" height="140%">
                         <feGaussianBlur stdDeviation="2.5" result="blur" />
@@ -47,21 +47,16 @@
                 {% if messages %}
                     {% for message in messages %}
                         {% set is_success = 'dispatched' in message or 'reset' in message or 'success' in message %}
-                        <div class="form-alert swipeable-alert" style="margin-bottom: 1.2rem; padding: 12px 14px; border-radius: 10px; 
-                            {% if is_success %}
-                                border: 1px solid rgba(52,211,153,0.3); background: rgba(52,211,153,0.11); color: #a7f3d0;
-                            {% else %}
-                                border: 1px solid rgba(248,113,113,0.3); background: rgba(248,113,113,0.11); color: #fecaca;
-                            {% endif %}
-                            font-size: 0.9rem;">
-                            <i class="ti {% if is_success %}ti-circle-check{% else %}ti-alert-triangle{% endif %}" style="margin-right:8px;"></i>{{ message }}
+                        <div class="form-alert swipeable-alert {% if is_success %}alert-success{% else %}alert-danger{% endif %}">
+                            <i class="ti {% if is_success %}ti-circle-check{% else %}ti-alert-triangle{% endif %}"></i>
+                            <span>{{ message }}</span>
                         </div>
                     {% endfor %}
                 {% endif %}
             {% endwith %}
 
             <form method="POST">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 {% if requires_2fa %}
                 <!-- Two-factor code input -->
                 <div class="auth-form-group">
@@ -84,7 +79,7 @@
                     <div class="auth-input-wrap">
                         <input class="form-input" type="password" id="password" name="password" placeholder="Password" autocomplete="current-password" required>
                         <button type="button" id="pw-eye" class="auth-eye" tabindex="-1" onclick="togglePw()" aria-label="Show or hide password">
-                            <i class="ti ti-eye" id="pw-eye-icon" style="font-size: 1.1rem; line-height: 1;"></i>
+                            <i class="ti ti-eye" id="pw-eye-icon"></i>
                         </button>
                     </div>
                 </div>
@@ -100,7 +95,7 @@
 
                 <!-- Primary button -->
                 <button type="submit" class="auth-submit-btn">
-                    {% if requires_2fa %}Verify Code{% else %}Sign In{% endif %}
+                    {% if requires_2fa %}Verify code{% else %}Sign in{% endif %}
                 </button>
             </form>
 
@@ -111,10 +106,10 @@
 
             <!-- Demo access button -->
             <a href="/demo-login" class="auth-demo-btn">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" style="vertical-align: middle; margin-right: 8px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                     <path d="M8 5v14l11-7z"/>
                 </svg>
-                Continue with Demo Account
+                <span>Continue with demo account</span>
             </a>
 
             <!-- Bottom text -->

@@ -5319,7 +5319,7 @@ function showDemoToast(msg) {
   if (toastTimer) clearTimeout(toastTimer);
   toastTimer = setTimeout(() => {
     el.classList.remove('is-active');
-  }, 2200);
+  }, 6500);
 }
 
 function setPosturePreview(posture) {
