@@ -1,263 +1,1741 @@
 {% extends 'base.html' %}
-
-{% block title %}Users - PhishSim AI{% endblock %}
+{% block title %}Users — PhishSim AI Admin{% endblock %}
 
 {% block content %}
 <style>
-.users-page { max-width: 1180px; margin: 0 auto; padding: 0.5rem 2rem 2rem 2rem; }
-.users-header { display:flex; justify-content:space-between; align-items:flex-end; gap:1rem; margin-bottom:1.2rem; }
-.users-header h1 { color:var(--text-main); margin:0; font-size:2.3rem; font-family:var(--font-sans); }
-.users-header p { color:var(--text-muted); margin:0.4rem 0 0; }
-.users-layout { display:grid; grid-template-columns:minmax(300px, 380px) minmax(0, 1fr); gap:1.5rem; align-items:start; }
-/* Users card overridden for window-mockup support */
-.users-card {
-    background: transparent !important;
-    border: none !important;
-    padding: 0 !important;
-    box-shadow: none !important;
+.users-container {
+    max-width: 1240px;
+    margin: 1.5rem auto 3.5rem auto;
+    padding: 0 1.5rem;
 }
-.users-card h2 { color:var(--text-main); margin:0 0 1rem; font-size:1.2rem; }
-.users-form-grid { display:grid; gap:0.9rem; }
-.users-form-grid label { color:var(--text-muted); font-size:0.78rem; text-transform:uppercase; letter-spacing:1px; font-family:var(--font-mono); }
-.users-form-grid input, .users-form-grid select {
-    width:100%; background:rgba(0,0,0,0.05); border:1px solid var(--border-color);
-    border-radius:10px; color:var(--text-main); padding:12px; outline:none;
+
+/* Header */
+.users-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    gap: 1rem;
 }
-.users-form-grid small { display:block; color:var(--text-muted); margin-top:5px; line-height:1.4; }
-.users-list { display:grid; gap:0.9rem; max-width:100%; overflow:hidden; }
-.user-row {
-    display:grid; grid-template-columns:minmax(0, 1fr) auto; gap:1rem; align-items:center;
-    background:rgba(0,0,0,0.02); border:1px solid var(--border-color);
-    border-radius:14px; padding:1rem; min-width:0;
+
+.users-header-left h1 {
+    font-size: 1.85rem;
+    font-weight: 800;
+    color: var(--text-primary, #0f172a);
+    margin: 0 0 0.35rem 0;
+    font-family: var(--font-sans);
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
-.user-main { min-width:0; }
-.user-main strong { color:var(--text-main); display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.user-main p { color:var(--text-muted); margin:0.25rem 0 0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.user-actions { display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap; justify-content:flex-end; }
-.icon-btn {
-    width:38px; height:38px; border-radius:10px; border:1px solid var(--border-color);
-    background:rgba(0,0,0,0.05); color:var(--text-muted); cursor:pointer;
+
+.users-header-left p {
+    font-size: 0.92rem;
+    color: var(--text-muted, #64748b);
+    margin: 0;
 }
-.icon-btn:hover { color:var(--text-main); border-color:var(--accent-blue); }
-.icon-btn.danger:hover { color:#f87171; border-color:rgba(239,68,68,0.35); }
-.role-form { margin:0; }
-.role-btn {
-    min-width:38px; height:38px; border-radius:10px; border:1px solid var(--border-color);
-    background:rgba(0,0,0,0.05); color:var(--text-muted); cursor:pointer; padding:0 11px;
+
+.badge-count {
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 3px 9px;
+    border-radius: 999px;
+    background: rgba(99, 102, 241, 0.12);
+    color: #6366f1;
+    border: 1px solid rgba(99, 102, 241, 0.25);
 }
-.role-btn:hover { color:#fff; border-color:rgba(59,130,246,0.45); background:linear-gradient(135deg,#06b6d4,#3b82f6); }
-.role-btn.warning:hover { border-color:rgba(245,158,11,0.55); background:linear-gradient(135deg,#f59e0b,#ef4444); }
-.reset-form {
-    grid-column:1 / -1; display:none; grid-template-columns:minmax(180px, 1fr) auto; gap:0.6rem;
-    margin-top:0.8rem; padding-top:0.8rem; border-top:1px solid var(--border-color);
+
+.users-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
 }
-.reset-form.show { display:grid; }
-.reset-form input {
-    background:rgba(0,0,0,0.05); border:1px solid var(--border-color);
-    border-radius:10px; color:var(--text-main); padding:10px;
+
+.btn-admin-nav {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 9px 16px;
+    background: var(--bg-card, #ffffff);
+    color: var(--text-primary, #0f172a);
+    border: 1px solid var(--border-color, #e2e8f0);
+    font-size: 0.88rem;
+    font-weight: 600;
+    border-radius: 8px;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    cursor: pointer;
 }
-.reset-form button {
-    border:0; border-radius:10px; padding:10px 14px; color:#fff;
-    background:linear-gradient(135deg,#06b6d4,#3b82f6); cursor:pointer; font-weight:700;
+
+.btn-admin-nav:hover {
+    background: rgba(0, 0, 0, 0.04);
+    border-color: var(--accent-blue, #2563eb);
 }
-.verify-pill { font-size:0.72rem; padding:3px 8px; border-radius:999px; border:1px solid rgba(34,197,94,0.25); color:#4ade80; background:rgba(34,197,94,0.08); }
-.verify-pill.pending { border-color:rgba(245,158,11,0.25); color:#facc15; background:rgba(245,158,11,0.08); }
-.confirm-modal {
-    position:fixed; inset:0; z-index:50000; display:none; align-items:center; justify-content:center;
-    background:rgba(2,6,23,0.72); backdrop-filter:blur(10px); padding:1.5rem;
+
+.btn-add-user {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 9px 18px;
+    background: #2563eb;
+    color: #ffffff !important;
+    font-size: 0.88rem;
+    font-weight: 600;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);
+    transition: all 0.2s ease;
 }
-.confirm-modal.show { display:flex; }
-.confirm-box {
-    width:min(420px,100%); background:rgba(10,16,38,0.96);
-    border:1px solid rgba(239,68,68,0.28); border-radius:18px; padding:1.5rem;
-    box-shadow:0 24px 70px rgba(0,0,0,0.5);
+
+.btn-add-user:hover {
+    background: #1d4ed8;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
 }
-.confirm-box h3 { color:#fff; margin:0 0 0.5rem; }
-.confirm-box p { color:#94a3b8; margin:0 0 1.2rem; }
-.confirm-actions { display:grid; grid-template-columns:1fr 1fr; gap:0.8rem; }
-.confirm-cancel, .confirm-danger {
-    border:0; border-radius:10px; padding:12px; cursor:pointer; color:#fff; font-weight:700;
+
+/* Flash alerts */
+.user-alert {
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 0.88rem;
+    margin-bottom: 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 }
-.confirm-cancel { background:rgba(148,163,184,0.14); color:#cbd5e1; }
-.confirm-danger { background:linear-gradient(135deg,#ef4444,#b91c1c); }
-@media (max-width: 860px) { .users-layout { grid-template-columns:1fr; } .user-row { grid-template-columns:1fr; } .user-actions { justify-content:flex-start; } }
+.user-alert.success { background: rgba(34, 197, 94, 0.12); color: #166534; border: 1px solid rgba(34, 197, 94, 0.3); }
+.user-alert.error { background: rgba(239, 68, 68, 0.12); color: #991b1b; border: 1px solid rgba(239, 68, 68, 0.3); }
+
+/* Filter & Search Toolbar */
+.users-toolbar {
+    background: var(--bg-card, #ffffff);
+    border: 1px solid var(--border-color, #e2e8f0);
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1.25rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.85rem;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.search-box {
+    position: relative;
+    flex: 1;
+    min-width: 260px;
+}
+
+.search-box i {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted, #94a3b8);
+    font-size: 1rem;
+    pointer-events: none;
+}
+
+.search-box input {
+    width: 100%;
+    padding: 9px 12px 9px 36px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color, #cbd5e1);
+    background: var(--bg-input, rgba(0, 0, 0, 0.02));
+    color: var(--text-primary, #0f172a);
+    font-size: 0.88rem;
+    outline: none;
+    box-sizing: border-box;
+    transition: border-color 0.2s ease;
+}
+
+.search-box input:focus {
+    border-color: var(--accent-blue, #2563eb);
+}
+
+.filter-group {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+}
+
+.filter-select {
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color, #cbd5e1);
+    background: var(--bg-input, rgba(0, 0, 0, 0.02));
+    color: var(--text-primary, #0f172a);
+    font-size: 0.84rem;
+    outline: none;
+    cursor: pointer;
+}
+
+.users-stats-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.82rem;
+    color: var(--text-muted, #64748b);
+    margin-bottom: 0.75rem;
+    padding: 0 0.25rem;
+}
+
+/* Users Table Card */
+.table-card {
+    background: var(--bg-card, #ffffff);
+    border: 1px solid var(--border-color, #e2e8f0);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+}
+
+.table-responsive {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.users-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.88rem;
+    text-align: left;
+}
+
+.users-table th {
+    background: rgba(0, 0, 0, 0.02);
+    padding: 12px 16px;
+    font-weight: 600;
+    color: var(--text-muted, #64748b);
+    border-bottom: 1px solid var(--border-color, #e2e8f0);
+    white-space: nowrap;
+    text-transform: uppercase;
+    font-size: 0.74rem;
+    letter-spacing: 0.04em;
+}
+
+.users-table td {
+    padding: 13px 16px;
+    border-bottom: 1px solid var(--border-color, #f1f5f9);
+    color: var(--text-primary, #0f172a);
+    vertical-align: middle;
+}
+
+.users-table tr:hover {
+    background: rgba(0, 0, 0, 0.015);
+}
+
+/* User cell */
+.user-cell {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 220px;
+}
+
+.user-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #6366f1, #3b82f6);
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.95rem;
+    flex-shrink: 0;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.user-meta {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.user-meta-name {
+    font-weight: 600;
+    color: var(--text-primary, #0f172a);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.user-meta-email {
+    font-size: 0.8rem;
+    color: var(--text-muted, #64748b);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Badges */
+.badge-role-admin {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 0.74rem;
+    font-weight: 700;
+    background: rgba(99, 102, 241, 0.12);
+    color: #6366f1;
+    border: 1px solid rgba(99, 102, 241, 0.25);
+}
+
+.badge-role-user {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 0.74rem;
+    font-weight: 600;
+    background: rgba(100, 116, 139, 0.1);
+    color: #475569;
+    border: 1px solid rgba(100, 116, 139, 0.2);
+}
+
+.badge-plan-pro {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 0.74rem;
+    font-weight: 700;
+    background: rgba(16, 185, 129, 0.12);
+    color: #059669;
+    border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+.badge-plan-free {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 0.74rem;
+    font-weight: 600;
+    background: rgba(148, 163, 184, 0.12);
+    color: #64748b;
+    border: 1px solid rgba(148, 163, 184, 0.22);
+}
+
+.badge-status-verified {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 0.74rem;
+    font-weight: 600;
+    background: rgba(34, 197, 94, 0.12);
+    color: #16a34a;
+    border: 1px solid rgba(34, 197, 94, 0.25);
+}
+
+.badge-status-pending {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 0.74rem;
+    font-weight: 600;
+    background: rgba(245, 158, 11, 0.12);
+    color: #d97706;
+    border: 1px solid rgba(245, 158, 11, 0.25);
+}
+
+.badge-status-disabled {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 0.74rem;
+    font-weight: 600;
+    background: rgba(239, 68, 68, 0.12);
+    color: #dc2626;
+    border: 1px solid rgba(239, 68, 68, 0.25);
+}
+
+/* Action buttons with visible text - NEVER empty boxes */
+.action-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+.btn-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 5px 9px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color, #e2e8f0);
+    background: var(--bg-card, #ffffff);
+    color: var(--text-primary, #1e293b);
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+}
+
+.btn-action:hover:not(:disabled) {
+    background: rgba(0, 0, 0, 0.05);
+    border-color: var(--accent-blue, #2563eb);
+}
+
+.btn-action:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    background: rgba(0, 0, 0, 0.02);
+}
+
+.btn-action.text-primary {
+    color: #2563eb;
+}
+.btn-action.text-primary:hover:not(:disabled) {
+    background: rgba(37, 99, 235, 0.08);
+    border-color: rgba(37, 99, 235, 0.35);
+}
+
+.btn-action.text-success {
+    color: #16a34a;
+}
+.btn-action.text-success:hover:not(:disabled) {
+    background: rgba(22, 163, 74, 0.08);
+    border-color: rgba(22, 163, 74, 0.35);
+}
+
+.btn-action.text-warning {
+    color: #d97706;
+}
+.btn-action.text-warning:hover:not(:disabled) {
+    background: rgba(217, 119, 6, 0.08);
+    border-color: rgba(217, 119, 6, 0.35);
+}
+
+.btn-action.text-danger {
+    color: #dc2626;
+}
+.btn-action.text-danger:hover:not(:disabled) {
+    background: rgba(220, 38, 38, 0.08);
+    border-color: rgba(220, 38, 38, 0.35);
+}
+
+/* Pagination */
+.pagination-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 18px;
+    border-top: 1px solid var(--border-color, #e2e8f0);
+    background: rgba(0, 0, 0, 0.01);
+    font-size: 0.84rem;
+    color: var(--text-muted, #64748b);
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.pagination-controls {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.btn-page {
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color, #cbd5e1);
+    background: var(--bg-card, #ffffff);
+    color: var(--text-primary, #0f172a);
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.btn-page:hover:not(:disabled) {
+    border-color: var(--accent-blue, #2563eb);
+    background: rgba(0, 0, 0, 0.03);
+}
+
+.btn-page:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+/* Side Drawers */
+.drawer-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.65);
+    backdrop-filter: blur(4px);
+    z-index: 9998;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+}
+
+.drawer-backdrop.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.drawer-panel {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: min(560px, 92vw);
+    background: var(--bg-main, #ffffff);
+    color: var(--text-primary, #0f172a);
+    box-shadow: -10px 0 35px rgba(0, 0, 0, 0.2);
+    z-index: 9999;
+    transform: translateX(100%);
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    display: flex;
+    flex-direction: column;
+}
+
+.drawer-panel.active {
+    transform: translateX(0);
+}
+
+.drawer-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid var(--border-color, #e2e8f0);
+}
+
+.drawer-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-drawer-close {
+    background: transparent;
+    border: none;
+    color: var(--text-muted, #64748b);
+    font-size: 1.3rem;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-drawer-close:hover {
+    color: var(--text-primary, #0f172a);
+    background: rgba(0, 0, 0, 0.05);
+}
+
+.drawer-body {
+    padding: 1.5rem;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.drawer-footer {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--border-color, #e2e8f0);
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    background: rgba(0, 0, 0, 0.015);
+}
+
+/* Form controls inside drawer */
+.form-group {
+    margin-bottom: 1.15rem;
+}
+
+.form-group label {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-muted, #475569);
+    margin-bottom: 0.4rem;
+}
+
+.form-control {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color, #cbd5e1);
+    background: var(--bg-input, rgba(0, 0, 0, 0.02));
+    color: var(--text-primary, #0f172a);
+    font-size: 0.9rem;
+    outline: none;
+    box-sizing: border-box;
+}
+
+.form-control:focus {
+    border-color: var(--accent-blue, #2563eb);
+}
+
+.form-help {
+    font-size: 0.78rem;
+    color: var(--text-muted, #64748b);
+    margin-top: 0.35rem;
+    display: block;
+    line-height: 1.4;
+}
+
+.temp-password-box {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-secondary {
+    padding: 9px 14px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color, #cbd5e1);
+    background: var(--bg-card, #ffffff);
+    color: var(--text-primary, #0f172a);
+    font-size: 0.86rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.btn-secondary:hover {
+    background: rgba(0, 0, 0, 0.04);
+}
+
+/* User Details Drawer specific styles */
+.detail-section {
+    margin-bottom: 1.75rem;
+}
+
+.detail-section-title {
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted, #64748b);
+    margin-bottom: 0.85rem;
+    padding-bottom: 0.35rem;
+    border-bottom: 1px solid var(--border-color, #f1f5f9);
+}
+
+.detail-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.9rem;
+}
+
+.detail-item-label {
+    font-size: 0.75rem;
+    color: var(--text-muted, #64748b);
+    margin-bottom: 2px;
+}
+
+.detail-item-value {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--text-primary, #0f172a);
+    word-break: break-all;
+}
+
+.detail-item-value.mono {
+    font-family: var(--font-mono, monospace);
+    font-size: 0.82rem;
+}
+
+.detail-campaign-item, .detail-audit-item {
+    padding: 9px 12px;
+    background: rgba(0, 0, 0, 0.02);
+    border: 1px solid var(--border-color, #e2e8f0);
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+    font-size: 0.82rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* Modal Dialog */
+.custom-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: rgba(15, 23, 42, 0.7);
+    backdrop-filter: blur(4px);
+    padding: 1.25rem;
+}
+
+.custom-modal.show {
+    display: flex;
+}
+
+.custom-modal-box {
+    width: min(440px, 100%);
+    background: var(--bg-card, #ffffff);
+    border: 1px solid var(--border-color, #cbd5e1);
+    border-radius: 14px;
+    padding: 1.5rem;
+    box-shadow: 0 20px 45px rgba(0, 0, 0, 0.3);
+}
+
+.custom-modal-box h3 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.15rem;
+    color: var(--text-primary, #0f172a);
+}
+
+.custom-modal-box p {
+    margin: 0 0 1.25rem 0;
+    font-size: 0.88rem;
+    color: var(--text-muted, #64748b);
+    line-height: 1.45;
+}
+
+.custom-modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+}
+
+/* Toast */
+.user-toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 11000;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    pointer-events: none;
+}
+
+.user-toast {
+    padding: 12px 18px;
+    border-radius: 8px;
+    background: #0f172a;
+    color: #ffffff;
+    font-size: 0.88rem;
+    font-weight: 500;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    animation: toastSlideIn 0.25s ease forwards;
+    pointer-events: auto;
+}
+.user-toast.success { border-left: 4px solid #22c55e; }
+.user-toast.error { border-left: 4px solid #ef4444; }
+
+@keyframes toastSlideIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 768px) {
+    .users-container { padding: 0 1rem; }
+    .users-toolbar { flex-direction: column; align-items: stretch; }
+    .search-box { min-width: 100%; }
+    .filter-group { justify-content: space-between; }
+    .action-toolbar { justify-content: flex-start; }
+}
 </style>
 
-<div class="users-page">
-    <div class="users-header">
-        <div>
-            <h1>Users</h1>
-            <p>Create users, view verification status, and reset passwords.</p>
+<div class="users-container">
+    <!-- Header -->
+    <div class="users-header-row">
+        <div class="users-header-left">
+            <h1>
+                <span>Users</span>
+                <span class="badge-count" id="total-users-badge">{{ users|length }} Total</span>
+            </h1>
+            <p>Manage accounts, administrative roles, subscription plans, and account security.</p>
+        </div>
+        <div class="users-header-actions">
+            <a href="/admin" class="btn-admin-nav">
+                <i class="ti ti-dashboard"></i> <span>Admin Overview</span>
+            </a>
+            <button type="button" class="btn-add-user" onclick="openAddUserDrawer()">
+                <i class="ti ti-user-plus"></i> <span>Add user</span>
+            </button>
         </div>
     </div>
 
-    {% with messages = get_flashed_messages() %}
+    <!-- Flash message alerts -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
-            <div class="form-alert">{{ messages[0] }}</div>
+            {% for category, msg in messages %}
+            <div class="user-alert {{ category }}">
+                <span>{{ msg }}</span>
+                <button type="button" style="background:none; border:none; cursor:pointer; color:inherit; font-size:1.1rem;" onclick="this.parentElement.remove();">&times;</button>
+            </div>
+            {% endfor %}
         {% endif %}
     {% endwith %}
 
-    <div class="users-layout">
-        <section class="users-card">
-            <div class="window-mockup" style="margin-bottom: 0;">
-                <div class="window-header">
-                    <div class="window-dots">
-                        <span class="window-dot red"></span>
-                        <span class="window-dot yellow"></span>
-                        <span class="window-dot green"></span>
-                    </div>
-                    <span class="window-title">add_user.sh</span>
-                </div>
-                <div class="window-body" style="padding: 1.5rem;">
-                    <h2 style="margin-top: 0; font-family: var(--font-sans);">Create User</h2>
-                    <form method="POST" class="users-form-grid">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                        <div>
-                            <label for="name">Name</label>
-                            <input type="text" id="name" name="name" placeholder="Security Manager" required>
-                        </div>
-                        <div>
-                            <label for="email">Email</label>
-                            <input type="email" id="email" name="email" placeholder="manager@gmail.com" required>
-                        </div>
-                        <div>
-                            <label for="password">Temporary Password</label>
-                            <input type="password" id="password" name="password" required>
-                            <small>Passwords are stored as hashes. They cannot be displayed later, only reset.</small>
-                        </div>
-                        <div>
-                            <label for="role">Role</label>
-                            <select id="role" name="role">
-                                <option value="company_user">Company User</option>
-                                <option value="admin">Admin</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label for="company_domain">Company Domain</label>
-                            <input type="text" id="company_domain" name="company_domain" placeholder="testing.local">
-                            <small>Optional while testing. If blank, the email domain is used.</small>
-                        </div>
-                        <button type="submit" class="btn-primary" style="width:100%;">Create User</button>
-                    </form>
-                </div>
-            </div>
-        </section>
-
-        <section class="users-card">
-            <div class="window-mockup" style="margin-bottom: 0;">
-                <div class="window-header">
-                    <div class="window-dots">
-                        <span class="window-dot red"></span>
-                        <span class="window-dot yellow"></span>
-                        <span class="window-dot green"></span>
-                    </div>
-                    <span class="window-title">existing_users.db</span>
-                </div>
-                <div class="window-body" style="padding: 1.5rem;">
-                    <h2 style="margin-top: 0; font-family: var(--font-sans);">Existing Users</h2>
-                    <div class="users-list">
-                        {% for user in users %}
-                        {% set role_action = 'company_user' if user.role == 'admin' else 'admin' %}
-                        <div class="user-row">
-                            <div class="user-main">
-                                <strong>{{ user.name }}</strong>
-                                <p>{{ user.email }}{% if user.company_domain %} · {{ user.company_domain }}{% endif %}</p>
-                            </div>
-                            <div class="user-actions">
-                                <span class="verify-pill {% if not user.email_verified %}pending{% endif %}">
-                                    {% if user.email_verified %}Verified{% else %}Unverified{% endif %}
-                                </span>
-                                {% if not user.email_verified %}
-                                <form action="/verify-user/{{ user.id }}" method="POST" class="role-form"
-                                      data-confirm-title="Verify user?"
-                                      data-confirm-message="This marks the user's email as verified without requiring an email link."
-                                      data-confirm-action="Verify">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                    <button type="submit" class="role-btn" title="Mark verified">
-                                        <i class="fas fa-envelope-circle-check"></i>
-                                    </button>
-                                </form>
-                                {% endif %}
-                                <span class="badge {% if user.role == 'admin' %}badge-launched{% else %}badge-draft{% endif %}">
-                                    {{ user.role.replace('_', ' ') }}
-                                </span>
-                                <form action="/set-user-role/{{ user.id }}" method="POST" class="role-form"
-                                      data-confirm-title="{% if user.role == 'admin' %}Remove admin access?{% else %}Make user admin?{% endif %}"
-                                      data-confirm-message="{% if user.role == 'admin' %}This user will become a company user and lose admin-only controls.{% else %}This user will be able to manage users and admin-only delivery options.{% endif %}"
-                                      data-confirm-action="{% if user.role == 'admin' %}Remove admin{% else %}Make admin{% endif %}">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                    <input type="hidden" name="role" value="{{ role_action }}">
-                                    <button type="submit" class="role-btn {% if user.role == 'admin' %}warning{% endif %}"
-                                            title="{% if user.role == 'admin' %}Remove admin{% else %}Make admin{% endif %}">
-                                        <i class="fas {% if user.role == 'admin' %}fa-user-minus{% else %}fa-user-shield{% endif %}"></i>
-                                    </button>
-                                </form>
-                                <button type="button" class="icon-btn" title="Reset password" onclick="toggleReset({{ user.id }})"><i class="fas fa-key"></i></button>
-                                <form action="/delete-user/{{ user.id }}" method="POST" data-confirm-title="Delete user?" data-confirm-message="This will delete the user account. Campaign data may remain attached to historical records." style="margin:0;">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                    <button type="submit" class="icon-btn danger" title="Delete user"><i class="fas fa-trash-alt"></i></button>
-                                </form>
-                            </div>
-                            <form id="reset-{{ user.id }}" class="reset-form" action="/reset-user-password/{{ user.id }}" method="POST">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                <input type="password" name="new_password" placeholder="New password" required>
-                                <button type="submit">Reset</button>
-                            </form>
-                        </div>
-                        {% endfor %}
-                    </div>
-                </div>
-            </div>
-        </section>
+    <!-- Filter & Search Toolbar -->
+    <div class="users-toolbar">
+        <div class="search-box">
+            <i class="ti ti-search"></i>
+            <input type="text" id="user-search-input" placeholder="Search by name, email, or domain..." oninput="onFilterChange()">
+        </div>
+        <div class="filter-group">
+            <select id="role-filter" class="filter-select" onchange="onFilterChange()">
+                <option value="all">All Roles</option>
+                <option value="admin">Admin</option>
+                <option value="company_user">Company User</option>
+            </select>
+            <select id="plan-filter" class="filter-select" onchange="onFilterChange()">
+                <option value="all">All Plans</option>
+                <option value="pro">Pro Plan</option>
+                <option value="free">Free Plan</option>
+            </select>
+            <select id="status-filter" class="filter-select" onchange="onFilterChange()">
+                <option value="all">All Statuses</option>
+                <option value="verified">Verified</option>
+                <option value="pending">Pending</option>
+                <option value="disabled">Disabled</option>
+            </select>
+            <select id="sort-select" class="filter-select" onchange="onFilterChange()">
+                <option value="created_desc">Created (Newest)</option>
+                <option value="name_asc">Name (A → Z)</option>
+                <option value="name_desc">Name (Z → A)</option>
+                <option value="campaigns_desc">Campaigns (Most)</option>
+                <option value="login_desc">Last Login (Recent)</option>
+            </select>
+        </div>
     </div>
-</div>
 
-<div class="confirm-modal" id="confirm-modal" aria-hidden="true">
-    <div class="confirm-box">
-        <h3 id="confirm-title">Delete?</h3>
-        <p id="confirm-message">This action cannot be undone.</p>
-        <div class="confirm-actions">
-            <button type="button" class="confirm-cancel" id="confirm-cancel">Cancel</button>
-            <button type="button" class="confirm-danger" id="confirm-danger" style="background: linear-gradient(135deg, #ef4444, #b91c1c) !important; color: #fff !important; border: none; border-radius: 10px; padding: 12px; cursor: pointer; font-weight: 700;">Delete</button>
+    <!-- Stats Bar -->
+    <div class="users-stats-bar">
+        <span id="showing-count-text">Showing {{ users|length }} of {{ users|length }} users</span>
+        <span>Page <strong id="current-page-num">1</strong> of <strong id="total-pages-num">1</strong></span>
+    </div>
+
+    <!-- Users Table Card -->
+    <div class="table-card">
+        <div class="table-responsive">
+            <table class="users-table">
+                <thead>
+                    <tr>
+                        <th>User</th>
+                        <th>Role</th>
+                        <th>Plan</th>
+                        <th>Verified</th>
+                        <th>Last Login</th>
+                        <th>Campaigns</th>
+                        <th style="text-align: right;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="users-tbody">
+                    {% for u in users %}
+                    <tr class="user-row-item"
+                        data-id="{{ u.id }}"
+                        data-name="{{ (u.name or '')|lower }}"
+                        data-email="{{ (u.email or '')|lower }}"
+                        data-domain="{{ (u.company_domain or '')|lower }}"
+                        data-role="{{ u.role }}"
+                        data-plan="{{ (u.plan or 'free')|lower }}"
+                        data-status="{% if u.is_disabled %}disabled{% elif u.email_verified %}verified{% else %}pending{% endif %}"
+                        data-campaigns="{{ u.campaigns_count or 0 }}"
+                        data-created="{{ u.created_at.timestamp() if u.created_at else 0 }}"
+                        data-last-login="{{ u.last_login_at.timestamp() if u.last_login_at else 0 }}">
+                        <td>
+                            <div class="user-cell">
+                                <div class="user-avatar">
+                                    {{ (u.name[0] if u.name else u.email[0])|upper }}
+                                </div>
+                                <div class="user-meta">
+                                    <span class="user-meta-name">{{ u.name }}</span>
+                                    <span class="user-meta-email">
+                                        {{ u.email }}
+                                        {% if u.company_domain %}
+                                            · {{ u.company_domain }}
+                                        {% endif %}
+                                    </span>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            {% if u.role == 'admin' %}
+                                <span class="badge-role-admin"><i class="ti ti-shield-check"></i> <span>Admin</span></span>
+                            {% else %}
+                                <span class="badge-role-user"><i class="ti ti-user"></i> <span>Company User</span></span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if u.plan == 'Pro' %}
+                                <span class="badge-plan-pro"><i class="ti ti-sparkles"></i> <span>Pro</span></span>
+                            {% else %}
+                                <span class="badge-plan-free"><i class="ti ti-circle-check"></i> <span>Free</span></span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if u.is_disabled %}
+                                <span class="badge-status-disabled"><i class="ti ti-ban"></i> <span>Disabled</span></span>
+                            {% elif u.email_verified %}
+                                <span class="badge-status-verified"><i class="ti ti-check"></i> <span>Verified</span></span>
+                            {% else %}
+                                <span class="badge-status-pending"><i class="ti ti-clock"></i> <span>Pending</span></span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if u.last_login_at %}
+                                <span style="font-size:0.84rem;">{{ u.last_login_at.strftime('%b %d, %Y') }}</span>
+                            {% else %}
+                                <span style="color:var(--text-muted); font-size:0.84rem;">Never</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span style="font-weight:600; font-size:0.84rem;">{{ u.campaigns_count or 0 }}</span>
+                        </td>
+                        <td style="text-align: right;">
+                            <div class="action-toolbar">
+                                <!-- Details Drawer Button -->
+                                <button type="button" class="btn-action text-primary" onclick="openUserDetailDrawer({{ u.id }})" title="View user profile and audit trail">
+                                    <i class="ti ti-layout-sidebar-right"></i> <span>Details</span>
+                                </button>
+
+                                <!-- Role Change -->
+                                {% if u.role == 'admin' %}
+                                    <button type="button" class="btn-action text-warning"
+                                            onclick="confirmRoleChange({{ u.id }}, 'company_user', '{{ u.name|escape }}')"
+                                            {% if u.id == session.get('user_id') %}disabled title="Cannot remove your own admin access"{% endif %}>
+                                        <i class="ti ti-shield-down"></i> <span>Demote</span>
+                                    </button>
+                                {% else %}
+                                    <button type="button" class="btn-action text-primary"
+                                            onclick="confirmRoleChange({{ u.id }}, 'admin', '{{ u.name|escape }}')">
+                                        <i class="ti ti-shield-up"></i> <span>Make Admin</span>
+                                    </button>
+                                {% endif %}
+
+                                <!-- Plan Change -->
+                                <button type="button" class="btn-action"
+                                        onclick="confirmPlanChange({{ u.id }}, '{% if u.plan == 'Pro' %}free{% else %}pro{% endif %}', '{{ u.name|escape }}')"
+                                        title="Switch user subscription tier">
+                                    <i class="ti ti-sparkles"></i> <span>{% if u.plan == 'Pro' %}Set Free{% else %}Set Pro{% endif %}</span>
+                                </button>
+
+                                <!-- Mark Verified -->
+                                {% if not u.email_verified and not u.is_disabled %}
+                                    <button type="button" class="btn-action text-success"
+                                            onclick="verifyUserAccount({{ u.id }}, '{{ u.name|escape }}')"
+                                            title="Mark email verified">
+                                        <i class="ti ti-check"></i> <span>Verify</span>
+                                    </button>
+                                {% endif %}
+
+                                <!-- Reset Password -->
+                                <button type="button" class="btn-action"
+                                        onclick="openResetPasswordModal({{ u.id }}, '{{ u.name|escape }}')"
+                                        title="Reset user password">
+                                    <i class="ti ti-key"></i> <span>Reset PW</span>
+                                </button>
+
+                                <!-- Disable / Enable -->
+                                <button type="button" class="btn-action {% if u.is_disabled %}text-success{% else %}text-warning{% endif %}"
+                                        onclick="confirmToggleStatus({{ u.id }}, {% if u.is_disabled %}false{% else %}true{% endif %}, '{{ u.name|escape }}')"
+                                        {% if u.id == session.get('user_id') %}disabled title="Cannot disable your own admin account"{% endif %}>
+                                    <i class="ti {% if u.is_disabled %}ti-player-play{% else %}ti-ban{% endif %}"></i>
+                                    <span>{% if u.is_disabled %}Enable{% else %}Disable{% endif %}</span>
+                                </button>
+
+                                <!-- Delete -->
+                                <button type="button" class="btn-action text-danger"
+                                        onclick="confirmDeleteUser({{ u.id }}, '{{ u.name|escape }}')"
+                                        {% if u.id == session.get('user_id') %}disabled title="Cannot delete your own account"{% endif %}>
+                                    <i class="ti ti-trash"></i> <span>Delete</span>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    <tr id="empty-state-row" style="display: none;">
+                        <td colspan="7" style="text-align: center; padding: 2.5rem 1rem; color: var(--text-muted);">
+                            <div style="font-size: 1.8rem; margin-bottom: 0.5rem;"><i class="ti ti-users-minus"></i></div>
+                            <strong style="display:block; font-size:1rem; color:var(--text-primary); margin-bottom:0.25rem;">No matching users found</strong>
+                            <span>Try adjusting your search criteria or filters.</span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination Controls -->
+        <div class="pagination-row">
+            <span id="page-entry-summary">Showing 1 to 25 of {{ users|length }} entries</span>
+            <div class="pagination-controls">
+                <button type="button" class="btn-page" id="btn-prev-page" onclick="changePage(-1)">
+                    <i class="ti ti-chevron-left"></i> Previous
+                </button>
+                <div id="page-numbers-container" style="display: flex; gap: 4px;"></div>
+                <button type="button" class="btn-page" id="btn-next-page" onclick="changePage(1)">
+                    Next <i class="ti ti-chevron-right"></i>
+                </button>
+            </div>
         </div>
     </div>
 </div>
 
+<!-- ==========================================
+     DRAWER: ADD USER
+     ========================================== -->
+<div class="drawer-backdrop" id="add-user-backdrop" onclick="closeAddUserDrawer()"></div>
+<div class="drawer-panel" id="add-user-drawer" role="dialog" aria-labelledby="add-user-title">
+    <div class="drawer-header">
+        <h2 class="drawer-title" id="add-user-title">
+            <i class="ti ti-user-plus" style="color: #2563eb;"></i> Add User
+        </h2>
+        <button type="button" class="btn-drawer-close" onclick="closeAddUserDrawer()" aria-label="Close drawer">
+            <i class="ti ti-x"></i>
+        </button>
+    </div>
+    <form id="add-user-form" onsubmit="submitAddUser(event)" style="display: flex; flex-direction: column; flex: 1; overflow: hidden; margin: 0;">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="drawer-body">
+            <div class="form-group">
+                <label for="new-user-name">Full Name</label>
+                <input type="text" id="new-user-name" name="name" class="form-control" placeholder="e.g. Sarah Connor" required>
+            </div>
+            <div class="form-group">
+                <label for="new-user-email">Email Address</label>
+                <input type="email" id="new-user-email" name="email" class="form-control" placeholder="e.g. sarah@cyberdyne.corp" required oninput="autoSuggestDomain()">
+            </div>
+            <div class="form-group">
+                <label for="new-user-role">Role</label>
+                <select id="new-user-role" name="role" class="form-control">
+                    <option value="company_user">Company User (Standard)</option>
+                    <option value="admin">Admin (Full Administrative Privileges)</option>
+                </select>
+                <small class="form-help">Admins can manage platform settings, inspect all campaigns, and create or manage users.</small>
+            </div>
+            <div class="form-group">
+                <label for="new-user-domain">Company Domain</label>
+                <input type="text" id="new-user-domain" name="company_domain" class="form-control" placeholder="e.g. cyberdyne.corp">
+                <small class="form-help">Leave blank to automatically extract from the user's business email address.</small>
+            </div>
+            <div class="form-group">
+                <label for="new-user-password">Temporary Password</label>
+                <div class="temp-password-box">
+                    <input type="text" id="new-user-password" name="password" class="form-control" style="font-family: var(--font-mono); font-weight: 600;" required>
+                    <button type="button" class="btn-secondary" onclick="generateNewPassword()" title="Generate new password">
+                        <i class="ti ti-refresh"></i>
+                    </button>
+                    <button type="button" class="btn-secondary" onclick="copyTempPassword('new-user-password')" title="Copy password">
+                        <i class="ti ti-copy"></i>
+                    </button>
+                </div>
+                <small class="form-help">
+                    <i class="ti ti-info-circle"></i> Passwords are generated and shown once here. Share this temporary password with the user securely.
+                </small>
+            </div>
+
+            <div id="add-user-alert-container"></div>
+        </div>
+        <div class="drawer-footer">
+            <button type="button" class="btn-secondary" onclick="closeAddUserDrawer()">Cancel</button>
+            <button type="submit" class="btn-add-user" id="btn-submit-add-user">
+                <i class="ti ti-user-check"></i> <span>Create User</span>
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- ==========================================
+     DRAWER: USER DETAILS & AUDIT TRAIL
+     ========================================== -->
+<div class="drawer-backdrop" id="user-detail-backdrop" onclick="closeUserDetailDrawer()"></div>
+<div class="drawer-panel" id="user-detail-drawer" role="dialog" aria-labelledby="user-detail-title">
+    <div class="drawer-header">
+        <h2 class="drawer-title" id="user-detail-title">
+            <i class="ti ti-user" style="color: #6366f1;"></i> User Profile & Audit
+        </h2>
+        <button type="button" class="btn-drawer-close" onclick="closeUserDetailDrawer()" aria-label="Close drawer">
+            <i class="ti ti-x"></i>
+        </button>
+    </div>
+    <div class="drawer-body" id="user-detail-body">
+        <div id="user-detail-loading" style="text-align: center; padding: 3rem 0; color: var(--text-muted);">
+            <i class="ti ti-loader-2 ti-spin" style="font-size: 2rem;"></i>
+            <p style="margin-top: 0.5rem;">Loading user telemetry & records...</p>
+        </div>
+        <div id="user-detail-content" style="display: none;">
+            <!-- Profile Info Card -->
+            <div class="detail-section">
+                <div class="detail-section-title">Account Profile</div>
+                <div class="detail-grid">
+                    <div>
+                        <div class="detail-item-label">Full Name</div>
+                        <div class="detail-item-value" id="detail-name">—</div>
+                    </div>
+                    <div>
+                        <div class="detail-item-label">Email Address</div>
+                        <div class="detail-item-value" id="detail-email">—</div>
+                    </div>
+                    <div>
+                        <div class="detail-item-label">Company Domain</div>
+                        <div class="detail-item-value" id="detail-domain">—</div>
+                    </div>
+                    <div>
+                        <div class="detail-item-label">User ID</div>
+                        <div class="detail-item-value mono" id="detail-id">—</div>
+                    </div>
+                    <div>
+                        <div class="detail-item-label">Account Created</div>
+                        <div class="detail-item-value" id="detail-created">—</div>
+                    </div>
+                    <div>
+                        <div class="detail-item-label">Last Login</div>
+                        <div class="detail-item-value" id="detail-login">—</div>
+                    </div>
+                    <div>
+                        <div class="detail-item-label">Role</div>
+                        <div class="detail-item-value" id="detail-role">—</div>
+                    </div>
+                    <div>
+                        <div class="detail-item-label">2-Factor Authentication</div>
+                        <div class="detail-item-value" id="detail-2fa">—</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Subscription Tier -->
+            <div class="detail-section">
+                <div class="detail-section-title">Subscription & Tier</div>
+                <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.02); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px 14px;">
+                    <div>
+                        <div style="font-weight: 700; font-size: 0.95rem;" id="detail-plan-text">—</div>
+                        <div style="font-size: 0.78rem; color: var(--text-muted);" id="detail-plan-expires">Active</div>
+                    </div>
+                    <button type="button" class="btn-action" id="btn-drawer-toggle-plan" onclick="togglePlanFromDrawer()">
+                        <i class="ti ti-sparkles"></i> <span>Toggle Pro/Free</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Recent Campaigns -->
+            <div class="detail-section">
+                <div class="detail-section-title">Recent Campaigns</div>
+                <div id="detail-campaigns-list">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+
+            <!-- Audit Trail -->
+            <div class="detail-section">
+                <div class="detail-section-title">Audit Trail (Last 15 Events)</div>
+                <div id="detail-audit-list">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="drawer-footer">
+        <button type="button" class="btn-secondary" onclick="closeUserDetailDrawer()">Close</button>
+    </div>
+</div>
+
+<!-- ==========================================
+     MODAL: RESET PASSWORD
+     ========================================== -->
+<div class="custom-modal" id="reset-password-modal" aria-hidden="true">
+    <div class="custom-modal-box">
+        <h3>Reset Password</h3>
+        <p>Set a new password or auto-generate a strong temporary password for <strong id="reset-target-name">User</strong>.</p>
+        <div class="form-group">
+            <label for="reset-new-password">New Temporary Password</label>
+            <div class="temp-password-box">
+                <input type="text" id="reset-new-password" class="form-control" style="font-family: var(--font-mono); font-weight: 600;">
+                <button type="button" class="btn-secondary" onclick="generateResetPassword()" title="Generate new password">
+                    <i class="ti ti-refresh"></i>
+                </button>
+                <button type="button" class="btn-secondary" onclick="copyTempPassword('reset-new-password')" title="Copy password">
+                    <i class="ti ti-copy"></i>
+                </button>
+            </div>
+            <small class="form-help">Copy the password before saving to deliver to the user.</small>
+        </div>
+        <div class="custom-modal-actions">
+            <button type="button" class="btn-secondary" onclick="closeResetPasswordModal()">Cancel</button>
+            <button type="button" class="btn-add-user" onclick="submitResetPassword()">
+                <i class="ti ti-key"></i> <span>Save Password</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ==========================================
+     MODAL: CONFIRM DESTRUCTIVE ACTION
+     ========================================== -->
+<div class="custom-modal" id="confirm-action-modal" aria-hidden="true">
+    <div class="custom-modal-box">
+        <h3 id="confirm-modal-title">Confirm Action</h3>
+        <p id="confirm-modal-message">Are you sure you want to proceed?</p>
+        <div class="custom-modal-actions">
+            <button type="button" class="btn-secondary" onclick="closeConfirmModal()">Cancel</button>
+            <button type="button" class="btn-add-user" id="btn-confirm-action" style="background: #dc2626;">
+                <i class="ti ti-alert-triangle"></i> <span id="confirm-action-label">Confirm</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Toast Container -->
+<div class="user-toast-container" id="user-toast-container"></div>
+
 <script>
-function toggleReset(id) {
-    document.getElementById("reset-" + id).classList.toggle("show");
+// Global CSRF helper
+function getCsrfToken() {
+    return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ||
+           document.querySelector('input[name="csrf_token"]')?.value || '';
 }
 
-(function() {
-    const modal = document.getElementById("confirm-modal");
-    const title = document.getElementById("confirm-title");
-    const message = document.getElementById("confirm-message");
-    const cancel = document.getElementById("confirm-cancel");
-    const danger = document.getElementById("confirm-danger");
-    let pendingForm = null;
+// Toast helper
+function showToastMessage(msg, type = 'info') {
+    if (typeof window.showToast === 'function') {
+        window.showToast(msg, type);
+        return;
+    }
+    const container = document.getElementById('user-toast-container');
+    if (!container) return;
+    const toast = document.createElement('div');
+    toast.className = `user-toast ${type}`;
+    toast.innerHTML = `<i class="ti ${type === 'success' ? 'ti-check' : (type === 'error' ? 'ti-alert-circle' : 'ti-info-circle')}"></i> <span>${msg}</span>`;
+    container.appendChild(toast);
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(-10px)';
+        toast.style.transition = 'all 0.25s ease';
+        setTimeout(() => toast.remove(), 260);
+    }, 4000);
+}
 
-    document.querySelectorAll("form[data-confirm-title]").forEach((form) => {
-        form.addEventListener("submit", function(e) {
-            e.preventDefault();
-            pendingForm = form;
-            title.textContent = form.dataset.confirmTitle || "Confirm action";
-            message.textContent = form.dataset.confirmMessage || "This action cannot be undone.";
-            danger.textContent = form.dataset.confirmAction || "Delete";
-            modal.classList.add("show");
-            modal.setAttribute("aria-hidden", "false");
+// ==========================================
+// CLIENT FILTERING, SORTING & PAGINATION (25 PER PAGE)
+// ==========================================
+const PAGE_SIZE = 25;
+let currentPage = 1;
+let filteredRows = [];
+
+function getAllRows() {
+    return Array.from(document.querySelectorAll('.user-row-item'));
+}
+
+function onFilterChange() {
+    currentPage = 1;
+    applyFilters();
+}
+
+function applyFilters() {
+    const query = (document.getElementById('user-search-input')?.value || '').toLowerCase().trim();
+    const roleFilter = document.getElementById('role-filter')?.value || 'all';
+    const planFilter = document.getElementById('plan-filter')?.value || 'all';
+    const statusFilter = document.getElementById('status-filter')?.value || 'all';
+    const sortVal = document.getElementById('sort-select')?.value || 'created_desc';
+
+    const allRows = getAllRows();
+
+    // 1. Filter
+    filteredRows = allRows.filter(row => {
+        const name = row.dataset.name || '';
+        const email = row.dataset.email || '';
+        const domain = row.dataset.domain || '';
+        const role = row.dataset.role || '';
+        const plan = row.dataset.plan || '';
+        const status = row.dataset.status || '';
+
+        // Search match
+        if (query) {
+            const matchesQuery = name.includes(query) || email.includes(query) || domain.includes(query);
+            if (!matchesQuery) return false;
+        }
+
+        // Role match
+        if (roleFilter !== 'all' && role !== roleFilter) return false;
+
+        // Plan match
+        if (planFilter !== 'all' && plan !== planFilter) return false;
+
+        // Status match
+        if (statusFilter !== 'all' && status !== statusFilter) return false;
+
+        return true;
+    });
+
+    // 2. Sort
+    filteredRows.sort((a, b) => {
+        if (sortVal === 'name_asc') {
+            return (a.dataset.name || '').localeCompare(b.dataset.name || '');
+        } else if (sortVal === 'name_desc') {
+            return (b.dataset.name || '').localeCompare(a.dataset.name || '');
+        } else if (sortVal === 'campaigns_desc') {
+            return (parseInt(b.dataset.campaigns) || 0) - (parseInt(a.dataset.campaigns) || 0);
+        } else if (sortVal === 'login_desc') {
+            return (parseFloat(b.dataset.lastLogin) || 0) - (parseFloat(a.dataset.lastLogin) || 0);
+        } else {
+            // Default: created_desc
+            return (parseFloat(b.dataset.created) || 0) - (parseFloat(a.dataset.created) || 0);
+        }
+    });
+
+    // 3. Render Pagination
+    renderPagination();
+}
+
+function renderPagination() {
+    const totalItems = filteredRows.length;
+    const totalPages = Math.ceil(totalItems / PAGE_SIZE) || 1;
+    if (currentPage > totalPages) currentPage = totalPages;
+    if (currentPage < 1) currentPage = 1;
+
+    // Hide all rows first
+    getAllRows().forEach(r => r.style.display = 'none');
+
+    const emptyState = document.getElementById('empty-state-row');
+    if (totalItems === 0) {
+        if (emptyState) emptyState.style.display = '';
+    } else {
+        if (emptyState) emptyState.style.display = 'none';
+        const start = (currentPage - 1) * PAGE_SIZE;
+        const end = Math.min(start + PAGE_SIZE, totalItems);
+
+        // Re-append sorted & visible rows to tbody
+        const tbody = document.getElementById('users-tbody');
+        for (let i = start; i < end; i++) {
+            const row = filteredRows[i];
+            row.style.display = '';
+            tbody.appendChild(row);
+        }
+    }
+
+    // Update stats bar
+    document.getElementById('showing-count-text').textContent = `Showing ${totalItems} of ${getAllRows().length} users`;
+    document.getElementById('current-page-num').textContent = currentPage;
+    document.getElementById('total-pages-num').textContent = totalPages;
+
+    const startItem = totalItems === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1;
+    const endItem = Math.min(currentPage * PAGE_SIZE, totalItems);
+    document.getElementById('page-entry-summary').textContent = `Showing ${startItem} to ${endItem} of ${totalItems} entries`;
+
+    // Update buttons
+    const prevBtn = document.getElementById('btn-prev-page');
+    const nextBtn = document.getElementById('btn-next-page');
+    if (prevBtn) prevBtn.disabled = (currentPage <= 1);
+    if (nextBtn) nextBtn.disabled = (currentPage >= totalPages);
+
+    // Number pills
+    const pageNumContainer = document.getElementById('page-numbers-container');
+    if (pageNumContainer) {
+        pageNumContainer.innerHTML = '';
+        for (let p = 1; p <= totalPages; p++) {
+            const pBtn = document.createElement('button');
+            pBtn.type = 'button';
+            pBtn.className = 'btn-page';
+            pBtn.style.padding = '6px 10px';
+            if (p === currentPage) {
+                pBtn.style.background = '#2563eb';
+                pBtn.style.color = '#ffffff';
+                pBtn.style.borderColor = '#2563eb';
+            }
+            pBtn.textContent = p;
+            pBtn.onclick = () => { currentPage = p; renderPagination(); };
+            pageNumContainer.appendChild(pBtn);
+        }
+    }
+}
+
+function changePage(delta) {
+    currentPage += delta;
+    renderPagination();
+}
+
+// Initialise pagination on load
+window.addEventListener('DOMContentLoaded', () => {
+    applyFilters();
+});
+
+// ==========================================
+// ADD USER DRAWER & GENERATE PASSWORD
+// ==========================================
+function getRandomPassword() {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789!@#$%&*';
+    let res = 'PhishSim-';
+    for (let i = 0; i < 8; i++) {
+        res += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return res + '!';
+}
+
+function openAddUserDrawer() {
+    document.getElementById('add-user-backdrop').classList.add('active');
+    document.getElementById('add-user-drawer').classList.add('active');
+    document.getElementById('add-user-drawer').setAttribute('aria-hidden', 'false');
+    if (!document.getElementById('new-user-password').value) {
+        generateNewPassword();
+    }
+    document.getElementById('new-user-name').focus();
+}
+
+function closeAddUserDrawer() {
+    document.getElementById('add-user-backdrop').classList.remove('active');
+    document.getElementById('add-user-drawer').classList.remove('active');
+    document.getElementById('add-user-drawer').setAttribute('aria-hidden', 'true');
+}
+
+function generateNewPassword() {
+    const pass = getRandomPassword();
+    document.getElementById('new-user-password').value = pass;
+}
+
+function copyTempPassword(inputId) {
+    const el = document.getElementById(inputId);
+    if (!el || !el.value) return;
+    navigator.clipboard.writeText(el.value).then(() => {
+        showToastMessage('Temporary password copied to clipboard!', 'success');
+    }).catch(() => {
+        el.select();
+        document.execCommand('copy');
+        showToastMessage('Temporary password copied!', 'success');
+    });
+}
+
+function autoSuggestDomain() {
+    const email = document.getElementById('new-user-email')?.value || '';
+    const domainInput = document.getElementById('new-user-domain');
+    if (domainInput && !domainInput.value && email.includes('@')) {
+        const parts = email.split('@');
+        if (parts[1]) domainInput.placeholder = parts[1];
+    }
+}
+
+function submitAddUser(e) {
+    e.preventDefault();
+    const form = document.getElementById('add-user-form');
+    const btn = document.getElementById('btn-submit-add-user');
+    const originalText = btn.innerHTML;
+    const alertBox = document.getElementById('add-user-alert-container');
+    alertBox.innerHTML = '';
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="ti ti-loader-2 ti-spin"></i> <span>Creating...</span>';
+
+    const formData = new FormData(form);
+
+    fetch('/users', {
+        method: 'POST',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json',
+            'X-CSRFToken': getCsrfToken()
+        },
+        body: formData
+    })
+    .then(async res => {
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || !data.success) {
+            throw new Error(data.error || 'Failed to create user.');
+        }
+        return data;
+    })
+    .then(data => {
+        showToastMessage(data.message || 'User created successfully.', 'success');
+        closeAddUserDrawer();
+        setTimeout(() => window.location.reload(), 1000);
+    })
+    .catch(err => {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+        alertBox.innerHTML = `<div class="user-alert error" style="margin-top:1rem;">${err.message}</div>`;
+    });
+}
+
+// ==========================================
+// USER DETAILS DRAWER
+// ==========================================
+let activeDetailUserId = null;
+let activeDetailUserPlan = null;
+
+function openUserDetailDrawer(userId) {
+    activeDetailUserId = userId;
+    document.getElementById('user-detail-backdrop').classList.add('active');
+    document.getElementById('user-detail-drawer').classList.add('active');
+    document.getElementById('user-detail-drawer').setAttribute('aria-hidden', 'false');
+
+    const loading = document.getElementById('user-detail-loading');
+    const content = document.getElementById('user-detail-content');
+    loading.style.display = 'block';
+    content.style.display = 'none';
+
+    fetch(`/api/admin/user/${userId}/details`, {
+        headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+    })
+    .then(res => res.json())
+    .then(data => {
+        loading.style.display = 'none';
+        content.style.display = 'block';
+
+        activeDetailUserPlan = data.plan;
+
+        document.getElementById('detail-name').textContent = data.name || '—';
+        document.getElementById('detail-email').textContent = data.email || '—';
+        document.getElementById('detail-domain').textContent = data.company_domain || '—';
+        document.getElementById('detail-id').textContent = `USR-${String(data.id).padStart(5, '0')}`;
+        document.getElementById('detail-created').textContent = data.created_at || '—';
+        document.getElementById('detail-login').textContent = data.last_login_at || 'Never';
+        document.getElementById('detail-role').textContent = (data.role || '').replace('_', ' ').toUpperCase();
+        document.getElementById('detail-2fa').textContent = data.two_factor_enabled ? 'Enabled' : 'Disabled';
+
+        // Plan
+        document.getElementById('detail-plan-text').textContent = `${data.plan} Tier`;
+        document.getElementById('detail-plan-expires').textContent = data.pro_expires_at ? `Expires: ${data.pro_expires_at}` : (data.plan === 'Pro' ? 'Active Subscription' : 'Standard limits apply');
+        const planBtn = document.getElementById('btn-drawer-toggle-plan');
+        planBtn.innerHTML = `<i class="ti ti-sparkles"></i> <span>Switch to ${data.plan === 'Pro' ? 'Free' : 'Pro'}</span>`;
+
+        // Campaigns
+        const campaignsList = document.getElementById('detail-campaigns-list');
+        if (data.campaigns && data.campaigns.length > 0) {
+            campaignsList.innerHTML = data.campaigns.map(c => `
+                <div class="detail-campaign-item">
+                    <div>
+                        <strong style="color:var(--text-primary); display:block;">${c.name}</strong>
+                        <span style="color:var(--text-muted); font-size:0.75rem;">${c.scenario} · ${c.created_at}</span>
+                    </div>
+                    <span class="badge-count" style="font-size:0.7rem;">${c.status}</span>
+                </div>
+            `).join('');
+        } else {
+            campaignsList.innerHTML = `<p style="color:var(--text-muted); font-size:0.84rem; margin:0;">No campaigns launched by this user yet.</p>`;
+        }
+
+        // Audit Trail
+        const auditList = document.getElementById('detail-audit-list');
+        if (data.audit_trail && data.audit_trail.length > 0) {
+            auditList.innerHTML = data.audit_trail.map(a => `
+                <div class="detail-audit-item">
+                    <div>
+                        <span style="font-weight:600; color:var(--text-primary); display:block;">${a.event_type}</span>
+                        <span style="color:var(--text-muted); font-size:0.74rem;">${a.created_at} ${a.ip ? '· ' + a.ip : ''}</span>
+                    </div>
+                    <span style="font-size:0.72rem; color:${a.status === 'success' ? '#16a34a' : '#dc2626'}; font-weight:700;">${(a.status || 'LOG').toUpperCase()}</span>
+                </div>
+            `).join('');
+        } else {
+            auditList.innerHTML = `<p style="color:var(--text-muted); font-size:0.84rem; margin:0;">No audit events found.</p>`;
+        }
+    })
+    .catch(err => {
+        loading.innerHTML = `<p style="color:#dc2626;">Failed to load user details: ${err.message}</p>`;
+    });
+}
+
+function closeUserDetailDrawer() {
+    document.getElementById('user-detail-backdrop').classList.remove('active');
+    document.getElementById('user-detail-drawer').classList.remove('active');
+    document.getElementById('user-detail-drawer').setAttribute('aria-hidden', 'true');
+}
+
+function togglePlanFromDrawer() {
+    if (!activeDetailUserId) return;
+    const nextPlan = activeDetailUserPlan === 'Pro' ? 'free' : 'pro';
+    postAction(`/set-user-plan/${activeDetailUserId}`, { plan: nextPlan }, () => {
+        showToastMessage(`Plan switched to ${nextPlan.toUpperCase()}`, 'success');
+        openUserDetailDrawer(activeDetailUserId);
+        setTimeout(() => window.location.reload(), 1200);
+    });
+}
+
+// ==========================================
+// RESET PASSWORD MODAL
+// ==========================================
+let resetTargetUserId = null;
+
+function openResetPasswordModal(userId, userName) {
+    resetTargetUserId = userId;
+    document.getElementById('reset-target-name').textContent = userName;
+    document.getElementById('reset-new-password').value = getRandomPassword();
+    const modal = document.getElementById('reset-password-modal');
+    modal.classList.add('show');
+    modal.setAttribute('aria-hidden', 'false');
+}
+
+function closeResetPasswordModal() {
+    const modal = document.getElementById('reset-password-modal');
+    modal.classList.remove('show');
+    modal.setAttribute('aria-hidden', 'true');
+    resetTargetUserId = null;
+}
+
+function generateResetPassword() {
+    document.getElementById('reset-new-password').value = getRandomPassword();
+}
+
+function submitResetPassword() {
+    if (!resetTargetUserId) return;
+    const newPass = document.getElementById('reset-new-password').value.trim();
+    if (!newPass) {
+        showToastMessage('Please enter or generate a password.', 'error');
+        return;
+    }
+
+    postAction(`/reset-user-password/${resetTargetUserId}`, { new_password: newPass }, (data) => {
+        showToastMessage(data.message || 'Password reset successfully.', 'success');
+        closeResetPasswordModal();
+    });
+}
+
+// ==========================================
+// CONFIRMATION MODAL & ACTIONS
+// ==========================================
+let pendingActionCallback = null;
+
+function openConfirmModal(title, message, actionLabel, actionColor, callback) {
+    document.getElementById('confirm-modal-title').textContent = title;
+    document.getElementById('confirm-modal-message').textContent = message;
+    document.getElementById('confirm-action-label').textContent = actionLabel;
+    const confirmBtn = document.getElementById('btn-confirm-action');
+    confirmBtn.style.background = actionColor;
+    pendingActionCallback = callback;
+
+    const modal = document.getElementById('confirm-action-modal');
+    modal.classList.add('show');
+    modal.setAttribute('aria-hidden', 'false');
+}
+
+function closeConfirmModal() {
+    const modal = document.getElementById('confirm-action-modal');
+    modal.classList.remove('show');
+    modal.setAttribute('aria-hidden', 'true');
+    pendingActionCallback = null;
+}
+
+document.getElementById('btn-confirm-action')?.addEventListener('click', () => {
+    if (typeof pendingActionCallback === 'function') {
+        const cb = pendingActionCallback;
+        closeConfirmModal();
+        cb();
+    }
+});
+
+function postAction(url, dataObj, onSuccess) {
+    const formData = new FormData();
+    formData.append('csrf_token', getCsrfToken());
+    for (const [k, v] of Object.entries(dataObj || {})) {
+        formData.append(k, v);
+    }
+
+    fetch(url, {
+        method: 'POST',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json',
+            'X-CSRFToken': getCsrfToken()
+        },
+        body: formData
+    })
+    .then(async res => {
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || data.success === false) {
+            throw new Error(data.error || 'Request failed.');
+        }
+        return data;
+    })
+    .then(data => {
+        if (typeof onSuccess === 'function') onSuccess(data);
+    })
+    .catch(err => {
+        showToastMessage(err.message, 'error');
+    });
+}
+
+// Action helpers
+function confirmRoleChange(userId, newRole, userName) {
+    const isDemote = newRole !== 'admin';
+    const title = isDemote ? 'Demote Admin?' : 'Promote to Admin?';
+    const message = isDemote
+        ? `Are you sure you want to remove admin access for ${userName}? They will lose all administrative privileges.`
+        : `Grant full administrative privileges to ${userName}? They will be able to manage accounts, settings, and campaigns.`;
+    const actionLabel = isDemote ? 'Demote' : 'Promote';
+    const actionColor = isDemote ? '#d97706' : '#2563eb';
+
+    openConfirmModal(title, message, actionLabel, actionColor, () => {
+        postAction(`/set-user-role/${userId}`, { role: newRole }, (data) => {
+            showToastMessage(data.message || 'Role updated.', 'success');
+            setTimeout(() => window.location.reload(), 800);
         });
     });
+}
 
-    cancel.addEventListener("click", function() {
-        pendingForm = null;
-        danger.textContent = "Delete";
-        modal.classList.remove("show");
-        modal.setAttribute("aria-hidden", "true");
-    });
+function confirmPlanChange(userId, newPlan, userName) {
+    const title = `Switch to ${newPlan.toUpperCase()} Plan?`;
+    const message = `Are you sure you want to change ${userName}'s subscription tier to ${newPlan.toUpperCase()}?`;
+    const actionLabel = `Set ${newPlan.toUpperCase()}`;
+    const actionColor = '#2563eb';
 
-    danger.addEventListener("click", function() {
-        if (pendingForm) pendingForm.submit();
+    openConfirmModal(title, message, actionLabel, actionColor, () => {
+        postAction(`/set-user-plan/${userId}`, { plan: newPlan }, (data) => {
+            showToastMessage(data.message || 'Plan updated.', 'success');
+            setTimeout(() => window.location.reload(), 800);
+        });
     });
-})();
+}
+
+function verifyUserAccount(userId, userName) {
+    postAction(`/verify-user/${userId}`, {}, (data) => {
+        showToastMessage(data.message || `${userName}'s email marked as verified.`, 'success');
+        setTimeout(() => window.location.reload(), 800);
+    });
+}
+
+function confirmToggleStatus(userId, willDisable, userName) {
+    const title = willDisable ? `Disable Account?` : `Enable Account?`;
+    const message = willDisable
+        ? `Disable login access for ${userName}? They will be immediately blocked from signing into PhishSim AI.`
+        : `Re-enable account access for ${userName}?`;
+    const actionLabel = willDisable ? 'Disable' : 'Enable';
+    const actionColor = willDisable ? '#d97706' : '#16a34a';
+
+    openConfirmModal(title, message, actionLabel, actionColor, () => {
+        postAction(`/toggle-user-status/${userId}`, {}, (data) => {
+            showToastMessage(data.message || 'Account status updated.', 'success');
+            setTimeout(() => window.location.reload(), 800);
+        });
+    });
+}
+
+function confirmDeleteUser(userId, userName) {
+    openConfirmModal(
+        'Delete User Account?',
+        `Are you sure you want to permanently delete ${userName}? Historical campaign events will be detached. This action cannot be undone.`,
+        'Delete User',
+        '#dc2626',
+        () => {
+            postAction(`/delete-user/${userId}`, {}, (data) => {
+                showToastMessage(data.message || 'User deleted successfully.', 'success');
+                setTimeout(() => window.location.reload(), 800);
+            });
+        }
+    );
+}
 </script>
 {% endblock %}

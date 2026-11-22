@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, send_file, session, flash, jsonify
+from flask import Flask, render_template, request, redirect, url_for, send_file, session, flash, jsonify, abort
 from dotenv import load_dotenv
 import os
 import mysql.connector
@@ -965,9 +965,10 @@ def admin_required(view):
     @wraps(view)
     def wrapped(*args, **kwargs):
         user = current_user()
-        if not user or user["role"] != "admin":
-            flash("Admin access is required to access that page.", "error")
-            return redirect(url_for("dashboard"))
+        if not user:
+            return redirect(url_for("login", next=request.path))
+        if user.get("role") != "admin":
+            abort(403)
         return view(*args, **kwargs)
     return wrapped
 
@@ -1910,9 +1911,14 @@ def login():
                 session.pop("pending_2fa_expires", None)
                 db = get_db_connection()
                 cursor = db.cursor(dictionary=True)
-                cursor.execute("SELECT id, role FROM users WHERE id = %s", (user_id,))
+                cursor.execute("SELECT id, role, is_disabled FROM users WHERE id = %s", (user_id,))
                 user = cursor.fetchone()
                 if user:
+                    if user.get("is_disabled"):
+                        cursor.close()
+                        db.close()
+                        flash("This account has been disabled by an administrator. Please contact support.", "error")
+                        return render_template("login.html")
                     remember = session.pop("pending_remember_me", False)
                     session.permanent = remember
                     session["remember_me"] = remember
@@ -1945,6 +1951,9 @@ def login():
         db.close()
 
         if user and check_password_hash(user["password_hash"], password):
+            if user.get("is_disabled"):
+                flash("This account has been disabled by an administrator. Please contact support.", "error")
+                return render_template("login.html")
             clear_failed_logins(login_key)
             remember = request.form.get("remember") == "y"
             if user.get("two_factor_enabled"):
@@ -4113,70 +4122,127 @@ def delete_account():
 
 
 # ==========================================
-# ADMIN CONTROL CENTER
+# ADMIN CONTROL CENTER & USER MANAGEMENT
 # ==========================================
+
+def ensure_users_schema_once(cursor):
+    try:
+        cursor.execute("ALTER TABLE users ADD COLUMN is_disabled BOOLEAN DEFAULT FALSE")
+    except Exception:
+        pass
 
 @app.route("/admin")
 @admin_required
 def admin_panel():
-    """Full admin control centre — users, campaigns, system health, audit log."""
+    """Full admin control centre — overview, metrics, health checks, audit log, settings."""
     db = get_db_connection()
     cursor = db.cursor(dictionary=True)
     try:
         ensure_audit_table(cursor)
         ensure_email_schema_once(cursor)
+        ensure_users_schema_once(cursor)
 
-        # All users (excluding active demo sessions for cleanliness)
-        cursor.execute("""
-            SELECT id, name, email, role, company_domain, email_verified,
-                    two_factor_enabled, email_notifications, created_at, last_login_at
-            FROM users
-            WHERE company_domain != 'demo-corp.com' OR company_domain IS NULL
-            ORDER BY id DESC
-        """)
-        all_users = cursor.fetchall()
-
-        # All campaigns across all real accounts
-        cursor.execute("""
-            SELECT c.id, c.name, c.scenario_type, c.delivery_mode,
-                    c.status, c.status_updated_at, c.company_domain,
-                    c.schedule_frequency, c.scheduled_at,
-                    u.name AS owner_name, u.email AS owner_email,
-                    (SELECT COUNT(*) FROM employees e WHERE e.campaign_id = c.id) AS targets,
-                    (SELECT COUNT(*) FROM emails_sent es WHERE es.campaign_id = c.id
-                    AND COALESCE(es.status,'sent') IN ('sent','previewed')) AS sent,
-                    (SELECT COUNT(DISTINCT ev.tracking_id)
-                    FROM events ev JOIN emails_sent es ON ev.tracking_id = es.tracking_id
-                    WHERE es.campaign_id = c.id AND ev.event_type = 'click') AS clicks
-            FROM campaigns c
-            LEFT JOIN users u ON c.user_id = u.id
-            WHERE (c.company_domain != 'demo-corp.com' OR c.company_domain IS NULL)
-            ORDER BY c.id DESC
-            LIMIT 50
-        """)
-        all_campaigns = cursor.fetchall()
-
-        # System stats
+        # 1. Stat tiles with real numbers
         cursor.execute("SELECT COUNT(*) AS cnt FROM users WHERE company_domain != 'demo-corp.com' OR company_domain IS NULL")
-        total_users = cursor.fetchone()["cnt"]
-
-        cursor.execute("SELECT COUNT(*) AS cnt FROM campaigns WHERE company_domain != 'demo-corp.com' OR company_domain IS NULL")
-        total_campaigns = cursor.fetchone()["cnt"]
+        stat_users = cursor.fetchone()["cnt"]
 
         cursor.execute("SELECT COUNT(*) AS cnt FROM users WHERE email_verified = TRUE AND (company_domain != 'demo-corp.com' OR company_domain IS NULL)")
-        verified_users = cursor.fetchone()["cnt"]
+        stat_verified = cursor.fetchone()["cnt"]
 
-        # Recent audit events
+        cursor.execute("SELECT COUNT(*) AS cnt FROM campaigns WHERE company_domain != 'demo-corp.com' OR company_domain IS NULL")
+        stat_campaigns = cursor.fetchone()["cnt"]
+
+        cursor.execute("SELECT COUNT(*) AS cnt FROM emails_sent WHERE sent_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)")
+        stat_sends_this_week = cursor.fetchone()["cnt"]
+
+        cursor.execute("SELECT COUNT(*) AS cnt FROM emails_sent WHERE status IN ('failed', 'error', 'bounced')")
+        stat_failed_sends = cursor.fetchone()["cnt"]
+
+        stats = {
+            "users": stat_users,
+            "verified": stat_verified,
+            "campaigns": stat_campaigns,
+            "sends_this_week": stat_sends_this_week,
+            "failed_sends": stat_failed_sends
+        }
+
+        # 2. Real System Health checks (Database, SMTP, AI Provider, Scheduler)
+        now_ts = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC")
+
+        # Database latency & ping
+        t0 = time.time()
+        cursor.execute("SELECT 1")
+        cursor.fetchone()
+        db_ms = max(1, int((time.time() - t0) * 1000))
+        db_health = {"status": "OK", "detail": f"{db_ms}ms response latency", "timestamp": now_ts}
+
+        # SMTP & Mail relay check
+        brevo_key = os.getenv("BREVO_API_KEY", "").strip()
+        smtp_host = os.getenv("SMTP_HOST", "").strip()
+        if brevo_key or smtp_host:
+            provider_label = "Brevo API" if brevo_key else f"SMTP ({smtp_host})"
+            smtp_health = {"status": "OK", "detail": f"{provider_label} connected", "timestamp": now_ts}
+        else:
+            smtp_health = {"status": "Degraded", "detail": "No external mail relay configured", "timestamp": now_ts}
+
+        # AI Provider reachability check
+        ai_key = os.getenv("OPENROUTER_API_KEY", "").strip()
+        if ai_key:
+            ai_health = {"status": "OK", "detail": "OpenRouter reachable", "timestamp": now_ts}
+        else:
+            ai_health = {"status": "Degraded", "detail": "API key not configured", "timestamp": now_ts}
+
+        # Scheduler run check
+        cursor.execute("SELECT MAX(sent_at) as last_sent FROM emails_sent")
+        sched_row = cursor.fetchone()
+        last_sched = sched_row["last_sent"] if sched_row and sched_row.get("last_sent") else None
+        if not last_sched:
+            cursor.execute("SELECT MAX(created_at) as last_created FROM campaigns")
+            c_row = cursor.fetchone()
+            last_sched = c_row["last_created"] if c_row and c_row.get("last_created") else None
+        sched_detail = f"Last activity: {last_sched.strftime('%b %d %H:%M UTC')}" if last_sched else "Background engine active"
+        scheduler_health = {"status": "OK", "detail": sched_detail, "timestamp": now_ts}
+
+        health = {
+            "database": db_health,
+            "smtp": smtp_health,
+            "ai": ai_health,
+            "scheduler": scheduler_health
+        }
+
+        # 3. Recent activity from audit_events
         cursor.execute("""
             SELECT ae.created_at, ae.event_type, ae.status, ae.ip_address, u.name AS user_name, u.email AS user_email
             FROM audit_events ae
             LEFT JOIN users u ON ae.user_id = u.id
             ORDER BY ae.created_at DESC
-            LIMIT 20
+            LIMIT 15
         """)
-        audit_log = cursor.fetchall()
+        recent_activity = cursor.fetchall()
 
-        # Email config status
+        # 4. Needs attention list
+        cursor.execute("""
+            SELECT id, name, email, company_domain, created_at,
+                   DATEDIFF(NOW(), created_at) AS days_pending
+            FROM users
+            WHERE (email_verified IS FALSE OR email_verified = 0)
+              AND created_at <= DATE_SUB(NOW(), INTERVAL 7 DAY)
+            ORDER BY created_at ASC
+            LIMIT 10
+        """)
+        stale_unverified = cursor.fetchall()
+
+        cursor.execute("""
+            SELECT c.id, c.name, c.company_domain, c.status, c.status_updated_at, u.name as owner_name, u.email as owner_email
+            FROM campaigns c
+            LEFT JOIN users u ON c.user_id = u.id
+            WHERE c.status IN ('failed', 'launched_with_errors')
+            ORDER BY c.id DESC
+            LIMIT 10
+        """)
+        failed_campaigns = cursor.fetchall()
+
+        # 5. Settings
         email_settings = get_email_settings(os.getenv("EMAIL_MODE", "local").strip().lower())
         enforce_work_emails = get_system_setting(cursor, "enforce_work_emails", "false")
 
@@ -4184,21 +4250,13 @@ def admin_panel():
         cursor.close()
         db.close()
 
-    system_stats = {
-        "total_users": total_users,
-        "verified_users": verified_users,
-        "total_campaigns": total_campaigns,
-        "email_provider": email_settings.get("provider", "not configured"),
-        "smtp_host": email_settings.get("host") or "not set",
-        "deployed": is_deployed_environment(),
-    }
-
     return render_template(
         "admin.html",
-        all_users=all_users,
-        all_campaigns=all_campaigns,
-        system_stats=system_stats,
-        audit_log=audit_log,
+        stats=stats,
+        health=health,
+        recent_activity=recent_activity,
+        stale_unverified=stale_unverified,
+        failed_campaigns=failed_campaigns,
         email_settings=email_settings,
         enforce_work_emails=enforce_work_emails,
     )
@@ -4207,173 +4265,455 @@ def admin_panel():
 @app.route("/admin/save-settings", methods=["POST"])
 @admin_required
 def admin_save_settings():
-    enforce_work_emails = request.form.get("enforce_work_emails", "false")
+    is_json = request.is_json
+    data = request.get_json(silent=True) or request.form
+    enforce_work_emails = data.get("enforce_work_emails", "false")
+    if enforce_work_emails not in ("true", "false"):
+        enforce_work_emails = "false"
+
     db = get_db_connection()
     cursor = db.cursor(dictionary=True)
     try:
         set_system_setting(cursor, "enforce_work_emails", enforce_work_emails)
         db.commit()
-        flash("System settings updated.")
+        record_audit_event(session.get("user_id"), f"Updated system setting: enforce_work_emails={enforce_work_emails}")
+        msg = "Settings saved successfully."
+        if is_json:
+            return jsonify({"success": True, "message": msg, "enforce_work_emails": enforce_work_emails})
+        flash(msg, "success")
     except Exception as e:
         print(f"Error saving settings: {e}")
-        flash("Failed to save settings.")
+        msg = "Failed to save settings."
+        if is_json:
+            return jsonify({"success": False, "error": msg}), 500
+        flash(msg, "error")
     finally:
         cursor.close()
         db.close()
-    return redirect(url_for("admin_panel"))
+    return redirect(url_for("admin_panel") + "#settings")
 
 
 @app.route("/users", methods=["GET", "POST"])
 @admin_required
 def manage_users():
-    if request.method == "POST":
-        name = request.form.get("name", "").strip()
-        email = request.form.get("email", "").strip().lower()
-        password = request.form.get("password", "")
-        role = request.form.get("role", "company_user")
-        company_domain = normalize_domain(request.form.get("company_domain", ""))
-
-        if role not in ("admin", "company_user"):
-            role = "company_user"
-
-        domain_from_email = email_domain(email)
-        if not name or not domain_from_email:
-            flash("Enter a valid name and email.")
-            return redirect(url_for("manage_users"))
-        if not password:
-            flash("Enter a temporary password.")
-            return redirect(url_for("manage_users"))
-        if not company_domain:
-            company_domain = domain_from_email
-
-        db = get_db_connection()
-        cursor = db.cursor(dictionary=True)
-        try:
-            cursor.execute("""
-                INSERT INTO users (name, email, password_hash, role, company_domain, email_verified)
-                VALUES (%s, %s, %s, %s, %s, TRUE)
-            """, (name, email, generate_password_hash(password), role, company_domain))
-            db.commit()
-        except Exception as e:
-            print(f"Admin create user failed: {e}")
-            flash("Could not create user. The email address might already be registered.")
-        cursor.close()
-        db.close()
-        return redirect(url_for("manage_users"))
-
     db = get_db_connection()
     cursor = db.cursor(dictionary=True)
-    cursor.execute("SELECT id, name, email, role, company_domain, email_verified, created_at FROM users ORDER BY id DESC")
-    users = cursor.fetchall()
-    cursor.close()
-    db.close()
-    return render_template("users.html", users=users)
+    try:
+        ensure_users_schema_once(cursor)
+        if request.method == "POST":
+            is_json = request.is_json
+            data = request.get_json(silent=True) or request.form
+
+            name = data.get("name", "").strip()
+            email = data.get("email", "").strip().lower()
+            password = data.get("password", "").strip()
+            role = data.get("role", "company_user").strip()
+            company_domain = normalize_domain(data.get("company_domain", ""))
+
+            if role not in ("admin", "company_user"):
+                role = "company_user"
+
+            domain_from_email = email_domain(email)
+            if not name or not domain_from_email:
+                msg = "Please enter a valid name and business email address."
+                if is_json: return jsonify({"success": False, "error": msg}), 400
+                flash(msg, "error")
+                return redirect(url_for("manage_users")), 400
+
+            generated_temp_pass = False
+            if not password:
+                password = f"PhishSim-{secrets.token_hex(4)}!"
+                generated_temp_pass = True
+
+            if not company_domain:
+                company_domain = domain_from_email
+
+            cursor.execute("SELECT id FROM users WHERE email = %s", (email,))
+            if cursor.fetchone():
+                msg = f"User with email '{email}' already exists."
+                if is_json: return jsonify({"success": False, "error": msg}), 400
+                flash(msg, "error")
+                return redirect(url_for("manage_users")), 400
+
+            cursor.execute("""
+                INSERT INTO users (name, email, password_hash, role, company_domain, email_verified, is_disabled)
+                VALUES (%s, %s, %s, %s, %s, TRUE, FALSE)
+            """, (name, email, generate_password_hash(password), role, company_domain))
+            db.commit()
+            new_user_id = cursor.lastrowid
+            record_audit_event(session.get("user_id"), f"Created user {name} ({email}) with role {role}")
+
+            msg = f"User '{name}' created successfully."
+            if is_json:
+                return jsonify({
+                    "success": True,
+                    "message": msg,
+                    "user_id": new_user_id,
+                    "temp_password": password,
+                    "generated_temp_pass": generated_temp_pass
+                })
+            flash(f"{msg} Temporary password: {password}", "success")
+            return redirect(url_for("manage_users"))
+
+        # GET: Fetch users with campaigns count and compute plan
+        cursor.execute("""
+            SELECT u.id, u.name, u.email, u.role, u.company_domain, u.email_verified,
+                   COALESCE(u.is_disabled, FALSE) AS is_disabled, u.created_at, u.last_login_at, u.pro_expires_at,
+                   (SELECT COUNT(*) FROM campaigns c WHERE c.user_id = u.id) AS campaigns_count
+            FROM users u
+            ORDER BY u.id DESC
+        """)
+        users_raw = cursor.fetchall()
+        users = []
+        for u in users_raw:
+            is_pro = u.get("role") == "pro" or (u.get("pro_expires_at") and u["pro_expires_at"] > datetime.utcnow())
+            plan = "Pro" if is_pro else ("Admin" if u.get("role") == "admin" else "Free")
+            u["plan"] = plan
+            users.append(u)
+
+    finally:
+        cursor.close()
+        db.close()
+
+    return render_template("users.html", users=users, current_admin=current_user())
+
 
 @app.route("/set-user-role/<int:user_id>", methods=["POST"])
 @admin_required
 def set_user_role(user_id):
-    new_role = request.form.get("role", "company_user")
+    is_json = request.is_json
+    data = request.get_json(silent=True) or request.form
+    new_role = data.get("role", "company_user").strip()
+
     if new_role not in ("admin", "company_user"):
-        flash("Invalid role.")
-        return redirect(url_for("manage_users"))
+        msg = "Invalid role specified."
+        if is_json: return jsonify({"success": False, "error": msg}), 400
+        flash(msg, "error")
+        return redirect(url_for("manage_users")), 400
 
     db = get_db_connection()
     cursor = db.cursor(dictionary=True)
     try:
+        # Admin self-protection
         if user_id == session.get("user_id") and new_role != "admin":
-            flash("You cannot remove your own admin access.")
-            return redirect(url_for("manage_users"))
+            msg = "You cannot remove your own admin access."
+            if is_json: return jsonify({"success": False, "error": msg}), 400
+            flash(msg, "error")
+            return redirect(url_for("manage_users")), 400
 
+        # Last admin protection
         if new_role != "admin":
             cursor.execute("SELECT COUNT(*) AS count FROM users WHERE role = 'admin'")
             admin_count = cursor.fetchone()["count"]
-            cursor.execute("SELECT role FROM users WHERE id = %s", (user_id,))
+            cursor.execute("SELECT role, email FROM users WHERE id = %s", (user_id,))
             target = cursor.fetchone()
             if target and target["role"] == "admin" and admin_count <= 1:
-                flash("At least one admin account is required.")
-                return redirect(url_for("manage_users"))
+                msg = "At least one admin account is required."
+                if is_json: return jsonify({"success": False, "error": msg}), 400
+                flash(msg, "error")
+                return redirect(url_for("manage_users")), 400
 
+        cursor.execute("SELECT email FROM users WHERE id = %s", (user_id,))
+        u = cursor.fetchone()
         cursor.execute("UPDATE users SET role = %s WHERE id = %s", (new_role, user_id))
         db.commit()
-        flash("User role updated.")
+        record_audit_event(session.get("user_id"), f"Changed role of user {user_id} ({u['email'] if u else 'unknown'}) to {new_role}")
+
+        msg = f"User role updated to {new_role.replace('_', ' ').title()}."
+        if is_json: return jsonify({"success": True, "message": msg, "role": new_role})
+        flash(msg, "success")
     except Exception as e:
         print(f"Admin update role failed: {e}")
-        flash("Could not update role. A database error occurred.")
+        msg = "Could not update user role."
+        if is_json: return jsonify({"success": False, "error": msg}), 500
+        flash(msg, "error")
     finally:
         cursor.close()
         db.close()
     return redirect(url_for("manage_users"))
 
+
+@app.route("/set-user-plan/<int:user_id>", methods=["POST"])
+@admin_required
+def set_user_plan(user_id):
+    is_json = request.is_json
+    data = request.get_json(silent=True) or request.form
+    new_plan = data.get("plan", "free").strip().lower()
+
+    if new_plan not in ("pro", "free"):
+        msg = "Invalid plan specified."
+        if is_json: return jsonify({"success": False, "error": msg}), 400
+        flash(msg, "error")
+        return redirect(url_for("manage_users")), 400
+
+    db = get_db_connection()
+    cursor = db.cursor(dictionary=True)
+    try:
+        cursor.execute("SELECT role, email FROM users WHERE id = %s", (user_id,))
+        target = cursor.fetchone()
+        if not target:
+            msg = "User not found."
+            if is_json: return jsonify({"success": False, "error": msg}), 404
+            flash(msg, "error")
+            return redirect(url_for("manage_users")), 404
+
+        if new_plan == "pro":
+            cursor.execute("""
+                UPDATE users
+                SET role = CASE WHEN role = 'admin' THEN 'admin' ELSE 'pro' END,
+                    pro_expires_at = DATE_ADD(NOW(), INTERVAL 365 DAY)
+                WHERE id = %s
+            """, (user_id,))
+        else:
+            cursor.execute("""
+                UPDATE users
+                SET role = CASE WHEN role = 'admin' THEN 'admin' ELSE 'company_user' END,
+                    pro_expires_at = NULL,
+                    stripe_subscription_id = NULL
+                WHERE id = %s
+            """, (user_id,))
+
+        db.commit()
+        record_audit_event(session.get("user_id"), f"Changed plan for user {user_id} ({target['email']}) to {new_plan.title()}")
+        msg = f"Subscription plan for {target['email']} set to {new_plan.title()}."
+        if is_json: return jsonify({"success": True, "message": msg, "plan": new_plan.title()})
+        flash(msg, "success")
+    except Exception as e:
+        print(f"Error setting plan: {e}")
+        msg = "Failed to update plan."
+        if is_json: return jsonify({"success": False, "error": msg}), 500
+        flash(msg, "error")
+    finally:
+        cursor.close()
+        db.close()
+    return redirect(url_for("manage_users"))
+
+
 @app.route("/verify-user/<int:user_id>", methods=["POST"])
 @admin_required
 def verify_user(user_id):
+    is_json = request.is_json
     db = get_db_connection()
-    cursor = db.cursor()
+    cursor = db.cursor(dictionary=True)
     try:
+        cursor.execute("SELECT email FROM users WHERE id = %s", (user_id,))
+        u = cursor.fetchone()
         cursor.execute("""
             UPDATE users
             SET email_verified = TRUE, verification_token = NULL
             WHERE id = %s
         """, (user_id,))
         db.commit()
-        flash("User email marked as verified.")
-        record_audit_event(session.get("user_id"), f"Verified user {user_id}")
+        record_audit_event(session.get("user_id"), f"Verified email for user {user_id} ({u['email'] if u else 'unknown'})")
+        msg = "User email marked as verified."
+        if is_json: return jsonify({"success": True, "message": msg, "email_verified": True})
+        flash(msg, "success")
     except Exception as e:
         print(f"Admin verify user failed: {e}")
-        flash("Could not verify user. A database error occurred.")
+        msg = "Could not verify user."
+        if is_json: return jsonify({"success": False, "error": msg}), 500
+        flash(msg, "error")
     finally:
         cursor.close()
         db.close()
     return redirect(url_for("manage_users"))
 
-@app.route("/delete-user/<int:user_id>", methods=["POST"])
-@admin_required
-def delete_user(user_id):
-    db = get_db_connection()
-    cursor = db.cursor(dictionary=True)
-    try:
-        # Don't let the user delete themselves
-        if user_id == session.get("user_id"):
-            flash("You cannot delete your own account.")
-        else:
-            # Check if deleting the last admin
-            cursor.execute("SELECT role FROM users WHERE id = %s", (user_id,))
-            target = cursor.fetchone()
-            if target and target["role"] == "admin":
-                cursor.execute("SELECT COUNT(*) AS count FROM users WHERE role = 'admin'")
-                admin_count = cursor.fetchone()["count"]
-                if admin_count <= 1:
-                    flash("Cannot delete the last admin account.")
-                    return redirect(url_for("manage_users"))
-            
-            cursor.execute("DELETE FROM users WHERE id = %s", (user_id,))
-            db.commit()
-            flash("User deleted successfully.")
-    except Exception as e:
-        print(f"Error deleting user: {e}")
-        flash("Error deleting user. A database error occurred.")
-    finally:
-        cursor.close()
-        db.close()
-    return redirect(url_for("manage_users"))
 
 @app.route("/reset-user-password/<int:user_id>", methods=["POST"])
 @admin_required
 def reset_user_password(user_id):
-    new_password = request.form.get("new_password", "")
+    is_json = request.is_json
+    data = request.get_json(silent=True) or request.form
+    new_password = data.get("new_password", "").strip()
+
     if not new_password:
-        flash("Enter a new password.")
-        return redirect(url_for("manage_users"))
+        new_password = f"PhishSim-{secrets.token_hex(4)}!"
+
     db = get_db_connection()
-    cursor = db.cursor()
+    cursor = db.cursor(dictionary=True)
     try:
+        cursor.execute("SELECT email, name FROM users WHERE id = %s", (user_id,))
+        u = cursor.fetchone()
+        if not u:
+            msg = "User not found."
+            if is_json: return jsonify({"success": False, "error": msg}), 404
+            flash(msg, "error")
+            return redirect(url_for("manage_users")), 404
+
         cursor.execute("UPDATE users SET password_hash = %s WHERE id = %s", (generate_password_hash(new_password), user_id))
         db.commit()
-        flash("User password reset.")
+        record_audit_event(session.get("user_id"), f"Reset password for user {user_id} ({u['email']})")
+
+        msg = f"Password for {u['name']} has been reset."
+        if is_json:
+            return jsonify({"success": True, "message": msg, "temp_password": new_password})
+        flash(f"{msg} New temporary password: {new_password}", "success")
     finally:
         cursor.close()
         db.close()
     return redirect(url_for("manage_users"))
+
+
+@app.route("/toggle-user-status/<int:user_id>", methods=["POST"])
+@admin_required
+def toggle_user_status(user_id):
+    is_json = request.is_json
+    if user_id == session.get("user_id"):
+        msg = "You cannot disable your own admin account."
+        if is_json: return jsonify({"success": False, "error": msg}), 400
+        flash(msg, "error")
+        return redirect(url_for("manage_users")), 400
+
+    db = get_db_connection()
+    cursor = db.cursor(dictionary=True)
+    try:
+        ensure_users_schema_once(cursor)
+        cursor.execute("SELECT role, email, COALESCE(is_disabled, FALSE) AS is_disabled FROM users WHERE id = %s", (user_id,))
+        target = cursor.fetchone()
+        if not target:
+            msg = "User not found."
+            if is_json: return jsonify({"success": False, "error": msg}), 404
+            flash(msg, "error")
+            return redirect(url_for("manage_users")), 404
+
+        new_status = not bool(target["is_disabled"])
+        cursor.execute("UPDATE users SET is_disabled = %s WHERE id = %s", (new_status, user_id))
+        db.commit()
+        status_word = "disabled" if new_status else "enabled"
+        record_audit_event(session.get("user_id"), f"{status_word.title()} user {user_id} ({target['email']})")
+
+        msg = f"User account has been {status_word}."
+        if is_json: return jsonify({"success": True, "message": msg, "is_disabled": new_status})
+        flash(msg, "success")
+    finally:
+        cursor.close()
+        db.close()
+    return redirect(url_for("manage_users"))
+
+
+@app.route("/delete-user/<int:user_id>", methods=["POST"])
+@admin_required
+def delete_user(user_id):
+    is_json = request.is_json
+    if user_id == session.get("user_id"):
+        msg = "You cannot delete your own account."
+        if is_json: return jsonify({"success": False, "error": msg}), 400
+        flash(msg, "error")
+        return redirect(url_for("manage_users")), 400
+
+    db = get_db_connection()
+    cursor = db.cursor(dictionary=True)
+    try:
+        cursor.execute("SELECT role, email, name FROM users WHERE id = %s", (user_id,))
+        target = cursor.fetchone()
+        if not target:
+            msg = "User not found."
+            if is_json: return jsonify({"success": False, "error": msg}), 404
+            flash(msg, "error")
+            return redirect(url_for("manage_users")), 404
+
+        if target["role"] == "admin":
+            cursor.execute("SELECT COUNT(*) AS count FROM users WHERE role = 'admin'")
+            admin_count = cursor.fetchone()["count"]
+            if admin_count <= 1:
+                msg = "Cannot delete the last admin account."
+                if is_json: return jsonify({"success": False, "error": msg}), 400
+                flash(msg, "error")
+                return redirect(url_for("manage_users")), 400
+
+        cursor.execute("DELETE FROM users WHERE id = %s", (user_id,))
+        db.commit()
+        record_audit_event(session.get("user_id"), f"Deleted user {user_id} ({target['email']})")
+        msg = f"User '{target['name']}' deleted successfully."
+        if is_json: return jsonify({"success": True, "message": msg})
+        flash(msg, "success")
+    except Exception as e:
+        print(f"Error deleting user: {e}")
+        msg = "Error deleting user."
+        if is_json: return jsonify({"success": False, "error": msg}), 500
+        flash(msg, "error")
+    finally:
+        cursor.close()
+        db.close()
+    return redirect(url_for("manage_users"))
+
+
+@app.route("/api/admin/user/<int:user_id>/details", methods=["GET"])
+@admin_required
+def get_user_details(user_id):
+    """Returns detailed user data for the side drawer: profile, plan, campaigns, and audit trail."""
+    db = get_db_connection()
+    cursor = db.cursor(dictionary=True)
+    try:
+        ensure_users_schema_once(cursor)
+        cursor.execute("""
+            SELECT id, name, email, role, company_domain, email_verified,
+                   COALESCE(is_disabled, FALSE) AS is_disabled, created_at, last_login_at,
+                   two_factor_enabled, pro_expires_at, stripe_customer_id
+            FROM users
+            WHERE id = %s
+        """, (user_id,))
+        u = cursor.fetchone()
+        if not u:
+            return jsonify({"error": "User not found"}), 404
+
+        is_pro = u.get("role") == "pro" or (u.get("pro_expires_at") and u["pro_expires_at"] > datetime.utcnow())
+        plan_str = "Pro" if is_pro else ("Admin" if u.get("role") == "admin" else "Free")
+
+        cursor.execute("""
+            SELECT id, name, scenario_type, status, created_at
+            FROM campaigns
+            WHERE user_id = %s
+            ORDER BY id DESC
+            LIMIT 10
+        """, (user_id,))
+        campaigns = cursor.fetchall()
+
+        cursor.execute("""
+            SELECT event_type, status, created_at, ip_address
+            FROM audit_events
+            WHERE user_id = %s
+            ORDER BY created_at DESC
+            LIMIT 15
+        """, (user_id,))
+        audits = cursor.fetchall()
+
+        return jsonify({
+            "id": u["id"],
+            "name": u["name"],
+            "email": u["email"],
+            "role": u["role"],
+            "plan": plan_str,
+            "company_domain": u.get("company_domain") or "—",
+            "email_verified": bool(u.get("email_verified")),
+            "is_disabled": bool(u.get("is_disabled")),
+            "two_factor_enabled": bool(u.get("two_factor_enabled")),
+            "created_at": u["created_at"].strftime("%b %d, %Y %H:%M") if u.get("created_at") else "—",
+            "last_login_at": u["last_login_at"].strftime("%b %d, %Y %H:%M") if u.get("last_login_at") else "Never",
+            "pro_expires_at": u["pro_expires_at"].strftime("%b %d, %Y") if u.get("pro_expires_at") else None,
+            "campaigns": [
+                {
+                    "id": c["id"],
+                    "name": c["name"],
+                    "scenario": (c.get("scenario_type") or "").replace("_", " ").title(),
+                    "status": c["status"],
+                    "created_at": c["created_at"].strftime("%b %d, %Y") if c.get("created_at") else "—"
+                }
+                for c in campaigns
+            ],
+            "audit_trail": [
+                {
+                    "event_type": a["event_type"],
+                    "status": a["status"],
+                    "created_at": a["created_at"].strftime("%b %d %H:%M") if a.get("created_at") else "—",
+                    "ip": a.get("ip_address") or ""
+                }
+                for a in audits
+            ]
+        })
+    finally:
+        cursor.close()
+        db.close()
 
 SCENARIO_LABEL_MAP = {
     "ceo_fraud": "CEO fraud",

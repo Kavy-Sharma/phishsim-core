@@ -1,549 +1,776 @@
 {% extends 'base.html' %}
-{% block title %}Admin Control Center — PhishSim AI{% endblock %}
+{% block title %}Admin Overview — PhishSim AI{% endblock %}
 {% block content %}
 <style>
-.admin-page { max-width: 1280px; margin: 0 auto; padding: 0.5rem 2rem 2rem 2rem; }
-.admin-topbar { display:flex; align-items:center; justify-content:space-between; margin-bottom:1.2rem; padding-bottom:1rem; border-bottom:1px solid var(--border-color); }
-.admin-title { font-family:var(--font-sans); font-size:2rem; font-weight:900; color:var(--text-main); display:flex; align-items:center; gap:12px; }
-.admin-badge { background:linear-gradient(135deg,rgba(245,158,11,0.15),rgba(239,68,68,0.1)); border:1px solid rgba(245,158,11,0.4); color:#f59e0b; padding:4px 14px; border-radius:100px; font-size:0.75rem; font-family:var(--font-mono); text-transform:uppercase; letter-spacing:1px; }
-
-/* Stat cards */
-.admin-stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:1rem; margin-bottom:2rem; }
-.astat { background:rgba(2, 6, 23, 0.45) !important; border:1px solid rgba(255,255,255,0.05) !important; border-radius:16px; padding:1.4rem 1.2rem; display:flex; align-items:center; gap:1rem; transition:all 0.2s; }
-body.light-theme .astat { background:rgba(0, 0, 0, 0.03) !important; border-color:rgba(0, 0, 0, 0.08) !important; }
-.astat:hover { border-color:rgba(6,182,212,0.3); transform:translateY(-2px); }
-.astat-icon { width:48px; height:48px; border-radius:14px; display:flex; align-items:center; justify-content:center; font-size:1.3rem; flex-shrink:0; }
-.astat-num { font-family:var(--font-sans); font-size:1.8rem; font-weight:900; color:var(--text-main); line-height:1; }
-.astat-label { font-size:0.78rem; color:var(--text-muted); margin-top:3px; }
-
-/* Section panels overridden for window-mockup support */
-.admin-section {
-    background: transparent !important;
-    border: none !important;
-    box-shadow: none !important;
-    backdrop-filter: none !important;
-    padding: 0 !important;
-    margin-bottom: 1.5rem;
+.admin-container {
+    max-width: 1240px;
+    margin: 1.5rem auto 3.5rem auto;
+    padding: 0 1.5rem;
 }
-.admin-section-title { font-family:var(--font-sans); font-size:1.15rem; font-weight:800; color:var(--text-main); margin:0 0 1.4rem; display:flex; align-items:center; gap:10px; }
 
-/* Email config status */
-.cfg-row { display:flex; align-items:center; justify-content:space-between; padding:0.8rem 0; border-bottom:1px solid var(--border-color); font-size:0.88rem; }
-.cfg-row:last-child { border-bottom:0; }
-.cfg-key { color:var(--text-muted); font-family:var(--font-mono); font-size:0.78rem; }
-.cfg-val { color:var(--text-main); font-weight:600; }
-.pill-ok  { background:rgba(34,197,94,0.12); color:#4ade80; border:1px solid rgba(34,197,94,0.25); padding:3px 10px; border-radius:100px; font-size:0.75rem; }
-.pill-warn{ background:rgba(245,158,11,0.12); color:#fbbf24; border:1px solid rgba(245,158,11,0.3); padding:3px 10px; border-radius:100px; font-size:0.75rem; }
-.pill-err { background:rgba(239,68,68,0.12); color:#f87171; border:1px solid rgba(239,68,68,0.25); padding:3px 10px; border-radius:100px; font-size:0.75rem; }
+/* Header */
+.admin-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.75rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
 
-/* Tables */
-.admin-table { width:100%; border-collapse:collapse; }
-.admin-table th { font-family:var(--font-mono); font-size:0.72rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px; padding:0.6rem 1rem; text-align:left; border-bottom:1px solid var(--border-color); white-space:nowrap; }
-.admin-table td { padding:0.8rem 1rem; border-bottom:1px solid rgba(255,255,255,0.04); font-size:0.88rem; color:var(--text-main); vertical-align:middle; }
-.admin-table tr:last-child td { border-bottom:0; }
-.admin-table tr:hover td { background:rgba(255,255,255,0.02); }
-.admin-table .mono { font-family:var(--font-mono); font-size:0.78rem; color:var(--text-muted); }
-.tbl-actions { display:flex; gap:6px; align-items:center; flex-wrap:wrap; }
-.act-btn { height:32px; border-radius:8px; border:1px solid var(--border-color); background:rgba(0,0,0,0.05); color:var(--text-muted); cursor:pointer; padding:0 10px; font-size:0.78rem; transition:all 0.2s; display:inline-flex; align-items:center; gap:5px; }
-.act-btn:hover { color:#fff; border-color:rgba(6,182,212,0.4); background:rgba(6,182,212,0.1); }
-.act-btn.danger:hover { color:#f87171; border-color:rgba(239,68,68,0.35); background:rgba(239,68,68,0.08); }
-.act-btn.success:hover { color:#4ade80; border-color:rgba(34,197,94,0.35); background:rgba(34,197,94,0.08); }
+.admin-header-title {
+    font-size: 1.85rem;
+    font-weight: 800;
+    color: var(--text-primary, #0f172a);
+    margin: 0 0 0.35rem 0;
+    font-family: var(--font-sans);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.admin-header-subtitle {
+    font-size: 0.92rem;
+    color: var(--text-muted, #64748b);
+    margin: 0;
+}
+
+.admin-badge-pill {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 3px 9px;
+    border-radius: 999px;
+    background: rgba(99, 102, 241, 0.12);
+    color: #6366f1;
+    border: 1px solid rgba(99, 102, 241, 0.25);
+}
+
+.btn-admin-nav {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 9px 16px;
+    background: var(--primary, #2563eb);
+    color: #ffffff;
+    font-size: 0.88rem;
+    font-weight: 600;
+    border-radius: 8px;
+    text-decoration: none;
+    transition: all 0.15s ease;
+}
+
+.btn-admin-nav:hover {
+    background: var(--primary-hover, #1d4ed8);
+    color: #ffffff;
+}
+
+/* Stat Tiles Grid */
+.stat-tiles-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+@media (max-width: 1024px) {
+    .stat-tiles-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 680px) {
+    .stat-tiles-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media (max-width: 480px) {
+    .stat-tiles-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.stat-tile {
+    background: var(--bg-surface, #ffffff);
+    border: 1px solid var(--border-default, rgba(226, 232, 240, 0.8));
+    border-radius: 12px;
+    padding: 1.25rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+body:not(.light-theme) .stat-tile {
+    background: #0f172a;
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+.stat-tile-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    flex-shrink: 0;
+}
+
+.icon-blue   { background: rgba(37, 99, 235, 0.1); color: #2563eb; }
+.icon-green  { background: rgba(34, 197, 94, 0.1); color: #16a34a; }
+.icon-purple { background: rgba(168, 85, 247, 0.1); color: #9333ea; }
+.icon-amber  { background: rgba(245, 158, 11, 0.1); color: #d97706; }
+.icon-red    { background: rgba(239, 68, 68, 0.1); color: #dc2626; }
+
+.stat-tile-num {
+    font-size: 1.55rem;
+    font-weight: 800;
+    color: var(--text-primary, #0f172a);
+    line-height: 1.1;
+    font-family: var(--font-sans);
+}
+
+.stat-tile-label {
+    font-size: 0.76rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-muted, #64748b);
+    margin-top: 2px;
+}
 
 /* Two-column layout */
-.admin-two-col { display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; margin-bottom:1.5rem; }
-@media(max-width:900px) { .admin-two-col { grid-template-columns:1fr; } }
-
-/* Create user form */
-.cuf-grid { display:grid; grid-template-columns:1fr 1fr; gap:0.8rem; }
-@media(max-width:600px){ .cuf-grid{grid-template-columns:1fr;} }
-.cuf-grid input, .cuf-grid select {
-    width:100%; background:rgba(0,0,0,0.06); border:1px solid var(--border-color);
-    border-radius:10px; color:var(--text-main); padding:10px 12px; outline:none; font-size:0.9rem;
-    transition:border-color 0.2s;
+.admin-grid-2col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
 }
-.cuf-grid input:focus, .cuf-grid select:focus { border-color:rgba(6,182,212,0.5); }
-.cuf-label { font-size:0.75rem; color:var(--text-muted); font-family:var(--font-mono); text-transform:uppercase; letter-spacing:0.8px; margin-bottom:5px; display:block; }
-.cuf-submit { width:100%; grid-column:1/-1; padding:11px; border:0; border-radius:10px; background:linear-gradient(135deg,#06b6d4,#3b82f6); color:#fff; font-weight:700; font-family:var(--font-sans); cursor:pointer; font-size:0.95rem; transition:all 0.2s; margin-top:0.3rem; }
-.cuf-submit:hover { transform:translateY(-1px); box-shadow:0 8px 20px rgba(6,182,212,0.3); }
 
-/* Audit log */
-.audit-row { display:flex; align-items:center; gap:12px; padding:0.7rem 0; border-bottom:1px solid rgba(255,255,255,0.04); font-size:0.84rem; }
-.audit-row:last-child { border-bottom:0; }
-.audit-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
-.audit-dot.success { background:#22c55e; box-shadow:0 0 6px rgba(34,197,94,0.5); }
-.audit-dot.fail    { background:#ef4444; box-shadow:0 0 6px rgba(239,68,68,0.5); }
+@media (max-width: 860px) {
+    .admin-grid-2col {
+        grid-template-columns: 1fr;
+    }
+}
 
-/* Confirm modal */
-.confirm-modal { position:fixed; inset:0; z-index:50000; display:none; align-items:center; justify-content:center; background:rgba(2,6,23,0.72); backdrop-filter:blur(10px); padding:1.5rem; }
-.confirm-modal.show { display:flex; }
-.confirm-box { width:min(420px,100%); background:rgba(10,16,38,0.96); border:1px solid rgba(239,68,68,0.28); border-radius:18px; padding:1.5rem; box-shadow:0 24px 70px rgba(0,0,0,0.5); }
-.confirm-box h3 { color:#fff; margin:0 0 0.5rem; }
-.confirm-box p { color:#94a3b8; margin:0 0 1.2rem; }
-.confirm-actions { display:grid; grid-template-columns:1fr 1fr; gap:0.8rem; }
-.confirm-cancel, .confirm-danger { border:0; border-radius:10px; padding:12px; cursor:pointer; color:#fff; font-weight:700; font-family:var(--font-sans); }
-.confirm-cancel { background:rgba(148,163,184,0.14); color:#cbd5e1; }
-.confirm-danger { background:linear-gradient(135deg,#ef4444,#b91c1c); }
+.admin-card {
+    background: var(--bg-surface, #ffffff);
+    border: 1px solid var(--border-default, rgba(226, 232, 240, 0.8));
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+}
 
-/* Reset form inline */
-.reset-inline { display:none; grid-template-columns:1fr auto; gap:6px; margin-top:6px; grid-column:1/-1; padding-top:8px; border-top:1px solid var(--border-color); }
-.reset-inline.show { display:grid; }
-.reset-inline input { background:rgba(0,0,0,0.06); border:1px solid var(--border-color); border-radius:8px; color:var(--text-main); padding:8px 10px; outline:none; width:100%; }
-.reset-inline button { border:0; border-radius:8px; padding:8px 14px; background:linear-gradient(135deg,#06b6d4,#3b82f6); color:#fff; font-weight:700; cursor:pointer; }
+body:not(.light-theme) .admin-card {
+    background: #0f172a;
+    border-color: rgba(255, 255, 255, 0.08);
+}
 
-/* Scrollable table container */
-.tbl-scroll { overflow-x:auto; }
+.card-header-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.25rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border-default, rgba(226, 232, 240, 0.6));
+}
+
+body:not(.light-theme) .card-header-bar {
+    border-bottom-color: rgba(255, 255, 255, 0.06);
+}
+
+.card-header-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--text-primary, #0f172a);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Health Checks */
+.health-check-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+}
+
+.health-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.65rem 0.85rem;
+    border-radius: 8px;
+    background: var(--bg-hover, rgba(248, 250, 252, 0.6));
+    border: 1px solid var(--border-default, rgba(226, 232, 240, 0.6));
+}
+
+body:not(.light-theme) .health-item {
+    background: rgba(255, 255, 255, 0.02);
+    border-color: rgba(255, 255, 255, 0.04);
+}
+
+.health-item-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.health-item-name {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--text-primary, #0f172a);
+}
+
+.health-item-detail {
+    font-size: 0.78rem;
+    color: var(--text-muted, #64748b);
+}
+
+.health-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 0.74rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.health-status-badge.ok {
+    background: rgba(34, 197, 94, 0.12);
+    color: #16a34a;
+}
+
+.health-status-badge.degraded {
+    background: rgba(245, 158, 11, 0.12);
+    color: #d97706;
+}
+
+/* Needs Attention */
+.attention-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.attention-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 0.85rem;
+    border-radius: 8px;
+    background: rgba(239, 68, 68, 0.03);
+    border: 1px solid rgba(239, 68, 68, 0.15);
+    font-size: 0.85rem;
+}
+
+body:not(.light-theme) .attention-row {
+    background: rgba(239, 68, 68, 0.05);
+    border-color: rgba(239, 68, 68, 0.2);
+}
+
+.attention-main {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.attention-title {
+    font-weight: 600;
+    color: var(--text-primary, #0f172a);
+}
+
+.attention-subtitle {
+    font-size: 0.78rem;
+    color: var(--text-muted, #64748b);
+}
+
+.btn-attention-action {
+    padding: 5px 10px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    border-radius: 6px;
+    background: var(--bg-surface, #ffffff);
+    border: 1px solid var(--border-default, #cbd5e1);
+    color: var(--text-primary, #0f172a);
+    text-decoration: none;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.btn-attention-action:hover {
+    background: var(--bg-hover, #f1f5f9);
+}
+
+.nominal-state {
+    text-align: center;
+    padding: 2rem 1rem;
+    color: var(--text-muted, #64748b);
+}
+
+.nominal-state i {
+    font-size: 2.2rem;
+    color: #22c55e;
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+/* Audit Log List */
+.audit-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 380px;
+    overflow-y: auto;
+}
+
+.audit-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 10px;
+    border-radius: 6px;
+    font-size: 0.82rem;
+    background: var(--bg-hover, rgba(248, 250, 252, 0.5));
+}
+
+body:not(.light-theme) .audit-item {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.audit-item-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.audit-indicator-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #22c55e;
+    flex-shrink: 0;
+}
+
+.audit-indicator-dot.fail {
+    background: #ef4444;
+}
+
+.audit-time {
+    font-family: var(--font-mono);
+    color: var(--text-muted, #64748b);
+    font-size: 0.76rem;
+    min-width: 90px;
+}
+
+.audit-desc {
+    color: var(--text-primary, #0f172a);
+    font-weight: 500;
+}
+
+.audit-user {
+    color: var(--text-muted, #64748b);
+    font-size: 0.78rem;
+}
+
+/* Settings Card */
+.settings-form-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 0;
+    border-bottom: 1px solid var(--border-default, rgba(226, 232, 240, 0.6));
+}
+
+body:not(.light-theme) .settings-form-row {
+    border-bottom-color: rgba(255, 255, 255, 0.06);
+}
+
+.settings-meta h4 {
+    margin: 0 0 3px 0;
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: var(--text-primary, #0f172a);
+}
+
+.settings-meta p {
+    margin: 0;
+    font-size: 0.8rem;
+    color: var(--text-muted, #64748b);
+}
+
+.form-select-sm {
+    padding: 7px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--border-default, #cbd5e1);
+    background: var(--bg-surface, #ffffff);
+    color: var(--text-primary, #0f172a);
+    font-size: 0.85rem;
+    font-family: inherit;
+    outline: none;
+}
+
+body:not(.light-theme) .form-select-sm {
+    background: #1e293b;
+    border-color: rgba(255, 255, 255, 0.15);
+    color: #f8fafc;
+}
+
+.settings-help-box {
+    margin-top: 1.25rem;
+    padding: 0.85rem 1rem;
+    background: rgba(37, 99, 235, 0.04);
+    border: 1px solid rgba(37, 99, 235, 0.15);
+    border-radius: 8px;
+    font-size: 0.82rem;
+    color: var(--text-secondary, #475569);
+    line-height: 1.5;
+}
+
+body:not(.light-theme) .settings-help-box {
+    background: rgba(59, 130, 246, 0.06);
+    border-color: rgba(59, 130, 246, 0.2);
+    color: #94a3b8;
+}
+
+.btn-save-settings {
+    padding: 9px 18px;
+    background: var(--primary, #2563eb);
+    color: #ffffff;
+    font-size: 0.88rem;
+    font-weight: 600;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.15s ease;
+}
+
+.btn-save-settings:hover {
+    background: var(--primary-hover, #1d4ed8);
+}
 </style>
 
-<div class="admin-page">
-
-    <!-- Top bar -->
-    <div class="admin-topbar">
-        <div class="admin-title">
-            <i class="fas fa-shield-halved" style="color:#f59e0b;"></i>
-            Admin Control Center
-            <span class="admin-badge">Super Admin</span>
+<div class="admin-container">
+    <!-- Topbar -->
+    <div class="admin-header-row">
+        <div>
+            <h1 class="admin-header-title">
+                <i class="ti ti-shield-check" style="color: var(--primary);"></i>
+                Admin Overview
+                <span class="admin-badge-pill">Super Admin</span>
+            </h1>
+            <p class="admin-header-subtitle">System telemetry, platform health monitoring, and workspace settings.</p>
         </div>
-        <div style="display:flex;gap:0.7rem;">
-            <a href="/users" class="act-btn"><i class="fas fa-users"></i> User Manager</a>
-            <a href="/dashboard" class="act-btn"><i class="fas fa-th-large"></i> Dashboard</a>
+        <div style="display: flex; gap: 10px;">
+            <a href="{{ url_for('manage_users') }}" class="btn-admin-nav" id="btn-goto-users">
+                <i class="ti ti-users"></i>
+                <span>Manage Users</span>
+            </a>
+            <a href="{{ url_for('dashboard') }}" class="btn-attention-action" style="padding: 9px 16px; font-size: 0.88rem;">
+                <i class="ti ti-layout-dashboard"></i>
+                <span>Dashboard</span>
+            </a>
         </div>
     </div>
 
-    {% with messages = get_flashed_messages() %}
-        {% if messages %}
-            <div style="background:rgba(6,182,212,0.08);border:1px solid rgba(6,182,212,0.3);color:#67e8f9;padding:12px 16px;border-radius:12px;margin-bottom:1.5rem;">
-                {{ messages[0] }}
+    <!-- Stat Tiles Grid (5 real metrics) -->
+    <div class="stat-tiles-grid">
+        <div class="stat-tile" id="tile-users">
+            <div class="stat-tile-icon icon-blue"><i class="ti ti-users"></i></div>
+            <div>
+                <div class="stat-tile-num">{{ stats.users }}</div>
+                <div class="stat-tile-label">Total Users</div>
             </div>
-        {% endif %}
-    {% endwith %}
-
-    <!-- System stat cards -->
-    <div class="window-mockup" style="margin-bottom: 2rem;">
-        <div class="window-header">
-            <div class="window-dots">
-                <span class="window-dot red"></span>
-                <span class="window-dot yellow"></span>
-                <span class="window-dot green"></span>
-            </div>
-            <span class="window-title">system_metrics.sh</span>
         </div>
-        <div class="window-body" style="padding: 1.5rem;">
-            <div class="admin-stats" style="margin-bottom: 0;">
-                <div class="astat">
-                    <div class="astat-icon" style="background:rgba(59,130,246,0.12);color:#3b82f6;"><i class="fas fa-users"></i></div>
-                    <div>
-                        <div class="astat-num">{{ system_stats.total_users }}</div>
-                        <div class="astat-label">Registered Users</div>
-                    </div>
-                </div>
-                <div class="astat">
-                    <div class="astat-icon" style="background:rgba(34,197,94,0.12);color:#22c55e;"><i class="fas fa-envelope-circle-check"></i></div>
-                    <div>
-                        <div class="astat-num">{{ system_stats.verified_users }}</div>
-                        <div class="astat-label">Verified Emails</div>
-                    </div>
-                </div>
-                <div class="astat">
-                    <div class="astat-icon" style="background:rgba(168,85,247,0.12);color:#a855f7;"><i class="fas fa-layer-group"></i></div>
-                    <div>
-                        <div class="astat-num">{{ system_stats.total_campaigns }}</div>
-                        <div class="astat-label">Total Campaigns</div>
-                    </div>
-                </div>
-                <div class="astat">
-                    <div class="astat-icon" style="background:{% if system_stats.deployed %}rgba(34,197,94,0.12){% else %}rgba(245,158,11,0.12){% endif %};color:{% if system_stats.deployed %}#22c55e{% else %}#f59e0b{% endif %};">
-                        <i class="fas fa-{% if system_stats.deployed %}cloud{% else %}server{% endif %}"></i>
-                    </div>
-                    <div>
-                        <div class="astat-num" style="font-size:1rem;padding-top:4px;">{% if system_stats.deployed %}Cloud{% else %}Local{% endif %}</div>
-                        <div class="astat-label">Environment</div>
-                    </div>
-                </div>
+
+        <div class="stat-tile" id="tile-verified">
+            <div class="stat-tile-icon icon-green"><i class="ti ti-user-check"></i></div>
+            <div>
+                <div class="stat-tile-num">{{ stats.verified }}</div>
+                <div class="stat-tile-label">Verified Users</div>
+            </div>
+        </div>
+
+        <div class="stat-tile" id="tile-campaigns">
+            <div class="stat-tile-icon icon-purple"><i class="ti ti-send"></i></div>
+            <div>
+                <div class="stat-tile-num">{{ stats.campaigns }}</div>
+                <div class="stat-tile-label">Campaigns</div>
+            </div>
+        </div>
+
+        <div class="stat-tile" id="tile-sends-week">
+            <div class="stat-tile-icon icon-amber"><i class="ti ti-mail-fast"></i></div>
+            <div>
+                <div class="stat-tile-num">{{ stats.sends_this_week }}</div>
+                <div class="stat-tile-label">Sends This Week</div>
+            </div>
+        </div>
+
+        <div class="stat-tile" id="tile-failed-sends">
+            <div class="stat-tile-icon icon-red"><i class="ti ti-alert-triangle"></i></div>
+            <div>
+                <div class="stat-tile-num">{{ stats.failed_sends }}</div>
+                <div class="stat-tile-label">Failed Sends</div>
             </div>
         </div>
     </div>
 
-    <!-- Two column: Create User + Email Config -->
-    <div class="admin-two-col">
+    <!-- Row 2: Health Card & Needs Attention -->
+    <div class="admin-grid-2col">
+        <!-- Health Card (Real checks only) -->
+        <div class="admin-card" id="card-system-health">
+            <div class="card-header-bar">
+                <h3 class="card-header-title">
+                    <i class="ti ti-activity-heartbeat" style="color: #22c55e;"></i>
+                    System Health
+                </h3>
+                <span style="font-size: 0.76rem; color: var(--text-muted); font-family: var(--font-mono);">
+                    {{ health.database.timestamp }}
+                </span>
+            </div>
 
-        <!-- Create User -->
-        <div class="admin-section">
-            <div class="window-mockup" style="margin-bottom: 0;">
-                <div class="window-header">
-                    <div class="window-dots">
-                        <span class="window-dot red"></span>
-                        <span class="window-dot yellow"></span>
-                        <span class="window-dot green"></span>
+            <div class="health-check-list">
+                <div class="health-item">
+                    <div class="health-item-meta">
+                        <span class="health-item-name">Database Connectivity</span>
+                        <span class="health-item-detail">{{ health.database.detail }}</span>
                     </div>
-                    <span class="window-title">create_user.sh</span>
+                    <span class="health-status-badge {{ health.database.status | lower }}">
+                        <i class="ti ti-circle-check"></i> {{ health.database.status }}
+                    </span>
                 </div>
-                <div class="window-body" style="padding: 1.8rem;">
-                    <div class="admin-section-title" style="margin-top: 0;">
-                        <i class="fas fa-user-plus" style="color:#06b6d4;"></i> Create New User
+
+                <div class="health-item">
+                    <div class="health-item-meta">
+                        <span class="health-item-name">SMTP Relay & Mail Delivery</span>
+                        <span class="health-item-detail">{{ health.smtp.detail }}</span>
                     </div>
-                    <form method="POST" action="/users">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                        <div class="cuf-grid">
-                            <div>
-                                <label class="cuf-label" for="cu-name">Full Name</label>
-                                <input type="text" id="cu-name" name="name" placeholder="Security Manager" required>
-                            </div>
-                            <div>
-                                <label class="cuf-label" for="cu-email">Email</label>
-                                <input type="email" id="cu-email" name="email" placeholder="manager@company.com" required>
-                            </div>
-                            <div>
-                                <label class="cuf-label" for="cu-pass">Temporary Password</label>
-                                <input type="password" id="cu-pass" name="password" required>
-                            </div>
-                            <div>
-                                <label class="cuf-label" for="cu-domain">Company Domain</label>
-                                <input type="text" id="cu-domain" name="company_domain" placeholder="company.com">
-                            </div>
-                            <div style="grid-column:1/-1;">
-                                <label class="cuf-label" for="cu-role">Role</label>
-                                <select id="cu-role" name="role">
-                                    <option value="company_user">Company User</option>
-                                    <option value="admin">Admin</option>
-                                </select>
-                            </div>
-                            <button type="submit" class="cuf-submit"><i class="fas fa-plus" style="margin-right:6px;"></i>Create User</button>
+                    <span class="health-status-badge {{ health.smtp.status | lower }}">
+                        <i class="ti ti-circle-check"></i> {{ health.smtp.status }}
+                    </span>
+                </div>
+
+                <div class="health-item">
+                    <div class="health-item-meta">
+                        <span class="health-item-name">AI Generation Engine</span>
+                        <span class="health-item-detail">{{ health.ai.detail }}</span>
+                    </div>
+                    <span class="health-status-badge {{ health.ai.status | lower }}">
+                        <i class="ti ti-circle-check"></i> {{ health.ai.status }}
+                    </span>
+                </div>
+
+                <div class="health-item">
+                    <div class="health-item-meta">
+                        <span class="health-item-name">Campaign Dispatcher & Scheduler</span>
+                        <span class="health-item-detail">{{ health.scheduler.detail }}</span>
+                    </div>
+                    <span class="health-status-badge {{ health.scheduler.status | lower }}">
+                        <i class="ti ti-circle-check"></i> {{ health.scheduler.status }}
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Needs Attention List -->
+        <div class="admin-card" id="card-needs-attention">
+            <div class="card-header-bar">
+                <h3 class="card-header-title">
+                    <i class="ti ti-bell-ringing" style="color: #f59e0b;"></i>
+                    Needs Attention
+                </h3>
+                <span style="font-size: 0.78rem; font-weight: 600; color: var(--text-muted);">
+                    {{ stale_unverified | length + failed_campaigns | length }} items
+                </span>
+            </div>
+
+            <div class="attention-list">
+                {% if stale_unverified or failed_campaigns %}
+                    {% for u in stale_unverified %}
+                    <div class="attention-row">
+                        <div class="attention-main">
+                            <span class="attention-title">{{ u.name }} ({{ u.email }})</span>
+                            <span class="attention-subtitle">Unverified email for {{ u.days_pending }} days</span>
                         </div>
-                    </form>
-                </div>
-            </div>
-        </div>
+                        <form action="/verify-user/{{ u.id }}" method="POST" style="margin: 0;">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn-attention-action">
+                                <i class="ti ti-check"></i> <span>Verify</span>
+                            </button>
+                        </form>
+                    </div>
+                    {% endfor %}
 
-        <!-- Email & System Config -->
-        <div class="admin-section">
-            <div class="window-mockup" style="margin-bottom: 0;">
-                <div class="window-header">
-                    <div class="window-dots">
-                        <span class="window-dot red"></span>
-                        <span class="window-dot yellow"></span>
-                        <span class="window-dot green"></span>
-                    </div>
-                    <span class="window-title">system_config.env</span>
-                </div>
-                <div class="window-body" style="padding: 1.8rem;">
-                    <div class="admin-section-title" style="margin-top: 0;">
-                        <i class="fas fa-cog" style="color:#f59e0b;"></i> System Configuration
-                    </div>
-                    <div class="cfg-row">
-                        <span class="cfg-key">Environment</span>
-                        <span class="{% if system_stats.deployed %}pill-ok{% else %}pill-warn{% endif %}">
-                            {% if system_stats.deployed %}Deployed (Cloud){% else %}Local Dev{% endif %}
-                        </span>
-                    </div>
-                    <div class="cfg-row">
-                        <span class="cfg-key">Email Provider</span>
-                        <span class="cfg-val">{{ system_stats.email_provider | upper }}</span>
-                    </div>
-                    <div class="cfg-row">
-                        <span class="cfg-key">SMTP Host</span>
-                        <span class="cfg-val mono">{{ system_stats.smtp_host }}</span>
-                    </div>
-                    <div class="cfg-row">
-                        <span class="cfg-key">Mailtrap Configured</span>
-                        {% if email_settings.get('user') %}
-                        <span class="pill-ok"><i class="fas fa-check" style="margin-right:4px;"></i>Yes</span>
-                        {% else %}
-                        <span class="pill-warn">Not set — users must provide own credentials</span>
-                        {% endif %}
-                    </div>
-                    <div class="cfg-row">
-                        <span class="cfg-key">Debug Email Route</span>
-                        <a href="/debug-email" target="_blank" class="act-btn" style="height:26px;font-size:0.76rem;">
-                            <i class="fas fa-flask"></i> View Config
+                    {% for c in failed_campaigns %}
+                    <div class="attention-row">
+                        <div class="attention-main">
+                            <span class="attention-title">{{ c.name }}</span>
+                            <span class="attention-subtitle">Campaign status: {{ c.status.replace('_', ' ') }} • Owner: {{ c.owner_name }}</span>
+                        </div>
+                        <a href="/campaign-report/{{ c.id }}" class="btn-attention-action">
+                            <i class="ti ti-arrow-right"></i> <span>Review</span>
                         </a>
                     </div>
-                    <form method="POST" action="/admin/save-settings">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                        <div class="cfg-row" style="border-bottom:0;">
-                            <span class="cfg-key" style="display:flex; flex-direction:column; gap:2px; text-transform:none;">
-                                <span style="font-weight:700; color:var(--text-main); font-size:0.82rem;">Enforce Work Emails</span>
-                                <span style="font-size:0.72rem; color:var(--text-muted);">Restrict signup & scan to corporate domains only</span>
-                            </span>
-                            <span class="cfg-val">
-                                <select name="enforce_work_emails" onchange="this.form.submit()" style="background:rgba(0,0,0,0.15); border:1px solid var(--border-color); border-radius:8px; color:var(--text-main); padding:6px 10px; font-size:0.8rem; outline:none; cursor:pointer;">
-                                    <option value="false" {% if enforce_work_emails == 'false' %}selected{% endif %}>Disabled (Allow Gmail/etc)</option>
-                                    <option value="true" {% if enforce_work_emails == 'true' %}selected{% endif %}>Enabled (Work Emails Only)</option>
-                                </select>
-                            </span>
-                        </div>
-                    </form>
-                    <div style="margin-top:1rem; padding:1rem; background:rgba(245,158,11,0.06); border:1px solid rgba(245,158,11,0.2); border-radius:12px; font-size:0.82rem; color:#fbbf24;">
-                        <i class="fas fa-info-circle" style="margin-right:6px;"></i>
-                        Set <strong>MAILTRAP_USER</strong> and <strong>MAILTRAP_PASS</strong> in your <code>.env</code> to enable platform-wide Safe Send. Users can also bring their own Mailtrap credentials when creating campaigns.
+                    {% endfor %}
+                {% else %}
+                    <div class="nominal-state">
+                        <i class="ti ti-shield-check"></i>
+                        <p style="margin: 0; font-weight: 600; color: var(--text-primary);">All systems nominal</p>
+                        <span style="font-size: 0.8rem;">No unverified accounts older than 7 days or failed campaigns.</span>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Row 3: Settings & Recent Activity -->
+    <div class="admin-grid-2col">
+        <!-- Settings Card -->
+        <div class="admin-card" id="settings">
+            <div class="card-header-bar">
+                <h3 class="card-header-title">
+                    <i class="ti ti-settings" style="color: #6366f1;"></i>
+                    Platform Settings
+                </h3>
+                <span id="settings-status-indicator" style="font-size: 0.78rem; color: #16a34a; font-weight: 600; display: none;">
+                    <i class="ti ti-check"></i> Saved
+                </span>
+            </div>
+
+            <form action="/admin/save-settings" method="POST" id="admin-settings-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                <div class="settings-form-row">
+                    <div class="settings-meta">
+                        <h4>Work Email Enforcement</h4>
+                        <p>Restrict new registrations and simulations to verified corporate domains only.</p>
+                    </div>
+                    <div>
+                        <select name="enforce_work_emails" class="form-select-sm" id="select-enforce-emails">
+                            <option value="false" {% if enforce_work_emails == 'false' %}selected{% endif %}>Disabled (Allow all domains)</option>
+                            <option value="true" {% if enforce_work_emails == 'true' %}selected{% endif %}>Enabled (Corporate domains only)</option>
+                        </select>
                     </div>
                 </div>
-            </div>
-        </div>
-    </div>
 
-    <!-- All Users Table -->
-    <div class="admin-section">
-        <div class="window-mockup" style="margin-bottom: 0;">
-            <div class="window-header">
-                <div class="window-dots">
-                    <span class="window-dot red"></span>
-                    <span class="window-dot yellow"></span>
-                    <span class="window-dot green"></span>
+                <div class="settings-form-row">
+                    <div class="settings-meta">
+                        <h4>Active Mail Provider</h4>
+                        <p>Current outbound relay: <strong>{{ email_settings.provider | upper }}</strong></p>
+                    </div>
+                    <div>
+                        <span style="font-family: var(--font-mono); font-size: 0.82rem; color: var(--text-muted);">
+                            {{ email_settings.host or 'local/sandbox' }}
+                        </span>
+                    </div>
                 </div>
-                <span class="window-title">operator_accounts.db</span>
+
+                <div class="settings-help-box">
+                    <i class="ti ti-info-circle" style="color: var(--primary); margin-right: 4px;"></i>
+                    <strong>Safe Send Mailtrap Setup:</strong> To enable simulated test delivery across all campaigns, configure <code>MAILTRAP_USER</code> and <code>MAILTRAP_PASS</code> in your environment variables. Individual campaign creators can also supply their own test inbox credentials.
+                </div>
+
+                <div style="margin-top: 1.25rem; display: flex; justify-content: flex-end;">
+                    <button type="submit" class="btn-save-settings" id="btn-save-settings">
+                        <i class="ti ti-device-floppy"></i>
+                        <span>Save Settings</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Recent Activity Audit Log -->
+        <div class="admin-card" id="card-recent-activity">
+            <div class="card-header-bar">
+                <h3 class="card-header-title">
+                    <i class="ti ti-file-text" style="color: #06b6d4;"></i>
+                    Recent Activity
+                </h3>
+                <a href="/download-audit-log" class="btn-attention-action" style="font-size: 0.78rem;">
+                    <i class="ti ti-download"></i> <span>Export CSV</span>
+                </a>
             </div>
-            <div class="window-body" style="padding: 1.8rem;">
-                <div class="admin-section-title" style="margin-top: 0;">
-                    <i class="fas fa-users" style="color:#3b82f6;"></i> All Users
-                    <span style="font-size:0.8rem;font-weight:400;color:var(--text-muted);margin-left:6px;">({{ all_users | length }} accounts, demo sessions excluded)</span>
-                </div>
-                <div class="tbl-scroll">
-                <table class="admin-table">
-                    <thead>
-                        <tr>
-                            <th>Name / Email</th>
-                            <th>Domain</th>
-                            <th>Role</th>
-                            <th>Verified</th>
-                            <th>2FA</th>
-                            <th>Last Login</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                    {% for u in all_users %}
-                    {% set role_action = 'company_user' if u.role == 'admin' else 'admin' %}
-                    <tr>
-                        <td>
-                            <strong>{{ u.name }}</strong>
-                            <div class="mono">{{ u.email }}</div>
-                        </td>
-                        <td class="mono">{{ u.company_domain or '—' }}</td>
-                        <td>
-                            <span class="{% if u.role == 'admin' %}pill-warn{% else %}pill-ok{% endif %}" style="font-size:0.75rem;padding:3px 9px;border-radius:100px;border:0;">
-                                {{ u.role.replace('_',' ') }}
-                            </span>
-                        </td>
-                        <td>
-                            {% if u.email_verified %}
-                            <span class="pill-ok">✓ Verified</span>
-                            {% else %}
-                            <form action="/verify-user/{{ u.id }}" method="POST" style="display:inline;">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                <button type="submit" class="act-btn success" title="Mark as verified">
-                                    <i class="fas fa-envelope-circle-check"></i> Verify
-                                </button>
-                            </form>
-                            {% endif %}
-                        </td>
-                        <td>
-                            <span class="{% if u.two_factor_enabled %}pill-ok{% else %}pill-err{% endif %}">
-                                {% if u.two_factor_enabled %}On{% else %}Off{% endif %}
-                            </span>
-                        </td>
-                        <td class="mono">{{ u.last_login_at.strftime('%b %d %H:%M') if u.last_login_at else 'Never' }}</td>
-                        <td>
-                            <div class="tbl-actions">
-                                <form action="/set-user-role/{{ u.id }}" method="POST" style="margin:0;"
-                                      data-confirm-title="{% if u.role == 'admin' %}Remove admin?{% else %}Make admin?{% endif %}"
-                                      data-confirm-message="{% if u.role == 'admin' %}User loses admin access.{% else %}User gains full admin access.{% endif %}"
-                                      data-confirm-action="Confirm">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                    <input type="hidden" name="role" value="{{ role_action }}">
-                                    <button type="submit" class="act-btn" title="Toggle role">
-                                        <i class="fas fa-{% if u.role == 'admin' %}user-minus{% else %}user-shield{% endif %}"></i>
-                                        {% if u.role == 'admin' %}Demote{% else %}Make Admin{% endif %}
-                                    </button>
-                                </form>
-                                <button type="button" class="act-btn" onclick="toggleReset('{{ u.id }}')">
-                                    <i class="fas fa-key"></i> Reset PW
-                                </button>
-                                <form action="/delete-user/{{ u.id }}" method="POST" style="margin:0;"
-                                      data-confirm-title="Delete user?"
-                                      data-confirm-message="This will permanently delete {{ u.name }}'s account."
-                                      data-confirm-action="Delete">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                    <button type="submit" class="act-btn danger"><i class="fas fa-trash-alt"></i></button>
-                                </form>
-                            </div>
-                            <form id="reset-{{ u.id }}" class="reset-inline" action="/reset-user-password/{{ u.id }}" method="POST">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                <input type="password" name="new_password" placeholder="New password" required>
-                                <button type="submit">Set</button>
-                            </form>
-                        </td>
-                    </tr>
-                    {% else %}
-                    <tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:2rem;">No users yet.</td></tr>
+
+            <div class="audit-list">
+                {% if recent_activity %}
+                    {% for a in recent_activity %}
+                    <div class="audit-item">
+                        <div class="audit-item-left">
+                            <span class="audit-indicator-dot {% if a.status != 'success' %}fail{% endif %}"></span>
+                            <span class="audit-time">{{ a.created_at.strftime('%b %d %H:%M') if a.created_at else '—' }}</span>
+                            <span class="audit-desc">{{ a.event_type }}</span>
+                        </div>
+                        <div class="audit-user">
+                            {{ a.user_name or a.user_email or 'System' }}
+                        </div>
+                    </div>
                     {% endfor %}
-                    </tbody>
-                </table>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- All Campaigns Table -->
-    <div class="admin-section">
-        <div class="window-mockup" style="margin-bottom: 0;">
-            <div class="window-header">
-                <div class="window-dots">
-                    <span class="window-dot red"></span>
-                    <span class="window-dot yellow"></span>
-                    <span class="window-dot green"></span>
-                </div>
-                <span class="window-title">phishing_campaigns.log</span>
-            </div>
-            <div class="window-body" style="padding: 1.8rem;">
-                <div class="admin-section-title" style="margin-top: 0;">
-                    <i class="fas fa-satellite-dish" style="color:#a855f7;"></i> All Campaigns
-                    <span style="font-size:0.8rem;font-weight:400;color:var(--text-muted);margin-left:6px;">(last 50, demo excluded)</span>
-                </div>
-                <div class="tbl-scroll">
-                <table class="admin-table">
-                    <thead>
-                        <tr>
-                            <th>Campaign</th>
-                            <th>Owner</th>
-                            <th>Scenario</th>
-                            <th>Mode</th>
-                            <th>Status</th>
-                            <th>Targets</th>
-                            <th>Sent</th>
-                            <th>Clicks</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                    {% for c in all_campaigns %}
-                    <tr>
-                        <td>
-                            <strong>{{ c.name }}</strong>
-                            <div class="mono">{{ c.company_domain or '—' }}</div>
-                        </td>
-                        <td>
-                            <span>{{ c.owner_name or '—' }}</span>
-                            <div class="mono">{{ c.owner_email or '' }}</div>
-                        </td>
-                        <td class="mono">{{ (c.scenario_type or '—').replace('_',' ') }}</td>
-                        <td><span class="mono">{{ c.delivery_mode or '—' }}</span></td>
-                        <td>
-                            {% set s = c.status %}
-                            <span class="badge badge-{{ s }}">
-                               <i class="fas fa-{% if s == 'launched' %}rocket{% elif s == 'launching' %}spinner fa-spin{% elif s == 'scheduled' %}clock{% elif s == 'failed' %}exclamation-triangle{% else %}circle{% endif %}"></i>
-                                {{ s.replace('_',' ') if s else '—' }}
-                            </span>
-                            {% if c.schedule_frequency != 'once' %}
-                            <div style="font-size:0.75rem; color:var(--text-muted); margin-top:4px;">
-                                <i class="fas fa-calendar-alt" style="margin-right:2px;"></i>
-                                {{ c.schedule_frequency.title() }}
-                                {% if c.scheduled_at %}
-                                <br>({{ c.scheduled_at.strftime('%m/%d %H:%M') }})
-                                {% endif %}
-                            </div>
-                            {% endif %}
-                        </td>
-                        <td style="text-align:center;">{{ c.targets or 0 }}</td>
-                        <td style="text-align:center;">{{ c.sent or 0 }}</td>
-                        <td style="text-align:center;color:{% if (c.clicks or 0) > 0 %}#f87171{% else %}var(--text-muted){% endif %};">
-                            {{ c.clicks or 0 }}
-                        </td>
-                        <td>
-                            <div class="tbl-actions">
-                                {% if c.status in ('launched','launched_with_errors') %}
-                                <a href="/campaign-report/{{ c.id }}" class="act-btn"><i class="fas fa-chart-bar"></i> Report</a>
-                                <a href="/campaign-emails/{{ c.id }}" class="act-btn"><i class="fas fa-envelope-open-text"></i> Emails</a>
-                                {% endif %}
-                                <form action="/delete-campaign/{{ c.id }}" method="POST" style="margin:0;"
-                                      data-confirm-title="Delete campaign?"
-                                      data-confirm-message="This deletes '{{ c.name }}' and all its data permanently."
-                                      data-confirm-action="Delete">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                    <button type="submit" class="act-btn danger"><i class="fas fa-trash-alt"></i></button>
-                                </form>
-                            </div>
-                        </td>
-                    </tr>
-                    {% else %}
-                    <tr><td colspan="9" style="text-align:center;color:var(--text-muted);padding:2rem;">No campaigns found.</td></tr>
-                    {% endfor %}
-                    </tbody>
-                </table>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Audit Log -->
-    <div class="admin-section">
-        <div class="window-mockup" style="margin-bottom: 0;">
-            <div class="window-header">
-                <div class="window-dots">
-                    <span class="window-dot red"></span>
-                    <span class="window-dot yellow"></span>
-                    <span class="window-dot green"></span>
-                </div>
-                <span class="window-title">recent_audit_log.sh</span>
-            </div>
-            <div class="window-body" style="padding: 1.8rem;">
-                <div class="admin-section-title" style="margin-top: 0; display: flex; justify-content: space-between; align-items: center;">
-                    <span><i class="fas fa-scroll" style="color:#06b6d4;"></i> Recent Audit Log</span>
-                    <a href="/download-audit-log" class="act-btn"><i class="fas fa-download"></i> Export CSV</a>
-                </div>
-                {% for ev in audit_log %}
-                <div class="audit-row">
-                    <span class="audit-dot {% if ev.status == 'success' %}success{% else %}fail{% endif %}"></span>
-                    <span style="color:var(--text-muted);font-family:var(--font-mono);font-size:0.75rem;flex-shrink:0;">
-                        {{ ev.created_at.strftime('%b %d %H:%M') if ev.created_at else '—' }}
-                    </span>
-                    <span style="color:var(--text-main);flex:1;">{{ ev.event_type }}</span>
-                    <span style="color:var(--text-muted);font-size:0.8rem;">{{ ev.user_name or ev.user_email or 'System' }}</span>
-                    <span class="mono" style="font-size:0.75rem;color:#334155;">{{ ev.ip_address or '' }}</span>
-                </div>
                 {% else %}
-                <p style="color:var(--text-muted);text-align:center;padding:1rem 0;">No audit events yet.</p>
-                {% endfor %}
+                    <p style="text-align: center; color: var(--text-muted); padding: 1.5rem 0; margin: 0; font-size: 0.85rem;">
+                        No audit events recorded yet.
+                    </p>
+                {% endif %}
             </div>
-        </div>
-    </div>
-
-</div>
-
-<!-- Confirm modal -->
-<div class="confirm-modal" id="confirm-modal" aria-hidden="true">
-    <div class="confirm-box">
-        <h3 id="confirm-title">Confirm</h3>
-        <p id="confirm-message">This action cannot be undone.</p>
-        <div class="confirm-actions">
-            <button type="button" class="confirm-cancel" id="confirm-cancel">Cancel</button>
-            <button type="button" class="confirm-danger" id="confirm-danger" style="background: linear-gradient(135deg, #ef4444, #b91c1c) !important; color: #fff !important; border: none; border-radius: 10px; padding: 12px; cursor: pointer; font-weight: 700;">Confirm</button>
         </div>
     </div>
 </div>
 
 <script>
-function toggleReset(id) {
-    document.getElementById('reset-' + id).classList.toggle('show');
-}
-(function() {
-    const modal = document.getElementById('confirm-modal');
-    const title = document.getElementById('confirm-title');
-    const msg   = document.getElementById('confirm-message');
-    const cancel= document.getElementById('confirm-cancel');
-    const danger= document.getElementById('confirm-danger');
-    let pending = null;
-    document.querySelectorAll('form[data-confirm-title]').forEach(form => {
-        form.addEventListener('submit', e => {
-            e.preventDefault();
-            pending = form;
-            title.textContent = form.dataset.confirmTitle || 'Confirm';
-            msg.textContent   = form.dataset.confirmMessage || 'This cannot be undone.';
-            danger.textContent= form.dataset.confirmAction  || 'Confirm';
-            modal.classList.add('show');
-        });
+// AJAX instant save for platform settings
+document.getElementById('admin-settings-form')?.addEventListener('submit', function(e) {
+    e.preventDefault();
+    const form = this;
+    const btn = document.getElementById('btn-save-settings');
+    const indicator = document.getElementById('settings-status-indicator');
+    const originalText = btn.innerHTML;
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="ti ti-loader-2 ti-spin"></i> <span>Saving...</span>';
+
+    fetch(form.action, {
+        method: 'POST',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json'
+        },
+        body: new FormData(form)
+    })
+    .then(res => res.json())
+    .then(data => {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+        if (data.success) {
+            indicator.style.display = 'inline-flex';
+            setTimeout(() => {
+                indicator.style.display = 'none';
+            }, 3000);
+            if (typeof showToast === 'function') {
+                showToast('Settings saved successfully.', 'success');
+            }
+        } else {
+            if (typeof showToast === 'function') {
+                showToast(data.error || 'Failed to save settings.', 'error');
+            }
+        }
+    })
+    .catch(() => {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+        form.submit(); // fallback to normal submit
     });
-    cancel.addEventListener('click', () => { pending = null; modal.classList.remove('show'); });
-    danger.addEventListener('click', () => { if (pending) pending.submit(); });
-})();
+});
 </script>
 {% endblock %}
