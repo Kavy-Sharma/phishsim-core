@@ -421,3 +421,207 @@ def test_cdn_blocked_zero_console_errors_and_interactivity():
     assert console_errors == [], f"Console errors with CDN blocked: {console_errors}"
     assert page_errors == [], f"Uncaught page errors with CDN blocked: {page_errors}"
 
+
+def test_clean_database_schema_and_campaign_report_resilience():
+    """Builds schema from scratch in a fresh database, seeds real campaigns,
+    and asserts report returns 200 with verdict, replay, departments, and actions.
+    Also tests: 0 clicks, 1 person, draft campaign, and campaign with no emails.
+    """
+    import os
+    import mysql.connector
+    from app import (
+        ensure_auth_schema, ensure_core_tables, ensure_email_tracking_table,
+        ensure_events_table, ensure_audit_table, get_db_connection
+    )
+    import app as app_module
+
+    clean_db_name = "phishsim_clean_scratch_test"
+
+    raw_db = get_db_connection()
+    raw_cursor = raw_db.cursor()
+    raw_cursor.execute(f"DROP DATABASE IF EXISTS {clean_db_name}")
+    raw_cursor.execute(f"CREATE DATABASE {clean_db_name}")
+    raw_cursor.close()
+    raw_db.close()
+
+    host = os.getenv("DB_HOST", "localhost")
+    user = os.getenv("DB_USER", "root")
+    password = os.getenv("DB_PASS", os.getenv("DB_PASSWORD", "root"))
+    port = int(os.getenv("DB_PORT", 3306))
+
+    clean_conn = mysql.connector.connect(
+        host=host, user=user, password=password, port=port, database=clean_db_name
+    )
+    cursor = clean_conn.cursor(dictionary=True)
+
+    original_get_db = app_module.get_db_connection
+    app_module.get_db_connection = lambda: mysql.connector.connect(
+        host=host, user=user, password=password, port=port, database=clean_db_name
+    )
+
+    try:
+        # 1. Bootstrap schema from scratch
+        ensure_auth_schema(cursor)
+        ensure_core_tables(cursor)
+        ensure_email_tracking_table(cursor)
+        ensure_events_table(cursor)
+        ensure_audit_table(cursor)
+        clean_conn.commit()
+
+        # Verify clean events table columns
+        cursor.execute("DESCRIBE events")
+        cols = [r["Field"] for r in cursor.fetchall()]
+        assert "ip_address" in cols
+        assert "created_at" in cols
+
+        # 2. Seed admin user
+        cursor.execute("""
+            INSERT INTO users (name, email, password_hash, role, email_verified, created_at)
+            VALUES ('Clean Admin', 'admin@clean-test.local', 'hash', 'admin', 1, NOW())
+        """)
+        clean_conn.commit()
+        admin_id = cursor.lastrowid
+
+        with app.test_client() as client:
+            with client.session_transaction() as sess:
+                sess["user_id"] = admin_id
+                sess["_fresh"] = True
+
+            # Case A: Real campaign with opens, clicks, and reports
+            cursor.execute("""
+                INSERT INTO campaigns (user_id, name, company_domain, scenario_type, delivery_mode, status, created_at)
+                VALUES (%s, 'Clean DB Standard Campaign', 'clean.local', 'it_reset', 'preview', 'completed', NOW())
+            """, (admin_id,))
+            clean_conn.commit()
+            c1_id = cursor.lastrowid
+
+            cursor.execute("INSERT INTO employees (campaign_id, name, email, department, title) VALUES (%s, 'Alice Vance', 'alice@clean.local', 'Finance', 'Analyst')", (c1_id,))
+            cursor.execute("INSERT INTO employees (campaign_id, name, email, department, title) VALUES (%s, 'Bob Ross', 'bob@clean.local', 'Sales', 'Manager')", (c1_id,))
+            cursor.execute("INSERT INTO employees (campaign_id, name, email, department, title) VALUES (%s, 'Charlie Day', 'charlie@clean.local', 'Finance', 'Clerk')", (c1_id,))
+
+            cursor.execute("""
+                INSERT INTO emails_sent (campaign_id, recipient_email, subject, sender_name, body_html, tracking_id, status, sent_at)
+                VALUES (%s, 'alice@clean.local', 'Urgent Alert', 'IT Help', '<p>Test</p>', 'trk-clean-1', 'sent', NOW())
+            """, (c1_id,))
+            cursor.execute("""
+                INSERT INTO emails_sent (campaign_id, recipient_email, subject, sender_name, body_html, tracking_id, status, sent_at)
+                VALUES (%s, 'bob@clean.local', 'Urgent Alert', 'IT Help', '<p>Test</p>', 'trk-clean-2', 'sent', NOW())
+            """, (c1_id,))
+            cursor.execute("""
+                INSERT INTO emails_sent (campaign_id, recipient_email, subject, sender_name, body_html, tracking_id, status, sent_at)
+                VALUES (%s, 'charlie@clean.local', 'Urgent Alert', 'IT Help', '<p>Test</p>', 'trk-clean-3', 'sent', NOW())
+            """, (c1_id,))
+
+            cursor.execute("INSERT INTO events (tracking_id, event_type, ip_address, user_agent, created_at) VALUES ('trk-clean-1', 'open', '127.0.0.1', 'Mozilla', NOW())")
+            cursor.execute("INSERT INTO events (tracking_id, event_type, ip_address, user_agent, created_at) VALUES ('trk-clean-1', 'click', '127.0.0.1', 'Mozilla', NOW())")
+            cursor.execute("INSERT INTO events (tracking_id, event_type, ip_address, user_agent, created_at) VALUES ('trk-clean-2', 'open', '127.0.0.1', 'Mozilla', NOW())")
+            cursor.execute("INSERT INTO events (tracking_id, event_type, ip_address, user_agent, created_at) VALUES ('trk-clean-2', 'report', '127.0.0.1', 'Mozilla', NOW())")
+            cursor.execute("INSERT INTO events (tracking_id, event_type, ip_address, user_agent, created_at) VALUES ('trk-clean-3', 'open', '127.0.0.1', 'Mozilla', NOW())")
+            clean_conn.commit()
+
+            resp = client.get(f"/campaign-report/{c1_id}")
+            assert resp.status_code == 200, f"Expected 200, got {resp.status_code}"
+            html = resp.get_data(as_text=True)
+            assert "Attack replay" in html
+            assert "Finance" in html
+            assert "Sales" in html
+            assert "Recommended remediation" in html or "Remediation" in html
+
+            # Case B: 0 clicks campaign
+            cursor.execute("""
+                INSERT INTO campaigns (user_id, name, company_domain, scenario_type, delivery_mode, status, created_at)
+                VALUES (%s, 'Zero Click Drill', 'clean.local', 'it_reset', 'preview', 'completed', NOW())
+            """, (admin_id,))
+            clean_conn.commit()
+            c2_id = cursor.lastrowid
+            cursor.execute("INSERT INTO employees (campaign_id, name, email, department, title) VALUES (%s, 'Eve Polastri', 'eve@clean.local', 'Security', 'Lead')", (c2_id,))
+            cursor.execute("""
+                INSERT INTO emails_sent (campaign_id, recipient_email, subject, sender_name, body_html, tracking_id, status, sent_at)
+                VALUES (%s, 'eve@clean.local', 'Password alert', 'IT', '<p>Test</p>', 'trk-clean-2-1', 'sent', NOW())
+            """, (c2_id,))
+            cursor.execute("INSERT INTO events (tracking_id, event_type, ip_address, user_agent, created_at) VALUES ('trk-clean-2-1', 'open', '127.0.0.1', 'Mozilla', NOW())")
+            cursor.execute("INSERT INTO events (tracking_id, event_type, ip_address, user_agent, created_at) VALUES ('trk-clean-2-1', 'report', '127.0.0.1', 'Mozilla', NOW())")
+            clean_conn.commit()
+
+            resp2 = client.get(f"/campaign-report/{c2_id}")
+            assert resp2.status_code == 200
+            html2 = resp2.get_data(as_text=True)
+            assert "Nobody clicked" in html2 or "0%" in html2
+
+            # Case C: 1 person campaign
+            cursor.execute("""
+                INSERT INTO campaigns (user_id, name, company_domain, scenario_type, delivery_mode, status, created_at)
+                VALUES (%s, 'Single Person Drill', 'clean.local', 'it_reset', 'preview', 'completed', NOW())
+            """, (admin_id,))
+            clean_conn.commit()
+            c3_id = cursor.lastrowid
+            cursor.execute("INSERT INTO employees (campaign_id, name, email, department, title) VALUES (%s, 'Solo Worker', 'solo@clean.local', 'Engineering', 'Dev')", (c3_id,))
+            cursor.execute("""
+                INSERT INTO emails_sent (campaign_id, recipient_email, subject, sender_name, body_html, tracking_id, status, sent_at)
+                VALUES (%s, 'solo@clean.local', 'Dev alert', 'IT', '<p>Test</p>', 'trk-clean-3-1', 'sent', NOW())
+            """, (c3_id,))
+            cursor.execute("INSERT INTO events (tracking_id, event_type, ip_address, user_agent, created_at) VALUES ('trk-clean-3-1', 'click', '127.0.0.1', 'Mozilla', NOW())")
+            clean_conn.commit()
+
+            resp3 = client.get(f"/campaign-report/{c3_id}")
+            assert resp3.status_code == 200
+            html3 = resp3.get_data(as_text=True)
+            assert "Engineering" in html3
+
+            # Case D: Draft campaign (graceful redirect, never 503)
+            cursor.execute("""
+                INSERT INTO campaigns (user_id, name, company_domain, scenario_type, delivery_mode, status, created_at)
+                VALUES (%s, 'Draft Campaign', 'clean.local', 'it_reset', 'preview', 'draft', NOW())
+            """, (admin_id,))
+            clean_conn.commit()
+            c4_id = cursor.lastrowid
+
+            resp4 = client.get(f"/campaign-report/{c4_id}")
+            assert resp4.status_code in (302, 303)
+            assert f"id={c4_id}" in resp4.headers.get("Location", "")
+
+            # Case E: Campaign with no emails
+            cursor.execute("""
+                INSERT INTO campaigns (user_id, name, company_domain, scenario_type, delivery_mode, status, created_at)
+                VALUES (%s, 'No Emails Drill', 'clean.local', 'it_reset', 'preview', 'completed', NOW())
+            """, (admin_id,))
+            clean_conn.commit()
+            c5_id = cursor.lastrowid
+
+            resp5 = client.get(f"/campaign-report/{c5_id}")
+            assert resp5.status_code == 200
+
+            # Case F: Replay resilience fallback
+            with app.test_request_context(f"/campaign-report/{c1_id}"):
+                from flask import render_template
+                from ai_engine.report_agent import compute_human_security_score
+                test_hss = compute_human_security_score(10, 20, 5, 0)
+                rendered = render_template(
+                    "campaign_report.html",
+                    campaign={"id": c1_id, "name": "Resilience Test", "status": "completed", "emails_sent": 3, "scenario_type": "it_reset"},
+                    report={"summary": "test", "risk_level": "Good", "hss": test_hss},
+                    hss=test_hss,
+                    verdict_sentence="Test verdict",
+                    attack_replay=None,
+                    lure_data={},
+                    department_stats=[],
+                    employee_logs=[],
+                    funnel_data={"current": {"sent": 3, "opened": 2, "clicked": 1, "submitted": 0, "reported": 1}, "prev": None, "is_first_campaign": True, "score_history": []},
+                    remediation_data={},
+                    is_demo_preview=False,
+                    is_live=False,
+                    user={"role": "admin"}
+                )
+                assert "Replay isn't available for this campaign" in rendered
+
+    finally:
+        app_module.get_db_connection = original_get_db
+        cursor.close()
+        clean_conn.close()
+
+        raw_db = get_db_connection()
+        raw_cursor = raw_db.cursor()
+        raw_cursor.execute(f"DROP DATABASE IF EXISTS {clean_db_name}")
+        raw_cursor.close()
+        raw_db.close()
+

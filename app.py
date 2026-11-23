@@ -1107,11 +1107,18 @@ def ensure_events_table(cursor):
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
-    try:
-        cursor.execute("ALTER TABLE events ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
-    except Exception as e:
-        # Columns may already exist, ignore safely
-        pass
+    for ddl in [
+        "ALTER TABLE events ADD COLUMN ip_address VARCHAR(45)",
+        "ALTER TABLE events ADD COLUMN user_agent TEXT",
+        "ALTER TABLE events ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP",
+        "ALTER TABLE events ADD COLUMN ip_addr VARCHAR(45)",
+        "ALTER TABLE events ADD COLUMN timestamp TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP"
+    ]:
+        try:
+            cursor.execute(ddl)
+        except Exception as e:
+            # Columns may already exist, ignore safely
+            pass
     try:
         cursor.execute("ALTER TABLE events MODIFY COLUMN event_type VARCHAR(50)")
     except Exception as e:
@@ -8245,45 +8252,63 @@ def campaign_report(campaign_id):
         is_live = status in ("launching", "launched", "running", "in_progress", "sending")
 
         # Fetch telemetry
-        cursor.execute("""
-            SELECT ev.id, ev.tracking_id, ev.event_type, ev.ip_addr, ev.user_agent, ev.timestamp, ev.created_at,
-                   es.recipient_email, es.sent_at,
-                   COALESCE(emp.name, REPLACE(SUBSTRING_INDEX(es.recipient_email, '@', 1), '.', ' ')) AS name,
-                   COALESCE(emp.department, 'Operations') AS department
-            FROM events ev
-            JOIN emails_sent es ON es.tracking_id = ev.tracking_id
-            LEFT JOIN employees emp ON emp.campaign_id = es.campaign_id AND emp.email = es.recipient_email
-            WHERE es.campaign_id = %s
-            ORDER BY ev.id ASC
-        """, (campaign_id,))
-        raw_events = cursor.fetchall()
+        raw_events = []
+        replay_failed = False
+        try:
+            cursor.execute("""
+                SELECT ev.id, ev.tracking_id, ev.event_type, ev.ip_address, ev.ip_address AS ip_addr,
+                       ev.user_agent, ev.created_at, ev.created_at AS timestamp,
+                       es.recipient_email, es.sent_at,
+                       COALESCE(emp.name, REPLACE(SUBSTRING_INDEX(es.recipient_email, '@', 1), '.', ' ')) AS name,
+                       COALESCE(emp.department, 'Operations') AS department
+                FROM events ev
+                JOIN emails_sent es ON es.tracking_id = ev.tracking_id
+                LEFT JOIN employees emp ON emp.campaign_id = es.campaign_id AND emp.email = es.recipient_email
+                WHERE es.campaign_id = %s
+                ORDER BY ev.id ASC
+            """, (campaign_id,))
+            raw_events = cursor.fetchall()
+        except Exception as e:
+            app.logger.warning("Attack replay events query failed for campaign %s: %s", campaign_id, e)
+            raw_events = []
+            replay_failed = True
 
-        cursor.execute("""
-            SELECT es.id, es.tracking_id, es.recipient_email, es.sent_at, es.status, es.subject, es.sender_name,
-                   es.body_html, es.educational_breakdown,
-                   COALESCE(emp.name, REPLACE(SUBSTRING_INDEX(es.recipient_email, '@', 1), '.', ' ')) AS name,
-                   COALESCE(emp.department, 'Operations') AS department
-            FROM emails_sent es
-            LEFT JOIN employees emp ON emp.campaign_id = es.campaign_id AND emp.email = es.recipient_email
-            WHERE es.campaign_id = %s
-            ORDER BY es.id ASC
-        """, (campaign_id,))
-        raw_emails_sent = cursor.fetchall()
+        raw_emails_sent = []
+        try:
+            cursor.execute("""
+                SELECT es.id, es.tracking_id, es.recipient_email, es.sent_at, es.status, es.subject, es.sender_name,
+                       es.body_html, es.educational_breakdown,
+                       COALESCE(emp.name, REPLACE(SUBSTRING_INDEX(es.recipient_email, '@', 1), '.', ' ')) AS name,
+                       COALESCE(emp.department, 'Operations') AS department
+                FROM emails_sent es
+                LEFT JOIN employees emp ON emp.campaign_id = es.campaign_id AND emp.email = es.recipient_email
+                WHERE es.campaign_id = %s
+                ORDER BY es.id ASC
+            """, (campaign_id,))
+            raw_emails_sent = cursor.fetchall()
+        except Exception as e:
+            app.logger.warning("Emails sent fetch failed for campaign %s: %s", campaign_id, e)
+            raw_emails_sent = []
 
         # Repeat offenders
-        cursor.execute("""
-            SELECT emp.name, emp.email, emp.department,
-                   COUNT(DISTINCT es2.campaign_id) AS campaigns_clicked
-            FROM employees emp
-            JOIN emails_sent es  ON es.campaign_id = emp.campaign_id  AND es.recipient_email = emp.email
-            JOIN events     ev   ON ev.tracking_id  = es.tracking_id   AND ev.event_type = 'click'
-            JOIN emails_sent es2 ON es2.recipient_email = emp.email
-            JOIN events     ev2  ON ev2.tracking_id  = es2.tracking_id  AND ev2.event_type = 'click'
-            WHERE emp.campaign_id = %s
-            GROUP BY emp.email, emp.name, emp.department
-            HAVING COUNT(DISTINCT es2.campaign_id) > 1
-        """, (campaign_id,))
-        repeat_offenders = cursor.fetchall()
+        repeat_offenders = []
+        try:
+            cursor.execute("""
+                SELECT emp.name, emp.email, emp.department,
+                       COUNT(DISTINCT es2.campaign_id) AS campaigns_clicked
+                FROM employees emp
+                JOIN emails_sent es  ON es.campaign_id = emp.campaign_id  AND es.recipient_email = emp.email
+                JOIN events     ev   ON ev.tracking_id  = es.tracking_id   AND ev.event_type = 'click'
+                JOIN emails_sent es2 ON es2.recipient_email = emp.email
+                JOIN events     ev2  ON ev2.tracking_id  = es2.tracking_id  AND ev2.event_type = 'click'
+                WHERE emp.campaign_id = %s
+                GROUP BY emp.email, emp.name, emp.department
+                HAVING COUNT(DISTINCT es2.campaign_id) > 1
+            """, (campaign_id,))
+            repeat_offenders = cursor.fetchall()
+        except Exception as e:
+            app.logger.warning("Repeat offenders query failed for campaign %s: %s", campaign_id, e)
+            repeat_offenders = []
 
         sent = int(campaign.get("emails_sent") or len(raw_emails_sent) or 0)
         repeat_pct = round((len(repeat_offenders) / sent) * 100, 1) if sent else 0.0
@@ -8501,10 +8526,27 @@ def campaign_report(campaign_id):
                 "reported": r["reported"]
             })
 
-        attack_replay = build_attack_replay_timeline(campaign, emails_sent_rows=raw_emails_sent, events_rows=raw_events)
-        lure_data = get_scenario_lure_and_clues(campaign.get("scenario_type"), campaign.get("company_domain"), campaign, emails_sent=raw_emails_sent)
-        actions_data = get_or_create_remediation_actions(campaign, department_stats, cursor=cursor)
-        db.commit()
+        attack_replay = None
+        if not replay_failed:
+            try:
+                attack_replay = build_attack_replay_timeline(campaign, emails_sent_rows=raw_emails_sent, events_rows=raw_events)
+            except Exception as e:
+                app.logger.warning("build_attack_replay_timeline failed for campaign %s: %s", campaign_id, e)
+                attack_replay = None
+
+        try:
+            lure_data = get_scenario_lure_and_clues(campaign.get("scenario_type"), campaign.get("company_domain"), campaign, emails_sent=raw_emails_sent)
+        except Exception as e:
+            app.logger.warning("get_scenario_lure_and_clues failed for campaign %s: %s", campaign_id, e)
+            lure_data = {}
+
+        try:
+            actions_data = get_or_create_remediation_actions(campaign, department_stats, cursor=cursor)
+            db.commit()
+        except Exception as e:
+            app.logger.warning("get_or_create_remediation_actions failed for campaign %s: %s", campaign_id, e)
+            actions_data = {}
+
         verdict_sentence = (report.get("verdict_sentence") if isinstance(report, dict) else None) or generate_verdict_sentence(campaign, report, weakest_dept=department_stats[0] if department_stats else None)
 
         anonymise_default = (user.get("role") == "company_user")

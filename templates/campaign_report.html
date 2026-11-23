@@ -171,13 +171,23 @@
                 <h2 class="section-title"><i class="ti ti-player-play"></i> Attack replay</h2>
                 <p class="section-subtitle">Real second-by-second timeline of employee engagement across 5 analytics lanes.</p>
             </div>
+            {% if attack_replay %}
             <div class="replay-controls">
                 <button id="btn-replay-play" class="replay-action-btn" aria-label="Replay attack unfolding over 8 seconds">
                     <i class="ti ti-player-play" id="replay-btn-icon"></i> <span id="replay-btn-text">Replay (8s)</span>
                 </button>
             </div>
+            {% endif %}
         </div>
 
+        {% if not attack_replay %}
+        <div class="empty-replay-card" style="padding: 2.5rem 1.5rem; text-align: center; background: var(--bg-card); border: 1px solid var(--border-default); border-radius: var(--radius-lg); margin-top: 1rem;">
+            <div style="width: 44px; height: 44px; border-radius: 50%; background: var(--bg-hover); display: inline-flex; align-items: center; justify-content: center; margin-bottom: 0.75rem;">
+                <i class="ti ti-player-play-off" style="font-size: 1.25rem; color: var(--text-muted);"></i>
+            </div>
+            <p style="color: var(--text-secondary); font-size: var(--text-sm); font-weight: 500; margin: 0;">Replay isn't available for this campaign</p>
+        </div>
+        {% else %}
         <!-- Live Counters Bar -->
         <div class="replay-counters-bar" role="region" aria-label="Attack live counters">
             <div class="live-counter">
@@ -275,6 +285,7 @@
                 </div>
             </div>
         </div>
+        {% endif %}
     </section>
 
     <!-- SECTION 3: WHY IT WORKED -->
