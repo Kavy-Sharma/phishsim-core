@@ -1078,7 +1078,7 @@
     <div class="drawer-body" id="user-detail-body">
         <div id="user-detail-loading" style="text-align: center; padding: 3rem 0; color: var(--text-muted);">
             <i class="ti ti-loader-2 ti-spin" style="font-size: 2rem;"></i>
-            <p style="margin-top: 0.5rem;">Loading user telemetry & records...</p>
+            <p style="margin-top: 0.5rem;">Loading user profile & audit records...</p>
         </div>
         <div id="user-detail-content" style="display: none;">
             <!-- Profile Info Card -->
@@ -1221,7 +1221,8 @@ function showToastMessage(msg, type = 'info') {
     if (!container) return;
     const toast = document.createElement('div');
     toast.className = `user-toast ${type}`;
-    toast.innerHTML = `<i class="ti ${type === 'success' ? 'ti-check' : (type === 'error' ? 'ti-alert-circle' : 'ti-info-circle')}"></i> <span>${msg}</span>`;
+    toast.innerHTML = `<i class="ti ${type === 'success' ? 'ti-check' : (type === 'error' ? 'ti-alert-circle' : 'ti-info-circle')}"></i> <span></span>`;
+    toast.querySelector('span').textContent = msg;
     container.appendChild(toast);
     setTimeout(() => {
         toast.style.opacity = '0';
@@ -1466,7 +1467,8 @@ function submitAddUser(e) {
     .catch(err => {
         btn.disabled = false;
         btn.innerHTML = originalText;
-        alertBox.innerHTML = `<div class="user-alert error" style="margin-top:1rem;">${err.message}</div>`;
+        alertBox.innerHTML = '<div class="user-alert error" style="margin-top:1rem;"></div>';
+        alertBox.firstElementChild.textContent = err.message || 'Failed to create user.';
     });
 }
 
@@ -1545,7 +1547,8 @@ function openUserDetailDrawer(userId) {
         }
     })
     .catch(err => {
-        loading.innerHTML = `<p style="color:#dc2626;">Failed to load user details: ${err.message}</p>`;
+        loading.innerHTML = '<p style="color:#dc2626;"></p>';
+        loading.firstElementChild.textContent = `Failed to load user details: ${err.message}`;
     });
 }
 

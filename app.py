@@ -6387,7 +6387,9 @@ def billing_success():
         try:
             cursor.execute("""
                 UPDATE users 
-                SET role = 'pro', stripe_customer_id = %s, stripe_subscription_id = %s
+                SET role = CASE WHEN role = 'admin' THEN 'admin' ELSE 'pro' END,
+                    stripe_customer_id = %s, stripe_subscription_id = %s,
+                    pro_expires_at = DATE_ADD(NOW(), INTERVAL 30 DAY)
                 WHERE id = %s
             """, (stripe_customer_id, stripe_subscription_id, user["id"]))
             db.commit()
@@ -13414,16 +13416,19 @@ PHISHRECON_FAVICON_CACHE = {}  # domain -> (bytes, content_type, timestamp)
 @app.route("/api/favicon", methods=["GET"])
 def proxy_favicon():
     """SSRF-safe favicon proxy for audited target domain only (A4)."""
+    import base64
     import socket
     import ssl
     import http.client
     from urllib.parse import urlparse, urljoin
     from flask import Response
 
+    FALLBACK_PNG = base64.b64decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=')
+
     raw_domain = request.args.get("domain", "")
     domain = normalize_exposure_domain(raw_domain)
     if not domain:
-        return "", 404
+        return Response(FALLBACK_PNG, mimetype="image/png", headers={"Cache-Control": "public, max-age=3600"})
 
     now = time.time()
 
@@ -13442,8 +13447,8 @@ def proxy_favicon():
     if cached:
         cache_dur = 60 if cached[0] is None else 86400
         if (now - cached[2] < cache_dur):
-            if cached[0] is None:
-                return "", 404
+            if cached[0] is None or cached[0] == FALLBACK_PNG:
+                return Response(FALLBACK_PNG, mimetype="image/png", headers={"Cache-Control": "public, max-age=3600"})
             return Response(cached[0], mimetype=cached[1], headers={"Cache-Control": "public, max-age=86400"})
 
     for scheme in ("https", "http"):
@@ -13528,8 +13533,8 @@ def proxy_favicon():
     except Exception:
         pass
 
-    PHISHRECON_FAVICON_CACHE[domain] = (None, None, now)
-    return "", 404
+    PHISHRECON_FAVICON_CACHE[domain] = (FALLBACK_PNG, "image/png", now)
+    return Response(FALLBACK_PNG, mimetype="image/png", headers={"Cache-Control": "public, max-age=3600"})
 
 
 @csrf.exempt

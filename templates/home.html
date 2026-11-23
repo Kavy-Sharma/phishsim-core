@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
-{% block title %}PhishSim AI - Agentic Phishing Simulator{% endblock %}
-{% block og_title %}PhishSim AI — Agentic Phishing Simulator{% endblock %}
+{% block title %}PhishSim AI - Phishing Simulation & Training Platform{% endblock %}
+{% block og_title %}PhishSim AI — Phishing Simulation & Training Platform{% endblock %}
 
 {% block extra_head %}
   <meta name="google-site-verification" content="ELvLqkebm4aw_A-8JlhjV5A9VmO1tprjJ-ABK6c-xhM" />
@@ -4409,7 +4409,7 @@
               stroke-linecap="round" stroke-linejoin="round">
               <path d="M3 12h4l3-9 4 18 3-9h4" />
             </svg></div>
-          <h3 class="card-title">Behavioral Telemetry</h3>
+          <h3 class="card-title">Behavioral Analytics</h3>
           <p class="card-desc">Every open, link interaction, credential submission, and report event is captured in real-time and attributed securely.</p>
         </div>
       </div>
@@ -4442,7 +4442,7 @@
         <p class="section-sub reveal"
           style="font-size: 1.05rem; color: var(--text-secondary); max-width: 600px; margin: 0 auto; line-height: 1.6;">Select a
           scenario to load a live simulation email. Click the action links to witness the simulated compromise and live
-          telemetry capture.</p>
+          event analytics.</p>
       </div>
 
       <div style="display: grid; grid-template-columns: 320px 1fr; gap: 32px; align-items: start;">
@@ -4568,17 +4568,17 @@
               </div>
             </div>
 
-            <!-- Live Telemetry Panel -->
-            <div class="sandbox-telemetry-panel">
+            <!-- Live Analytics Panel -->
+            <div class="sandbox-analytics-panel">
               <div
                 style="color: var(--primary); font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border-subtle); padding-bottom: 8px; flex-shrink: 0;">
-                <span>SIMULATED TELEMETRY</span>
+                <span>SIMULATED ANALYTICS</span>
                 <i class="ti ti-activity" style="color: var(--primary); font-size: 0.95rem;"></i>
               </div>
-              <div id="live-telemetry-container"
+              <div id="live-analytics-container"
                 tabindex="0"
                 role="region"
-                aria-label="Live simulation telemetry log"
+                aria-label="Live simulation analytics log"
                 style="display: flex; flex-direction: column; gap: 8px; color: var(--text-secondary); overflow-y: auto; flex: 1; max-height: 300px; min-height: 220px; scroll-behavior: smooth;">
 
                 <!-- Logs are typewritten here -->
@@ -4737,7 +4737,7 @@
       background: color-mix(in srgb, var(--bg-surface) 60%, transparent);
     }
 
-    .sandbox-telemetry-panel {
+    .sandbox-analytics-panel {
       background: var(--bg-surface-elevated, #020617);
       border: 1px solid var(--border-subtle, rgba(6, 182, 212, 0.2));
       border-radius: var(--radius-sm, 12px);
@@ -4791,7 +4791,7 @@
         logs: [
           { text: "[SIM-SERVER] Initialized CEO Fraud Scenario trigger..." },
           { text: "[SIM-SERVER] Target clicked action payload link." },
-          { text: "[TELEMETRY] Captured click on 'Authorize Wire Transfer'." },
+          { text: "[AUDIT LOG] Captured click on 'Authorize Wire Transfer'." },
           { text: "[ANALYTICS] Flagged compromised: User bypassed verification controls." },
           { text: "[DATABASE] Logged simulated vulnerability event (ID: sim_ceo_click)." }
         ]
@@ -4816,7 +4816,7 @@
         logs: [
           { text: "[SIM-SERVER] Initialized IT Credential Scenario trigger..." },
           { text: "[SIM-SERVER] Target clicked update credentials hook." },
-          { text: "[TELEMETRY] Captured login page redirection event." },
+          { text: "[AUDIT LOG] Captured login page redirection event." },
           { text: "[ANALYTICS] Flagged compromised: Potential credential harvest." },
           { text: "[DATABASE] Logged simulated vulnerability event (ID: sim_it_click)." }
         ]
@@ -4841,7 +4841,7 @@
         logs: [
           { text: "[SIM-SERVER] Initialized HR Compensation Scenario trigger..." },
           { text: "[SIM-SERVER] Target clicked View Compensation Document." },
-          { text: "[TELEMETRY] Captured redirect to mock payroll portal." },
+          { text: "[AUDIT LOG] Captured redirect to mock payroll portal." },
           { text: "[ANALYTICS] Flagged compromised: Human firewall failure." },
           { text: "[DATABASE] Logged simulated vulnerability event (ID: sim_hr_click)." }
         ]
@@ -4866,7 +4866,7 @@
         logs: [
           { text: "[SIM-SERVER] Initialized Vendor Invoice Scenario trigger..." },
           { text: "[SIM-SERVER] Target clicked Download Overdue Invoice." },
-          { text: "[TELEMETRY] Captured simulated payload download." },
+          { text: "[AUDIT LOG] Captured simulated payload download." },
           { text: "[ANALYTICS] Flagged compromised: Accounting vector failure." },
           { text: "[DATABASE] Logged simulated vulnerability event (ID: sim_invoice_click)." }
         ]
@@ -4877,7 +4877,7 @@
     let activeTelemetryTimeout = null;
 
     function appendTelemetryLog(text, color = '#94a3b8', isWarning = false) {
-      const container = document.getElementById('live-telemetry-container');
+      const container = document.getElementById('live-analytics-container');
       if (!container) return;
       const div = document.createElement('div');
       div.style.marginBottom = '6px';
@@ -4899,7 +4899,7 @@
     function playTelemetryWalkthrough(key, data) {
       if (activeTelemetryTimeout) clearTimeout(activeTelemetryTimeout);
 
-      const container = document.getElementById('live-telemetry-container');
+      const container = document.getElementById('live-analytics-container');
       if (!container) return;
 
       appendTelemetryLog(`[AI ENGINE] Lure generation complete (took ${data.duration_ms}ms).`, 'var(--cyan)');
@@ -4967,10 +4967,10 @@
       document.getElementById('mail-from').innerHTML = '<span class="skeleton-block" style="display:inline-block; width:200px; height:14px; margin:0;"></span>';
       document.getElementById('mail-subject').innerHTML = '<span class="skeleton-block" style="display:inline-block; width:300px; height:14px; margin:0;"></span>';
 
-      // Clear telemetry
+      // Clear analytics
       if (activeTelemetryTimeout) clearTimeout(activeTelemetryTimeout);
-      const telemetryContainer = document.getElementById('live-telemetry-container');
-      if (telemetryContainer) telemetryContainer.innerHTML = '';
+      const analyticsContainer = document.getElementById('live-analytics-container');
+      if (analyticsContainer) analyticsContainer.innerHTML = '';
       appendTelemetryLog(`[CUSTOM AI] Scenario: "${rawVal}"`);
       appendTelemetryLog(`[SYSTEM] Dispatching prompt to OpenRouter live AI engine...`);
 
@@ -5109,11 +5109,11 @@
         return;
       }
 
-      // Clear telemetry loop timeout
+      // Clear analytics loop timeout
       if (activeTelemetryTimeout) clearTimeout(activeTelemetryTimeout);
 
-      // Initialize telemetry panel and print start sequence
-      const container = document.getElementById('live-telemetry-container');
+      // Initialize analytics panel and print start sequence
+      const container = document.getElementById('live-analytics-container');
       if (container) container.innerHTML = '';
 
       // Check client-side cache first
@@ -5145,7 +5145,7 @@
         bodyHtml = bodyHtml.replace(/href=['"]PHISHING_LINK['"]/g, `href="#" onclick="triggerSandboxCompromise(event, '${key}')"`);
         mailBody.innerHTML = bodyHtml;
 
-        // Start telemetry walkthrough sequence
+        // Start analytics walkthrough sequence
         playTelemetryWalkthrough(key, cached);
         return;
       }
@@ -5235,7 +5235,7 @@
           bodyHtml = bodyHtml.replace(/href=['"]PHISHING_LINK['"]/g, `href="#" onclick="triggerSandboxCompromise(event, '${key}')"`);
           mailBody.innerHTML = bodyHtml;
 
-          // Start telemetry walkthrough sequence
+          // Start analytics walkthrough sequence
           playTelemetryWalkthrough(key, fetchedData);
         } else {
           // Clear headers
@@ -5253,7 +5253,7 @@
 
           if (activeTelemetryTimeout) clearTimeout(activeTelemetryTimeout);
           appendTelemetryLog(`[ERROR] Generation failed: ${errorMsg}`, 'var(--danger)');
-          appendTelemetryLog("[SYSTEM] Aborting simulated telemetry walkthrough.", 'var(--danger)');
+          appendTelemetryLog("[SYSTEM] Aborting simulated analytics walkthrough.", 'var(--danger)');
         }
       });
     }
@@ -5292,15 +5292,15 @@
       panel.style.display = 'block';
       panel.classList.add('show-panel');
 
-      // Also inject compromise logs into the live telemetry stream
-      const container = document.getElementById('live-telemetry-container');
+      // Also inject compromise logs into the live analytics stream
+      const container = document.getElementById('live-analytics-container');
       if (container) {
         if (activeTelemetryTimeout) clearTimeout(activeTelemetryTimeout);
 
         appendTelemetryLog("[!!!] VULNERABILITY ALERT: TARGET COMPROMISED", 'var(--danger)', true);
 
         const compLogs = [
-          { text: "[WALKTHROUGH] Step 5: Captured click event telemetry payload.", color: 'var(--danger)' },
+          { text: "[WALKTHROUGH] Step 5: Captured click event analytics payload.", color: 'var(--danger)' },
           { text: "[WALKTHROUGH] Step 6: Logged compromise details in simulation DB.", color: 'var(--danger)' },
           { text: "[SYSTEM] Compromise sequence completed. Review red flags panel.", color: 'var(--cyan)' }
         ];
@@ -5344,7 +5344,7 @@
       <div class="cap-card cap-card-3 reveal reveal-delay-3" data-tilt>
         <div class="cap-card-glare"></div>
         <div class="cap-icon"><i class="ti ti-presentation-analytics" style="color: var(--primary); font-size: 2rem;"></i></div>
-        <div class="cap-title">Real-Time Telemetry Pipeline</div>
+        <div class="cap-title">Real-Time Event Stream</div>
         <div class="cap-desc">Live metrics capture opens, click-throughs, credential captures, and report events immediately as employees interact with lures.</div>
       </div>
       <div class="cap-card cap-card-4 reveal reveal-delay-1" data-tilt>
@@ -5377,7 +5377,7 @@
         Threat Intelligence</h2>
       <p class="section-sub"
         style="font-size: 1.05rem; color: var(--muted); max-width: 600px; margin: 0 auto; line-height: 1.6;">Live
-        telemetry captured from simulated nodes across our global decoy network.</p>
+        event analyticsd from simulated nodes across our global decoy network.</p>
     </div>
 
     <div class="intel-layout">
@@ -5388,7 +5388,7 @@
           <span
             style="font-family: var(--font-sans); font-size: 0.95rem; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
             <i class="ti ti-activity-heartbeat"
-              style="color: var(--primary); font-size: 1.25rem; animation: pulse 2.5s infinite;"></i> Global Telemetry
+              style="color: var(--primary); font-size: 1.25rem; animation: pulse 2.5s infinite;"></i> Global Analytics
             Stream
           </span>
           <span
@@ -5434,7 +5434,7 @@
             {% else %}
             <div class="intel-log-card"
               style="border-left: 4px solid var(--primary); background: rgba(255, 255, 255, 0.02); padding: 20px; border-radius: 8px; text-align: center; justify-content: center;">
-              <span style="color: var(--text-secondary); font-size: 0.85rem;">No simulation activity yet — telemetry
+              <span style="color: var(--text-secondary); font-size: 0.85rem;">No simulation activity yet — analytics
                 will appear here once campaigns run.</span>
             </div>
             {% endif %}
@@ -5505,7 +5505,7 @@
             {% if public_stats.avg_remediation_minutes is not none %}
             Average time to complete assigned training.
             {% else %}
-            No completions yet. Telemetry pending.
+            No completions yet. Metrics pending.
             {% endif %}
           </div>
         </div>
@@ -6016,7 +6016,7 @@
 
           <div class="stat-card reveal reveal-delay-4">
             <div class="stat-num">100<span>%</span></div>
-            <div class="stat-label">Tenant telemetry & data privacy</div>
+            <div class="stat-label">Tenant analytics & data privacy</div>
             <div class="stat-bench">Zero third-party foundation model training</div>
           </div>
           {% endif %}
@@ -6031,7 +6031,7 @@
           <div class="compare-item"><span class="icon x">✕</span>Blind to which employees would click a credential harvesting attack</div>
           <div class="compare-item"><span class="icon x">✕</span>No visibility into which departments represent the highest financial exposure</div>
           <div class="compare-item"><span class="icon x">✕</span>Annual compliance security training is ignored and forgotten within days</div>
-          <div class="compare-item"><span class="icon x">✕</span>Audit reports lack verifiable telemetry of human-layer readiness</div>
+          <div class="compare-item"><span class="icon x">✕</span>Audit reports lack verifiable analytics of human-layer readiness</div>
         </div>
         <div class="compare-col good">
           <div class="compare-head">
@@ -6340,11 +6340,11 @@
         </div>
       </div>
 
-      <!-- Plan 2: Pro Operator (Highlighted) -->
+      <!-- Plan 2: Pro Plan (Highlighted) -->
       <div class="pricing-card-v2 featured reveal reveal-delay-1" data-tilt>
         <span class="pricing-badge-pill">Most Popular</span>
         <div>
-          <span style="font-family: var(--font-mono); font-size: 0.72rem; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 0.08em; display: block; margin-bottom: 0.5rem;">Full Operator</span>
+          <span style="font-family: var(--font-mono); font-size: 0.72rem; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 0.08em; display: block; margin-bottom: 0.5rem;">Full Plan</span>
           <h3 style="font-size: 1.5rem; font-weight: 700; color: var(--text-primary); margin: 0 0 0.6rem;">Pro Flat Rate</h3>
           <p style="color: var(--text-secondary); font-size: 0.88rem; line-height: 1.55; margin-bottom: 1.8rem;">Continuous automation covering up to 50 simulated targets. Real delivery, instant LMS, and audit reports.</p>
 
@@ -6645,7 +6645,7 @@
         icon: '<i class="ti ti-target" style="color:var(--primary);"></i>',
         title: "Autonomous Spear Phishing Heuristics",
         body: `
-      <p style="margin-bottom: 16px;">The <strong>PhishSim AI Phishing Simulator</strong> uses agentic natural language processing to craft dynamic, context-aware simulation templates. Rather than relying on static mailing lists, the system analyzes target metadata in real-time.</p>
+      <p style="margin-bottom: 16px;">The <strong>PhishSim AI Phishing Simulator</strong> uses autonomous natural language processing to craft dynamic, context-aware simulation templates. Rather than relying on static mailing lists, the system analyzes target metadata in real-time.</p>
       
       <h4 style="color:#fff; font-size:0.95rem; margin-top:20px; margin-bottom:10px;">Simulation Engine Parameters</h4>
       <table style="width:100%; border-collapse:collapse; font-size:0.82rem; margin-bottom:20px;">
@@ -6748,7 +6748,7 @@
           <td style="padding:8px 0; color:#94a3b8;">Native Outlook VSTO manifests and Google Workspace JSON configurations.</td>
         </tr>
         <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
-          <td style="padding:8px 0; color:var(--warning); font-weight:600;">Telemetry Match</td>
+          <td style="padding:8px 0; color:var(--warning); font-weight:600;">Pattern Match</td>
           <td style="padding:8px 0; color:#94a3b8;">Correlates reported messages with active simulator database IDs in real-time.</td>
         </tr>
         <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
@@ -6808,7 +6808,7 @@
     /* Theme toggle handled globally by base.html via silky-smooth document.startViewTransition */
 
 
-    /* ── NEURAL THREAT MAP BACKGROUND ── */
+    /* ── AI THREAT MAP BACKGROUND ── */
     (function () {
       const canvas = document.getElementById('threat-map-canvas');
       if (!canvas) return;
@@ -7823,7 +7823,7 @@
     const vfs = {
       "home": {
         "agent": {
-          "README.md": "PhishSim Agentic OS\n================================\nAutonomous phishing simulation engine.\nPowered by OpenRouter LLMs + OSINT scraping.\n\nQuick Start:\n  run_agent     → Launch a full simulation\n  osint <domain>→ Scan a target domain\n  campaigns     → List all active campaigns\n  status        → Engine status\n  help          → All commands",
+          "README.md": "PhishSim Autonomous OS\n================================\nAutonomous phishing simulation engine.\nPowered by OpenRouter LLMs + OSINT scraping.\n\nQuick Start:\n  run_agent     → Launch a full simulation\n  osint <domain>→ Scan a target domain\n  campaigns     → List all active campaigns\n  status        → Engine status\n  help          → All commands",
           "campaigns": {
             "q3_finance_sim.json": '{\n  "id": 1,\n  "name": "Q3 Finance Phish",\n  "scenario": "ceo_fraud",\n  "targets": 45,\n  "sent": 45,\n  "opens": 27,\n  "clicks": 8,\n  "reports": 3,\n  "risk_score": "HIGH",\n  "status": "launched"\n}',
             "hr_training_sim.json": '{\n  "id": 2,\n  "name": "Mandatory HR Training",\n  "scenario": "hr_update",\n  "targets": 30,\n  "sent": 30,\n  "opens": 24,\n  "clicks": 11,\n  "reports": 1,\n  "risk_score": "CRITICAL",\n  "status": "launched"\n}'
@@ -7845,7 +7845,7 @@
         }
       },
       "etc": {
-        "phishsim.conf": '{\n  "engine": "PhishSim Agentic OS",\n  "llm_provider": "OpenRouter",\n  "model": "openrouter/free",\n  "smtp_mode": "live",\n  "tracking": "pixel + click",\n  "osint": "enabled",\n  "db": "MySQL (TiDB Serverless)",\n  "deployment": "Render.com"\n}',
+        "phishsim.conf": '{\n  "engine": "PhishSim Autonomous OS",\n  "llm_provider": "OpenRouter",\n  "model": "openrouter/free",\n  "smtp_mode": "live",\n  "tracking": "pixel + click",\n  "osint": "enabled",\n  "db": "MySQL (TiDB Serverless)",\n  "deployment": "Render.com"\n}',
         "scenarios.json": '[\n  "ceo_fraud    → Impersonates executive, urgent wire transfer",\n  "hr_update    → Fake HR compliance deadline",\n  "it_alert     → Account lockout / password reset",\n  "invoice      → Urgent vendor invoice to finance dept"\n]'
       }
     };
@@ -8225,7 +8225,7 @@
           const actualDate = new Date().toDateString();
           outputHTML = `<div style="font-family:'JetBrains Mono',monospace; font-size:12px; line-height:1.8;">
 PhishSim AI <br>
-Built with: OpenRouter · MySQL · Agentic Engine<br>
+Built with: OpenRouter · MySQL · Autonomous Engine<br>
 Environment: Production Sandbox<br>
 Last deploy: ${actualDate}<br>
 <span style="color:var(--primary);">[→] <a href="https://phishsim-ai.onrender.com" target="_blank" style="color:var(--primary);text-decoration:underline;">https://phishsim-ai.onrender.com</a></span>
@@ -8349,7 +8349,7 @@ Last deploy: ${actualDate}<br>
                 details += `  Campaign Database           ${getBarAndStatus(h.db)}<br>`;
                 details += `  Auth Service                ${getBarAndStatus(h.auth)}<br>`;
                 details += `  SMTP Relay                  ${getBarAndStatus(h.smtp)}<br>`;
-                details += `  Agentic Worker              ${getBarAndStatus(h.worker)}<br><br>`;
+                details += `  Simulation Worker              ${getBarAndStatus(h.worker)}<br><br>`;
 
                 const overallStatus = (h.llm.status !== 'DEGRADED' && h.db.status !== 'DEGRADED')
                   ? '<span style="color:#34D399; font-weight:bold;">OPERATIONAL</span>'
@@ -8437,7 +8437,7 @@ Last deploy: ${actualDate}<br>
               outputHTML = `<div class="t-info">[*] <span style="color:var(--warning);">Auth required.</span> Type <span style="color:var(--primary);">login</span> first.</div>`;
             } else {
               termState.mode = 'campaign_create'; termState.step = 1; termState.data = {};
-              outputHTML = `<div class="t-info">[NEW CAMPAIGN] Agentic campaign creation wizard</div>
+              outputHTML = `<div class="t-info">[NEW CAMPAIGN] AI campaign creation wizard</div>
 <div class="t-info" style="color:rgba(255,255,255,0.5);">               (Type values and press Enter at each step)</div>
 <div style="color:#818CF8; margin-top:8px;">Campaign name:</div>`;
             }
@@ -8659,11 +8659,11 @@ IT Compliance Dept</pre>`), 2200);
               });
           }
         } else if (cmd === 'run_agent') {
-          outputHTML = `<div class="t-ok">[+] Bootstrapping PhishSim Agentic Engine...</div>`;
+          outputHTML = `<div class="t-ok">[+] Bootstrapping PhishSim Simulation Engine...</div>`;
           setTimeout(() => appendTerminalHTML(`<div class="t-info">[*] Step 1/5: OSINT domain profiling initiated... [ OK ]</div>`), 500);
           setTimeout(() => appendTerminalHTML(`<div class="t-info">[*] Step 2/5: Crafting LLM personalized phishing lures... [ OK ]</div>`), 1200);
           setTimeout(() => appendTerminalHTML(`<div class="t-info">[*] Step 3/5: Dispatching simulation tokens via SMTP relay... [ OK ]</div>`), 2000);
-          setTimeout(() => appendTerminalHTML(`<div class="t-info">[*] Step 4/5: Listening for real-time tracking webhook telemetry... [ OK ]</div>`), 2800);
+          setTimeout(() => appendTerminalHTML(`<div class="t-info">[*] Step 4/5: Listening for real-time tracking webhook analytics... [ OK ]</div>`), 2800);
           setTimeout(() => appendTerminalHTML(`<div class="t-info">[*] Step 5/5: Formatting PDF audit risk posture reports... [ OK ]</div>`), 3600);
           setTimeout(() => appendTerminalHTML(`<div class="t-passive">[*] This is a walkthrough &mdash; run a real simulation free below.</div>`), 4200);
           setTimeout(() => appendTerminalHTML(`<div class="t-ok">[+] <a href="/signup" style="color:#34d399; text-decoration:underline;">Sign up now</a> or access the dashboard via <a href="/demo-login" style="color:#34d399; text-decoration:underline;">one-click demo login</a> to launch campaigns.</div>`), 4800);
@@ -9122,7 +9122,7 @@ ${body}
 
 
     /* ── DYNAMIC GLOBAL THREAT INTELLIGENCE STREAM ── */
-    // Handled server-side via Jinja template rendering to display real DB telemetry logs.
+    // Handled server-side via Jinja template rendering to display real DB analytics logs.
 
 
 
@@ -9207,7 +9207,7 @@ ${body}
                 { text: '[+] Rebuilding sector indices... OK', cls: '#22c55e' },
                 { text: '[+] Restoring virtual filesystem (/home/agent)... OK', cls: '#22c55e' },
                 { text: '[+] Reloading phishsim modules... OK', cls: '#22c55e' },
-                { text: '[+] System recovery completed. Restarting Agentic OS...', cls: '#22c55e' }
+                { text: '[+] System recovery completed. Restarting Simulation OS...', cls: '#22c55e' }
               ];
 
               steps.forEach((step, idx) => {

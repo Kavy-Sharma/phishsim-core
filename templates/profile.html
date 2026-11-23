@@ -74,7 +74,7 @@
                     <div class="profile-card-header">
                         <div class="profile-card-title-group">
                             <h2 class="profile-card-title">Identity &amp; Account</h2>
-                            <p class="profile-card-subtitle">Your basic operator profile and organizational affiliation.</p>
+                            <p class="profile-card-subtitle">Your basic account profile and organizational affiliation.</p>
                         </div>
                     </div>
 
@@ -86,7 +86,7 @@
                         <div class="profile-identity-meta">
                             <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
                                 <h3 id="display-user-name" style="margin: 0; font-size: 1.35rem; font-weight: 700; color: var(--text-primary); font-family: var(--font-heading);">
-                                    {{ user.name or "Operator" }}
+                                    {{ user.name or "User" }}
                                 </h3>
                                 <span class="badge {% if user.role in ('admin', 'pro') %}badge-primary{% else %}badge-neutral{% endif %}">
                                     {{ user.role.upper() }}
@@ -167,7 +167,7 @@
                     <div class="profile-card-header">
                         <div class="profile-card-title-group">
                             <h2 class="profile-card-title">Change Password</h2>
-                            <p class="profile-card-subtitle">Update your master password to secure your operator account.</p>
+                            <p class="profile-card-subtitle">Update your master password to secure your account.</p>
                         </div>
                     </div>
 
@@ -315,7 +315,7 @@
                     <div class="profile-card-header">
                         <div class="profile-card-title-group">
                             <h2 class="profile-card-title">Active Session</h2>
-                            <p class="profile-card-subtitle">Devices currently authenticated to your PhishSim operator session.</p>
+                            <p class="profile-card-subtitle">Devices currently authenticated to your PhishSim user session.</p>
                         </div>
                     </div>
 
@@ -432,7 +432,7 @@
                         <div class="pref-row-item">
                             <div>
                                 <strong style="display: block; font-size: 0.95rem; color: var(--text-primary); margin-bottom: 2px;">Timezone</strong>
-                                <span style="font-size: 0.85rem; color: var(--text-secondary);">Used to timestamp campaign telemetry and attack timeline events.</span>
+                                <span style="font-size: 0.85rem; color: var(--text-secondary);">Used to timestamp campaign activity and attack timeline events.</span>
                             </div>
                             <select id="pref-timezone" class="form-control" style="max-width: 260px;" onchange="savePreferencesAuto()">
                                 <option value="UTC" {% if user.timezone == 'UTC' or not user.timezone %}selected{% endif %}>UTC (Coordinated Universal Time)</option>
@@ -580,7 +580,7 @@
                                 <i class="ti ti-alert-triangle" style="margin-right: 6px;"></i>
                                 Delete Account
                             </h2>
-                            <p class="profile-card-subtitle">Permanently delete your PhishSim operator account and all associated simulation data.</p>
+                            <p class="profile-card-subtitle">Permanently delete your PhishSim account and all associated simulation data.</p>
                         </div>
                     </div>
 
@@ -590,7 +590,7 @@
                         </p>
                         <ul style="margin: 0 0 1.25rem 0; padding-left: 1.25rem; font-size: 0.85rem; color: var(--text-secondary); line-height: 1.6;">
                             <li>All active and historical drill campaigns will be deleted.</li>
-                            <li>All employee targets, interaction telemetry, and click timestamps are permanently erased.</li>
+                            <li>All employee targets, interaction records, and click timestamps are permanently erased.</li>
                             <li>Your Human Risk Score trends and audit logs will be wiped.</li>
                             <li>This action is <strong>irreversible</strong> and cannot be undone.</li>
                         </ul>
@@ -1251,17 +1251,20 @@
             toast.style.background = 'var(--success-dim, rgba(16, 185, 129, 0.2))';
             toast.style.border = '1px solid var(--success)';
             toast.style.color = 'var(--success)';
-            toast.innerHTML = `<i class="ti ti-check"></i> <span>${msg}</span>`;
+            toast.innerHTML = '<i class="ti ti-check"></i> <span></span>';
+            toast.querySelector('span').textContent = msg;
         } else if (type === 'error') {
             toast.style.background = 'var(--danger-dim, rgba(239, 68, 68, 0.2))';
             toast.style.border = '1px solid var(--danger)';
             toast.style.color = 'var(--danger)';
-            toast.innerHTML = `<i class="ti ti-alert-circle"></i> <span>${msg}</span>`;
+            toast.innerHTML = '<i class="ti ti-alert-circle"></i> <span></span>';
+            toast.querySelector('span').textContent = msg;
         } else {
             toast.style.background = 'var(--bg-surface-raised)';
             toast.style.border = '1px solid var(--border-default)';
             toast.style.color = 'var(--text-primary)';
-            toast.innerHTML = `<i class="ti ti-info-circle" style="color: var(--primary);"></i> <span>${msg}</span>`;
+            toast.innerHTML = '<i class="ti ti-info-circle" style="color: var(--primary);"></i> <span></span>';
+            toast.querySelector('span').textContent = msg;
         }
 
         document.body.appendChild(toast);

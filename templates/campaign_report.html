@@ -8,7 +8,7 @@
 
 {# SAFE DEFENSIVE FALLBACKS FOR ANY CALLER (PREVENTS 500 UNDEFINED ERRORS) #}
 {% set hss_obj = hss or (report and report.hss) or {'score': 62, 'tier': 'amber', 'label': 'At Risk', 'terms': {'click_penalty': 15, 'open_penalty': 5, 'repeat_penalty': 2, 'report_bonus': 5}} %}
-{% set replay_obj = attack_replay or {'total_sent': (campaign.emails_sent or 0), 'total_opened': (campaign.opens or 0), 'total_clicked': (campaign.clicks or 0), 'total_submitted': 0, 'total_reported': (campaign.reports or 0), 'events': [], 'key_insight': 'Telemetry recorded across simulation dispatch.', 'total_duration_minutes': 60} %}
+{% set replay_obj = attack_replay or {'total_sent': (campaign.emails_sent or 0), 'total_opened': (campaign.opens or 0), 'total_clicked': (campaign.clicks or 0), 'total_submitted': 0, 'total_reported': (campaign.reports or 0), 'events': [], 'key_insight': 'Analytics recorded across simulation dispatch.', 'total_duration_minutes': 60} %}
 {% set lure_obj = lure_data or {'sender': 'IT Support <support@' ~ (campaign.company_domain or 'company.com') ~ '>', 'subject': 'Action Required: Security Notice', 'lure_html': 'Please review the security awareness simulation notice.', 'clues_missed': []} %}
 {% set funnel_obj = funnel_data or {'current': {'sent': (campaign.emails_sent or 0), 'opened': (campaign.opens or 0), 'clicked': (campaign.clicks or 0), 'submitted': 0, 'reported': (campaign.reports or 0)}, 'prev': None, 'is_first_campaign': True, 'score_history': []} %}
 {% set rem_obj = remediation_data or {'actions': [], 'completed_count': 0, 'total_count': 0, 'progress_pct': 0} %}
@@ -169,7 +169,7 @@
         <div class="section-header-row">
             <div>
                 <h2 class="section-title"><i class="ti ti-player-play"></i> Attack replay</h2>
-                <p class="section-subtitle">Real second-by-second timeline of employee engagement across 5 telemetry lanes.</p>
+                <p class="section-subtitle">Real second-by-second timeline of employee engagement across 5 analytics lanes.</p>
             </div>
             <div class="replay-controls">
                 <button id="btn-replay-play" class="replay-action-btn" aria-label="Replay attack unfolding over 8 seconds">
@@ -271,7 +271,7 @@
             <div class="replay-insight-banner">
                 <i class="ti ti-bulb insight-icon"></i>
                 <div class="insight-text">
-                    <strong>Telemetry Insight:</strong> {{ replay_obj.key_insight }}
+                    <strong>Key Assessment Insight:</strong> {{ replay_obj.key_insight }}
                 </div>
             </div>
         </div>
@@ -340,7 +340,7 @@
         <div class="section-header-row">
             <div>
                 <h2 class="section-title"><i class="ti ti-users"></i> Who is exposed</h2>
-                <p class="section-subtitle">Department vulnerability rankings and recipient behavioral telemetry.</p>
+                <p class="section-subtitle">Department vulnerability rankings and recipient behavioral analytics.</p>
             </div>
             <div>
                 <label class="toggle-flags-label" for="toggle-anonymise">
@@ -637,7 +637,7 @@
             <div class="export-tile">
                 <div class="tile-icon-box icon-pdf"><i class="ti ti-file-type-pdf"></i></div>
                 <h3 class="tile-title">One-Page Executive PDF</h3>
-                <p class="tile-desc">Clean, white corporate styling matching on-screen telemetry. Formatted for leadership review.</p>
+                <p class="tile-desc">Clean, white corporate styling matching on-screen metrics. Formatted for leadership review.</p>
                 <a href="/download-report/{{ campaign.id }}" class="tile-action-btn btn-export-pdf">
                     <i class="ti ti-file-download"></i> Download Executive PDF
                 </a>
@@ -646,7 +646,7 @@
             <!-- 2. CSV Evidence -->
             <div class="export-tile">
                 <div class="tile-icon-box icon-csv"><i class="ti ti-file-spreadsheet"></i></div>
-                <h3 class="tile-title">Raw Telemetry CSV</h3>
+                <h3 class="tile-title">Raw Event Log CSV</h3>
                 <p class="tile-desc">Full recipient logs, reaction latencies, department breakdowns, and audit evidence.</p>
                 <a href="/export-campaign-csv/{{ campaign.id }}" class="tile-action-btn btn-export-csv">
                     <i class="ti ti-table-export"></i> Download CSV Evidence
@@ -939,7 +939,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                     const meta = document.getElementById('meta-info-' + actionKey);
                     if (meta) {
-                        meta.innerHTML = `<span class="done-note"><i class="ti ti-check"></i> Done by ${data.completed_by} (${data.completed_at})</span>`;
+                        meta.innerHTML = DOMPurify.sanitize(`<span class="done-note"><i class="ti ti-check"></i> Done by ${data.completed_by} (${data.completed_at})</span>`);
                     }
 
                     if (data.progress_pct !== undefined) {
@@ -975,7 +975,7 @@ document.addEventListener('DOMContentLoaded', function() {
             `• Opened: {{ campaign.opens or 0 }} ({{ report.open_rate }}%)\n` +
             `• Clicked: {{ campaign.clicks or 0 }} ({{ report.click_rate }}%)\n` +
             `• Reported: {{ campaign.reports or 0 }} ({{ report.report_rate }}%)\n\n` +
-            `Telemetry Insight:\n` +
+            `Key Assessment Insight:\n` +
             `{{ replay_obj.key_insight }}\n\n` +
             `Remediation Progress: {{ rem_obj.completed_count }}/{{ rem_obj.total_count }} actions completed.`;
 
