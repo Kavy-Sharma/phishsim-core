@@ -805,7 +805,9 @@ def get_scenario_lure_and_clues(scenario_key, domain="company.com", click_count=
                 if es.get("sender_name"):
                     res["sender_name"] = _html.escape(str(es["sender_name"]))
                 if es.get("body_html"):
-                    res["body_html"] = _annotate_lure_html(es["body_html"])
+                    body_val = str(es["body_html"]).strip()
+                    if len(body_val) > 20 and body_val.lower() not in ["email body", "<p>email body</p>", "body", "test"]:
+                        res["body_html"] = _annotate_lure_html(es["body_html"])
                 actual_breakdown = es.get("educational_breakdown")
                 break
 

@@ -855,8 +855,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
             const rect = dot.getBoundingClientRect();
             const parentRect = document.getElementById('timeline-svg-box').getBoundingClientRect();
-            popover.style.left = (rect.left - parentRect.left + 10) + 'px';
-            popover.style.top = (rect.top - parentRect.top - 50) + 'px';
+            let leftPos = rect.left - parentRect.left + 10;
+            if (leftPos + 200 > parentRect.width) {
+                leftPos = rect.left - parentRect.left - 180;
+            }
+            popover.style.left = Math.max(10, leftPos) + 'px';
+            popover.style.top = Math.max(10, rect.top - parentRect.top - 54) + 'px';
             popover.style.display = 'block';
         });
 

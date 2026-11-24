@@ -5654,7 +5654,7 @@
             <i class="ti ti-shield-code" aria-hidden="true"></i>
             <span>Interactive Defense Console</span>
           </div>
-          <h2 id="holding-heading" class="holding-title">
+          <h2 id="holding-heading" class="holding-title section-title liquid-text">
             Start with what you're <span class="holding-title-highlight">holding.</span>
           </h2>
           <p class="holding-sub">
@@ -5947,80 +5947,80 @@
   <!-- STATS + COMPARE -->
   <!-- STATS + COMPARE -->
   <section id="stats">
+    <div class="stats-header reveal" style="text-align: center; max-width: 860px; margin: 0 auto 3.5rem;">
+      <div class="section-eyebrow" style="margin: 0 auto 1.25rem;">Measurable Impact</div>
+      <h2 class="section-title" style="font-family: var(--font-heading), 'Space Grotesk', sans-serif; font-size: clamp(2rem, 4vw, 2.85rem); font-weight: 800; line-height: 1.2; margin-bottom: 1rem; color: var(--text-primary);">What Continuous Simulation Reveals</h2>
+      <p class="section-sub" style="font-size: 1.05rem; color: var(--text-secondary); max-width: 620px; margin: 0 auto; line-height: 1.65;">{% if public_stats.total_simulations and public_stats.total_simulations > 0 %}Live aggregate metrics from simulation campaigns executed to date.{% else %}Engine performance benchmarks and threat surface coverage.{% endif %}</p>
+    </div>
+
     <div class="stats-inner">
-      <div>
-        <div class="section-eyebrow reveal">Measurable Impact</div>
-        <h2 class="section-title reveal">What Continuous Simulation Reveals</h2>
-        <p class="section-sub reveal">{% if public_stats.total_simulations and public_stats.total_simulations > 0 %}Live aggregate metrics from simulation campaigns executed to date.{% else %}Engine performance benchmarks and threat surface coverage.{% endif %}</p>
-
-        <div class="stats-grid" style="margin-top:36px">
-          {% if public_stats.total_simulations and public_stats.total_simulations > 0 %}
-          <!-- Card 1: Opened Emails (Live) -->
-          <div class="stat-card reveal reveal-delay-1">
-            {% if public_stats.pct_emails_opened is not none %}
-            <div class="stat-num" data-countup data-target="{{ public_stats.pct_emails_opened }}" data-suffix="%">{{ public_stats.pct_emails_opened }}<span>%</span></div>
-            {% else %}
-            <div class="stat-num" style="font-size: clamp(1.2rem, 1.8vw, 1.6rem); line-height: 2.2; color: var(--text-secondary);">Tracking Active</div>
-            {% endif %}
-            <div class="stat-label">of simulated emails opened</div>
-            <div class="stat-bench">Across {{ public_stats.total_simulations_formatted }} simulation dispatches</div>
-          </div>
-
-          <!-- Card 2: Click Rate (Live) -->
-          <div class="stat-card reveal reveal-delay-2">
-            {% if public_stats.pct_clicked is not none %}
-            <div class="stat-num" data-countup data-target="{{ public_stats.pct_clicked }}" data-suffix="%">{{ public_stats.pct_clicked }}<span>%</span></div>
-            {% else %}
-            <div class="stat-num" style="font-size: clamp(1.2rem, 1.8vw, 1.6rem); line-height: 2.2; color: var(--text-secondary);">Tracking Active</div>
-            {% endif %}
-            <div class="stat-label">of targets clicked the simulated link</div>
-            <div class="stat-bench">{% if public_stats.pct_clicked_finance_dept is not none %}Finance dept: {{ public_stats.pct_clicked_finance_dept }}%{% else %}Tracked across active target departments{% endif %}</div>
-          </div>
-
-          <!-- Card 3: Report Rate (Live) -->
-          <div class="stat-card reveal reveal-delay-3">
-            {% if public_stats.pct_reported is not none %}
-            <div class="stat-num" data-countup data-target="{{ public_stats.pct_reported }}" data-suffix="%">{{ public_stats.pct_reported }}<span>%</span></div>
-            {% else %}
-            <div class="stat-num" style="font-size: clamp(1.2rem, 1.8vw, 1.6rem); line-height: 2.2; color: var(--text-secondary);">Tracking Active</div>
-            {% endif %}
-            <div class="stat-label">reported via in-inbox plugin</div>
-            <div class="stat-bench">Target resilience benchmark: &gt;40%</div>
-          </div>
-
-          <!-- Card 4: Dispatch Velocity -->
-          <div class="stat-card reveal reveal-delay-4">
-            <div class="stat-num">&lt; 60<span>s</span></div>
-            <div class="stat-label">CSV upload to automated dispatch</div>
-            <div class="stat-bench">Automated role parsing & dispatch</div>
-          </div>
+      <div class="stats-grid">
+        {% if public_stats.total_simulations and public_stats.total_simulations > 0 %}
+        <!-- Card 1: Opened Emails (Live) -->
+        <div class="stat-card reveal reveal-delay-1">
+          {% if public_stats.pct_emails_opened is not none %}
+          <div class="stat-num" data-countup data-target="{{ public_stats.pct_emails_opened }}" data-suffix="%">{{ public_stats.pct_emails_opened }}<span>%</span></div>
           {% else %}
-          <!-- Capability Benchmark Fallbacks (When no simulations have run yet) -->
-          <div class="stat-card reveal reveal-delay-1">
-            <div class="stat-num">100<span>+</span></div>
-            <div class="stat-label">MITRE ATT&CK scenario templates</div>
-            <div class="stat-bench">Covers spear-phishing, quishing & pretexting</div>
-          </div>
-
-          <div class="stat-card reveal reveal-delay-2">
-            <div class="stat-num">&lt; 60<span>s</span></div>
-            <div class="stat-label">CSV upload to automated dispatch</div>
-            <div class="stat-bench">Automated role and department mapping</div>
-          </div>
-
-          <div class="stat-card reveal reveal-delay-3">
-            <div class="stat-num">1-Click</div>
-            <div class="stat-label">Outlook & Gmail in-inbox reporting</div>
-            <div class="stat-bench">Native employee reporting button</div>
-          </div>
-
-          <div class="stat-card reveal reveal-delay-4">
-            <div class="stat-num">100<span>%</span></div>
-            <div class="stat-label">Tenant analytics & data privacy</div>
-            <div class="stat-bench">Zero third-party foundation model training</div>
-          </div>
+          <div class="stat-num" style="font-size: clamp(1.2rem, 1.8vw, 1.6rem); line-height: 2.2; color: var(--text-secondary);">Tracking Active</div>
           {% endif %}
+          <div class="stat-label">of simulated emails opened</div>
+          <div class="stat-bench">Across {{ public_stats.total_simulations_formatted }} simulation dispatches</div>
         </div>
+
+        <!-- Card 2: Click Rate (Live) -->
+        <div class="stat-card reveal reveal-delay-2">
+          {% if public_stats.pct_clicked is not none %}
+          <div class="stat-num" data-countup data-target="{{ public_stats.pct_clicked }}" data-suffix="%">{{ public_stats.pct_clicked }}<span>%</span></div>
+          {% else %}
+          <div class="stat-num" style="font-size: clamp(1.2rem, 1.8vw, 1.6rem); line-height: 2.2; color: var(--text-secondary);">Tracking Active</div>
+          {% endif %}
+          <div class="stat-label">of targets clicked the simulated link</div>
+          <div class="stat-bench">{% if public_stats.pct_clicked_finance_dept is not none %}Finance dept: {{ public_stats.pct_clicked_finance_dept }}%{% else %}Tracked across active target departments{% endif %}</div>
+        </div>
+
+        <!-- Card 3: Report Rate (Live) -->
+        <div class="stat-card reveal reveal-delay-3">
+          {% if public_stats.pct_reported is not none %}
+          <div class="stat-num" data-countup data-target="{{ public_stats.pct_reported }}" data-suffix="%">{{ public_stats.pct_reported }}<span>%</span></div>
+          {% else %}
+          <div class="stat-num" style="font-size: clamp(1.2rem, 1.8vw, 1.6rem); line-height: 2.2; color: var(--text-secondary);">Tracking Active</div>
+          {% endif %}
+          <div class="stat-label">reported via in-inbox plugin</div>
+          <div class="stat-bench">Target resilience benchmark: &gt;40%</div>
+        </div>
+
+        <!-- Card 4: Dispatch Velocity -->
+        <div class="stat-card reveal reveal-delay-4">
+          <div class="stat-num">&lt; 60<span>s</span></div>
+          <div class="stat-label">CSV upload to automated dispatch</div>
+          <div class="stat-bench">Automated role parsing & dispatch</div>
+        </div>
+        {% else %}
+        <!-- Capability Benchmark Fallbacks (When no simulations have run yet) -->
+        <div class="stat-card reveal reveal-delay-1">
+          <div class="stat-num">100<span>+</span></div>
+          <div class="stat-label">MITRE ATT&CK scenario templates</div>
+          <div class="stat-bench">Covers spear-phishing, quishing & pretexting</div>
+        </div>
+
+        <div class="stat-card reveal reveal-delay-2">
+          <div class="stat-num">&lt; 60<span>s</span></div>
+          <div class="stat-label">CSV upload to automated dispatch</div>
+          <div class="stat-bench">Automated role and department mapping</div>
+        </div>
+
+        <div class="stat-card reveal reveal-delay-3">
+          <div class="stat-num">1-Click</div>
+          <div class="stat-label">Outlook & Gmail in-inbox reporting</div>
+          <div class="stat-bench">Native employee reporting button</div>
+        </div>
+
+        <div class="stat-card reveal reveal-delay-4">
+          <div class="stat-num">100<span>%</span></div>
+          <div class="stat-label">Tenant analytics & data privacy</div>
+          <div class="stat-bench">Zero third-party foundation model training</div>
+        </div>
+        {% endif %}
       </div>
 
       <div class="compare-box reveal">
