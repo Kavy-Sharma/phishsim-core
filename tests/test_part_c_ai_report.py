@@ -4,6 +4,7 @@ from app import app, get_db_connection
 from ai_engine.report_agent import (
     compute_human_security_score,
     generate_verdict_sentence,
+    determine_weakest_department,
     build_attack_replay_timeline,
     get_scenario_lure_and_clues,
     ensure_campaign_actions_table,
@@ -624,4 +625,70 @@ def test_clean_database_schema_and_campaign_report_resilience():
         raw_cursor.execute(f"DROP DATABASE IF EXISTS {clean_db_name}")
         raw_cursor.close()
         raw_db.close()
+
+
+def test_verdict_sentence_matches_department_table_and_ignores_small_groups():
+    """Verify verdict sentence (demo and real) is built from the exact department table numbers,
+    picks the actual highest click rate, ignores groups under 5 people and says so,
+    and checks that score history has tier labels explaining 'Critical'.
+    """
+    client = app.test_client()
+    res = client.get("/reports/demo")
+    assert res.status_code == 200
+    html = res.get_data(as_text=True)
+
+    # 1. Parse verdict sentence from .verdict-serif-quote
+    verdict_match = re.search(r'<blockquote class="verdict-serif-quote">[\s\r\n]*&ldquo;(.*?)&rdquo;[\s\r\n]*</blockquote>', html, re.DOTALL)
+    assert verdict_match, "Verdict quote must be present in demo report"
+    verdict_sentence = verdict_match.group(1).strip()
+    
+    # Assert verdict contains Finance (60%) and NOT Sales (58%)
+    assert "Finance was the weakest team" in verdict_sentence, f"Verdict should state Finance was weakest team, got: '{verdict_sentence}'"
+    assert "Sales was the weakest team" not in verdict_sentence
+
+    # 2. Parse departments and click rates from .dept-bar-item
+    dept_names = re.findall(r'<span class="dept-name">[\s\r\n]*([A-Za-z0-9_\s]+?)(?:<span.*?)?</span>', html, re.DOTALL)
+    dept_rates = re.findall(r'<span class="dept-click-pct font-mono">(\d+)% clicked</span>', html)
+    dept_interacted = re.findall(r'<span>(\d+) of (\d+) targets interacted</span>', html)
+    
+    parsed_depts = []
+    for i in range(min(len(dept_names), len(dept_rates), len(dept_interacted))):
+        parsed_depts.append({
+            "department": dept_names[i].strip(),
+            "click_rate": int(dept_rates[i]),
+            "clicks": int(dept_interacted[i][0]),
+            "targets": int(dept_interacted[i][1])
+        })
+    assert len(parsed_depts) >= 4
+
+    # Top department by click rate in table must match verdict
+    eligible = [d for d in parsed_depts if d["targets"] >= 5]
+    top_dept = max(eligible, key=lambda d: d["click_rate"])
+    assert top_dept["department"] == "Finance"
+    assert "Finance was the weakest team" in verdict_sentence
+
+    # 3. Small sample rule: group under 5 people ignored & explicitly stated
+    mixed_stats = [
+        {"department": "Executive", "targets": 2, "clicks": 2, "reports": 0, "click_rate": 100, "small_sample": True},
+        {"department": "Finance", "targets": 10, "clicks": 6, "reports": 2, "click_rate": 60, "small_sample": False},
+        {"department": "Sales", "targets": 12, "clicks": 5, "reports": 1, "click_rate": 42, "small_sample": False}
+    ]
+    weakest = determine_weakest_department(mixed_stats)
+    assert weakest["department"] == "Finance", "Should ignore Executive (<5 people) despite 100% click rate"
+    assert weakest["ignored_small_sample"] is True
+    
+    mixed_sentence = generate_verdict_sentence(
+        {"emails_sent": 24, "clicks": 13, "reports": 3},
+        {"click_rate": 54.2, "report_rate": 12.5},
+        weakest_dept=weakest
+    )
+    assert "Finance was the weakest team (ignoring groups under 5 people)" in mixed_sentence
+
+    # 4. Score History Trajectory card contains tier labels explaining 'Critical'
+    assert "35/100" in html
+    assert "40/100" in html
+    assert "45/100" in html
+    score_trend_block = re.search(r'<div class="score-trend-card">.*?</div>\s*</div>', html, re.DOTALL)
+    assert score_trend_block, "Score trend card must be present"
+    assert "Critical" in score_trend_block.group(0), "Score history card must explain 'Critical' tier word"
 

@@ -110,12 +110,59 @@ def compute_human_security_score(click_rate, open_rate, report_rate, repeat_pct=
     }
 
 
+def determine_weakest_department(department_stats, min_sample=5):
+    """Picks the weakest department based on actual highest click rate from department numbers.
+    
+    Ignores groups under min_sample (default 5) people if larger groups with clicks exist.
+    Returns a dict with:
+      - 'department': name of the department
+      - 'click_rate': click rate
+      - 'targets': count of targets
+      - 'ignored_small_sample': bool, whether groups under min_sample were ignored
+      - 'is_small_sample': bool, whether the picked department itself is under min_sample
+    Or None if no departments or zero clicks.
+    """
+    if not department_stats:
+        return None
+
+    # Filter departments that experienced clicks or positive click rate
+    depts_with_clicks = [d for d in department_stats if (d.get("clicks") or 0) > 0 or (d.get("click_rate") or 0) > 0]
+    if not depts_with_clicks:
+        return None
+
+    # Groups meeting the min_sample size (>= 5 people)
+    adequate = [d for d in depts_with_clicks if (d.get("targets") or 0) >= min_sample]
+    has_small_with_clicks = any((d.get("targets") or 0) < min_sample for d in depts_with_clicks)
+
+    if adequate:
+        # Pick the actual highest click rate among teams >= min_sample
+        # Tie-breaker: most clicks, then most targets
+        weakest = max(adequate, key=lambda d: (d.get("click_rate") or 0, d.get("clicks") or 0, d.get("targets") or 0))
+        return {
+            "department": weakest["department"],
+            "click_rate": weakest.get("click_rate", 0),
+            "targets": weakest.get("targets", 0),
+            "ignored_small_sample": has_small_with_clicks,
+            "is_small_sample": False
+        }
+    else:
+        # All teams with clicks have under min_sample people
+        weakest = max(depts_with_clicks, key=lambda d: (d.get("click_rate") or 0, d.get("clicks") or 0, d.get("targets") or 0))
+        return {
+            "department": weakest["department"],
+            "click_rate": weakest.get("click_rate", 0),
+            "targets": weakest.get("targets", 0),
+            "ignored_small_sample": False,
+            "is_small_sample": True
+        }
+
+
 def generate_verdict_sentence(campaign, report=None, weakest_dept=None, model_sentence=None):
     """Generates the landmark plain serif verdict sentence.
     
     The numbers inside it MUST be injected from data, validated,
     and fall back to a rule-based sentence if the model is unavailable or disagrees.
-    Example: '18 of 44 people clicked, but 8 reported within the hour — Sales was the weakest team.'
+    Example: '18 of 44 people clicked, but 8 reported within the hour — Finance was the weakest team.'
     """
     sent = int(campaign.get("emails_sent") or 0)
     clicks = int(campaign.get("clicks") or 0)
@@ -123,14 +170,26 @@ def generate_verdict_sentence(campaign, report=None, weakest_dept=None, model_se
     opens = int(campaign.get("opens") or 0)
     total_targets = int(campaign.get("employee_count") or sent)
 
-    # Determine weakest department label if available
+    # Determine weakest department label and sample qualification
     weakest_name = None
-    if isinstance(weakest_dept, dict) and weakest_dept.get("department"):
-        weakest_name = weakest_dept["department"]
+    ignored_small = False
+    is_small = False
+    if isinstance(weakest_dept, dict):
+        weakest_name = weakest_dept.get("department")
+        ignored_small = bool(weakest_dept.get("ignored_small_sample"))
+        is_small = bool(weakest_dept.get("is_small_sample"))
     elif isinstance(weakest_dept, str) and weakest_dept.strip():
         weakest_name = weakest_dept.strip()
 
-    weakest_clause = f" — {weakest_name} was the weakest team." if weakest_name else "."
+    if weakest_name:
+        if ignored_small:
+            weakest_clause = f" — {weakest_name} was the weakest team (ignoring groups under 5 people)."
+        elif is_small:
+            weakest_clause = f" — {weakest_name} was the weakest team (sample under 5 people)."
+        else:
+            weakest_clause = f" — {weakest_name} was the weakest team."
+    else:
+        weakest_clause = "."
 
     # 1. Deterministic Rule-Based Sentence (Golden Truth)
     if sent == 0:
@@ -230,9 +289,9 @@ Analyze these phishing simulation results for '{campaign.get('name', 'Campaign')
 - Clicks: {clicks} ({click_rate}%)
 - Reports: {reports} ({report_rate}%)
 - Human risk score: {hss['score']}/100 ({hss['label']})
-- Weakest department: {weakest_dept.get('department') if isinstance(weakest_dept, dict) else 'None'}
+- Weakest department: {weakest_dept.get('department') if isinstance(weakest_dept, dict) else (weakest_dept if isinstance(weakest_dept, str) else 'None')}
 
-Write a concise 1-sentence verdict summarizing the exact metrics: '{clicks} of {sent} people clicked, but {reports} reported within the hour — {weakest_dept.get("department") if isinstance(weakest_dept, dict) else "Sales"} was the weakest team.'
+Write a concise 1-sentence verdict summarizing the exact metrics: '{verdict_sentence}'
 Provide exactly:
 1. "verdict": One plain sentence stating the exact figures from above. Do not invent any numbers.
 2. "summary": A 2-sentence executive summary analyzing the cognitive vulnerability.

@@ -578,10 +578,15 @@
                 <div class="trend-steps-list">
                     {% for h in funnel_obj.score_history %}
                     <div class="trend-step-item">
-                        <div class="trend-bullet"></div>
+                        <div class="trend-bullet bullet-{{ h.tier or ('red' if h.score <= 45 else ('amber' if h.score < 70 else 'green')) }}"></div>
                         <div class="trend-step-body">
                             <span class="trend-step-name">{{ h.name }}</span>
-                            <span class="trend-step-score font-mono">{{ h.score }}/100</span>
+                            <div class="trend-step-meta">
+                                <span class="trend-step-score font-mono">{{ h.score }}/100</span>
+                                <span class="trend-tier-pill tier-{{ h.tier or ('red' if h.score <= 45 else ('amber' if h.score < 70 else 'green')) }}">
+                                    {{ h.label or ('Critical' if h.score <= 45 else ('At Risk' if h.score < 70 else 'Good')) }}
+                                </span>
+                            </div>
                         </div>
                     </div>
                     {% endfor %}

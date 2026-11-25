@@ -24,6 +24,7 @@ from ai_engine.report_agent import (
     build_campaign_report,
     compute_human_security_score,
     generate_verdict_sentence,
+    determine_weakest_department,
     build_attack_replay_timeline,
     get_scenario_lure_and_clues,
     ensure_campaign_actions_table,
@@ -5265,6 +5266,7 @@ def dashboard():
     )
 
 @app.route("/reports-demo")
+@app.route("/reports/demo")
 def reports_demo():
     """Interactive demo of the landmark AI Report (the Debrief) using the unified template."""
     return campaign_report(0)
@@ -8269,8 +8271,8 @@ def campaign_report(campaign_id):
         }
 
         department_stats = [
-            {"department": "Sales", "targets": 12, "opens": 10, "clicks": 7, "reports": 1, "open_rate": 83, "click_rate": 58, "small_sample": False, "delta_dir": "worse", "delta_str": "+14% vs last drill"},
             {"department": "Finance", "targets": 10, "opens": 9, "clicks": 6, "reports": 2, "open_rate": 90, "click_rate": 60, "small_sample": False, "delta_dir": "worse", "delta_str": "+8% vs last drill"},
+            {"department": "Sales", "targets": 12, "opens": 10, "clicks": 7, "reports": 1, "open_rate": 83, "click_rate": 58, "small_sample": False, "delta_dir": "worse", "delta_str": "+14% vs last drill"},
             {"department": "Operations", "targets": 14, "opens": 7, "clicks": 5, "reports": 2, "open_rate": 50, "click_rate": 36, "small_sample": False, "delta_dir": "better", "delta_str": "-4% vs last drill"},
             {"department": "Engineering", "targets": 8, "opens": 2, "clicks": 0, "reports": 3, "open_rate": 25, "click_rate": 0, "small_sample": False, "delta_dir": "better", "delta_str": "-12% vs last drill"}
         ]
@@ -8288,13 +8290,18 @@ def campaign_report(campaign_id):
             "current": {"sent": 44, "opened": 28, "clicked": 18, "submitted": 11, "reported": 8},
             "prev": {"sent": 40, "opened": 24, "clicked": 20, "submitted": 14, "reported": 4},
             "is_first_campaign": False,
-            "score_history": [{"name": "Q1 Baseline", "score": 35}, {"name": "Q2 IT Drill", "score": 40}, {"name": "Q3 CEO Fraud", "score": 45}]
+            "score_history": [
+                {"name": "Q1 Baseline", "score": 35, "tier": "red", "label": "Critical"},
+                {"name": "Q2 IT Drill", "score": 40, "tier": "red", "label": "Critical"},
+                {"name": "Q3 CEO Fraud", "score": 45, "tier": "red", "label": "Critical"}
+            ]
         }
 
         attack_replay = build_attack_replay_timeline(campaign, None, None)
         lure_data = get_scenario_lure_and_clues("ceo_fraud", "demo-corp.com", campaign)
         actions_data = get_or_create_remediation_actions(campaign, department_stats, cursor=None)
-        verdict_sentence = generate_verdict_sentence(campaign, report, weakest_dept=department_stats[0])
+        weakest_dept = determine_weakest_department(department_stats)
+        verdict_sentence = generate_verdict_sentence(campaign, report, weakest_dept=weakest_dept)
 
         return render_template(
             "campaign_report.html",
@@ -8479,6 +8486,7 @@ def campaign_report(campaign_id):
             })
 
         department_stats.sort(key=lambda d: (d["click_rate"], d["clicks"], d["targets"]), reverse=True)
+        weakest_dept = determine_weakest_department(department_stats)
 
         emp_count = max(int(campaign.get("employee_count") or sent or 1), 1)
         opens_count = int(campaign.get("opens") or 0)
@@ -8494,7 +8502,7 @@ def campaign_report(campaign_id):
         hss = compute_human_security_score(cr_val, opr_val, rr_val, repeat_pct)
 
         try:
-            report = build_campaign_report(campaign, weakest_dept=department_stats[0] if department_stats else None)
+            report = build_campaign_report(campaign, weakest_dept=weakest_dept)
             report["hss"] = hss
             report["click_rate"] = cr_val
             report["open_rate"] = opr_val
@@ -8544,9 +8552,9 @@ def campaign_report(campaign_id):
                     p_opr = round((int(pcm.get("opens") or 0) / ps) * 100, 1) if ps else 0.0
                     p_rr = round((int(pcm.get("reports") or 0) / ps) * 100, 1) if ps else 0.0
                     p_hss = compute_human_security_score(p_cr, p_opr, p_rr)
-                    score_history.append({"name": pc["name"], "score": p_hss["score"]})
+                    score_history.append({"name": pc["name"], "score": p_hss["score"], "tier": p_hss["tier"], "label": p_hss["label"]})
         
-        score_history.append({"name": campaign["name"], "score": hss["score"]})
+        score_history.append({"name": campaign["name"], "score": hss["score"], "tier": hss["tier"], "label": hss["label"]})
 
         funnel_data = {
             "current": current_funnel,
@@ -8632,7 +8640,7 @@ def campaign_report(campaign_id):
             app.logger.warning("get_or_create_remediation_actions failed for campaign %s: %s", campaign_id, e)
             actions_data = {}
 
-        verdict_sentence = (report.get("verdict_sentence") if isinstance(report, dict) else None) or generate_verdict_sentence(campaign, report, weakest_dept=department_stats[0] if department_stats else None)
+        verdict_sentence = (report.get("verdict_sentence") if isinstance(report, dict) else None) or generate_verdict_sentence(campaign, report, weakest_dept=weakest_dept)
 
         anonymise_default = (user.get("role") == "company_user")
 
