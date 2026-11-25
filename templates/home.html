@@ -2308,12 +2308,26 @@
     }
 
     .section-title {
-      font-size: clamp(1.8rem, 3vw, 2.8rem);
-      font-weight: 700;
-      letter-spacing: 0;
-      line-height: 1.15;
-      margin-bottom: 16px;
-      display: block;
+      font-size: clamp(2rem, 3.8vw, 3rem) !important;
+      font-weight: 800 !important;
+      letter-spacing: -0.03em !important;
+      font-family: var(--font-heading), 'Space Grotesk', sans-serif !important;
+      line-height: 1.18 !important;
+      margin-bottom: 16px !important;
+      display: block !important;
+    }
+
+    .attack-chain-header,
+    .pricing-header,
+    .stats-header,
+    #capabilities .text-center,
+    #sandbox .text-center,
+    #threat-sandbox .text-center,
+    .exposure-scan-wrap {
+      text-align: center !important;
+      margin-left: auto !important;
+      margin-right: auto !important;
+      max-width: 860px !important;
     }
 
     .attack-chain-header .section-title,
@@ -2322,12 +2336,19 @@
     .text-center .section-title,
     #threat-sandbox .section-title,
     #capabilities .section-title,
-    #global-threat-intel .section-title {
+    #global-threat-intel .section-title,
+    #sandbox .section-title,
+    .pricing-header h2,
+    .attack-chain-header h2,
+    .stats-header h2 {
       display: block !important;
       text-align: center !important;
       margin-left: auto !important;
       margin-right: auto !important;
       width: 100% !important;
+      font-family: var(--font-heading), 'Space Grotesk', sans-serif !important;
+      font-weight: 800 !important;
+      letter-spacing: -0.03em !important;
     }
 
     .section-sub {
@@ -3627,7 +3648,8 @@
 
     .attack-chain-header {
       text-align: center;
-      margin-bottom: 56px;
+      margin: 0 auto 56px auto;
+      max-width: 860px;
     }
 
     .attack-chain-header .section-label {
@@ -3638,20 +3660,24 @@
       font-size: 11px;
       letter-spacing: 0.12em;
       text-transform: uppercase;
+      text-align: center;
     }
 
     .attack-chain-header .section-title {
       margin-bottom: 12px;
       color: var(--text-primary);
-      font-family: var(--font-heading), sans-serif;
+      font-family: var(--font-heading), 'Space Grotesk', sans-serif !important;
       font-size: clamp(2rem, 4vw, 3rem);
-      font-weight: 700;
+      font-weight: 800 !important;
+      letter-spacing: -0.03em !important;
+      text-align: center !important;
     }
 
     .attack-chain-header .section-subtitle {
       color: var(--text-secondary);
-      font-family: var(--font-heading), sans-serif;
+      font-family: var(--font-heading), 'Space Grotesk', sans-serif;
       font-size: 1.1rem;
+      text-align: center;
     }
 
     .attack-chain-body {
@@ -9783,115 +9809,7 @@ ${body}
           });
         });
       };
-      attachHoverEvents();
-      setInterval(attachHoverEvents, 2000);
     });
-
-    // ── CURSOR-LOCAL LIQUID HEADING EFFECT ──────────────────────────────────────
-    (function () {
-      function getAccentColors() {
-        const style = getComputedStyle(document.documentElement);
-        const primary = (style.getPropertyValue('--primary') || '#2DD4BF').trim();
-        return [primary, primary, primary, primary, primary];
-      }
-
-      function isLiquidTarget(el) {
-        if (!el || !el.tagName) return false;
-        // Deliberately exclude the main hero heading
-        if (el.classList.contains('hero-h1')) return false;
-        const tag = el.tagName.toUpperCase();
-        if (['H1', 'H2', 'H3', 'H4', 'H5', 'H6'].includes(tag)) return true;
-        if (el.classList.contains('liquid-text') || 
-            el.classList.contains('holding-badge') ||
-            el.classList.contains('holding-title') ||
-            el.classList.contains('section-title') || 
-            el.classList.contains('card-title') || 
-            el.classList.contains('page-title') ||
-            el.classList.contains('heading-title') ||
-            el.classList.contains('banner-title') ||
-            el.classList.contains('modal-title')) return true;
-        return false;
-      }
-
-      function isExcluded(el) {
-        if (!el || !el.closest) return true;
-        return el.closest(`
-            .nav-links, .nav-link, .brand-logo,
-            button, .btn, .action-btn, .pro-btn, .secondary-btn,
-            .terminal-wrapper, .terminal-body, .terminal,
-            code, pre, .monospace, .font-mono,
-            input, textarea, select, [role="button"]
-        `);
-      }
-
-      function applyLiquid(el, relX, relW) {
-        const colors = getAccentColors();
-
-        const frac = Math.max(0, Math.min(1, relX / relW));
-        const pct = Math.round(frac * 100);
-        const activeRadius = Math.min(140, Math.max(40, relW * 0.4));
-        const r = Math.round((activeRadius / relW) * 100);
-
-        const colorStop1 = colors[0];
-        const colorStop2 = colors[Math.floor(colors.length / 2)];
-        const colorStop3 = colors[colors.length - 1];
-
-        const bg = `radial-gradient(ellipse ${r * 2}% 220% at ${pct}% 50%,
-            ${colorStop2} 0%,
-            ${colorStop1} 35%,
-            ${colorStop3} 70%,
-            transparent 100%)`;
-
-        el.classList.add('liquid-active');
-        el.style.setProperty('background-image', bg, 'important');
-        el.style.setProperty('background-size', '100% 100%', 'important');
-      }
-
-      function removeLiquid(el) {
-        el.classList.remove('liquid-active');
-        el.style.removeProperty('background-image');
-        el.style.removeProperty('background-size');
-      }
-
-      let liquidRaf = null;
-      let lastLiquidEvent = null;
-
-      document.addEventListener('mousemove', function (e) {
-        lastLiquidEvent = e;
-        if (!liquidRaf) {
-          liquidRaf = requestAnimationFrame(() => {
-            liquidRaf = null;
-            if (!lastLiquidEvent) return;
-            let el = lastLiquidEvent.target;
-            for (let i = 0; i < 4; i++) {
-              if (!el || el === document.body) break;
-              if (isLiquidTarget(el) && !isExcluded(el)) {
-                const rect = el.getBoundingClientRect();
-                const relX = lastLiquidEvent.clientX - rect.left;
-                applyLiquid(el, relX, rect.width);
-                return;
-              }
-              el = el.parentElement;
-            }
-          });
-        }
-      }, { passive: true });
-
-      document.addEventListener('mouseout', function (e) {
-        const target = e.target;
-        let el = target;
-        for (let i = 0; i < 4; i++) {
-          if (!el || el === document.body) break;
-          if (isLiquidTarget(el) && el.classList.contains('liquid-active')) {
-            if (!el.contains(e.relatedTarget)) {
-              removeLiquid(el);
-            }
-            return;
-          }
-          el = el.parentElement;
-        }
-      }, { passive: true });
-    })();
   </script>
 {% endblock %}
 

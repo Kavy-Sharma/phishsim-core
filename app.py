@@ -533,6 +533,25 @@ def ensure_osint_scan_cache_table(cursor):
         )
     """)
 
+def ensure_invoices_table(cursor):
+    """Creates the invoices table if it does not exist."""
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS invoices (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            user_id INT NOT NULL,
+            invoice_number VARCHAR(100) NULL,
+            amount VARCHAR(50) NOT NULL DEFAULT '$24.00',
+            currency VARCHAR(10) DEFAULT 'usd',
+            status VARCHAR(50) NOT NULL DEFAULT 'PAID',
+            description VARCHAR(255) NOT NULL DEFAULT 'PhishSim.ai Pro Subscription',
+            hosted_invoice_url VARCHAR(500) NULL DEFAULT '#',
+            is_test BOOLEAN NOT NULL DEFAULT FALSE,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            INDEX idx_invoices_user (user_id),
+            INDEX idx_invoices_created (created_at)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    """)
+
 def ensure_core_tables(cursor):
     """Creates the campaigns and employees tables if they do not exist."""
     cursor.execute("""
@@ -572,6 +591,7 @@ def ensure_core_tables(cursor):
         # Table or column updates may already have been applied
         pass
     ensure_osint_scan_cache_table(cursor)
+    ensure_invoices_table(cursor)
 
 # Track the next time we should retry the schema bootstrap after a failure
 _SCHEMA_RETRY_AFTER = 0
@@ -6245,15 +6265,33 @@ def billing_portal():
             print(f"Failed to fetch live Stripe billing details: {e}")
             stripe_status = "active"
             next_billing = fallback_billing
-    elif is_pro and is_test_mode:
-        stripe_invoices.append({
-            "date": datetime.utcnow().strftime("%Y-%m-%d"),
-            "description": "PhishSim.ai Pro Subscription (Test mode)",
-            "amount": "$24.00",
-            "status": "PAID (TEST)",
-            "hosted_invoice_url": "#",
-            "is_test": True
-        })
+
+    # Query real stored invoice records for this user (including test-mode checkouts)
+    try:
+        db = get_db_connection()
+        cursor = db.cursor(dictionary=True)
+        ensure_invoices_table(cursor)
+        cursor.execute("""
+            SELECT id, invoice_number, amount, status, description, hosted_invoice_url, is_test, created_at 
+            FROM invoices 
+            WHERE user_id = %s 
+            ORDER BY created_at DESC
+        """, (user["id"],))
+        db_invs = cursor.fetchall() or []
+        cursor.close()
+        db.close()
+        for r in db_invs:
+            r_date = r["created_at"].strftime("%Y-%m-%d") if r.get("created_at") else datetime.utcnow().strftime("%Y-%m-%d")
+            stripe_invoices.append({
+                "date": r_date,
+                "description": r.get("description") or "PhishSim.ai Pro Subscription",
+                "amount": r.get("amount") or "$24.00",
+                "status": "Test" if r.get("is_test") else (r.get("status") or "PAID"),
+                "hosted_invoice_url": r.get("hosted_invoice_url") or "#",
+                "is_test": bool(r.get("is_test"))
+            })
+    except Exception as e:
+        print(f"Failed to query invoices table: {e}")
 
     # Limits and percentages for usage meters
     seats_max = 50
@@ -6354,7 +6392,16 @@ def billing_mock_charge():
     db = get_db_connection()
     cursor = db.cursor()
     try:
+        ensure_invoices_table(cursor)
         cursor.execute("UPDATE users SET role = 'pro' WHERE id = %s", (user["id"],))
+        
+        # Create a real invoice record flagged as test
+        inv_number = f"INV-TEST-{user['id']}-{int(datetime.utcnow().timestamp())}"
+        cursor.execute("""
+            INSERT INTO invoices (user_id, invoice_number, amount, status, description, hosted_invoice_url, is_test)
+            VALUES (%s, %s, '$24.00', 'PAID', 'PhishSim.ai Pro Subscription (Test mode)', '#', TRUE)
+        """, (user["id"], inv_number))
+        
         db.commit()
         record_audit_event(user["id"], "Upgraded to PRO via mock billing")
     finally:
@@ -6377,6 +6424,7 @@ def billing_success():
     stripe_customer_id = None
     stripe_subscription_id = None
     payment_verified = False
+    is_test_checkout = stripe.api_key.startswith("sk_test_mock") or not session_id
     
     if session_id and not stripe.api_key.startswith("sk_test_mock"):
         try:
@@ -6395,6 +6443,7 @@ def billing_success():
         db = get_db_connection()
         cursor = db.cursor()
         try:
+            ensure_invoices_table(cursor)
             cursor.execute("""
                 UPDATE users 
                 SET role = CASE WHEN role = 'admin' THEN 'admin' ELSE 'pro' END,
@@ -6402,6 +6451,17 @@ def billing_success():
                     pro_expires_at = DATE_ADD(NOW(), INTERVAL 30 DAY)
                 WHERE id = %s
             """, (stripe_customer_id, stripe_subscription_id, user["id"]))
+            
+            # Avoid inserting duplicate invoices if mock-charge already recorded one within the last 30 seconds
+            cursor.execute("SELECT id FROM invoices WHERE user_id = %s AND created_at >= DATE_SUB(NOW(), INTERVAL 30 SECOND)", (user["id"],))
+            if not cursor.fetchone():
+                inv_number = f"INV-{'TEST-' if is_test_checkout else ''}{user['id']}-{int(datetime.utcnow().timestamp())}"
+                inv_desc = 'PhishSim.ai Pro Subscription (Test mode)' if is_test_checkout else 'PhishSim.ai Pro Subscription'
+                cursor.execute("""
+                    INSERT INTO invoices (user_id, invoice_number, amount, status, description, hosted_invoice_url, is_test)
+                    VALUES (%s, %s, '$24.00', 'PAID', %s, '#', %s)
+                """, (user["id"], inv_number, inv_desc, is_test_checkout))
+            
             db.commit()
             record_audit_event(user["id"], "Upgraded to PRO via Stripe Checkout")
         finally:

@@ -318,7 +318,15 @@
                 </div>
 
                 <div class="email-body-content" id="lure-email-body">
-                    {{ lure_obj.lure_html | safe }}
+                    {% if lure_obj.lure_html and lure_obj.lure_html | trim | length > 15 and (lure_obj.lure_html | trim | lower) not in ['mail body', '<p>mail body</p>', 'mock body', '<p>mock body</p>', '<p>test</p>'] %}
+                        {{ lure_obj.lure_html | safe }}
+                    {% else %}
+                        <p>Your action is requested regarding the pending corporate security verification requirement.</p>
+                        <p>Please review and acknowledge the updated access instructions <mark class='trigger-highlight' tabindex='0' data-trigger='Urgency' data-tip='Urgency: Short turnaround forces immediate click.'>before end-of-day</mark> to prevent <mark class='trigger-highlight' tabindex='0' data-trigger='Loss Aversion' data-tip='Loss Aversion: Fear of losing service access.'>service interruptions</mark>.</p>
+                        <div style="margin-top: 18px;">
+                            <span style="display:inline-block; padding: 10px 22px; background: var(--primary, #06b6d4); color: var(--bg-main, #020617); border-radius: 6px; font-weight: 700; font-size: 0.9rem; letter-spacing: -0.01em;">Review Verification Notice</span>
+                        </div>
+                    {% endif %}
                 </div>
             </div>
 

@@ -801,15 +801,31 @@ def get_scenario_lure_and_clues(scenario_key, domain="company.com", click_count=
         for es in emails_sent:
             if es.get("body_html") or es.get("subject"):
                 if es.get("subject"):
-                    res["subject_html"] = _html.escape(str(es["subject"]))
+                    subj_str = str(es["subject"]).strip()
+                    if len(subj_str) > 5 and subj_str.lower() not in ["simulation subject", "subject", "test"]:
+                        res["subject_html"] = _html.escape(subj_str)
                 if es.get("sender_name"):
-                    res["sender_name"] = _html.escape(str(es["sender_name"]))
+                    sname_str = str(es["sender_name"]).strip()
+                    if sname_str.lower() not in ["phishsim", "test", "sender"]:
+                        res["sender_name"] = _html.escape(sname_str)
                 if es.get("body_html"):
                     body_val = str(es["body_html"]).strip()
-                    if len(body_val) > 20 and body_val.lower() not in ["email body", "<p>email body</p>", "body", "test"]:
+                    if len(body_val) > 25 and body_val.lower() not in ["email body", "<p>email body</p>", "body", "test", "<p>test</p>", "mail body", "<p>mail body</p>", "mock body", "<p>mock body</p>"]:
                         res["body_html"] = _annotate_lure_html(es["body_html"])
                 actual_breakdown = es.get("educational_breakdown")
                 break
+
+    # Attach interactive call to action button if present and not already in body
+    if res.get("cta_text") and res.get("body_html") and res["cta_text"] not in res["body_html"]:
+        cta_html = (
+            f"<div style='margin-top: 20px;'>"
+            f"<span style='display:inline-block; padding: 10px 22px; background: var(--primary, #06b6d4); "
+            f"color: var(--bg-main, #020617); border-radius: 6px; font-weight: 700; font-size: 0.9rem; "
+            f"box-shadow: 0 4px 14px color-mix(in srgb, var(--primary, #06b6d4) 25%, transparent); "
+            f"letter-spacing: -0.01em; cursor: default;'>{_html.escape(res['cta_text'])}</span>"
+            f"</div>"
+        )
+        res["body_html"] += cta_html
 
     res["sender"] = f"{res.get('sender_name')} &lt;{res.get('sender_email_html')}&gt;"
     res["subject"] = res.get("subject_html")
