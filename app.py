@@ -6232,13 +6232,27 @@ def billing_portal():
     
     trial_expires = None
     trial_days_left = None
+    trial_formatted_date = None
+    is_trial = False
     renewal_text = "Free tier evaluation"
 
     if user.get("pro_expires_at"):
-        trial_expires = user["pro_expires_at"].strftime("%B %d, %Y")
-        days = (user["pro_expires_at"] - datetime.utcnow()).days
-        trial_days_left = max(0, days)
-        renewal_text = f"Trial ends in {trial_days_left} days ({trial_expires})"
+        expires_at = user["pro_expires_at"]
+        if isinstance(expires_at, str):
+            try:
+                expires_at = datetime.fromisoformat(expires_at)
+            except Exception:
+                expires_at = datetime.utcnow()
+        if expires_at and expires_at > datetime.utcnow():
+            is_trial = True
+            trial_days_left = max(0, (expires_at - datetime.utcnow()).days)
+            day_num = expires_at.strftime("%d").lstrip("0")
+            month_name = expires_at.strftime("%b")
+            trial_formatted_date = f"{day_num} {month_name}"
+            trial_expires = expires_at.strftime("%B %d, %Y")
+            renewal_text = f"Pro trial · ends {trial_formatted_date}, then $24/month"
+        elif is_pro:
+            renewal_text = f"Renews on {fallback_billing}"
     elif is_pro:
         renewal_text = f"Renews on {fallback_billing}"
 
@@ -6246,6 +6260,8 @@ def billing_portal():
         try:
             sub = stripe.Subscription.retrieve(user["stripe_subscription_id"])
             stripe_status = sub.status
+            if sub.status == "active":
+                is_trial = False
             period_end = datetime.utcfromtimestamp(sub.current_period_end)
             next_billing = period_end.strftime("%B %d, %Y")
             renewal_text = f"Renews on {next_billing}"
@@ -6294,14 +6310,16 @@ def billing_portal():
         print(f"Failed to query invoices table: {e}")
 
     # Limits and percentages for usage meters
-    seats_max = 50
+    campaign_target_limit = 50
+    is_over_target_limit = bool(targets_count > campaign_target_limit)
+    seats_max = campaign_target_limit
     seats_used = min(targets_count, seats_max)
     seats_pct = min(100, round((targets_count / seats_max) * 100)) if seats_max else 0
 
     campaigns_limit_label = "Unlimited" if is_pro else "3 max"
     campaigns_pct = 100 if is_pro else min(100, round((campaigns_this_month / 3) * 100))
 
-    targets_pct = min(100, round((targets_count / seats_max) * 100)) if seats_max else 0
+    targets_pct = min(100, round((targets_count / campaign_target_limit) * 100)) if campaign_target_limit else 0
 
     recon_limit_label = "Unlimited" if is_pro else "15 / day"
     recon_pct = 100 if is_pro else min(100, round((recon_count / 15) * 100))
@@ -6310,6 +6328,10 @@ def billing_portal():
         "billing.html", 
         user=user,
         is_pro=is_pro,
+        is_trial=is_trial,
+        trial_formatted_date=trial_formatted_date,
+        campaign_target_limit=campaign_target_limit,
+        is_over_target_limit=is_over_target_limit,
         is_test_mode=is_test_mode,
         renewal_text=renewal_text,
         seats_used=seats_used,

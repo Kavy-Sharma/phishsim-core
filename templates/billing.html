@@ -146,6 +146,12 @@ body:not(.light-theme) .plan-badge.pro {
     border: 1px solid rgba(100, 116, 139, 0.2);
 }
 
+.plan-badge.trial {
+    background: color-mix(in srgb, var(--warning) 15%, transparent);
+    color: var(--warning);
+    border: 1px solid color-mix(in srgb, var(--warning) 30%, transparent);
+}
+
 .plan-price-row {
     display: flex;
     align-items: baseline;
@@ -201,6 +207,20 @@ body:not(.light-theme) .progress-track {
     background: var(--primary, #2563eb);
     border-radius: 999px;
     transition: width 0.4s ease;
+}
+
+.progress-fill.progress-amber {
+    background: var(--warning) !important;
+}
+
+.over-limit-notice {
+    color: var(--warning);
+    font-size: 0.78rem;
+    font-weight: 600;
+    margin-top: 0.35rem;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
 }
 
 .card-actions-row {
@@ -725,29 +745,42 @@ body:not(.light-theme) .btn-cancel-dismiss {
             <div class="card-top">
                 <div class="card-title-row">
                     <span class="card-heading">Current Plan</span>
-                    <span class="plan-badge {% if is_pro %}pro{% else %}free{% endif %}">
-                        {% if is_pro %}Pro{% else %}Free{% endif %}
+                    <span class="plan-badge {% if is_trial %}trial{% elif is_pro %}pro{% else %}free{% endif %}">
+                        {% if is_trial %}Pro Trial{% elif is_pro %}Pro{% else %}Free{% endif %}
                     </span>
                 </div>
 
                 <div class="plan-price-row">
-                    <span class="price-number">{% if is_pro %}$24{% else %}$0{% endif %}</span>
+                    {% if is_trial %}
+                    <span class="price-number">$0</span>
+                    <span class="price-unit">/ trial</span>
+                    {% elif is_pro %}
+                    <span class="price-number">$24</span>
                     <span class="price-unit">/ month</span>
+                    {% else %}
+                    <span class="price-number">$0</span>
+                    <span class="price-unit">/ month</span>
+                    {% endif %}
                 </div>
 
                 <p class="renewal-text" id="renewal-date-text">
                     {{ renewal_text }}
                 </p>
 
-                <!-- Seats Progress Bar -->
+                <!-- Campaign Target Capacity Progress Bar -->
                 <div class="seats-progress-wrap">
                     <div class="seats-meta">
-                        <span>Seats</span>
-                        <span><strong>{{ seats_used }}</strong> of {{ seats_max }} used</span>
+                        <span>Campaign target capacity</span>
+                        <span><strong>{{ targets_count }}</strong> / {{ seats_max }} per campaign</span>
                     </div>
                     <div class="progress-track">
-                        <div class="progress-fill" style="width: {{ seats_pct }}%;"></div>
+                        <div class="progress-fill {% if is_over_target_limit %}progress-amber{% endif %}" style="width: {{ seats_pct }}%;"></div>
                     </div>
+                    {% if is_over_target_limit %}
+                    <div class="over-limit-notice">
+                        <i class="ti ti-alert-triangle"></i> Over the 50-person campaign limit
+                    </div>
+                    {% endif %}
                 </div>
             </div>
 
@@ -809,8 +842,13 @@ body:not(.light-theme) .btn-cancel-dismiss {
                             <span class="usage-item-val" id="usage-people-val">{{ targets_count }} / {{ seats_max }}</span>
                         </div>
                         <div class="progress-track">
-                            <div class="progress-fill" style="width: {{ targets_pct }}%;"></div>
+                            <div class="progress-fill {% if is_over_target_limit %}progress-amber{% endif %}" style="width: {{ targets_pct }}%;"></div>
                         </div>
+                        {% if is_over_target_limit %}
+                        <div class="over-limit-notice">
+                            <i class="ti ti-alert-triangle"></i> Over the 50-person campaign limit
+                        </div>
+                        {% endif %}
                     </div>
 
                     <!-- PhishRecon Audits -->
@@ -828,9 +866,9 @@ body:not(.light-theme) .btn-cancel-dismiss {
 
             <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 1rem;">
                 {% if is_pro %}
-                Pro tier: unlimited campaigns and PhishRecon threat intelligence enabled.
+                Pro tier: includes up to 50 simulated recipients per campaign across unlimited campaigns and PhishRecon threat intelligence.
                 {% else %}
-                Free tier: 3 campaigns max and 15 daily PhishRecon scans.
+                Free tier: includes up to 50 simulated recipients per campaign, 3 campaigns max per month, and 15 daily PhishRecon scans.
                 {% endif %}
             </div>
         </div>
@@ -956,7 +994,11 @@ body:not(.light-theme) .btn-cancel-dismiss {
                     </ul>
                 </div>
 
-                {% if is_pro %}
+                {% if is_trial %}
+                <div style="padding: 10px 0; font-size: 0.88rem; font-weight: 600; color: var(--warning);">
+                    <i class="ti ti-sparkles"></i> Active Pro Trial
+                </div>
+                {% elif is_pro %}
                 <div style="padding: 10px 0; font-size: 0.88rem; font-weight: 600; color: var(--primary);">
                     <i class="ti ti-check"></i> Active subscription
                 </div>
