@@ -139,31 +139,35 @@
     <!-- ═══════════════════════════════════════════════════════════════
          2.1 TAB ROW: Overview · Campaigns · People · Activity (Sliding underline)
          ═══════════════════════════════════════════════════════════════ -->
-    <nav class="tab-row" id="dashboard-tab-row" aria-label="Dashboard navigation">
-        <a href="#overview" class="tab-item active" data-tab="overview" onclick="handleTabClick(event, 'overview')">
-            <span>Overview</span>
-        </a>
-        <a href="#campaigns" class="tab-item" data-tab="campaigns" onclick="handleTabClick(event, 'campaigns')">
-            <span>Campaigns</span>
-            {% if ns.all > 0 %}
-            <span class="badge badge-neutral tab-count-badge" id="tab-count-campaigns">{{ ns.all }}</span>
-            {% endif %}
-        </a>
-        <a href="#people" class="tab-item" data-tab="people" onclick="handleTabClick(event, 'people')">
-            <span>People</span>
-            {% if dept_count and (dept_count | int(0)) > 0 %}
-            <span class="badge badge-neutral tab-count-badge">{{ dept_count }}</span>
-            {% endif %}
-        </a>
-        <a href="#activity" class="tab-item" data-tab="activity" onclick="handleTabClick(event, 'activity')">
-            <span>Activity</span>
-            {% if recent_activities and recent_activities | length > 0 %}
-            <span class="badge badge-neutral tab-count-badge">{{ recent_activities | length }}</span>
-            {% endif %}
-        </a>
+    <div class="tab-nav-container">
+        <div class="tab-scroll-wrapper" id="dash-tab-scroll-wrapper">
+            <nav class="tab-row" id="dashboard-tab-row" aria-label="Dashboard navigation">
+                <a href="#overview" class="tab-item active" data-tab="overview" onclick="handleTabClick(event, 'overview')">
+                    <span>Overview</span>
+                </a>
+                <a href="#campaigns" class="tab-item" data-tab="campaigns" onclick="handleTabClick(event, 'campaigns')">
+                    <span>Campaigns</span>
+                    {% if ns.all > 0 %}
+                    <span class="badge badge-neutral tab-count-badge" id="tab-count-campaigns">{{ ns.all }}</span>
+                    {% endif %}
+                </a>
+                <a href="#people" class="tab-item" data-tab="people" onclick="handleTabClick(event, 'people')">
+                    <span>People</span>
+                    {% if dept_count and (dept_count | int(0)) > 0 %}
+                    <span class="badge badge-neutral tab-count-badge">{{ dept_count }}</span>
+                    {% endif %}
+                </a>
+                <a href="#activity" class="tab-item" data-tab="activity" onclick="handleTabClick(event, 'activity')">
+                    <span>Activity</span>
+                    {% if recent_activities and recent_activities | length > 0 %}
+                    <span class="badge badge-neutral tab-count-badge">{{ recent_activities | length }}</span>
+                    {% endif %}
+                </a>
 
-        <!-- Sliding underline indicator in --primary (250 ms) -->
-        <div class="tab-sliding-indicator" id="tab-sliding-indicator" aria-hidden="true"></div>
+                <!-- Sliding underline indicator in --primary (250 ms) -->
+                <div class="tab-sliding-indicator" id="tab-sliding-indicator" aria-hidden="true"></div>
+            </nav>
+        </div>
 
         <!-- "⋯" More Menu at the right of the tab row (Briefing, Export, Print) -->
         <div class="tab-more-menu-wrapper">
@@ -189,7 +193,7 @@
                 </button>
             </div>
         </div>
-    </nav>
+    </div>
 
     <!-- ═══════════════════════════════════════════════════════════════
          TAB CONTENT: OVERVIEW TAB PANE
@@ -954,7 +958,7 @@
                                     </td>
 
                                     <!-- Name + Scenario Subtitle -->
-                                    <th scope="row" class="campaign-cell-name">
+                                    <th scope="row" class="campaign-cell-name" data-label="Campaign">
                                         <div class="campaign-meta-stack">
                                             <span class="campaign-title-strong">
                                                 {{ camp.name }}
@@ -966,7 +970,7 @@
                                     </th>
 
                                     <!-- Status Badge -->
-                                    <td>
+                                    <td data-label="Status">
                                         {% if st_group == 'running' %}
                                         <span class="badge badge-status-running"><span class="campaign-status-dot pulse badge-dot-info"></span> Running</span>
                                         {% elif st_group == 'scheduled' %}
@@ -983,7 +987,7 @@
                                     </td>
 
                                     <!-- Progress Bar (Thin sent / total) -->
-                                    <td>
+                                    <td data-label="Progress">
                                         <div class="campaign-progress-stack">
                                             <div class="campaign-progress-bar">
                                                 <div class="campaign-progress-fill" data-progress="{{ progress_pct }}"></div>
@@ -993,16 +997,16 @@
                                     </td>
 
                                     <!-- Numbers (JetBrains Mono tabular) -->
-                                    <td class="mono-data td-num">{{ sent_count }}</td>
-                                    <td class="mono-data td-num">{{ opens_count }}</td>
-                                    <td class="mono-data td-num {% if clicks_count > 0 %}text-warning{% endif %}">{{ clicks_count }}</td>
-                                    <td class="mono-data td-num {% if reports_count > 0 %}text-success{% endif %}">{{ reports_count }}</td>
+                                    <td class="mono-data td-num" data-label="Sent">{{ sent_count }}</td>
+                                    <td class="mono-data td-num" data-label="Opened">{{ opens_count }}</td>
+                                    <td class="mono-data td-num {% if clicks_count > 0 %}text-warning{% endif %}" data-label="Clicked">{{ clicks_count }}</td>
+                                    <td class="mono-data td-num {% if reports_count > 0 %}text-success{% endif %}" data-label="Reported">{{ reports_count }}</td>
 
                                     <!-- Date (JetBrains Mono tabular) -->
-                                    <td class="mono-data td-num">{{ (camp.created_at | string)[:10] if camp.created_at else '—' }}</td>
+                                    <td class="mono-data td-num" data-label="Date">{{ (camp.created_at | string)[:10] if camp.created_at else '—' }}</td>
 
                                     <!-- "⋯" Row Menu -->
-                                    <td class="td-action" onclick="event.stopPropagation();">
+                                    <td class="td-action" data-label="Action" onclick="event.stopPropagation();">
                                         <div class="row-menu-wrapper">
                                             <button type="button" class="btn btn-sm btn-tertiary" onclick="toggleCampaignRowMenu(event, 'row-menu-{{ camp.id }}')" aria-label="More campaign actions" aria-haspopup="true">
                                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>
@@ -1297,6 +1301,17 @@
         const width = activeTabEl.offsetWidth;
         indicator.style.left = `${left}px`;
         indicator.style.width = `${width}px`;
+
+        const scrollWrap = document.getElementById('dash-tab-scroll-wrapper');
+        if (scrollWrap) {
+            const wrapLeft = scrollWrap.scrollLeft;
+            const wrapWidth = scrollWrap.clientWidth;
+            if (left < wrapLeft) {
+                scrollWrap.scrollTo({ left: Math.max(0, left - 16), behavior: 'smooth' });
+            } else if (left + width > wrapLeft + wrapWidth) {
+                scrollWrap.scrollTo({ left: left + width - wrapWidth + 24, behavior: 'smooth' });
+            }
+        }
     }
 
     window.handleTabClick = function(event, tabKey) {

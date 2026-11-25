@@ -161,7 +161,7 @@
                                 <td class="td-select">
                                     <input type="checkbox" class="campaign-checkbox" data-id="{{ c.id }}" data-is-finished="{{ '1' if is_fin else '0' }}" onchange="handleRowSelect(this)" aria-label="Select {{ c.name }}">
                                 </td>
-                                <td class="td-name">
+                                <td class="td-name" data-label="Campaign">
                                     <div class="camp-cell-name-wrap">
                                         <a href="/campaign-report/{{ c.id }}" class="camp-link-title">{{ c.name }}</a>
                                         <div class="camp-meta-subline">
@@ -172,7 +172,7 @@
                                         </div>
                                     </div>
                                 </td>
-                                <td>
+                                <td data-label="Status">
                                     {% if is_fin %}
                                     <span class="badge badge-success"><span class="campaign-status-dot badge-dot-success"></span>Finished</span>
                                     {% elif c_st in ('launching', 'running', 'in_progress') %}
@@ -183,7 +183,7 @@
                                     <span class="badge badge-neutral"><span class="campaign-status-dot badge-dot-neutral"></span>Draft</span>
                                     {% endif %}
                                 </td>
-                                <td class="td-progress">
+                                <td class="td-progress" data-label="Funnel">
                                     {% if c_sent > 0 %}
                                     <div class="funnel-progress-wrap" title="Sent: {{ c_sent }} · Opened: {{ c_open }} · Clicked: {{ c_click }} · Reported: {{ c_report }}">
                                         <div class="funnel-bar-track">
@@ -197,16 +197,16 @@
                                     <span class="text-muted" style="font-size: var(--text-xs);">No targets dispatched</span>
                                     {% endif %}
                                 </td>
-                                <td class="mono-data">{{ c_sent }}</td>
-                                <td class="mono-data">{{ c_open }} <span class="sub-stat">({{ c_or }}%)</span></td>
-                                <td class="mono-data {% if c_cr > 20.0 %}text-danger{% elif c_cr > 0 %}text-warning{% endif %}">
+                                <td class="mono-data" data-label="Sent">{{ c_sent }}</td>
+                                <td class="mono-data" data-label="Opened">{{ c_open }} <span class="sub-stat">({{ c_or }}%)</span></td>
+                                <td class="mono-data {% if c_cr > 20.0 %}text-danger{% elif c_cr > 0 %}text-warning{% endif %}" data-label="Clicked">
                                     {{ c_click }} <span class="sub-stat">({{ c_cr }}%)</span>
                                 </td>
-                                <td class="mono-data {% if c_report > 0 %}text-success{% endif %}">
+                                <td class="mono-data {% if c_report > 0 %}text-success{% endif %}" data-label="Reported">
                                     {{ c_report }} <span class="sub-stat">({{ c_rr }}%)</span>
                                 </td>
-                                <td class="mono-data">{{ (c.created_at ~ '')[:10] if c.created_at else '—' }}</td>
-                                <td class="td-action">
+                                <td class="mono-data" data-label="Date">{{ (c.created_at ~ '')[:10] if c.created_at else '—' }}</td>
+                                <td class="td-action" data-label="Action">
                                     <div class="camp-actions-dropdown">
                                         <a href="/campaign-report/{{ c.id }}" class="btn btn-sm btn-secondary" title="View details & report">
                                             <span>Report</span>

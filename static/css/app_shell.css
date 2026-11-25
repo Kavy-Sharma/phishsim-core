@@ -322,6 +322,68 @@ body.light-theme .app-table-wrapper {
   background-color: var(--bg-hover);
 }
 
+/* ── Stacked Cards Table on Phone (< 640px) ───────────────────────── */
+@media (max-width: 640px) {
+  .app-table-wrapper {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    overflow: visible !important;
+  }
+  .app-table,
+  .app-table tbody,
+  .app-table tr,
+  .app-table td {
+    display: block !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+  }
+  .app-table thead {
+    display: none !important;
+  }
+  .app-table tbody tr {
+    margin-bottom: 12px !important;
+    padding: 12px 14px !important;
+    background: var(--bg-surface) !important;
+    border: 1px solid var(--border-subtle) !important;
+    border-radius: var(--radius-card) !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04) !important;
+  }
+  body:not(.light-theme) .app-table tbody tr {
+    background: #0f172a !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+  }
+  .app-table tbody td {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    padding: 8px 0 !important;
+    border-bottom: 1px solid rgba(226, 232, 240, 0.4) !important;
+    text-align: right !important;
+  }
+  body:not(.light-theme) .app-table tbody td {
+    border-bottom-color: rgba(255, 255, 255, 0.04) !important;
+  }
+  .app-table tbody td:last-child {
+    border-bottom: none !important;
+  }
+  .app-table tbody td[data-label]::before {
+    content: attr(data-label);
+    font-weight: 600;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-muted);
+    text-align: left;
+    margin-right: 12px;
+    flex-shrink: 0;
+  }
+  .app-table td.td-select {
+    display: none !important;
+  }
+}
+
 /* JetBrains Mono ONLY for real data (IDs, IPs, hashes, timestamps, code) */
 .app-table td.is-mono,
 .app-table td.data-mono,
@@ -1674,16 +1736,57 @@ body.light-theme .ocean-caustics-layer {
    Dashboard Specific Primitives (Part 2)
    ═══════════════════════════════════════════════════════════════════ */
 
+/* ── Skeleton and Transient Layout Safety ──── */
+.skeleton-loader-overlay,
+.shared-page-skeleton {
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+}
+
+.skeleton-block {
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
 /* ── Tab Row (Plain text with sliding 250ms --primary underline) ──── */
+.tab-nav-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  max-width: 100%;
+  border-bottom: 1px solid var(--border-subtle);
+  margin-bottom: 1.75rem;
+  box-sizing: border-box;
+}
+
+.tab-scroll-wrapper {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  mask-image: linear-gradient(to right, black calc(100% - 24px), transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, black calc(100% - 24px), transparent 100%);
+}
+
+.tab-scroll-wrapper::-webkit-scrollbar {
+  display: none;
+}
+
 .tab-row {
   position: relative;
   display: flex;
   align-items: center;
   gap: 1.5rem;
-  border-bottom: 1px solid var(--border-subtle);
-  margin-bottom: 1.75rem;
+  border-bottom: none;
+  margin-bottom: 0;
   padding-bottom: 0;
-  width: 100%;
+  width: max-content;
   box-sizing: border-box;
 }
 
@@ -3088,6 +3191,8 @@ body.light-theme .view-toggle-segmented {
   bottom: 24px;
   left: 50%;
   transform: translateX(-50%) translateY(100px);
+  max-width: calc(100vw - 32px);
+  box-sizing: border-box;
   background: var(--bg-surface-raised);
   border: 1px solid var(--border-default);
   border-radius: var(--radius-card);
@@ -3356,6 +3461,21 @@ body.light-theme .campaign-card:hover {
   justify-content: space-between;
   margin-top: auto;
   padding-top: 0.75rem;
+}
+
+@media (max-width: 640px) {
+  .dash-page-container {
+    padding: 1rem 1rem !important;
+    overflow-x: hidden !important;
+  }
+  .campaign-card-footer {
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+  }
+  .card-actions-left {
+    flex-wrap: wrap !important;
+    gap: 6px !important;
+  }
 }
 
 /* Status badge variants */
@@ -6423,6 +6543,51 @@ dialog.compare-dialog::backdrop,
   border-radius: 50%;
   background: var(--success);
   display: inline-block;
+}
+
+/* ── Compact Wizard Stepper on Phone (< 640px) ─────────────────────── */
+@media (max-width: 640px) {
+  .wizard-header,
+  .wizard-stepper-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 12px !important;
+    padding: 0.75rem 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+  .wizard-stepper,
+  .wizard-stepper-inner {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    justify-content: flex-start !important;
+    gap: 6px !important;
+  }
+  /* Stepper becomes compact (numbers only + current step label) */
+  .wizard-stepper-step:not(.active) .stepper-label,
+  .wizard-step:not(.active) .stepper-label {
+    display: none !important;
+  }
+  .wizard-stepper-step.active .stepper-label,
+  .wizard-step.active .stepper-label {
+    display: inline-block !important;
+    font-size: 0.8125rem !important;
+    font-weight: 600 !important;
+    margin-left: 4px !important;
+    white-space: nowrap !important;
+  }
+  .wizard-step-divider,
+  .stepper-line {
+    width: 16px !important;
+    min-width: 10px !important;
+  }
+  .wizard-autosave-status,
+  .stepper-autosave-indicator {
+    margin-left: 0 !important;
+    font-size: 0.75rem !important;
+  }
 }
 
 .wizard-columns-layout {

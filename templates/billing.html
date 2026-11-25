@@ -3,15 +3,26 @@
 {% block content %}
 <style>
 .billing-page {
+    width: 100%;
     max-width: 1040px;
     margin: 2rem auto 4rem auto;
     padding: 0 1.5rem;
+    box-sizing: border-box;
+    overflow-x: hidden;
+}
+
+@media (max-width: 640px) {
+    .billing-page {
+        padding: 0 1rem;
+        margin: 1rem auto 3rem auto;
+    }
 }
 
 /* Thin Test Mode Banner */
 .test-mode-banner {
     display: flex;
     align-items: center;
+    flex-wrap: wrap;
     gap: 10px;
     background: rgba(245, 158, 11, 0.08);
     border: 1px solid rgba(245, 158, 11, 0.25);
@@ -20,6 +31,10 @@
     margin-bottom: 2rem;
     font-size: 0.88rem;
     color: #d97706;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    word-break: break-word;
 }
 
 body:not(.light-theme) .test-mode-banner {
@@ -334,6 +349,56 @@ body:not(.light-theme) .invoices-table td {
 
 .invoices-table tr:last-child td {
     border-bottom: none;
+}
+
+@media (max-width: 640px) {
+    .invoices-table,
+    .invoices-table tbody,
+    .invoices-table tr,
+    .invoices-table td {
+        display: block !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+    .invoices-table thead {
+        display: none !important;
+    }
+    .invoices-table tr {
+        margin-bottom: 12px !important;
+        padding: 12px 14px !important;
+        border: 1px solid var(--border-default, rgba(226, 232, 240, 0.8)) !important;
+        border-radius: 10px !important;
+        background: var(--bg-surface, #ffffff) !important;
+    }
+    body:not(.light-theme) .invoices-table tr {
+        background: rgba(255, 255, 255, 0.02) !important;
+        border-color: rgba(255, 255, 255, 0.08) !important;
+    }
+    .invoices-table td {
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        padding: 7px 0 !important;
+        border-bottom: 1px solid rgba(226, 232, 240, 0.4) !important;
+        text-align: right !important;
+    }
+    body:not(.light-theme) .invoices-table td {
+        border-bottom-color: rgba(255, 255, 255, 0.04) !important;
+    }
+    .invoices-table td:last-child {
+        border-bottom: none !important;
+    }
+    .invoices-table td[data-label]::before {
+        content: attr(data-label);
+        font-weight: 600;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--text-muted, #64748b);
+        text-align: left;
+        margin-right: 12px;
+        flex-shrink: 0;
+    }
 }
 
 .status-pill {
@@ -790,15 +855,15 @@ body:not(.light-theme) .btn-cancel-dismiss {
                 <tbody>
                     {% for inv in stripe_invoices %}
                     <tr>
-                        <td style="font-family: var(--font-mono); font-size: 0.84rem;">{{ inv.date }}</td>
-                        <td>{{ inv.description }}</td>
-                        <td style="font-weight: 600;">{{ inv.amount }}</td>
-                        <td>
+                        <td data-label="Date" style="font-family: var(--font-mono); font-size: 0.84rem;">{{ inv.date }}</td>
+                        <td data-label="Description">{{ inv.description }}</td>
+                        <td data-label="Amount" style="font-weight: 600;">{{ inv.amount }}</td>
+                        <td data-label="Status">
                             <span class="status-pill {% if inv.is_test %}test{% else %}paid{% endif %}">
                                 {{ inv.status }}
                             </span>
                         </td>
-                        <td>
+                        <td data-label="Download">
                             {% if inv.hosted_invoice_url and inv.hosted_invoice_url != '#' %}
                             <a href="{{ inv.hosted_invoice_url }}" target="_blank" class="invoice-download-link">
                                 Download <i class="ti ti-download"></i>

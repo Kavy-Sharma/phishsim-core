@@ -4,9 +4,110 @@
 {% block content %}
 <style>
 .users-container {
+    width: 100%;
     max-width: 1240px;
     margin: 1.5rem auto 3.5rem auto;
     padding: 0 1.5rem;
+    box-sizing: border-box;
+    overflow-x: hidden;
+}
+
+@media (max-width: 640px) {
+    .users-container {
+        padding: 0 1rem;
+        margin: 1rem auto 3rem auto;
+    }
+    .users-header-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
+    .users-header-actions {
+        width: 100%;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    .users-header-actions .btn-admin-nav,
+    .users-header-actions .btn-add-user {
+        flex: 1;
+        justify-content: center;
+    }
+    .users-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.75rem;
+    }
+    .search-box {
+        min-width: 0 !important;
+        width: 100%;
+    }
+    .filter-group {
+        width: 100%;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.5rem;
+    }
+    .filter-select {
+        width: 100%;
+        box-sizing: border-box;
+    }
+    .user-cell {
+        min-width: 0 !important;
+    }
+    .users-table,
+    .users-table tbody,
+    .users-table tr,
+    .users-table td {
+        display: block !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+    .users-table thead {
+        display: none !important;
+    }
+    .users-table tr {
+        margin-bottom: 12px !important;
+        padding: 12px 14px !important;
+        border: 1px solid var(--border-color, #e2e8f0) !important;
+        border-radius: 10px !important;
+        background: var(--bg-card, #ffffff) !important;
+    }
+    body:not(.light-theme) .users-table tr {
+        background: rgba(255, 255, 255, 0.02) !important;
+        border-color: rgba(255, 255, 255, 0.08) !important;
+    }
+    .users-table td {
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        padding: 7px 0 !important;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05) !important;
+        text-align: right !important;
+    }
+    body:not(.light-theme) .users-table td {
+        border-bottom-color: rgba(255, 255, 255, 0.04) !important;
+    }
+    .users-table td:last-child {
+        border-bottom: none !important;
+        padding-top: 10px !important;
+        justify-content: flex-end !important;
+    }
+    .users-table td[data-label]::before {
+        content: attr(data-label);
+        font-weight: 600;
+        font-size: 0.74rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--text-muted, #64748b);
+        text-align: left;
+        margin-right: 12px;
+        flex-shrink: 0;
+    }
+    .action-toolbar {
+        flex-wrap: wrap !important;
+        justify-content: flex-end !important;
+        gap: 6px !important;
+    }
 }
 
 /* Header */
@@ -860,7 +961,7 @@
                         data-campaigns="{{ u.campaigns_count or 0 }}"
                         data-created="{{ u.created_at.timestamp() if u.created_at else 0 }}"
                         data-last-login="{{ u.last_login_at.timestamp() if u.last_login_at else 0 }}">
-                        <td>
+                        <td data-label="User">
                             <div class="user-cell">
                                 <div class="user-avatar">
                                     {{ (u.name[0] if u.name else u.email[0])|upper }}
@@ -876,21 +977,21 @@
                                 </div>
                             </div>
                         </td>
-                        <td>
+                        <td data-label="Role">
                             {% if u.role == 'admin' %}
                                 <span class="badge-role-admin"><i class="ti ti-shield-check"></i> <span>Admin</span></span>
                             {% else %}
                                 <span class="badge-role-user"><i class="ti ti-user"></i> <span>Company User</span></span>
                             {% endif %}
                         </td>
-                        <td>
+                        <td data-label="Plan">
                             {% if u.plan == 'Pro' %}
                                 <span class="badge-plan-pro"><i class="ti ti-sparkles"></i> <span>Pro</span></span>
                             {% else %}
                                 <span class="badge-plan-free"><i class="ti ti-circle-check"></i> <span>Free</span></span>
                             {% endif %}
                         </td>
-                        <td>
+                        <td data-label="Status">
                             {% if u.is_disabled %}
                                 <span class="badge-status-disabled"><i class="ti ti-ban"></i> <span>Disabled</span></span>
                             {% elif u.email_verified %}
@@ -899,17 +1000,17 @@
                                 <span class="badge-status-pending"><i class="ti ti-clock"></i> <span>Pending</span></span>
                             {% endif %}
                         </td>
-                        <td>
+                        <td data-label="Last Login">
                             {% if u.last_login_at %}
                                 <span style="font-size:0.84rem;">{{ u.last_login_at.strftime('%b %d, %Y') }}</span>
                             {% else %}
                                 <span style="color:var(--text-muted); font-size:0.84rem;">Never</span>
                             {% endif %}
                         </td>
-                        <td>
+                        <td data-label="Campaigns">
                             <span style="font-weight:600; font-size:0.84rem;">{{ u.campaigns_count or 0 }}</span>
                         </td>
-                        <td style="text-align: right;">
+                        <td data-label="Actions" style="text-align: right;">
                             <div class="action-toolbar">
                                 <!-- Details Drawer Button -->
                                 <button type="button" class="btn-action text-primary" onclick="openUserDetailDrawer({{ u.id }})" title="View user profile and audit trail">
