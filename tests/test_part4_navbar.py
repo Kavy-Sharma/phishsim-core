@@ -8,56 +8,27 @@ import urllib.request
 import pytest
 from playwright.sync_api import sync_playwright
 
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 ARTIFACTS_DIR = r"C:\Users\user\.gemini\antigravity-ide\brain\aa7bd232-df2c-41e9-9645-8462240b7e2f\screenshots"
 os.makedirs(ARTIFACTS_DIR, exist_ok=True)
 
+from tests.test_server_helper import start_test_server, stop_test_server
+
 BASE_URL = "http://127.0.0.1:5050"
+SERVER_PROC = None
 
 AXE_CDN = "https://cdnjs.cloudflare.com/ajax/libs/axe-core/4.8.4/axe.min.js"
 
 
-def is_port_open(host="127.0.0.1", port=5050):
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    try:
-        s.settimeout(1.0)
-        s.connect((host, port))
-        s.close()
-        return True
-    except Exception:
-        return False
-
-
-def ensure_server_running():
-    if is_port_open():
-        print(f"[SERVER] Server is already running on {BASE_URL}")
-        return None
-    
-    print("[SERVER] Starting Flask server on port 5050...")
-    scratch_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "scratch")
-    os.makedirs(scratch_dir, exist_ok=True)
-    log_file = open(os.path.join(scratch_dir, "flask_server.log"), "w", encoding="utf-8")
-    proc = subprocess.Popen(
-        [sys.executable, "app.py"],
-        stdout=log_file,
-        stderr=subprocess.STDOUT,
-        cwd=os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    )
-    
-    for _ in range(50):
-        if is_port_open():
-            print(f"[SERVER] Flask server ready on {BASE_URL}")
-            return proc
-        time.sleep(0.5)
-    
-    raise RuntimeError("Could not start Flask server on port 5050")
-
-
 @pytest.fixture(scope="module", autouse=True)
 def run_flask_server():
-    proc = ensure_server_running()
+    global SERVER_PROC, BASE_URL
+    SERVER_PROC, BASE_URL, port = start_test_server()
     yield
-    if proc:
+    if SERVER_PROC:
         print("[SERVER] Terminating spawned Flask server...")
+        stop_test_server(SERVER_PROC)
         proc.terminate()
 
 
@@ -82,7 +53,7 @@ def safe_screenshot(p, path):
 
 
 def test_navbar_full_suite():
-    ensure_server_running()
+    # Server managed by run_flask_server fixture
     axe_source = get_axe_script()
 
     with sync_playwright() as p:

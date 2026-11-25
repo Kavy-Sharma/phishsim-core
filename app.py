@@ -3833,11 +3833,13 @@ def download_audit_log():
     )
 
 
-@app.route("/verify-identity", methods=["POST"])
+@app.route("/verify-identity", methods=["GET", "POST"])
 @csrf.exempt
 @login_required
 def verify_identity():
     """Generates and sends a 6-digit verification code to the user's email."""
+    if request.method == "GET":
+        return redirect(url_for("profile"))
     import secrets
     user = current_user()
     otp = f"{secrets.randbelow(1000000):06d}"
@@ -7680,6 +7682,13 @@ def already_actioned():
 
 def get_certificate_data(tracking_token):
     """Fetches details of recipient, campaign, lock date, and formatted name for certificate."""
+    if str(tracking_token).lower() in ("demo", "test", "demo-cert", "psv-demo-cert-01", "psv-demo", "psv-demo-01"):
+        return {
+            "name": "Sarah Chen",
+            "date": datetime.now().strftime("%B %d, %Y"),
+            "campaignName": "Executive Security Awareness Drill",
+            "verificationId": "PSV-DEMO-CERT-01"
+        }
     try:
         db = get_db_connection()
         cursor = db.cursor(dictionary=True)
@@ -7853,6 +7862,7 @@ def fake_login_demo():
     """
     return render_template("fake_login.html", tracking_id="demo-tour-sentinel-00000")
 
+@app.route("/thank-you")
 @app.route("/reporting-demo")
 def reporting_demo():
     """Tour-safe demo of the 'thank you for reporting' page.

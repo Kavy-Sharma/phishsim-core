@@ -8,52 +8,27 @@ import subprocess
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from playwright.sync_api import sync_playwright
+from tests.test_server_helper import start_test_server, stop_test_server
 
 ARTIFACTS_DIR = r"C:\Users\user\.gemini\antigravity-ide\brain\4a12513e-979f-43a2-833d-a42f1dbd9591"
 
 
-def is_port_open(host="127.0.0.1", port=5050):
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.settimeout(0.5)
-    try:
-        s.connect((host, port))
-        s.close()
-        return True
-    except (socket.error, ConnectionRefusedError):
-        return False
-
-
-def ensure_server_running():
-    if is_port_open():
-        return None
-    proc = subprocess.Popen(
-        [sys.executable, "app.py"],
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-        cwd=os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    )
-    for _ in range(50):
-        if is_port_open():
-            return proc
-        time.sleep(0.5)
-    raise RuntimeError("Could not start Flask server on port 5050")
-
-
 def run_browser_verification():
-    proc = ensure_server_running()
-    print("Starting Playwright browser verification for PhishRecon Part 2...")
-    with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)
+    proc, base_url, port = start_test_server()
+    print(f"Starting Playwright browser verification for PhishRecon Part 2 on {base_url}...")
+    try:
+        with sync_playwright() as p:
+            browser = p.chromium.launch(headless=True)
 
-        # ── 1. Desktop & Hostile Packet Injection Test ──────────────────
-        print("\n--- TEST A: Hostile Packet Replay & XSS Proof ---")
-        ctx = browser.new_context(viewport={"width": 1440, "height": 900})
-        page = ctx.new_page()
+            # ── 1. Desktop & Hostile Packet Injection Test ──────────────────
+            print("\n--- TEST A: Hostile Packet Replay & XSS Proof ---")
+            ctx = browser.new_context(viewport={"width": 1440, "height": 900})
+            page = ctx.new_page()
 
-        dialog_events = []
-        page.on("dialog", lambda d: dialog_events.append(d.message))
+            dialog_events = []
+            page.on("dialog", lambda d: dialog_events.append(d.message))
 
-        page.goto("http://127.0.0.1:5050/exposure-report?sample=default&debug=1", wait_until="domcontentloaded")
+            page.goto(f"{base_url}/exposure-report?sample=default&debug=1", wait_until="domcontentloaded")
         page.wait_for_timeout(1000)
 
         # Inject hostile packet through dispatch
@@ -154,7 +129,7 @@ def run_browser_verification():
             demo_domain = "acme-assets.example" if var == "no_mail" else "acme.example"
 
             # ── Dark Theme ──
-            page.goto(f"http://127.0.0.1:5050/exposure-report?sample={var}&debug=1", wait_until="domcontentloaded")
+            page.goto(f"{base_url}/exposure-report?sample={var}&debug=1", wait_until="domcontentloaded")
             page.evaluate(f"() => {{ document.documentElement.setAttribute('data-theme', 'dark'); document.body.classList.remove('light-theme'); if (window.__pr) window.__pr.run('{demo_domain}', {{ sample: true, variant: '{var}', instant: true }}); }}")
             page.wait_for_timeout(600)
 
@@ -191,7 +166,7 @@ def run_browser_verification():
         print("\n--- TEST F: Mobile (390px) Viewport Check ---")
         mobile_ctx = browser.new_context(viewport={"width": 390, "height": 844})
         mobile_page = mobile_ctx.new_page()
-        mobile_page.goto("http://127.0.0.1:5050/exposure-report?sample=default&debug=1", wait_until="domcontentloaded")
+        mobile_page.goto(f"{base_url}/exposure-report?sample=default&debug=1", wait_until="domcontentloaded")
         mobile_page.evaluate("() => { if (window.__pr) window.__pr.run('acme.example', { sample: true, variant: 'default', instant: true }); }")
         mobile_page.wait_for_timeout(600)
         mobile_png = os.path.join(ARTIFACTS_DIR, "mobile_390px_variant_default.png")
@@ -201,6 +176,8 @@ def run_browser_verification():
         mobile_ctx.close()
         ctx.close()
         browser.close()
+    finally:
+        stop_test_server(proc)
 
     print("\n[PASS] ALL PLAYWRIGHT BROWSER VERIFICATIONS PASSED SUCCESSFULLY!")
 

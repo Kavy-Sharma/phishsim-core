@@ -226,9 +226,11 @@ class TestSSRFPrevention(unittest.TestCase):
 
     def test_probe_public_ip_does_not_follow_redirects(self):
         """probe_exact_lookalike_ip sends minimal request and never follows redirects."""
-        with patch("http.client.HTTPConnection") as mock_conn_cls:
+        with patch("http.client.HTTPSConnection") as mock_https_cls, \
+             patch("http.client.HTTPConnection") as mock_http_cls:
             mock_conn = MagicMock()
-            mock_conn_cls.return_value = mock_conn
+            mock_https_cls.return_value = mock_conn
+            mock_http_cls.return_value = mock_conn
 
             mock_resp = MagicMock()
             mock_resp.status = 301

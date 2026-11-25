@@ -145,4 +145,44 @@ This platform is in a state of continuous, aggressive development. I am dedicate
 - Employee Training Portal Integration
 - API Webhooks for Enterprise SIEM Integration
 
+## 🧪 Running Tests
+
+PhishSim AI comes with comprehensive test coverage including hermetic unit tests, database migration tests, security evaluation suites, and Playwright browser smoke tests.
+
+### Required Environment Variables
+
+When running against a live environment, the test suites leverage the following variables (or safe ephemeral defaults):
+
+| Variable | Description | Default / Test Fallback |
+| :--- | :--- | :--- |
+| `DB_HOST` | MySQL hostname | `127.0.0.1` |
+| `DB_PORT` | MySQL port | `3306` |
+| `DB_USER` | MySQL username | `root` |
+| `DB_PASSWORD` | MySQL password | `""` |
+| `DB_NAME` | Database name | `phishsim_db` |
+| `FLASK_SECRET_KEY` | Flask session secret key | Ephemeral auto-generated in tests |
+| `DECOY_ENCRYPTION_KEY` | Fernet key for decoy payload encryption | Ephemeral auto-generated in tests |
+| `APP_BASE_URL` | Application URL for routing assertions | `http://127.0.0.1:<dynamic_port>` |
+| `PORT` | Listening port | Dynamically assigned via free port helper |
+
+### Test Suites Execution
+
+1. **Run Unit and Hermetic Tests (No Database Required)**:
+   ```bash
+   pytest tests/test_phishrecon.py tests/test_part_c_ai_report.py
+   ```
+   *Note: SSRF prevention probes and mock network checks are completely hermetic with zero outbound sockets.*
+
+2. **Run All Pytest Suites**:
+   ```bash
+   pytest
+   ```
+   *Browser and database tests utilize `tests/test_server_helper.py` to automatically detect free ports and skip gracefully with a clear explanatory notice if MySQL is offline.*
+
+3. **Run Production Playwright Smoke Test Matrix**:
+   ```bash
+   python scratch/playwright_smoke_test.py
+   ```
+   *Executes dark/light/mobile viewport matrices, asserts `scrollWidth <= clientWidth` at 375px phone widths with 0px overflow, validates WCAG 2.0 accessibility with Axe-core, and guarantees zero requests leave localhost.*
+
 *Built with 💙 by Kavy Sharma — "Securing the human element, one byte at a time."*

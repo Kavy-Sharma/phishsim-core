@@ -5,46 +5,15 @@ import time
 import socket
 import subprocess
 import requests
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 from playwright.sync_api import sync_playwright
+from tests.test_server_helper import start_test_server, stop_test_server
 
 BASE_URL = "http://127.0.0.1:5050"
 ARTIFACTS_DIR = r"C:\Users\user\.gemini\antigravity-ide\brain\40571adf-05e2-49f2-ad21-63d329593ba3\screenshots"
 os.makedirs(ARTIFACTS_DIR, exist_ok=True)
-
-
-def is_port_open(host="127.0.0.1", port=5050):
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    try:
-        s.settimeout(1.0)
-        s.connect((host, port))
-        s.close()
-        return True
-    except Exception:
-        return False
-
-
-def ensure_server_running():
-    if is_port_open():
-        print(f"[SERVER] Server is already running on {BASE_URL}")
-        return None
-    
-    print("[SERVER] Starting Flask server on port 5050...")
-    log_file = open(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "scratch", "flask_server.log"), "w", encoding="utf-8")
-    proc = subprocess.Popen(
-        [sys.executable, "app.py"],
-        stdout=log_file,
-        stderr=subprocess.STDOUT,
-        cwd=os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    )
-    
-    # Wait up to 25 seconds for server to come up
-    for _ in range(50):
-        if is_port_open():
-            print(f"[SERVER] Flask server ready on {BASE_URL}")
-            return proc
-        time.sleep(0.5)
-    
-    raise RuntimeError("Could not start Flask server on port 5050")
 
 
 def block_external_cdns(route):
@@ -62,7 +31,8 @@ def block_external_cdns(route):
 
 
 def test_part4_playwright_suite():
-    server_proc = ensure_server_running()
+    global BASE_URL
+    server_proc, BASE_URL, port = start_test_server()
 
     try:
         with sync_playwright() as p:
@@ -367,8 +337,7 @@ def test_part4_playwright_suite():
     finally:
         if server_proc:
             print("[SERVER] Terminating spawned Flask server...")
-            server_proc.terminate()
-            server_proc.wait()
+            stop_test_server(server_proc)
 
 
 if __name__ == "__main__":
