@@ -318,13 +318,24 @@
                 </div>
 
                 <div class="email-body-content" id="lure-email-body">
-                    {% if lure_obj.lure_html and lure_obj.lure_html | trim | length > 15 and (lure_obj.lure_html | trim | lower) not in ['mail body', '<p>mail body</p>', 'mock body', '<p>mock body</p>', '<p>test</p>'] %}
+                    {% set clean_lure_text = (lure_obj.lure_html or '') | striptags | trim | lower %}
+                    {% if lure_obj.lure_html and clean_lure_text | length >= 20 and clean_lure_text not in ['mail body', 'mock body', 'test', 'test body', 'body'] and 'mail body' not in clean_lure_text %}
                         {{ lure_obj.lure_html | safe }}
                     {% else %}
-                        <p>Your action is requested regarding the pending corporate security verification requirement.</p>
-                        <p>Please review and acknowledge the updated access instructions <mark class='trigger-highlight' tabindex='0' data-trigger='Urgency' data-tip='Urgency: Short turnaround forces immediate click.'>before end-of-day</mark> to prevent <mark class='trigger-highlight' tabindex='0' data-trigger='Loss Aversion' data-tip='Loss Aversion: Fear of losing service access.'>service interruptions</mark>.</p>
-                        <div style="margin-top: 18px;">
-                            <span style="display:inline-block; padding: 10px 22px; background: var(--primary, #06b6d4); color: var(--bg-main, #020617); border-radius: 6px; font-weight: 700; font-size: 0.9rem; letter-spacing: -0.01em;">Review Verification Notice</span>
+                        <div style="border-bottom: 1px solid var(--border-default); padding-bottom: 12px; margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between;">
+                            <span style="font-size: 0.76rem; font-family: var(--font-mono); color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;"><i class="ti ti-shield-alert" style="color: var(--warning);"></i> Automated Security Drill Dispatch</span>
+                            <span style="font-size: 0.72rem; padding: 2px 8px; border-radius: 4px; background: rgba(245, 158, 11, 0.12); color: var(--warning); font-weight: 600;">High Urgency Lure</span>
+                        </div>
+                        <p style="margin-bottom: 12px;">This is an automated notice from the <mark class="trigger-highlight" tabindex="0" data-trigger="Authority" data-tip="Authority trigger: Impersonates central IT leadership to suppress critical scrutiny.">Corporate IT Security Team</mark>.</p>
+                        <p style="margin-bottom: 12px;">All company employees are required to verify their multi-factor credentials and acknowledge the updated access instructions <mark class="trigger-highlight" tabindex="0" data-trigger="Urgency" data-tip="Urgency trigger: Strict deadline creates artificial panic and bypasses analytical thinking.">before 5:00 PM today</mark> to prevent <mark class="trigger-highlight" tabindex="0" data-trigger="Loss Aversion" data-tip="Loss Aversion: Exploits fear of sudden account lockout or disruption.">immediate suspension of single sign-on access</mark>.</p>
+                        <p style="margin-bottom: 18px; color: var(--text-secondary); font-size: 0.88rem;">Please access the verification portal below using your corporate network credentials:</p>
+                        <div style="margin: 18px 0 14px 0;">
+                            <span style="display:inline-flex; align-items: center; gap: 8px; padding: 10px 22px; background: var(--primary, #00f2fe); color: #090c15; border-radius: 8px; font-weight: 700; font-size: 0.88rem; letter-spacing: -0.01em; box-shadow: 0 4px 14px rgba(0, 242, 254, 0.25);">
+                                <i class="ti ti-lock"></i> Review & Authenticate Credentials
+                            </span>
+                        </div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted); border-top: 1px dashed var(--border-default); padding-top: 10px; margin-top: 16px;">
+                            <span>Security Ref: SIM-{{ campaign.id or 8921 }} &bull; Transmission protocol: TLS 1.3 encrypted</span>
                         </div>
                     {% endif %}
                 </div>

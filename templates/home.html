@@ -2310,8 +2310,8 @@
     .section-title {
       font-size: clamp(2rem, 3.8vw, 3rem) !important;
       font-weight: 800 !important;
-      letter-spacing: -0.03em !important;
-      font-family: var(--font-heading), 'Space Grotesk', sans-serif !important;
+      letter-spacing: -0.025em !important;
+      font-family: var(--font-heading) !important;
       line-height: 1.18 !important;
       margin-bottom: 16px !important;
       display: block !important;
@@ -2328,6 +2328,10 @@
       margin-left: auto !important;
       margin-right: auto !important;
       max-width: 860px !important;
+      display: flex !important;
+      flex-direction: column !important;
+      align-items: center !important;
+      justify-content: center !important;
     }
 
     .attack-chain-header .section-title,
@@ -2346,9 +2350,9 @@
       margin-left: auto !important;
       margin-right: auto !important;
       width: 100% !important;
-      font-family: var(--font-heading), 'Space Grotesk', sans-serif !important;
+      font-family: var(--font-heading) !important;
       font-weight: 800 !important;
-      letter-spacing: -0.03em !important;
+      letter-spacing: -0.025em !important;
     }
 
     .section-sub {
@@ -3488,7 +3492,7 @@
     h4.liquid-active,
     h5.liquid-active,
     h6.liquid-active,
-    .liquid-text.liquid-active,
+    .liquid-text.liquid-active:not(.holding-badge),
     .section-title.liquid-active,
     .card-title.liquid-active,
     .page-title.liquid-active,
@@ -3666,16 +3670,16 @@
     .attack-chain-header .section-title {
       margin-bottom: 12px;
       color: var(--text-primary);
-      font-family: var(--font-heading), 'Space Grotesk', sans-serif !important;
+      font-family: var(--font-heading) !important;
       font-size: clamp(2rem, 4vw, 3rem);
       font-weight: 800 !important;
-      letter-spacing: -0.03em !important;
+      letter-spacing: -0.025em !important;
       text-align: center !important;
     }
 
     .attack-chain-header .section-subtitle {
       color: var(--text-secondary);
-      font-family: var(--font-heading), 'Space Grotesk', sans-serif;
+      font-family: var(--font-heading);
       font-size: 1.1rem;
       text-align: center;
     }
@@ -4521,13 +4525,13 @@
   <section id="threat-sandbox"
     style="padding: 100px 5% 80px; background: var(--bg-surface, var(--bg)); position: relative; z-index: 2; border-top: 1px solid var(--border-subtle, var(--border));">
     <div style="max-width: 1200px; margin: 0 auto;">
-      <div style="text-align: center; margin-bottom: 50px;">
-        <div class="section-eyebrow reveal">Threat Sandbox</div>
-        <h2 class="section-title reveal"
-          style="font-size: clamp(2rem, 3.5vw, 2.8rem); font-weight: 700; margin: 16px 0; line-height: 1.25;">
+      <div class="threat-sandbox-header text-center reveal" style="text-align: center; margin: 0 auto 50px auto; max-width: 860px;">
+        <div class="section-eyebrow" style="margin: 0 auto 1.25rem;">Threat Sandbox</div>
+        <h2 class="section-title"
+          style="font-family: var(--font-heading) !important; font-size: clamp(2rem, 3.8vw, 2.85rem); font-weight: 800; margin: 16px auto; line-height: 1.25; text-align: center;">
           Interactive Threat Lab</h2>
-        <p class="section-sub reveal"
-          style="font-size: 1.05rem; color: var(--text-secondary); max-width: 600px; margin: 0 auto; line-height: 1.6;">Select a
+        <p class="section-sub"
+          style="font-size: 1.05rem; color: var(--text-secondary); max-width: 600px; margin: 0 auto; line-height: 1.6; text-align: center;">Select a
           scenario to load a live simulation email. Click the action links to witness the simulated compromise and live
           event analytics.</p>
       </div>
@@ -5446,10 +5450,10 @@
   <!-- CAPABILITIES -->
   <!-- CAPABILITIES -->
   <section id="capabilities">
-    <div class="text-center reveal">
-      <div class="section-eyebrow">Engine Architecture</div>
-      <h2 class="section-title">End-to-End Simulation Infrastructure</h2>
-      <p class="section-sub">Everything required to design, dispatch, monitor, and remediate organizational phishing vulnerability.</p>
+    <div class="text-center reveal" style="text-align: center; margin: 0 auto 50px auto; max-width: 860px;">
+      <div class="section-eyebrow" style="margin: 0 auto 1.25rem;">Engine Architecture</div>
+      <h2 class="section-title" style="font-family: var(--font-heading) !important; font-size: clamp(2rem, 3.8vw, 2.85rem); font-weight: 800; line-height: 1.2; margin-bottom: 1rem; color: var(--text-primary); text-align: center;">End-to-End Simulation Infrastructure</h2>
+      <p class="section-sub" style="font-size: 1.05rem; color: var(--text-secondary); max-width: 620px; margin: 0 auto; line-height: 1.65; text-align: center;">Everything required to design, dispatch, monitor, and remediate organizational phishing vulnerability.</p>
     </div>
 
     <div class="caps-grid">
@@ -6073,8 +6077,8 @@
   <section id="stats">
     <div class="stats-header reveal" style="text-align: center; max-width: 860px; margin: 0 auto 3.5rem;">
       <div class="section-eyebrow" style="margin: 0 auto 1.25rem;">Measurable Impact</div>
-      <h2 class="section-title" style="font-family: var(--font-heading), 'Space Grotesk', sans-serif; font-size: clamp(2rem, 4vw, 2.85rem); font-weight: 800; line-height: 1.2; margin-bottom: 1rem; color: var(--text-primary);">What Continuous Simulation Reveals</h2>
-      <p class="section-sub" style="font-size: 1.05rem; color: var(--text-secondary); max-width: 620px; margin: 0 auto; line-height: 1.65;">{% if public_stats.total_simulations and public_stats.total_simulations > 0 %}Live aggregate metrics from simulation campaigns executed to date.{% else %}Engine performance benchmarks and threat surface coverage.{% endif %}</p>
+      <h2 class="section-title" style="font-family: var(--font-heading) !important; font-size: clamp(2rem, 4vw, 2.85rem); font-weight: 800; line-height: 1.2; margin-bottom: 1rem; color: var(--text-primary); text-align: center;">What Continuous Simulation Reveals</h2>
+      <p class="section-sub" style="font-size: 1.05rem; color: var(--text-secondary); max-width: 620px; margin: 0 auto; line-height: 1.65; text-align: center;">{% if public_stats.total_simulations and public_stats.total_simulations > 0 %}Live aggregate metrics from simulation campaigns executed to date.{% else %}Engine performance benchmarks and threat surface coverage.{% endif %}</p>
     </div>
 
     <div class="stats-inner">

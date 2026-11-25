@@ -260,10 +260,18 @@
     display: flex;
     align-items: center;
     gap: 0.6rem;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+}
+
+@media (max-width: 1024px) {
+    .filter-group {
+        flex-wrap: wrap;
+    }
 }
 
 .filter-select {
+    width: auto !important;
+    flex: 0 0 auto;
     padding: 8px 12px;
     border-radius: 8px;
     border: 1px solid var(--border-color, #cbd5e1);
@@ -272,6 +280,102 @@
     font-size: 0.84rem;
     outline: none;
     cursor: pointer;
+}
+
+/* Skeleton Loading */
+.skeleton-row td {
+    padding: 14px 16px;
+}
+.skeleton-box {
+    background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 25%, rgba(255, 255, 255, 0.12) 37%, rgba(255, 255, 255, 0.05) 63%);
+    background-size: 400% 100%;
+    animation: skeleton-shimmer 1.4s ease infinite;
+    border-radius: 4px;
+}
+body.light-theme .skeleton-box {
+    background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 37%, #f1f5f9 63%);
+    background-size: 400% 100%;
+}
+@keyframes skeleton-shimmer {
+    0% { background-position: 100% 50%; }
+    100% { background-position: 0 50%; }
+}
+
+/* Action Dropdown Menu ("⋯") */
+.user-row-dropdown {
+    position: relative;
+    display: inline-block;
+}
+.btn-menu-trigger {
+    padding: 6px 10px !important;
+    font-size: 1rem !important;
+    line-height: 1 !important;
+}
+.user-action-menu {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 4px);
+    z-index: 100;
+    min-width: 180px;
+    background: var(--bg-card, #ffffff);
+    border: 1px solid var(--border-color, #e2e8f0);
+    border-radius: 8px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+    padding: 6px;
+    display: none;
+    flex-direction: column;
+    gap: 2px;
+}
+body:not(.light-theme) .user-action-menu {
+    background: #0f172a;
+    border-color: rgba(255, 255, 255, 0.12);
+    box-shadow: 0 14px 30px rgba(0, 0, 0, 0.5);
+}
+.user-action-menu.show {
+    display: flex;
+    animation: menuFadeIn 0.15s ease forwards;
+}
+@keyframes menuFadeIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.action-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 7px 10px;
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--text-primary, #0f172a);
+    background: transparent;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.15s ease, color 0.15s ease;
+    box-sizing: border-box;
+}
+.action-menu-item:hover:not(:disabled),
+.action-menu-item:focus-visible:not(:disabled) {
+    background: var(--bg-hover, rgba(0, 0, 0, 0.05));
+    outline: none;
+}
+body:not(.light-theme) .action-menu-item:hover:not(:disabled),
+body:not(.light-theme) .action-menu-item:focus-visible:not(:disabled) {
+    background: rgba(255, 255, 255, 0.08);
+}
+.action-menu-item:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+.action-menu-divider {
+    height: 1px;
+    background: var(--border-color, #e2e8f0);
+    margin: 4px 0;
+}
+body:not(.light-theme) .action-menu-divider {
+    background: rgba(255, 255, 255, 0.08);
 }
 
 .users-stats-bar {
@@ -948,6 +1052,27 @@
                         <th style="text-align: right;">Actions</th>
                     </tr>
                 </thead>
+                <tbody id="users-skeleton-tbody" style="display: none;">
+                    {% for _ in range(5) %}
+                    <tr class="skeleton-row">
+                        <td>
+                            <div style="display:flex;align-items:center;gap:12px;">
+                                <div class="skeleton-box" style="width:36px;height:36px;border-radius:50%;flex-shrink:0;"></div>
+                                <div style="display:flex;flex-direction:column;gap:6px;width:140px;">
+                                    <div class="skeleton-box" style="width:85%;height:14px;"></div>
+                                    <div class="skeleton-box" style="width:60%;height:11px;"></div>
+                                </div>
+                            </div>
+                        </td>
+                        <td><div class="skeleton-box" style="width:64px;height:22px;border-radius:12px;"></div></td>
+                        <td><div class="skeleton-box" style="width:50px;height:22px;border-radius:12px;"></div></td>
+                        <td><div class="skeleton-box" style="width:55px;height:22px;border-radius:12px;"></div></td>
+                        <td><div class="skeleton-box" style="width:80px;height:14px;"></div></td>
+                        <td><div class="skeleton-box" style="width:35px;height:14px;"></div></td>
+                        <td style="text-align: right;"><div class="skeleton-box" style="width:75px;height:28px;border-radius:6px;margin-left:auto;"></div></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
                 <tbody id="users-tbody">
                     {% for u in users %}
                     <tr class="user-row-item"
@@ -1012,62 +1137,77 @@
                         </td>
                         <td data-label="Actions" style="text-align: right;">
                             <div class="action-toolbar">
-                                <!-- Details Drawer Button -->
+                                <!-- Details Drawer Button (Primary Action) -->
                                 <button type="button" class="btn-action text-primary" onclick="openUserDetailDrawer({{ u.id }})" title="View user profile and audit trail">
                                     <i class="ti ti-layout-sidebar-right"></i> <span>Details</span>
                                 </button>
 
-                                <!-- Role Change -->
-                                {% if u.role == 'admin' %}
-                                    <button type="button" class="btn-action text-warning"
-                                            onclick="confirmRoleChange({{ u.id }}, 'company_user', '{{ u.name|escape }}')"
-                                            {% if u.id == session.get('user_id') %}disabled title="Cannot remove your own admin access"{% endif %}>
-                                        <i class="ti ti-shield-down"></i> <span>Demote</span>
+                                <!-- "⋯" Dropdown Menu Container -->
+                                <div class="user-row-dropdown">
+                                    <button type="button" class="btn-action btn-menu-trigger"
+                                            id="menu-trigger-{{ u.id }}"
+                                            aria-haspopup="true"
+                                            aria-expanded="false"
+                                            aria-controls="menu-dropdown-{{ u.id }}"
+                                            aria-label="More actions for {{ u.name|escape }}"
+                                            title="More actions"
+                                            onclick="toggleUserRowMenu(this, event)">
+                                        <i class="ti ti-dots"></i>
                                     </button>
-                                {% else %}
-                                    <button type="button" class="btn-action text-primary"
-                                            onclick="confirmRoleChange({{ u.id }}, 'admin', '{{ u.name|escape }}')">
-                                        <i class="ti ti-shield-up"></i> <span>Make Admin</span>
-                                    </button>
-                                {% endif %}
+                                    <div class="user-action-menu"
+                                         id="menu-dropdown-{{ u.id }}"
+                                         role="menu"
+                                         aria-labelledby="menu-trigger-{{ u.id }}"
+                                         tabindex="-1">
+                                        {% if u.role == 'admin' %}
+                                            <button type="button" class="action-menu-item text-warning" role="menuitem" tabindex="-1"
+                                                    onclick="closeAllRowMenus(); confirmRoleChange({{ u.id }}, 'company_user', '{{ u.name|escape }}')"
+                                                    {% if u.id == session.get('user_id') %}disabled title="Cannot remove your own admin access"{% endif %}>
+                                                <i class="ti ti-shield-down"></i> <span>Demote to User</span>
+                                            </button>
+                                        {% else %}
+                                            <button type="button" class="action-menu-item text-primary" role="menuitem" tabindex="-1"
+                                                    onclick="closeAllRowMenus(); confirmRoleChange({{ u.id }}, 'admin', '{{ u.name|escape }}')">
+                                                <i class="ti ti-shield-up"></i> <span>Make Admin</span>
+                                            </button>
+                                        {% endif %}
 
-                                <!-- Plan Change -->
-                                <button type="button" class="btn-action"
-                                        onclick="confirmPlanChange({{ u.id }}, '{% if u.plan == 'Pro' %}free{% else %}pro{% endif %}', '{{ u.name|escape }}')"
-                                        title="Switch user subscription tier">
-                                    <i class="ti ti-sparkles"></i> <span>{% if u.plan == 'Pro' %}Set Free{% else %}Set Pro{% endif %}</span>
-                                </button>
+                                        <button type="button" class="action-menu-item" role="menuitem" tabindex="-1"
+                                                onclick="closeAllRowMenus(); confirmPlanChange({{ u.id }}, '{% if u.plan == 'Pro' %}free{% else %}pro{% endif %}', '{{ u.name|escape }}')"
+                                                title="Switch user subscription tier">
+                                            <i class="ti ti-sparkles"></i> <span>{% if u.plan == 'Pro' %}Set Free Plan{% else %}Set Pro Plan{% endif %}</span>
+                                        </button>
 
-                                <!-- Mark Verified -->
-                                {% if not u.email_verified and not u.is_disabled %}
-                                    <button type="button" class="btn-action text-success"
-                                            onclick="verifyUserAccount({{ u.id }}, '{{ u.name|escape }}')"
-                                            title="Mark email verified">
-                                        <i class="ti ti-check"></i> <span>Verify</span>
-                                    </button>
-                                {% endif %}
+                                        {% if not u.email_verified and not u.is_disabled %}
+                                            <button type="button" class="action-menu-item text-success" role="menuitem" tabindex="-1"
+                                                    onclick="closeAllRowMenus(); verifyUserAccount({{ u.id }}, '{{ u.name|escape }}')"
+                                                    title="Mark email verified">
+                                                <i class="ti ti-check"></i> <span>Verify Email</span>
+                                            </button>
+                                        {% endif %}
 
-                                <!-- Reset Password -->
-                                <button type="button" class="btn-action"
-                                        onclick="openResetPasswordModal({{ u.id }}, '{{ u.name|escape }}')"
-                                        title="Reset user password">
-                                    <i class="ti ti-key"></i> <span>Reset PW</span>
-                                </button>
+                                        <button type="button" class="action-menu-item" role="menuitem" tabindex="-1"
+                                                onclick="closeAllRowMenus(); openResetPasswordModal({{ u.id }}, '{{ u.name|escape }}')"
+                                                title="Reset user password">
+                                            <i class="ti ti-key"></i> <span>Reset Password</span>
+                                        </button>
 
-                                <!-- Disable / Enable -->
-                                <button type="button" class="btn-action {% if u.is_disabled %}text-success{% else %}text-warning{% endif %}"
-                                        onclick="confirmToggleStatus({{ u.id }}, {% if u.is_disabled %}false{% else %}true{% endif %}, '{{ u.name|escape }}')"
-                                        {% if u.id == session.get('user_id') %}disabled title="Cannot disable your own admin account"{% endif %}>
-                                    <i class="ti {% if u.is_disabled %}ti-player-play{% else %}ti-ban{% endif %}"></i>
-                                    <span>{% if u.is_disabled %}Enable{% else %}Disable{% endif %}</span>
-                                </button>
+                                        <div class="action-menu-divider" role="separator"></div>
 
-                                <!-- Delete -->
-                                <button type="button" class="btn-action text-danger"
-                                        onclick="confirmDeleteUser({{ u.id }}, '{{ u.name|escape }}')"
-                                        {% if u.id == session.get('user_id') %}disabled title="Cannot delete your own account"{% endif %}>
-                                    <i class="ti ti-trash"></i> <span>Delete</span>
-                                </button>
+                                        <button type="button" class="action-menu-item {% if u.is_disabled %}text-success{% else %}text-warning{% endif %}" role="menuitem" tabindex="-1"
+                                                onclick="closeAllRowMenus(); confirmToggleStatus({{ u.id }}, {% if u.is_disabled %}false{% else %}true{% endif %}, '{{ u.name|escape }}')"
+                                                {% if u.id == session.get('user_id') %}disabled title="Cannot disable your own admin account"{% endif %}>
+                                            <i class="ti {% if u.is_disabled %}ti-player-play{% else %}ti-ban{% endif %}"></i>
+                                            <span>{% if u.is_disabled %}Enable Account{% else %}Disable Account{% endif %}</span>
+                                        </button>
+
+                                        <button type="button" class="action-menu-item text-danger" role="menuitem" tabindex="-1"
+                                                onclick="closeAllRowMenus(); confirmDeleteUser({{ u.id }}, '{{ u.name|escape }}')"
+                                                {% if u.id == session.get('user_id') %}disabled title="Cannot delete your own account"{% endif %}>
+                                            <i class="ti ti-trash"></i> <span>Delete User</span>
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         </td>
                     </tr>
@@ -1339,15 +1479,104 @@ function showToastMessage(msg, type = 'info') {
 const PAGE_SIZE = 25;
 let currentPage = 1;
 let filteredRows = [];
+let filterDebounceTimer = null;
 
 function getAllRows() {
     return Array.from(document.querySelectorAll('.user-row-item'));
 }
 
-function onFilterChange() {
-    currentPage = 1;
-    applyFilters();
+function showSkeleton() {
+    const skel = document.getElementById('users-skeleton-tbody');
+    const real = document.getElementById('users-tbody');
+    if (skel) skel.style.display = '';
+    if (real) real.style.display = 'none';
 }
+
+function hideSkeleton() {
+    const skel = document.getElementById('users-skeleton-tbody');
+    const real = document.getElementById('users-tbody');
+    if (skel) skel.style.display = 'none';
+    if (real) real.style.display = '';
+}
+
+function onFilterChange() {
+    showSkeleton();
+    clearTimeout(filterDebounceTimer);
+    filterDebounceTimer = setTimeout(() => {
+        currentPage = 1;
+        applyFilters();
+        hideSkeleton();
+    }, 140);
+}
+
+// Row Action Dropdown ("⋯") Controls & Keyboard Navigation
+function toggleUserRowMenu(triggerBtn, event) {
+    if (event) {
+        event.stopPropagation();
+        event.preventDefault();
+    }
+    const dropdown = triggerBtn.closest('.user-row-dropdown');
+    if (!dropdown) return;
+    const menu = dropdown.querySelector('.user-action-menu');
+    if (!menu) return;
+    const isExpanded = triggerBtn.getAttribute('aria-expanded') === 'true';
+
+    closeAllRowMenus();
+
+    if (!isExpanded) {
+        triggerBtn.setAttribute('aria-expanded', 'true');
+        menu.classList.add('show');
+        const firstItem = menu.querySelector('.action-menu-item:not(:disabled)');
+        if (firstItem) firstItem.focus();
+    }
+}
+
+function closeAllRowMenus() {
+    document.querySelectorAll('.user-action-menu.show').forEach(m => {
+        m.classList.remove('show');
+        const trigger = m.closest('.user-row-dropdown')?.querySelector('.btn-menu-trigger');
+        if (trigger) trigger.setAttribute('aria-expanded', 'false');
+    });
+}
+
+document.addEventListener('click', (e) => {
+    if (!e.target.closest('.user-row-dropdown')) {
+        closeAllRowMenus();
+    }
+});
+
+document.addEventListener('keydown', (e) => {
+    const activeMenu = document.querySelector('.user-action-menu.show');
+    if (!activeMenu) {
+        const focusedTrigger = document.activeElement ? document.activeElement.closest('.btn-menu-trigger') : null;
+        if (focusedTrigger && (e.key === 'ArrowDown' || e.key === 'Enter' || e.key === ' ')) {
+            e.preventDefault();
+            toggleUserRowMenu(focusedTrigger, e);
+        }
+        return;
+    }
+
+    if (e.key === 'Escape') {
+        e.preventDefault();
+        const trigger = activeMenu.closest('.user-row-dropdown')?.querySelector('.btn-menu-trigger');
+        closeAllRowMenus();
+        if (trigger) trigger.focus();
+    } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        const items = Array.from(activeMenu.querySelectorAll('.action-menu-item:not(:disabled)'));
+        if (items.length === 0) return;
+        const currentIndex = items.indexOf(document.activeElement);
+        let nextIndex;
+        if (e.key === 'ArrowDown') {
+            nextIndex = currentIndex === -1 ? 0 : (currentIndex + 1) % items.length;
+        } else {
+            nextIndex = currentIndex === -1 ? items.length - 1 : (currentIndex - 1 + items.length) % items.length;
+        }
+        items[nextIndex].focus();
+    } else if (e.key === 'Tab') {
+        closeAllRowMenus();
+    }
+});
 
 function applyFilters() {
     const query = (document.getElementById('user-search-input')?.value || '').toLowerCase().trim();
@@ -1472,9 +1701,13 @@ function changePage(delta) {
     renderPagination();
 }
 
-// Initialise pagination on load
+// Initialise pagination and skeleton loader on load
 window.addEventListener('DOMContentLoaded', () => {
-    applyFilters();
+    showSkeleton();
+    setTimeout(() => {
+        applyFilters();
+        hideSkeleton();
+    }, 160);
 });
 
 // ==========================================
