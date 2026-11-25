@@ -1,6 +1,9 @@
 from flask import Flask, render_template, request, redirect, url_for, send_file, session, flash, jsonify, abort
 from dotenv import load_dotenv
 import os
+import mimetypes
+mimetypes.add_type("font/woff2", ".woff2")
+mimetypes.add_type("font/woff", ".woff")
 import mysql.connector
 import csv
 import io

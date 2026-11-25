@@ -134,12 +134,14 @@ body.light-theme #threat-intel-suite.holding-section::after {
     overflow: hidden;
 }
 
-.holding-badge:hover {
-    border-color: rgba(0, 242, 254, 0.7);
-    box-shadow: 0 0 28px rgba(0, 242, 254, 0.4), inset 0 0 16px rgba(0, 242, 254, 0.2);
-    filter: url(#liquid-filter);
+.holding-badge:hover,
+.holding-badge.liquid-active {
+    border-color: rgba(0, 242, 254, 0.85);
+    box-shadow: 0 0 28px rgba(0, 242, 254, 0.45), inset 0 0 16px rgba(0, 242, 254, 0.25);
+    filter: url(#liquid-filter) drop-shadow(0 0 14px rgba(0, 242, 254, 0.5));
     transform: translateY(-1px);
     cursor: default;
+    background: linear-gradient(135deg, rgba(0, 242, 254, 0.22), rgba(56, 189, 248, 0.12));
 }
 
 body.light-theme .holding-badge {
@@ -149,9 +151,12 @@ body.light-theme .holding-badge {
     box-shadow: 0 0 16px rgba(2, 132, 199, 0.12);
 }
 
-body.light-theme .holding-badge:hover {
-    box-shadow: 0 0 24px rgba(2, 132, 199, 0.25);
-    filter: url(#liquid-filter);
+body.light-theme .holding-badge:hover,
+body.light-theme .holding-badge.liquid-active {
+    box-shadow: 0 0 24px rgba(2, 132, 199, 0.35);
+    border-color: rgba(2, 132, 199, 0.8);
+    filter: url(#liquid-filter) drop-shadow(0 0 12px rgba(2, 132, 199, 0.4));
+    background: linear-gradient(135deg, rgba(2, 132, 199, 0.22), rgba(59, 130, 246, 0.12));
 }
 
 .holding-pulse-dot {
@@ -175,18 +180,21 @@ body.light-theme .holding-pulse-dot {
 
 /* Section Title */
 .holding-title {
-    font-family: var(--font-heading), 'Space Grotesk', sans-serif;
-    font-size: clamp(2.1rem, 3.2vw, 2.85rem);
-    font-weight: 800;
-    line-height: 1.18;
+    font-family: var(--font-heading), 'Space Grotesk', sans-serif !important;
+    font-size: clamp(2rem, 3.2vw, 2.85rem) !important;
+    font-weight: 800 !important;
+    line-height: 1.18 !important;
     color: var(--text-primary, #ffffff);
     margin: 0 0 14px 0;
     letter-spacing: -0.02em;
+    display: block !important;
+    width: 100% !important;
+    text-align: left !important;
     transition: filter 0.3s ease, text-shadow 0.3s ease;
 }
 
 .holding-title:hover {
-    filter: url(#liquid-filter) drop-shadow(0 0 24px rgba(0, 242, 254, 0.28));
+    filter: url(#liquid-filter) drop-shadow(0 0 24px rgba(0, 242, 254, 0.38));
 }
 
 .holding-title.liquid-active {
@@ -207,7 +215,8 @@ body.light-theme .holding-pulse-dot {
     background: linear-gradient(135deg, #00f2fe 0%, #38bdf8 55%, #818cf8 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
-    display: inline-block;
+    display: inline !important;
+    white-space: nowrap !important;
 }
 
 body.light-theme .holding-title {

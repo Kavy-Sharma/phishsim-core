@@ -2313,6 +2313,21 @@
       letter-spacing: 0;
       line-height: 1.15;
       margin-bottom: 16px;
+      display: block;
+    }
+
+    .attack-chain-header .section-title,
+    .pricing-header .section-title,
+    .stats-header .section-title,
+    .text-center .section-title,
+    #threat-sandbox .section-title,
+    #capabilities .section-title,
+    #global-threat-intel .section-title {
+      display: block !important;
+      text-align: center !important;
+      margin-left: auto !important;
+      margin-right: auto !important;
+      width: 100% !important;
     }
 
     .section-sub {
@@ -5650,11 +5665,11 @@
       <!-- Left Column: Sticky Navigator -->
       <div class="holding-nav-col">
         <div class="holding-header">
-          <div class="holding-badge">
+          <div class="holding-badge liquid-text" tabindex="0">
             <i class="ti ti-shield-code" aria-hidden="true"></i>
             <span>Interactive Defense Console</span>
           </div>
-          <h2 id="holding-heading" class="holding-title section-title liquid-text">
+          <h2 id="holding-heading" class="holding-title liquid-text">
             Start with what you're <span class="holding-title-highlight">holding.</span>
           </h2>
           <p class="holding-sub">
@@ -9704,6 +9719,8 @@ ${body}
         const tag = el.tagName.toUpperCase();
         if (['H1', 'H2', 'H3', 'H4', 'H5', 'H6'].includes(tag)) return true;
         if (el.classList.contains('liquid-text') || 
+            el.classList.contains('holding-badge') ||
+            el.classList.contains('holding-title') ||
             el.classList.contains('section-title') || 
             el.classList.contains('card-title') || 
             el.classList.contains('page-title') ||
