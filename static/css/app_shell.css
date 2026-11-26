@@ -4598,9 +4598,12 @@ body.light-theme .ai-stream-card {
   font-weight: 500;
   color: var(--text-primary);
   line-height: 1.35;
-  white-space: nowrap;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   overflow: hidden;
-  text-overflow: ellipsis;
+  word-break: break-word;
+  white-space: normal;
 }
 
 .ai-event-subtext {
@@ -5258,6 +5261,15 @@ body.light-theme .ai-stream-card {
 body.dash-view #pb-host {
   bottom: 24px !important;
   right: 24px !important;
+  z-index: 999;
+}
+
+@media (min-width: 992px) {
+  /* Give the dashboard content a safe right margin/padding so floating mascot never overlaps the cards */
+  .dash-view .dash-page-container {
+    padding-right: calc(1.5rem + 76px) !important;
+    padding-bottom: 120px !important;
+  }
 }
 
 @media (max-width: 768px) {
@@ -6654,6 +6666,34 @@ dialog.compare-dialog::backdrop,
   margin-top: 2px;
 }
 
+.form-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  color: var(--text-primary) !important;
+  margin-bottom: 6px;
+}
+
+.form-helper,
+.form-hint,
+.form-text {
+  font-size: 13px !important;
+  color: var(--text-muted) !important;
+  margin-top: 4px;
+  display: block;
+  line-height: 1.4;
+}
+
+.form-label .badge,
+.auth-card-title-row .badge {
+  text-transform: none !important;
+  font-weight: 500 !important;
+  font-size: 11px !important;
+  letter-spacing: normal !important;
+}
+
 /* Scenario Select Cards */
 .scenario-cards-grid {
   display: grid;
@@ -7367,8 +7407,8 @@ dialog.compare-dialog::backdrop,
 .edu-card-title {
   font-size: 11px;
   font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+  text-transform: none;
+  letter-spacing: 0.02em;
 }
 
 .edu-card-text {

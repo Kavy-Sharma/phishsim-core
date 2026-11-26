@@ -283,7 +283,13 @@
                         <div class="trend-chart-header">
                             <div>
                                 <span class="trend-chart-title" id="trend-metric-title">Team readiness trend</span>
-                                <span class="trend-chart-subtitle trend-subtitle-spacing">Last 8 campaigns</span>
+                                <span class="trend-chart-subtitle trend-subtitle-spacing" id="trend-chart-subtitle">
+                                    {% if (trend_points and trend_points | length < 3) or (finished_count < 3 and not (is_demo and ns.all >= 3)) %}
+                                    Trend gets clearer after 3 campaigns
+                                    {% else %}
+                                    Last 8 campaigns
+                                    {% endif %}
+                                </span>
                             </div>
                             <span class="mono-data trend-latest-val-label" id="trend-latest-val-label">Latest: {{ readiness_val }} pts</span>
                         </div>
@@ -320,6 +326,9 @@
 
                                 <!-- Interactive tracking dot -->
                                 <circle id="trend-hover-dot" cx="0" cy="0" r="5" class="trend-hover-dot" fill="var(--bg-surface)" stroke="var(--primary)" stroke-width="2.5"></circle>
+
+                                <!-- Explicit data points on the trend line -->
+                                <g id="trend-points-group"></g>
 
                                 <!-- ONE filled dot on the latest point with soft halo -->
                                 <circle id="trend-halo-glow" cx="510" cy="28" r="9" class="trend-halo-glow" fill="var(--primary)"></circle>
@@ -1532,6 +1541,22 @@
             };
         });
 
+        function renderPointsDots(data) {
+            const pointsGroup = document.getElementById('trend-points-group');
+            if (!pointsGroup || !data || !data.points) return;
+            while (pointsGroup.firstChild) pointsGroup.removeChild(pointsGroup.firstChild);
+            data.points.forEach(pt => {
+                const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                circle.setAttribute('cx', pt.x);
+                circle.setAttribute('cy', pt.y);
+                circle.setAttribute('r', '4');
+                circle.setAttribute('fill', 'var(--bg-surface)');
+                circle.setAttribute('stroke', data.color);
+                circle.setAttribute('stroke-width', '2');
+                pointsGroup.appendChild(circle);
+            });
+        }
+
         const xLabelsGroup = document.getElementById('trend-x-labels-group');
         if (xLabelsGroup && trendDatasets['readiness']) {
             while (xLabelsGroup.firstChild) xLabelsGroup.removeChild(xLabelsGroup.firstChild);
@@ -1544,6 +1569,12 @@
                 text.textContent = pt.date;
                 xLabelsGroup.appendChild(text);
             });
+            renderPointsDots(trendDatasets['readiness']);
+        }
+
+        if (rawTrendPoints && rawTrendPoints.length < 3) {
+            const subTitle = document.getElementById('trend-chart-subtitle');
+            if (subTitle) subTitle.textContent = 'Trend gets clearer after 3 campaigns';
         }
     }
     buildTrendDatasets();
@@ -1567,6 +1598,26 @@
         const heroSvg = document.getElementById('hero-trend-svg');
         if (heroSvg) {
             heroSvg.setAttribute('aria-label', `${data.title}: latest score ${data.latestVal} across 8 campaigns`);
+        }
+
+        // Render point dots
+        const pointsGroup = document.getElementById('trend-points-group');
+        if (pointsGroup && data.points) {
+            while (pointsGroup.firstChild) pointsGroup.removeChild(pointsGroup.firstChild);
+            data.points.forEach(pt => {
+                const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                circle.setAttribute('cx', pt.x);
+                circle.setAttribute('cy', pt.y);
+                circle.setAttribute('r', '4');
+                circle.setAttribute('fill', 'var(--bg-surface)');
+                circle.setAttribute('stroke', data.color);
+                circle.setAttribute('stroke-width', '2');
+                pointsGroup.appendChild(circle);
+            });
+        }
+        if (rawTrendPoints && rawTrendPoints.length < 3) {
+            const subTitle = document.getElementById('trend-chart-subtitle');
+            if (subTitle) subTitle.textContent = 'Trend gets clearer after 3 campaigns';
         }
 
         // Update SVG paths & styles
@@ -1703,7 +1754,7 @@
     };
 
     // ── 8. Campaigns List / Grid View Switcher ─────────────────────────
-    window.setCampaignsView = function(viewMode) {
+    window.setCampaignsView = function(viewMode, instant = false) {
         const listPane = document.getElementById('pane-view-list');
         const gridPane = document.getElementById('pane-view-grid');
         const btnList = document.getElementById('view-toggle-list');
@@ -1721,7 +1772,7 @@
         url.searchParams.set('view', viewMode);
         window.history.replaceState({}, '', url);
 
-        // Cross-fade in 200 ms
+        // Switch view
         if (viewMode === 'grid') {
             btnList.classList.remove('active');
             btnList.setAttribute('aria-checked', 'false');
@@ -1729,12 +1780,19 @@
             btnGrid.classList.add('active');
             btnGrid.setAttribute('aria-checked', 'true');
             btnGrid.setAttribute('tabindex', '0');
-            listPane.style.opacity = '0';
-            setTimeout(() => {
+            if (instant) {
                 listPane.classList.add('hidden');
+                listPane.style.opacity = '0';
                 gridPane.classList.remove('hidden');
                 gridPane.style.opacity = '1';
-            }, 200);
+            } else {
+                listPane.style.opacity = '0';
+                setTimeout(() => {
+                    listPane.classList.add('hidden');
+                    gridPane.classList.remove('hidden');
+                    gridPane.style.opacity = '1';
+                }, 100);
+            }
         } else {
             btnGrid.classList.remove('active');
             btnGrid.setAttribute('aria-checked', 'false');
@@ -1742,12 +1800,19 @@
             btnList.classList.add('active');
             btnList.setAttribute('aria-checked', 'true');
             btnList.setAttribute('tabindex', '0');
-            gridPane.style.opacity = '0';
-            setTimeout(() => {
+            if (instant) {
                 gridPane.classList.add('hidden');
+                gridPane.style.opacity = '0';
                 listPane.classList.remove('hidden');
                 listPane.style.opacity = '1';
-            }, 200);
+            } else {
+                gridPane.style.opacity = '0';
+                setTimeout(() => {
+                    gridPane.classList.add('hidden');
+                    listPane.classList.remove('hidden');
+                    listPane.style.opacity = '1';
+                }, 100);
+            }
         }
     };
 
@@ -1760,9 +1825,9 @@
             } catch (e) {}
         }
         if (viewChoice === 'grid') {
-            window.setCampaignsView('grid');
+            window.setCampaignsView('grid', true);
         } else {
-            window.setCampaignsView('list');
+            window.setCampaignsView('list', true);
         }
 
         const viewGroup = document.querySelector('.view-toggle-segmented');
