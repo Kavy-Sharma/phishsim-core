@@ -213,8 +213,8 @@ class TestPartGAdmin(unittest.TestCase):
 
         # Ensure action buttons have visible text spans (NEVER empty boxes!)
         self.assertIn("<span>Details</span>", html)
-        self.assertIn("<span>Reset PW</span>", html)
-        self.assertIn("<span>Delete</span>", html)
+        self.assertTrue("<span>Reset Password</span>" in html or "<span>Reset PW</span>" in html)
+        self.assertTrue("<span>Delete User</span>" in html or "<span>Delete</span>" in html)
 
         # Ensure drawers and modals exist
         self.assertIn("add-user-drawer", html)

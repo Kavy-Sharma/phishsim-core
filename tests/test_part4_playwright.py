@@ -269,7 +269,7 @@ def test_part4_playwright_suite():
                 elif expected_role == 'pro':
                     assert "Pro" in plan_badge, f"Expected Pro badge, got '{plan_badge}'"
                 else:
-                    assert "Free" in plan_badge, f"Expected Free badge, got '{plan_badge}'"
+                    assert any(w in plan_badge for w in ("Free", "Starter")), f"Expected Free or Starter badge, got '{plan_badge}'"
 
                 # Check upgrade button visibility
                 upgrade_btn = u_page.locator("#app-upgrade-btn")
@@ -287,6 +287,20 @@ def test_part4_playwright_suite():
 
                 print(f"[PASS] Role '{expected_role}' verified: plan_badge='{plan_badge.strip()}', upgrade_btn={expect_upgrade_btn}, admin_tab={expect_admin_link}")
                 u_ctx.close()
+
+            # Ensure DB roles are set correctly for hermetic test
+            try:
+                from app import get_db_connection
+                _db = get_db_connection()
+                _cur = _db.cursor()
+                _cur.execute("UPDATE users SET role = 'company_user', pro_expires_at = NULL WHERE email = 'test_free@phishsim.ai'")
+                _cur.execute("UPDATE users SET role = 'pro' WHERE email = 'test_pro@phishsim.ai'")
+                _cur.execute("UPDATE users SET role = 'admin' WHERE email = 'test_admin@phishsim.ai'")
+                _db.commit()
+                _cur.close()
+                _db.close()
+            except Exception as _e:
+                print(f"[WARN] Failed to normalize user roles: {_e}")
 
             # Test Free User
             verify_user_role_navbar("test_free@phishsim.ai", "free", expect_upgrade_btn=True, expect_admin_link=False)

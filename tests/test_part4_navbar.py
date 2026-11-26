@@ -29,7 +29,6 @@ def run_flask_server():
     if SERVER_PROC:
         print("[SERVER] Terminating spawned Flask server...")
         stop_test_server(SERVER_PROC)
-        proc.terminate()
 
 
 def get_axe_script():

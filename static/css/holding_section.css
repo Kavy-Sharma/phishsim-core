@@ -132,6 +132,18 @@ body.light-theme #threat-intel-suite.holding-section::after {
     transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     position: relative;
     overflow: hidden;
+    animation: holdingBadgeWaterGlow 4s ease-in-out infinite alternate;
+}
+
+@keyframes holdingBadgeWaterGlow {
+    0% {
+        border-color: rgba(0, 242, 254, 0.35);
+        box-shadow: 0 0 18px rgba(0, 242, 254, 0.18), inset 0 0 10px rgba(0, 242, 254, 0.08);
+    }
+    100% {
+        border-color: rgba(0, 242, 254, 0.7);
+        box-shadow: 0 0 28px rgba(0, 242, 254, 0.35), inset 0 0 16px rgba(0, 242, 254, 0.18);
+    }
 }
 
 .holding-badge:hover,
@@ -212,12 +224,20 @@ body.light-theme .holding-pulse-dot {
 }
 
 .holding-title-highlight {
-    background: linear-gradient(135deg, #00f2fe 0%, #38bdf8 55%, #818cf8 100%);
+    background: linear-gradient(135deg, #00f2fe 0%, #38bdf8 30%, #818cf8 60%, #00f0ff 85%, #00f2fe 100%);
+    background-size: 250% auto;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     display: inline-block !important;
     white-space: nowrap !important;
-    margin-left: 0.18em;
+    margin-left: 0.22em;
+    animation: holdingWaterFlow 4.5s linear infinite;
+    filter: drop-shadow(0 0 14px rgba(0, 242, 254, 0.45));
+}
+
+@keyframes holdingWaterFlow {
+    0% { background-position: 0% center; }
+    100% { background-position: 250% center; }
 }
 
 body.light-theme .holding-title {
@@ -225,9 +245,12 @@ body.light-theme .holding-title {
 }
 
 body.light-theme .holding-title-highlight {
-    background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+    background: linear-gradient(135deg, #0284c7 0%, #0369a1 40%, #4f46e5 70%, #0284c7 100%);
+    background-size: 250% auto;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
+    animation: holdingWaterFlow 4.5s linear infinite;
+    filter: drop-shadow(0 0 10px rgba(2, 132, 199, 0.3));
 }
 
 .holding-sub {
